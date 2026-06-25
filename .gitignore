@@ -1,0 +1,59 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+!.env.example
+
+# firebase: per-developer project alias. Run `firebase use <project-id>`
+# after cloning, or copy .firebaserc.example to .firebaserc and edit it.
+.firebaserc
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# internal release notes + release script — never publish to any remote
+PUBLISH.md
+publish.ps1
+test-published.ps1
+back-to-main.ps1
+
+# internal planning / scoping docs — kept local, not published
+docs/plans/
+
+# temporary worktree used by publish.ps1 — lives one dir above the repo,
+# so it's normally invisible to git status; entry kept for intent.
+leadstack-pub-tmp/

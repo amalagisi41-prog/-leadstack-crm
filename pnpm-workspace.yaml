@@ -1,0 +1,11 @@
+# pnpm 10+ blocks dependency lifecycle (build) scripts by default for
+# supply-chain safety. This is the approval list (the pnpm 11 home for
+# what used to be package.json's "pnpm.onlyBuiltDependencies"). Setting a
+# package to true lets its install script run. sharp's build is required
+# so Next.js image optimization gets its native binary.
+allowBuilds:
+  '@firebase/util': true
+  msw: true
+  protobufjs: true
+  sharp: true
+  unrs-resolver: true

@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LeadStack CRM Setup Guide</title>
+  <style>
+    :root {
+      --bg: #0a0a0b;
+      --surface: #141416;
+      --surface-hover: #1c1c1f;
+      --border: #27272a;
+      --text: #fafafa;
+      --text-muted: #a1a1aa;
+      --accent: #6d28d9;
+      --accent-light: #8b5cf6;
+      --success: #22c55e;
+      --success-bg: rgba(34, 197, 94, 0.1);
+      --warning: #f59e0b;
+      --warning-bg: rgba(245, 158, 11, 0.1);
+      --info: #3b82f6;
+      --info-bg: rgba(59, 130, 246, 0.1);
+      --code-bg: #1e1e22;
+      --radius: 12px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 6rem;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      padding: 3rem 0 2rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 3rem;
+    }
+
+    .header h1 {
+      font-size: 2.25rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.5rem;
+    }
+
+    .header h1 span { color: var(--accent-light); }
+
+    .header p {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    /* Progress bar */
+    .progress-bar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 0;
+      margin-bottom: 2rem;
+    }
+
+    .progress-track {
+      display: flex;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .progress-step {
+      flex: 1;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      transition: background 0.3s;
+    }
+
+    .progress-step.done { background: var(--success); }
+    .progress-step.active { background: var(--accent-light); }
+
+    .progress-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-align: center;
+      margin-top: 0.5rem;
+    }
+
+    /* Sections */
+    .section {
+      margin-bottom: 3rem;
+    }
+
+    .section-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      background: var(--accent);
+      color: white;
+      font-size: 0.85rem;
+      font-weight: 700;
+      border-radius: 50%;
+      margin-bottom: 0.75rem;
+    }
+
+    .section h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+
+    .section > p {
+      color: var(--text-muted);
+      margin-bottom: 1.25rem;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .card h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .card h3 .badge {
+      font-size: 0.7rem;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .badge-auto {
+      background: var(--success-bg);
+      color: var(--success);
+      border: 1px solid rgba(34, 197, 94, 0.2);
+    }
+
+    .badge-guided {
+      background: var(--info-bg);
+      color: var(--info);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+
+    .badge-manual {
+      background: var(--warning-bg);
+      color: var(--warning);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+
+    /* Steps list */
+    .steps {
+      list-style: none;
+      counter-reset: step;
+    }
+
+    .steps li {
+      position: relative;
+      padding: 0.5rem 0 0.5rem 2rem;
+      color: var(--text);
+    }
+
+    .steps li::before {
+      counter-increment: step;
+      content: counter(step);
+      position: absolute;
+      left: 0;
+      top: 0.55rem;
+      width: 22px;
+      height: 22px;
+      background: var(--border);
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-weight: 600;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .steps li + li { border-top: 1px solid var(--border); }
+
+    .steps a {
+      color: var(--accent-light);
+      text-decoration: none;
+    }
+
+    .steps a:hover { text-decoration: underline; }
+
+    /* Code blocks */
+    code {
+      font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
+      font-size: 0.88em;
+      background: var(--code-bg);
+      padding: 2px 7px;
+      border-radius: 5px;
+      border: 1px solid var(--border);
+    }
+
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      margin: 0.75rem 0;
+    }
+
+    pre code {
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+
+    /* Callout boxes */
+    .callout {
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      margin: 1rem 0;
+      font-size: 0.95rem;
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
+    }
+
+    .callout-icon {
+      font-size: 1.1rem;
+      line-height: 1.5;
+      flex-shrink: 0;
+    }
+
+    .callout-info {
+      background: var(--info-bg);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+
+    .callout-success {
+      background: var(--success-bg);
+      border: 1px solid rgba(34, 197, 94, 0.2);
+    }
+
+    .callout-tip {
+      background: rgba(139, 92, 246, 0.1);
+      border: 1px solid rgba(139, 92, 246, 0.25);
+    }
+
+    .callout-tip code {
+      background: rgba(139, 92, 246, 0.15);
+      border-color: rgba(139, 92, 246, 0.3);
+    }
+
+    .callout-warning {
+      background: var(--warning-bg);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+
+    /* Config table */
+    .config-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+      margin: 0.75rem 0;
+    }
+
+    .config-table th {
+      text-align: left;
+      padding: 0.5rem 0.75rem;
+      border-bottom: 2px solid var(--border);
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .config-table td {
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .config-table td code { font-size: 0.82rem; }
+
+    /* Checklist */
+    .checklist {
+      list-style: none;
+    }
+
+    .checklist li {
+      padding: 0.6rem 0 0.6rem 2rem;
+      position: relative;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .checklist li:last-child { border-bottom: none; }
+
+    .checklist li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0.75rem;
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--border);
+      border-radius: 4px;
+    }
+
+    .checklist li.checked::before {
+      background: var(--success);
+      border-color: var(--success);
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+
+    /* Troubleshooting */
+    details {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+    }
+
+    summary {
+      padding: 0.75rem 1rem;
+      cursor: pointer;
+      font-weight: 500;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    summary:hover { background: var(--surface-hover); border-radius: 8px; }
+
+    summary::marker, summary::-webkit-details-marker { display: none; }
+
+    summary::before {
+      content: '\25B6';
+      font-size: 0.65rem;
+      transition: transform 0.2s;
+      color: var(--text-muted);
+    }
+
+    details[open] summary::before { transform: rotate(90deg); }
+
+    details .details-content {
+      padding: 0 1rem 1rem;
+      color: var(--text-muted);
+    }
+
+    /* Divider */
+    hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 3rem 0;
+    }
+
+    /* Final card */
+    .final-card {
+      background: linear-gradient(135deg, rgba(109, 40, 217, 0.15), rgba(59, 130, 246, 0.1));
+      border: 1px solid rgba(109, 40, 217, 0.3);
+      border-radius: var(--radius);
+      padding: 2rem;
+      text-align: center;
+      margin-top: 3rem;
+    }
+
+    .final-card h3 {
+      font-size: 1.25rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .final-card p {
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+
+    .final-card pre {
+      display: inline-block;
+      text-align: left;
+      margin: 0.5rem auto;
+    }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .container { padding: 1rem 1rem 4rem; }
+      .header h1 { font-size: 1.75rem; }
+      .section h2 { font-size: 1.25rem; }
+      .card { padding: 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <h1><span>LeadStack CRM</span> Setup Guide</h1>
+    <p>Everything you need to go from zero to a running app. Claude Code will handle most of the heavy lifting.</p>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-bar">
+    <div class="progress-track">
+      <div class="progress-step" id="p1"></div>
+      <div class="progress-step" id="p2"></div>
+      <div class="progress-step" id="p3"></div>
+      <div class="progress-step" id="p4"></div>
+      <div class="progress-step" id="p5"></div>
+      <div class="progress-step" id="p6"></div>
+      <div class="progress-step" id="p7"></div>
+    </div>
+    <div class="progress-label">Prerequisites &rarr; Install &rarr; Firebase &rarr; Comms &rarr; Stripe &rarr; Launch &rarr; Deploy</div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- PHASE 1: Prerequisites -->
+  <!-- ============================================ -->
+  <div class="section">
+    <div class="section-number">1</div>
+    <h2>Prerequisites</h2>
+    <p>Install these three things manually. Claude Code can't run installers for you, but it can check if they're installed and guide you.</p>
+
+    <div class="card">
+      <h3>VS Code <span class="badge badge-manual">manual install</span></h3>
+      <ol class="steps">
+        <li>Go to <a href="https://code.visualstudio.com" target="_blank">code.visualstudio.com</a></li>
+        <li>Click <strong>"Download for Windows"</strong></li>
+        <li>Run the installer &mdash; accept all defaults</li>
+        <li>Open VS Code when it finishes</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h3>Git <span class="badge badge-manual">manual install</span></h3>
+      <ol class="steps">
+        <li>Go to <a href="https://git-scm.com/download/win" target="_blank">git-scm.com/download/win</a></li>
+        <li>Download and run the installer &mdash; just keep clicking <strong>Next</strong></li>
+        <li><strong>Close and reopen VS Code</strong> so the terminal picks up Git</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h3>Node.js <span class="badge badge-manual">manual install</span></h3>
+      <ol class="steps">
+        <li>Go to <a href="https://nodejs.org" target="_blank">nodejs.org</a></li>
+        <li>Download the <strong>LTS</strong> version (the button on the left)</li>
+        <li>Run the installer &mdash; accept all defaults</li>
+        <li><strong>Close and reopen VS Code</strong> so the terminal picks up Node</li>
+      </ol>
+    </div>
+
+    <div class="callout callout-tip">
+      <span class="callout-icon">&#x1F4A1;</span>
+      <div><strong>Tip:</strong> Once you have VS Code open with the project, tell Claude Code <code>check what prerequisites I need</code> and it will automatically verify which tools are installed and which are missing. After installing anything, restart your terminal and ask Claude Code to check again.</div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- PHASE 2: Clone & Open -->
+  <!-- ============================================ -->
+  <div class="section">
+    <div class="section-number">2</div>
+    <h2>Clone the Project</h2>
+    <p>Get the code onto your machine and open it in VS Code.</p>
+
+    <div class="card">
+      <h3>Clone &amp; Open</h3>
+      <ol class="steps">
+        <li>Open VS Code and open a terminal (<strong>Terminal &gt; New Terminal</strong>)</li>
+        <li>
+          Navigate to where you want the project and clone it:
+          <pre><code>cd ~/Documents
+git clone https://github.com/ben941/saas-boilerplate.git
+cd saas-boilerplate
+code .</code></pre>
+        </li>
+        <li>VS Code will reopen in the project folder</li>
+      </ol>
+      <div class="callout callout-tip">
+        <span class="callout-icon">&#x1F4A1;</span>
+        <div><strong>Tip:</strong> If you get an error while cloning, copy and paste the entire error message into Claude Code and it will help you troubleshoot. Common issues include Git not being installed or needing to restart your terminal.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- PHASE 3: Claude Code -->
+  <!-- ============================================ -->
+  <div class="section">
+    <div class="section-number">3</div>
+    <h2>Install Claude Code</h2>
+    <p>Claude Code is the AI assistant that will guide you through the rest of the setup.</p>
+
+    <div class="card">
+      <h3>Get Claude Code Running</h3>
+      <ol class="steps">
+        <li>Create an account at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> and get an API key</li>
+        <li>
+          In the VS Code terminal, install Claude Code:
+          <pre><code>npm install -g @anthropic-ai/claude-code</code></pre>
+        </li>
+        <li>
+          Launch it:
+          <pre><code>claude</code></pre>
+        </li>
+        <li>Follow the prompts to enter your API key</li>
+      </ol>
+    </div>
+
+    <div class="callout callout-info">
+      <span class="callout-icon">&#9432;</span>
+      <div>From this point on, type <code>help me set up this project</code> in Claude Code. It reads the project's <code>CLAUDE.md</code> file and knows exactly what to do. The steps below show what it will handle.</div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- PHASE 4: Dependencies & Env -->
+  <!-- ============================================ -->
+  <div class="section">
+    <div class="section-number">4</div>
+    <h2>Dependencies &amp; Environment</h2>
+    <p>Claude Code handles all of this automatically &mdash; no input needed from you.</p>
+
+    <div class="card">
+      <h3>What Claude Code Does <span class="badge badge-auto">automatic</span></h3>
+      <ol class="steps">
+        <li>Checks that Git, Node.js, pnpm, and Stripe CLI are installed</li>
+        <li>Installs <code>pnpm</code> if missing (<code>npm install -g pnpm</code>)</li>
+        <li>Installs Stripe CLI if missing (<code>winget install Stripe.StripeCLI</code>)</li>
+        <li>Runs <code>pnpm install</code> to install all project dependencies</li>
+        <li>Creates <code>.env.local</code> from the template (<code>.env.example</code>)</li>
+        <li>Generates two secure cookie secrets and writes them in</li>
+        <li>Sets <code>NEXT_PUBLIC_APP_URL=http://localhost:3000</code></li>
+      </ol>
+    </div>
+
+    <div class="callout callout-success">
+      <span class="callout-icon">&#x1F512;</span>
+      <div><strong>Your secrets are safe.</strong> All keys and credentials go into <code>.env.local</code> which is git-ignored. It will never be committed to GitHub. The template stays clean for everyone.</div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- PHASE 5: Service Configuration -->
+  <!-- ============================================ -->
+  <div class="section">
+    <div class="section-number">5</div>
+    <h2>Service Configuration</h2>
+    <p>For each service, Claude Code tells you what to do in your browser. You paste values back and it writes them into <code>.env.local</code>.</p>
+
+    <!-- Firebase intro -->
+    <div class="card" style="border-left: 3px solid var(--accent-light);">
+      <h3>Why Firebase?</h3>
+      <p style="color: var(--text-muted); margin-bottom: 0.75rem;">
+        Firebase is Google's app development platform, and LeadStack uses two of its core services: <strong>Authentication</strong> and <strong>Cloud Firestore</strong>.
+      </p>
+      <p style="color: var(--text-muted); margin-bottom: 0.75rem;">
+        <strong>Authentication</strong> handles everything related to user accounts &mdash; signing up, logging in, password resets, and Google sign-in. Instead of building all of that from scratch (which is complex and easy to get wrong from a security standpoint), Firebase gives you a battle-tested system that handles password hashing, session tokens, and OAuth flows. When a user clicks "Sign in with Google" on your app, Firebase is doing all the heavy lifting behind the scenes.
+      </p>
+      <p style="color: var(--text-muted);">
+        <strong>Cloud Firestore</strong> is a NoSQL database that stores your app's data &mdash; user profiles, contacts, deals, tasks, calendar events, form submissions, and subscription status. It's a "serverless" database, meaning you don't need to set up or maintain a database server. Your app reads and writes data directly, and Firestore handles scaling, backups, and availability. It also has real-time sync, so when one user drags a deal on the pipeline Kanban, every other seat sees the update instantly without refreshing the page.
+      </p>
+    </div>
+
+    <div class="card" style="border-left: 3px solid var(--accent-light); margin-bottom: 0.5rem;">
+      <h3>Client SDK vs Admin SDK &mdash; What's the Difference?</h3>
+      <p style="color: var(--text-muted); margin-bottom: 0.75rem;">
+        Firebase gives you two sets of keys because your app talks to Firebase from two different places, each with different trust levels:
+      </p>
+      <p style="color: var(--text-muted); margin-bottom: 0.75rem;">
+        The <strong>Client SDK keys</strong> run in the user's browser. They're used for things like signing in, signing up, and reading data that the user is allowed to see. These keys are "public" in the sense that anyone can see them in your website's source code &mdash; and that's fine by design. Firebase security rules control what each user can actually access, not the keys themselves.
+      </p>
+      <p style="color: var(--text-muted);">
+        The <strong>Admin SDK keys</strong> (the service account) run on your server only. They have full, unrestricted access to your Firebase project &mdash; they can read any data, delete any user, bypass all security rules. This is why the private key must be kept secret in <code>.env.local</code> and never exposed to the browser. Your server uses these keys for trusted operations like verifying authentication tokens in middleware and managing user records.
+      </p>
+    </div>
+
+    <!-- Firebase Client -->
+    <div class="card">
+      <h3>Firebase Client SDK <span class="badge badge-guided">guided</span></h3>
+      <ol class="steps">
+        <li>Go to <a href="https://console.firebase.google.com" target="_blank">Firebase Console</a> and create a project (or use an existing one)</li>
+        <li>Go to <strong>Project Settings</strong> &gt; <strong>Your apps</strong> &gt; click the web icon (<strong>&lt;/&gt;</strong>)</li>
+        <li>Register a web app (skip hosting)</li>
+        <li>Copy the <code>firebaseConfig</code> object and paste it to Claude Code</li>
+      </ol>
+      <table class="config-table">
+        <thead><tr><th>Config Key</th><th>Env Variable</th></tr></thead>
+        <tbody>
+          <tr><td><code>apiKey</code></td><td><code>NEXT_PUBLIC_FIREBASE_API_KEY</code></td></tr>
+          <tr><td><code>authDomain</code></td><td><code>NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN</code></td></tr>
+          <tr><td><code>projectId</code></td><td><code>NEXT_PUBLIC_FIREBASE_PROJECT_ID</code></td></tr>
+          <tr><td><code>storageBucket</code></td><td><code>NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET</code></td></tr>
+          <tr><td><code>messagingSenderId</code></td><td><code>NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID</code></td></tr>
+          <tr><td><code>appId</code></td><td><code>NEXT_PUBLIC_FIREBASE_APP_ID</code></td></tr>
+        </tbody>
+      </table>
+      <div class="callout callout-tip">
+        <span class="callout-icon">&#x1F4A1;</span>
+        <div><strong>Tip:</strong> Just paste the entire <code>firebaseConfig</code> object into Claude Code &mdash; it will automatically extract all 6 values and write them into <code>.env.local</code> for you. No need to copy them one by one.</div>
+      </div>
+    </div>
+
+    <!-- Firebase Admin -->
+    <div class="card">
+      <h3>Firebase Admin SDK <span class="badge badge-guided">guided</span></h3>
+      <ol class="steps">
+        <li>In Firebase Console, go to <strong>Project Settings</strong> &gt; <strong>Service accounts</strong></li>
+        <li>Click <strong>"Generate new private key"</strong> &mdash; this downloads a JSON file</li>
+        <li>Open the JSON file and paste its contents to Claude Code</li>
+      </ol>
+      <table class="config-table">
+        <thead><tr><th>JSON Key</th><th>Env Variable</th></tr></thead>
+        <tbody>
+          <tr><td><code>project_id</code></td><td><code>FIREBASE_ADMIN_PROJECT_ID</code></td></tr>
+          <tr><td><code>client_email</code></td><td><code>FIREBASE_ADMIN_CLIENT_EMAIL</code></td></tr>
+          <tr><td><code>private_key</code></td><td><code>FIREBASE_ADMIN_PRIVATE_KEY</code></td></tr>
+        </tbody>
+      </table>
+      <div class="callout callout-warning">
+        <span class="callout-icon">&#9888;</span>
+        <div>The private key must be wrapped in double quotes in <code>.env.local</code> with <code>\n</code> for newlines. Claude Code handles this for you.</div>
+      </div>
+      <div class="callout callout-tip">
+        <span class="callout-icon">&#x1F4A1;</span>
+        <div><strong>Tip:</strong> Paste the entire JSON file contents into Claude Code. It will extract the 3 values it needs and format the private key correctly. If you get a "private key" error later, tell Claude Code <code>I'm getting a private key error</code> and it will check the formatting in <code>.env.local</code> for you.</div>
+      </div>
+    </div>
+
+    <!-- Firebase Auth & Firestore -->
+    <div class="card">
+      <h3>Firebase Auth &amp; Firestore <span class="badge badge-guided">guided</span></h3>
+      <p style="color: var(--text-muted); margin-bottom: 0.75rem;">
+        Having the keys isn't enough &mdash; you also need to switch on the specific Firebase services your app uses. Think of it like having a key to a building, but the lights and electricity still need to be turned on. These toggles tell Firebase "yes, I want to use Authentication and Firestore in this project."
+      </p>
+      <ol class="steps">
+        <li>In Firebase Console, go to <strong>Authentication</strong> &gt; <strong>Get started</strong></li>
+        <li>Enable <strong>Email/Password</strong> (toggle on, save)</li>
+        <li>Go to <strong>Firestore Database</strong> &gt; <strong>Create database</strong></li>
+        <li>Select <strong>Start in production mode</strong> &gt; pick closest location &gt; <strong>Enable</strong></li>
+      </ol>
+      <div class="callout callout-info">
+        <span class="callout-icon">&#9432;</span>
+        <div>LeadStack ships with strict <strong>owner-scoped</strong> Firestore rules in <code>firestore.rules</code> &mdash; every user can only read/write their own contacts, deals, tasks, etc. That's why you pick <strong>production mode</strong> instead of test mode. We deploy the rules next.</div>
+      </div>
+      <div class="callout callout-tip">
+        <span class="callout-icon">&#x1F4A1;</span>
+        <div><strong>Tip:</strong> If you're unsure whether you've enabled everything correctly, tell Claude Code <code>can you check if my Firebase setup is working?</code> after starting the app. It can help diagnose auth and database connection issues.</div>
+      </div>
+    </div>
+
+    <!-- Firestore Rules Deploy -->
+    <div class="card">
+      <h3>Deploy Firestore Rules <span class="badge badge-guided">guided</span></h3>
+      <p style="color: var(--text-muted); margin-bottom: 0.75rem;">
+        LeadStack's security rules live in <code>firestore.rules</code> in the repo. They deny all access by default and then explicitly allow each collection (<code>contacts</code>, <code>deals</code>, <code>events</code>, <code>tasks</code>, <code>forms</code>, etc.) to its owner only. Claude Code deploys these to your Firebase project with the Firebase CLI.
+      </p>
+      <ol class="steps">
+        <li>
+          Log in to Firebase CLI (a browser window opens, click <strong>Allow</strong>):
+          <pre><code>firebase login</code></pre>
+        </li>
+        <li>
+          Deploy the rules:
+          <pre><code>firebase deploy --only firestore:rules</code></pre>
+        </li>
+        <li>The repo already ships with <code>.firebaserc</code> and <code>firebase.json</code> &mdash; Claude Code will update <code>.firebaserc</code> to point at your Firebase project ID if needed</li>
+      </ol>
+      <div class="callout callout-warning">
+        <span class="callout-icon">&#9888;</span>
+        <div><strong>Rerun</strong> <code>firebase deploy --only firestore:rules</code> any time you add a new Firestore collection. Without rules, writes to new collections will fail with "Missing or insufficient permissions".</div>
+      </div>
+    </div>
+
+    <!-- Comms intro -->
+    <div class="card" style="border-left: 3px solid var(--accent-light);">
+      <h3>Why Resend + Twilio?</h3>
+      <p style="color: var(--text-muted); margin-bottom: 0.75rem;">
+        LeadStack lets users send <strong>email</strong> and <strong>SMS</strong> to their contacts directly from a contact profile &mdash; a core part of any CRM. It uses the <strong>shared-sender</strong> model: you (the operator of LeadStack) own one Resend account and one Twilio account, and every user of your CRM sends through them. The cost of each email or SMS is baked into the plan price your users pay; they never have to set up their own comms providers.
+      </p>
+      <p style="color: var(--text-muted);">
+        When a user clicks <strong>Send email</strong> on a contact, LeadStack sends the message from your verified domain with the user's own email address on the <code>Reply-To:</code> header &mdash; so when the recipient hits reply, the reply goes straight to the user's inbox, bypassing LeadStack entirely. SMS works the same way through Twilio, sent from your Twilio phone number.
+      </p>
+    </div>
+
+    <!-- Resend -->
+    <div class="card">
+      <h3>Resend (Email) <span class="badge badge-guided">guided</span></h3>
+      <p style="color: var(--text-muted); margin-bottom: 0.75rem;">
+        <a href="https://resend.com" target="_blank">Resend</a> is a transactional email API with a generous free tier. You add your sending domain, verify DNS, and every email LeadStack sends goes through Resend's infrastructure with proper SPF/DKIM signing.
+      </p>
+      <ol class="steps">
+        <li>Go to <a href="https://resend.com" target="_blank">resend.com</a> and create an account</li>
+        <li>Go to <strong>Domains</strong> &gt; <strong>Add Domain</strong>. Add the DNS records Resend shows you at your DNS provider. Verification usually takes minutes</li>
+        <li>Go to <strong>API Keys</strong> &gt; <strong>Create API Key</strong> (Full Access). Copy the key (starts with <code>re_...</code>) and paste it to Claude Code</li>
+        <li>Tell Claude Code the verified sender you want (e.g., <code>notifications@yourdomain.com</code>). It formats <code>EMAIL_FROM</code> correctly for you</li>
+      </ol>
+      <table class="config-table">
+        <thead><tr><th>Value</th><th>Env Variable</th></tr></thead>
+        <tbody>
+          <tr><td>API key (<code>re_...</code>)</td><td><code>RESEND_API_KEY</code></td></tr>
+          <tr><td>Verified sender (e.g. <code>"LeadStack &lt;notifications@yourdomain.com&gt;"</code>)</td><td><code>EMAIL_FROM</code></td></tr>
+        </tbody>
+      </table>
+      <div class="callout callout-info">
+        <span class="callout-icon">&#9432;</span>
+        <div><strong>Don't own a domain yet?</strong> You can test with Resend's sandbox by setting <code>EMAIL_FROM="onboarding@resend.dev"</code>. Sandbox sends work for testing but will be flagged as untrusted in production.</div>
+      </div>
+      <div class="callout callout-tip">
+        <span class="callout-icon">&#x1F4A1;</span>
+        <div><strong>Email is optional.</strong> If <code>RESEND_API_KEY</code> or <code>EMAIL_FROM</code> is missing, <code>/api/comms/email/send</code> returns a 503 and the Send email button on a contact profile surfaces a clean error. The rest of LeadStack works normally.</div>
+      </div>
+    </div>
+
+    <!-- Twilio -->
+    <div class="card">
+      <h3>Twilio (SMS) <span class="badge badge-guided">guided</span></h3>
+      <p style="color: var(--text-muted); margin-bottom: 0.75rem;">
+        <a href="https://www.twilio.com" target="_blank">Twilio</a> is the industry-standard SMS API. Trial accounts come with a free phone number + credits, which is plenty for local development and testing.
+      </p>
+      <ol class="steps">
+        <li>Go to <a href="https://console.twilio.com" target="_blank">console.twilio.com</a> and sign up</li>
+        <li>From the dashboard, copy the <strong>Account SID</strong> and <strong>Auth Token</strong> and paste them to Claude Code</li>
+        <li>Go to <strong>Phone Numbers</strong> &gt; <strong>Manage</strong> &gt; <strong>Active Numbers</strong>. Copy your trial or purchased number in <strong>E.164 format</strong> (<code>+15551234567</code>) and paste it to Claude Code</li>
+      </ol>
+      <table class="config-table">
+        <thead><tr><th>Value</th><th>Env Variable</th></tr></thead>
+        <tbody>
+          <tr><td>Account SID</td><td><code>TWILIO_ACCOUNT_SID</code></td></tr>
+          <tr><td>Auth Token</td><td><code>TWILIO_AUTH_TOKEN</code></td></tr>
+          <tr><td>Phone number (E.164)</td><td><code>TWILIO_FROM_NUMBER</code></td></tr>
+        </tbody>
+      </table>
+      <div class="callout callout-warning">
+        <span class="callout-icon">&#9888;</span>
+        <div><strong>Trial account caveats:</strong> Twilio trial accounts can only send SMS to numbers you've verified under <strong>Phone Numbers &gt; Verified Caller IDs</strong>, and every message gets prepended with a "Sent from a Twilio trial account" banner. For real usage, upgrade and (in the US) register A2P 10DLC through the Twilio console.</div>
+      </div>
+      <div class="callout callout-tip">
+        <span class="callout-icon">&#x1F4A1;</span>
+        <div><strong>SMS is optional.</strong> If any of the three Twilio vars are missing, <code>/api/comms/sms/send</code> returns a 503 and the Send SMS button fails with a clean error. The rest of LeadStack works normally.</div>
+      </div>
+    </div>
+
+    <!-- Stripe intro -->
+    <div class="card" style="border-left: 3px solid var(--accent-light);">
+      <h3>Why Stripe?</h3>
+      <p style="color: var(--text-muted); margin-bottom: 0.75rem;">
+        LeadStack is a SaaS (Software as a Service) CRM, which means users pay a monthly subscription to access Pro and Scale features. Stripe is the payment platform that makes this possible. It handles everything you'd never want to build yourself: securely collecting credit card numbers, processing payments, managing recurring subscriptions, handling failed payments, issuing refunds, and staying compliant with financial regulations.
+      </p>
+      <p style="color: var(--text-muted);">
+        You'll set up three things in Stripe: <strong>API keys</strong> (so your app can talk to Stripe's servers), a <strong>product and price</strong> (the "Pro Plan" that users subscribe to), and a <strong>webhook</strong> (so Stripe can notify your app when something happens, like a successful payment or a cancelled subscription). Stripe has a "Test mode" that lets you simulate all of this with fake credit cards &mdash; no real money changes hands during development. The test card number <code>4242 4242 4242 4242</code> always succeeds, which is how you'll verify everything works.
+      </p>
+    </div>
+
+    <!-- Stripe -->
+    <div class="card">
+      <h3>Stripe API Keys <span class="badge badge-guided">guided</span></h3>
+      <p style="color: var(--text-muted); margin-bottom: 0.75rem;">
+        Stripe gives you two keys. The <strong>publishable key</strong> is used in the browser to create checkout sessions &mdash; it's safe to expose publicly. The <strong>secret key</strong> runs on your server and can charge cards, create subscriptions, and access sensitive data &mdash; it must stay private in <code>.env.local</code>.
+      </p>
+      <ol class="steps">
+        <li>Go to <a href="https://dashboard.stripe.com" target="_blank">Stripe Dashboard</a> &mdash; make sure <strong>Test mode</strong> is ON</li>
+        <li>Go to <strong>Developers</strong> &gt; <strong>API keys</strong></li>
+        <li>Copy the Publishable key and Secret key, paste them to Claude Code</li>
+      </ol>
+      <table class="config-table">
+        <thead><tr><th>Key</th><th>Env Variable</th></tr></thead>
+        <tbody>
+          <tr><td>Publishable key (<code>pk_test_...</code>)</td><td><code>NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY</code></td></tr>
+          <tr><td>Secret key (<code>sk_test_...</code>)</td><td><code>STRIPE_SECRET_KEY</code></td></tr>
+        </tbody>
+      </table>
+      <div class="callout callout-tip">
+        <span class="callout-icon">&#x1F4A1;</span>
+        <div><strong>Tip:</strong> Tell Claude Code <code>here are my Stripe keys</code> and paste both keys. It will figure out which is the publishable key and which is the secret key and save them to the right variables automatically.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Stripe Product <span class="badge badge-guided">guided</span></h3>
+      <p style="color: var(--text-muted); margin-bottom: 0.75rem;">
+        In Stripe, a <strong>Product</strong> represents what you're selling (e.g., "Pro Plan"), and a <strong>Price</strong> defines how much it costs and how often (e.g., $29/month). Your app uses the Price ID to tell Stripe exactly what to charge when a user clicks "Subscribe." You create these in the Stripe Dashboard, not in code &mdash; this means you can change pricing, add new plans, or run promotions without touching your codebase.
+      </p>
+      <ol class="steps">
+        <li>In Stripe Dashboard, go to <strong>Product catalog</strong> &gt; <strong>+ Add product</strong></li>
+        <li>Name it <strong>"Pro Plan"</strong>, set pricing to <strong>Recurring</strong> at <strong>$29/month</strong> (to match the pricing on your landing page)</li>
+        <li>Save, then copy the <strong>Price ID</strong> (<code>price_...</code>) and paste to Claude Code</li>
+      </ol>
+      <table class="config-table">
+        <thead><tr><th>Value</th><th>Env Variable</th></tr></thead>
+        <tbody>
+          <tr><td>Price ID</td><td><code>STRIPE_PRO_PRICE_ID</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3>Stripe Webhook (Local Testing) <span class="badge badge-guided">guided</span></h3>
+      <p style="color: var(--text-muted); margin-bottom: 0.75rem;">
+        When a user completes a payment, cancels their subscription, or updates their card, Stripe needs a way to tell your app about it. It does this through <strong>webhooks</strong> &mdash; HTTP requests that Stripe sends to a URL on your server whenever something important happens. Your app listens at <code>/api/webhooks/stripe</code> and updates the user's subscription status in Firestore accordingly.
+      </p>
+      <p style="color: var(--text-muted); margin-bottom: 0.75rem;">
+        During local development, your computer isn't publicly accessible on the internet, so Stripe can't reach it directly. The <strong>Stripe CLI</strong> solves this by creating a secure tunnel &mdash; it listens for events on Stripe's servers and forwards them to your local <code>localhost:3000</code>. The <strong>webhook signing secret</strong> lets your app verify that incoming webhook requests are genuinely from Stripe and haven't been tampered with.
+      </p>
+      <ol class="steps">
+        <li>Open a <strong>separate terminal</strong> (keep the current one available)</li>
+        <li>
+          Log in to Stripe CLI:
+          <pre><code>stripe login</code></pre>
+        </li>
+        <li>
+          Start the webhook listener:
+          <pre><code>stripe listen --forward-to localhost:3000/api/webhooks/stripe</code></pre>
+        </li>
+        <li>Copy the webhook signing secret (<code>whsec_...</code>) and paste to Claude Code</li>
+      </ol>
+      <table class="config-table">
+        <thead><tr><th>Value</th><th>Env Variable</th></tr></thead>
+        <tbody>
+          <tr><td>Signing secret</td><td><code>STRIPE_WEBHOOK_SECRET</code></td></tr>
+        </tbody>
+      </table>
+      <div class="callout callout-warning">
+        <span class="callout-icon">&#9888;</span>
+        <div><strong>Keep that terminal running</strong> while testing payments locally. The webhook listener forwards Stripe events to your dev server.</div>
+      </div>
+      <div class="callout callout-tip">
+        <span class="callout-icon">&#x1F4A1;</span>
+        <div><strong>Tip:</strong> If <code>stripe login</code> or <code>stripe listen</code> gives you an error, copy the entire error message and paste it into Claude Code. It can usually diagnose the issue immediately &mdash; common fixes include installing the Stripe CLI or restarting your terminal.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- PHASE 6: Launch & Verify -->
+  <!-- ============================================ -->
+  <div class="section">
+    <div class="section-number">6</div>
+    <h2>Launch &amp; Verify</h2>
+    <p>Claude Code starts the dev server for you. Here's how to verify everything works.</p>
+
+    <div class="card">
+      <h3>Start the App <span class="badge badge-auto">automatic</span></h3>
+      <pre><code>pnpm dev</code></pre>
+      <p style="color: var(--text-muted); margin-top: 0.5rem;">
+        Open <a href="http://localhost:3000" target="_blank">http://localhost:3000</a> in your browser.
+      </p>
+    </div>
+
+    <div class="card">
+      <h3>Verification Checklist</h3>
+      <ul class="checklist">
+        <li>Landing page loads &mdash; Hero, Pillars, Features, Comparison, Pricing, FAQ</li>
+        <li>Theme toggle (sun/moon icon) switches light and dark mode</li>
+        <li>Sign up at <code>/signup</code> &mdash; Firebase Console &gt; Authentication shows the new user</li>
+        <li>Log in at <code>/login</code></li>
+        <li>Dashboard shows the "Getting Started" empty state</li>
+        <li><strong>Contacts</strong> &gt; <strong>Add Contact</strong> (name + email + phone)</li>
+        <li><strong>Pipeline</strong> &gt; <strong>New Deal</strong>, pick the contact, drag it across stages, drop into <strong>Lost</strong> to see the reason dialog</li>
+        <li><strong>Calendar</strong> &gt; click any day &gt; create an event linked to the contact</li>
+        <li><strong>Tasks</strong> &gt; <strong>New Task</strong> with a due date today &mdash; sidebar shows the "due today" count badge</li>
+        <li><strong>Forms</strong> &gt; <strong>New Form</strong> &gt; copy the public link &gt; submit in an incognito tab &mdash; the contact auto-creates</li>
+        <li><code>Ctrl/Cmd + K</code> opens global search across everything</li>
+        <li><strong>Reports</strong> &mdash; KPIs, pipeline funnel, and charts populate with the data you just entered</li>
+        <li>Stripe checkout works with test card <code>4242 4242 4242 4242</code></li>
+      </ul>
+      <div class="callout callout-info">
+        <span class="callout-icon">&#9432;</span>
+        <div><strong>If Resend is configured:</strong> open any contact &gt; <strong>Email</strong> &gt; send a test &mdash; check your inbox, the <code>Reply-To:</code> header should be your own email.<br>
+        <strong>If Twilio is configured:</strong> <strong>SMS</strong> &gt; send a test &mdash; check your phone (to a Twilio-verified number if on the trial account).</div>
+      </div>
+      <div class="callout callout-tip">
+        <span class="callout-icon">&#x1F4A1;</span>
+        <div><strong>Tip:</strong> If something on this checklist isn't working, tell Claude Code exactly what's happening, e.g. <code>I can see the landing page but when I try to sign up I get an error</code>. The more specific you are, the faster it can help. If you see an error message on screen or in the terminal, copy and paste it in &mdash; Claude Code can usually identify the fix right away.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- PHASE 7: Deploy to Vercel -->
+  <!-- ============================================ -->
+  <div class="section">
+    <div class="section-number">7</div>
+    <h2>Deploy to Production</h2>
+    <p>Your app works locally &mdash; now let's put it on the internet so anyone can use it.</p>
+
+    <!-- Why Vercel -->
+    <div class="card" style="border-left: 3px solid var(--accent-light);">
+      <h3>Why Vercel?</h3>
+      <p style="color: var(--text-muted); margin-bottom: 0.75rem;">
+        Vercel is the company that created Next.js, and their hosting platform is purpose-built for it. When you deploy to Vercel, it automatically detects your Next.js project, builds it, and hosts it on a global CDN (Content Delivery Network) &mdash; meaning your app loads fast for users anywhere in the world. It also handles HTTPS certificates, custom domains, and automatic deployments when you push to GitHub.
+      </p>
+      <p style="color: var(--text-muted);">
+        The free tier is generous enough for learning and small projects. You don't need to configure servers, manage Docker containers, or worry about scaling. Push your code, and Vercel takes care of the rest. This is what "serverless deployment" looks like in practice.
+      </p>
+    </div>
+
+    <!-- Connect GitHub -->
+    <div class="card">
+      <h3>Connect GitHub to Vercel <span class="badge badge-guided">guided</span></h3>
+      <ol class="steps">
+        <li>Go to <a href="https://vercel.com" target="_blank">vercel.com</a> and click <strong>"Sign Up"</strong></li>
+        <li>Choose <strong>"Continue with GitHub"</strong> &mdash; this links your GitHub account so Vercel can access your repositories</li>
+        <li>Click <strong>"Add New..."</strong> &gt; <strong>"Project"</strong></li>
+        <li>Find your <strong>saas-boilerplate</strong> repository in the list and click <strong>"Import"</strong></li>
+      </ol>
+      <div class="callout callout-info">
+        <span class="callout-icon">&#9432;</span>
+        <div>If you don't see your repository, click <strong>"Adjust GitHub App Permissions"</strong> to grant Vercel access to it.</div>
+      </div>
+    </div>
+
+    <!-- Environment Variables -->
+    <div class="card">
+      <h3>Add Environment Variables <span class="badge badge-guided">guided</span></h3>
+      <p style="color: var(--text-muted); margin-bottom: 0.75rem;">
+        Remember how all your secrets live in <code>.env.local</code>? That file only exists on your computer &mdash; it's git-ignored and never uploaded to GitHub. Vercel needs its own copy of those values. You'll add them through the Vercel dashboard, where they're encrypted and securely injected into your app at build time.
+      </p>
+      <ol class="steps">
+        <li>On the project import screen, expand the <strong>"Environment Variables"</strong> section</li>
+        <li>
+          Open your local <code>.env.local</code> file. For each variable, add a new entry in Vercel with the same name and value. You need all of these:
+          <pre><code># Firebase Client
+NEXT_PUBLIC_FIREBASE_API_KEY
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+NEXT_PUBLIC_FIREBASE_PROJECT_ID
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+NEXT_PUBLIC_FIREBASE_APP_ID
+
+# Firebase Admin
+FIREBASE_ADMIN_PROJECT_ID
+FIREBASE_ADMIN_CLIENT_EMAIL
+FIREBASE_ADMIN_PRIVATE_KEY
+
+# Stripe
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+STRIPE_SECRET_KEY
+STRIPE_PRO_PRICE_ID
+STRIPE_WEBHOOK_SECRET
+
+# Email (Resend) — optional
+RESEND_API_KEY
+EMAIL_FROM
+
+# SMS (Twilio) — optional
+TWILIO_ACCOUNT_SID
+TWILIO_AUTH_TOKEN
+TWILIO_FROM_NUMBER
+
+# Auth cookies
+COOKIE_SECRET_CURRENT
+COOKIE_SECRET_PREVIOUS
+
+# App URL (update this after deploy!)
+NEXT_PUBLIC_APP_URL</code></pre>
+        </li>
+        <li>Set <code>NEXT_PUBLIC_APP_URL</code> to <code>https://your-project.vercel.app</code> for now &mdash; you'll get the exact URL after deploying</li>
+      </ol>
+      <div class="callout callout-tip">
+        <span class="callout-icon">&#x1F4A1;</span>
+        <div><strong>Tip:</strong> Tell Claude Code <code>show me all the env vars from my .env.local</code> and it will list them all so you can copy them into Vercel one by one. If you're not sure which values to use for production vs development, ask Claude Code <code>which env vars need to change for production?</code></div>
+      </div>
+    </div>
+
+    <!-- Deploy -->
+    <div class="card">
+      <h3>Deploy <span class="badge badge-guided">guided</span></h3>
+      <ol class="steps">
+        <li>Click <strong>"Deploy"</strong> &mdash; Vercel will build your app (this takes 1-2 minutes)</li>
+        <li>When it finishes, you'll see a <strong>congratulations screen</strong> with a link to your live app (e.g., <code>https://saas-boilerplate-abc123.vercel.app</code>)</li>
+        <li>Click the link to verify your app is live and working</li>
+        <li>
+          Go back to Vercel &gt; your project &gt; <strong>Settings</strong> &gt; <strong>Environment Variables</strong> and update <code>NEXT_PUBLIC_APP_URL</code> to your actual Vercel URL:
+          <pre><code>https://your-project.vercel.app</code></pre>
+        </li>
+        <li>Click <strong>Deployments</strong> &gt; find the latest &gt; click the <strong>...</strong> menu &gt; <strong>Redeploy</strong> to pick up the URL change</li>
+      </ol>
+      <div class="callout callout-tip">
+        <span class="callout-icon">&#x1F4A1;</span>
+        <div><strong>Tip:</strong> If your Vercel build fails, go to Vercel &gt; Deployments &gt; click the failed build &gt; copy the error from the build log and paste it into Claude Code. It can usually identify the missing env var or code issue causing the failure.</div>
+      </div>
+    </div>
+
+    <!-- Production Stripe Webhook -->
+    <div class="card">
+      <h3>Production Stripe Webhook <span class="badge badge-guided">guided</span></h3>
+      <p style="color: var(--text-muted); margin-bottom: 0.75rem;">
+        Locally, the Stripe CLI forwarded webhook events to your computer. In production, Stripe needs to send events directly to your Vercel URL. You'll create a webhook endpoint in the Stripe Dashboard that points to your live app.
+      </p>
+      <ol class="steps">
+        <li>Go to <a href="https://dashboard.stripe.com" target="_blank">Stripe Dashboard</a> &gt; <strong>Developers</strong> &gt; <strong>Webhooks</strong></li>
+        <li>Click <strong>"Add endpoint"</strong></li>
+        <li>
+          Set the endpoint URL to your Vercel app's webhook route:
+          <pre><code>https://your-project.vercel.app/api/webhooks/stripe</code></pre>
+        </li>
+        <li>Under <strong>"Select events to listen to"</strong>, add these three events:
+          <pre><code>checkout.session.completed
+customer.subscription.updated
+customer.subscription.deleted</code></pre>
+        </li>
+        <li>Click <strong>"Add endpoint"</strong> to save</li>
+        <li>On the endpoint page, click <strong>"Reveal signing secret"</strong> &mdash; copy this new <code>whsec_...</code> value</li>
+        <li>Go to Vercel &gt; your project &gt; <strong>Settings</strong> &gt; <strong>Environment Variables</strong> and update <code>STRIPE_WEBHOOK_SECRET</code> with the new production secret</li>
+        <li><strong>Redeploy</strong> the app so it picks up the new webhook secret</li>
+      </ol>
+      <div class="callout callout-info">
+        <span class="callout-icon">&#9432;</span>
+        <div>Your local webhook secret (from <code>stripe listen</code>) and your production webhook secret (from the Stripe Dashboard) are different. The local one only works with the Stripe CLI tunnel. The production one only works with your live Vercel URL.</div>
+      </div>
+    </div>
+
+    <!-- Stripe: Test Mode to Live Mode -->
+    <div class="card">
+      <h3>Switch Stripe from Test Mode to Live Mode <span class="badge badge-guided">guided</span></h3>
+      <p style="color: var(--text-muted); margin-bottom: 0.75rem;">
+        Throughout this setup you've been using Stripe in <strong>Test mode</strong> &mdash; a sandbox where no real money changes hands. Test mode keys start with <code>pk_test_</code> and <code>sk_test_</code>, and only the fake card number <code>4242 4242 4242 4242</code> works. This is perfect for development, but when you're ready to accept real payments from real customers, you need to switch to <strong>Live mode</strong>.
+      </p>
+      <p style="color: var(--text-muted); margin-bottom: 0.75rem;">
+        Live mode keys start with <code>pk_live_</code> and <code>sk_live_</code> and connect to real payment networks. When a customer enters their credit card on your live site, Stripe will actually charge them. You'll also need to create a new webhook endpoint for live mode (or update your existing one) because test and live mode are completely separate environments in Stripe &mdash; they have different keys, different webhook secrets, and different transaction histories.
+      </p>
+      <div class="callout callout-warning">
+        <span class="callout-icon">&#9888;</span>
+        <div><strong>You can skip this step while learning.</strong> It's perfectly fine to keep your deployed app in test mode until you're ready to launch for real. Everything will work the same &mdash; just no real charges. Come back to this step when you're ready to go live.</div>
+      </div>
+      <ol class="steps">
+        <li>Go to <a href="https://dashboard.stripe.com" target="_blank">Stripe Dashboard</a></li>
+        <li>Toggle <strong>"Test mode"</strong> OFF in the top-right corner (it will switch to live mode)</li>
+        <li>
+          Stripe may require you to activate your account first. This involves:
+          <ul style="margin: 0.5rem 0 0.5rem 1.5rem; color: var(--text-muted);">
+            <li>Providing your business details (or selecting "Individual")</li>
+            <li>Adding a bank account for payouts</li>
+            <li>Verifying your identity</li>
+          </ul>
+        </li>
+        <li>Once activated, go to <strong>Developers</strong> &gt; <strong>API keys</strong> (now showing live keys)</li>
+        <li>Copy your <strong>live Publishable key</strong> (<code>pk_live_...</code>) and <strong>live Secret key</strong> (<code>sk_live_...</code>)</li>
+        <li>Go to <strong>Product catalog</strong> &mdash; you'll need to create your Pro Plan product again in live mode (test products don't carry over). Set it to <strong>$29/month recurring</strong> and copy the new <strong>Price ID</strong></li>
+        <li>Go to <strong>Developers</strong> &gt; <strong>Webhooks</strong> &gt; <strong>Add endpoint</strong> in live mode:
+          <pre><code>https://your-project.vercel.app/api/webhooks/stripe</code></pre>
+          Add the same three events: <code>checkout.session.completed</code>, <code>customer.subscription.updated</code>, <code>customer.subscription.deleted</code>
+        </li>
+        <li>Copy the live webhook signing secret (<code>whsec_...</code>)</li>
+        <li>
+          Update these four values in Vercel &gt; <strong>Settings</strong> &gt; <strong>Environment Variables</strong>:
+          <table class="config-table" style="margin-top: 0.5rem;">
+            <thead><tr><th>Variable</th><th>New Value</th></tr></thead>
+            <tbody>
+              <tr><td><code>NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY</code></td><td>Your <code>pk_live_...</code> key</td></tr>
+              <tr><td><code>STRIPE_SECRET_KEY</code></td><td>Your <code>sk_live_...</code> key</td></tr>
+              <tr><td><code>STRIPE_PRO_PRICE_ID</code></td><td>Your new live <code>price_...</code> ID</td></tr>
+              <tr><td><code>STRIPE_WEBHOOK_SECRET</code></td><td>Your live <code>whsec_...</code> secret</td></tr>
+            </tbody>
+          </table>
+        </li>
+        <li><strong>Redeploy</strong> the app in Vercel</li>
+        <li>Test with a real card to confirm everything works (you can refund yourself immediately from the Stripe Dashboard)</li>
+      </ol>
+      <div class="callout callout-info">
+        <span class="callout-icon">&#9432;</span>
+        <div><strong>Keep your local <code>.env.local</code> on test keys.</strong> Your local development environment should always use test mode so you don't accidentally process real charges while building features. Only your Vercel production environment should have live keys.</div>
+      </div>
+    </div>
+
+    <!-- Firebase Auth Domain -->
+    <div class="card">
+      <h3>Update Firebase Authorized Domains <span class="badge badge-guided">guided</span></h3>
+      <p style="color: var(--text-muted); margin-bottom: 0.75rem;">
+        Firebase Authentication only allows sign-ins from domains you've explicitly approved. Your <code>localhost</code> is approved by default, but your new Vercel URL isn't &mdash; so Google sign-in and other auth flows will fail on your live site until you add it.
+      </p>
+      <ol class="steps">
+        <li>Go to <a href="https://console.firebase.google.com" target="_blank">Firebase Console</a> &gt; <strong>Authentication</strong> &gt; <strong>Settings</strong> tab</li>
+        <li>Under <strong>"Authorized domains"</strong>, click <strong>"Add domain"</strong></li>
+        <li>
+          Add your Vercel domain (without <code>https://</code>):
+          <pre><code>your-project.vercel.app</code></pre>
+        </li>
+        <li>Click <strong>"Add"</strong></li>
+      </ol>
+    </div>
+
+    <!-- Custom Domain (optional) -->
+    <div class="card">
+      <h3>Custom Domain (Optional) <span class="badge badge-guided">guided</span></h3>
+      <p style="color: var(--text-muted); margin-bottom: 0.75rem;">
+        Your app works at <code>your-project.vercel.app</code>, but if you own a domain (e.g., <code>mycrm.com</code>), you can connect it. Vercel handles the SSL certificate automatically.
+      </p>
+      <ol class="steps">
+        <li>In Vercel, go to your project &gt; <strong>Settings</strong> &gt; <strong>Domains</strong></li>
+        <li>Type your domain name and click <strong>"Add"</strong></li>
+        <li>Vercel will show you DNS records to add at your domain registrar (e.g., Namecheap, GoDaddy, Cloudflare)</li>
+        <li>After DNS propagates (can take a few minutes to a few hours), your custom domain will be live</li>
+        <li>Update <code>NEXT_PUBLIC_APP_URL</code> in Vercel to your custom domain and redeploy</li>
+        <li>Add the custom domain to Firebase's authorized domains list (same as above)</li>
+      </ol>
+    </div>
+
+    <!-- Production Checklist -->
+    <div class="card">
+      <h3>Production Verification Checklist</h3>
+      <ul class="checklist">
+        <li>Landing page loads on your Vercel URL</li>
+        <li>Sign up and login work</li>
+        <li>Dashboard loads after login</li>
+        <li>Add a contact, open a deal, drag it across pipeline stages</li>
+        <li>Create a form, submit the public link in incognito &mdash; contact auto-creates in production</li>
+        <li>Stripe checkout redirects correctly</li>
+        <li>If Resend configured: send email from a contact profile &mdash; delivery verified + activity logged</li>
+        <li>If Twilio configured: send SMS from a contact profile &mdash; delivery verified + activity logged</li>
+        <li><code>NEXT_PUBLIC_APP_URL</code> matches your actual Vercel URL</li>
+        <li>Stripe webhook endpoint is set to your Vercel URL</li>
+        <li>Firebase authorized domains includes your Vercel domain</li>
+      </ul>
+      <div class="callout callout-tip">
+        <span class="callout-icon">&#x1F4A1;</span>
+        <div><strong>Tip:</strong> If something works locally but not on your live site, tell Claude Code <code>this feature works on localhost but not on my Vercel deployment</code> and describe what's happening. The most common causes are missing environment variables in Vercel or Firebase not having your Vercel domain authorized.</div>
+      </div>
+    </div>
+  </div>
+
+  <hr />
+
+  <!-- ============================================ -->
+  <!-- Troubleshooting -->
+  <!-- ============================================ -->
+  <div class="section">
+    <h2>Troubleshooting</h2>
+    <p>Common issues and how to fix them.</p>
+
+    <div class="callout callout-tip">
+      <span class="callout-icon">&#x1F4A1;</span>
+      <div><strong>Tip:</strong> For any error you encounter, the fastest fix is usually to copy the entire error message and paste it into Claude Code. It has context about this project's setup and can diagnose most issues immediately. Don't worry about understanding the error yourself &mdash; just paste it in and let Claude Code figure it out.</div>
+    </div>
+
+    <details>
+      <summary><code>pnpm: command not found</code></summary>
+      <div class="details-content">Run <code>npm install -g pnpm</code>, then close and reopen your terminal.</div>
+    </details>
+
+    <details>
+      <summary><code>git: command not found</code></summary>
+      <div class="details-content">Install Git from <a href="https://git-scm.com/download/win">git-scm.com</a>, then restart VS Code completely.</div>
+    </details>
+
+    <details>
+      <summary><code>node: command not found</code></summary>
+      <div class="details-content">Install Node.js LTS from <a href="https://nodejs.org">nodejs.org</a>, then restart VS Code completely.</div>
+    </details>
+
+    <details>
+      <summary><code>ERR_PNPM_NO_IMPORTER_MANIFEST_FOUND</code></summary>
+      <div class="details-content">You're in the wrong folder. Make sure you <code>cd</code> into the folder that contains <code>package.json</code>.</div>
+    </details>
+
+    <details>
+      <summary>Blank page or console errors</summary>
+      <div class="details-content">Check <code>.env.local</code> &mdash; look for any empty values. Every variable needs to be filled in.</div>
+    </details>
+
+    <details>
+      <summary>Auth not working (can't sign up or log in)</summary>
+      <div class="details-content">Make sure Email/Password and Google sign-in are enabled in Firebase Console under Authentication &gt; Sign-in method.</div>
+    </details>
+
+    <details>
+      <summary><code>Missing or insufficient permissions</code> from Firestore</summary>
+      <div class="details-content">Your security rules haven't been deployed. Run <code>firebase deploy --only firestore:rules</code>. Rerun this any time you add a new collection.</div>
+    </details>
+
+    <details>
+      <summary><code>firebase deploy</code> says "no project"</summary>
+      <div class="details-content">Edit <code>.firebaserc</code> so <code>"default"</code> matches your Firebase project ID (find it in Firebase Console &gt; Project Settings), then retry.</div>
+    </details>
+
+    <details>
+      <summary><code>FIREBASE_ADMIN_PRIVATE_KEY</code> errors</summary>
+      <div class="details-content">Make sure the value is wrapped in double quotes in <code>.env.local</code> and has <code>\n</code> for newlines. Example: <code>FIREBASE_ADMIN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIE...\n-----END PRIVATE KEY-----\n"</code></div>
+    </details>
+
+    <details>
+      <summary><code>Email is not configured on this deployment</code> (503)</summary>
+      <div class="details-content"><code>RESEND_API_KEY</code> or <code>EMAIL_FROM</code> is missing from <code>.env.local</code>. Add both and restart the dev server (<code>pnpm dev</code>).</div>
+    </details>
+
+    <details>
+      <summary>Resend returns 403 at send time</summary>
+      <div class="details-content">Your <code>EMAIL_FROM</code> address is on a domain that isn't verified in Resend. Go to <a href="https://resend.com/domains" target="_blank">Resend &gt; Domains</a> and finish the DNS verification (SPF / DKIM / DMARC).</div>
+    </details>
+
+    <details>
+      <summary><code>SMS is not configured on this deployment</code> (503)</summary>
+      <div class="details-content">One of <code>TWILIO_ACCOUNT_SID</code>, <code>TWILIO_AUTH_TOKEN</code>, or <code>TWILIO_FROM_NUMBER</code> is missing. Add all three and restart the dev server.</div>
+    </details>
+
+    <details>
+      <summary>Twilio "unverified number" error</summary>
+      <div class="details-content">Trial Twilio accounts can only SMS numbers you've verified in <a href="https://console.twilio.com/us1/develop/phone-numbers/manage/verified" target="_blank">Phone Numbers &gt; Verified Caller IDs</a>. Add the destination number there, or upgrade your Twilio account.</div>
+    </details>
+
+    <details>
+      <summary>Stripe checkout not redirecting</summary>
+      <div class="details-content">Verify all 4 Stripe environment variables are filled in: <code>NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY</code>, <code>STRIPE_SECRET_KEY</code>, <code>STRIPE_PRO_PRICE_ID</code>, and <code>STRIPE_WEBHOOK_SECRET</code>.</div>
+    </details>
+
+    <details>
+      <summary>Port 3000 already in use</summary>
+      <div class="details-content">Run <code>pnpm dev -- -p 3001</code> to use a different port, then open <code>http://localhost:3001</code> instead.</div>
+    </details>
+
+    <details>
+      <summary>Vercel build fails</summary>
+      <div class="details-content">Check the build logs in Vercel &gt; Deployments &gt; click the failed deployment. Common causes: missing environment variables (check that every variable from <code>.env.local</code> is added in Vercel Settings &gt; Environment Variables) or TypeScript errors in your code.</div>
+    </details>
+
+    <details>
+      <summary>Auth works locally but not on Vercel</summary>
+      <div class="details-content">Your Vercel domain needs to be added to Firebase's authorized domains. Go to Firebase Console &gt; Authentication &gt; Settings &gt; Authorized domains &gt; Add domain. Add your <code>your-project.vercel.app</code> domain (without <code>https://</code>).</div>
+    </details>
+
+    <details>
+      <summary>Stripe payments work locally but not in production</summary>
+      <div class="details-content">You need a separate production webhook endpoint in Stripe. Go to Stripe Dashboard &gt; Developers &gt; Webhooks &gt; Add endpoint pointing to <code>https://your-app.vercel.app/api/webhooks/stripe</code>. Copy the new signing secret and update <code>STRIPE_WEBHOOK_SECRET</code> in Vercel's environment variables, then redeploy.</div>
+    </details>
+
+    <details>
+      <summary><code>NEXT_PUBLIC_APP_URL</code> is wrong after deploying</summary>
+      <div class="details-content">Update this value in Vercel &gt; Settings &gt; Environment Variables to match your actual Vercel URL (e.g., <code>https://your-project.vercel.app</code>), then redeploy. This URL is used for Stripe redirect URLs and other absolute links.</div>
+    </details>
+  </div>
+
+  <hr />
+
+  <!-- ============================================ -->
+  <!-- Where do secrets live? -->
+  <!-- ============================================ -->
+  <div class="section">
+    <h2>Where Do My Secrets Live?</h2>
+    <div class="card">
+      <p>Everything goes in one file: <strong><code>.env.local</code></strong></p>
+      <ul class="checklist" style="margin-top: 0.75rem;">
+        <li class="checked"><code>.env.local</code> is listed in <code>.gitignore</code></li>
+        <li class="checked">It will never be committed to GitHub</li>
+        <li class="checked">The template (<code>.env.example</code>) only has empty placeholders</li>
+        <li class="checked">No secrets in any other config file</li>
+      </ul>
+      <p style="color: var(--text-muted); margin-top: 0.75rem;">If you ever need to check or change a value, <code>.env.local</code> is the only place to look.</p>
+    </div>
+  </div>
+
+  <!-- ============================================ -->
+  <!-- Final Card -->
+  <!-- ============================================ -->
+  <div class="final-card">
+    <h3>Setup Complete!</h3>
+    <p>Once everything is running and verified, you can hide this setup page. Just tell Claude Code:</p>
+    <pre><code>Remove the setup page - I'm done with setup</code></pre>
+    <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 1rem;">Claude Code will delete <code>public/setup.html</code> so it's no longer accessible. The SETUP.md file in the repo will remain as a reference.</p>
+  </div>
+
+</div>
+
+</body>
+</html>

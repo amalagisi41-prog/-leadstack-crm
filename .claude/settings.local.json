@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(pnpm --version)",
+      "Bash(pnpm create:*)",
+      "Bash(pnpm install:*)",
+      "Bash(ls -la *.* .gitignore)",
+      "Bash(pnpm dlx:*)",
+      "Bash(pnpm add:*)",
+      "Bash(git -C \"/c/Users/Ben XPS9360/OneDrive/Webservices/Claude/Saas boiler plate\" remote -v)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(git --version)",
+      "Bash(stripe --version)",
+      "Bash(npx skills:*)"
+    ]
+  }
+}

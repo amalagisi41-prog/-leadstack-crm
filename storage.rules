@@ -1,0 +1,27 @@
+rules_version = '2';
+
+// Firebase Storage rules. The only writer surface today is the Community
+// feature's group cover/logo uploads. Community group images are PUBLIC (the
+// About page at /c/* is public), so reads are open; writes require a signed-in
+// Firebase user (staff — community members are NOT Firebase users, so they
+// can't write here) plus an image content-type + 5 MB size cap.
+//
+// Deploy with: firebase deploy --only storage
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // Community group cover/logo images.
+    match /community/{subAccountId}/{groupId}/{fileName} {
+      allow read: if true;
+      allow write: if request.auth != null
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+      allow delete: if request.auth != null;
+    }
+
+    // Default deny everything else.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
