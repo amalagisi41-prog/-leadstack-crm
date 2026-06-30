@@ -76,6 +76,10 @@ A small set of optional booleans on `SubAccountDoc` that **only the agency owner
 | `outboundVoiceEnabledByAgency` | The Outbound Voice channel — operator-initiated AI calls: the contact-profile click-to-call button, the test-call, and bulk voice campaigns (`/api/comms/voice/call`, `/api/comms/voice/test-call`, `/api/comms/voice/campaign/*`) | `false` | No — the sub-account's voice channel config + provisioned Vapi assistant/number (shared with inbound Voice) are preserved. While off: the call + campaign routes 403, the contact-profile call button + AI Agents → Outbound Voice section show a "Locked by your agency" state. Re-enable resumes instantly. Inbound Voice is unaffected — outbound is independently gated because it spends Vapi minutes proactively and carries dialing-compliance risk. |
 | `metaInboxEnabledByAgency` | **Beta master switch** for the Facebook Messenger + Instagram DM unified-inbox channels (both ride one Meta connection, so they flip together) | `false` | No tear-down — while off the inbox surface is **inert and invisible** everywhere. Ships off so an agency lights it up only for a sub-account that has a connected Meta account and volunteers to beta-test. Re-enabling resumes instantly. |
 | `socialPlannerEnabledByAgency` | **Beta master switch** for the Social Planner (schedule + auto-publish posts to the connected Facebook Page / Instagram Business) — the sidebar entry, the connect/create/publish routes, and posting scopes at connect time | `false` | No tear-down — scheduled posts + the Meta connection are preserved. While off: the Social Planner sidebar entry renders a "Locked by your agency" state and the connect/create/publish routes 403. **Shares the same `metaConfig` connection as the inbox** — it does NOT add a second connection (see "Social Planner v1"). Re-enabling resumes instantly. |
+| `websiteEnabledByAgency` | The Website Builder feature — the `/website` sidebar entry, all site-create/build/poll/delete routes under `/api/sub-accounts/[id]/website` | `false` | No — existing `subAccounts/{id}/website/*` docs are preserved. While off: the Website sidebar entry shows a "Locked by your agency" state (or is hidden if `websiteHiddenWhenDisabled` is set on the sub-account) and all build/poll routes 403. Re-enabling resumes instantly. |
+| `communityEnabledByAgency` | The Community + Courses feature (Skool-style member portal) — the `/community` sidebar entry, all community group/post/comment/lesson/member routes | `false` | No tear-down — existing community groups + member data are preserved. While off: the Community sidebar entry is hidden/locked and the community API routes 403. Re-enabling resumes instantly. |
+
+**Hide-instead-of-lock overrides.** Some gates support a per-sub-account `*HiddenWhenDisabled` field (optional boolean on `SubAccountDoc`): `broadcastsHiddenWhenDisabled`, `websiteHiddenWhenDisabled`, `socialPlannerHiddenWhenDisabled`, `communityHiddenWhenDisabled`. When `true`, the sidebar entry is removed entirely rather than showing a padlock state. Agencies use this for sub-accounts where the feature is permanently off and the padlock UI would confuse the client.
 
 **Wiring pattern (same shape for every gate):**
 1. **Schema** — optional boolean on `SubAccountDoc` (`*EnabledByAgency`). Read `=== true` so legacy docs missing the field default to off.
@@ -106,6 +110,10 @@ Adding a new gate: add the field to `SubAccountDoc`, write the default at the tw
 - **Toasts:** sonner
 - **Marketing tracking:** Meta Pixel + Google Tag Manager (script tags conditional on env vars, identical pattern to Crisp)
 - **Live chat / support:** Crisp Chat (widget loaded site-wide when configured; used as the primary support channel in place of mailto)
+- **Rich text:** `@tiptap/*` (community posts, lesson content, course descriptions)
+- **PDF generation:** `@react-pdf/renderer` (quotes/invoice PDF download, rendered server-side via Next.js route)
+- **Accessible primitives:** `@base-ui/react` (supplements shadcn/ui for complex accessible components)
+- **Icons:** `react-icons` (supplemental icon set alongside lucide-react)
 - **Deployment:** Vercel
 
 ## Core Features (all shipped)
@@ -123,7 +131,18 @@ Adding a new gate: add the field to `SubAccountDoc`, write the default at the tw
 - **Public API (v1)** — REST endpoints under `/api/v1/*` for contacts / deals / tasks / events / form submissions plus signed outbound webhooks. Per-sub-account API keys (`lsk_live_*` / `lsk_test_*`), idempotency-key support, response envelope versioning, per-key rate limits, and an `apiAccessEnabledByAgency` agency gate that disables a tenant's keys without rotating them. Operator surfaces include API Keys, Webhooks, and API Recipes sections in sub-account settings.
 - **AI Agents** — one persona (system prompt + business hours + escalation keywords + optional Firecrawl-scraped website KB) shared across every active channel. Five live channels: **Web Chat** (embeddable iframe widget with inline lead-capture form), **SMS** (auto-replies to inbound SMS on the sub-account's dedicated Twilio number), **WhatsApp** (auto-replies on the Twilio WhatsApp sender — beta; agency-gated), **Voice** (Vapi-powered AI answering inbound calls on the same Twilio number — qualifies the lead + books a callback), and **Outbound Voice** (the AI proactively dials contacts — single click-to-call from a contact, or a bulk campaign over a filtered audience — behind a native dialing-compliance gate; agency-gated). Captures across all channels trigger an automatic Task + escalation email. Operator consoles: Web Chat → Sessions (transcripts), Voice → Calls (call summaries + transcripts), Outbound Voice → Campaigns (per-recipient status). Email + Google Business Profile are scaffolded as hidden "coming soon" placeholders.
 - **Social Planner** — schedule + auto-publish posts to a sub-account's connected Facebook Page / Instagram Business account. Gated `/social` sidebar entry with a content calendar + post list + composer (caption + pasted image URL + FB/IG targets + schedule). Posts queue through QStash and publish via the Graph API at the scheduled time. **Rides the same one `metaConfig` Meta connection as the inbox** (no second connection) — agency-gated via `socialPlannerEnabledByAgency`. v1 is Meta-only, single-image-URL (no upload). See "Social Planner v1".
-- **Billing** — Stripe checkout + customer portal + webhooks, Free / Pro / Scale plans
+- **Workflows (v2 automation engine)** — a general-purpose visual trigger → node graph replacing the v1 recipe system. Triggers: `contact.created`, `contact.tag.added`, `form.submitted`, `pipeline.stage.changed`, `booking.created`, `quote.accepted`. Nodes: `send_email`, `send_sms`, `whatsapp_template`, `wait`, `if_else`, `goal`, `add_tag`, `remove_tag`, `move_stage`, `update_field`, `create_task`, `notify`, `webhook`. Live execution log at `/sa/[id]/workflows/[workflowId]/runs`. See "Workflows (builder engine v2)".
+- **Community + Courses** — Skool-style member portal per sub-account: discussion feed, group management, Tiptap-powered courses with sections + lessons (video + rich text), member leaderboard, DMs, magic-link auth (members are NOT Firebase Auth users). Agency-gated via `communityEnabledByAgency`. See "Community + Courses".
+- **Custom Fields** — operator-defined fields on contacts and deals (GHL parity). Field types: text, number, date, dropdown, multiselect, checkbox, url, phone, email. Definitions stored at `subAccounts/{id}/customFields/{key}`; values stored inline on the entity doc as `customFields: { [key]: value }`. See "Custom Fields".
+- **Conversations / Unified Inbox** — cross-channel conversation list merging SMS, WhatsApp, Facebook Messenger, and Instagram DM threads. Thin index doc at `conversations/{contactId}` (channel, last message, unread count, bot mode). Operator views the thread at `/sa/[id]/conversations/[contactId]`. Bot mode toggles: `off` (manual only), `suggest` (drafts shown to operator), `auto` (AI replies automatically). See "Conversations (Unified Inbox)".
+- **Territory Scoping** — optional collaborator-level access restriction. When `territoryScopingEnabled === true` on the sub-account, collaborators only see contacts/deals/tasks/events tagged with their assigned territory (`territoryId`). Admins see everything. Indexes cover the `(subAccountId, territoryId)` composite for all scoped collections. See "Territory Scoping".
+- **GHL Import** — migrate contacts + deals + pipelines from GoHighLevel using a Private Integration Token. Import job fans out via QStash; progress tracked at `subAccounts/{id}/importJobs/{jobId}`. UI at `/sa/[id]/import`. See "GHL Import".
+- **Google Review Requests** — send a direct Google review link to contacts via email or SMS. Per-sub-account `googleReviewConfig.placeId` (the Google Business Profile place ID). Operator sends from the contact profile; activity row stamped. No Google OAuth required — the place ID is public.
+- **Sub-account Branding** — each sub-account can upload a `logoUrl` (stored on `SubAccountDoc.logoUrl`, updated via `PATCH /api/sub-accounts/[id]/branding`). Shown in the sidebar header and outbound email templates.
+- **Pipeline Stage Customization** — `SubAccountDoc.pipelineStages` overrides the default 6-stage array (`New → Contacted → Qualified → Proposal → Won / Lost`) with a custom ordered stage list. The pipeline board reads `pipelineStages` first, falls back to defaults. Managed from dashboard settings.
+- **Calendar ICS Feed** — per-sub-account ICS export at `/api/sub-accounts/[id]/calendar.ics` (auth-protected). Consumers can subscribe this URL in Apple Calendar / Google Calendar / Outlook for live sync. Returns all Events for the sub-account serialized as RFC 5545 VCALENDAR.
+- **Affiliate Program** — LeadStack-variant only (`LANDING_VARIANT === "leadstack"`). 40% recurring commission, 30-day cookie, last-click attribution. `affiliates/{code}` + `clicks/{clickId}` + `referrals/{referralId}` top-level collections. Affiliate dashboard at `/affiliate` (magic-link auth). See "Affiliate Program".
+- **Billing** — Stripe checkout + customer portal + webhooks, Free / Pro / Scale plans. Optional Founders cohort pricing via `STRIPE_FOUNDERS_PRICE_ID`.
 - **Marketing attribution** — every public form submission captures `utm_source`, `utm_medium`, `utm_campaign`, `utm_content`, `utm_term`, `fbclid`, `gclid`, document referrer, and landing-page URL from the visitor's browser, then stores them on the contact's `attribution` field. `source` falls back to `utm_source` when present. Fires Meta Pixel `Lead` event client-side on successful submit.
 - **Settings** — profile edit, theme, subscription, CSV export, sign-out
 
@@ -150,9 +169,16 @@ src/
         quotes/                   List + new + [id] detail/edit (operator-facing quote flow)
         reports/                  Date-range KPIs + funnel + charts
         automations/              Recipe list + activity logs + settings + templates
+        workflows/                Workflow list + [workflowId] visual builder + [workflowId]/runs execution log
         broadcasts/               Bulk-email list + [id] detail (live status)
+        conversations/            Unified inbox list + [contactId] cross-channel thread
         social/                   Social Planner — content calendar + post list + composer + Connections tab (agency-gated)
+        community/                Community group list + [groupId] (feed, classroom, members) (agency-gated)
         website/                  gitpage.site builder (long sectioned form)
+        products/                 Product catalog (list + add/edit)
+        import/                   GHL import wizard + job-progress tracker
+        logs/                     Automation + webhook delivery logs viewer
+        templates/                Shared email/SMS template library
         ai-agents/                Shared persona + KB (Overview) + per-channel pages
           (page.tsx)              Overview: AgentProfileSection + channel status grid
           web-chat/               Web Chat settings (toggle, theme, allowed domains, snippet)
@@ -206,6 +232,36 @@ src/
         quotes/[quoteId]/send/    POST send/re-send quote (issues fresh HMAC token, sends email)
         quotes/[quoteId]/mark-paid/  POST flip accepted → paid (manual; no payment collection in v1)
       quotes/[token]/respond/     POST anonymous accept/decline (HMAC-token-gated, txn-wrapped)
+      sub-accounts/[id]/
+        workflows/                GET list + POST create workflow
+        workflows/[workflowId]/   PATCH update + DELETE
+        workflows/[workflowId]/   POST enable/disable
+          toggle/
+        workflows/[workflowId]/   GET execution run list
+          runs/
+        custom-fields/            GET list + POST create field definition
+        custom-fields/[key]/      PATCH update + DELETE definition
+        conversations/            GET conversation index list + PATCH status/bot-mode
+        branding/                 PATCH logoUrl (upload URL handled client-side)
+        calendar.ics              GET RFC-5545 ICS feed (auth-protected)
+        import/ghl/               POST start GHL import job (Private Integration Token)
+        import/[jobId]/           GET job progress
+        community/                GET list + POST create community group
+        community/[groupId]/      GET/PATCH/DELETE community group
+        community/[groupId]/      GET/POST community posts
+          posts/
+        community/[groupId]/      GET/POST course catalog
+          courses/
+        community/[groupId]/      POST invite + revoke members
+          members/
+        reviews/send/             POST send Google review request (email or SMS)
+        territories/              GET list + POST create/update/delete territory
+      workflows/[workflowId]/     POST trigger test run (dry-run against a contact)
+        test/
+      social/publish/step/        POST QStash callback — publish one scheduled social post
+      import/ghl/step/            POST QStash callback — process one GHL import batch
+      community/[groupId]/        POST public magic-link sign-in for community members
+        auth/
       dev-only/danger-wipe-       DEV TESTING ONLY — wipes everything in the agency
         everything/               (owner-gated; not for production use)
   components/
@@ -229,6 +285,11 @@ src/
     analytics-scripts.tsx  Crisp/GTM/Pixel loader — skips on /embed/* so the chat iframe doesn't render a nested support widget
     search/              Cmd+K command palette
     settings/            Sub-account members + per-SA Twilio config sections
+    workflows/           Workflow canvas (node graph builder), trigger-picker, node-config panels, run-history
+    conversations/       Unified inbox: conversation-list, conversation-thread, channel-badge, bot-mode-toggle, composer
+    community/           Group-list, post-feed, lesson-viewer (Tiptap renderer), member-leaderboard, DM thread
+    custom-fields/       Field-definition list + editor, value-renderer (contact/deal profile inline)
+    import/              GHL-import wizard (token input → field-mapping → job-progress bar)
   config/
     landing.ts           CUSTOM_BRAND fields (white-label config)
   lib/
@@ -238,17 +299,26 @@ src/
     comms/ai/            AI Agents: agent.ts (profile + per-channel resolver + lazy migration), respond.ts (SMS orchestrator), prompt.ts (channel-aware system prompt + KB injection), context.ts (contact context block), escalation.ts (keyword match + email notify), openrouter.ts (LLM client)
     comms/web-chat/      Web Chat: session.ts (get-or-create + history + capture-state), respond.ts (orchestrator returning reply over HTTP), capture.ts (parse [[form]] + [[capture]] markers, Contact reconciliation), follow-up.ts (post-capture Task + escalation email), origin.ts (Origin allowlist), rate-limit.ts (in-memory IP + session caps)
     firecrawl/           client.ts — agency-level scrape wrapper (/v1/scrape, 30s timeout, FirecrawlError)
-    firestore/           CRUD helpers per collection (contacts, deals, tasks, events, forms, quotes, activities, users, mail, web-chat-sessions, social-posts)
+    firestore/           CRUD helpers per collection (contacts, deals, tasks, events, forms, quotes, activities, users, mail, web-chat-sessions, social-posts, conversations, workflows, community)
     quotes/              calc.ts (pure money math + isQuoteExpired), token.ts (HMAC + nonce public-share token, only SHA-256 hash persisted), number.ts (atomic Q-YYYY-NNNN sequence per sub-account), email.ts (recipient email subject + text + html), lifecycle.ts (recordQuoteActivity + fireQuoteTrigger + autoCreateDealForAcceptedQuote — side-effects swallow errors so they can't break the primary write)
     automations/         triggers, executor, qstash, merge-tags, unsubscribe-token, seed-templates, template-presets
+    workflows/           builder-tree.ts (node graph helpers), catalog.ts (trigger/node definitions), conditions.ts (evaluator), engine.ts (step runner — QStash fan-out)
     broadcasts/          audience.ts (filter resolution for bulk email recipients)
     contacts/            location.ts (IP geo via ipapi.co + phone country-code parsing + country centroids)
+    custom-fields/       load-defs.ts (per-SA field definition loader), validation.ts (value coercion + type checking)
+    community/           member-auth.ts (magic-link token mint + verify), member-session.ts (cookie helper), member-context.ts (read active member), member-account.ts (profile helpers), gate.ts (community access guard), lesson-html.ts (server-side Tiptap HTML sanitizer), staff-guard.ts (operator-only guard for community admin routes), upload-image.ts, video-embed.ts, dm-hooks.ts
+    import/              bulk-write.ts (batched Firestore writer), job-progress.ts (progress tracker per job)
     landing/             resolve-brand.ts (server-side: merges agency doc over CUSTOM_BRAND for the custom landing)
     gitpage/             client.ts (gitpage REST SDK) + heartbeat.ts (telemetry + status cache)
     website/             gitpage-values.ts (curated dropdown values), niches.ts, validation.ts
     forms/               Form appearance/styling helpers
     auth/                require-admin, require-tenancy guards
     health/              Liveness checks (incl. OpenRouter + Firecrawl checks under the ai-agents category)
+    reviews/             Google review request helpers (build review URL from placeId, send via Resend/Twilio)
+    affiliate/           account.ts, admin-data.ts, buyers-data.ts, clicks.ts, codes.ts, dashboard-data.ts, magic-link.ts, ref-cookie.ts, referrals.ts, session.ts — LeadStack-variant only
+    paypal/              payment-link.ts — buildPaypalInvoiceUrl() pure URL builder (no API call)
+    server/              Service layer: conversations-service.ts, community-service.ts, contacts-service.ts, community-classroom-service.ts, community-dm-service.ts, community-feed-service.ts, community-leaderboard-service.ts, community-purchase-service.ts, deals-service.ts, events-service.ts
+    qstash/              register-schedules.ts — auto-registers named QStash schedules on cold start (production only); idempotent via 24h Firestore marker at `system/scheduleRegistration`
     attribution.ts       readAttributionFromBrowser() + trackLeadEvent() — captures UTM/fbclid/gclid/referrer/landing-page from URL params and fires Meta Pixel Lead event on form submit
     crisp.ts             openCrispChat() — typed wrapper around the global $crisp queue; safe no-op when the widget isn't loaded
     csv.ts               CSV parse + serialize + contact-field fuzzy matcher
@@ -256,12 +326,12 @@ src/
     utils.ts             cn() class merger
   hooks/                 useAuth, useSubAccount, useDueTodayCount, etc.
   context/               AuthContext + SubAccountContext providers
-  types/                 Per-domain TypeScript types
-  middleware.ts          Auth gating (next-firebase-auth-edge); PUBLIC_PATHS + PUBLIC_PATH_PATTERNS (includes /api/web-chat + /embed + /widget.js)
+  types/                 Per-domain TypeScript types (contacts, deals, workflows, community, custom-fields, conversations, affiliate, tenancy, etc.)
+  middleware.ts          Auth gating (next-firebase-auth-edge); PUBLIC_PATHS + PUBLIC_PATH_PATTERNS (includes /api/web-chat + /embed + /widget.js + /api/community/*/auth)
 public/widget.js         Vanilla JS widget loader (~4KB). Snippet on the buyer's clients' sites pulls this file; it injects a floating bubble + lazy-loads the iframe pointing at /embed/chat/[saId].
 next.config.ts           Headers config — CSP frame-ancestors * for /embed/* so the chat iframe loads cross-origin; CORS + cache-control on /widget.js.
-instrumentation.ts       Cold-start gitpage heartbeat ping
-firestore.rules          Tenancy + role-based security rules
+instrumentation.ts       Cold-start gitpage heartbeat ping + schedule auto-registration (calls lib/qstash/register-schedules.ts::ensureSchedulesRegistered() in production)
+firestore.rules          Tenancy + role-based security rules (covers contacts, deals, tasks, events, forms, quotes, conversations, socialPosts, workflows, community, customFields, territories)
 firebase.json            Deploys firestore.rules only
 ```
 
@@ -309,6 +379,25 @@ firebase.json            Deploys firestore.rules only
 | `subAccounts/{id}/counters/quoteNumbers` | server-only | Per-sub-account sequence counter for the year-prefixed `Q-YYYY-NNNN` quote number generator. `{ year: number, seq: number, updatedAt }`. Atomic increment via Firestore transaction in `lib/quotes/number.ts::issueQuoteNumber()`. Never touched by clients — the resulting number returns in the create-quote API response. |
 | `quotes/{id}` | sub-account read/create/update/delete | Operator-built quote. Carries tenancy (`agencyId`, `subAccountId`, `createdByUid`), `contactId`, `quoteNumber` (e.g. `Q-2026-0001`), `status` (draft → sent → viewed → accepted/declined/expired → paid), `currency`, `lineItems[]`, `globalDiscount`, `globalTaxPercent`, `termsAndNotes`, `billedToOrganization`, `validUntil`, `autoCreateDealOnAccept`, lifecycle stamps (`sentAt`, `viewedAt`, `acceptedAt`, `declinedAt`, `declineReason`, `declineNote`, `paidAt`), and `publicTokenHash` (SHA-256 of the most recent HMAC-signed public token — raw token never persisted). Edits allowed on sent quotes per v1 spec. |
 | `socialPosts/{id}` | sub-account read; server-only write | Social Planner post (top-level, like `quotes`). Carries tenancy (`agencyId`, `subAccountId`, `createdByUid`), `caption`, `imageUrl`, `targets` (`("facebook"\|"instagram")[]`), `status` (draft → scheduled → publishing → published/failed), `scheduledAt`, `publishedAt`, per-target `results[]` (`{platform, status, externalId, error}`), and `qstashMessageId`. Reads stream to the content calendar via `subscribeToSocialPosts`; all writes go through Admin-SDK routes (rules are read-only for members, mirrors `products`). |
+| `conversations/{contactId}` | sub-account read; server-only write | Unified inbox index — one doc per contact that has any message thread. Carries `subAccountId`, `agencyId`, `contactId`, `channel` (most-recent), `channelsSeen[]`, `lastMessageAt`, `lastMessageBody`, `unreadCount`, `status` (open/closed/snoozed), `snoozedUntil`, `botMode` (off/suggest/auto), `draft` (suggest-mode pending bot reply). Doc id = contactId for O(1) lookups. Written by all inbound message webhooks (Twilio, WhatsApp, Meta). |
+| `contacts/{id}/metaMessages/{id}` | sub-account read; server-only create/delete; client `readAt`-only update | Facebook Messenger + Instagram DM messages. `channel` field discriminates (`facebook`/`instagram`). Doc id = Meta message id. |
+| `subAccounts/{id}/customFields/{key}` | admins write; members read | Custom field definitions. `key` (snake_case, immutable identifier), `label`, `type` (text/number/date/dropdown/multiselect/checkbox/url/phone/email), `options[]` (for dropdown/multiselect), `required`, `order`, `entity` (contact/deal). Values stored inline on the contact/deal doc under `customFields: { [key]: value }`. |
+| `subAccounts/{id}/territories/{territoryId}` | admins write; members read | Territory definitions when `territoryScopingEnabled` is on. Each territory is a named region; contacts/deals/tasks/events carry an optional `territoryId` for filter-based access control. |
+| `subAccounts/{id}/importJobs/{jobId}` | sub-account admin; server-only write | GHL import job tracking. `status` (queued/running/completed/failed), `source` (ghl), `totals` (contacts/deals/queued/processed/failed), `startedAt`, `completedAt`, error logs. QStash fan-out updates progress atomically via `FieldValue.increment()`. |
+| `workflows/{workflowId}` | sub-account admin write; members read | Workflow definition. `name`, `status` (draft/active/paused), `trigger` (`{type: WorkflowTriggerType, config}`), `nodes[]` (ordered `{id, type: WorkflowNodeType, config, nextIds[]}`), `enabled`. Stored flat (not a graph object) — `nextIds[]` encodes the DAG edges; `if_else` nodes carry `trueNextId` + `falseNextId`. |
+| `workflowRuns/{runId}` | sub-account read; server-only write | Per-execution log. `workflowId`, `contactId`, `status` (running/completed/failed/stopped), `startedAt`, `completedAt`, `nodeResults[]` (per-node outcome log). Doc id = random UUID. Client subscribes to the run detail page via onSnapshot. |
+| `communityGroups/{groupId}` | sub-account admin write; community members read | Community group config. `subAccountId`, `name`, `slug`, `access` (free/paid), `joinPolicy` (open/approval), `status`, `coverUrl`, `logoUrl`, `memberCount`, `priceId` (Stripe price for paid groups). |
+| `communityGroups/{groupId}/members/{uid}` | sub-account read; server-only write | Community member rows. `memberId` (magic-link member id), `role` (member/moderator/admin), `status` (active/pending/removed), `joinedAt`, `xp`, `streakDays`. |
+| `communityGroups/{groupId}/posts/{postId}` | community members read; server-only write | Feed post. `authorMemberId`, `body` (Tiptap JSON), `likeCount`, `commentCount`, `pinned`, `createdAt`. |
+| `communityGroups/{groupId}/posts/{postId}/comments/{commentId}` | community members read; server-only write | Post comment thread. `authorMemberId`, `body`, `likeCount`. |
+| `communityGroups/{groupId}/courses/{courseId}` | community members read; admins write | Course metadata. `title`, `description`, `coverUrl`, `published`, `order`. |
+| `communityGroups/{groupId}/courses/{courseId}/sections/{sectionId}` | community members read; admins write | Course section. `title`, `order`. |
+| `communityGroups/{groupId}/courses/{courseId}/sections/{sectionId}/lessons/{lessonId}` | community members read; admins write | Lesson. `title`, `type` (video/text), `videoUrl`, `body` (Tiptap JSON), `duration`, `order`, `published`. |
+| `communityMembers/{memberId}` | self-read; sub-account admin-read; server-only write | Magic-link member identity (separate from Firebase Auth). `email`, `name`, `avatarUrl`, `xp`, `streakDays`, `lastActiveAt`. One member can belong to multiple groups. |
+| `affiliates/{code}` | server-only | Affiliate account. `code` (short, public referral code), `uid` (Firebase Auth uid of the affiliate), `commissionPercent` (40), `paypalEmail`, `createdAt`. LeadStack-variant only. |
+| `clicks/{clickId}` | server-only | Affiliate link click. `code`, `visitorIp`, `userAgent`, `referrer`, `landingPage`, `clickedAt`. Used for attribution analytics. |
+| `referrals/{referralId}` | server-only | Affiliate conversion. `code`, `sessionId`, `planId`, `commissionCents`, `status` (pending/approved/paid), `convertedAt`. |
+| `system/scheduleRegistration` | server-only | 24h marker doc written by `ensureSchedulesRegistered()`. Prevents repeated QStash schedule creation calls on every cold start. `registeredAt`, `appUrl`. If `appUrl` changes (new deployment domain), the marker is ignored and schedules re-register against the new URL. |
 
 ## Key Architecture
 - **Firebase Client SDK** (`lib/firebase/client.ts`) — browser only
@@ -324,6 +413,10 @@ firebase.json            Deploys firestore.rules only
 - **Marketing attribution capture** — when a visitor hits a hosted form page at `/f/[id]`, [src/components/forms/public-form.tsx](src/components/forms/public-form.tsx) calls [src/lib/attribution.ts](src/lib/attribution.ts)::`readAttributionFromBrowser()` on mount to snapshot `utm_source/medium/campaign/content/term`, `fbclid`, `gclid`, `document.referrer`, and `window.location.href`. That snapshot is held in a `useRef` (so a post-submit URL rewrite doesn't lose it) and forwarded in the POST body to `/api/forms/[id]/submit`, which validates each field (≤500 chars, trimmed) via `normalizeAttribution()` and writes it to `contact.attribution`. `source` falls back to `utm_source` when set, otherwise the legacy `"website"`. After a successful submission, `trackLeadEvent()` fires a Meta Pixel `Lead` event client-side before any redirect — once the browser navigates the pixel script unloads with the page. **Iframe gotcha:** the captured URL is the iframe's URL, not the host page's (cross-origin blocks `window.parent.location`). Agencies embedding via iframe must encode UTMs in the iframe `src` for them to flow through.
 - **Site-wide tracking scripts** — [src/app/layout.tsx](src/app/layout.tsx) conditionally loads Meta Pixel (when `NEXT_PUBLIC_META_PIXEL_ID` is set), Google Tag Manager (when `NEXT_PUBLIC_GTM_ID` is set), and Crisp Chat (when `NEXT_PUBLIC_CRISP_WEBSITE_ID` is set). All three follow the same `<Script strategy="afterInteractive">` pattern and ship `<noscript>` fallbacks where applicable (Pixel + GTM). Each is fully optional — leave the env unset to skip. GTM is the documented escape hatch for any tracker Pixel doesn't cover (LinkedIn Insight, TikTok Pixel, Hotjar, custom server-side gtag).
 - **Crisp Chat as the support channel** — Crisp is wired site-wide via `NEXT_PUBLIC_CRISP_WEBSITE_ID`. The codebase deliberately routes every "talk to us" path through [src/lib/crisp.ts](src/lib/crisp.ts)::`openCrispChat()` instead of `mailto:` — pricing checkout-error fallback, the privacy-policy contact line. `openCrispChat()` is a typed no-op when the widget isn't loaded, so buyers who clone without configuring Crisp see broken-feeling but non-crashing buttons; document the env var prominently in their setup.
+- **`lib/server/` service layer** — a new set of server-only modules (under `src/lib/server/`) that encapsulate complex multi-collection reads + writes. These are used by API routes instead of raw Firestore calls so business logic stays out of route handlers. Example: `conversations-service.ts::upsertConversationForMessage()` is called by all three inbound message webhooks (Twilio/WhatsApp/Meta) to maintain the unified inbox index atomically. Unlike the old `lib/firestore/*` helpers (simple CRUD), the server services own multi-step transactions and can be tested without mounting a Next.js route.
+- **QStash schedule auto-registration** — `lib/qstash/register-schedules.ts::ensureSchedulesRegistered()` is called from `instrumentation.ts` on every cold start. It writes two named QStash schedules (gitpage heartbeat + API cleanup) using stable `scheduleId`s. The SDK's `schedules.create()` is idempotent on the same id. A 24h Firestore marker at `system/scheduleRegistration` skips the round-trip on warm hits. The marker is invalidated when `NEXT_PUBLIC_APP_URL` changes so a new domain re-registers. **No Upstash dashboard step needed.**
+- **Territory scoping** — when `subAccountDoc.territoryScopingEnabled === true`, the `subAccountCollaborator` role sees only records tagged with their territory. Implemented via Firestore composite indexes `(subAccountId, territoryId)` in `firestore.indexes.json`. Rules don't enforce it — the server-side query enforces it by injecting a `where("territoryId", "==", memberTerritoryId)` clause when loading records for collaborators. Admins always see everything.
+- **Community member identity** — community members are NOT Firebase Auth users. They authenticate via magic-link email tokens (minted by `lib/community/member-auth.ts`, stored as short-lived JWT, verified per-request). The member session cookie (`lib/community/member-session.ts`) is separate from the operator session cookie. Community routes under `/api/community/*` use `lib/community/gate.ts::requireCommunityMember()` instead of the standard `requireUid()`. Staff-only routes (admin community management) additionally require `lib/community/staff-guard.ts::requireCommunityStaff()` which checks the operator's Firebase session.
 
 ## Automations (Workflow Recipes v1)
 
@@ -1345,3 +1438,235 @@ Common issues and fixes:
 - **Quote accepted but no Deal appeared at "Won"** — either `autoCreateDealOnAccept` was unchecked on the quote (it's per-quote, default on), or the deal write blipped (logged but not surfaced to the recipient — they see "accepted" regardless). Check the contact's pipeline column manually. Operator can create the deal by hand if it's missing — no automated retry in v1.
 - **Quote-triggered automation never fires sends** — known v1 limitation. The trigger types (`quote_sent`, `quote_accepted`, etc.) dispatch correctly into `fireTriggers()` and create the execution doc, but the only `recipeType` shipped is `instant_response` which only handles `form_submit` in `computeFirstStepDelay()`. v2 will either extend instant-response or add a quote-aware recipe. For now, hand-wired automations via direct Firestore edit will register but never send.
 - **Firestore "INTERNAL ASSERTION FAILED (ca9)" in browser console** — the `quotes/{id}` rules block is missing from `firestore.rules` (or wasn't deployed). The Firestore client SDK's onSnapshot stream gets denied and surfaces this opaque error. Run `firebase deploy --only firestore:rules,firestore:indexes` to fix.
+
+## Workflows (builder engine v2)
+
+The Workflows system is a general-purpose visual automation builder that supersedes the v1 "Workflow Recipes" (Speed-to-Lead). Where v1 had one fixed recipe type, v2 lets operators build arbitrary trigger → node graphs with branching, waits, field updates, and external webhooks.
+
+### Trigger types
+
+Defined in `src/types/workflows.ts::WorkflowTriggerType`:
+- `contact.created` — fires when a new contact is added (manual, import, form, or API)
+- `contact.tag.added` — fires when a specific tag is applied to a contact
+- `form.submitted` — fires on public form submission (replaces the v1 recipe trigger)
+- `pipeline.stage.changed` — fires when a deal moves to a specific stage
+- `booking.created` — fires when a booking is confirmed
+- `quote.accepted` — fires when a recipient accepts a quote
+
+### Node types
+
+Defined in `src/types/workflows.ts::WorkflowNodeType`:
+- `send_email` — send an email template (reuses `message_templates`)
+- `send_sms` — send an SMS template
+- `whatsapp_template` — send an approved WhatsApp template (requires an approved `contentSid`)
+- `wait` — pause execution for a configurable duration (minutes/hours/days)
+- `if_else` — branch on a condition (evaluates `ConditionGroup` against the contact/deal); has `trueNextId` + `falseNextId` edges
+- `goal` — mark the contact as having achieved a goal (exits loop, records metric)
+- `add_tag` / `remove_tag` — mutate the contact's tag array
+- `move_stage` — move the associated deal to a pipeline stage
+- `update_field` — set a contact or deal field value (including custom fields)
+- `create_task` — create a task linked to the contact with a configurable due-date offset
+- `notify` — send an internal email notification to the sub-account operator
+- `webhook` — POST a signed JSON payload to an external URL
+
+### Condition model
+
+`ConditionOp` values: `eq`, `neq`, `contains`, `not_contains`, `gt`, `lt`, `gte`, `lte`, `is_set`, `is_not_set`. A `Condition` is `{ field, op, value }`. A `ConditionGroup` is `{ logic: "and" | "or", conditions: Condition[] }` — evaluated recursively in `lib/workflows/conditions.ts::evaluateConditionGroup()`.
+
+### Execution model
+
+1. `lib/workflows/engine.ts::dispatchWorkflowTrigger(triggerType, triggerData, contactId)` — called from any event source (form submit, booking, stage change, etc.). Queries all active `workflows` matching the trigger, creates a `workflowRuns/{runId}` doc per match with `status: "running"`, and schedules the first node via QStash.
+2. `POST /api/workflows/step` (QStash callback, Upstash-signature-verified) — loads the run + workflow, evaluates the current node, executes the action (send, update, branch, etc.), appends to `nodeResults[]`, and schedules the next node(s) or marks the run `completed`. `wait` nodes just reschedule with a delay. `if_else` nodes schedule one of the two branches.
+3. All node executions are idempotent — the run's `nodeResults[]` acts as the dedup log (same node id already in results → skip).
+
+### Operator UX
+
+`/sa/[id]/workflows` — list with status badges (draft/active/paused), trigger label, last-run time. **New workflow** opens a visual canvas (DAG editor built with `@dnd-kit` + custom SVG edges) where operators add triggers and nodes from the catalog (`lib/workflows/catalog.ts`). Each node has a settings panel (right sidebar). Save writes the flat `nodes[]` array + `trigger` to Firestore. **Enable** via the toggle on the list row or the canvas header.
+
+`/sa/[id]/workflows/[workflowId]/runs` — execution history table. Selecting a run shows the per-node result timeline with status indicators (pending/success/failed/skipped).
+
+### v1 recipe compatibility
+
+The v1 `automations` collection + `automation_executions` remain functional and are NOT migrated. Forms created under v1 still fire the Speed-to-Lead recipe. The Workflows engine is additive — it checks the `workflows` collection, not `automations`. v2 does NOT deprecate v1 — both run in parallel until the operator migrates manually.
+
+## Community + Courses
+
+A Skool-style member community per sub-account. Operators create **community groups** (each with a slug, an access tier, and a join policy). Members are NOT Firebase Auth users — they join via magic-link email and hold a separate session cookie.
+
+### Member identity + auth
+
+`lib/community/member-auth.ts` mints short-lived signed tokens (JWT, 15-minute expiry) sent to a member's email. The member clicks the link, the token is verified, and `lib/community/member-session.ts` sets a `community_session` cookie (httpOnly, signed). Per-request `lib/community/member-context.ts::requireCommunityMember()` reads + verifies the cookie and returns the `CommunityMemberContext`. There is no password or OAuth — magic-link only. The community public pages (`/c/[groupSlug]`) are served from a separate layout that does NOT require Firebase auth.
+
+Community members are stored in two places:
+- `communityMembers/{memberId}` — global member record (email, profile, XP, streak)
+- `communityGroups/{groupId}/members/{memberId}` — per-group membership with role + status
+
+An operator-created member is seeded by the sub-account admin from the group members panel; self-join (for `joinPolicy: "open"`) creates the member record automatically on first magic-link click.
+
+### Groups
+
+A sub-account can have multiple community groups. Each group has:
+- `slug` — URL-safe name used in the public path `/c/[slug]`
+- `access: "free" | "paid"` — paid groups check `member.status` for a linked Stripe subscription before granting access
+- `joinPolicy: "open" | "approval"` — open groups accept any member on magic-link click; approval groups hold them as `pending` until an operator accepts
+- `status: "draft" | "published"` — unpublished groups are only visible to admins
+
+### Feed + content
+
+The community feed at `/c/[slug]` shows a Tiptap-rendered post list. Posts support rich text (Tiptap JSON stored in Firestore), images (URL-based, same as Social Planner), reactions, and comments. The `lib/server/community-feed-service.ts` service handles write fan-out (XP increment, streak update, leaderboard recalc) after each post.
+
+### Courses (classroom)
+
+The classroom at `/c/[slug]/classroom` shows a course list. Each course has sections → lessons. Lesson types: `video` (URL embed via `lib/community/video-embed.ts` — YouTube/Vimeo iframe) or `text` (Tiptap JSON rendered by `lib/community/lesson-html.ts` with server-side HTML sanitization). Progress is tracked per-member-per-lesson at `communityGroups/{groupId}/courses/{courseId}/sections/{sectionId}/lessons/{lessonId}/progress/{memberId}`.
+
+### Gamification
+
+`XP` and `streakDays` are tracked on `communityMembers/{memberId}`. Actions that award XP: post created, comment posted, lesson completed (value configurable per group). Streak increments on daily login. The leaderboard at `/c/[slug]/leaderboard` is a real-time Firestore query sorted by XP, capped at 50. `lib/server/community-leaderboard-service.ts` handles the increment and triggers a leaderboard cache refresh.
+
+### DMs
+
+Member-to-member DMs stored at `communityMembers/{memberId}/dms/{otherMemberId}/messages/{msgId}`. Client-side hooks in `lib/community/dm-hooks.ts` manage the real-time subscription. Operator staff can read but not write to DM threads (admin-only read rules).
+
+### Agency gate + setup
+
+Agency gate: `communityEnabledByAgency`. Default off. Once on, the sub-account admin creates groups at `/sa/[id]/community`. Public member portal is at `/c/[slug]` (root-level route, no `/sa/` prefix — community URLs are tenant-branded, not workspace-scoped). The magic-link email is sent via Resend (`EMAIL_FROM`). No new env vars required. Run `firebase deploy --only firestore:rules,firestore:indexes` after enabling — community collections use composite indexes.
+
+## Custom Fields
+
+Operator-defined fields on contacts and deals, mirroring GHL's "Custom Fields" feature. Field definitions live per-sub-account and values are stored inline on the entity.
+
+### Field definition
+
+`CustomFieldDef` (in `src/types/custom-fields.ts`):
+- `key` — snake_case immutable identifier (e.g. `property_type`). Set at creation; cannot be renamed (only label can change). Uniqueness enforced per sub-account + entity pair.
+- `label` — human-readable display name
+- `type: CustomFieldType` — one of: `text`, `number`, `date`, `dropdown`, `multiselect`, `checkbox`, `url`, `phone`, `email`
+- `options: string[]` — for `dropdown` / `multiselect` only
+- `required: boolean` — surfaced in the contact/deal form as a required field
+- `order: number` — display order in the contact profile card
+- `entity: "contact" | "deal"` — which entity this field applies to
+
+Definitions are stored at `subAccounts/{id}/customFields/{key}` (doc id = key for stable Firestore references).
+
+### Field values
+
+Values are stored **inline** on the entity doc under `customFields: { [key]: value }`. This means a contact/deal doc may carry any number of custom field values without subcollection overhead. The tradeoff: deleting a field definition doesn't clean up old values (they just become orphaned keys). A future cleanup sweep can be run manually or on definition delete.
+
+### Management
+
+`lib/custom-fields/load-defs.ts` — `loadCustomFieldDefs(subAccountId, entity)` fetches + caches the definition list for a given entity type. `lib/custom-fields/validation.ts` — `validateCustomFieldValue(def, value)` coerces + validates a raw value against its type (e.g. `date` fields are stored as ISO strings, `number` fields reject non-numeric input).
+
+The contact profile renders custom fields below the standard fields card via `src/components/custom-fields/`. Operators manage field definitions under sub-account Settings → Custom Fields.
+
+## Conversations (Unified Inbox)
+
+The Conversations view at `/sa/[id]/conversations` presents a single list of all active threads across SMS, WhatsApp, Facebook Messenger, and Instagram DM — one row per contact, sorted by most-recent message.
+
+### Index model
+
+A thin `conversations/{contactId}` doc (doc id = contactId for O(1) lookup) is the inbox index. It carries:
+- `channel` — the channel of the most recent inbound message
+- `channelsSeen[]` — all channels this contact has ever messaged from (drives the composer's channel picker)
+- `lastMessageAt`, `lastMessageBody`, `unreadCount`
+- `status: "open" | "closed" | "snoozed"`, `snoozedUntil` (timestamp for snooze-until behavior)
+- `botMode: "off" | "suggest" | "auto"` — controls the AI agent's reply behavior in this thread
+- `draft` — for `suggest` mode: the bot's pending draft reply (shown to operator before sending)
+
+`lib/server/conversations-service.ts::upsertConversationForMessage(message)` is the single write path — called by all three inbound message webhooks (Twilio SMS inbound, Twilio WhatsApp inbound, Meta webhook) immediately after writing the individual message subcollection doc. It does a Firestore merge-write so fields not in the new message (like `channelsSeen`) are not overwritten.
+
+### Thread view
+
+`/sa/[id]/conversations/[contactId]` renders the unified thread: all `messages`, `whatsappMessages`, and `metaMessages` subcollections merged and sorted chronologically. The channel badge on each bubble indicates which channel it came through. The composer has a channel-picker that shows only channels in `channelsSeen` (plus channels the sub-account has configured). Sending routes to the appropriate `/api/comms/sms/send`, `/api/comms/whatsapp/send`, or `/api/comms/meta/send` endpoint.
+
+### Bot modes
+
+- `off` — operator replies manually; no AI involvement in this thread
+- `suggest` — the AI generates a draft reply after each inbound, stored on `conversation.draft`. The operator reviews + edits + sends; or discards. The draft updates via onSnapshot so it appears in real-time as the LLM generates.
+- `auto` — the AI sends replies automatically (same behavior as the existing SMS channel + WhatsApp channel AI auto-reply)
+
+The `botMode` is per-conversation (per-contact), not per-channel. A contact who texted once and DM'd once gets one `botMode`. The operator toggles it from the thread header.
+
+## Territory Scoping
+
+Optional collaborator-level data isolation. Enabled per-sub-account via `SubAccountDoc.territoryScopingEnabled: true`.
+
+### How it works
+
+When `territoryScopingEnabled` is on:
+1. Territories are defined at `subAccounts/{id}/territories/{territoryId}` (name, color, assigned member UIDs).
+2. Contacts, deals, tasks, events, and quotes can optionally carry a `territoryId` field.
+3. When a `subAccountCollaborator` member loads a list view (contacts list, pipeline, task list, calendar, quotes), the server injects a `where("territoryId", "==", memberTerritoryId)` clause into the Firestore query if their membership doc has a `territoryId` assignment.
+4. Sub-account admins (and the agency owner) always see all records — no territory filter applied.
+
+This is enforced server-side, not in Firestore rules — the rules continue to check sub-account membership; the territory filter is a query-level restriction in each list API route and Firestore listener. A collaborator accessing a specific contact by ID (e.g. via a direct URL) still loads the contact — territory scoping affects list views only.
+
+### Composite indexes
+
+`firestore.indexes.json` includes composite indexes for `(subAccountId, territoryId)` on `contacts`, `deals`, `tasks`, `events`, and `quotes`. These are required for the territory-filtered list queries. Run `firebase deploy --only firestore:rules,firestore:indexes` after enabling territory scoping.
+
+### Setup
+
+1. Agency owner enables `territoryScopingEnabled` on the sub-account (Settings → Advanced or via the Manage dialog).
+2. Sub-account admin creates territories (Settings → Territories) and assigns them to collaborator members.
+3. Admin assigns `territoryId` to contacts as needed (bulk-assign via the contacts list action menu or individual contact profile).
+
+## GHL Import
+
+One-click import from GoHighLevel using a Private Integration Token. The import job fans out via QStash and tracks progress in Firestore.
+
+### Flow
+
+1. Operator goes to `/sa/[id]/import` and clicks **Import from GoHighLevel**.
+2. Pastes a **GHL Private Integration Token** (created in GHL → Settings → Integrations → Private Integrations). Also pastes the **Location ID** of the GHL sub-account they're migrating.
+3. `POST /api/sub-accounts/[id]/import/ghl` validates the token against the GHL API, creates an `importJobs/{jobId}` doc with `status: "queued"`, and fans out batched QStash messages — one per 100 contacts.
+4. Each QStash step (`POST /api/import/ghl/step`) fetches a page of GHL contacts + deals, writes them to Firestore via `lib/import/bulk-write.ts` (batched 500-doc writes), and atomically increments `importJobs/{jobId}.totals.*` via `FieldValue.increment()`.
+5. The operator's import page subscribes to the job doc via onSnapshot and shows a live progress bar.
+
+### What's imported
+
+- **Contacts** — all standard fields (name, email, phone, address, tags, source, assignedUser). GHL custom fields are imported as LeadStack custom fields if a matching `key` exists; otherwise logged as `unmappedFields`.
+- **Deals (Opportunities)** — mapped to the matching pipeline stage. If the stage name doesn't match a LeadStack stage (or the sub-account's `pipelineStages` override), the deal is placed at "New".
+- **NOT imported** — conversations/messages, automation history, email templates, files/documents, website funnels. v1 scope is contacts + deals only.
+
+### Credentials storage
+
+The GHL token is stored on `SubAccountDoc.ghlImportConfig.token` (admin-write). It's an admin-level credential (not a public API key) — Firestore rules block member reads of this field. After import completion, operators should revoke the token in GHL.
+
+## Affiliate Program
+
+**LeadStack-variant only** — this feature activates when the deployment's `LANDING_VARIANT` environment variable is set to `"leadstack"`. Buyers who white-label LeadStack will not see the affiliate surfaces.
+
+### Model
+
+- **40% recurring commission** on every Stripe invoice paid by a referred subscriber, for as long as the subscriber stays active.
+- **30-day cookie** — `lib/affiliate/ref-cookie.ts::setRefCookie()` writes a `leadstack_ref` cookie (30-day expiry) when a visitor arrives via a tracked affiliate link (`?ref=CODE`).
+- **Last-click attribution** — if the same visitor arrives via two different affiliate links, the later click overwrites the cookie. At checkout, `lib/affiliate/session.ts::readRefFromSession()` reads the cookie and stamps it on the Stripe session metadata. The Stripe webhook (`/api/webhooks/stripe`) records the conversion at `referrals/{referralId}`.
+
+### Data model
+
+- `affiliates/{code}` — affiliate account. `code` is the short public referral code (7 chars, base62). `uid` is the affiliate's Firebase Auth UID (affiliates log in to LeadStack as regular users). `commissionPercent: 40`. `paypalEmail` for payouts (manual; no automated payout in v1).
+- `clicks/{clickId}` — one doc per tracked link click. Used for analytics (clicks → conversions funnel).
+- `referrals/{referralId}` — one doc per Stripe subscription conversion. `status: "pending" | "approved" | "paid"`. Commission is calculated from `invoice.amount_paid` at webhook time.
+
+### Affiliate dashboard
+
+Affiliates visit `/affiliate` (public-facing, magic-link auth via `lib/affiliate/magic-link.ts`) to see their dashboard: referral link, clicks, conversions, pending commission. Admin-facing affiliate management is at `/agency/affiliates` (agency-owner only).
+
+### Setup contract
+
+No new env vars beyond what's already required. The affiliate surfaces are gated by `LANDING_VARIANT === "leadstack"` — if that env var is absent or a different value, no affiliate routes, UI, or collections are active. `STRIPE_FOUNDERS_PRICE_ID` is an additional optional env var for the founders cohort pricing flow at checkout (separate from the standard Pro plan price).
+
+## Additional Troubleshooting
+
+- **Workflow runs stuck at "running"** — the QStash callback (`/api/workflows/step`) isn't reaching the app. Check that `QSTASH_URL` + signing keys are configured and `NEXT_PUBLIC_APP_URL` is publicly reachable. The run doc's `nodeResults[]` will show which node executed last.
+- **Workflow `if_else` always takes the same branch** — the `ConditionGroup` is evaluating against stale contact data (Firestore doc read at execution time, not at trigger time). Ensure the contact doc was already updated before the workflow fires. Use `contact.tag.added` as the trigger instead of `contact.created` if the condition depends on a tag that's set during the same create-flow.
+- **Community magic-link email not arriving** — Resend is not configured, or `EMAIL_FROM` isn't verified. Community magic-link emails use the same Resend path as quote emails. Check Resend logs.
+- **Community `/c/[slug]` returns 404** — the group's `status` is still `"draft"`. Publish it from the sub-account's Community group settings.
+- **Community member can access a paid group without a subscription** — the access check in `lib/community/gate.ts` reads `member.status` from the group membership row. If the Stripe webhook didn't update `member.status` (e.g. webhook not configured), the status remains default. Verify the Stripe webhook is delivering events to `/api/webhooks/stripe`.
+- **Custom field values not appearing on contacts** — the field definition was created after the contacts were imported/created, so old contacts have no value yet. Values only appear after the contact is edited and the field is filled in. There is no backfill in v1.
+- **Custom field `type: "dropdown"` shows no options** — `options[]` was left empty when the field was created. Edit the field definition to add options.
+- **Conversations inbox shows "No conversations yet" despite SMS threads existing** — the `conversations/{contactId}` index wasn't written because the inbound SMS arrived before the Conversations feature was deployed (old messages didn't trigger `upsertConversationForMessage`). The index only updates on NEW inbound messages. A one-time backfill script can populate historical rows if needed.
+- **Territory-filtered contacts list returns nothing for a collaborator** — their membership doc may not have a `territoryId` assigned, which causes the server to treat them as having no territory (returns empty). Check Settings → Members and assign a territory.
+- **GHL import job hangs at "queued"** — QStash isn't delivering the first step callback. Check `QSTASH_URL` region matches the signing keys, and that `/api/import/ghl/step` is in the `PUBLIC_PATH_PATTERNS` (it must be, since security is the QStash signature).
+- **GHL import succeeds but custom fields are empty** — the GHL custom field keys don't match the LeadStack custom field definitions. The import logs the unmapped fields in `importJobs/{jobId}.unmappedFields`. Create matching custom field definitions first, then re-import.
+- **`STRIPE_FOUNDERS_PRICE_ID` not recognized** — this env var is only read by the founders-cohort checkout flow in `src/lib/stripe/checkout.ts`. If you don't have a founders cohort, leave it unset — the standard `STRIPE_PRO_PRICE_ID` flow is unaffected.
