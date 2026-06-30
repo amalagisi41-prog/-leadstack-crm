@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, Geist_Mono, Playfair_Display } from "next/font/google";
+import { Inter, Geist_Mono, Manrope } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { RefTracker } from "@/components/affiliate/ref-tracker";
 import { AnalyticsScripts } from "@/components/analytics-scripts";
 import { CUSTOM_BRAND, LANDING_VARIANT } from "@/config/landing";
 import "./globals.css";
 
-const jakartaSans = Plus_Jakarta_Sans({
-  variable: "--font-jakarta-sans",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
 });
@@ -17,11 +17,10 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const playfairDisplay = Playfair_Display({
-  variable: "--font-playfair-display",
+const manrope = Manrope({
+  variable: "--font-manrope",
   subsets: ["latin"],
-  weight: ["400", "500"],
-  style: ["normal", "italic"],
+  weight: ["400", "500", "600", "700"],
 });
 
 // Metadata follows the same variant the landing page renders. The custom
@@ -47,7 +46,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${jakartaSans.variable} ${geistMono.variable} ${playfairDisplay.variable} antialiased`}
+        className={`${inter.variable} ${geistMono.variable} ${manrope.variable} antialiased`}
       >
         {process.env.NEXT_PUBLIC_GTM_ID && (
           <noscript>
