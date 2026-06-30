@@ -3,8 +3,8 @@
  *
  * The repo ships with two complete landing pages:
  *
- *   - "custom"    â€” a generic agency-CRM landing the buyer brands as
- *     their own. THIS IS THE DEFAULT â€” every new clone should be
+ *   - "custom"    â€" a generic agency-CRM landing the buyer brands as
+ *     their own. THIS IS THE DEFAULT â€" every new clone should be
  *     branded for the buyer's business, so the custom variant renders
  *     at "/" out of the box and CUSTOM_BRAND below should be edited
  *     first.
@@ -13,11 +13,11 @@
  *     prospects see a "Talk to us" mailto CTA (uses CUSTOM_BRAND.
  *     supportEmail), the owner takes payment off-system, provisions
  *     a sub-account, then invites the client via the in-app invite
- *     flow. Pricing tiers + section are hidden by default â€” see the
+ *     flow. Pricing tiers + section are hidden by default â€" see the
  *     CUSTOM_BRAND.pricing block below for how to re-enable real
  *     self-serve resale.
  *
- *   - "leadstack" â€” the LeadStack-branded marketing landing that sells
+ *   - "leadstack" â€" the LeadStack-branded marketing landing that sells
  *     LeadStack itself (used on the leadstack.dev demo site). Only flip
  *     back to this if you're running the public LeadStack demo.
  *
@@ -53,7 +53,7 @@ export interface CustomBrand {
 
 /**
  * The brand object actually passed to the custom landing components at
- * render time. Resolved on the server by lib/landing/resolve-brand.ts â€”
+ * render time. Resolved on the server by lib/landing/resolve-brand.ts â€"
  * agency doc fields take precedence, CUSTOM_BRAND fills the gaps. `logoUrl`
  * is nullable because "no logo set" is a meaningful state (renders the
  * default gradient mark instead of an <img>).
@@ -70,31 +70,31 @@ export interface ResolvedBrand {
 /**
  * Brand fields used by the "custom" landing variant. Ignored entirely when
  * LANDING_VARIANT is "leadstack". Edit these to brand the white-label
- * landing for your own business â€” the values below are placeholder
+ * landing for your own business â€" the values below are placeholder
  * defaults so the page renders cleanly out of the box.
  */
 export const CUSTOM_BRAND: CustomBrand = {
-  /** Displayed in navbar, hero, footer copyright, page title â€” everywhere. */
-  name: “AgentEdge”,
+  /** Displayed in navbar, hero, footer copyright, page title â€" everywhere. */
+  name: "AgentEdge",
 
   /** One-line positioning, surfaced in hero subtitle + meta description. */
-  tagline: “Built for the top 1% of realtors”,
+  tagline: "Built for the top 1% of realtors",
 
   /**
    * Short (~140 char) description used under the hero headline. Should
-   * read like a tweet â€” what the product does, for whom.
+   * read like a tweet â€" what the product does, for whom.
    */
   shortDescription:
-    “Contacts, pipeline, AI follow-up, and client communication — the CRM high-producing agents actually use. Close more, work less.”,
+    "Contacts, pipeline, AI follow-up, and client communication — the CRM high-producing agents actually use. Close more, work less.",
 
-  /** Used on CTA buttons + the FAQ “talk to us” line + footer. */
-  supportEmail: “hello@agentedge.com”,
+  /** Used on CTA buttons + the FAQ "talk to us" line + footer. */
+  supportEmail: "hello@agentedge.com",
 
   /** Used in footer, og:url, canonical. No https://, no trailing slash. */
-  primaryDomain: “agentedge.com”,
+  primaryDomain: "agentedge.com",
 
   /**
-   * Pricing tiers. HIDDEN BY DEFAULT â€” the custom landing is wired for
+   * Pricing tiers. HIDDEN BY DEFAULT â€" the custom landing is wired for
    * done-for-you sales (see header comment), not self-serve, so the
    * Pricing section and the #pricing nav link are not rendered. The
    * config below is kept as a starting point for buyers who later want
@@ -110,7 +110,7 @@ export const CUSTOM_BRAND: CustomBrand = {
    *      page (currently gated on LANDING_VARIANT === "leadstack").
    *   5. Add a Stripe-driven public signup flow that provisions a
    *      fresh agency + sub-account + owner membership on
-   *      checkout.completed â€” today's /api/auth/signup is invite-only
+   *      checkout.completed â€" today's /api/auth/signup is invite-only
    *      after the first bootstrap user, so strangers paying through
    *      Stripe can't currently land anywhere. See CLAUDE.md
    *      ("Auth & Tenancy Model") for the existing signup contract.
