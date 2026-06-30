@@ -7,34 +7,34 @@ import type { ResolvedBrand } from "@/config/landing";
 
 const faqs = [
   {
-    question: "How do I get started?",
+    question: "I already use Chime / Follow Up Boss / KvCORE. Why switch?",
     answer:
-      "No coding required. We use a byo accounts model — you connect your own services, so you stay in control of your data and costs. Budget around a couple of hours if it's your first time and this isn't something you do every day (faster if it is). To start, you only need a login & database service. From there, add payments, email, messaging (SMS), background jobs, AI, a website builder, and maps as you switch features on. Optional extras include website-knowledge for AI, voice calling, ad tracking, and live chat. Your setup assistant walks you through each one.",
+      "Most real estate CRMs lock you into their ecosystem and charge per-seat as your team grows. AgentEdge is designed to be simple enough for a solo agent but powerful enough for a 20-person team — with AI follow-up, voice calling, and booking pages built in. You own your data, your automations, and your brand. No per-seat surprises.",
   },
   {
-    question: "How do imports work?",
+    question: "How fast will leads get a response?",
     answer:
-      "Drop in a CSV from Sheets, HubSpot, Pipedrive, or anywhere else. Our importer fuzzy-matches name / email / phone / company columns automatically; map anything else manually.",
+      "Under 60 seconds for SMS and email. When a buyer submits your lead form, AgentEdge fires a personalized text and email immediately — while you're showing a home or in a closing. The AI agent can also answer follow-up questions, book showings, and qualify the lead before you pick up the phone.",
   },
   {
-    question: "What about email and SMS?",
+    question: "Can I import my contacts from another CRM?",
     answer:
-      "Send from any contact profile in one click — replies route straight to your inbox via Reply-To. Email runs through our verified domain; SMS via a managed sender.",
+      "Yes. Drop in a CSV from Follow Up Boss, Chime, KvCORE, Zillow, Realtor.com, or Google Contacts. We fuzzy-match names, emails, and phones automatically. GHL users can connect via the one-click import tool — contacts and deals come over in minutes.",
   },
   {
-    question: "How fast can I get a website live?",
+    question: "Does it work for teams and brokerages?",
     answer:
-      "Built-in website builder ships a marketing site or video sales letter in 1–3 minutes. Multi-page or single-page funnel — pick a niche template, fill the form, hit Build, get a live URL.",
+      "Yes. The Team & Brokerage plan gives each agent their own sub-account (isolated contacts and pipeline) under one brokerage login. Territory assignment routes inbound leads to the right agent automatically. Brokers get a top-level view across all agents.",
   },
   {
-    question: "Is my data safe?",
+    question: "How does the AI agent work?",
     answer:
-      "All data is owner-scoped — only you and the people you invite can read or write to your workspace. Daily backups, encrypted at rest, exportable as CSV at any time.",
+      "You write your agent's persona once (what to say, your business hours, escalation keywords). It then handles inbound texts, web chat on your site, and phone calls — qualifying buyers, answering property questions, and booking showings. When a lead says something like 'I'm ready to make an offer,' the AI flags it and sends you an alert immediately.",
   },
   {
-    question: "Do you have an API?",
+    question: "Is my client data safe?",
     answer:
-      "The form submission endpoint is public; full read/write API is on the roadmap. In the meantime, every page exports CSV and the underlying database is queryable directly.",
+      "All data is owner-scoped — only you and the people you invite can access your workspace. Encrypted at rest, exportable as CSV at any time, hosted on enterprise-grade infrastructure. We never sell or share your contact data.",
   },
 ];
 

@@ -28,11 +28,10 @@ export function Hero({ brand }: { brand: ResolvedBrand }) {
           </div>
 
           <h1 className="text-balance text-4xl font-semibold tracking-tighter sm:text-5xl md:text-6xl lg:text-[5rem] lg:leading-[1.04]">
-            The CRM your team will{" "}
+            Stop losing leads.{" "}
             <span className="inline-block bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-300 bg-clip-text pr-1 font-serif font-normal text-transparent">
-              actually use
+              Start closing.
             </span>
-            .
           </h1>
 
           <p className="mx-auto mt-6 max-w-2xl text-pretty text-lg text-muted-foreground md:text-xl">
@@ -45,7 +44,7 @@ export function Hero({ brand }: { brand: ResolvedBrand }) {
               size="lg"
               className="px-6 text-base"
             >
-              Talk to us
+              Book a demo
             </Button>
             <Button
               render={<a href="#features" />}
@@ -53,7 +52,7 @@ export function Hero({ brand }: { brand: ResolvedBrand }) {
               size="lg"
               className="px-6 text-base"
             >
-              See features
+              See how it works
             </Button>
           </div>
         </div>

@@ -8,15 +8,13 @@ export function CTA({ brand }: { brand: ResolvedBrand }) {
 
       <div className="container mx-auto px-4 text-center">
         <h2 className="mx-auto max-w-2xl text-3xl font-semibold tracking-tighter sm:text-5xl">
-          Get your team into{" "}
+          Ready to close more deals with{" "}
           <span className="font-serif font-normal italic">
-            {brand.name}
-          </span>{" "}
-          this afternoon.
+            less hustle?
+          </span>
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">
-          Tell us about your business and we&apos;ll get you set up — contacts
-          imported, pipeline configured, ready to run in days, not months.
+          Book a 20-minute call. We&apos;ll import your contacts, configure your pipeline, and have you running with AI follow-up before the week is out.
         </p>
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Button
@@ -24,7 +22,15 @@ export function CTA({ brand }: { brand: ResolvedBrand }) {
             size="lg"
             className="px-6 text-base"
           >
-            Talk to us
+            Book a demo
+          </Button>
+          <Button
+            render={<a href={`mailto:${brand.supportEmail}?subject=AgentEdge%20questions`} />}
+            variant="outline"
+            size="lg"
+            className="px-6 text-base"
+          >
+            Ask a question
           </Button>
         </div>
       </div>
