@@ -75,23 +75,23 @@ export interface ResolvedBrand {
  */
 export const CUSTOM_BRAND: CustomBrand = {
   /** Displayed in navbar, hero, footer copyright, page title â€" everywhere. */
-  name: "AgentEdge",
+  name: "Artisan Home Network",
 
   /** One-line positioning, surfaced in hero subtitle + meta description. */
-  tagline: "Built for the top 1% of realtors",
+  tagline: "Purpose-built for REALTORS®",
 
   /**
    * Short (~140 char) description used under the hero headline. Should
    * read like a tweet â€" what the product does, for whom.
    */
   shortDescription:
-    "Contacts, pipeline, AI follow-up, and client communication — the CRM high-producing agents actually use. Close more, work less.",
+    "Stop losing deals between showings. LeadStack responds to every inbound lead in under 60 seconds, keeps your pipeline organized from first inquiry to closing day, and follows up so you don't have to.",
 
   /** Used on CTA buttons + the FAQ "talk to us" line + footer. */
-  supportEmail: "hello@agentedge.com",
+  supportEmail: "hello@artisanhomenetwork.com",
 
   /** Used in footer, og:url, canonical. No https://, no trailing slash. */
-  primaryDomain: "agentedge.com",
+  primaryDomain: "artisanhomenetwork.com",
 
   /**
    * Pricing tiers. HIDDEN BY DEFAULT â€" the custom landing is wired for

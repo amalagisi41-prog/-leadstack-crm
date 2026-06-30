@@ -16,44 +16,15 @@ import {
 import type { ResolvedBrand } from "@/config/landing";
 import { Logo } from "./logo";
 
+const links = [
+  { href: "#features", label: "For Agents" },
+  { href: "#team", label: "For Brokers" },
+  { href: "#faq", label: "FAQ" },
+];
+
 export function Navbar({ brand }: { brand: ResolvedBrand }) {
   const { user, loading } = useAuth();
   const [open, setOpen] = useState(false);
-
-  const navItems = (
-    <>
-      <a
-        href="#features"
-        className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-      >
-        Features
-      </a>
-      <a
-        href="#faq"
-        className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-      >
-        FAQ
-      </a>
-      {!loading && (
-        <>
-          {user ? (
-            <Button render={<Link href="/dashboard" />} size="sm">
-              Dashboard
-            </Button>
-          ) : (
-            <>
-              <Button render={<Link href="/login" />} variant="ghost" size="sm">
-                Login
-              </Button>
-              <Button render={<Link href="/signup" />} size="sm">
-                Sign Up
-              </Button>
-            </>
-          )}
-        </>
-      )}
-    </>
-  );
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur">
@@ -74,10 +45,43 @@ export function Navbar({ brand }: { brand: ResolvedBrand }) {
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-4 md:flex">
-          <ThemeToggle />
-          {navItems}
+        <nav className="hidden items-center gap-6 md:flex">
+          {links.map(({ href, label }) => (
+            <a
+              key={href}
+              href={href}
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {label}
+            </a>
+          ))}
         </nav>
+
+        <div className="hidden items-center gap-3 md:flex">
+          <ThemeToggle />
+          {!loading && (
+            <>
+              {user ? (
+                <Button render={<Link href="/dashboard" />} size="sm">
+                  Dashboard
+                </Button>
+              ) : (
+                <>
+                  <Button render={<Link href="/login" />} variant="ghost" size="sm">
+                    Login
+                  </Button>
+                  <Button
+                    render={<a href={`mailto:${brand.supportEmail}`} />}
+                    size="sm"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                  >
+                    Start Free →
+                  </Button>
+                </>
+              )}
+            </>
+          )}
+        </div>
 
         <div className="flex items-center gap-2 md:hidden">
           <ThemeToggle />
@@ -97,18 +101,15 @@ export function Navbar({ brand }: { brand: ResolvedBrand }) {
               <SheetTitle>Menu</SheetTitle>
             </SheetHeader>
             <nav className="flex flex-col gap-4 p-4">
-              <SheetClose
-                render={<a href="#features" />}
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-              >
-                Features
-              </SheetClose>
-              <SheetClose
-                render={<a href="#faq" />}
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-              >
-                FAQ
-              </SheetClose>
+              {links.map(({ href, label }) => (
+                <SheetClose
+                  key={href}
+                  render={<a href={href} />}
+                  className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  {label}
+                </SheetClose>
+              ))}
               {!loading && (
                 <>
                   {user ? (
@@ -135,11 +136,11 @@ export function Navbar({ brand }: { brand: ResolvedBrand }) {
                       </SheetClose>
                       <SheetClose render={<span />}>
                         <Button
-                          render={<Link href="/signup" />}
-                          className="w-full"
+                          render={<a href={`mailto:${brand.supportEmail}`} />}
+                          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
                           size="sm"
                         >
-                          Sign Up
+                          Start Free →
                         </Button>
                       </SheetClose>
                     </>

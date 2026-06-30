@@ -9,12 +9,12 @@ const faqs = [
   {
     question: "I already use Chime / Follow Up Boss / KvCORE. Why switch?",
     answer:
-      "Most real estate CRMs lock you into their ecosystem and charge per-seat as your team grows. AgentEdge is designed to be simple enough for a solo agent but powerful enough for a 20-person team — with AI follow-up, voice calling, and booking pages built in. You own your data, your automations, and your brand. No per-seat surprises.",
+      "Most real estate CRMs lock you into their ecosystem and charge per-seat as your team grows. LeadStack is designed to be simple enough for a solo agent but powerful enough for a 20-person team — with AI follow-up, voice calling, and booking pages built in. You own your data, your automations, and your brand. No per-seat surprises.",
   },
   {
     question: "How fast will leads get a response?",
     answer:
-      "Under 60 seconds for SMS and email. When a buyer submits your lead form, AgentEdge fires a personalized text and email immediately — while you're showing a home or in a closing. The AI agent can also answer follow-up questions, book showings, and qualify the lead before you pick up the phone.",
+      "Under 60 seconds for SMS and email. When a buyer submits your lead form, LeadStack fires a personalized text and email immediately — while you're showing a home or in a closing. The AI agent can also answer follow-up questions, book showings, and qualify the lead before you pick up the phone.",
   },
   {
     question: "Can I import my contacts from another CRM?",
@@ -27,7 +27,7 @@ const faqs = [
       "Yes. The Team & Brokerage plan gives each agent their own sub-account (isolated contacts and pipeline) under one brokerage login. Territory assignment routes inbound leads to the right agent automatically. Brokers get a top-level view across all agents.",
   },
   {
-    question: "How does the AI agent work?",
+    question: "How does the AI receptionist work?",
     answer:
       "You write your agent's persona once (what to say, your business hours, escalation keywords). It then handles inbound texts, web chat on your site, and phone calls — qualifying buyers, answering property questions, and booking showings. When a lead says something like 'I'm ready to make an offer,' the AI flags it and sends you an alert immediately.",
   },
