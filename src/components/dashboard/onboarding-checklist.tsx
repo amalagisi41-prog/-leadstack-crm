@@ -24,6 +24,7 @@ import {
   ONBOARDING_STEPS,
   type OnboardingStepId,
   type OnboardingStepMeta,
+  type OnboardingVideos,
 } from "@/lib/onboarding/steps";
 
 // Icon per step id lives here (client-only) so the shared step metadata in
@@ -42,12 +43,15 @@ function StepRow({
   videoUrl,
   done,
   saPath,
+  preview,
   onToggle,
 }: {
   step: OnboardingStepMeta;
   videoUrl: string | null;
   done: boolean;
-  saPath: (p: string) => string;
+  saPath?: (p: string) => string;
+  /** Preview mode (agency settings): CTA is inert since there's no sub-account. */
+  preview?: boolean;
   onToggle: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
@@ -122,9 +126,15 @@ function StepRow({
         <div className="border-t border-border px-4 py-3">
           <p className="text-sm text-muted-foreground">{step.description}</p>
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <Button size="sm" render={<Link href={saPath(step.href)} />}>
-              {step.cta}
-            </Button>
+            {preview || !saPath ? (
+              <Button size="sm" disabled>
+                {step.cta}
+              </Button>
+            ) : (
+              <Button size="sm" render={<Link href={saPath(step.href)} />}>
+                {step.cta}
+              </Button>
+            )}
             {videoUrl && (
               <Button
                 size="sm"
@@ -147,14 +157,25 @@ function StepRow({
 
 export function OnboardingChecklist({
   saPath,
+  preview = false,
+  videosOverride,
 }: {
-  saPath: (path: string) => string;
+  saPath?: (path: string) => string;
+  /**
+   * Preview mode for the agency settings page — CTAs are inert, the Dismiss
+   * control is hidden, and video URLs come from `videosOverride` (the
+   * in-progress form) instead of the saved agency doc.
+   */
+  preview?: boolean;
+  videosOverride?: OnboardingVideos;
 }) {
   const agency = useAgency();
   const [completed, setCompleted] = useState<Set<string>>(new Set());
   const [dismissed, setDismissed] = useState(false);
 
   if (dismissed) return null;
+
+  const videos = preview ? (videosOverride ?? {}) : agency.onboardingVideos;
 
   const toggle = (id: string) =>
     setCompleted((prev) => {
@@ -188,12 +209,14 @@ export function OnboardingChecklist({
             </p>
           </div>
         </div>
-        <button
-          onClick={() => setDismissed(true)}
-          className="text-xs text-muted-foreground hover:text-foreground"
-        >
-          Dismiss
-        </button>
+        {!preview && (
+          <button
+            onClick={() => setDismissed(true)}
+            className="text-xs text-muted-foreground hover:text-foreground"
+          >
+            Dismiss
+          </button>
+        )}
       </div>
 
       {/* Progress bar */}
@@ -218,9 +241,10 @@ export function OnboardingChecklist({
           <StepRow
             key={step.id}
             step={step}
-            videoUrl={agency.onboardingVideos[step.id] ?? null}
+            videoUrl={videos[step.id] ?? null}
             done={completed.has(step.id)}
             saPath={saPath}
+            preview={preview}
             onToggle={() => toggle(step.id)}
           />
         ))}

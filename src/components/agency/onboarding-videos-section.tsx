@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
-import { PlayCircle, Save } from "lucide-react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { Eye, EyeOff, PlayCircle, Save } from "lucide-react";
 import { toast } from "sonner";
 import { useAgency } from "@/hooks/use-agency";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { OnboardingChecklist } from "@/components/dashboard/onboarding-checklist";
 import {
   ONBOARDING_STEPS,
+  type OnboardingStepId,
   type OnboardingVideos,
 } from "@/lib/onboarding/steps";
 
@@ -18,6 +20,7 @@ export function OnboardingVideosSection() {
   const agency = useAgency();
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
   // Hydrate once from the agency doc; don't clobber in-flight edits on the
@@ -69,6 +72,17 @@ export function OnboardingVideosSection() {
     (urls[s.id] ?? "").trim(),
   ).length;
 
+  // Feed the preview only valid http(s) URLs so a half-typed link doesn't
+  // render a broken "Watch" button — this mirrors exactly what will save.
+  const previewVideos = useMemo<OnboardingVideos>(() => {
+    const out: OnboardingVideos = {};
+    for (const step of ONBOARDING_STEPS) {
+      const val = (urls[step.id] ?? "").trim();
+      if (val && URL_RE.test(val)) out[step.id as OnboardingStepId] = val;
+    }
+    return out;
+  }, [urls]);
+
   return (
     <form
       onSubmit={handleSave}
@@ -114,15 +128,38 @@ export function OnboardingVideosSection() {
         ))}
       </div>
 
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <p className="text-[11px] text-muted-foreground">
           {filledCount} of {ONBOARDING_STEPS.length} videos added
         </p>
-        <Button type="submit" disabled={saving || !hydrated}>
-          <Save className="mr-1 h-3.5 w-3.5" />
-          {saving ? "Saving…" : "Save"}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setShowPreview((v) => !v)}
+          >
+            {showPreview ? (
+              <EyeOff className="mr-1 h-3.5 w-3.5" />
+            ) : (
+              <Eye className="mr-1 h-3.5 w-3.5" />
+            )}
+            {showPreview ? "Hide preview" : "Preview checklist"}
+          </Button>
+          <Button type="submit" disabled={saving || !hydrated}>
+            <Save className="mr-1 h-3.5 w-3.5" />
+            {saving ? "Saving…" : "Save"}
+          </Button>
+        </div>
       </div>
+
+      {showPreview && (
+        <div className="rounded-2xl border bg-muted/30 p-4">
+          <p className="mb-3 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+            What new agents see · updates live as you type
+          </p>
+          <OnboardingChecklist preview videosOverride={previewVideos} />
+        </div>
+      )}
     </form>
   );
 }
