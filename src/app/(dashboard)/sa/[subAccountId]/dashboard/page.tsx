@@ -36,6 +36,7 @@ import type { WebChatSession } from "@/types/web-chat";
 import { Button } from "@/components/ui/button";
 import { NewDealDialog } from "@/components/pipeline/new-deal-dialog";
 import { cn } from "@/lib/utils";
+import { OnboardingChecklist } from "@/components/dashboard/onboarding-checklist";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -297,7 +298,10 @@ export default function DashboardPage() {
       </div>
 
       {isEmpty ? (
-        <GettingStarted saPath={saPath} contacts={contacts} />
+        <div className="space-y-4">
+          <OnboardingChecklist saPath={saPath} />
+          <GettingStarted saPath={saPath} contacts={contacts} />
+        </div>
       ) : (
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
           {/* ── Left column ──────────────────────────────────────────────── */}
