@@ -4,6 +4,11 @@ import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import { invalidateAgencyPolicyCache } from "@/lib/agency/policy";
+import {
+  ONBOARDING_STEP_IDS,
+  type OnboardingStepId,
+  type OnboardingVideos,
+} from "@/lib/onboarding/steps";
 import type { MemberStatus, Role } from "@/types";
 
 /**
@@ -26,6 +31,7 @@ interface PatchBody {
   supportEmail?: string | null;
   primaryDomain?: string | null;
   sharedSmsAllowed?: boolean;
+  onboardingVideos?: Record<string, unknown> | null;
 }
 
 const URL_RE = /^https?:\/\/.+/i;
@@ -160,6 +166,40 @@ export async function PATCH(request: Request) {
       );
     }
     update.sharedSmsAllowed = body.sharedSmsAllowed;
+  }
+
+  if (body.onboardingVideos !== undefined) {
+    if (body.onboardingVideos === null) {
+      update.onboardingVideos = null;
+    } else if (
+      typeof body.onboardingVideos !== "object" ||
+      Array.isArray(body.onboardingVideos)
+    ) {
+      return NextResponse.json(
+        { error: "onboardingVideos must be an object keyed by step id, or null." },
+        { status: 400 },
+      );
+    } else {
+      const cleaned: OnboardingVideos = {};
+      for (const [key, raw] of Object.entries(body.onboardingVideos)) {
+        if (!ONBOARDING_STEP_IDS.includes(key as OnboardingStepId)) {
+          return NextResponse.json(
+            { error: `Unknown onboarding step: ${key}.` },
+            { status: 400 },
+          );
+        }
+        // null / empty clears that step's video.
+        if (raw === null || raw === "") continue;
+        if (typeof raw !== "string" || !URL_RE.test(raw.trim())) {
+          return NextResponse.json(
+            { error: `Video URL for "${key}" must start with http:// or https://.` },
+            { status: 400 },
+          );
+        }
+        cleaned[key as OnboardingStepId] = raw.trim();
+      }
+      update.onboardingVideos = cleaned;
+    }
   }
 
   if (Object.keys(update).length === 1) {

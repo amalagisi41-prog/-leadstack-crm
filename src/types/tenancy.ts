@@ -44,6 +44,14 @@ export interface AgencyDoc {
    * (`getTwilioForSubAccount`) and reflected in the workflow builder readiness.
    */
   sharedSmsAllowed?: boolean;
+  /**
+   * Per-step onboarding walkthrough video URLs, keyed by the step ids in
+   * lib/onboarding/steps.ts (`contacts`, `sms`, `form`, `automation`,
+   * `pipeline`, `ai`). The agency owner pastes these under Agency → Settings
+   * → Onboarding videos; the new-agent checklist renders a "Watch" button
+   * per step that has a URL. Absent / null = no videos configured yet.
+   */
+  onboardingVideos?: import("../lib/onboarding/steps").OnboardingVideos | null;
 }
 
 export interface SubAccountDoc {

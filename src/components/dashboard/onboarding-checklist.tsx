@@ -19,108 +19,39 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useAgency } from "@/hooks/use-agency";
+import {
+  ONBOARDING_STEPS,
+  type OnboardingStepId,
+  type OnboardingStepMeta,
+} from "@/lib/onboarding/steps";
 
-interface ChecklistStep {
-  id: string;
-  icon: React.ElementType;
-  title: string;
-  description: string;
-  cta: string;
-  href: string;
-  videoMinutes?: number;
-  /**
-   * Loom (or any) walkthrough URL for this step. Paste your recorded links
-   * here — when set, a "Watch (N min)" button appears in the expanded step.
-   * Leave null until you've recorded the video.
-   */
-  videoUrl?: string | null;
-}
-
-// ─── Onboarding videos ────────────────────────────────────────────────────────
-// Record one short Loom per step and paste the share URL below. Until then the
-// steps still work — they just don't show a "Watch" button.
-const STEPS: ChecklistStep[] = [
-  {
-    id: "contacts",
-    icon: Users,
-    title: "Import your contacts",
-    description:
-      "Upload a CSV from your old CRM or add your first contacts manually. Your entire database lives here.",
-    cta: "Go to Contacts",
-    href: "/contacts?import=1",
-    videoMinutes: 4,
-    videoUrl: null,
-  },
-  {
-    id: "sms",
-    icon: Phone,
-    title: "Connect your phone number",
-    description:
-      "Link your dedicated Twilio number so you can send and receive SMS directly in the CRM — and the AI can reply on your behalf.",
-    cta: "Open SMS Settings",
-    href: "/dashboard/settings?tab=sms",
-    videoMinutes: 3,
-    videoUrl: null,
-  },
-  {
-    id: "form",
-    icon: FileText,
-    title: "Build your lead capture form",
-    description:
-      "Create a form for your website or a landing page. Every submission auto-creates a contact and drops them into your pipeline.",
-    cta: "Build a Form",
-    href: "/forms",
-    videoMinutes: 5,
-    videoUrl: null,
-  },
-  {
-    id: "automation",
-    icon: Zap,
-    title: "Turn on Speed-to-Lead",
-    description:
-      "Attach the Speed-to-Lead automation to your form so every new inquiry gets an SMS and email within 60 seconds — automatically.",
-    cta: "Set Up Automation",
-    href: "/automations",
-    videoMinutes: 4,
-    videoUrl: null,
-  },
-  {
-    id: "pipeline",
-    icon: KanbanSquare,
-    title: "Review your pipeline",
-    description:
-      "Your pipeline is pre-set for real estate: New Lead → Contacted → Showing Scheduled → Offer Made → Closed. Drag deals as they progress.",
-    cta: "View Pipeline",
-    href: "/pipeline",
-    videoMinutes: 3,
-    videoUrl: null,
-  },
-  {
-    id: "ai",
-    icon: Bot,
-    title: "Activate your AI agent",
-    description:
-      "Your AI agent persona is pre-written for a CT realtor. Review it, add your business name, then enable it on SMS and Web Chat.",
-    cta: "Set Up AI Agent",
-    href: "/ai-agents",
-    videoMinutes: 5,
-    videoUrl: null,
-  },
-];
+// Icon per step id lives here (client-only) so the shared step metadata in
+// lib/onboarding/steps.ts stays plain data, importable by server code.
+const STEP_ICONS: Record<OnboardingStepId, React.ElementType> = {
+  contacts: Users,
+  sms: Phone,
+  form: FileText,
+  automation: Zap,
+  pipeline: KanbanSquare,
+  ai: Bot,
+};
 
 function StepRow({
   step,
+  videoUrl,
   done,
   saPath,
   onToggle,
 }: {
-  step: ChecklistStep;
+  step: OnboardingStepMeta;
+  videoUrl: string | null;
   done: boolean;
   saPath: (p: string) => string;
   onToggle: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const Icon = step.icon;
+  const Icon = STEP_ICONS[step.id];
 
   return (
     <div
@@ -173,8 +104,8 @@ function StepRow({
           {step.title}
         </span>
 
-        {/* Video badge */}
-        {step.videoMinutes && !done && (
+        {/* Video badge — only when a walkthrough URL is configured */}
+        {videoUrl && !done && (
           <span className="hidden items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground sm:flex">
             {step.videoMinutes} min video
           </span>
@@ -194,16 +125,14 @@ function StepRow({
             <Button size="sm" render={<Link href={saPath(step.href)} />}>
               {step.cta}
             </Button>
-            {step.videoUrl && (
+            {videoUrl && (
               <Button
                 size="sm"
                 variant="outline"
-                render={
-                  <a href={step.videoUrl} target="_blank" rel="noreferrer" />
-                }
+                render={<a href={videoUrl} target="_blank" rel="noreferrer" />}
               >
                 <PlayCircle className="mr-1 h-3.5 w-3.5" />
-                Watch{step.videoMinutes ? ` (${step.videoMinutes} min)` : ""}
+                Watch ({step.videoMinutes} min)
               </Button>
             )}
             <Button size="sm" variant="ghost" onClick={onToggle}>
@@ -221,6 +150,7 @@ export function OnboardingChecklist({
 }: {
   saPath: (path: string) => string;
 }) {
+  const agency = useAgency();
   const [completed, setCompleted] = useState<Set<string>>(new Set());
   const [dismissed, setDismissed] = useState(false);
 
@@ -235,7 +165,7 @@ export function OnboardingChecklist({
     });
 
   const doneCount = completed.size;
-  const totalCount = STEPS.length;
+  const totalCount = ONBOARDING_STEPS.length;
   const allDone = doneCount === totalCount;
   const progressPct = Math.round((doneCount / totalCount) * 100);
 
@@ -284,10 +214,11 @@ export function OnboardingChecklist({
 
       {/* Steps */}
       <div className="mt-4 space-y-2">
-        {STEPS.map((step) => (
+        {ONBOARDING_STEPS.map((step) => (
           <StepRow
             key={step.id}
             step={step}
+            videoUrl={agency.onboardingVideos[step.id] ?? null}
             done={completed.has(step.id)}
             saPath={saPath}
             onToggle={() => toggle(step.id)}

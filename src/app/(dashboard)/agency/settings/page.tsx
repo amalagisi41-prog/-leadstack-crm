@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { BrandingSection } from "@/components/agency/branding-section";
+import { OnboardingVideosSection } from "@/components/agency/onboarding-videos-section";
 import { MessagingSection } from "@/components/agency/messaging-section";
 import { SeedDemoSection } from "@/components/agency/seed-demo-section";
 import { PasswordSection } from "@/components/settings/password-section";
@@ -41,6 +42,11 @@ export default function AgencySettingsPage() {
       </div>
 
       <BrandingSection />
+
+      {/* Per-step onboarding walkthrough video URLs — surface as "Watch"
+          buttons on the new-agent dashboard checklist. Agency-wide (recorded
+          once, shown to every sub-account). */}
+      <OnboardingVideosSection />
 
       {/* Read-only view of the shared (env-var) Twilio + Resend senders, so the
           owner can see exactly what "agency-level" SMS/email resolves to. */}
