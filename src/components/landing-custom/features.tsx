@@ -23,7 +23,7 @@ const features = [
     icon: Star,
     title: "Google reviews on autopilot",
     body: "LeadStack sends a review request at the perfect moment — right after closing, when satisfaction is highest. More five-star reviews, less asking awkwardly.",
-    color: "bg-emerald-500/10 text-emerald-500",
+    color: "bg-blue-500/10 text-blue-500",
   },
   {
     icon: Globe,

@@ -30,8 +30,8 @@ const steps = [
     icon: Star,
     title: "Close and get your review",
     body: "LeadStack follows up from offer to closing day — then automatically asks for a Google review at exactly the right moment.",
-    color: "text-emerald-500",
-    bg: "bg-emerald-500/10",
+    color: "text-blue-500",
+    bg: "bg-blue-500/10",
   },
 ];
 

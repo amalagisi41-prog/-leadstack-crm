@@ -15,7 +15,7 @@ const testimonials = [
     name: "Tanya K.",
     title: "Top Producer · Austin, TX · GCI $380k",
     initials: "TK",
-    color: "bg-emerald-500",
+    color: "bg-blue-500",
   },
   {
     quote:

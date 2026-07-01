@@ -205,7 +205,7 @@ function SidebarContent() {
               className="h-6 w-auto max-w-[120px] object-contain"
             />
           ) : (
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-600">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600">
               <LogoMark size={16} idSuffix="-sidebar" className="text-white" />
             </div>
           )}
@@ -342,7 +342,7 @@ function SidebarContent() {
         {!showSubNav && !loading && (
           <p className="rounded-md border border-white/10 px-3 py-3 text-xs text-white/40">
             Pick a sub-account from{" "}
-            <Link href="/agency" className="text-emerald-400 underline">
+            <Link href="/agency" className="text-blue-400 underline">
               Agency home
             </Link>{" "}
             to see its data.
@@ -383,7 +383,7 @@ function SidebarLink({
       className={cn(
         "flex items-center justify-between gap-2.5 rounded-md px-2 py-1.5 text-sm font-medium transition-colors",
         active
-          ? "bg-emerald-600/20 text-emerald-400"
+          ? "bg-blue-600/20 text-blue-400"
           : "text-white/50 hover:bg-white/5 hover:text-white/80",
       )}
     >
@@ -396,7 +396,7 @@ function SidebarLink({
           className={cn(
             "rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums",
             active
-              ? "bg-emerald-500 text-white"
+              ? "bg-blue-500 text-white"
               : "bg-amber-500/20 text-amber-400",
           )}
         >

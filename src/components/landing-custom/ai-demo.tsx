@@ -52,7 +52,7 @@ export function AiDemo() {
                   "Escalates hot leads to you immediately",
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2.5 text-sm">
-                    <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600">
+                    <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-blue-500/15 text-blue-600">
                       ✓
                     </span>
                     {item}
@@ -64,15 +64,15 @@ export function AiDemo() {
             {/* Chat mockup */}
             <div className="rounded-2xl border bg-card shadow-xl overflow-hidden">
               <div className="flex items-center gap-3 border-b px-4 py-3 bg-muted/30">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/10">
-                  <Bot className="h-4 w-4 text-emerald-500" />
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500/10">
+                  <Bot className="h-4 w-4 text-blue-500" />
                 </div>
                 <div>
                   <p className="text-xs font-semibold">Artisan Home Network</p>
                   <p className="text-[10px] text-muted-foreground">AI Receptionist · Online</p>
                 </div>
                 <div className="ml-auto flex items-center gap-1">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
                   <span className="text-[10px] text-muted-foreground">live</span>
                 </div>
               </div>
@@ -83,9 +83,9 @@ export function AiDemo() {
                     key={i}
                     className={`flex gap-2 ${msg.from === "visitor" ? "flex-row-reverse" : ""}`}
                   >
-                    <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${msg.from === "bot" ? "bg-emerald-500/10" : "bg-blue-500/10"}`}>
+                    <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${msg.from === "bot" ? "bg-blue-500/10" : "bg-blue-500/10"}`}>
                       {msg.from === "bot" ? (
-                        <Bot className="h-3 w-3 text-emerald-500" />
+                        <Bot className="h-3 w-3 text-blue-500" />
                       ) : (
                         <User className="h-3 w-3 text-blue-500" />
                       )}
@@ -94,7 +94,7 @@ export function AiDemo() {
                       className={`max-w-[80%] rounded-xl px-3 py-2 text-xs leading-relaxed ${
                         msg.from === "bot"
                           ? "bg-muted text-foreground"
-                          : "bg-emerald-600 text-white"
+                          : "bg-blue-600 text-white"
                       }`}
                     >
                       {msg.text}
@@ -107,7 +107,7 @@ export function AiDemo() {
                 <div className="flex-1 rounded-lg border bg-muted/50 px-3 py-1.5 text-xs text-muted-foreground">
                   Type a message...
                 </div>
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-600 text-white text-xs font-bold">
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white text-xs font-bold">
                   ↑
                 </div>
               </div>

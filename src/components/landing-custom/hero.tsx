@@ -37,8 +37,8 @@ const pipelineStages = [
   },
   {
     stage: "Under Contract",
-    color: "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400",
-    dot: "bg-emerald-500",
+    color: "bg-blue-500/10 border-blue-500/20 text-blue-600 dark:text-blue-400",
+    dot: "bg-blue-500",
     contacts: [
       { name: "Chen Family", note: "Close Dec 15 · $620k", time: "3d ago" },
     ],
@@ -48,8 +48,8 @@ const pipelineStages = [
 export function Hero({ brand }: { brand: ResolvedBrand }) {
   return (
     <section className="relative overflow-hidden py-16 md:py-24">
-      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,oklch(0.72_0.16_165)_/_16%,transparent_55%)]" />
-      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_bottom_left,oklch(0.74_0.13_185)_/_12%,transparent_55%)]" />
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,oklch(0.72_0.18_263)_/_16%,transparent_55%)]" />
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_bottom_left,oklch(0.74_0.15_280)_/_12%,transparent_55%)]" />
       <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-[1px] bg-gradient-to-r from-transparent via-foreground/10 to-transparent" />
       <div
         className="pointer-events-none absolute inset-0 -z-10 opacity-[0.03]"
@@ -62,16 +62,16 @@ export function Hero({ brand }: { brand: ResolvedBrand }) {
 
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-3xl text-center">
-          <div className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/5 px-3 py-1 text-xs font-medium">
-            <Sparkles className="h-3.5 w-3.5 text-emerald-500" />
-            <span className="bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-300 bg-clip-text text-transparent">
+          <div className="mx-auto mb-6 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-blue-500/5 px-3 py-1 text-xs font-medium">
+            <Sparkles className="h-3.5 w-3.5 text-blue-500" />
+            <span className="bg-gradient-to-r from-blue-500 via-blue-400 to-indigo-400 bg-clip-text text-transparent">
               {brand.tagline}
             </span>
           </div>
 
           <h1 className="text-balance text-4xl font-semibold tracking-tighter sm:text-5xl md:text-6xl lg:text-[5rem] lg:leading-[1.04]">
             Never lose another lead{" "}
-            <span className="inline-block bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-300 bg-clip-text pr-1 font-serif font-normal italic text-transparent">
+            <span className="inline-block bg-gradient-to-r from-blue-500 via-blue-400 to-indigo-400 bg-clip-text pr-1 font-serif font-normal italic text-transparent">
               between showings.
             </span>
           </h1>
@@ -84,7 +84,7 @@ export function Hero({ brand }: { brand: ResolvedBrand }) {
             <Button
               render={<a href={`mailto:${brand.supportEmail}`} />}
               size="lg"
-              className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 text-base"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 text-base"
             >
               Start Free <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
@@ -101,7 +101,7 @@ export function Hero({ brand }: { brand: ResolvedBrand }) {
           <div className="mt-10 grid grid-cols-3 gap-4 sm:gap-8">
             {stats.map(({ icon: Icon, value, label }) => (
               <div key={label} className="flex flex-col items-center gap-1">
-                <div className="flex items-center gap-1.5 text-emerald-500">
+                <div className="flex items-center gap-1.5 text-blue-500">
                   <Icon className="h-4 w-4" />
                   <span className="text-xl font-bold text-foreground sm:text-2xl">{value}</span>
                 </div>

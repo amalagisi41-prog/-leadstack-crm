@@ -40,7 +40,7 @@ export function Navbar({ brand }: { brand: ResolvedBrand }) {
           ) : (
             <Logo size={24} idSuffix="-nav" />
           )}
-          <span className="bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-300 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-blue-500 via-blue-400 to-indigo-400 bg-clip-text text-transparent">
             {brand.name}
           </span>
         </Link>
@@ -73,7 +73,7 @@ export function Navbar({ brand }: { brand: ResolvedBrand }) {
                   <Button
                     render={<a href={`mailto:${brand.supportEmail}`} />}
                     size="sm"
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
                   >
                     Start Free →
                   </Button>
@@ -137,7 +137,7 @@ export function Navbar({ brand }: { brand: ResolvedBrand }) {
                       <SheetClose render={<span />}>
                         <Button
                           render={<a href={`mailto:${brand.supportEmail}`} />}
-                          className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                          className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                           size="sm"
                         >
                           Start Free →

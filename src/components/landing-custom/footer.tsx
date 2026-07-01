@@ -19,7 +19,7 @@ export function Footer({ brand }: { brand: ResolvedBrand }) {
               ) : (
                 <Logo size={20} idSuffix="-footer" />
               )}
-              <span className="bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-300 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-blue-500 via-blue-400 to-indigo-400 bg-clip-text text-transparent">
                 {brand.name}
               </span>
             </Link>

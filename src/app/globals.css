@@ -74,34 +74,34 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  /* Emerald primary — Artisan Home Network brand */
-  --primary: oklch(0.46 0.11 157);
+  /* Blue primary — Artisan Home Network brand */
+  --primary: oklch(0.546 0.245 262.881);
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.95 0.015 157);
-  --accent-foreground: oklch(0.46 0.11 157);
+  --accent: oklch(0.945 0.025 262.881);
+  --accent-foreground: oklch(0.546 0.245 262.881);
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.46 0.11 157);
-  --chart-1: oklch(0.46 0.11 157);
-  --chart-2: oklch(0.60 0.13 157);
-  --chart-3: oklch(0.72 0.12 157);
-  --chart-4: oklch(0.82 0.09 157);
-  --chart-5: oklch(0.91 0.05 157);
+  --ring: oklch(0.546 0.245 262.881);
+  --chart-1: oklch(0.546 0.245 262.881);
+  --chart-2: oklch(0.623 0.214 259.815);
+  --chart-3: oklch(0.72 0.18 260);
+  --chart-4: oklch(0.82 0.12 260);
+  --chart-5: oklch(0.91 0.07 260);
   --radius: 0.625rem;
   /* Sidebar — dark panel */
   --sidebar: oklch(0.12 0.012 265);
   --sidebar-foreground: oklch(0.82 0 0);
-  --sidebar-primary: oklch(0.65 0.14 157);
+  --sidebar-primary: oklch(0.623 0.214 259.815);
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.18 0.012 265);
   --sidebar-accent-foreground: oklch(0.95 0 0);
   --sidebar-border: oklch(0.22 0.012 265);
-  --sidebar-ring: oklch(0.46 0.11 157);
+  --sidebar-ring: oklch(0.546 0.245 262.881);
 }
 
 .dark {

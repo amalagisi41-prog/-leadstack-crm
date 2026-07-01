@@ -2,13 +2,13 @@ import { MapPin, Users, TrendingUp } from "lucide-react";
 
 const farmStats = [
   { label: "Contacts in your farm", value: "247", icon: Users, color: "text-blue-500" },
-  { label: "Avg days to first contact", value: "0.4", icon: TrendingUp, color: "text-emerald-500" },
+  { label: "Avg days to first contact", value: "0.4", icon: TrendingUp, color: "text-blue-500" },
   { label: "Active territories", value: "3", icon: MapPin, color: "text-purple-500" },
 ];
 
 const territories = [
   { name: "Maplewood North", contacts: 84, hot: 6, stage: "Showing Scheduled", color: "bg-blue-500" },
-  { name: "South Orange", contacts: 63, hot: 4, stage: "New Inquiry", color: "bg-emerald-500" },
+  { name: "South Orange", contacts: 63, hot: 4, stage: "New Inquiry", color: "bg-blue-500" },
   { name: "Montclair Heights", contacts: 100, hot: 9, stage: "Offer In", color: "bg-purple-500" },
 ];
 
@@ -21,7 +21,7 @@ export function Territory() {
             {/* Territory map mockup */}
             <div className="rounded-2xl border bg-card shadow-xl overflow-hidden order-2 lg:order-1">
               <div className="flex items-center gap-2 border-b px-4 py-3 bg-muted/30">
-                <MapPin className="h-4 w-4 text-emerald-500" />
+                <MapPin className="h-4 w-4 text-blue-500" />
                 <span className="text-xs font-semibold">Territory Overview</span>
               </div>
 
@@ -103,7 +103,7 @@ export function Territory() {
                   "Track GCI per territory for brokerage reporting",
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2.5 text-sm">
-                    <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600">
+                    <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-blue-500/15 text-blue-600">
                       ✓
                     </span>
                     {item}
