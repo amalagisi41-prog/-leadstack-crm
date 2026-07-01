@@ -20,6 +20,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAgency } from "@/hooks/use-agency";
+import { OnboardingHelp } from "@/components/dashboard/onboarding-help";
 import {
   ONBOARDING_STEPS,
   type OnboardingStepId,
@@ -257,6 +258,10 @@ export function OnboardingChecklist({
           </p>
         </div>
       )}
+
+      {/* AI setup assistant — backs up the videos with instant Q&A. Hidden in
+          the agency-settings preview (it makes live LLM calls). */}
+      {!preview && <OnboardingHelp />}
     </div>
   );
 }
