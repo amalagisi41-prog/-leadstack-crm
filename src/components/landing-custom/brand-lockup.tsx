@@ -36,15 +36,17 @@ export function BrandLockup({
       ? "text-lg tracking-[0.2em]"
       : "text-2xl tracking-[0.24em]";
   const sublineClass = size === "sm" ? "text-[7px]" : "text-[9px]";
+  // Even (non-justified) spacing between words + generous letter tracking.
+  const sublineSpacing = size === "sm" ? "0.34em" : "0.42em";
 
   return (
     <span className="flex items-center gap-2">
       {showMark && (
         <Logo size={size === "sm" ? 22 : 28} idSuffix={`-lockup-${size}`} />
       )}
-      {/* inline-flex column shrinks to ARTISAN's width so the justified
-          sub-line stretches exactly edge-to-edge under it. */}
-      <span className="inline-flex flex-col leading-none">
+      {/* Both lines centered on the same axis so the sub-line sits centered
+          under ARTISAN with even spacing (no justify stretch). */}
+      <span className="inline-flex flex-col items-center leading-none">
         <span
           className={`font-sans font-extrabold ${wordClass}`}
           style={{ color: NAVY }}
@@ -52,12 +54,14 @@ export function BrandLockup({
           {primaryWord}
         </span>
         <span
-          className={`mt-1 block w-full font-sans font-medium uppercase ${sublineClass}`}
+          className={`mt-1 block text-center font-sans font-medium uppercase ${sublineClass}`}
           style={{
             color: NAVY,
             opacity: 0.7,
-            textAlign: "justify",
-            textAlignLast: "justify",
+            letterSpacing: sublineSpacing,
+            // letter-spacing adds a trailing gap after the last letter;
+            // pull it back so the word stays visually centered.
+            marginRight: `-${sublineSpacing}`,
           }}
         >
           {subline}
