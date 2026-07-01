@@ -36,8 +36,9 @@ export function BrandLockup({
       ? "text-lg tracking-[0.2em]"
       : "text-2xl tracking-[0.24em]";
   const sublineClass = size === "sm" ? "text-[7px]" : "text-[9px]";
-  // Even (non-justified) spacing between words + generous letter tracking.
-  const sublineSpacing = size === "sm" ? "0.34em" : "0.42em";
+  // Even (non-justified) spacing between words + letter tracking tuned so the
+  // sub-line reads at ~ARTISAN's width without justify-stretching the words.
+  const sublineSpacing = size === "sm" ? "0.14em" : "0.18em";
 
   return (
     <span className="flex items-center gap-2">
