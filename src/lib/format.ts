@@ -83,12 +83,17 @@ export function daysSince(
   return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
 }
 
-export function formatCurrency(value: number, currency = "USD"): string {
+export function formatCurrency(
+  value: number,
+  currency = "USD",
+  opts?: { compact?: boolean },
+): string {
   try {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency,
-      maximumFractionDigits: value % 1 === 0 ? 0 : 2,
+      notation: opts?.compact ? "compact" : "standard",
+      maximumFractionDigits: opts?.compact ? 1 : value % 1 === 0 ? 0 : 2,
     }).format(value || 0);
   } catch {
     return `${currency} ${value.toLocaleString()}`;

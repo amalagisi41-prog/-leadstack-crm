@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
 import { useAuth } from "@/hooks/use-auth";
 import { getFirebaseDb } from "@/lib/firebase/client";
+import type { OnboardingVideos } from "@/lib/onboarding/steps";
 import type { AgencyDoc } from "@/types";
 
 interface AgencySummary {
@@ -15,6 +16,8 @@ interface AgencySummary {
   supportEmail: string | null;
   /** Bare public domain (no scheme). Null until set in Agency → Settings. */
   primaryDomain: string | null;
+  /** Per-step onboarding walkthrough video URLs. Empty until set in Agency → Settings. */
+  onboardingVideos: OnboardingVideos;
   /** True until the Firestore snapshot has resolved. UI shouldn't render brand chrome before this flips false. */
   loading: boolean;
 }
@@ -24,6 +27,7 @@ interface AgencyData {
   logoUrl: string | null;
   supportEmail: string | null;
   primaryDomain: string | null;
+  onboardingVideos: OnboardingVideos;
 }
 
 /**
@@ -39,6 +43,7 @@ export function useAgency(): AgencySummary {
     logoUrl: null,
     supportEmail: null,
     primaryDomain: null,
+    onboardingVideos: {},
   });
   const [loading, setLoading] = useState<boolean>(!!agencyId);
 
@@ -58,6 +63,8 @@ export function useAgency(): AgencySummary {
             logoUrl: (d.logoUrl as string | null) ?? null,
             supportEmail: (d.supportEmail as string | null) ?? null,
             primaryDomain: (d.primaryDomain as string | null) ?? null,
+            onboardingVideos:
+              (d.onboardingVideos as OnboardingVideos | null) ?? {},
           });
         }
         setLoading(false);

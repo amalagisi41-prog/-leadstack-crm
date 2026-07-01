@@ -4,7 +4,7 @@ import type { ResolvedBrand } from "@/config/landing";
 export function CTA({ brand }: { brand: ResolvedBrand }) {
   return (
     <section className="relative overflow-hidden py-24">
-      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,oklch(0.72_0.16_165)_/_14%,transparent_60%)]" />
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,oklch(0.72_0.18_263)_/_14%,transparent_60%)]" />
 
       <div className="container mx-auto px-4 text-center">
         <h2 className="mx-auto max-w-2xl text-3xl font-semibold tracking-tighter sm:text-5xl">
@@ -25,7 +25,7 @@ export function CTA({ brand }: { brand: ResolvedBrand }) {
             Book a demo
           </Button>
           <Button
-            render={<a href={`mailto:${brand.supportEmail}?subject=AgentEdge%20questions`} />}
+            render={<a href={`mailto:${brand.supportEmail}?subject=Question%20about%20Artisan%20RE%20Solutions`} />}
             variant="outline"
             size="lg"
             className="px-6 text-base"

@@ -25,9 +25,17 @@ import { LiveVisitorBeacon } from "@/components/landing/live-visitor-beacon";
 
 import { Navbar as CustomNavbar } from "@/components/landing-custom/navbar";
 import { Hero as CustomHero } from "@/components/landing-custom/hero";
+import { PainPoints } from "@/components/landing-custom/pain-points";
+import { HowItWorks as CustomHowItWorks } from "@/components/landing-custom/how-it-works";
+import { PipelineDemo } from "@/components/landing-custom/pipeline-demo";
+import { AiDemo } from "@/components/landing-custom/ai-demo";
+import { Territory } from "@/components/landing-custom/territory";
 import { Features as CustomFeatures } from "@/components/landing-custom/features";
+import { Testimonials } from "@/components/landing-custom/testimonials";
+import { Pricing as CustomPricing } from "@/components/landing-custom/pricing";
+import { AddOns } from "@/components/landing-custom/add-ons";
 import { FAQ as CustomFAQ } from "@/components/landing-custom/faq";
-import { CTA as CustomCTA } from "@/components/landing-custom/cta";
+import { SignupCta } from "@/components/landing-custom/signup-cta";
 import { Footer as CustomFooter } from "@/components/landing-custom/footer";
 
 /**
@@ -51,9 +59,17 @@ export default async function HomePage() {
         <CustomNavbar brand={brand} />
         <main className="flex-1">
           <CustomHero brand={brand} />
+          <PainPoints />
+          <CustomHowItWorks />
+          <PipelineDemo />
+          <AiDemo />
+          <Territory />
           <CustomFeatures />
+          <Testimonials />
+          <CustomPricing />
+          <AddOns />
           <CustomFAQ brand={brand} />
-          <CustomCTA brand={brand} />
+          <SignupCta />
         </main>
         <CustomFooter brand={brand} />
       </div>

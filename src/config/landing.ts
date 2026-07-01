@@ -75,23 +75,23 @@ export interface ResolvedBrand {
  */
 export const CUSTOM_BRAND: CustomBrand = {
   /** Displayed in navbar, hero, footer copyright, page title â€" everywhere. */
-  name: "AgentEdge",
+  name: "Artisan RE Solutions",
 
   /** One-line positioning, surfaced in hero subtitle + meta description. */
-  tagline: "Built for the top 1% of realtors",
+  tagline: "Purpose-built for REALTORS®",
 
   /**
    * Short (~140 char) description used under the hero headline. Should
    * read like a tweet â€" what the product does, for whom.
    */
   shortDescription:
-    "Contacts, pipeline, AI follow-up, and client communication — the CRM high-producing agents actually use. Close more, work less.",
+    "Stop losing deals between showings. Artisan CRM responds to every inbound lead in under 60 seconds, keeps your pipeline organized from first inquiry to closing day, and follows up so you don't have to.",
 
   /** Used on CTA buttons + the FAQ "talk to us" line + footer. */
-  supportEmail: "hello@agentedge.com",
+  supportEmail: "hello@artisanresolutions.com",
 
   /** Used in footer, og:url, canonical. No https://, no trailing slash. */
-  primaryDomain: "agentedge.com",
+  primaryDomain: "artisanresolutions.com",
 
   /**
    * Pricing tiers. HIDDEN BY DEFAULT â€" the custom landing is wired for
@@ -118,32 +118,33 @@ export const CUSTOM_BRAND: CustomBrand = {
   pricing: {
     starter: {
       name: "Solo Agent",
-      priceMonthly: 79,
-      priceAnnual: 59,
-      blurb: "For individual agents who are serious about follow-up.",
+      priceMonthly: 199,
+      priceAnnual: 159,
+      blurb: "For individual agents serious about never missing a lead.",
       features: [
-        "Up to 2,500 contacts",
+        "Up to 5,000 contacts",
         "Pipeline + tasks + calendar",
-        "AI text & email follow-up",
+        "AI SMS & email follow-up",
         "Lead capture forms",
         "Booking pages",
         "Mobile-friendly dashboard",
+        "Email & chat support",
       ],
       cta: "Start free trial",
       highlighted: false,
     },
     pro: {
       name: "Top Producer",
-      priceMonthly: 149,
-      priceAnnual: 119,
+      priceMonthly: 299,
+      priceAnnual: 239,
       blurb: "For high-volume agents who can't afford to let a lead go cold.",
       features: [
         "Unlimited contacts",
         "AI Voice + SMS + Web Chat agent",
         "Automated drip sequences",
         "Quote & estimate builder",
-        "Built-in website for listings",
         "Up to 5 team members",
+        "Territory routing",
         "Priority support",
       ],
       cta: "Start free trial",
@@ -151,15 +152,15 @@ export const CUSTOM_BRAND: CustomBrand = {
     },
     scale: {
       name: "Team & Brokerage",
-      priceMonthly: 349,
-      priceAnnual: 279,
+      priceMonthly: 399,
+      priceAnnual: 319,
       blurb: "For teams and brokerages managing multiple agents.",
       features: [
         "Everything in Top Producer",
-        "Unlimited team seats",
+        "Unlimited agent seats",
         "Per-agent sub-accounts",
-        "Territory assignment & routing",
         "Bulk email campaigns",
+        "API access + webhooks",
         "Dedicated onboarding call",
         "SLA-backed support",
       ],

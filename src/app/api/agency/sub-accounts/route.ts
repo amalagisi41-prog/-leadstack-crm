@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import { seedDefaultTemplates } from "@/lib/automations/seed-templates";
+import { applyRealEstateSnapshot } from "@/lib/snapshots/real-estate-agent";
 import { GLOBAL_TERRITORY_ID, type MemberStatus, type Role } from "@/types";
 
 interface CreateBody {
@@ -221,10 +222,26 @@ export async function POST(request: Request) {
     return current;
   });
 
+  // Apply the real-estate agent snapshot (pipeline stages + email/SMS
+  // templates + AI persona) as a best-effort follow-up write. Runs AFTER the
+  // creation transaction commits so a snapshot hiccup can never orphan the
+  // sub-account. If it fails, the sub-account still exists with generic
+  // defaults and the owner can re-apply via POST .../apply-snapshot.
+  let snapshotApplied = false;
+  try {
+    await applyRealEstateSnapshot(subAccountId, agencyId, uid, {
+      businessName: name,
+    });
+    snapshotApplied = true;
+  } catch (err) {
+    console.error("[sub-accounts] snapshot apply failed", subAccountId, err);
+  }
+
   return NextResponse.json({
     subAccountId,
     accountNumber,
     name,
     agencyId,
+    snapshotApplied,
   });
 }
