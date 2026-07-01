@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { CUSTOM_BRAND, type CustomPricingTier } from "@/config/landing";
 
 export function Pricing() {
-  const [annual, setAnnual] = useState(true);
+  const [annual, setAnnual] = useState(false);
 
   const tiers: CustomPricingTier[] = [
     CUSTOM_BRAND.pricing.starter,
