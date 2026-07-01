@@ -44,7 +44,7 @@ export function AiDemo() {
                 </span>
               </h2>
               <p className="text-muted-foreground leading-relaxed mb-6">
-                Artisan&apos;s AI receptionist responds to inbound texts, web chat, and calls 24/7 — qualifying buyers, booking showings, and sending listing docs before you even see the notification.
+                Artisan CRM&apos;s AI receptionist responds to inbound texts, web chat, and calls 24/7 — qualifying buyers, booking showings, and sending listing docs before you even see the notification.
               </p>
               <ul className="space-y-3">
                 {[

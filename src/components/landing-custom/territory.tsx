@@ -92,7 +92,7 @@ export function Territory() {
                 </span>
               </h2>
               <p className="text-muted-foreground leading-relaxed mb-6">
-                Stop guessing who&apos;s hot in your territory. Artisan maps every contact to their neighborhood, shows you which leads haven&apos;t heard from you in too long, and routes new inquiries to the right agent automatically.
+                Stop guessing who&apos;s hot in your territory. Artisan CRM maps every contact to their neighborhood, shows you which leads haven&apos;t heard from you in too long, and routes new inquiries to the right agent automatically.
               </p>
               <ul className="space-y-3">
                 {[

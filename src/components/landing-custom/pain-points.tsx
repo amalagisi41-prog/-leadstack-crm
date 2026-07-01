@@ -9,7 +9,7 @@ const pains = [
   {
     emoji: "📋",
     heading: "You said you'd follow up — but never did.",
-    body: "Seven touchpoints is the conversion sweet spot. Most agents send one. Artisan runs the whole sequence automatically so nothing slips through.",
+    body: "Seven touchpoints is the conversion sweet spot. Most agents send one. Artisan CRM runs the whole sequence automatically so nothing slips through.",
   },
   {
     emoji: "🧠",

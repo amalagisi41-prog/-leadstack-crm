@@ -4,7 +4,7 @@ const features = [
   {
     icon: Zap,
     title: "Speed-to-lead — every time",
-    body: "The first agent to respond wins. Artisan fires a personal text and email within 60 seconds of any new inquiry — from your website, Zillow, or a yard sign text — even while you're in a showing.",
+    body: "The first agent to respond wins. Artisan CRM fires a personal text and email within 60 seconds of any new inquiry — from your website, Zillow, or a yard sign text — even while you're in a showing.",
     color: "bg-amber-500/10 text-amber-500",
   },
   {

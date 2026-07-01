@@ -85,7 +85,7 @@ export const CUSTOM_BRAND: CustomBrand = {
    * read like a tweet â€" what the product does, for whom.
    */
   shortDescription:
-    "Stop losing deals between showings. Artisan responds to every inbound lead in under 60 seconds, keeps your pipeline organized from first inquiry to closing day, and follows up so you don't have to.",
+    "Stop losing deals between showings. Artisan CRM responds to every inbound lead in under 60 seconds, keeps your pipeline organized from first inquiry to closing day, and follows up so you don't have to.",
 
   /** Used on CTA buttons + the FAQ "talk to us" line + footer. */
   supportEmail: "hello@artisanresolutions.com",

@@ -5,7 +5,7 @@ const steps = [
     number: "01",
     icon: Inbox,
     title: "Lead comes in",
-    body: "From Zillow, your website, a yard sign text, or a referral — Artisan captures every inquiry and responds in under 60 seconds.",
+    body: "From Zillow, your website, a yard sign text, or a referral — Artisan CRM captures every inquiry and responds in under 60 seconds.",
     iconColor: "text-blue-500",
     iconBg: "bg-blue-500/10",
     numColor: "text-blue-600",

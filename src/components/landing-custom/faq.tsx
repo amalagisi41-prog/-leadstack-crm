@@ -9,7 +9,7 @@ const faqs = [
   {
     question: "I already use Chime / Follow Up Boss / KvCORE. Why switch?",
     answer:
-      "Most real estate CRMs lock you into their ecosystem and charge per-seat as your team grows. Artisan is designed to be simple enough for a solo agent but powerful enough for a 20-person team — with AI follow-up, voice calling, and booking pages built in. You own your data, your automations, and your brand. No per-seat surprises.",
+      "Most real estate CRMs lock you into their ecosystem and charge per-seat as your team grows. Artisan CRM is designed to be simple enough for a solo agent but powerful enough for a 20-person team — with AI follow-up, voice calling, and booking pages built in. You own your data, your automations, and your brand. No per-seat surprises.",
   },
   {
     question: "How fast will leads get a response?",
