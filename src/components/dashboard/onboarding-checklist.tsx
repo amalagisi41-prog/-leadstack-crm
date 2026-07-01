@@ -15,6 +15,7 @@ import {
   FileText,
   Rocket,
   Sparkles,
+  PlayCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -27,8 +28,17 @@ interface ChecklistStep {
   cta: string;
   href: string;
   videoMinutes?: number;
+  /**
+   * Loom (or any) walkthrough URL for this step. Paste your recorded links
+   * here — when set, a "Watch (N min)" button appears in the expanded step.
+   * Leave null until you've recorded the video.
+   */
+  videoUrl?: string | null;
 }
 
+// ─── Onboarding videos ────────────────────────────────────────────────────────
+// Record one short Loom per step and paste the share URL below. Until then the
+// steps still work — they just don't show a "Watch" button.
 const STEPS: ChecklistStep[] = [
   {
     id: "contacts",
@@ -39,6 +49,7 @@ const STEPS: ChecklistStep[] = [
     cta: "Go to Contacts",
     href: "/contacts?import=1",
     videoMinutes: 4,
+    videoUrl: null,
   },
   {
     id: "sms",
@@ -49,6 +60,7 @@ const STEPS: ChecklistStep[] = [
     cta: "Open SMS Settings",
     href: "/dashboard/settings?tab=sms",
     videoMinutes: 3,
+    videoUrl: null,
   },
   {
     id: "form",
@@ -59,6 +71,7 @@ const STEPS: ChecklistStep[] = [
     cta: "Build a Form",
     href: "/forms",
     videoMinutes: 5,
+    videoUrl: null,
   },
   {
     id: "automation",
@@ -69,6 +82,7 @@ const STEPS: ChecklistStep[] = [
     cta: "Set Up Automation",
     href: "/automations",
     videoMinutes: 4,
+    videoUrl: null,
   },
   {
     id: "pipeline",
@@ -79,6 +93,7 @@ const STEPS: ChecklistStep[] = [
     cta: "View Pipeline",
     href: "/pipeline",
     videoMinutes: 3,
+    videoUrl: null,
   },
   {
     id: "ai",
@@ -89,6 +104,7 @@ const STEPS: ChecklistStep[] = [
     cta: "Set Up AI Agent",
     href: "/ai-agents",
     videoMinutes: 5,
+    videoUrl: null,
   },
 ];
 
@@ -174,10 +190,22 @@ function StepRow({
       {expanded && !done && (
         <div className="border-t border-border px-4 py-3">
           <p className="text-sm text-muted-foreground">{step.description}</p>
-          <div className="mt-3 flex items-center gap-2">
+          <div className="mt-3 flex flex-wrap items-center gap-2">
             <Button size="sm" render={<Link href={saPath(step.href)} />}>
               {step.cta}
             </Button>
+            {step.videoUrl && (
+              <Button
+                size="sm"
+                variant="outline"
+                render={
+                  <a href={step.videoUrl} target="_blank" rel="noreferrer" />
+                }
+              >
+                <PlayCircle className="mr-1 h-3.5 w-3.5" />
+                Watch{step.videoMinutes ? ` (${step.videoMinutes} min)` : ""}
+              </Button>
+            )}
             <Button size="sm" variant="ghost" onClick={onToggle}>
               Mark done
             </Button>
@@ -201,7 +229,8 @@ export function OnboardingChecklist({
   const toggle = (id: string) =>
     setCompleted((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
 

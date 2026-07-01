@@ -26,7 +26,7 @@ export async function POST(
   const access = await requireSubAccountAdmin(request, subAccountId);
   if (access instanceof NextResponse) return access;
 
-  let body: { businessName?: string; agentName?: string } = {};
+  let body: { businessName?: string } = {};
   try {
     body = await request.json();
   } catch {
@@ -43,7 +43,7 @@ export async function POST(
       subAccountId,
       agencyId,
       createdByUid,
-      { businessName: body.businessName, agentName: body.agentName },
+      { businessName: body.businessName },
     );
 
     return NextResponse.json({
