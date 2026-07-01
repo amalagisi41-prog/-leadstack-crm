@@ -16,14 +16,28 @@ const addOns: AddOn[] = [
   {
     category: "Visibility",
     name: "Agent Website",
-    tagline: "Your own branded listing site",
+    tagline: "Your branded listing site, live in days",
     price: "$49",
     billing: "/mo",
     features: [
-      "Custom domain + SSL included",
+      "Template-based site on your domain",
       "MLS/IDX property search feed",
       "Neighborhood pages & market reports",
-      "Lead capture forms → pipeline",
+      "Lead capture forms straight to your pipeline",
+    ],
+  },
+  {
+    category: "Visibility",
+    name: "Custom Website Build",
+    tagline: "A fully custom site built from scratch",
+    price: "$1,500",
+    billing: " one-time",
+    badge: "Premium",
+    features: [
+      "Bespoke design — no templates",
+      "IDX integration + lead capture wired in",
+      "Mobile-first, SEO-optimized build",
+      "Handed off to you or hosted on your plan",
     ],
   },
   {
@@ -96,14 +110,14 @@ const addOns: AddOn[] = [
   {
     category: "Onboarding",
     name: "White-Glove Setup",
-    tagline: "We do the heavy lifting for you",
+    tagline: "Our team configures everything for you",
     price: "$299",
     billing: " one-time",
     features: [
-      "Full data import from any CRM",
-      "Speed-to-Lead automation built out",
-      "AI agent persona written for you",
-      "2-hour live strategy call",
+      "We import your contacts from any CRM or CSV",
+      "Speed-to-Lead automations built & tested",
+      "AI agent persona written for your brand",
+      "2-hour live onboarding call with your team",
     ],
   },
 ];
