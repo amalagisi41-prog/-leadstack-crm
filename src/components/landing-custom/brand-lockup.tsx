@@ -55,7 +55,7 @@ export function BrandLockup({
           {primaryWord}
         </span>
         <span
-          className={`mt-1 block text-center font-sans font-medium uppercase ${sublineClass}`}
+          className={`-mt-0.5 block text-center font-sans font-medium uppercase ${sublineClass}`}
           style={{
             color: NAVY,
             opacity: 0.7,
