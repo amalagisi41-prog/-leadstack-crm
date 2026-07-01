@@ -4,21 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { Check, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { CUSTOM_BRAND, type CustomPricingTier } from "@/config/landing";
-
-// Pricing buttons currently route to /signup. When you wire Stripe, swap
-// the Subscribe button to call createCheckoutSession with the relevant
-// STRIPE_PRO_PRICE_ID / STRIPE_SCALE_PRICE_ID.
 
 export function Pricing() {
   const [annual, setAnnual] = useState(true);
@@ -33,18 +20,18 @@ export function Pricing() {
     <section id="pricing" className="py-24">
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-2xl text-center">
-          <p className="text-sm font-semibold uppercase tracking-wide text-primary">
+          <p className="text-sm font-semibold uppercase tracking-wide text-blue-600 mb-2">
             Pricing
           </p>
-          <h2 className="mt-2 text-3xl font-semibold tracking-tighter sm:text-5xl">
+          <h2 className="text-3xl font-semibold tracking-tighter sm:text-5xl">
             Simple pricing.{" "}
-            <span className="font-serif font-normal italic">
+            <span className="bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text font-serif font-normal italic text-transparent">
               Cancel anytime.
             </span>
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            Pick the plan that fits. Upgrade, downgrade, or cancel from
-            your account in two clicks.
+            Pick the plan that fits your volume. Upgrade, downgrade, or cancel
+            from your account in two clicks.
           </p>
 
           <div className="mx-auto mt-8 inline-flex items-center gap-1 rounded-full border bg-muted/50 p-1">
@@ -69,7 +56,7 @@ export function Pricing() {
               )}
             >
               Annual
-              <span className="rounded-full bg-blue-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-blue-600 dark:text-blue-400">
+              <span className="rounded-full bg-blue-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-blue-600">
                 save 20%
               </span>
             </button>
@@ -81,79 +68,118 @@ export function Pricing() {
             const price = annual ? tier.priceAnnual : tier.priceMonthly;
             const isFree = price === 0;
             return (
-              <Card
+              <div
                 key={tier.name}
                 className={cn(
-                  "flex flex-col",
-                  tier.highlighted &&
-                    "relative border-primary shadow-xl shadow-primary/10 ring-2 ring-primary/30",
+                  "relative flex flex-col overflow-hidden rounded-2xl border bg-card",
+                  tier.highlighted
+                    ? "border-[#1a2f50]/40 shadow-xl shadow-[#1a2f50]/10 ring-2 ring-[#1a2f50]/20"
+                    : "border-border shadow-sm",
                 )}
               >
                 {tier.highlighted && (
-                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 gap-1 px-3">
-                    <Sparkles className="h-3 w-3" />
-                    Most popular
-                  </Badge>
+                  <div className="absolute -top-px left-1/2 -translate-x-1/2">
+                    <div className="flex items-center gap-1 rounded-b-full bg-[#1a2f50] px-3 py-1 text-xs font-semibold text-white">
+                      <Sparkles className="h-3 w-3" />
+                      Most popular
+                    </div>
+                  </div>
                 )}
-                <CardHeader>
-                  <CardTitle className="text-lg">{tier.name}</CardTitle>
-                  <CardDescription>{tier.blurb}</CardDescription>
+
+                {/* Card header */}
+                <div
+                  className={cn(
+                    "px-6 pt-8 pb-5",
+                    tier.highlighted ? "bg-[#1a2f50]" : "",
+                  )}
+                >
+                  <p
+                    className={cn(
+                      "text-lg font-semibold",
+                      tier.highlighted ? "text-white" : "text-foreground",
+                    )}
+                  >
+                    {tier.name}
+                  </p>
+                  <p
+                    className={cn(
+                      "mt-1 text-sm",
+                      tier.highlighted ? "text-blue-200/70" : "text-muted-foreground",
+                    )}
+                  >
+                    {tier.blurb}
+                  </p>
                   <div className="mt-4 flex items-baseline gap-1">
-                    <span className="text-4xl font-bold tracking-tight">
+                    <span
+                      className={cn(
+                        "text-4xl font-bold tracking-tight",
+                        tier.highlighted ? "text-white" : "text-foreground",
+                      )}
+                    >
                       {isFree ? "Free" : `$${price}`}
                     </span>
                     {!isFree && (
-                      <span className="text-muted-foreground">/mo</span>
+                      <span
+                        className={cn(
+                          tier.highlighted
+                            ? "text-blue-200/60"
+                            : "text-muted-foreground",
+                        )}
+                      >
+                        /mo
+                      </span>
                     )}
                   </div>
                   {!isFree && (
-                    <p className="text-xs text-muted-foreground">
+                    <p
+                      className={cn(
+                        "mt-1 text-xs",
+                        tier.highlighted
+                          ? "text-blue-200/50"
+                          : "text-muted-foreground",
+                      )}
+                    >
                       {annual
                         ? `Billed $${price * 12}/yr · save $${(tier.priceMonthly - tier.priceAnnual) * 12}`
                         : "Billed monthly · cancel anytime"}
                     </p>
                   )}
-                </CardHeader>
-                <CardContent className="flex-1">
-                  <ul className="space-y-3">
+                </div>
+
+                {/* Features + CTA */}
+                <div className="flex flex-1 flex-col px-6 py-5">
+                  <ul className="flex-1 space-y-3">
                     {tier.features.map((feature) => (
-                      <li
-                        key={feature}
-                        className="flex items-start gap-2 text-sm"
-                      >
-                        <span
-                          className={cn(
-                            "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full",
-                            tier.highlighted
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-primary/10 text-primary",
-                          )}
-                        >
+                      <li key={feature} className="flex items-start gap-2 text-sm">
+                        <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600">
                           <Check className="h-3 w-3" />
                         </span>
-                        <span>{feature}</span>
+                        <span className="text-foreground">{feature}</span>
                       </li>
                     ))}
                   </ul>
-                </CardContent>
-                <CardFooter>
-                  <Button
-                    render={<Link href="/signup" />}
-                    variant={tier.highlighted ? "default" : "outline"}
-                    className="w-full"
-                  >
-                    {tier.cta}
-                  </Button>
-                </CardFooter>
-              </Card>
+                  <div className="mt-6">
+                    <Button
+                      render={<Link href="/signup" />}
+                      variant={tier.highlighted ? "default" : "outline"}
+                      className={cn(
+                        "w-full",
+                        tier.highlighted &&
+                          "bg-[#1a2f50] hover:bg-[#243d66] text-white",
+                      )}
+                    >
+                      {tier.cta}
+                    </Button>
+                  </div>
+                </div>
+              </div>
             );
           })}
         </div>
 
         <p className="mx-auto mt-8 max-w-lg text-center text-xs text-muted-foreground">
-          All plans include unlimited contacts, pipeline, forms, automations,
-          and the website builder. No per-contact tax, no per-message
-          metering.
+          All plans include unlimited pipeline stages, lead forms, calendar, and
+          tasks. No per-contact tax. No per-message metering.
         </p>
       </div>
     </section>
