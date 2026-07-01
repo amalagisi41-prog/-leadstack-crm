@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ResolvedBrand } from "@/config/landing";
-import { Logo } from "./logo";
+import { BrandLockup } from "./brand-lockup";
 
 export function Footer({ brand }: { brand: ResolvedBrand }) {
   return (
@@ -8,20 +8,17 @@ export function Footer({ brand }: { brand: ResolvedBrand }) {
       <div className="container mx-auto px-4">
         <div className="grid gap-8 sm:grid-cols-4">
           <div className="sm:col-span-1">
-            <Link href="/" className="flex items-center gap-2 text-lg font-bold">
+            <Link href="/" className="flex items-center gap-2">
               {brand.logoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={brand.logoUrl}
                   alt={`${brand.name} logo`}
-                  className="h-5 w-auto max-w-[100px] object-contain"
+                  className="h-8 w-auto max-w-[140px] object-contain"
                 />
               ) : (
-                <Logo size={20} idSuffix="-footer" />
+                <BrandLockup brand={brand} size="sm" />
               )}
-              <span className="bg-gradient-to-r from-blue-500 via-blue-400 to-indigo-400 bg-clip-text text-transparent">
-                {brand.name}
-              </span>
             </Link>
             <p className="mt-3 text-sm text-muted-foreground">
               {brand.tagline}.
@@ -96,7 +93,7 @@ export function Footer({ brand }: { brand: ResolvedBrand }) {
         </div>
 
         <div className="mt-8 border-t pt-8 text-center text-sm text-muted-foreground">
-          &copy; {new Date().getFullYear()} {brand.name} &middot; LeadStack CRM &middot; Built for REALTORS&reg;, not spreadsheets.
+          &copy; {new Date().getFullYear()} {brand.name} &middot; Built for REALTORS&reg;, not spreadsheets.
         </div>
       </div>
     </footer>

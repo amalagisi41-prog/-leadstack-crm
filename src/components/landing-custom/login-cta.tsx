@@ -13,10 +13,10 @@ export function LoginCta({ brand }: { brand: ResolvedBrand }) {
             <div className="border-b border-[#2a3f5f]/60 px-6 py-5 text-center">
               <p className="text-xs font-semibold uppercase tracking-wide text-blue-400 mb-1">Welcome back</p>
               <h2 className="text-xl font-semibold text-white">
-                Sign in to your LeadStack workspace
+                Sign in to your {brand.name} workspace
               </h2>
               <p className="mt-1 text-xs text-blue-300/60">
-                {brand.name} · powered by LeadStack CRM
+                {brand.name}
               </p>
             </div>
 

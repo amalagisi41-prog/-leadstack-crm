@@ -13,6 +13,7 @@ import {
   SheetClose,
 } from "@/components/ui/sheet";
 import type { ResolvedBrand } from "@/config/landing";
+import { BrandLockup } from "./brand-lockup";
 
 const links = [
   { href: "#how-it-works", label: "How it works" },
@@ -29,9 +30,16 @@ export function Navbar({ brand }: { brand: ResolvedBrand }) {
     <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2">
-          <span className="bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-500 bg-clip-text text-xl font-bold text-transparent">
-            {brand.name}
-          </span>
+          {brand.logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={brand.logoUrl}
+              alt={`${brand.name} logo`}
+              className="h-8 w-auto max-w-[160px] object-contain"
+            />
+          ) : (
+            <BrandLockup brand={brand} />
+          )}
         </Link>
 
         <nav className="hidden items-center gap-6 md:flex">

@@ -44,7 +44,7 @@ export function AiDemo() {
                 </span>
               </h2>
               <p className="text-muted-foreground leading-relaxed mb-6">
-                LeadStack&apos;s AI receptionist responds to inbound texts, web chat, and calls 24/7 — qualifying buyers, booking showings, and sending listing docs before you even see the notification.
+                Artisan&apos;s AI receptionist responds to inbound texts, web chat, and calls 24/7 — qualifying buyers, booking showings, and sending listing docs before you even see the notification.
               </p>
               <ul className="space-y-3">
                 {[
@@ -70,8 +70,8 @@ export function AiDemo() {
                   <Bot className="h-4 w-4 text-white" />
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-white">Artisan Home Network</p>
-                  <p className="text-[10px] text-blue-100">Powered by LeadStack AI · Online</p>
+                  <p className="text-xs font-semibold text-white">Artisan RE Solutions</p>
+                  <p className="text-[10px] text-blue-100">Powered by Artisan AI · Online</p>
                 </div>
                 <div className="ml-auto flex items-center gap-1">
                   <span className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />

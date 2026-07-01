@@ -97,10 +97,10 @@ describe("POST /api/onboarding/help", () => {
     await POST(
       makeRequest({
         question: "How do I turn on Speed-to-Lead?",
-        brandName: "Artisan Home Network",
+        brandName: "Artisan RE Solutions",
       }),
     );
-    expect(lastSystemPrompt()).toContain("Artisan Home Network");
+    expect(lastSystemPrompt()).toContain("Artisan RE Solutions");
   });
 
   it("passes clean prior turns through and drops malformed ones", async () => {

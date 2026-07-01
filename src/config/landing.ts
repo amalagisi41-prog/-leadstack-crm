@@ -75,7 +75,7 @@ export interface ResolvedBrand {
  */
 export const CUSTOM_BRAND: CustomBrand = {
   /** Displayed in navbar, hero, footer copyright, page title â€" everywhere. */
-  name: "Artisan Home Network",
+  name: "Artisan RE Solutions",
 
   /** One-line positioning, surfaced in hero subtitle + meta description. */
   tagline: "Purpose-built for REALTORS®",
@@ -85,13 +85,13 @@ export const CUSTOM_BRAND: CustomBrand = {
    * read like a tweet â€" what the product does, for whom.
    */
   shortDescription:
-    "Stop losing deals between showings. LeadStack responds to every inbound lead in under 60 seconds, keeps your pipeline organized from first inquiry to closing day, and follows up so you don't have to.",
+    "Stop losing deals between showings. Artisan responds to every inbound lead in under 60 seconds, keeps your pipeline organized from first inquiry to closing day, and follows up so you don't have to.",
 
   /** Used on CTA buttons + the FAQ "talk to us" line + footer. */
-  supportEmail: "hello@artisanhomenetwork.com",
+  supportEmail: "hello@artisanresolutions.com",
 
   /** Used in footer, og:url, canonical. No https://, no trailing slash. */
-  primaryDomain: "artisanhomenetwork.com",
+  primaryDomain: "artisanresolutions.com",
 
   /**
    * Pricing tiers. HIDDEN BY DEFAULT â€" the custom landing is wired for
