@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { Menu } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -14,11 +13,10 @@ import {
   SheetClose,
 } from "@/components/ui/sheet";
 import type { ResolvedBrand } from "@/config/landing";
-import { Logo } from "./logo";
 
 const links = [
-  { href: "#features", label: "For Agents" },
-  { href: "#team", label: "For Brokers" },
+  { href: "#how-it-works", label: "How it works" },
+  { href: "#features", label: "Features" },
   { href: "#faq", label: "FAQ" },
 ];
 
@@ -29,18 +27,8 @@ export function Navbar({ brand }: { brand: ResolvedBrand }) {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Link href="/" className="flex items-center gap-2 text-xl font-bold">
-          {brand.logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={brand.logoUrl}
-              alt={`${brand.name} logo`}
-              className="h-6 w-auto max-w-[120px] object-contain"
-            />
-          ) : (
-            <Logo size={24} idSuffix="-nav" />
-          )}
-          <span className="bg-gradient-to-r from-blue-500 via-blue-400 to-indigo-400 bg-clip-text text-transparent">
+        <Link href="/" className="flex items-center gap-2">
+          <span className="bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-500 bg-clip-text text-xl font-bold text-transparent">
             {brand.name}
           </span>
         </Link>
@@ -58,7 +46,6 @@ export function Navbar({ brand }: { brand: ResolvedBrand }) {
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
-          <ThemeToggle />
           {!loading && (
             <>
               {user ? (
@@ -68,14 +55,14 @@ export function Navbar({ brand }: { brand: ResolvedBrand }) {
               ) : (
                 <>
                   <Button render={<Link href="/login" />} variant="ghost" size="sm">
-                    Login
+                    Sign in
                   </Button>
                   <Button
-                    render={<a href={`mailto:${brand.supportEmail}`} />}
+                    render={<Link href="/signup" />}
                     size="sm"
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                    className="bg-[#1a2f50] hover:bg-[#243d66] text-white"
                   >
-                    Start Free →
+                    Start Free
                   </Button>
                 </>
               )}
@@ -84,7 +71,6 @@ export function Navbar({ brand }: { brand: ResolvedBrand }) {
         </div>
 
         <div className="flex items-center gap-2 md:hidden">
-          <ThemeToggle />
           <Button
             variant="ghost"
             size="icon"
@@ -114,33 +100,24 @@ export function Navbar({ brand }: { brand: ResolvedBrand }) {
                 <>
                   {user ? (
                     <SheetClose render={<span />}>
-                      <Button
-                        render={<Link href="/dashboard" />}
-                        className="w-full"
-                        size="sm"
-                      >
+                      <Button render={<Link href="/dashboard" />} className="w-full" size="sm">
                         Dashboard
                       </Button>
                     </SheetClose>
                   ) : (
                     <>
                       <SheetClose render={<span />}>
-                        <Button
-                          render={<Link href="/login" />}
-                          variant="ghost"
-                          className="w-full"
-                          size="sm"
-                        >
-                          Login
+                        <Button render={<Link href="/login" />} variant="ghost" className="w-full" size="sm">
+                          Sign in
                         </Button>
                       </SheetClose>
                       <SheetClose render={<span />}>
                         <Button
-                          render={<a href={`mailto:${brand.supportEmail}`} />}
-                          className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                          render={<Link href="/signup" />}
+                          className="w-full bg-[#1a2f50] hover:bg-[#243d66] text-white"
                           size="sm"
                         >
-                          Start Free →
+                          Start Free
                         </Button>
                       </SheetClose>
                     </>

@@ -7,6 +7,8 @@ const testimonials = [
     name: "Marcus R.",
     title: "Realtor® · Maplewood, NJ · 11 years",
     initials: "MR",
+    metric: "$24k",
+    metricLabel: "extra commissions last month",
     color: "bg-blue-500",
   },
   {
@@ -15,7 +17,9 @@ const testimonials = [
     name: "Tanya K.",
     title: "Top Producer · Austin, TX · GCI $380k",
     initials: "TK",
-    color: "bg-blue-500",
+    metric: "90+ days",
+    metricLabel: "still using it every morning",
+    color: "bg-indigo-500",
   },
   {
     quote:
@@ -23,7 +27,9 @@ const testimonials = [
     name: "David L.",
     title: "Team Lead · Boca Raton, FL · 6 agents",
     initials: "DL",
-    color: "bg-purple-500",
+    metric: "6 agents",
+    metricLabel: "all in one dashboard",
+    color: "bg-blue-600",
   },
 ];
 
@@ -31,7 +37,7 @@ function Stars() {
   return (
     <div className="flex gap-0.5">
       {Array.from({ length: 5 }).map((_, i) => (
-        <Star key={i} className="h-4 w-4 fill-amber-400 text-amber-400" />
+        <Star key={i} className="h-4 w-4 fill-blue-400 text-blue-400" />
       ))}
     </div>
   );
@@ -39,35 +45,41 @@ function Stars() {
 
 export function Testimonials() {
   return (
-    <section className="py-24 bg-muted/30">
+    <section className="bg-[#1a2540] py-24">
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-2xl text-center mb-14">
-          <p className="text-sm font-semibold uppercase tracking-wide text-primary mb-2">
+          <p className="text-sm font-semibold uppercase tracking-wide text-blue-400 mb-2">
             Real results
           </p>
-          <h2 className="text-3xl font-semibold tracking-tighter sm:text-5xl">
+          <h2 className="text-3xl font-semibold tracking-tighter text-white sm:text-5xl">
             Agents who stopped{" "}
-            <span className="font-serif font-normal italic">losing leads</span>
+            <span className="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text font-serif font-normal italic text-transparent">
+              losing leads
+            </span>
           </h2>
         </div>
 
         <div className="mx-auto max-w-5xl grid gap-6 sm:grid-cols-3">
-          {testimonials.map(({ quote, name, title, initials, color }) => (
+          {testimonials.map(({ quote, name, title, initials, metric, metricLabel, color }) => (
             <div
               key={name}
-              className="flex flex-col gap-4 rounded-2xl border bg-card p-6 shadow-sm"
+              className="flex flex-col gap-4 rounded-2xl border border-[#2a3f5f]/60 bg-[#1e3050]/50 p-6"
             >
               <Stars />
-              <p className="text-sm leading-relaxed text-muted-foreground flex-1">
+              <div className="rounded-xl bg-blue-600/10 border border-blue-600/20 px-3 py-2 text-center">
+                <span className="text-xl font-bold text-blue-400">{metric}</span>
+                <p className="text-[10px] text-blue-300/70 mt-0.5">{metricLabel}</p>
+              </div>
+              <p className="text-sm leading-relaxed text-blue-100/70 flex-1">
                 &ldquo;{quote}&rdquo;
               </p>
-              <div className="flex items-center gap-3 pt-2 border-t">
+              <div className="flex items-center gap-3 pt-2 border-t border-[#2a3f5f]/60">
                 <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${color} text-white text-sm font-bold`}>
                   {initials}
                 </div>
                 <div>
-                  <p className="text-sm font-semibold">{name}</p>
-                  <p className="text-xs text-muted-foreground">{title}</p>
+                  <p className="text-sm font-semibold text-white">{name}</p>
+                  <p className="text-xs text-blue-300/60">{title}</p>
                 </div>
               </div>
             </div>

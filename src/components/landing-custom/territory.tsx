@@ -1,15 +1,15 @@
 import { MapPin, Users, TrendingUp } from "lucide-react";
 
 const farmStats = [
-  { label: "Contacts in your farm", value: "247", icon: Users, color: "text-blue-500" },
-  { label: "Avg days to first contact", value: "0.4", icon: TrendingUp, color: "text-blue-500" },
-  { label: "Active territories", value: "3", icon: MapPin, color: "text-purple-500" },
+  { label: "Contacts in farm", value: "247", icon: Users, color: "text-blue-500" },
+  { label: "Avg days to contact", value: "0.4", icon: TrendingUp, color: "text-indigo-500" },
+  { label: "Active territories", value: "3", icon: MapPin, color: "text-blue-600" },
 ];
 
 const territories = [
-  { name: "Maplewood North", contacts: 84, hot: 6, stage: "Showing Scheduled", color: "bg-blue-500" },
-  { name: "South Orange", contacts: 63, hot: 4, stage: "New Inquiry", color: "bg-blue-500" },
-  { name: "Montclair Heights", contacts: 100, hot: 9, stage: "Offer In", color: "bg-purple-500" },
+  { name: "Maplewood North", contacts: 84, hot: 6, color: "bg-blue-500" },
+  { name: "South Orange", contacts: 63, hot: 4, color: "bg-indigo-500" },
+  { name: "Montclair Heights", contacts: 100, hot: 9, color: "bg-blue-600" },
 ];
 
 export function Territory() {
@@ -26,7 +26,7 @@ export function Territory() {
               </div>
 
               {/* Simplified visual map */}
-              <div className="relative bg-muted/20 h-44 overflow-hidden">
+              <div className="relative bg-muted/20 h-40 overflow-hidden">
                 <div className="absolute inset-0 grid grid-cols-8 grid-rows-4 gap-0.5 p-2 opacity-20">
                   {Array.from({ length: 32 }).map((_, i) => (
                     <div key={i} className="rounded-sm bg-border" />
@@ -37,7 +37,7 @@ export function Territory() {
                     key={t.name}
                     className="absolute flex items-center gap-1 rounded-full border bg-card px-2 py-1 shadow-sm text-[10px] font-medium"
                     style={{
-                      top: `${20 + i * 30}%`,
+                      top: `${20 + i * 28}%`,
                       left: `${10 + i * 25}%`,
                     }}
                   >
@@ -45,9 +45,6 @@ export function Territory() {
                     {t.name}
                   </div>
                 ))}
-                <div className="absolute bottom-2 right-2 text-[10px] text-muted-foreground">
-                  Essex County, NJ
-                </div>
               </div>
 
               <div className="p-4 space-y-3">
@@ -85,12 +82,14 @@ export function Territory() {
             </div>
 
             <div className="order-1 lg:order-2">
-              <p className="text-sm font-semibold uppercase tracking-wide text-primary mb-2">
+              <p className="text-sm font-semibold uppercase tracking-wide text-blue-600 mb-2">
                 Territory farming
               </p>
               <h2 className="text-3xl font-semibold tracking-tighter sm:text-4xl mb-4">
                 Know your farm.{" "}
-                <span className="font-serif font-normal italic">Work it smarter.</span>
+                <span className="bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text font-serif font-normal italic text-transparent">
+                  Work it smarter.
+                </span>
               </h2>
               <p className="text-muted-foreground leading-relaxed mb-6">
                 Stop guessing who&apos;s hot in your territory. LeadStack maps every contact to their neighborhood, shows you which leads haven&apos;t heard from you in too long, and routes new inquiries to the right agent automatically.

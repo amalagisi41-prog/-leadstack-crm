@@ -27,12 +27,13 @@ import { Navbar as CustomNavbar } from "@/components/landing-custom/navbar";
 import { Hero as CustomHero } from "@/components/landing-custom/hero";
 import { PainPoints } from "@/components/landing-custom/pain-points";
 import { HowItWorks as CustomHowItWorks } from "@/components/landing-custom/how-it-works";
+import { PipelineDemo } from "@/components/landing-custom/pipeline-demo";
 import { AiDemo } from "@/components/landing-custom/ai-demo";
 import { Territory } from "@/components/landing-custom/territory";
 import { Features as CustomFeatures } from "@/components/landing-custom/features";
 import { Testimonials } from "@/components/landing-custom/testimonials";
 import { FAQ as CustomFAQ } from "@/components/landing-custom/faq";
-import { CTA as CustomCTA } from "@/components/landing-custom/cta";
+import { LoginCta } from "@/components/landing-custom/login-cta";
 import { Footer as CustomFooter } from "@/components/landing-custom/footer";
 
 /**
@@ -58,12 +59,13 @@ export default async function HomePage() {
           <CustomHero brand={brand} />
           <PainPoints />
           <CustomHowItWorks />
+          <PipelineDemo />
           <AiDemo />
           <Territory />
           <CustomFeatures />
           <Testimonials />
           <CustomFAQ brand={brand} />
-          <CustomCTA brand={brand} />
+          <LoginCta brand={brand} />
         </main>
         <CustomFooter brand={brand} />
       </div>

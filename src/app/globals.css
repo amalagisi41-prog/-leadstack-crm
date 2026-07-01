@@ -68,25 +68,25 @@
 }
 
 :root {
-  --background: oklch(0.99 0.004 75);
+  --background: oklch(0.97 0.025 78);
   --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
+  --card: oklch(0.99 0.012 75);
   --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
+  --popover: oklch(0.99 0.012 75);
   --popover-foreground: oklch(0.145 0 0);
-  /* Blue primary — Artisan Home Network brand */
-  --primary: oklch(0.546 0.245 262.881);
+  /* Muted navy — complements cream background */
+  --primary: oklch(0.38 0.12 248);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
+  --secondary: oklch(0.94 0.015 78);
   --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.945 0.025 262.881);
-  --accent-foreground: oklch(0.546 0.245 262.881);
+  --muted: oklch(0.94 0.015 78);
+  --muted-foreground: oklch(0.50 0.018 75);
+  --accent: oklch(0.91 0.025 248);
+  --accent-foreground: oklch(0.38 0.12 248);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.546 0.245 262.881);
+  --border: oklch(0.88 0.025 78);
+  --input: oklch(0.88 0.025 78);
+  --ring: oklch(0.38 0.12 248);
   --chart-1: oklch(0.546 0.245 262.881);
   --chart-2: oklch(0.623 0.214 259.815);
   --chart-3: oklch(0.72 0.18 260);

@@ -44,12 +44,12 @@ export function Features() {
     <section id="features" className="py-24">
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-2xl text-center">
-          <p className="text-sm font-semibold uppercase tracking-wide text-primary">
+          <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">
             Built for top producers
           </p>
           <h2 className="mt-2 text-3xl font-semibold tracking-tighter sm:text-5xl">
             Everything a closing agent needs.{" "}
-            <span className="font-serif font-normal italic">
+            <span className="bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text font-serif font-normal italic text-transparent">
               Simple enough to actually use.
             </span>
           </h2>
