@@ -8,6 +8,7 @@ import { useAgency } from "@/hooks/use-agency";
 import { Button } from "@/components/ui/button";
 import { TemplateGallery } from "./template-gallery";
 import { DesignerChat } from "./designer-chat";
+import { ContentEditor } from "./content-editor";
 import { AgentSiteRenderer } from "./agent-site-renderer";
 import {
   AGENT_SITE_TEMPLATE_LIST,
@@ -33,6 +34,8 @@ export function WebsiteStudioApp() {
   const [content, setContent] = useState<AgentSiteContent>(emptyAgentSiteContent());
   const [selecting, setSelecting] = useState<AgentSiteTemplateId | null>(null);
   const [publishing, setPublishing] = useState(false);
+  const [mode, setMode] = useState<"designer" | "edit">("designer");
+  const [savingDraft, setSavingDraft] = useState(false);
 
   // Scaled live-preview sizing.
   const previewWrapRef = useRef<HTMLDivElement>(null);
@@ -109,6 +112,17 @@ export function WebsiteStudioApp() {
       toast.success(`Switched to ${getTemplate(id).name}.`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not switch.");
+    }
+  }
+
+  async function saveContent(next: AgentSiteContent) {
+    setSavingDraft(true);
+    try {
+      const s = await patch({ content: next });
+      setSite(s);
+      setContent(s.content);
+    } finally {
+      setSavingDraft(false);
     }
   }
 
@@ -199,15 +213,44 @@ export function WebsiteStudioApp() {
 
       {/* Split: Designer chat + live preview */}
       <div className="grid gap-4 lg:grid-cols-[380px_1fr]">
-        <div className="h-[72vh]">
-          <DesignerChat
-            subAccountId={subAccountId}
-            brandName={brandName}
-            initialTranscript={site.designerTranscript ?? []}
-            initialStep={site.designerStep ?? 0}
-            totalSteps={10}
-            onContent={setContent}
-          />
+        <div className="flex h-[72vh] flex-col gap-2">
+          <div className="flex items-center gap-1 rounded-lg border p-1">
+            <button
+              onClick={() => setMode("designer")}
+              className={`flex-1 rounded px-3 py-1.5 text-xs font-medium transition-colors ${
+                mode === "designer" ? "bg-[#1a2f50] text-white" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              AI Designer
+            </button>
+            <button
+              onClick={() => setMode("edit")}
+              className={`flex-1 rounded px-3 py-1.5 text-xs font-medium transition-colors ${
+                mode === "edit" ? "bg-[#1a2f50] text-white" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Edit content
+            </button>
+          </div>
+          <div className="min-h-0 flex-1">
+            {mode === "designer" ? (
+              <DesignerChat
+                subAccountId={subAccountId}
+                brandName={brandName}
+                initialTranscript={site.designerTranscript ?? []}
+                initialStep={site.designerStep ?? 0}
+                totalSteps={10}
+                onContent={setContent}
+              />
+            ) : (
+              <ContentEditor
+                content={content}
+                onChange={setContent}
+                onSave={saveContent}
+                saving={savingDraft}
+              />
+            )}
+          </div>
         </div>
 
         <div className="overflow-hidden rounded-2xl border bg-muted/30">
