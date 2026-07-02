@@ -2,21 +2,18 @@ import "server-only";
 
 import { NextResponse } from "next/server";
 import { requireSubAccountAdmin } from "@/lib/auth/require-tenancy";
-import { applyRealEstateSnapshot } from "@/lib/snapshots/real-estate-agent";
+import { applySnapshot } from "@/lib/snapshots/apply";
+import { SNAPSHOTS, type SnapshotId } from "@/lib/snapshots/catalog";
 
 /**
  * POST /api/sub-accounts/[id]/apply-snapshot
  *
- * Applies the real-estate agent snapshot to the sub-account:
- *   - Pipeline stage labels (New Lead → Contacted → Showing Scheduled → …)
- *   - 4 email templates + 2 SMS templates
- *   - AI agent persona pre-written for a CT realtor
+ * Applies a role snapshot (solo_agent / team_builder / broker_office) to the
+ * sub-account: a tailored pipeline, email/SMS templates, an AI persona, and
+ * draft workflows. Sub-account admin only. Idempotent per snapshot.
  *
- * Sub-account admin only. Safe to call multiple times — all writes are
- * idempotent (stable doc ids, merge semantics on the profile doc).
- *
- * Body (optional JSON):
- *   { businessName?: string; agentName?: string }
+ * Body: { snapshotId?: SnapshotId; businessName?: string }
+ *   snapshotId defaults to "solo_agent".
  */
 export async function POST(
   request: Request,
@@ -26,7 +23,7 @@ export async function POST(
   const access = await requireSubAccountAdmin(request, subAccountId);
   if (access instanceof NextResponse) return access;
 
-  let body: { businessName?: string } = {};
+  let body: { snapshotId?: string; businessName?: string } = {};
   try {
     body = await request.json();
   } catch {
@@ -38,17 +35,22 @@ export async function POST(
     return NextResponse.json({ error: "Agency not found" }, { status: 400 });
   }
 
+  const snapshotId = (body.snapshotId ?? "solo_agent") as SnapshotId;
+  if (!(snapshotId in SNAPSHOTS)) {
+    return NextResponse.json({ error: "Unknown snapshot." }, { status: 400 });
+  }
+
   try {
-    const result = await applyRealEstateSnapshot(
+    const result = await applySnapshot(
       subAccountId,
       agencyId,
       createdByUid,
+      snapshotId,
       { businessName: body.businessName },
     );
-
     return NextResponse.json({
       ok: true,
-      message: `Snapshot applied — ${result.templatesWritten} templates created.`,
+      message: `Applied "${SNAPSHOTS[snapshotId].name}" — ${result.templates} templates, ${result.workflows} workflows.`,
       ...result,
     });
   } catch (err) {
