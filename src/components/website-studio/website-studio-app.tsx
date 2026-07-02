@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { TemplateGallery } from "./template-gallery";
 import { DesignerChat } from "./designer-chat";
 import { ContentEditor } from "./content-editor";
+import { BusinessSetupAssistant } from "./business-setup-assistant";
 import { AgentSiteRenderer } from "./agent-site-renderer";
 import {
   AGENT_SITE_TEMPLATE_LIST,
@@ -36,6 +37,7 @@ export function WebsiteStudioApp() {
   const [publishing, setPublishing] = useState(false);
   const [mode, setMode] = useState<"designer" | "edit">("designer");
   const [savingDraft, setSavingDraft] = useState(false);
+  const [view, setView] = useState<"builder" | "setup">("builder");
 
   // Scaled live-preview sizing.
   const previewWrapRef = useRef<HTMLDivElement>(null);
@@ -155,16 +157,50 @@ export function WebsiteStudioApp() {
     );
   }
 
+  const tabRow = (
+    <div className="flex w-fit items-center gap-1 rounded-lg border p-1">
+      <button
+        onClick={() => setView("builder")}
+        className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${view === "builder" ? "bg-[#1a2f50] text-white" : "text-muted-foreground hover:text-foreground"}`}
+      >
+        Website Builder
+      </button>
+      <button
+        onClick={() => setView("setup")}
+        className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${view === "setup" ? "bg-[#1a2f50] text-white" : "text-muted-foreground hover:text-foreground"}`}
+      >
+        Business Setup
+      </button>
+    </div>
+  );
+
+  if (view === "setup") {
+    return (
+      <div className="space-y-4">
+        {tabRow}
+        <BusinessSetupAssistant />
+      </div>
+    );
+  }
+
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center text-muted-foreground">
-        <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading Website Studio…
+      <div className="space-y-4">
+        {tabRow}
+        <div className="flex h-64 items-center justify-center text-muted-foreground">
+          <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading Website Studio…
+        </div>
       </div>
     );
   }
 
   if (!site) {
-    return <TemplateGallery onSelect={pickTemplate} selecting={selecting} />;
+    return (
+      <div className="space-y-4">
+        {tabRow}
+        <TemplateGallery onSelect={pickTemplate} selecting={selecting} />
+      </div>
+    );
   }
 
   const template = getTemplate(site.templateId);
@@ -172,6 +208,7 @@ export function WebsiteStudioApp() {
 
   return (
     <div className="space-y-4">
+      {tabRow}
       {/* Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
