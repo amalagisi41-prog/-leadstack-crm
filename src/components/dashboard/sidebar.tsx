@@ -24,6 +24,7 @@ import {
   Send,
   Bot,
   Package,
+  LayoutTemplate,
   ScrollText,
   MessagesSquare,
   Share2,
@@ -112,6 +113,7 @@ const SUB_ACCOUNT_NAV_SECTIONS: NavSection[] = [
     items: [
       { href: "/products", label: "Products", icon: Package, enabled: true },
       { href: "/website", label: "Website", icon: Globe, enabled: true },
+      { href: "/website-studio", label: "Website Studio", icon: LayoutTemplate, enabled: true },
       { href: "/social", label: "Social Planner", icon: Share2, enabled: true },
       {
         href: "/community",

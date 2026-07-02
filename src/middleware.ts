@@ -79,6 +79,10 @@ const PUBLIC_PATHS = [
   //    visitor can't double-book a slot
   "/b",
   "/api/booking",
+  // Published agent websites — /agent/[subAccountId]/[slug]. Server-rendered
+  // from the site doc via the Admin SDK; only renders when status ===
+  // "published". Public marketing pages, no session needed.
+  "/agent",
   // Public event-management page (/e/[token]) + cancel/reschedule
   // endpoints. All gated by HMAC-token + hash match against the stored
   // `event.publicTokenHash`. Reschedule rotates the token so any
