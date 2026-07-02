@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { ExternalLink, Loader2, Rocket, LayoutTemplate } from "lucide-react";
+import { ExternalLink, Loader2, Rocket, LayoutTemplate, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { useSubAccount } from "@/context/sub-account-context";
 import { useAgency } from "@/hooks/use-agency";
@@ -23,8 +23,9 @@ import {
 const DESIGN_WIDTH = 1080;
 
 export function WebsiteStudioApp() {
-  const { subAccountId } = useSubAccount();
+  const { subAccountId, subAccount } = useSubAccount();
   const agency = useAgency();
+  const gateOpen = subAccount?.websiteStudioEnabledByAgency === true;
   const brandName = agency.name === "LeadStack" ? "your CRM" : agency.name;
 
   const [loading, setLoading] = useState(true);
@@ -47,6 +48,12 @@ export function WebsiteStudioApp() {
   }, [site]);
 
   useEffect(() => {
+    // Don't hit the (gated) API until we know the add-on is enabled.
+    if (subAccount && !gateOpen) {
+      setLoading(false);
+      return;
+    }
+    if (!gateOpen) return; // subAccount not resolved yet — wait.
     let active = true;
     (async () => {
       try {
@@ -62,7 +69,7 @@ export function WebsiteStudioApp() {
     return () => {
       active = false;
     };
-  }, [subAccountId]);
+  }, [subAccountId, gateOpen, subAccount]);
 
   const patch = useCallback(
     async (body: Record<string, unknown>) => {
@@ -116,6 +123,22 @@ export function WebsiteStudioApp() {
     } finally {
       setPublishing(false);
     }
+  }
+
+  if (subAccount && !gateOpen) {
+    return (
+      <div className="mx-auto max-w-lg rounded-2xl border bg-card p-8 text-center">
+        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+          <Lock className="h-5 w-5" />
+        </div>
+        <h1 className="text-lg font-semibold">Website Studio is a premium add-on</h1>
+        <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
+          Build a stunning agent website from premium templates with an AI
+          Designer — plus guided setup for A2P, chat widgets, SEO, and more.
+          Ask your agency to enable it for your account.
+        </p>
+      </div>
+    );
   }
 
   if (loading) {

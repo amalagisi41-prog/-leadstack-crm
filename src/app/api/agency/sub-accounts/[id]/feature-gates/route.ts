@@ -39,6 +39,7 @@ interface PatchBody {
   whatsappEnabled?: boolean;
   metaInboxEnabled?: boolean;
   websiteEnabled?: boolean;
+  websiteStudioEnabled?: boolean;
   socialPlannerEnabled?: boolean;
   communityEnabled?: boolean;
   // "Hide instead of lock" overrides for the sidebar-gated features.
@@ -78,6 +79,7 @@ export async function PATCH(
   const wantsWhatsapp = typeof body.whatsappEnabled === "boolean";
   const wantsMetaInbox = typeof body.metaInboxEnabled === "boolean";
   const wantsWebsite = typeof body.websiteEnabled === "boolean";
+  const wantsWebsiteStudio = typeof body.websiteStudioEnabled === "boolean";
   const wantsSocialPlanner = typeof body.socialPlannerEnabled === "boolean";
   const wantsCommunity = typeof body.communityEnabled === "boolean";
   const wantsBroadcastsHidden =
@@ -96,6 +98,7 @@ export async function PATCH(
     !wantsWhatsapp &&
     !wantsMetaInbox &&
     !wantsWebsite &&
+    !wantsWebsiteStudio &&
     !wantsSocialPlanner &&
     !wantsCommunity &&
     !wantsBroadcastsHidden &&
@@ -214,6 +217,15 @@ export async function PATCH(
     updates.websiteEnabledByAgency = body.websiteEnabled;
   }
 
+  if (wantsWebsiteStudio) {
+    // No tear-down — the agentSites/main doc + any published page are left
+    // intact. Disabling 403s the /agent-site routes and locks the Website
+    // Studio sidebar entry; re-enabling restores it instantly. This is the
+    // paid-add-on switch — the agency owner flips it on per sub-account that
+    // has paid for the Website Studio tier.
+    updates.websiteStudioEnabledByAgency = body.websiteStudioEnabled;
+  }
+
   if (wantsSocialPlanner) {
     // No tear-down — the Meta connection + any scheduled posts are left
     // intact. Disabling 403s the connect/create/publish routes and locks the
@@ -262,6 +274,9 @@ export async function PATCH(
     ...(wantsWhatsapp ? { whatsappEnabled: body.whatsappEnabled } : {}),
     ...(wantsMetaInbox ? { metaInboxEnabled: body.metaInboxEnabled } : {}),
     ...(wantsWebsite ? { websiteEnabled: body.websiteEnabled } : {}),
+    ...(wantsWebsiteStudio
+      ? { websiteStudioEnabled: body.websiteStudioEnabled }
+      : {}),
     ...(wantsSocialPlanner
       ? { socialPlannerEnabled: body.socialPlannerEnabled }
       : {}),

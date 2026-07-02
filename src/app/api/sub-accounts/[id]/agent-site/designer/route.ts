@@ -6,6 +6,10 @@ import { getAdminDb } from "@/lib/firebase/admin";
 import { requireSubAccountAdmin } from "@/lib/auth/require-tenancy";
 import { aiIsConfigured, callAi, type AiChatMessage } from "@/lib/comms/ai/openrouter";
 import {
+  websiteStudioGateOpen,
+  WEBSITE_STUDIO_LOCKED_MESSAGE,
+} from "@/lib/website-studio/gate";
+import {
   DESIGNER_STEPS,
   buildDesignerSystemPrompt,
   isLastStep,
@@ -80,6 +84,10 @@ export async function POST(
   const { id: subAccountId } = await ctx.params;
   const access = await requireSubAccountAdmin(request, subAccountId);
   if (access instanceof NextResponse) return access;
+
+  if (!(await websiteStudioGateOpen(subAccountId))) {
+    return NextResponse.json({ error: WEBSITE_STUDIO_LOCKED_MESSAGE }, { status: 403 });
+  }
 
   if (!aiIsConfigured()) {
     return NextResponse.json(

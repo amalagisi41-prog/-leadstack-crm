@@ -4,6 +4,10 @@ import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { requireSubAccountAdmin } from "@/lib/auth/require-tenancy";
+import {
+  websiteStudioGateOpen,
+  WEBSITE_STUDIO_LOCKED_MESSAGE,
+} from "@/lib/website-studio/gate";
 import { AGENT_SITE_TEMPLATES } from "@/lib/website-studio/templates";
 import {
   emptyAgentSiteContent,
@@ -40,6 +44,10 @@ export async function GET(
   const access = await requireSubAccountAdmin(request, subAccountId);
   if (access instanceof NextResponse) return access;
 
+  if (!(await websiteStudioGateOpen(subAccountId))) {
+    return NextResponse.json({ error: WEBSITE_STUDIO_LOCKED_MESSAGE }, { status: 403 });
+  }
+
   const snap = await getAdminDb()
     .doc(`subAccounts/${subAccountId}/agentSites/${SITE_ID}`)
     .get();
@@ -57,6 +65,10 @@ export async function PATCH(
   const { uid, agencyId } = access;
   if (!agencyId) {
     return NextResponse.json({ error: "Agency not found" }, { status: 400 });
+  }
+
+  if (!(await websiteStudioGateOpen(subAccountId))) {
+    return NextResponse.json({ error: WEBSITE_STUDIO_LOCKED_MESSAGE }, { status: 403 });
   }
 
   let body: {

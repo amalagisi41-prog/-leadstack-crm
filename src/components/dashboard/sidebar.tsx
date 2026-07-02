@@ -152,6 +152,7 @@ function SidebarContent() {
 
   const [broadcastsGate, setBroadcastsGate] = useState<boolean | null>(null);
   const [websiteGate, setWebsiteGate] = useState<boolean | null>(null);
+  const [websiteStudioGate, setWebsiteStudioGate] = useState<boolean | null>(null);
   const [socialGate, setSocialGate] = useState<boolean | null>(null);
   const [communityGate, setCommunityGate] = useState<boolean | null>(null);
   const [broadcastsHidden, setBroadcastsHidden] = useState(false);
@@ -164,6 +165,7 @@ function SidebarContent() {
     if (!linkSubIdLocal) {
       setBroadcastsGate(null);
       setWebsiteGate(null);
+      setWebsiteStudioGate(null);
       setSocialGate(null);
       setCommunityGate(null);
       return;
@@ -174,6 +176,7 @@ function SidebarContent() {
         const data = snap.data();
         setBroadcastsGate(data?.broadcastsEnabledByAgency === true);
         setWebsiteGate(data?.websiteEnabledByAgency === true);
+        setWebsiteStudioGate(data?.websiteStudioEnabledByAgency === true);
         setSocialGate(data?.socialPlannerEnabledByAgency === true);
         setCommunityGate(data?.communityEnabledByAgency === true);
         setBroadcastsHidden(data?.broadcastsHiddenWhenDisabled === true);
@@ -184,6 +187,7 @@ function SidebarContent() {
       () => {
         setBroadcastsGate(null);
         setWebsiteGate(null);
+        setWebsiteStudioGate(null);
         setSocialGate(null);
         setCommunityGate(null);
       },
@@ -275,6 +279,8 @@ function SidebarContent() {
                   const gateLocked =
                     (item.href === "/broadcasts" && broadcastsGate === false) ||
                     (item.href === "/website" && websiteGate === false) ||
+                    (item.href === "/website-studio" &&
+                      websiteStudioGate === false) ||
                     (item.href === "/social" && socialGate === false) ||
                     (item.href === "/community" && communityGate === false);
 

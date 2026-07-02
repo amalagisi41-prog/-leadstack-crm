@@ -170,6 +170,18 @@ export interface SubAccountDoc {
    */
   websiteEnabledByAgency?: boolean;
   /**
+   * Agency-controlled gate for **Website Studio** — the AI-guided, premium-
+   * template agent website builder (plus its bundled setup assists: A2P
+   * guidance, chat-widget help, SEO, etc.). Sold as a paid add-on, so only
+   * the agency owner can flip it on for a sub-account that has paid (PATCH
+   * /api/agency/sub-accounts/[id]/feature-gates). When `false` (or undefined
+   * on legacy docs): the Website Studio sidebar entry renders a "Locked by
+   * your agency" state and the /agent-site routes 403. No tear-down on
+   * disable — the site doc + published page are preserved, so re-enabling
+   * resumes instantly. Defaults to `false` at creation; read `=== true`.
+   */
+  websiteStudioEnabledByAgency?: boolean;
+  /**
    * Agency-controlled gate for the Social Planner (schedule + auto-publish
    * posts to the connected Facebook Page / Instagram Business via the shared
    * `metaConfig` connection). Only the agency owner can flip it (PATCH
