@@ -16,6 +16,7 @@ import {
   Rocket,
   Sparkles,
   PlayCircle,
+  Globe,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -38,6 +39,7 @@ const STEP_ICONS: Record<OnboardingStepId, React.ElementType> = {
   automation: Zap,
   pipeline: KanbanSquare,
   ai: Bot,
+  domain: Globe,
 };
 
 function StepRow({
@@ -221,12 +223,12 @@ export function OnboardingChecklist({
           </div>
           <div>
             <h2 className="font-semibold tracking-tight">
-              {allDone ? "You're all set!" : "Get set up in 6 steps"}
+              {allDone ? "You're all set!" : `Get set up in ${totalCount} steps`}
             </h2>
             <p className="text-xs text-muted-foreground">
               {allDone
                 ? "Your account is fully configured — time to close some deals."
-                : `${doneCount} of ${totalCount} complete · about 22 min total`}
+                : `${doneCount} of ${totalCount} complete`}
             </p>
           </div>
         </div>

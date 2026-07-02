@@ -318,6 +318,14 @@ export interface SubAccountDoc {
    */
   onboardingStepsCompleted?: string[];
   /**
+   * The custom domain the sub-account wants to front their published website
+   * (e.g. "janedoe-homes.com"). Bare host, no scheme. Saved during the domain
+   * setup step; the actual DNS + Vercel domain hookup is an ops step the
+   * Connect Domain guide walks the operator through. Null = using the default
+   * deployment URL.
+   */
+  customDomain?: string | null;
+  /**
    * GHL migration connection (Phase 4). Holds the Private Integration Token +
    * location id used to pull the account's data. The token is a secret stored
    * like `twilioConfig.authToken` — server-only, never returned to the client.

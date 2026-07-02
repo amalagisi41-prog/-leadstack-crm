@@ -22,7 +22,8 @@ export type OnboardingStepId =
   | "form"
   | "automation"
   | "pipeline"
-  | "ai";
+  | "ai"
+  | "domain";
 
 export interface OnboardingStepMeta {
   id: OnboardingStepId;
@@ -90,6 +91,15 @@ export const ONBOARDING_STEPS: readonly OnboardingStepMeta[] = [
     cta: "Set Up AI Agent",
     href: "/ai-agents",
     videoMinutes: 5,
+  },
+  {
+    id: "domain",
+    title: "Connect your domain",
+    description:
+      "The final step — point your website to your own domain. Already own one? We'll show you the exact DNS records to add. Need one? We'll walk you through registering a new one.",
+    cta: "Connect Domain",
+    href: "/domain",
+    videoMinutes: 4,
   },
 ];
 
