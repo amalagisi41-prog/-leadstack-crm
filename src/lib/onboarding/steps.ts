@@ -96,5 +96,14 @@ export const ONBOARDING_STEPS: readonly OnboardingStepMeta[] = [
 export const ONBOARDING_STEP_IDS: readonly OnboardingStepId[] =
   ONBOARDING_STEPS.map((s) => s.id);
 
+/** True once every onboarding step id is present in `completed`. */
+export function isOnboardingComplete(
+  completed: readonly string[] | null | undefined,
+): boolean {
+  if (!completed) return false;
+  const set = new Set(completed);
+  return ONBOARDING_STEP_IDS.every((id) => set.has(id));
+}
+
 /** Per-step walkthrough video URLs, keyed by step id. */
 export type OnboardingVideos = Partial<Record<OnboardingStepId, string>>;

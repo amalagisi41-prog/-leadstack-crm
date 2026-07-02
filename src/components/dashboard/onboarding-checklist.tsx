@@ -161,6 +161,9 @@ export function OnboardingChecklist({
   saPath,
   preview = false,
   videosOverride,
+  subAccountId,
+  initialCompleted,
+  mandatory = false,
 }: {
   saPath?: (path: string) => string;
   /**
@@ -170,9 +173,17 @@ export function OnboardingChecklist({
    */
   preview?: boolean;
   videosOverride?: OnboardingVideos;
+  /** When set, step toggles persist to the sub-account (survives reloads). */
+  subAccountId?: string;
+  /** Persisted completed step ids to hydrate from. */
+  initialCompleted?: string[];
+  /** Mandatory setup mode (the /get-started gate): no Dismiss. */
+  mandatory?: boolean;
 }) {
   const agency = useAgency();
-  const [completed, setCompleted] = useState<Set<string>>(new Set());
+  const [completed, setCompleted] = useState<Set<string>>(
+    () => new Set(initialCompleted ?? []),
+  );
   const [dismissed, setDismissed] = useState(false);
 
   if (dismissed) return null;
@@ -184,6 +195,14 @@ export function OnboardingChecklist({
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
+      // Persist (fire-and-forget) so progress survives reloads + gates login.
+      if (subAccountId) {
+        void fetch(`/api/sub-accounts/${subAccountId}/onboarding`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ steps: Array.from(next) }),
+        }).catch(() => {});
+      }
       return next;
     });
 
@@ -211,7 +230,7 @@ export function OnboardingChecklist({
             </p>
           </div>
         </div>
-        {!preview && (
+        {!preview && !mandatory && (
           <button
             onClick={() => setDismissed(true)}
             className="text-xs text-muted-foreground hover:text-foreground"
@@ -260,6 +279,11 @@ export function OnboardingChecklist({
           <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
             🎉 Setup complete — you&apos;re ready to work leads.
           </p>
+          {mandatory && saPath && (
+            <Button className="mt-3" render={<Link href={saPath("/dashboard")} />}>
+              Continue to dashboard
+            </Button>
+          )}
         </div>
       )}
 

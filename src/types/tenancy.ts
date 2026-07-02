@@ -310,6 +310,14 @@ export interface SubAccountDoc {
    */
   pipelineStages?: import("./deals").PipelineStageOverride[];
   /**
+   * Setup-checklist progress for this sub-account. Holds the ids of the
+   * onboarding steps (see lib/onboarding/steps.ts) the operator has marked
+   * done. Persisted so the checklist survives reloads and the dashboard can
+   * force a new customer onto the /get-started checklist at login until every
+   * step is complete. Absent/empty on a fresh sub-account.
+   */
+  onboardingStepsCompleted?: string[];
+  /**
    * GHL migration connection (Phase 4). Holds the Private Integration Token +
    * location id used to pull the account's data. The token is a secret stored
    * like `twilioConfig.authToken` — server-only, never returned to the client.
