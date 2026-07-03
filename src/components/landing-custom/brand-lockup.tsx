@@ -19,9 +19,11 @@ import { Logo } from "./logo";
  * image logoUrl in Agency → Settings, the navbar/footer render that instead.
  */
 
+// Official AgentStack brand palette (from the logo lockup spec):
+// navy #1b3d7a base, bright blue #3b7ff2 secondary (#6ba3ff on dark).
 const PALETTE = {
-  light: { primary: "#1a2f50", accent: "#3b82f6", subline: "#64748b" },
-  dark: { primary: "#f5f2ec", accent: "#7c9ff8", subline: "#94a3b8" },
+  light: { primary: "#1b3d7a", accent: "#3b7ff2", subline: "#3a5786" },
+  dark: { primary: "#f5f0e8", accent: "#6ba3ff", subline: "#c9d3e3" },
 } as const;
 
 function splitWordmark(name: string): { primary: string; accent: string } {
@@ -31,14 +33,36 @@ function splitWordmark(name: string): { primary: string; accent: string } {
   return { primary: compact, accent: "" };
 }
 
+/** One row of the block lockup: letters distributed flush to both edges. */
+function JustifiedWord({
+  word,
+  className,
+  style,
+}: {
+  word: string;
+  className?: string;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <span className={`flex w-full justify-between ${className ?? ""}`} style={style}>
+      {word.split("").map((ch, i) => (
+        <span key={i}>{ch}</span>
+      ))}
+    </span>
+  );
+}
+
 /**
- * Stacked hero lockup — the big above-the-fold treatment:
+ * Stacked block hero lockup — a square composition where every row runs
+ * flush left AND right to the same width:
  *
- *   Agent                    ← navy, display size
- *   Stack                    ← blue, display size, tight leading
- *   REAL ESTATE SOLUTIONS    ← small, wide-tracked, muted, below
+ *   A G E N T                ← navy, display size, letters justified
+ *   S T A C K                ← blue, display size, letters justified
+ *   REAL ESTATE SOLUTIONS    ← small, words justified across the block
  *
- * Same camelCase split + palette as BrandLockup, arranged vertically.
+ * The block width is set by the display rows; the sub-line's words spread
+ * to match. Subline color is darkened vs the inline lockup so it stays
+ * readable as small type on mobile.
  */
 export function BrandLockupStacked({
   brand,
@@ -51,24 +75,21 @@ export function BrandLockupStacked({
 }) {
   const { primary, accent } = splitWordmark(brand.name);
   const colors = PALETTE[tone];
+  const sublineColor = colors.subline;
 
   return (
-    <span className="inline-flex flex-col">
-      <span className="font-sans text-5xl font-extrabold leading-[0.95] tracking-tight sm:text-6xl">
-        <span className="block" style={{ color: colors.primary }}>
-          {primary}
-        </span>
-        {accent && (
-          <span className="block" style={{ color: colors.accent }}>
-            {accent}
-          </span>
-        )}
+    <span className="inline-flex w-[11.5rem] flex-col sm:w-[13.5rem]">
+      <span className="font-sans text-[3.4rem] font-extrabold uppercase leading-[0.98] tracking-tight sm:text-[4rem]">
+        <JustifiedWord word={primary} style={{ color: colors.primary }} />
+        {accent && <JustifiedWord word={accent} style={{ color: colors.accent }} />}
       </span>
       <span
-        className="mt-2 block font-sans text-[11px] font-semibold uppercase sm:text-xs"
-        style={{ color: colors.subline, letterSpacing: "0.28em" }}
+        className="mt-1.5 flex w-full justify-between font-sans text-[10.5px] font-bold uppercase sm:text-xs"
+        style={{ color: sublineColor }}
       >
-        {subline}
+        {subline.split(/\s+/).map((w, i) => (
+          <span key={i}>{w}</span>
+        ))}
       </span>
     </span>
   );
