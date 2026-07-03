@@ -75,7 +75,7 @@ export interface ResolvedBrand {
  */
 export const CUSTOM_BRAND: CustomBrand = {
   /** Displayed in navbar, hero, footer copyright, page title â€" everywhere. */
-  name: "Artisan RE Solutions",
+  name: "AgentStack",
 
   /** One-line positioning, surfaced in hero subtitle + meta description. */
   tagline: "Purpose-built for REALTORS®",
@@ -85,13 +85,15 @@ export const CUSTOM_BRAND: CustomBrand = {
    * read like a tweet â€" what the product does, for whom.
    */
   shortDescription:
-    "Stop losing deals between showings. Artisan CRM responds to every inbound lead in under 60 seconds, keeps your pipeline organized from first inquiry to closing day, and follows up so you don't have to.",
+    "Stop losing deals between showings. AgentStack responds to every inbound lead in under 60 seconds, keeps your pipeline organized from first inquiry to closing day, and follows up so you don't have to.",
 
-  /** Used on CTA buttons + the FAQ "talk to us" line + footer. */
-  supportEmail: "hello@artisanresolutions.com",
+  /** Used on CTA buttons + the FAQ "talk to us" line + footer.
+   *  PLACEHOLDER — update once the AgentStack domain is purchased. */
+  supportEmail: "hello@agentstackre.com",
 
-  /** Used in footer, og:url, canonical. No https://, no trailing slash. */
-  primaryDomain: "artisanresolutions.com",
+  /** Used in footer, og:url, canonical. No https://, no trailing slash.
+   *  PLACEHOLDER — update once the AgentStack domain is purchased. */
+  primaryDomain: "agentstackre.com",
 
   /**
    * Pricing tiers. HIDDEN BY DEFAULT â€" the custom landing is wired for

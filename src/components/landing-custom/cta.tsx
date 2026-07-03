@@ -25,7 +25,7 @@ export function CTA({ brand }: { brand: ResolvedBrand }) {
             Book a demo
           </Button>
           <Button
-            render={<a href={`mailto:${brand.supportEmail}?subject=Question%20about%20Artisan%20RE%20Solutions`} />}
+            render={<a href={`mailto:${brand.supportEmail}?subject=Question%20about%20AgentStack`} />}
             variant="outline"
             size="lg"
             className="px-6 text-base"
