@@ -88,12 +88,12 @@ export const CUSTOM_BRAND: CustomBrand = {
     "Stop losing deals between showings. AgentStack responds to every inbound lead in under 60 seconds, keeps your pipeline organized from first inquiry to closing day, and follows up so you don't have to.",
 
   /** Used on CTA buttons + the FAQ "talk to us" line + footer.
-   *  PLACEHOLDER — update once the AgentStack domain is purchased. */
-  supportEmail: "hello@agentstackre.com",
+   *  PLACEHOLDER — domain not final; current favorite, swap when purchased. */
+  supportEmail: "hello@agentstackcrm.com",
 
   /** Used in footer, og:url, canonical. No https://, no trailing slash.
-   *  PLACEHOLDER — update once the AgentStack domain is purchased. */
-  primaryDomain: "agentstackre.com",
+   *  PLACEHOLDER — domain not final; current favorite, swap when purchased. */
+  primaryDomain: "agentstackcrm.com",
 
   /**
    * Pricing tiers. HIDDEN BY DEFAULT â€" the custom landing is wired for

@@ -31,6 +31,49 @@ function splitWordmark(name: string): { primary: string; accent: string } {
   return { primary: compact, accent: "" };
 }
 
+/**
+ * Stacked hero lockup — the big above-the-fold treatment:
+ *
+ *   Agent                    ← navy, display size
+ *   Stack                    ← blue, display size, tight leading
+ *   REAL ESTATE SOLUTIONS    ← small, wide-tracked, muted, below
+ *
+ * Same camelCase split + palette as BrandLockup, arranged vertically.
+ */
+export function BrandLockupStacked({
+  brand,
+  subline = "Real Estate Solutions",
+  tone = "light",
+}: {
+  brand: ResolvedBrand;
+  subline?: string;
+  tone?: "light" | "dark";
+}) {
+  const { primary, accent } = splitWordmark(brand.name);
+  const colors = PALETTE[tone];
+
+  return (
+    <span className="inline-flex flex-col">
+      <span className="font-sans text-5xl font-extrabold leading-[0.95] tracking-tight sm:text-6xl">
+        <span className="block" style={{ color: colors.primary }}>
+          {primary}
+        </span>
+        {accent && (
+          <span className="block" style={{ color: colors.accent }}>
+            {accent}
+          </span>
+        )}
+      </span>
+      <span
+        className="mt-2 block font-sans text-[11px] font-semibold uppercase sm:text-xs"
+        style={{ color: colors.subline, letterSpacing: "0.28em" }}
+      >
+        {subline}
+      </span>
+    </span>
+  );
+}
+
 export function BrandLockup({
   brand,
   subline = "Real Estate Solutions",
