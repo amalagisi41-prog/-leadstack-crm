@@ -4,21 +4,20 @@ import { useState, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  BookOpen,
-  Users,
+  Building2,
+  Link2,
   Target,
   Zap,
-  Bot,
+  TrendingUp,
+  Star,
   CheckCircle2,
   ArrowRight,
   Upload,
+  Users,
+  Phone,
+  Bot,
   FileText,
-  Star,
   Sparkles,
-  Home,
-  Building2,
-  TrendingUp,
-  UserCheck,
   ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -32,7 +31,6 @@ type WizardStep = 0 | 1 | 2 | 3 | 4 | 5;
 interface WizardProps {
   subAccountId: string;
   saPath: (p: string) => string;
-  /** Already-completed step IDs (hydrated from Firestore). */
   initialCompleted: string[];
 }
 
@@ -40,55 +38,44 @@ interface WizardProps {
 
 const WIZARD_STEPS = [
   {
-    id: "business_profile" as const,
-    label: "Business Profile",
-    icon: BookOpen,
-    tagline: "Tell AgentStack about your business",
+    id: "build" as const,
+    label: "Build",
+    icon: Building2,
+    tagline: "Your Business Brain",
   },
   {
-    id: "contacts" as const,
-    label: "Import Contacts",
-    icon: Users,
-    tagline: "Bring your existing leads",
+    id: "connect" as const,
+    label: "Connect",
+    icon: Link2,
+    tagline: "Bring everything together",
   },
   {
-    id: "goals" as const,
-    label: "Choose Your Goals",
+    id: "capture" as const,
+    label: "Capture",
     icon: Target,
-    tagline: "Pick what matters most to you",
+    tagline: "Lead capture systems",
   },
   {
-    id: "marketing" as const,
-    label: "Launch Marketing",
+    id: "respond" as const,
+    label: "Respond",
     icon: Zap,
-    tagline: "Set up your lead capture funnel",
+    tagline: "Instant AI response",
   },
   {
-    id: "ai_setup" as const,
-    label: "AI Setup",
-    icon: Bot,
-    tagline: "Activate your AI receptionist",
+    id: "nurture" as const,
+    label: "Nurture",
+    icon: TrendingUp,
+    tagline: "Automatic follow-up",
   },
   {
-    id: "done" as const,
-    label: "You're Ready",
+    id: "close" as const,
+    label: "Close",
     icon: Star,
     tagline: "Start closing deals",
   },
 ] as const;
 
-/* ---------- goal chips ---------- */
-
-const GOAL_OPTIONS: { id: string; label: string; icon: React.ElementType }[] = [
-  { id: "buyers", label: "Work with Buyers", icon: Home },
-  { id: "sellers", label: "List & Sell Homes", icon: Building2 },
-  { id: "investors", label: "Investor Deals", icon: TrendingUp },
-  { id: "first_time_buyers", label: "First-Time Buyers", icon: UserCheck },
-  { id: "rentals", label: "Rentals", icon: FileText },
-  { id: "luxury", label: "Luxury Market", icon: Sparkles },
-];
-
-/* ---------- recommended funnel cards ---------- */
+/* ---------- funnel cards ---------- */
 
 const FUNNEL_RECOMMENDATIONS = [
   {
@@ -96,21 +83,18 @@ const FUNNEL_RECOMMENDATIONS = [
     title: "Buyer Lead Form",
     description: "Capture buyer inquiries 24/7. AI follows up within 60 seconds.",
     badge: "Most popular",
-    stepsMarked: ["form", "automation"] as const,
   },
   {
     id: "seller_valuation",
     title: "Home Valuation Request",
     description: "Sellers request a free home value estimate. AI qualifies them immediately.",
     badge: "High intent",
-    stepsMarked: ["form", "automation"] as const,
   },
   {
     id: "open_house",
     title: "Open House Sign-in",
     description: "Digital sign-in sheet. AI texts attendees within minutes of leaving.",
     badge: "",
-    stepsMarked: ["form", "automation"] as const,
   },
 ];
 
@@ -136,10 +120,8 @@ export function OnboardingWizard({
   const [completed, setCompleted] = useState<Set<string>>(
     () => new Set(initialCompleted),
   );
-  const [selectedGoals, setSelectedGoals] = useState<Set<string>>(new Set());
   const [chosenFunnel, setChosenFunnel] = useState<string | null>(null);
 
-  /* mark step IDs as done and persist */
   const markDone = useCallback(
     (ids: string[]) => {
       setCompleted((prev) => {
@@ -160,20 +142,11 @@ export function OnboardingWizard({
     [markDone],
   );
 
-  /* finish — mark everything remaining, redirect to dashboard */
   const finish = useCallback(() => {
     const all = [...ONBOARDING_STEP_IDS];
     markDone(all);
     router.replace(saPath("/dashboard"));
   }, [markDone, router, saPath]);
-
-  const toggleGoal = (id: string) =>
-    setSelectedGoals((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
 
   return (
     <div className="flex min-h-[calc(100vh-4rem)] flex-col">
@@ -186,10 +159,10 @@ export function OnboardingWizard({
       </div>
 
       <div className="flex flex-1 gap-0 md:gap-8 p-4 md:p-8 max-w-6xl mx-auto w-full">
-        {/* ── left sidebar ── */}
+        {/* ── left sidebar — The AgentStack Method™ ── */}
         <aside className="hidden md:flex flex-col gap-1 w-52 shrink-0 pt-2">
           <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Setup — 15 min
+            The AgentStack Method&trade;
           </p>
           {WIZARD_STEPS.map((step, idx) => {
             const isActive = idx === currentStep;
@@ -227,32 +200,28 @@ export function OnboardingWizard({
         {/* ── main content ── */}
         <main className="flex-1 min-w-0">
           {currentStep === 0 && (
-            <StepBusinessProfile saPath={saPath} onNext={() => advance(["business_profile"])} />
+            <StepBuild saPath={saPath} onNext={() => advance(["business_profile"])} />
           )}
           {currentStep === 1 && (
-            <StepImportContacts saPath={saPath} onSkip={() => advance(["contacts"])} />
+            <StepConnect saPath={saPath} onNext={() => advance(["contacts", "sms"])} onSkip={() => advance(["contacts", "sms"])} />
           )}
           {currentStep === 2 && (
-            <StepChooseGoals
-              selectedGoals={selectedGoals}
-              onToggle={toggleGoal}
-              onNext={() => advance()}
-            />
-          )}
-          {currentStep === 3 && (
-            <StepLaunchMarketing
+            <StepCapture
               chosenFunnel={chosenFunnel}
               onChoose={setChosenFunnel}
               saPath={saPath}
-              onNext={() => advance(["form", "automation"])}
-              onSkip={() => advance(["form", "automation"])}
+              onNext={() => advance(["form"])}
+              onSkip={() => advance(["form"])}
             />
           )}
+          {currentStep === 3 && (
+            <StepRespond saPath={saPath} onNext={() => advance(["automation", "ai"])} onSkip={() => advance(["automation", "ai"])} />
+          )}
           {currentStep === 4 && (
-            <StepAISetup saPath={saPath} onNext={() => advance(["ai"])} onSkip={() => advance(["ai"])} />
+            <StepNurture saPath={saPath} onNext={() => advance(["pipeline"])} />
           )}
           {currentStep === 5 && (
-            <StepDone
+            <StepClose
               completed={completed}
               saPath={saPath}
               onFinish={finish}
@@ -282,10 +251,10 @@ export function OnboardingWizard({
 }
 
 /* ════════════════════════════════════════════════════════════
-   Step 1 — Business Profile
+   Step 1 — BUILD: Your Business Brain
    ════════════════════════════════════════════════════════════ */
 
-function StepBusinessProfile({
+function StepBuild({
   saPath,
   onNext,
 }: {
@@ -294,12 +263,11 @@ function StepBusinessProfile({
 }) {
   return (
     <StepShell
-      icon={<BookOpen className="h-6 w-6 text-blue-600" />}
-      eyebrow="Step 1 of 6 · 5 min"
-      title="Set up your Business Profile"
-      subtitle="This is the most important step. Everything else in AgentStack references this information — your AI receptionist, email templates, SMS follow-ups, and lead funnels all pull from it automatically."
+      icon={<Building2 className="h-6 w-6 text-blue-600" />}
+      eyebrow="Step 1: Build · 5 min"
+      title="Build your Business Brain"
+      subtitle="This is the foundation of everything. You tell AgentStack about your business once — name, brokerage, services, brand voice, compliance rules, and FAQs. Every AI agent, email, SMS template, and automation pulls from this profile automatically. Set it once, and everything else just works."
     >
-      {/* teaching cards */}
       <div className="grid gap-3 sm:grid-cols-3 my-6">
         {[
           {
@@ -342,69 +310,90 @@ function StepBusinessProfile({
       </div>
 
       <TeachingNote>
-        You don&apos;t have to fill everything in right now — even your name, brokerage, and
-        service areas make a big difference. You can always come back to add FAQs, brand voice,
-        and compliance rules. Once saved, click the &ldquo;Continue setup&rdquo; button on that page to come back
-        here.
+        Think of your Business Profile as your &ldquo;Business Brain&rdquo; — a single source of truth
+        that feeds every feature in AgentStack. You don&apos;t have to fill everything in right now.
+        Even your name, brokerage, and service areas make a big difference. You can always come back
+        to add FAQs, brand voice, and compliance rules later.
       </TeachingNote>
     </StepShell>
   );
 }
 
 /* ════════════════════════════════════════════════════════════
-   Step 2 — Import Contacts
+   Step 2 — CONNECT: Bring everything together
    ════════════════════════════════════════════════════════════ */
 
-function StepImportContacts({
+function StepConnect({
   saPath,
+  onNext,
   onSkip,
 }: {
   saPath: (p: string) => string;
+  onNext: () => void;
   onSkip: () => void;
 }) {
   return (
     <StepShell
-      icon={<Users className="h-6 w-6 text-violet-600" />}
-      eyebrow="Step 2 of 6 · 3 min"
-      title="Bring your contacts"
-      subtitle="Upload a CSV from your old CRM, or add a few contacts manually to start. Every contact you add becomes part of your AI-powered follow-up pipeline."
+      icon={<Link2 className="h-6 w-6 text-violet-600" />}
+      eyebrow="Step 2: Connect · 5 min"
+      title="Bring everything together"
+      subtitle="Import your existing contacts and connect your phone number. These two connections unlock AI-powered SMS follow-up, automated responses, and a full communication history for every lead."
     >
       <div className="grid gap-3 sm:grid-cols-2 my-6">
-        <ImportOptionCard
+        <ConnectOptionCard
           icon={<Upload className="h-5 w-5 text-violet-500" />}
-          title="Import from CSV"
-          description="Export contacts from any CRM as a .csv file and upload here. AgentStack maps your columns automatically."
+          title="Import contacts"
+          description="Upload a CSV from your old CRM. AgentStack maps columns automatically and handles duplicate detection."
           href={saPath("/contacts?import=1")}
           cta="Upload CSV"
         />
-        <ImportOptionCard
+        <ConnectOptionCard
           icon={<Users className="h-5 w-5 text-blue-500" />}
           title="Add manually"
-          description="Got just a handful of leads? Add them one by one from the Contacts page."
+          description="Got a handful of leads? Add them one by one from the Contacts page to get started."
           href={saPath("/contacts")}
           cta="Go to Contacts"
+        />
+        <ConnectOptionCard
+          icon={<Phone className="h-5 w-5 text-emerald-500" />}
+          title="Connect your phone"
+          description="Link a dedicated Twilio number so you can send and receive SMS — and your AI can reply on your behalf."
+          href={saPath("/dashboard/settings?tab=sms")}
+          cta="SMS Settings"
+        />
+        <ConnectOptionCard
+          icon={<Bot className="h-5 w-5 text-amber-500" />}
+          title="More connections"
+          description="Email, calendar, website, and social accounts can all be connected later from Settings."
+          href={saPath("/dashboard/settings")}
+          cta="View Settings"
         />
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
+        <Button onClick={onNext}>
+          Continue
+          <ArrowRight className="ml-1.5 h-4 w-4" />
+        </Button>
         <button
           onClick={onSkip}
           className="text-sm text-muted-foreground underline-offset-4 hover:underline"
         >
-          Skip for now — I&apos;ll import later
+          Skip — I&apos;ll connect later
         </button>
       </div>
 
       <TeachingNote>
         Already using GoHighLevel, Follow Up Boss, kvCORE, or another CRM? Export your contacts
-        as a CSV from those platforms and upload here. The importer handles duplicate detection
-        automatically — so it&apos;s safe to upload even if you have some contacts already.
+        as a CSV and upload here. The importer handles duplicate detection automatically. Connecting
+        your phone number is what powers AI SMS responses — your agent can start answering leads the
+        moment you flip the switch.
       </TeachingNote>
     </StepShell>
   );
 }
 
-function ImportOptionCard({
+function ConnectOptionCard({
   icon,
   title,
   description,
@@ -435,87 +424,10 @@ function ImportOptionCard({
 }
 
 /* ════════════════════════════════════════════════════════════
-   Step 3 — Choose Your Goals
+   Step 3 — CAPTURE: Build your lead capture systems
    ════════════════════════════════════════════════════════════ */
 
-function StepChooseGoals({
-  selectedGoals,
-  onToggle,
-  onNext,
-}: {
-  selectedGoals: Set<string>;
-  onToggle: (id: string) => void;
-  onNext: () => void;
-}) {
-  return (
-    <StepShell
-      icon={<Target className="h-6 w-6 text-amber-500" />}
-      eyebrow="Step 3 of 6 · 1 min"
-      title="What kind of business do you run?"
-      subtitle="Choose everything that applies. We'll use this to recommend the right funnels, automations, and AI scripts for your specific situation."
-    >
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 my-6">
-        {GOAL_OPTIONS.map(({ id, label, icon: Icon }) => {
-          const active = selectedGoals.has(id);
-          return (
-            <button
-              key={id}
-              onClick={() => onToggle(id)}
-              className={cn(
-                "flex flex-col items-start gap-2 rounded-xl border p-4 text-left transition-all",
-                active
-                  ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-700"
-                  : "border-border bg-card hover:border-muted-foreground/30",
-              )}
-            >
-              <div
-                className={cn(
-                  "flex h-8 w-8 items-center justify-center rounded-lg",
-                  active
-                    ? "bg-blue-100 text-blue-600 dark:bg-blue-900/40"
-                    : "bg-muted text-muted-foreground",
-                )}
-              >
-                <Icon className="h-4 w-4" />
-              </div>
-              <span
-                className={cn(
-                  "text-sm font-medium leading-snug",
-                  active ? "text-blue-700 dark:text-blue-300" : "",
-                )}
-              >
-                {label}
-              </span>
-              {active && (
-                <CheckCircle2 className="h-3.5 w-3.5 self-end text-blue-500" />
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      <Button onClick={onNext} disabled={selectedGoals.size === 0}>
-        Continue
-        <ArrowRight className="ml-1.5 h-4 w-4" />
-      </Button>
-      {selectedGoals.size === 0 && (
-        <p className="mt-2 text-xs text-muted-foreground">Select at least one to continue.</p>
-      )}
-
-      <TeachingNote>
-        Your selection helps AgentStack surface the right templates, funnel suggestions, and AI
-        scripts. You can update these at any time in your account settings — your data is never
-        locked to a category.
-      </TeachingNote>
-    </StepShell>
-  );
-}
-
-/* ════════════════════════════════════════════════════════════
-   Step 4 — Launch Marketing
-   ════════════════════════════════════════════════════════════ */
-
-function StepLaunchMarketing({
+function StepCapture({
   chosenFunnel,
   onChoose,
   saPath,
@@ -530,10 +442,10 @@ function StepLaunchMarketing({
 }) {
   return (
     <StepShell
-      icon={<Zap className="h-6 w-6 text-amber-500" />}
-      eyebrow="Step 4 of 6 · 3 min"
-      title="Launch your first lead capture funnel"
-      subtitle="Pick a ready-made funnel. We'll set up the form and wire the AI Speed-to-Lead automation so every new inquiry gets a follow-up within 60 seconds — automatically."
+      icon={<Target className="h-6 w-6 text-amber-500" />}
+      eyebrow="Step 3: Capture · 3 min"
+      title="Create your Lead Capture Systems"
+      subtitle="These are the places where leads enter your business — forms on your website, landing pages, booking pages. Pick a ready-made system below. Every submission auto-creates a contact and drops them into your pipeline."
     >
       <div className="flex flex-col gap-3 my-6">
         {FUNNEL_RECOMMENDATIONS.map((funnel) => (
@@ -582,7 +494,7 @@ function StepLaunchMarketing({
           disabled={!chosenFunnel}
           onClick={onNext}
         >
-          Build my funnel
+          Build my capture system
           <ArrowRight className="ml-1.5 h-4 w-4" />
         </Button>
         <button
@@ -594,8 +506,8 @@ function StepLaunchMarketing({
       </div>
 
       <TeachingNote>
-        Every funnel is built on two things: a Form (the page where leads give you their info)
-        and a Speed-to-Lead Automation (the AI that texts and emails them the second they submit).
+        Every lead capture system is built on two things: a Form (the page where leads give you
+        their info) and an instant AI response (the follow-up that fires within 60 seconds).
         AgentStack pre-configures both — you just review and activate. The whole thing takes
         about 3 minutes.
       </TeachingNote>
@@ -604,10 +516,10 @@ function StepLaunchMarketing({
 }
 
 /* ════════════════════════════════════════════════════════════
-   Step 5 — AI Setup
+   Step 4 — RESPOND: Enable instant AI response
    ════════════════════════════════════════════════════════════ */
 
-function StepAISetup({
+function StepRespond({
   saPath,
   onNext,
   onSkip,
@@ -618,27 +530,32 @@ function StepAISetup({
 }) {
   return (
     <StepShell
-      icon={<Bot className="h-6 w-6 text-indigo-600" />}
-      eyebrow="Step 5 of 6 · 2 min"
-      title="Activate your AI receptionist"
-      subtitle="Your AI agent is already pre-configured with a real estate persona and has read your Business Profile. All you need to do is review the persona, enable it, and go live."
+      icon={<Zap className="h-6 w-6 text-indigo-600" />}
+      eyebrow="Step 4: Respond · 3 min"
+      title="Enable instant AI response"
+      subtitle="This is where AgentStack earns its keep. You don't build automations — you enable them. Your AI agent is already pre-configured with your Business Brain. It responds to every lead within 60 seconds across SMS, web chat, and more."
     >
       <div className="grid gap-3 sm:grid-cols-2 my-6">
         {[
           {
-            title: "Web Chat Widget",
-            description: "An AI chat bubble on your website that qualifies leads instantly, 24/7.",
-            badge: "Quickest to activate",
+            icon: <Zap className="h-5 w-5 text-amber-500" />,
+            title: "Speed-to-Lead",
+            description: "Every new form submission gets an SMS and email within 60 seconds — automatically. The first agent to respond wins 78% of the time.",
+            badge: "Activate in 1 click",
             badgeColor: "emerald",
           },
           {
-            title: "SMS Receptionist",
-            description: "Connect your Twilio number and the AI handles inbound texts automatically.",
-            badge: "Most leads use this",
+            icon: <Bot className="h-5 w-5 text-indigo-500" />,
+            title: "AI Receptionist",
+            description: "Your AI agent handles inbound texts and web chat 24/7. It reads your Business Brain, qualifies leads, and books callbacks.",
+            badge: "Pre-configured",
             badgeColor: "blue",
           },
         ].map((card) => (
-          <div key={card.title} className="rounded-xl border border-border bg-card p-4">
+          <div key={card.title} className="rounded-xl border border-border bg-card p-5">
+            <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
+              {card.icon}
+            </div>
             <div className="flex items-start justify-between gap-2 mb-2">
               <p className="text-sm font-medium">{card.title}</p>
               <span
@@ -658,9 +575,12 @@ function StepAISetup({
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <Button render={<Link href={saPath("/ai-agents")} />} onClick={onNext}>
-          Review &amp; Activate AI Agent
+        <Button render={<Link href={saPath("/automations")} />} onClick={onNext}>
+          Enable Speed-to-Lead
           <ArrowRight className="ml-1.5 h-4 w-4" />
+        </Button>
+        <Button variant="outline" render={<Link href={saPath("/ai-agents")} />} onClick={onNext}>
+          Review AI Agent
         </Button>
         <button
           onClick={onSkip}
@@ -671,20 +591,83 @@ function StepAISetup({
       </div>
 
       <TeachingNote>
-        The AI reads your Business Profile so it already knows your name, brokerage, service
-        areas, and brand voice. From AI Agents, click &ldquo;Web Chat&rdquo; and flip the toggle — your
-        widget snippet is generated instantly. SMS requires connecting a Twilio number in Settings
-        first, which takes about 5 minutes.
+        Speed-to-Lead is already wired to your lead capture forms. Just enable it and every new
+        inquiry fires an SMS + email automatically. Your AI agent reads your Business Brain so it
+        already knows your name, brokerage, service areas, and brand voice — review the persona,
+        flip the toggle, and go live. No configuration required.
       </TeachingNote>
     </StepShell>
   );
 }
 
 /* ════════════════════════════════════════════════════════════
-   Step 6 — Done
+   Step 5 — NURTURE: Automatic follow-up
    ════════════════════════════════════════════════════════════ */
 
-function StepDone({
+function StepNurture({
+  saPath,
+  onNext,
+}: {
+  saPath: (p: string) => string;
+  onNext: () => void;
+}) {
+  return (
+    <StepShell
+      icon={<TrendingUp className="h-6 w-6 text-emerald-600" />}
+      eyebrow="Step 5: Nurture · 2 min"
+      title="Your follow-up runs itself"
+      subtitle="Every lead that enters your system gets automatic follow-up until they reply. Your pipeline tracks every opportunity from first contact to closing. Nothing falls through the cracks."
+    >
+      <div className="grid gap-3 sm:grid-cols-2 my-6">
+        <div className="rounded-xl border border-border bg-card p-5">
+          <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
+            <TrendingUp className="h-5 w-5 text-emerald-500" />
+          </div>
+          <p className="text-sm font-medium">Your Pipeline</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Pre-set for real estate: New Lead &rarr; Contacted &rarr; Showing Scheduled &rarr;
+            Offer Made &rarr; Closed. Drag deals as they progress. Customize stages anytime.
+          </p>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-5">
+          <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
+            <Sparkles className="h-5 w-5 text-violet-500" />
+          </div>
+          <p className="text-sm font-medium">Automatic Follow-up</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Your AI agent continues the conversation. Leads get follow-up messages until they
+            reply, book a showing, or opt out. Everything is pre-written and pre-scheduled.
+          </p>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3">
+        <Button render={<Link href={saPath("/pipeline")} />} onClick={onNext}>
+          Review Pipeline
+          <ArrowRight className="ml-1.5 h-4 w-4" />
+        </Button>
+        <button
+          onClick={onNext}
+          className="text-sm text-muted-foreground underline-offset-4 hover:underline"
+        >
+          Looks good — continue
+        </button>
+      </div>
+
+      <TeachingNote>
+        Most agents lose deals not because they lack leads, but because follow-up stops. AgentStack
+        handles the nurture automatically — your AI texts, your pipeline tracks, and your dashboard
+        shows you exactly who needs attention today. You just show up and close.
+      </TeachingNote>
+    </StepShell>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════
+   Step 6 — CLOSE: You're ready
+   ════════════════════════════════════════════════════════════ */
+
+function StepClose({
   completed,
   saPath,
   onFinish,
@@ -699,11 +682,10 @@ function StepDone({
   return (
     <StepShell
       icon={<Star className="h-6 w-6 text-amber-500" />}
-      eyebrow="You're all set!"
-      title="Your CRM is ready to use"
-      subtitle="You've completed the setup. AgentStack is configured and your AI receptionist is standing by. Let's go close some deals."
+      eyebrow="Step 6: Close"
+      title="Your system is ready"
+      subtitle="Build. Connect. Capture. Respond. Nurture. Close. That's the AgentStack Method — and you just set it up. Your AI receptionist is standing by, your pipeline is live, and every new lead gets instant follow-up."
     >
-      {/* what was completed */}
       <div className="my-6 rounded-xl border border-emerald-200 bg-emerald-50/60 dark:border-emerald-800/40 dark:bg-emerald-950/20 p-5">
         <div className="flex items-center gap-2 mb-3">
           <CheckCircle2 className="h-5 w-5 text-emerald-500" />
@@ -719,12 +701,11 @@ function StepDone({
         </div>
         {doneCount < totalCount && (
           <p className="mt-2 text-xs text-emerald-600 dark:text-emerald-500">
-            You can finish the remaining steps any time from your dashboard.
+            You can finish the remaining steps any time from your dashboard checklist.
           </p>
         )}
       </div>
 
-      {/* quick links */}
       <div className="grid grid-cols-2 gap-2 mb-6">
         {[
           { label: "View Contacts", href: saPath("/contacts") },
