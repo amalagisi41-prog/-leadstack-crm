@@ -85,14 +85,12 @@ export const CUSTOM_BRAND: CustomBrand = {
    * read like a tweet â€" what the product does, for whom.
    */
   shortDescription:
-    "Stop losing deals between showings. AgentStack responds to every inbound lead in under 60 seconds, keeps your pipeline organized from first inquiry to closing day, and follows up so you don't have to.",
+    "AgentStack responds to every inbound lead in under 60 seconds, organizes every opportunity in one pipeline, and keeps follow-up moving until closing — so no lead ever goes cold between showings.",
 
-  /** Used on CTA buttons + the FAQ "talk to us" line + footer.
-   *  PLACEHOLDER — domain not final; current favorite, swap when purchased. */
+  /** Used on CTA buttons + the FAQ "talk to us" line + footer. */
   supportEmail: "hello@agentstackcrm.com",
 
-  /** Used in footer, og:url, canonical. No https://, no trailing slash.
-   *  PLACEHOLDER — domain not final; current favorite, swap when purchased. */
+  /** Used in footer, og:url, canonical. No https://, no trailing slash. */
   primaryDomain: "agentstackcrm.com",
 
   /**

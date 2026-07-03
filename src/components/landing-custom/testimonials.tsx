@@ -49,14 +49,18 @@ export function Testimonials() {
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-2xl text-center mb-14">
           <p className="text-sm font-semibold uppercase tracking-wide text-blue-400 mb-2">
-            Real results
+            The kind of results agents see
           </p>
           <h2 className="text-3xl font-semibold tracking-tighter text-white sm:text-5xl">
-            Agents who stopped{" "}
+            Stop{" "}
             <span className="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text font-serif font-normal italic text-transparent">
               losing leads
             </span>
           </h2>
+          <p className="mt-3 text-xs text-blue-200/60">
+            Illustrative examples of outcomes AgentStack is built to drive. Real
+            customer stories will replace these as they come in.
+          </p>
         </div>
 
         <div className="mx-auto max-w-5xl grid gap-6 sm:grid-cols-3">
