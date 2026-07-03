@@ -9,12 +9,12 @@ const faqs = [
   {
     question: "I already use Chime / Follow Up Boss / KvCORE. Why switch?",
     answer:
-      "Most real estate CRMs lock you into their ecosystem and charge per-seat as your team grows. Artisan CRM is designed to be simple enough for a solo agent but powerful enough for a 20-person team — with AI follow-up, voice calling, and booking pages built in. You own your data, your automations, and your brand. No per-seat surprises.",
+      "Most real estate CRMs lock you into their ecosystem and charge per-seat as your team grows. AgentStack is designed to be simple enough for a solo agent but powerful enough for a 20-person team — with AI follow-up, voice calling, and booking pages built in. You own your data, your automations, and your brand. No per-seat surprises.",
   },
   {
     question: "How fast will leads get a response?",
     answer:
-      "Under 60 seconds for SMS and email. When a buyer submits your lead form, Artisan fires a personalized text and email immediately — while you're showing a home or in a closing. The AI agent can also answer follow-up questions, book showings, and qualify the lead before you pick up the phone.",
+      "Under 60 seconds for SMS and email. When a buyer submits your lead form, AgentStack fires a personalized text and email immediately — while you're showing a home or in a closing. The AI agent can also answer follow-up questions, book showings, and qualify the lead before you pick up the phone.",
   },
   {
     question: "Can I import my contacts from another CRM?",

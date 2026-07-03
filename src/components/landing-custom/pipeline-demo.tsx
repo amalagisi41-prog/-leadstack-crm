@@ -70,7 +70,7 @@ export function PipelineDemo() {
             <div className="h-3 w-3 rounded-full bg-yellow-400/70" />
             <div className="h-3 w-3 rounded-full bg-green-400/70" />
             <span className="ml-2 text-xs font-medium text-muted-foreground">
-              Pipeline — Artisan RE Solutions
+              Pipeline — AgentStack
             </span>
             <div className="ml-auto flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />

@@ -4,7 +4,7 @@ const features = [
   {
     icon: Zap,
     title: "Speed-to-lead — every time",
-    body: "The first agent to respond wins. Artisan CRM fires a personal text and email within 60 seconds of any new inquiry — from your website, Zillow, or a yard sign text — even while you're in a showing.",
+    body: "The first agent to respond wins. AgentStack fires a personal text and email within 60 seconds of any new inquiry — from your website, Zillow, or a yard sign text — even while you're in a showing.",
     color: "bg-amber-500/10 text-amber-500",
   },
   {
@@ -22,7 +22,7 @@ const features = [
   {
     icon: Star,
     title: "Google reviews on autopilot",
-    body: "Artisan sends a review request at the perfect moment — right after closing, when satisfaction is highest. More five-star reviews, less asking awkwardly.",
+    body: "AgentStack sends a review request at the perfect moment — right after closing, when satisfaction is highest. More five-star reviews, less asking awkwardly.",
     color: "bg-blue-500/10 text-blue-500",
   },
   {
@@ -54,7 +54,7 @@ export function Features() {
             </span>
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            Top producers don&apos;t have time to learn software. Artisan is set up in a day and pays for itself with one closed deal.
+            Top producers don&apos;t have time to learn software. AgentStack is set up in a day and pays for itself with one closed deal.
           </p>
         </div>
 

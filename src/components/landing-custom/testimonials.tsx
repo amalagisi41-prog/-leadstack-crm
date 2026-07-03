@@ -3,7 +3,7 @@ import { Star } from "lucide-react";
 const testimonials = [
   {
     quote:
-      "I used to lose 2–3 leads a week just because I was with another client when they called. Artisan's AI receptionist now qualifies every Zillow lead immediately. I closed an extra $24k in commissions last month alone.",
+      "I used to lose 2–3 leads a week just because I was with another client when they called. AgentStack's AI receptionist now qualifies every Zillow lead immediately. I closed an extra $24k in commissions last month alone.",
     name: "Marcus R.",
     title: "Realtor® · Maplewood, NJ · 11 years",
     initials: "MR",
