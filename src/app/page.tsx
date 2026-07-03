@@ -36,6 +36,7 @@ import { Pricing as CustomPricing } from "@/components/landing-custom/pricing";
 import { AddOns } from "@/components/landing-custom/add-ons";
 import { FAQ as CustomFAQ } from "@/components/landing-custom/faq";
 import { SignupCta } from "@/components/landing-custom/signup-cta";
+import { VideoTeaser } from "@/components/landing-custom/video-teaser";
 import { Footer as CustomFooter } from "@/components/landing-custom/footer";
 
 /**
@@ -59,6 +60,7 @@ export default async function HomePage() {
         <CustomNavbar brand={brand} />
         <main className="flex-1">
           <CustomHero brand={brand} />
+          <VideoTeaser />
           <PainPoints />
           <CustomHowItWorks />
           <PipelineDemo />

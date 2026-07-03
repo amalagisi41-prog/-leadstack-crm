@@ -287,6 +287,11 @@ export interface ResolvedAiAgent {
     contextMessageCount: number;
     modelOverride: string | null;
     websiteKb: string | null;
+    /** Compiled Agent Business Profile block (the central Knowledge Base).
+     *  Null when the sub-account hasn't filled in a business profile.
+     *  Injected into the system prompt so every channel speaks from the
+     *  same playbook. See lib/business-profile/compile.ts. */
+    businessKnowledge: string | null;
   };
 }
 

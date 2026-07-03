@@ -8,8 +8,10 @@ import {
 import { aiIsConfigured, callAi } from "@/lib/comms/ai/openrouter";
 import { buildSystemPrompt } from "@/lib/comms/ai/prompt";
 import { getAdminDb } from "@/lib/firebase/admin";
+import { compileBusinessProfilePrompt } from "@/lib/business-profile/compile";
 import { DEFAULT_AI_CHANNEL_CONFIG } from "@/types/ai";
 import type { ResolvedAiAgent } from "@/types/ai";
+import type { BusinessProfileContent } from "@/types/business-profile";
 import type { SubAccountDoc } from "@/types";
 
 export const dynamic = "force-dynamic";
@@ -62,8 +64,17 @@ export async function POST(
     body.channel === "web-chat" ? "web-chat" : "sms";
   const channel = await getChannelConfig(id, channelId);
 
-  const saSnap = await getAdminDb().doc(`subAccounts/${id}`).get();
+  const db = getAdminDb();
+  const [saSnap, bizSnap] = await Promise.all([
+    db.doc(`subAccounts/${id}`).get(),
+    db.doc(`subAccounts/${id}/businessProfile/main`).get(),
+  ]);
   const subAccount = saSnap.data() as SubAccountDoc | undefined;
+  // Compile the central Knowledge Base so the dry-run reflects exactly what
+  // the live agent receives.
+  const businessKnowledge = bizSnap.exists
+    ? compileBusinessProfilePrompt(bizSnap.data() as BusinessProfileContent)
+    : null;
 
   // Synthesize a ResolvedAiAgent for the dry-run. When the channel config
   // doesn't exist yet (operator hasn't enabled it), fall back to defaults
@@ -91,6 +102,7 @@ export async function POST(
       contextMessageCount: effectiveChannel.contextMessageCount,
       modelOverride: effectiveChannel.modelOverride,
       websiteKb: profile.websiteKb ?? null,
+      businessKnowledge,
     },
   };
 

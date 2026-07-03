@@ -29,6 +29,8 @@ import {
   MessagesSquare,
   Share2,
   GraduationCap,
+  Filter,
+  BookOpen,
   ChevronDown,
 } from "lucide-react";
 import { getFirebaseDb } from "@/lib/firebase/client";
@@ -95,6 +97,12 @@ const SUB_ACCOUNT_NAV_SECTIONS: NavSection[] = [
   {
     label: "AI & Automation",
     items: [
+      {
+        href: "/business-profile",
+        label: "Business Profile",
+        icon: BookOpen,
+        enabled: true,
+      },
       { href: "/ai-agents", label: "AI Receptionist", icon: Bot, enabled: true },
       { href: "/workflows", label: "Workflows", icon: Workflow, enabled: true },
       { href: "/broadcasts", label: "Broadcasts", icon: Send, enabled: true },
@@ -114,6 +122,7 @@ const SUB_ACCOUNT_NAV_SECTIONS: NavSection[] = [
       { href: "/products", label: "Products", icon: Package, enabled: true },
       { href: "/website", label: "Website", icon: Globe, enabled: true },
       { href: "/website-studio", label: "Website Studio", icon: LayoutTemplate, enabled: true },
+      { href: "/funnels", label: "Sales Funnels", icon: Filter, enabled: true },
       { href: "/social", label: "Social Planner", icon: Share2, enabled: true },
       {
         href: "/community",
@@ -279,7 +288,8 @@ function SidebarContent() {
                   const gateLocked =
                     (item.href === "/broadcasts" && broadcastsGate === false) ||
                     (item.href === "/website" && websiteGate === false) ||
-                    (item.href === "/website-studio" &&
+                    ((item.href === "/website-studio" ||
+                      item.href === "/funnels") &&
                       websiteStudioGate === false) ||
                     (item.href === "/social" && socialGate === false) ||
                     (item.href === "/community" && communityGate === false);

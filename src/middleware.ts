@@ -83,6 +83,12 @@ const PUBLIC_PATHS = [
   // from the site doc via the Admin SDK; only renders when status ===
   // "published". Public marketing pages, no session needed.
   "/agent",
+  // Published sales funnels — /l/[subAccountId]/[slug] (server-rendered,
+  // published-only) + the /api/l/[saId]/[slug]/submit lead-capture POST.
+  // Public: the submit route creates a contact via the Admin SDK and
+  // validates the funnel is published; no session needed.
+  "/l",
+  "/api/l",
   // Public event-management page (/e/[token]) + cancel/reschedule
   // endpoints. All gated by HMAC-token + hash match against the stored
   // `event.publicTokenHash`. Reschedule rotates the token so any
