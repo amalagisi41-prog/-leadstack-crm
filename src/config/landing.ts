@@ -88,10 +88,10 @@ export const CUSTOM_BRAND: CustomBrand = {
     "AgentStack responds to every inbound lead in under 60 seconds, organizes every opportunity in one pipeline, and keeps follow-up moving until closing — so no lead ever goes cold between showings.",
 
   /** Used on CTA buttons + the FAQ "talk to us" line + footer. */
-  supportEmail: "hello@agentstackcrm.com",
+  supportEmail: "hello@agentstackcrm.app",
 
   /** Used in footer, og:url, canonical. No https://, no trailing slash. */
-  primaryDomain: "agentstackcrm.com",
+  primaryDomain: "agentstackcrm.app",
 
   /**
    * Pricing tiers. HIDDEN BY DEFAULT â€" the custom landing is wired for
