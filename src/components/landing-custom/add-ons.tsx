@@ -15,15 +15,17 @@ interface AddOn {
 const addOns: AddOn[] = [
   {
     category: "Visibility",
-    name: "Agent Website",
-    tagline: "Your branded listing site, live in days",
-    price: "$49",
+    name: "Website Studio",
+    tagline: "AI builds your site from premium templates",
+    price: "$99",
     billing: "/mo",
+    badge: "New",
+    highlight: true,
     features: [
-      "Template-based site on your domain",
-      "MLS/IDX property search feed",
-      "Neighborhood pages & market reports",
-      "Lead capture forms straight to your pipeline",
+      "Premium templates + an AI Designer that interviews you",
+      "Edit your brand & content any time · keep drafts",
+      "Build sales funnels + landing pages",
+      "Guided A2P registration, chat-widget & SEO setup",
     ],
   },
   {

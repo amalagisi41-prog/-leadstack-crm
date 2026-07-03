@@ -170,6 +170,18 @@ export interface SubAccountDoc {
    */
   websiteEnabledByAgency?: boolean;
   /**
+   * Agency-controlled gate for **Website Studio** — the AI-guided, premium-
+   * template agent website builder (plus its bundled setup assists: A2P
+   * guidance, chat-widget help, SEO, etc.). Sold as a paid add-on, so only
+   * the agency owner can flip it on for a sub-account that has paid (PATCH
+   * /api/agency/sub-accounts/[id]/feature-gates). When `false` (or undefined
+   * on legacy docs): the Website Studio sidebar entry renders a "Locked by
+   * your agency" state and the /agent-site routes 403. No tear-down on
+   * disable — the site doc + published page are preserved, so re-enabling
+   * resumes instantly. Defaults to `false` at creation; read `=== true`.
+   */
+  websiteStudioEnabledByAgency?: boolean;
+  /**
    * Agency-controlled gate for the Social Planner (schedule + auto-publish
    * posts to the connected Facebook Page / Instagram Business via the shared
    * `metaConfig` connection). Only the agency owner can flip it (PATCH
@@ -297,6 +309,22 @@ export interface SubAccountDoc {
    * /api/sub-accounts/[id]/pipeline-stages (admin). See "Phase 2 (2A)".
    */
   pipelineStages?: import("./deals").PipelineStageOverride[];
+  /**
+   * Setup-checklist progress for this sub-account. Holds the ids of the
+   * onboarding steps (see lib/onboarding/steps.ts) the operator has marked
+   * done. Persisted so the checklist survives reloads and the dashboard can
+   * force a new customer onto the /get-started checklist at login until every
+   * step is complete. Absent/empty on a fresh sub-account.
+   */
+  onboardingStepsCompleted?: string[];
+  /**
+   * The custom domain the sub-account wants to front their published website
+   * (e.g. "janedoe-homes.com"). Bare host, no scheme. Saved during the domain
+   * setup step; the actual DNS + Vercel domain hookup is an ops step the
+   * Connect Domain guide walks the operator through. Null = using the default
+   * deployment URL.
+   */
+  customDomain?: string | null;
   /**
    * GHL migration connection (Phase 4). Holds the Private Integration Token +
    * location id used to pull the account's data. The token is a secret stored

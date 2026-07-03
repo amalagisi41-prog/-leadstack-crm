@@ -16,11 +16,13 @@ import {
   Rocket,
   Sparkles,
   PlayCircle,
+  Globe,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAgency } from "@/hooks/use-agency";
 import { OnboardingHelp } from "@/components/dashboard/onboarding-help";
+import { SnapshotPicker } from "@/components/dashboard/snapshot-picker";
 import {
   ONBOARDING_STEPS,
   type OnboardingStepId,
@@ -37,6 +39,7 @@ const STEP_ICONS: Record<OnboardingStepId, React.ElementType> = {
   automation: Zap,
   pipeline: KanbanSquare,
   ai: Bot,
+  domain: Globe,
 };
 
 function StepRow({
@@ -160,6 +163,9 @@ export function OnboardingChecklist({
   saPath,
   preview = false,
   videosOverride,
+  subAccountId,
+  initialCompleted,
+  mandatory = false,
 }: {
   saPath?: (path: string) => string;
   /**
@@ -169,9 +175,17 @@ export function OnboardingChecklist({
    */
   preview?: boolean;
   videosOverride?: OnboardingVideos;
+  /** When set, step toggles persist to the sub-account (survives reloads). */
+  subAccountId?: string;
+  /** Persisted completed step ids to hydrate from. */
+  initialCompleted?: string[];
+  /** Mandatory setup mode (the /get-started gate): no Dismiss. */
+  mandatory?: boolean;
 }) {
   const agency = useAgency();
-  const [completed, setCompleted] = useState<Set<string>>(new Set());
+  const [completed, setCompleted] = useState<Set<string>>(
+    () => new Set(initialCompleted ?? []),
+  );
   const [dismissed, setDismissed] = useState(false);
 
   if (dismissed) return null;
@@ -183,6 +197,14 @@ export function OnboardingChecklist({
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
+      // Persist (fire-and-forget) so progress survives reloads + gates login.
+      if (subAccountId) {
+        void fetch(`/api/sub-accounts/${subAccountId}/onboarding`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ steps: Array.from(next) }),
+        }).catch(() => {});
+      }
       return next;
     });
 
@@ -201,16 +223,16 @@ export function OnboardingChecklist({
           </div>
           <div>
             <h2 className="font-semibold tracking-tight">
-              {allDone ? "You're all set!" : "Get set up in 6 steps"}
+              {allDone ? "You're all set!" : `Get set up in ${totalCount} steps`}
             </h2>
             <p className="text-xs text-muted-foreground">
               {allDone
                 ? "Your account is fully configured — time to close some deals."
-                : `${doneCount} of ${totalCount} complete · about 22 min total`}
+                : `${doneCount} of ${totalCount} complete`}
             </p>
           </div>
         </div>
-        {!preview && (
+        {!preview && !mandatory && (
           <button
             onClick={() => setDismissed(true)}
             className="text-xs text-muted-foreground hover:text-foreground"
@@ -231,10 +253,13 @@ export function OnboardingChecklist({
       {/* Snapshot applied banner */}
       <div className="mt-3 flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-2 text-xs text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
         <Sparkles className="h-3.5 w-3.5 shrink-0" />
-        Your account came pre-configured with real estate pipeline stages, 6
-        email &amp; SMS templates, and a CT realtor AI persona. Just review and
-        activate.
+        Your account came pre-configured with a real estate pipeline, ready
+        email &amp; SMS templates, an AI persona, and draft workflows. Pick your
+        business type below to tailor it, then just review and activate.
       </div>
+
+      {/* Business-type snapshot picker (skip in the settings preview). */}
+      {!preview && <SnapshotPicker />}
 
       {/* Steps */}
       <div className="mt-4 space-y-2">
@@ -256,6 +281,11 @@ export function OnboardingChecklist({
           <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
             🎉 Setup complete — you&apos;re ready to work leads.
           </p>
+          {mandatory && saPath && (
+            <Button className="mt-3" render={<Link href={saPath("/dashboard")} />}>
+              Continue to dashboard
+            </Button>
+          )}
         </div>
       )}
 

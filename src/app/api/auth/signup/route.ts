@@ -233,6 +233,7 @@ export async function POST(request: Request) {
         whatsappEnabledByAgency: false,
         metaInboxEnabledByAgency: false,
         websiteEnabledByAgency: false,
+        websiteStudioEnabledByAgency: false,
         communityEnabledByAgency: false,
         metaConfig: null,
         bookingConfig: null,

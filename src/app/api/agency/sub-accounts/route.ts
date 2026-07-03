@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import { seedDefaultTemplates } from "@/lib/automations/seed-templates";
-import { applyRealEstateSnapshot } from "@/lib/snapshots/real-estate-agent";
+import { applySnapshot } from "@/lib/snapshots/apply";
 import { GLOBAL_TERRITORY_ID, type MemberStatus, type Role } from "@/types";
 
 interface CreateBody {
@@ -173,6 +173,7 @@ export async function POST(request: Request) {
       whatsappEnabledByAgency: false,
       metaInboxEnabledByAgency: false,
       websiteEnabledByAgency: false,
+      websiteStudioEnabledByAgency: false,
       communityEnabledByAgency: false,
       metaConfig: null,
       bookingConfig: null,
@@ -222,14 +223,14 @@ export async function POST(request: Request) {
     return current;
   });
 
-  // Apply the real-estate agent snapshot (pipeline stages + email/SMS
-  // templates + AI persona) as a best-effort follow-up write. Runs AFTER the
-  // creation transaction commits so a snapshot hiccup can never orphan the
-  // sub-account. If it fails, the sub-account still exists with generic
-  // defaults and the owner can re-apply via POST .../apply-snapshot.
+  // Apply the default "Solo Agent" role snapshot (pipeline + templates +
+  // persona + draft workflows) as a best-effort follow-up write. Runs AFTER
+  // the creation transaction commits so a snapshot hiccup can never orphan the
+  // sub-account. The operator can switch to Team Builder / Broker Office via
+  // POST .../apply-snapshot.
   let snapshotApplied = false;
   try {
-    await applyRealEstateSnapshot(subAccountId, agencyId, uid, {
+    await applySnapshot(subAccountId, agencyId, uid, "solo_agent", {
       businessName: name,
     });
     snapshotApplied = true;

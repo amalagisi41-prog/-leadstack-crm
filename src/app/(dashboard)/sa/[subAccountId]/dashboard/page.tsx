@@ -36,13 +36,26 @@ import type { WebChatSession } from "@/types/web-chat";
 import { Button } from "@/components/ui/button";
 import { NewDealDialog } from "@/components/pipeline/new-deal-dialog";
 import { cn } from "@/lib/utils";
-import { OnboardingChecklist } from "@/components/dashboard/onboarding-checklist";
+import { useRouter } from "next/navigation";
+import { isOnboardingComplete } from "@/lib/onboarding/steps";
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const { subAccount, subAccountId, agencyId, saPath } = useSubAccount();
   const { ready: filterReady, filter: territoryFilter } =
     useEffectiveTerritoryFilter();
+
+  // Force new customers onto the setup checklist at login until every step is
+  // marked complete (progress is persisted per sub-account).
+  const onboardingDone = isOnboardingComplete(
+    subAccount?.onboardingStepsCompleted,
+  );
+  useEffect(() => {
+    if (subAccount && !onboardingDone) {
+      router.replace(saPath("/get-started"));
+    }
+  }, [subAccount, onboardingDone, router, saPath]);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [deals, setDeals] = useState<Deal[]>([]);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -206,6 +219,15 @@ export default function DashboardPage() {
 
   const isEmpty = !loading && contacts.length === 0 && deals.length === 0;
 
+  // While the redirect to /get-started is in flight, don't flash the dashboard.
+  if (subAccount && !onboardingDone) {
+    return (
+      <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
+        Taking you to setup…
+      </div>
+    );
+  }
+
   // ── Stage display names ───────────────────────────────────────────────────
   const stageDisplay: Record<string, { label: string; color: string }> = {
     new: { label: "Inquiry", color: "bg-slate-100 text-slate-600" },
@@ -298,10 +320,7 @@ export default function DashboardPage() {
       </div>
 
       {isEmpty ? (
-        <div className="space-y-4">
-          <OnboardingChecklist saPath={saPath} />
-          <GettingStarted saPath={saPath} contacts={contacts} />
-        </div>
+        <GettingStarted saPath={saPath} contacts={contacts} />
       ) : (
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
           {/* ── Left column ──────────────────────────────────────────────── */}

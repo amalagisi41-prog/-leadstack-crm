@@ -6,6 +6,7 @@ import {
   AlertTriangle,
   Globe,
   KeyRound,
+  LayoutTemplate,
   Loader2,
   Mail,
   MessageCircle,
@@ -59,6 +60,8 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
   const initialWhatsapp = subAccount?.whatsappEnabledByAgency === true;
   const initialMetaInbox = subAccount?.metaInboxEnabledByAgency === true;
   const initialWebsite = subAccount?.websiteEnabledByAgency === true;
+  const initialWebsiteStudio =
+    subAccount?.websiteStudioEnabledByAgency === true;
   const initialSocial = subAccount?.socialPlannerEnabledByAgency === true;
   const initialCommunity = subAccount?.communityEnabledByAgency === true;
   // "Hide instead of lock" overrides for the sidebar-gated features.
@@ -78,6 +81,8 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
   const [whatsappEnabled, setWhatsappEnabled] = useState(initialWhatsapp);
   const [metaInboxEnabled, setMetaInboxEnabled] = useState(initialMetaInbox);
   const [websiteEnabled, setWebsiteEnabled] = useState(initialWebsite);
+  const [websiteStudioEnabled, setWebsiteStudioEnabled] =
+    useState(initialWebsiteStudio);
   const [socialPlannerEnabled, setSocialPlannerEnabled] =
     useState(initialSocial);
   const [communityEnabled, setCommunityEnabled] = useState(initialCommunity);
@@ -159,6 +164,7 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
   const whatsappDirty = whatsappEnabled !== initialWhatsapp;
   const metaInboxDirty = metaInboxEnabled !== initialMetaInbox;
   const websiteDirty = websiteEnabled !== initialWebsite;
+  const websiteStudioDirty = websiteStudioEnabled !== initialWebsiteStudio;
   const socialDirty = socialPlannerEnabled !== initialSocial;
   const communityDirty = communityEnabled !== initialCommunity;
   const broadcastsHiddenDirty = broadcastsHidden !== initialBroadcastsHidden;
@@ -173,6 +179,7 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
     whatsappDirty ||
     metaInboxDirty ||
     websiteDirty ||
+    websiteStudioDirty ||
     socialDirty ||
     communityDirty ||
     broadcastsHiddenDirty ||
@@ -200,6 +207,7 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
         whatsappEnabled?: boolean;
         metaInboxEnabled?: boolean;
         websiteEnabled?: boolean;
+        websiteStudioEnabled?: boolean;
         socialPlannerEnabled?: boolean;
         communityEnabled?: boolean;
         broadcastsHiddenWhenDisabled?: boolean;
@@ -214,6 +222,8 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
       if (whatsappDirty) payload.whatsappEnabled = whatsappEnabled;
       if (metaInboxDirty) payload.metaInboxEnabled = metaInboxEnabled;
       if (websiteDirty) payload.websiteEnabled = websiteEnabled;
+      if (websiteStudioDirty)
+        payload.websiteStudioEnabled = websiteStudioEnabled;
       if (socialDirty) payload.socialPlannerEnabled = socialPlannerEnabled;
       if (communityDirty) payload.communityEnabled = communityEnabled;
       if (broadcastsHiddenDirty)
@@ -407,6 +417,21 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
             sub-accounts). Disabling locks the Website sidebar entry and returns
             403 on new build attempts; the existing config and any published
             site are preserved, so re-enabling resumes instantly.
+          </GateToggle>
+
+          <GateToggle
+            checked={websiteStudioEnabled}
+            onChange={setWebsiteStudioEnabled}
+            disabled={saving}
+            icon={<LayoutTemplate className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />}
+            title="Website Studio (premium add-on)"
+          >
+            When enabled, this sub-account gets Website Studio — the AI-guided,
+            premium-template agent website builder, plus its bundled setup
+            assists (A2P guidance, chat-widget help, SEO). Sold as a paid
+            add-on, so enable it only for sub-accounts that have paid for the
+            tier. Disabling locks the Website Studio sidebar entry and 403s the
+            builder routes; the site draft and any published page are preserved.
           </GateToggle>
 
           <GateToggle
