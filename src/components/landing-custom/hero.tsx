@@ -2,6 +2,7 @@ import { Sparkles, ArrowRight, Clock, TrendingUp, DollarSign } from "lucide-reac
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import type { ResolvedBrand } from "@/config/landing";
+import { BrandLockupStacked } from "./brand-lockup";
 
 const stats = [
   { icon: TrendingUp, value: "2.3×", label: "more leads converted" },
@@ -56,11 +57,14 @@ export function Hero({ brand }: { brand: ResolvedBrand }) {
         <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
           {/* Left: copy */}
           <div>
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-blue-500/5 px-3 py-1 text-xs font-medium">
-              <Sparkles className="h-3.5 w-3.5 text-blue-500" />
-              <span className="bg-gradient-to-r from-blue-500 via-blue-400 to-indigo-400 bg-clip-text text-transparent">
-                {brand.tagline}
-              </span>
+            {/* Stacked brand lockup — the above-the-fold hero mark. */}
+            <div className="mb-7">
+              <BrandLockupStacked brand={brand} />
+            </div>
+
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#1a2f50]/25 bg-[#1a2f50]/[0.06] px-3.5 py-1.5 text-xs font-semibold text-[#1a2f50]">
+              <Sparkles className="h-3.5 w-3.5 text-[#3b82f6]" />
+              <span>{brand.tagline}</span>
             </div>
 
             <h1 className="text-balance text-4xl font-semibold tracking-tighter sm:text-5xl md:text-[3.25rem] md:leading-[1.05]">
