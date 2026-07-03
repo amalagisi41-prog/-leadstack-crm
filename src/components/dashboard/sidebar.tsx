@@ -30,6 +30,7 @@ import {
   Share2,
   GraduationCap,
   Filter,
+  BookOpen,
   ChevronDown,
 } from "lucide-react";
 import { getFirebaseDb } from "@/lib/firebase/client";
@@ -96,6 +97,12 @@ const SUB_ACCOUNT_NAV_SECTIONS: NavSection[] = [
   {
     label: "AI & Automation",
     items: [
+      {
+        href: "/business-profile",
+        label: "Business Profile",
+        icon: BookOpen,
+        enabled: true,
+      },
       { href: "/ai-agents", label: "AI Receptionist", icon: Bot, enabled: true },
       { href: "/workflows", label: "Workflows", icon: Workflow, enabled: true },
       { href: "/broadcasts", label: "Broadcasts", icon: Send, enabled: true },

@@ -45,12 +45,21 @@ export function buildSystemPrompt(input: BuildSystemPromptInput): string {
 
   const safetyRails = buildSafetyRails(channelId, businessNameForPrompt);
 
+  // The central Agent Business Profile (Knowledge Base). Placed right after
+  // the persona so it outranks the scraped-homepage KB — it's authoritative
+  // structured fact the agent typed, not crawled prose.
+  const businessKnowledge = agent.effective.businessKnowledge?.trim() || null;
+
   const kb = agent.effective.websiteKb?.trim();
   const kbBlock = kb ? buildKbBlock(kb) : null;
 
-  const sections = [persona, safetyRails, kbBlock, contactContextBlock].filter(
-    (s): s is string => !!s,
-  );
+  const sections = [
+    persona,
+    safetyRails,
+    businessKnowledge,
+    kbBlock,
+    contactContextBlock,
+  ].filter((s): s is string => !!s);
   return sections.join("\n\n");
 }
 

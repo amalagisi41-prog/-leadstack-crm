@@ -12,6 +12,8 @@ import {
   type AiChannelConfig,
   type ResolvedAiAgent,
 } from "@/types/ai";
+import { compileBusinessProfilePrompt } from "@/lib/business-profile/compile";
+import type { BusinessProfileContent } from "@/types/business-profile";
 
 const PROFILE_DOC = "profile";
 // Literal union — gives us the same narrow string type without an unused
@@ -236,14 +238,22 @@ export async function resolveAgent(
 ): Promise<ResolvedAiAgent | null> {
   await maybeMigrateLegacy(subAccountId);
   const db = getAdminDb();
-  const [profileSnap, channelSnap] = await Promise.all([
+  const [profileSnap, channelSnap, businessSnap] = await Promise.all([
     db.doc(profilePath(subAccountId)).get(),
     db.doc(channelPath(subAccountId, channelId)).get(),
+    // The central Knowledge Base — one extra doc get so every channel reads
+    // the same business playbook. Null-safe: no profile → no block.
+    db.doc(`subAccounts/${subAccountId}/businessProfile/main`).get(),
   ]);
   if (!profileSnap.exists || !channelSnap.exists) return null;
 
   const profile = profileSnap.data() as AiAgentProfile;
   const channel = channelSnap.data() as AiChannelConfig;
+  const businessKnowledge = businessSnap.exists
+    ? compileBusinessProfilePrompt(
+        businessSnap.data() as BusinessProfileContent,
+      )
+    : null;
 
   return {
     profile,
@@ -262,6 +272,7 @@ export async function resolveAgent(
       contextMessageCount: channel.contextMessageCount,
       modelOverride: channel.modelOverride,
       websiteKb: profile.websiteKb ?? null,
+      businessKnowledge,
     },
   };
 }
