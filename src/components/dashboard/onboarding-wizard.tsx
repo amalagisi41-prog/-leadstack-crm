@@ -23,7 +23,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { SERVICE_SPECIALTIES } from "@/types/business-profile";
 import { ONBOARDING_STEP_IDS } from "@/lib/onboarding/steps";
 
 /* ---------- types ---------- */
@@ -193,7 +192,6 @@ export function OnboardingWizard({
             Setup — 15 min
           </p>
           {WIZARD_STEPS.map((step, idx) => {
-            const Icon = step.icon;
             const isActive = idx === currentStep;
             const isDone = idx < currentStep;
             return (
@@ -232,7 +230,7 @@ export function OnboardingWizard({
             <StepBusinessProfile saPath={saPath} onNext={() => advance(["business_profile"])} />
           )}
           {currentStep === 1 && (
-            <StepImportContacts saPath={saPath} onNext={() => advance(["contacts"])} onSkip={() => advance(["contacts"])} />
+            <StepImportContacts saPath={saPath} onSkip={() => advance(["contacts"])} />
           )}
           {currentStep === 2 && (
             <StepChooseGoals
@@ -339,14 +337,14 @@ function StepBusinessProfile({
           onClick={onNext}
           className="text-sm text-muted-foreground underline-offset-4 hover:underline"
         >
-          I'll do this later
+          I&apos;ll do this later
         </button>
       </div>
 
       <TeachingNote>
-        You don't have to fill everything in right now — even your name, brokerage, and
+        You don&apos;t have to fill everything in right now — even your name, brokerage, and
         service areas make a big difference. You can always come back to add FAQs, brand voice,
-        and compliance rules. Once saved, click the "Continue setup" button on that page to come back
+        and compliance rules. Once saved, click the &ldquo;Continue setup&rdquo; button on that page to come back
         here.
       </TeachingNote>
     </StepShell>
@@ -359,11 +357,9 @@ function StepBusinessProfile({
 
 function StepImportContacts({
   saPath,
-  onNext,
   onSkip,
 }: {
   saPath: (p: string) => string;
-  onNext: () => void;
   onSkip: () => void;
 }) {
   return (
@@ -395,14 +391,14 @@ function StepImportContacts({
           onClick={onSkip}
           className="text-sm text-muted-foreground underline-offset-4 hover:underline"
         >
-          Skip for now — I'll import later
+          Skip for now — I&apos;ll import later
         </button>
       </div>
 
       <TeachingNote>
         Already using GoHighLevel, Follow Up Boss, kvCORE, or another CRM? Export your contacts
         as a CSV from those platforms and upload here. The importer handles duplicate detection
-        automatically — so it's safe to upload even if you have some contacts already.
+        automatically — so it&apos;s safe to upload even if you have some contacts already.
       </TeachingNote>
     </StepShell>
   );
@@ -593,7 +589,7 @@ function StepLaunchMarketing({
           onClick={onSkip}
           className="text-sm text-muted-foreground underline-offset-4 hover:underline"
         >
-          Skip — I'll set this up later
+          Skip — I&apos;ll set this up later
         </button>
       </div>
 
@@ -676,7 +672,7 @@ function StepAISetup({
 
       <TeachingNote>
         The AI reads your Business Profile so it already knows your name, brokerage, service
-        areas, and brand voice. From AI Agents, click "Web Chat" and flip the toggle — your
+        areas, and brand voice. From AI Agents, click &ldquo;Web Chat&rdquo; and flip the toggle — your
         widget snippet is generated instantly. SMS requires connecting a Twilio number in Settings
         first, which takes about 5 minutes.
       </TeachingNote>
