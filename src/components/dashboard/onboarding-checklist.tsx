@@ -17,6 +17,7 @@ import {
   Sparkles,
   PlayCircle,
   Globe,
+  BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -33,6 +34,7 @@ import {
 // Icon per step id lives here (client-only) so the shared step metadata in
 // lib/onboarding/steps.ts stays plain data, importable by server code.
 const STEP_ICONS: Record<OnboardingStepId, React.ElementType> = {
+  business_profile: BookOpen,
   contacts: Users,
   sms: Phone,
   form: FileText,

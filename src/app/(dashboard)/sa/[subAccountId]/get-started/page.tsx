@@ -1,30 +1,24 @@
 "use client";
 
 import { useSubAccount } from "@/context/sub-account-context";
-import { OnboardingChecklist } from "@/components/dashboard/onboarding-checklist";
+import { OnboardingWizard } from "@/components/dashboard/onboarding-wizard";
 
 /**
- * Mandatory setup landing. The sub-account dashboard redirects here at login
- * until every onboarding step is marked complete (persisted per sub-account).
+ * Mandatory first-run wizard. The sub-account dashboard redirects here at
+ * login until all onboarding step IDs are in subAccount.onboardingStepsCompleted.
+ *
+ * The wizard walks through 6 screens (Business Profile → Import Contacts →
+ * Choose Goals → Launch Marketing → AI Setup → Done). Completing the final
+ * screen marks all step IDs done and redirects to the dashboard.
  */
 export default function GetStartedPage() {
   const { subAccountId, subAccount, saPath } = useSubAccount();
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Let&apos;s get you set up</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Finish these steps to activate your CRM. Your progress is saved — you
-          can pick up where you left off any time.
-        </p>
-      </div>
-      <OnboardingChecklist
-        saPath={saPath}
-        subAccountId={subAccountId}
-        initialCompleted={subAccount?.onboardingStepsCompleted ?? []}
-        mandatory
-      />
-    </div>
+    <OnboardingWizard
+      subAccountId={subAccountId}
+      saPath={saPath}
+      initialCompleted={subAccount?.onboardingStepsCompleted ?? []}
+    />
   );
 }

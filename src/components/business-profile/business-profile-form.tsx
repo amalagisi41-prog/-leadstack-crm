@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   BookOpen,
+  ArrowRight,
   Check,
   Loader2,
   Plus,
@@ -75,7 +77,10 @@ function Section({
 }
 
 export function BusinessProfileForm() {
-  const { subAccountId } = useSubAccount();
+  const { subAccountId, saPath } = useSubAccount();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const fromWizard = searchParams.get("from") === "wizard";
   const [content, setContent] = useState<BusinessProfileContent>(
     EMPTY_BUSINESS_PROFILE,
   );
@@ -631,14 +636,32 @@ export function BusinessProfileForm() {
             <Shield className="h-3.5 w-3.5" />
             Saved to your private workspace. Used only by your AI tools.
           </p>
-          <Button onClick={save} disabled={saving}>
-            {saving ? (
-              <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-            ) : (
-              <Check className="mr-1 h-4 w-4" />
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={save} disabled={saving}>
+              {saving ? (
+                <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+              ) : (
+                <Check className="mr-1 h-4 w-4" />
+              )}
+              Save profile
+            </Button>
+            {fromWizard && (
+              <Button
+                onClick={async () => {
+                  const ok = await save();
+                  if (ok) router.push(saPath("/get-started"));
+                }}
+                disabled={saving}
+              >
+                {saving ? (
+                  <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                ) : (
+                  <ArrowRight className="mr-1 h-4 w-4" />
+                )}
+                Save &amp; Continue setup
+              </Button>
             )}
-            Save profile
-          </Button>
+          </div>
         </div>
       </div>
     </div>

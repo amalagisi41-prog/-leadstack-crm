@@ -17,6 +17,7 @@
  */
 
 export type OnboardingStepId =
+  | "business_profile"
   | "contacts"
   | "sms"
   | "form"
@@ -38,6 +39,15 @@ export interface OnboardingStepMeta {
 }
 
 export const ONBOARDING_STEPS: readonly OnboardingStepMeta[] = [
+  {
+    id: "business_profile",
+    title: "Set up your Business Profile",
+    description:
+      "Tell AgentStack about your business once — name, brokerage, services, brand voice, compliance rules, and FAQs. Every AI agent, email, and automation pulls from this profile automatically.",
+    cta: "Set Up Business Profile",
+    href: "/business-profile",
+    videoMinutes: 5,
+  },
   {
     id: "contacts",
     title: "Import your contacts",
