@@ -1,14 +1,8 @@
-import { Sparkles, ArrowRight, Clock, TrendingUp, DollarSign } from "lucide-react";
+import { Sparkles, ArrowRight, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import type { ResolvedBrand } from "@/config/landing";
 import { BrandLockupStacked } from "./brand-lockup";
-
-const stats = [
-  { icon: TrendingUp, value: "2.3×", label: "more leads converted" },
-  { icon: Clock, value: "< 60s", label: "first response time" },
-  { icon: DollarSign, value: "$0", label: "setup fee" },
-];
 
 export function Hero({ brand }: { brand: ResolvedBrand }) {
   const pill = (
@@ -30,9 +24,9 @@ export function Hero({ brand }: { brand: ResolvedBrand }) {
           </div>
 
           <h1 className="text-balance text-4xl font-semibold tracking-tighter sm:text-5xl md:text-[3.25rem] md:leading-[1.05]">
-            Stop losing deals{" "}
+            The easiest way to run your{" "}
             <span className="inline-block bg-gradient-to-r from-blue-500 via-blue-400 to-indigo-400 bg-clip-text pr-1 font-serif font-normal italic text-transparent">
-              between showings.
+              real estate business.
             </span>
           </h1>
 
@@ -46,20 +40,17 @@ export function Hero({ brand }: { brand: ResolvedBrand }) {
               size="lg"
               className="bg-[#1a2f50] hover:bg-[#243d66] text-white px-6 text-base"
             >
-              Start Free — No Card Needed <ArrowRight className="ml-2 h-4 w-4" />
+              Start Free <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
-          </div>
-
-          <div className="mt-10 flex items-center justify-center gap-8">
-            {stats.map(({ icon: Icon, value, label }) => (
-              <div key={label} className="flex flex-col">
-                <div className="flex items-center gap-1.5">
-                  <Icon className="h-4 w-4 text-blue-500" />
-                  <span className="text-2xl font-bold text-foreground">{value}</span>
-                </div>
-                <span className="text-xs text-muted-foreground">{label}</span>
-              </div>
-            ))}
+            <Button
+              render={<a href="#video-teaser" />}
+              variant="outline"
+              size="lg"
+              className="text-base"
+            >
+              <Play className="mr-2 h-4 w-4" />
+              See How It Works
+            </Button>
           </div>
         </div>
       </div>

@@ -52,8 +52,8 @@ const SLIDES = [
           <p className="vt-lock-tag">Real Estate Solutions</p>
         </div>
         <p className="vt-sub">
-          The AI-powered CRM that answers, qualifies, and books — so you never
-          lose another deal between showings.
+          The guided business system that answers, qualifies, and books — so
+          you never lose another deal between showings.
         </p>
       </>
     ),
@@ -184,8 +184,8 @@ const SLIDES = [
       <>
         <p className="vt-kicker">Everything in one stack</p>
         <h2 className="vt-h1 vt-h1-md">
-          Built for REALTORS®,{" "}
-          <span className="vt-accent">not spreadsheets.</span>
+          Your complete business{" "}
+          <span className="vt-accent">operating system.</span>
         </h2>
         <div className="vt-chips">
           {[

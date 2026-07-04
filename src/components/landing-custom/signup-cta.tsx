@@ -75,15 +75,15 @@ export function SignupCta() {
                 Get started free
               </p>
               <h2 className="text-3xl font-semibold tracking-tighter text-white sm:text-4xl">
-                Your pipeline is ready.{" "}
+                Set up your business once.{" "}
                 <span className="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text font-serif font-normal italic text-transparent">
-                  Start in 2 minutes.
+                  AgentStack runs it.
                 </span>
               </h2>
               <p className="mt-4 text-blue-200/70">
-                Join agents who stopped losing leads between showings. Set up
-                your workspace, import your contacts, and let the AI handle
-                every follow-up.
+                Build your AI Business Profile in 15 minutes. AgentStack
+                handles lead capture, instant response, follow-up, and
+                scheduling — so you can focus on closing.
               </p>
               <ul className="mt-6 space-y-3">
                 {perks.map((perk) => (

@@ -93,7 +93,7 @@ export function Footer({ brand }: { brand: ResolvedBrand }) {
         </div>
 
         <div className="mt-8 border-t pt-8 text-center text-sm text-muted-foreground">
-          &copy; {new Date().getFullYear()} {brand.name} &middot; Built for REALTORS&reg;, not spreadsheets.
+          &copy; {new Date().getFullYear()} {brand.name} &middot; The easiest way to run a modern real estate business.
         </div>
       </div>
     </footer>
