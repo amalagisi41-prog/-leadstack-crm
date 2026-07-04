@@ -116,7 +116,7 @@ const addOns: AddOn[] = [
     price: "$299",
     billing: " one-time",
     features: [
-      "We import your contacts from any CRM or CSV",
+      "We import your contacts from any system or CSV",
       "Speed-to-Lead automations built & tested",
       "AI agent persona written for your brand",
       "2-hour live onboarding call with your team",
@@ -150,8 +150,8 @@ export function AddOns() {
             </span>
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            Every plan starts with a full CRM and AI follow-up engine. Layer on only
-            the services that match your business — no bundles, no bloat.
+            Every plan starts with the full operating system and AI follow-up engine.
+            Layer on only the services that match your business — no bundles, no bloat.
           </p>
         </div>
 

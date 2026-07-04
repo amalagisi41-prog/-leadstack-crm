@@ -1,9 +1,9 @@
 /**
  * Logo for the custom landing variant.
  *
- * CRM-inspired mark: three nodes connected on a diagonal pipeline path,
- * inside a rounded mint-gradient square. Reads as contact journey / lead
- * progression / pipeline stages — on-brand for any CRM.
+ * Three nodes connected on a diagonal pipeline path, inside a rounded
+ * mint-gradient square. Reads as contact journey / lead progression /
+ * pipeline stages.
  *
  * `idSuffix` is required when more than one instance of this logo renders
  * on the same page (e.g. navbar + footer) so the SVG `<linearGradient>` IDs

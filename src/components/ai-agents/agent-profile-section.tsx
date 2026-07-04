@@ -181,7 +181,7 @@ export function AgentProfileSection() {
         truncated?: boolean;
       };
       if (!res.ok) {
-        toast.error(data.error ?? "Failed to refresh knowledge base");
+        toast.error(data.error ?? "Failed to refresh website context");
         return;
       }
       if (data.profile) setProfile(data.profile);
@@ -352,7 +352,7 @@ export function AgentProfileSection() {
 
           <div className="rounded-xl border bg-muted/20 p-4 space-y-3">
             <div>
-              <Label htmlFor="profile-website-url">Website knowledge base</Label>
+              <Label htmlFor="profile-website-url">Website context</Label>
               <p className="mt-1 text-[11px] text-muted-foreground">
                 Optional. Paste this client&rsquo;s public website. Save the
                 profile, then click <strong>Refresh KB</strong> to crawl the
@@ -489,7 +489,7 @@ export function AgentProfileSection() {
       <Dialog open={kbModalOpen} onOpenChange={setKbModalOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Website knowledge base</DialogTitle>
+            <DialogTitle>Website context</DialogTitle>
             <DialogDescription>
               {profile?.websiteUrl ?? "—"}
               {profile?.websiteKbFetchedAt && (

@@ -25,7 +25,7 @@ import {
 /**
  * "Tell us about your business once. AgentStack handles the rest."
  *
- * The setup surface for the central Knowledge Base. Every field feeds the
+ * The setup surface for the central Business Profile. Every field feeds the
  * compiled Business Profile block that every AI agent reads before acting,
  * so this one form grounds the receptionist, follow-up, intake, listing-copy
  * and review agents at the same time.
