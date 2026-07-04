@@ -1,11 +1,14 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+
+const FADE_MS = 400;
+const DISPLAY_MS = 2000;
+const SLIDE_INTERVAL = DISPLAY_MS + FADE_MS;
 
 const SLIDES = [
   {
-    bg: "light",
-    duration: 8,
+    bg: "light" as const,
     content: (
       <>
         <div className="vt-hero-grid">
@@ -26,7 +29,7 @@ const SLIDES = [
             </div>
             <div className="vt-dash-body">
               <div className="vt-dash-sidebar">
-                {["Dashboard", "Contacts", "Pipeline", "Calendar", "AI Agent"].map(
+                {["Dashboard", "Contacts", "Active Clients", "Calendar", "AI Agent"].map(
                   (t) => (
                     <span key={t} className="vt-dash-nav">
                       {t}
@@ -58,8 +61,7 @@ const SLIDES = [
     ),
   },
   {
-    bg: "light",
-    duration: 7,
+    bg: "light" as const,
     content: (
       <>
         <p className="vt-small">New Buyer Inquiry</p>
@@ -80,16 +82,16 @@ const SLIDES = [
     ),
   },
   {
-    bg: "blue",
-    duration: 10,
+    bg: "blue" as const,
     content: (
       <>
         <div className="vt-ai-grid">
           <div className="vt-ai-left">
-            <p className="vt-small vt-small-blue">Automation</p>
-            <h2 className="vt-h2 vt-h2-navy">AI Receptionist</h2>
+            <p className="vt-small vt-small-blue">Never miss an inquiry</p>
+            <h2 className="vt-h2 vt-h2-navy">Instant Response</h2>
             <p className="vt-ai-desc">
-              Instantly responds, confirms the request, and keeps you focused.
+              Every lead answered immediately — while you stay focused on your
+              client.
             </p>
           </div>
           <div className="vt-chat">
@@ -103,7 +105,7 @@ const SLIDES = [
             </div>
             <div className="vt-bub vt-bub-ai">
               <strong>Appointment Confirmed</strong>{" "}
-              <span className="vt-check">✓</span>
+              <span className="vt-check">&#10003;</span>
               <br />
               <span className="vt-bub-muted">
                 Showing window sent to Sarah.
@@ -115,12 +117,11 @@ const SLIDES = [
     ),
   },
   {
-    bg: "light",
-    duration: 9,
+    bg: "light" as const,
     content: (
       <>
-        <p className="vt-small">Pipeline</p>
-        <h2 className="vt-h2">Lead Journey</h2>
+        <p className="vt-small">Client Journey</p>
+        <h2 className="vt-h2">Every client, every stage</h2>
         <div className="vt-timeline-card">
           <div className="vt-tl-track">
             <div className="vt-tl-fill" />
@@ -147,17 +148,15 @@ const SLIDES = [
     ),
   },
   {
-    bg: "dark",
-    duration: 9,
+    bg: "dark" as const,
     content: (
       <>
         <div className="vt-bp-grid">
           <div>
-            <p className="vt-small vt-small-dark">Onboarding</p>
-            <h2 className="vt-h2 vt-h2-white">Business Blueprint</h2>
+            <p className="vt-small vt-small-dark">Get Started</p>
+            <h2 className="vt-h2 vt-h2-white">Build My Business</h2>
             <p className="vt-bp-desc">
-              Build your operating system once. Let AgentStack apply it
-              everywhere.
+              Set up your business once. AgentStack applies it everywhere.
             </p>
           </div>
           <div className="vt-checklist-card">
@@ -165,32 +164,31 @@ const SLIDES = [
               "Business Profile",
               "Service Areas",
               "Lead Sources",
-              "Follow-Up Rules",
-              "AI Receptionist",
+              "Automatic Follow-Up",
+              "Instant Response",
               "Integrations",
             ].map((item) => (
               <div key={item} className="vt-row">
-                <span className="vt-box">✓</span>
+                <span className="vt-box">&#10003;</span>
                 {item}
               </div>
             ))}
-            <div className="vt-pill vt-pill-sm">Blueprint Complete</div>
+            <div className="vt-pill vt-pill-sm">Setup Complete</div>
           </div>
         </div>
       </>
     ),
   },
   {
-    bg: "light",
-    duration: 8,
+    bg: "light" as const,
     content: (
       <>
         <div className="vt-import-grid">
           <div>
             <p className="vt-small">Import</p>
-            <h2 className="vt-h2">Contact Import</h2>
+            <h2 className="vt-h2">Your contacts, organized</h2>
             <p className="vt-ai-desc">
-              Existing contacts organized. Duplicates removed. Ready.
+              Bring existing contacts in. Duplicates removed. Ready in minutes.
             </p>
           </div>
           <div className="vt-import-card">
@@ -231,8 +229,7 @@ const SLIDES = [
     ),
   },
   {
-    bg: "blue",
-    duration: 8,
+    bg: "blue" as const,
     content: (
       <>
         <p className="vt-small vt-small-blue">Connected</p>
@@ -248,7 +245,7 @@ const SLIDES = [
             <div key={i.label} className="vt-integ">
               <span className="vt-integ-icon">{i.icon}</span>
               <span className="vt-integ-label">{i.label}</span>
-              <span className="vt-check-sm">✓</span>
+              <span className="vt-check-sm">&#10003;</span>
             </div>
           ))}
         </div>
@@ -256,8 +253,7 @@ const SLIDES = [
     ),
   },
   {
-    bg: "light",
-    duration: 9,
+    bg: "light" as const,
     content: (
       <>
         <div className="vt-plan-grid">
@@ -283,15 +279,14 @@ const SLIDES = [
             <p className="vt-nba-title">
               Confirm Sarah&apos;s showing window
             </p>
-            <span className="vt-check-lg">✓</span>
+            <span className="vt-check-lg">&#10003;</span>
           </div>
         </div>
       </>
     ),
   },
   {
-    bg: "light",
-    duration: 7,
+    bg: "light" as const,
     content: (
       <>
         <h2 className="vt-cta-h">
@@ -300,84 +295,45 @@ const SLIDES = [
           Let AgentStack handle the rest.
         </h2>
         <a href="/signup" className="vt-cta-btn">
-          Start Free — 14 Days
+          Start Free
         </a>
-        <p className="vt-cta-url">agentstackcrm.app</p>
       </>
     ),
   },
-] as const;
-
-const TOTAL = SLIDES.reduce((a, s) => a + s.duration, 0);
+];
 
 export function VideoTeaser() {
   const [idx, setIdx] = useState(0);
-  const [playing, setPlaying] = useState(false);
-  const [hasStarted, setHasStarted] = useState(false);
-  const elapsed = useRef(0);
-  const inSlide = useRef(0);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [paused, setPaused] = useState(false);
+  const progressRef = useRef<HTMLDivElement>(null);
+  const startRef = useRef(Date.now());
 
-  const go = useCallback((i: number) => {
-    const next = Math.max(0, Math.min(SLIDES.length - 1, i));
-    setIdx(next);
-    inSlide.current = 0;
-    elapsed.current = SLIDES.slice(0, next).reduce(
-      (a, s) => a + s.duration,
-      0,
-    );
+  const advance = useCallback(() => {
+    setIdx((i) => (i + 1) % SLIDES.length);
+    startRef.current = Date.now();
   }, []);
 
   useEffect(() => {
-    if (!playing) return;
-    const iv = setInterval(() => {
-      elapsed.current += 0.1;
-      inSlide.current += 0.1;
-      if (inSlide.current >= SLIDES[idx].duration) {
-        if (idx < SLIDES.length - 1) {
-          setIdx((i) => i + 1);
-          inSlide.current = 0;
-        } else {
-          setPlaying(false);
-        }
-      }
-    }, 100);
+    if (paused) return;
+    startRef.current = Date.now();
+    const iv = setInterval(advance, SLIDE_INTERVAL);
     return () => clearInterval(iv);
-  }, [playing, idx]);
+  }, [paused, advance]);
 
   useEffect(() => {
-    if (!playing || !containerRef.current) return;
-    const bar =
-      containerRef.current.querySelector<HTMLDivElement>(".vt-prog-fill");
-    const clock =
-      containerRef.current.querySelector<HTMLSpanElement>(".vt-clock");
-    const iv = setInterval(() => {
-      if (bar) bar.style.width = `${(elapsed.current / TOTAL) * 100}%`;
-      if (clock) {
-        const t = Math.min(TOTAL, Math.floor(elapsed.current));
-        clock.textContent = `${Math.floor(t / 60)}:${String(t % 60).padStart(2, "0")}`;
+    if (!progressRef.current) return;
+    let raf: number;
+    const tick = () => {
+      if (progressRef.current) {
+        const elapsed = paused ? 0 : Date.now() - startRef.current;
+        const pct = Math.min(100, (elapsed / SLIDE_INTERVAL) * 100);
+        progressRef.current.style.width = `${pct}%`;
       }
-    }, 100);
-    return () => clearInterval(iv);
-  }, [playing]);
-
-  const handlePlayPause = () => {
-    if (!hasStarted) {
-      setHasStarted(true);
-      setPlaying(true);
-      return;
-    }
-    if (
-      !playing &&
-      idx === SLIDES.length - 1 &&
-      inSlide.current >= SLIDES[idx].duration
-    ) {
-      go(0);
-      setPlaying(true);
-      return;
-    }
-    setPlaying((p) => !p);
-  };
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [paused, idx]);
 
   const bgClass =
     SLIDES[idx].bg === "blue"
@@ -400,94 +356,50 @@ export function VideoTeaser() {
             Watch the AgentStack difference
           </h2>
           <p className="mt-3 text-muted-foreground">
-            See how AgentStack turns missed leads into closed deals — in under
-            90 seconds.
+            See how AgentStack turns missed leads into closed deals.
           </p>
         </div>
 
         <div
-          ref={containerRef}
           className="relative mx-auto max-w-4xl overflow-hidden rounded-2xl border shadow-2xl"
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
         >
-          {/* Progress bar */}
+          {/* Per-slide progress bar */}
           <div className="absolute top-0 left-0 right-0 z-20 h-1 bg-black/5">
             <div
-              className="vt-prog-fill h-full bg-[#3B82F6] transition-[width] duration-100"
+              ref={progressRef}
+              className="h-full bg-[#3B82F6] transition-none"
               style={{ width: "0%" }}
             />
           </div>
 
           {/* Slide viewport */}
           <div className={`vt-viewport ${bgClass}`}>
-            {!hasStarted && (
-              <button
-                onClick={handlePlayPause}
-                className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-4 bg-[#0E1117]/80 transition-opacity hover:bg-[#0E1117]/70"
-                aria-label="Play teaser"
-              >
-                <span className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-white/30 bg-white/10 backdrop-blur-sm">
-                  <svg
-                    className="ml-1 h-8 w-8 text-white"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
-                </span>
-                <span className="text-sm font-semibold text-white/70">
-                  Play teaser · {Math.floor(TOTAL / 60)}:
-                  {String(TOTAL % 60).padStart(2, "0")}
-                </span>
-              </button>
-            )}
-
             {SLIDES.map((slide, i) => (
               <div
                 key={i}
-                className={`vt-slide ${i === idx && hasStarted ? "vt-slide-active" : ""}`}
+                className={`vt-slide ${i === idx ? "vt-slide-active" : ""}`}
               >
                 {slide.content}
               </div>
             ))}
           </div>
 
-          {/* Controls */}
-          {hasStarted && (
-            <div className="vt-hud">
-              <span className="vt-clock">0:00</span>
+          {/* Dot indicators */}
+          <div className="absolute bottom-3 left-0 right-0 z-20 flex justify-center gap-1.5">
+            {SLIDES.map((_, i) => (
               <button
-                className="vt-hud-btn"
-                onClick={() => go(idx - 1)}
-                disabled={idx === 0}
-              >
-                ‹ Back
-              </button>
-              <button className="vt-hud-btn" onClick={handlePlayPause}>
-                {!playing && idx === SLIDES.length - 1
-                  ? "Replay"
-                  : playing
-                    ? "Pause"
-                    : "Play"}
-              </button>
-              <button
-                className="vt-hud-btn"
-                onClick={() => go(idx + 1)}
-                disabled={idx === SLIDES.length - 1}
-              >
-                Next ›
-              </button>
-              <div className="flex gap-1.5">
-                {SLIDES.map((_, i) => (
-                  <button
-                    key={i}
-                    className={`h-2 w-2 rounded-full transition-colors ${i === idx ? "bg-[#3B82F6]" : "bg-black/20"}`}
-                    onClick={() => go(i)}
-                    aria-label={`Slide ${i + 1}`}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
+                key={i}
+                className={`h-1.5 rounded-full transition-all duration-300 ${i === idx ? "w-6 bg-[#3B82F6]" : "w-1.5 bg-black/20"}`}
+                onClick={() => {
+                  setIdx(i);
+                  startRef.current = Date.now();
+                }}
+                aria-label={`Slide ${i + 1}`}
+              />
+            ))}
+          </div>
         </div>
       </div>
 
@@ -507,7 +419,7 @@ export function VideoTeaser() {
           position: relative;
           aspect-ratio: 16 / 9;
           overflow: hidden;
-          transition: background 0.5s ease;
+          transition: background 0.4s ease;
         }
         @media (max-width: 640px) {
           .vt-viewport { aspect-ratio: 4 / 3; }
@@ -526,22 +438,23 @@ export function VideoTeaser() {
           align-items: center;
           justify-content: center;
           text-align: center;
-          padding: 40px 6vw 64px;
+          padding: 40px 6vw 48px;
           opacity: 0;
           pointer-events: none;
-          transition: opacity 0.5s ease;
+          transition: opacity ${FADE_MS}ms ease;
         }
         .vt-slide-active { opacity: 1; pointer-events: auto; }
 
-        .vt-slide > * { opacity: 0; transform: translateY(16px); }
-        .vt-slide-active > * { animation: vtUp 0.6s cubic-bezier(0.22,1,0.36,1) forwards; }
-        .vt-slide-active > *:nth-child(1) { animation-delay: 0.05s; }
-        .vt-slide-active > *:nth-child(2) { animation-delay: 0.18s; }
-        .vt-slide-active > *:nth-child(3) { animation-delay: 0.32s; }
-        .vt-slide-active > *:nth-child(4) { animation-delay: 0.46s; }
+        .vt-slide > * { opacity: 0; transform: translateY(10px); }
+        .vt-slide-active > * { animation: vtUp 0.5s cubic-bezier(0.22,1,0.36,1) forwards; }
+        .vt-slide-active > *:nth-child(1) { animation-delay: 0.04s; }
+        .vt-slide-active > *:nth-child(2) { animation-delay: 0.12s; }
+        .vt-slide-active > *:nth-child(3) { animation-delay: 0.2s; }
+        .vt-slide-active > *:nth-child(4) { animation-delay: 0.28s; }
         @keyframes vtUp { to { opacity: 1; transform: translateY(0); } }
         @media (prefers-reduced-motion: reduce) {
           .vt-slide > *, .vt-slide-active > * { animation: none !important; opacity: 1; transform: none; }
+          .vt-slide { transition: none; }
         }
 
         /* --- Typography --- */
@@ -778,7 +691,7 @@ export function VideoTeaser() {
         .vt-typing span:nth-child(3) { animation-delay: 0.4s; }
         @keyframes vtTyp { 50% { opacity: 0.35; transform: translateY(-2px); } }
 
-        /* --- Slide 4: Pipeline --- */
+        /* --- Slide 4: Client Journey --- */
         .vt-timeline-card {
           background: var(--vt-card);
           border: 1px solid var(--vt-border);
@@ -827,7 +740,7 @@ export function VideoTeaser() {
           box-shadow: 0 0 0 6px var(--vt-tint);
         }
 
-        /* --- Slide 5: Blueprint --- */
+        /* --- Slide 5: Build My Business --- */
         .vt-bp-grid {
           display: grid;
           grid-template-columns: 1fr 1.1fr;
@@ -907,7 +820,6 @@ export function VideoTeaser() {
           font-weight: 600;
         }
         .vt-bars { display: grid; gap: 10px; }
-        .vt-bar-row {}
         .vt-bar-label {
           display: flex;
           justify-content: space-between;
@@ -1022,45 +934,6 @@ export function VideoTeaser() {
           text-decoration: none;
         }
         .vt-cta-btn:hover { filter: brightness(1.08); }
-        .vt-cta-url {
-          font-size: clamp(12px, 1.3vw, 16px);
-          font-weight: 700;
-          letter-spacing: 0.06em;
-          color: var(--vt-blue);
-          margin-top: 14px;
-        }
-
-        /* --- HUD controls --- */
-        .vt-hud {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 12px;
-          padding: 10px 14px;
-          background: linear-gradient(transparent, rgba(0,0,0,0.5));
-          position: absolute;
-          bottom: 0; left: 0; right: 0;
-          z-index: 20;
-        }
-        .vt-hud-btn {
-          background: rgba(255,255,255,0.15);
-          border: 1px solid rgba(255,255,255,0.25);
-          color: #fff;
-          font-weight: 700;
-          font-size: 12px;
-          padding: 5px 12px;
-          border-radius: 8px;
-          cursor: pointer;
-        }
-        .vt-hud-btn:hover { background: rgba(255,255,255,0.25); }
-        .vt-hud-btn:disabled { opacity: 0.4; cursor: default; }
-        .vt-clock {
-          font-size: 11px;
-          font-weight: 700;
-          color: rgba(255,255,255,0.6);
-          font-variant-numeric: tabular-nums;
-          min-width: 36px;
-        }
       `}</style>
     </section>
   );

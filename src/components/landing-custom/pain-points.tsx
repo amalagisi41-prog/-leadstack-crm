@@ -9,7 +9,7 @@ const pains = [
   {
     emoji: "📋",
     heading: "You said you'd follow up — but never did.",
-    body: "Seven touchpoints is the conversion sweet spot. Most agents send one. AgentStack runs the whole sequence automatically so nothing slips through.",
+    body: "Seven touchpoints is the conversion sweet spot. Most agents send one. AgentStack runs the entire follow-up sequence automatically so nothing slips through.",
   },
   {
     emoji: "🧠",

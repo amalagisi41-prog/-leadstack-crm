@@ -53,7 +53,7 @@ export function BrandLockupStacked({
 
   return (
     <span className="inline-flex w-full max-w-[22rem] flex-col items-center sm:max-w-[28rem] md:max-w-[32rem]">
-      <span className="w-full font-sans text-[4.5rem] font-extrabold uppercase leading-[0.95] tracking-tight sm:text-[6rem] md:text-[7rem]">
+      <span className="w-full font-sans text-[5.5rem] font-extrabold uppercase leading-[0.92] sm:text-[7rem] md:text-[8.5rem]">
         <JustifiedWord word={primary} style={{ color: colors.primary }} />
       </span>
 
@@ -62,7 +62,7 @@ export function BrandLockupStacked({
       )}
 
       {accent && (
-        <span className="w-full font-sans text-[4.5rem] font-extrabold uppercase leading-[0.95] tracking-tight sm:text-[6rem] md:text-[7rem]">
+        <span className="w-full font-sans text-[5.5rem] font-extrabold uppercase leading-[0.92] sm:text-[7rem] md:text-[8.5rem]">
           <JustifiedWord word={accent} style={{ color: colors.accent }} />
         </span>
       )}

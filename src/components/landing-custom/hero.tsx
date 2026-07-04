@@ -1,4 +1,4 @@
-import { Sparkles, ArrowRight, Play } from "lucide-react";
+import { ArrowRight, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import type { ResolvedBrand } from "@/config/landing";
@@ -7,7 +7,6 @@ import { BrandLockupStacked } from "./brand-lockup";
 export function Hero({ brand }: { brand: ResolvedBrand }) {
   const pill = (
     <span className="inline-flex items-center gap-2 rounded-full border border-[#1b3d7a]/20 bg-[#1b3d7a]/[0.06] px-4 py-1.5 text-xs font-semibold text-[#1b3d7a] sm:text-sm">
-      <Sparkles className="h-3.5 w-3.5 text-[#3b82f6] sm:h-4 sm:w-4" />
       <span>{brand.tagline}</span>
     </span>
   );
@@ -24,14 +23,15 @@ export function Hero({ brand }: { brand: ResolvedBrand }) {
           </div>
 
           <h1 className="text-balance text-4xl font-semibold tracking-tighter sm:text-5xl md:text-[3.25rem] md:leading-[1.05]">
-            The easiest way to run your{" "}
+            You&apos;re with a client.{" "}
             <span className="inline-block bg-gradient-to-r from-blue-500 via-blue-400 to-indigo-400 bg-clip-text pr-1 font-serif font-normal italic text-transparent">
-              real estate business.
+              AgentStack is running your business.
             </span>
           </h1>
 
           <p className="mt-5 max-w-xl text-pretty text-lg text-muted-foreground">
-            {brand.shortDescription}
+            Never miss another lead, showing, or follow-up while serving the
+            client in front of you.
           </p>
 
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">

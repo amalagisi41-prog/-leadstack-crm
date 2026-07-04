@@ -35,16 +35,16 @@ export function AiDemo() {
           <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
             <div>
               <p className="text-sm font-semibold uppercase tracking-wide text-blue-600 mb-2">
-                AI receptionist
+                Never miss an inquiry
               </p>
               <h2 className="text-3xl font-semibold tracking-tighter sm:text-4xl mb-4">
-                You can&apos;t answer every inquiry.{" "}
+                Every lead answered.{" "}
                 <span className="bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text font-serif font-normal italic text-transparent">
-                  Your AI can.
+                  Even at 2 a.m.
                 </span>
               </h2>
               <p className="text-muted-foreground leading-relaxed mb-6">
-                AgentStack&apos;s AI receptionist responds to inbound texts, web chat, and calls 24/7 — qualifying buyers, booking showings, and sending listing docs before you even see the notification.
+                AgentStack responds to inbound texts, web chat, and calls around the clock — qualifying buyers, booking showings, and sending listing docs before you even see the notification.
               </p>
               <ul className="space-y-3">
                 {[
