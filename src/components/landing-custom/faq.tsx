@@ -9,7 +9,7 @@ const faqs = [
   {
     question: "I already use Chime / Follow Up Boss / KvCORE. Why switch?",
     answer:
-      "Most real estate CRMs lock you into their ecosystem and charge per-seat as your team grows. AgentStack is designed to be simple enough for a solo agent but powerful enough for a 20-person team — with AI follow-up, voice calling, and booking pages built in. You own your data, your automations, and your brand. No per-seat surprises.",
+      "Those are CRMs — they store your contacts. AgentStack is a business operating system — it tells you what to do next, responds to leads for you, and keeps every follow-up moving automatically. Set up your Business Profile once and AgentStack configures AI, lead capture, and follow-up around it. No per-seat surprises.",
   },
   {
     question: "How fast will leads get a response?",
@@ -27,9 +27,9 @@ const faqs = [
       "Yes. The Team & Brokerage plan gives each agent their own sub-account (isolated contacts and pipeline) under one brokerage login. Territory assignment routes inbound leads to the right agent automatically. Brokers get a top-level view across all agents.",
   },
   {
-    question: "How does the AI receptionist work?",
+    question: "How does the AI work?",
     answer:
-      "You write your agent's persona once (what to say, your business hours, escalation keywords). It then handles inbound texts, web chat on your site, and phone calls — qualifying buyers, answering property questions, and booking showings. When a lead says something like 'I'm ready to make an offer,' the AI flags it and sends you an alert immediately.",
+      "You never write prompts or build automations. You answer simple business questions in your Business Profile — hours, services, preferred vendors, brand voice — and AgentStack configures the AI automatically. It handles inbound texts, web chat, and phone calls — qualifying leads, answering questions, and booking showings. When someone's ready to move, the AI flags it and alerts you immediately.",
   },
   {
     question: "Is my client data safe?",

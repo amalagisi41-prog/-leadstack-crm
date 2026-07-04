@@ -28,8 +28,8 @@ export function PainPoints() {
             Sound familiar?
           </div>
           <h2 className="text-3xl font-semibold tracking-tighter text-white sm:text-4xl">
-            The leads were there.{" "}
-            <span className="font-serif font-normal italic text-blue-300">The follow-up wasn&apos;t.</span>
+            You don&apos;t have a lead problem.{" "}
+            <span className="font-serif font-normal italic text-blue-300">You have a systems problem.</span>
           </h2>
         </div>
 

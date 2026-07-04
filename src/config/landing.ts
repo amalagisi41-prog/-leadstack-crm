@@ -78,14 +78,14 @@ export const CUSTOM_BRAND: CustomBrand = {
   name: "AgentStack",
 
   /** One-line positioning, surfaced in hero subtitle + meta description. */
-  tagline: "Purpose-built for REALTORS®",
+  tagline: "The operating system for modern real estate professionals",
 
   /**
    * Short (~140 char) description used under the hero headline. Should
    * read like a tweet â€" what the product does, for whom.
    */
   shortDescription:
-    "AgentStack responds to every inbound lead in under 60 seconds, organizes every opportunity in one pipeline, and keeps follow-up moving until closing — so no lead ever goes cold between showings.",
+    "Capture leads, respond instantly, stay organized, and close more transactions with one simple system powered by AI.",
 
   /** Used on CTA buttons + the FAQ "talk to us" line + footer. */
   supportEmail: "hello@agentstackcrm.app",
