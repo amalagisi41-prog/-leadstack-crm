@@ -17,7 +17,7 @@ const faqs = [
       "Under 60 seconds for SMS and email. When a buyer submits your lead form, AgentStack fires a personalized text and email immediately — while you're showing a home or in a closing. The AI agent can also answer follow-up questions, book showings, and qualify the lead before you pick up the phone.",
   },
   {
-    question: "Can I import my contacts from another CRM?",
+    question: "Can I import my contacts from another system?",
     answer:
       "Yes. Drop in a CSV from Follow Up Boss, Chime, KvCORE, Zillow, Realtor.com, or Google Contacts. We fuzzy-match names, emails, and phones automatically. GHL users can connect via the one-click import tool — contacts and deals come over in minutes.",
   },

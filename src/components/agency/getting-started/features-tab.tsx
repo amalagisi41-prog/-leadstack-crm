@@ -123,7 +123,7 @@ const FEATURES: Feature[] = [
     tone: "violet",
     href: "/ai-agents",
     description:
-      "One persona, every channel. Configure the agent's identity once (system prompt, business hours, escalation keywords) and optionally point at the client's website — Firecrawl scrapes the homepage into a knowledge base the bot uses for replies. Channels: Web Chat (embeddable widget), SMS + WhatsApp (auto-replies on the sub-account's number), Voice (Vapi answers inbound calls), and Outbound Voice (the AI proactively dials a contact or a filtered campaign). Captures create a Contact + a follow-up Task + an escalation email.",
+      "One persona, every channel. Configure the agent's identity once (system prompt, business hours, escalation keywords) and optionally point at the client's website — Firecrawl scrapes the homepage into website context the bot uses for replies. Channels: Web Chat (embeddable widget), SMS + WhatsApp (auto-replies on the sub-account's number), Voice (Vapi answers inbound calls), and Outbound Voice (the AI proactively dials a contact or a filtered campaign). Captures create a Contact + a follow-up Task + an escalation email.",
   },
   {
     icon: Send,

@@ -13,7 +13,7 @@ const testimonials = [
   },
   {
     quote:
-      "I've tried everything — KvCORE, Chime, Follow Up Boss. This is the first CRM I've actually kept using past 90 days. The pipeline view tells me exactly what to do each morning. I stopped losing deals to forgetting.",
+      "I've tried everything — KvCORE, Chime, Follow Up Boss. This is the first system I've actually kept using past 90 days. It tells me exactly what to do each morning. I stopped losing deals to forgetting.",
     name: "Tanya K.",
     title: "Top Producer · Austin, TX · GCI $380k",
     initials: "TK",
