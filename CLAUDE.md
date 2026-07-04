@@ -1,5 +1,7 @@
 # LeadStack CRM
 
+> **Product vision:** see [PRODUCT.md](PRODUCT.md) for the AgentStack Master Product Prompt — the north-star design principles, navigation vocabulary, onboarding philosophy, and success criteria that every feature should align with.
+
 ## Audience for this document
 
 This file is written for **the buyer who just generated their own repo from the LeadStack template** (`Claude-Code-Pro-Camp/leadstack-agency` → "Use this template"; see SETUP.md Phase 1) and is setting it up — usually with Claude Code's help. Their repo is a standalone copy in their own GitHub account, with no upstream link back to the template. The landing page is a white-label CRM template the buyer brands as their own (via `CUSTOM_BRAND` in `src/config/landing.ts`). The buyer's deployment becomes their product, not "LeadStack".
