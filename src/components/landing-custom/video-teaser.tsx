@@ -4,222 +4,305 @@ import { useState, useEffect, useCallback, useRef } from "react";
 
 const SLIDES = [
   {
-    bg: "deep",
-    duration: 9,
-    content: (
-      <>
-        <p className="vt-kicker">While you were in a showing…</p>
-        <h2 className="vt-h1">
-          You just missed a <span className="vt-accent">$12,000</span>{" "}
-          commission.
-        </h2>
-        <p className="vt-sub">
-          A Zillow lead texted. Waited 11 minutes. Then called the next agent on
-          the list.
-        </p>
-      </>
-    ),
-  },
-  {
-    bg: "cream",
+    bg: "light",
     duration: 8,
     content: (
       <>
-        <p className="vt-bignum">78%</p>
-        <h2 className="vt-h1 vt-h1-sm">
-          of buyers hire the <span className="vt-accent">first agent</span> who
-          responds.
-        </h2>
-        <p className="vt-sub">
-          Speed isn&apos;t a nice-to-have. It&apos;s the whole game.
-        </p>
-      </>
-    ),
-  },
-  {
-    bg: "deep",
-    duration: 10,
-    content: (
-      <>
-        <span className="vt-pulse">
-          <span className="vt-pulse-dot" />
-          Introducing
-        </span>
-        <div className="vt-lockup">
-          <p className="vt-wordmark">
-            Agent<span className="vt-accent">Stack</span>
-          </p>
-          <p className="vt-lock-tag">Real Estate Solutions</p>
-        </div>
-        <p className="vt-sub">
-          The guided business system that answers, qualifies, and books — so
-          you never lose another deal between showings.
-        </p>
-      </>
-    ),
-  },
-  {
-    bg: "blue",
-    duration: 14,
-    content: (
-      <>
-        <p className="vt-kicker" style={{ opacity: 0.85 }}>
-          Your 24/7 AI receptionist
-        </p>
-        <h2 className="vt-h1 vt-h1-md">
-          Every lead answered in{" "}
-          <span style={{ color: "var(--vt-deep)" }}>under 60 seconds.</span>
-        </h2>
-        <div className="vt-phone">
-          <div className="vt-ph-head">
-            <div className="vt-ph-dot">AI</div>
-            <div>
-              <p className="vt-ph-name">Rivera Realty Group</p>
-              <p className="vt-ph-ai">● AgentStack AI · replies instantly</p>
+        <div className="vt-hero-grid">
+          <div>
+            <p className="vt-wordmark">
+              <span className="vt-wm-a">Agent</span>
+              <span className="vt-wm-s">Stack</span>
+            </p>
+            <p className="vt-hero-sub">
+              The business operating system for modern real estate.
+            </p>
+          </div>
+          <div className="vt-dash-mock">
+            <div className="vt-dash-bar">
+              <span className="vt-dash-dot" />
+              <span className="vt-dash-dot" />
+              <span className="vt-dash-dot" />
+            </div>
+            <div className="vt-dash-body">
+              <div className="vt-dash-sidebar">
+                {["Dashboard", "Contacts", "Pipeline", "Calendar", "AI Agent"].map(
+                  (t) => (
+                    <span key={t} className="vt-dash-nav">
+                      {t}
+                    </span>
+                  ),
+                )}
+              </div>
+              <div className="vt-dash-main">
+                <div className="vt-dash-kpi">
+                  <div>
+                    <span className="vt-kpi-n">24</span>
+                    <span className="vt-kpi-l">Active Leads</span>
+                  </div>
+                  <div>
+                    <span className="vt-kpi-n">8</span>
+                    <span className="vt-kpi-l">Showings</span>
+                  </div>
+                  <div>
+                    <span className="vt-kpi-n">3</span>
+                    <span className="vt-kpi-l">Offers</span>
+                  </div>
+                </div>
+                <div className="vt-dash-chart" />
+              </div>
             </div>
           </div>
-          <div className="vt-bub vt-bub-lead">
-            Hi — is 42 Birchwood Ln still available? We&apos;re pre-approved at
-            $900k.
-          </div>
-          <p className="vt-stamp">Sat 9:42 PM</p>
-          <div className="vt-bub vt-bub-ai">
-            It is! Great news on the pre-approval. Sarah has Sunday 1:30 or 3:00
-            open for a private showing — which works better?
-          </div>
-          <p className="vt-stamp vt-stamp-r">
-            Sat 9:42 PM · 38 seconds later
+        </div>
+      </>
+    ),
+  },
+  {
+    bg: "light",
+    duration: 7,
+    content: (
+      <>
+        <p className="vt-small">New Buyer Inquiry</p>
+        <div className="vt-notice">
+          <p className="vt-notice-title">Sarah Thompson</p>
+          <p className="vt-notice-body">
+            &ldquo;I&apos;d like to schedule a showing.&rdquo;
           </p>
-          <div className="vt-bub vt-bub-lead">1:30 works!</div>
-          <div className="vt-bub vt-bub-ai">
-            Booked ✓ You&apos;ll get a confirmation text shortly. See you
-            Sunday!
+          <div className="vt-pill">
+            <span className="vt-pill-dot" />
+            Showing starts in 5 minutes
           </div>
         </div>
-      </>
-    ),
-  },
-  {
-    bg: "cream",
-    duration: 10,
-    content: (
-      <>
-        <p className="vt-kicker">Nothing falls through the cracks</p>
-        <h2 className="vt-h1 vt-h1-sm">
-          Every deal tracked from{" "}
-          <span className="vt-accent">inquiry to closing day.</span>
-        </h2>
-        <div className="vt-chips">
-          {[
-            "New Inquiry",
-            "Showing Scheduled",
-            "Offer Submitted",
-            "Under Contract",
-          ].map((s) => (
-            <span key={s} className="vt-chip vt-chip-light">
-              {s}
-            </span>
-          ))}
-          <span className="vt-chip vt-chip-active">Closed ✓</span>
-        </div>
-        <p className="vt-sub">
-          Automatic follow-ups, deadline reminders, and pre-approval tracking on
-          every card.
+        <p className="vt-muted-hint">
+          You&apos;re in a showing. But the lead can&apos;t wait.
         </p>
-      </>
-    ),
-  },
-  {
-    bg: "deep",
-    duration: 9,
-    content: (
-      <>
-        <p className="vt-kicker">Get your evenings back</p>
-        <p className="vt-bignum">5+ hrs</p>
-        <h2 className="vt-h1 vt-h1-sm">
-          saved every week on{" "}
-          <span className="vt-accent">
-            follow-up, scheduling &amp; reviews.
-          </span>
-        </h2>
       </>
     ),
   },
   {
     bg: "blue",
-    duration: 11,
+    duration: 10,
     content: (
       <>
-        <p className="vt-kicker" style={{ opacity: 0.85 }}>
-          What speed is worth
-        </p>
-        <h2 className="vt-h1 vt-h1-md">2–3 extra closings a year.</h2>
-        <div className="vt-vals">
-          <div className="vt-val">
-            <p className="vt-val-n">
-              <em>2.3x</em>
+        <div className="vt-ai-grid">
+          <div className="vt-ai-left">
+            <p className="vt-small vt-small-blue">Automation</p>
+            <h2 className="vt-h2 vt-h2-navy">AI Receptionist</h2>
+            <p className="vt-ai-desc">
+              Instantly responds, confirms the request, and keeps you focused.
             </p>
-            <p className="vt-val-l">More leads contacted same-day</p>
           </div>
-          <div className="vt-val">
-            <p className="vt-val-n">
-              $48k<em>+</em>
-            </p>
-            <p className="vt-val-l">Added GCI per year</p>
-          </div>
-          <div className="vt-val">
-            <p className="vt-val-n">
-              <em>38s</em>
-            </p>
-            <p className="vt-val-l">Avg response time</p>
+          <div className="vt-chat">
+            <div className="vt-bub vt-bub-lead">
+              Sarah: I&apos;d like to schedule a showing.
+            </div>
+            <div className="vt-bub vt-bub-ai vt-typing">
+              <span />
+              <span />
+              <span />
+            </div>
+            <div className="vt-bub vt-bub-ai">
+              <strong>Appointment Confirmed</strong>{" "}
+              <span className="vt-check">✓</span>
+              <br />
+              <span className="vt-bub-muted">
+                Showing window sent to Sarah.
+              </span>
+            </div>
           </div>
         </div>
       </>
     ),
   },
   {
-    bg: "deep",
-    duration: 11,
+    bg: "light",
+    duration: 9,
     content: (
       <>
-        <p className="vt-kicker">Everything in one stack</p>
-        <h2 className="vt-h1 vt-h1-md">
-          Your complete business{" "}
-          <span className="vt-accent">operating system.</span>
-        </h2>
-        <div className="vt-chips">
+        <p className="vt-small">Pipeline</p>
+        <h2 className="vt-h2">Lead Journey</h2>
+        <div className="vt-timeline-card">
+          <div className="vt-tl-track">
+            <div className="vt-tl-fill" />
+          </div>
+          <div className="vt-milestones">
+            {[
+              { label: "New Lead", done: true },
+              { label: "Showing", done: true },
+              { label: "Offer", done: true },
+              { label: "Contract", done: false },
+              { label: "Closed", done: false },
+            ].map((m) => (
+              <div
+                key={m.label}
+                className={`vt-ms ${m.done ? "vt-ms-done" : ""}`}
+              >
+                <div className="vt-ms-dot" />
+                {m.label}
+              </div>
+            ))}
+          </div>
+        </div>
+      </>
+    ),
+  },
+  {
+    bg: "dark",
+    duration: 9,
+    content: (
+      <>
+        <div className="vt-bp-grid">
+          <div>
+            <p className="vt-small vt-small-dark">Onboarding</p>
+            <h2 className="vt-h2 vt-h2-white">Business Blueprint</h2>
+            <p className="vt-bp-desc">
+              Build your operating system once. Let AgentStack apply it
+              everywhere.
+            </p>
+          </div>
+          <div className="vt-checklist-card">
+            {[
+              "Business Profile",
+              "Service Areas",
+              "Lead Sources",
+              "Follow-Up Rules",
+              "AI Receptionist",
+              "Integrations",
+            ].map((item) => (
+              <div key={item} className="vt-row">
+                <span className="vt-box">✓</span>
+                {item}
+              </div>
+            ))}
+            <div className="vt-pill vt-pill-sm">Blueprint Complete</div>
+          </div>
+        </div>
+      </>
+    ),
+  },
+  {
+    bg: "light",
+    duration: 8,
+    content: (
+      <>
+        <div className="vt-import-grid">
+          <div>
+            <p className="vt-small">Import</p>
+            <h2 className="vt-h2">Contact Import</h2>
+            <p className="vt-ai-desc">
+              Existing contacts organized. Duplicates removed. Ready.
+            </p>
+          </div>
+          <div className="vt-import-card">
+            <div className="vt-metrics">
+              <div className="vt-metric">
+                <span className="vt-metric-n">1,248</span>
+                <span className="vt-metric-l">Contacts Imported</span>
+              </div>
+              <div className="vt-metric">
+                <span className="vt-metric-n">99%</span>
+                <span className="vt-metric-l">Data Accuracy</span>
+              </div>
+            </div>
+            <div className="vt-bars">
+              {[
+                { label: "Buyers", pct: 84 },
+                { label: "Sellers", pct: 72 },
+                { label: "Investors", pct: 48 },
+                { label: "Past Clients", pct: 91 },
+              ].map((b) => (
+                <div key={b.label} className="vt-bar-row">
+                  <div className="vt-bar-label">
+                    <span>{b.label}</span>
+                    <span>{b.pct}%</span>
+                  </div>
+                  <div className="vt-bar-track">
+                    <div
+                      className="vt-bar-fill-h"
+                      style={{ width: `${b.pct}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </>
+    ),
+  },
+  {
+    bg: "blue",
+    duration: 8,
+    content: (
+      <>
+        <p className="vt-small vt-small-blue">Connected</p>
+        <h2 className="vt-h2 vt-h2-navy">Connect Your Business</h2>
+        <div className="vt-integrations">
           {[
-            { e: "🤖", t: "AI Receptionist" },
-            { e: "⬡", t: "Deal Pipeline" },
-            { e: "📅", t: "Showing Scheduler" },
-            { e: "📍", t: "Territory Routing" },
-            { e: "⭐", t: "Review Engine" },
-            { e: "📊", t: "GCI Analytics" },
-          ].map((c) => (
-            <span key={c.t} className="vt-chip">
-              <em>{c.e}</em> {c.t}
-            </span>
+            { icon: "✉", label: "Email" },
+            { icon: "📅", label: "Calendar" },
+            { icon: "🌐", label: "Website" },
+            { icon: "📱", label: "Phone" },
+            { icon: "⭐", label: "Google Business" },
+          ].map((i) => (
+            <div key={i.label} className="vt-integ">
+              <span className="vt-integ-icon">{i.icon}</span>
+              <span className="vt-integ-label">{i.label}</span>
+              <span className="vt-check-sm">✓</span>
+            </div>
           ))}
         </div>
       </>
     ),
   },
   {
-    bg: "deep",
-    duration: 8,
+    bg: "light",
+    duration: 9,
     content: (
       <>
-        <div className="vt-lockup">
-          <p className="vt-wordmark vt-wordmark-sm">
-            Agent<span className="vt-accent">Stack</span>
-          </p>
-          <p className="vt-lock-tag">Real Estate Solutions</p>
+        <div className="vt-plan-grid">
+          <div className="vt-plan-left">
+            <p className="vt-small">Daily Plan</p>
+            <h2 className="vt-h2">Today&apos;s Plan</h2>
+            <p className="vt-ai-desc">
+              Good morning. Here&apos;s what moves the business forward.
+            </p>
+            <div className="vt-todos">
+              {["Call Sarah Thompson", "Confirm showing at 2pm", "Review 3 new leads"].map(
+                (t) => (
+                  <div key={t} className="vt-todo">
+                    <span className="vt-todo-dot" />
+                    {t}
+                  </div>
+                ),
+              )}
+            </div>
+          </div>
+          <div className="vt-nba-card">
+            <p className="vt-small">Next Best Action</p>
+            <p className="vt-nba-title">
+              Confirm Sarah&apos;s showing window
+            </p>
+            <span className="vt-check-lg">✓</span>
+          </div>
         </div>
-        <p className="vt-sub">Stop losing deals between showings.</p>
+      </>
+    ),
+  },
+  {
+    bg: "light",
+    duration: 7,
+    content: (
+      <>
+        <h2 className="vt-cta-h">
+          Build your business once.
+          <br />
+          Let AgentStack handle the rest.
+        </h2>
         <a href="/signup" className="vt-cta-btn">
           Start Free — 14 Days
         </a>
-        <p className="vt-url">agentstacksolutions.com</p>
+        <p className="vt-cta-url">agentstackcrm.app</p>
       </>
     ),
   },
@@ -239,7 +322,10 @@ export function VideoTeaser() {
     const next = Math.max(0, Math.min(SLIDES.length - 1, i));
     setIdx(next);
     inSlide.current = 0;
-    elapsed.current = SLIDES.slice(0, next).reduce((a, s) => a + s.duration, 0);
+    elapsed.current = SLIDES.slice(0, next).reduce(
+      (a, s) => a + s.duration,
+      0,
+    );
   }, []);
 
   useEffect(() => {
@@ -261,8 +347,10 @@ export function VideoTeaser() {
 
   useEffect(() => {
     if (!playing || !containerRef.current) return;
-    const bar = containerRef.current.querySelector<HTMLDivElement>(".vt-bar-fill");
-    const clock = containerRef.current.querySelector<HTMLSpanElement>(".vt-clock");
+    const bar =
+      containerRef.current.querySelector<HTMLDivElement>(".vt-prog-fill");
+    const clock =
+      containerRef.current.querySelector<HTMLSpanElement>(".vt-clock");
     const iv = setInterval(() => {
       if (bar) bar.style.width = `${(elapsed.current / TOTAL) * 100}%`;
       if (clock) {
@@ -279,7 +367,11 @@ export function VideoTeaser() {
       setPlaying(true);
       return;
     }
-    if (!playing && idx === SLIDES.length - 1 && inSlide.current >= SLIDES[idx].duration) {
+    if (
+      !playing &&
+      idx === SLIDES.length - 1 &&
+      inSlide.current >= SLIDES[idx].duration
+    ) {
       go(0);
       setPlaying(true);
       return;
@@ -288,14 +380,17 @@ export function VideoTeaser() {
   };
 
   const bgClass =
-    SLIDES[idx].bg === "cream"
-      ? "vt-bg-cream"
-      : SLIDES[idx].bg === "blue"
-        ? "vt-bg-blue"
-        : "vt-bg-deep";
+    SLIDES[idx].bg === "blue"
+      ? "vt-bg-blue"
+      : SLIDES[idx].bg === "dark"
+        ? "vt-bg-dark"
+        : "vt-bg-light";
 
   return (
-    <section id="video-teaser" className="scroll-mt-8 py-16 md:py-24 bg-gradient-to-b from-background to-muted/30">
+    <section
+      id="video-teaser"
+      className="scroll-mt-8 py-16 md:py-24 bg-gradient-to-b from-background to-muted/30"
+    >
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-3xl text-center mb-10">
           <p className="text-sm font-semibold uppercase tracking-wider text-blue-500 mb-3">
@@ -315,20 +410,19 @@ export function VideoTeaser() {
           className="relative mx-auto max-w-4xl overflow-hidden rounded-2xl border shadow-2xl"
         >
           {/* Progress bar */}
-          <div className="absolute top-0 left-0 right-0 z-20 h-1 bg-white/10">
+          <div className="absolute top-0 left-0 right-0 z-20 h-1 bg-black/5">
             <div
-              className="vt-bar-fill h-full bg-[#3b7ff2] transition-[width] duration-100"
+              className="vt-prog-fill h-full bg-[#3B82F6] transition-[width] duration-100"
               style={{ width: "0%" }}
             />
           </div>
 
           {/* Slide viewport */}
           <div className={`vt-viewport ${bgClass}`}>
-            {/* Play overlay (before start) */}
             {!hasStarted && (
               <button
                 onClick={handlePlayPause}
-                className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-4 bg-[#122a55]/90 transition-opacity hover:bg-[#122a55]/80"
+                className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-4 bg-[#0E1117]/80 transition-opacity hover:bg-[#0E1117]/70"
                 aria-label="Play teaser"
               >
                 <span className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-white/30 bg-white/10 backdrop-blur-sm">
@@ -341,12 +435,12 @@ export function VideoTeaser() {
                   </svg>
                 </span>
                 <span className="text-sm font-semibold text-white/70">
-                  Play teaser · {Math.floor(TOTAL / 60)}:{String(TOTAL % 60).padStart(2, "0")}
+                  Play teaser · {Math.floor(TOTAL / 60)}:
+                  {String(TOTAL % 60).padStart(2, "0")}
                 </span>
               </button>
             )}
 
-            {/* Slides */}
             {SLIDES.map((slide, i) => (
               <div
                 key={i}
@@ -386,7 +480,7 @@ export function VideoTeaser() {
                 {SLIDES.map((_, i) => (
                   <button
                     key={i}
-                    className={`h-2 w-2 rounded-full transition-colors ${i === idx ? "bg-[#6ba3ff]" : "bg-white/30"}`}
+                    className={`h-2 w-2 rounded-full transition-colors ${i === idx ? "bg-[#3B82F6]" : "bg-black/20"}`}
                     onClick={() => go(i)}
                     aria-label={`Slide ${i + 1}`}
                   />
@@ -397,14 +491,16 @@ export function VideoTeaser() {
         </div>
       </div>
 
-      {/* Scoped styles */}
       <style>{`
         :root {
-          --vt-cream: #f5f0e8;
-          --vt-navy: #1b3d7a;
-          --vt-deep: #122a55;
-          --vt-blue: #3b7ff2;
-          --vt-sky: #6ba3ff;
+          --vt-bg: #F8F8F6;
+          --vt-navy: #173B7A;
+          --vt-blue: #3B82F6;
+          --vt-muted: #6B7280;
+          --vt-border: #E8E9ED;
+          --vt-tint: #EFF6FF;
+          --vt-card: #FFFFFF;
+          --vt-text: #171717;
         }
 
         .vt-viewport {
@@ -417,10 +513,11 @@ export function VideoTeaser() {
           .vt-viewport { aspect-ratio: 4 / 3; }
         }
 
-        .vt-bg-deep { background: radial-gradient(1200px 700px at 50% 30%, #1b3d7a 0%, #122a55 65%); }
-        .vt-bg-cream { background: #f5f0e8; }
-        .vt-bg-blue { background: linear-gradient(150deg, #2d63c8 0%, #3b7ff2 60%, #6ba3ff 100%); }
+        .vt-bg-light { background: var(--vt-bg); }
+        .vt-bg-blue { background: var(--vt-tint); }
+        .vt-bg-dark { background: #0E1117; }
 
+        /* --- Slide transitions --- */
         .vt-slide {
           position: absolute;
           inset: 0;
@@ -429,278 +526,533 @@ export function VideoTeaser() {
           align-items: center;
           justify-content: center;
           text-align: center;
-          padding: 32px 6vw 64px;
+          padding: 40px 6vw 64px;
           opacity: 0;
           pointer-events: none;
           transition: opacity 0.5s ease;
         }
         .vt-slide-active { opacity: 1; pointer-events: auto; }
 
-        .vt-slide > * { opacity: 0; transform: translateY(20px); }
-        .vt-slide-active > * { animation: vtUp 0.7s cubic-bezier(0.22,1,0.36,1) forwards; }
+        .vt-slide > * { opacity: 0; transform: translateY(16px); }
+        .vt-slide-active > * { animation: vtUp 0.6s cubic-bezier(0.22,1,0.36,1) forwards; }
         .vt-slide-active > *:nth-child(1) { animation-delay: 0.05s; }
-        .vt-slide-active > *:nth-child(2) { animation-delay: 0.2s; }
-        .vt-slide-active > *:nth-child(3) { animation-delay: 0.38s; }
-        .vt-slide-active > *:nth-child(4) { animation-delay: 0.56s; }
-        .vt-slide-active > *:nth-child(5) { animation-delay: 0.74s; }
-        .vt-slide-active > *:nth-child(6) { animation-delay: 0.9s; }
+        .vt-slide-active > *:nth-child(2) { animation-delay: 0.18s; }
+        .vt-slide-active > *:nth-child(3) { animation-delay: 0.32s; }
+        .vt-slide-active > *:nth-child(4) { animation-delay: 0.46s; }
         @keyframes vtUp { to { opacity: 1; transform: translateY(0); } }
         @media (prefers-reduced-motion: reduce) {
           .vt-slide > *, .vt-slide-active > * { animation: none !important; opacity: 1; transform: none; }
         }
 
-        .vt-kicker {
-          font-size: clamp(10px, 1.3vw, 13px);
-          font-weight: 800;
-          letter-spacing: 0.3em;
-          text-transform: uppercase;
-          opacity: 0.65;
-          margin-bottom: 20px;
-          color: var(--vt-cream);
-        }
-        .vt-bg-cream .vt-kicker { color: var(--vt-navy); }
-        .vt-bg-blue .vt-kicker { color: #fff; }
-
-        .vt-h1 {
-          font-size: clamp(24px, 5vw, 60px);
-          font-weight: 900;
-          letter-spacing: -0.03em;
-          line-height: 1.05;
-          max-width: 14ch;
-          text-wrap: balance;
-          color: var(--vt-cream);
-          margin: 0;
-        }
-        .vt-h1-sm { font-size: clamp(20px, 3.2vw, 38px); }
-        .vt-h1-md { font-size: clamp(22px, 3.8vw, 46px); }
-        .vt-bg-cream .vt-h1 { color: var(--vt-navy); }
-        .vt-bg-blue .vt-h1 { color: #fff; }
-
-        .vt-accent { color: var(--vt-sky); }
-        .vt-bg-cream .vt-accent { color: var(--vt-blue); }
-
-        .vt-sub {
-          font-size: clamp(13px, 1.6vw, 18px);
-          font-weight: 600;
-          opacity: 0.75;
-          margin-top: 18px;
-          max-width: 42ch;
-          line-height: 1.5;
-          color: var(--vt-cream);
-        }
-        .vt-bg-cream .vt-sub { color: var(--vt-navy); }
-        .vt-bg-blue .vt-sub { color: #fff; }
-
-        .vt-bignum {
-          font-size: clamp(50px, 11vw, 140px);
-          font-weight: 900;
-          letter-spacing: -0.04em;
-          line-height: 0.95;
-          color: var(--vt-sky);
-          font-variant-numeric: tabular-nums;
-          margin: 0 0 10px;
-        }
-        .vt-bg-cream .vt-bignum { color: var(--vt-blue); }
-
-        .vt-lockup { line-height: 1; }
-        .vt-wordmark {
-          font-size: clamp(36px, 7vw, 80px);
-          font-weight: 900;
-          letter-spacing: -0.03em;
-          color: var(--vt-cream);
-          margin: 0;
-        }
-        .vt-wordmark-sm { font-size: clamp(32px, 5.5vw, 64px); }
-        .vt-lock-tag {
-          font-size: clamp(10px, 1.3vw, 15px);
+        /* --- Typography --- */
+        .vt-small {
+          font-size: clamp(10px, 1.2vw, 14px);
           font-weight: 700;
-          letter-spacing: 0.36em;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: rgba(245,240,232,0.6);
-          margin-top: 12px;
+          color: var(--vt-muted);
+          margin-bottom: 10px;
+        }
+        .vt-small-blue { color: var(--vt-navy); }
+        .vt-small-dark { color: rgba(255,255,255,0.5); }
+
+        .vt-h2 {
+          font-size: clamp(24px, 4.5vw, 52px);
+          font-weight: 800;
+          letter-spacing: -0.045em;
+          line-height: 1.02;
+          color: var(--vt-text);
+          margin: 0 0 14px;
+        }
+        .vt-h2-white { color: #fff; }
+        .vt-h2-navy { color: var(--vt-navy); }
+
+        /* --- Slide 1: Hero --- */
+        .vt-hero-grid {
+          display: grid;
+          grid-template-columns: 1fr 1.2fr;
+          gap: 28px;
+          width: 100%;
+          height: 100%;
+          align-items: center;
+          text-align: left;
+        }
+        @media (max-width: 640px) { .vt-hero-grid { grid-template-columns: 1fr; } }
+
+        .vt-wordmark {
+          font-size: clamp(32px, 6vw, 76px);
+          font-weight: 800;
+          letter-spacing: -0.055em;
+          line-height: 1;
+          margin: 0;
+        }
+        .vt-wm-a { color: var(--vt-navy); }
+        .vt-wm-s { color: var(--vt-blue); }
+        .vt-hero-sub {
+          font-size: clamp(14px, 2vw, 26px);
+          color: var(--vt-muted);
+          margin-top: 16px;
+          line-height: 1.4;
+          max-width: 520px;
         }
 
-        .vt-pulse {
+        .vt-dash-mock {
+          background: var(--vt-card);
+          border-radius: 14px;
+          border: 1px solid var(--vt-border);
+          box-shadow: 0 18px 50px rgba(0,0,0,0.1);
+          overflow: hidden;
+        }
+        .vt-dash-bar {
+          display: flex;
+          gap: 5px;
+          padding: 8px 12px;
+          border-bottom: 1px solid var(--vt-border);
+        }
+        .vt-dash-dot {
+          width: 8px; height: 8px; border-radius: 50%; background: #D1D5DB;
+        }
+        .vt-dash-body { display: flex; min-height: 120px; }
+        .vt-dash-sidebar {
+          width: 30%;
+          border-right: 1px solid var(--vt-border);
+          padding: 8px;
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+        }
+        .vt-dash-nav {
+          font-size: clamp(7px, 0.9vw, 11px);
+          padding: 4px 6px;
+          border-radius: 4px;
+          color: var(--vt-muted);
+          font-weight: 600;
+        }
+        .vt-dash-nav:first-child { background: var(--vt-tint); color: var(--vt-navy); }
+        .vt-dash-main { flex: 1; padding: 10px; }
+        .vt-dash-kpi { display: flex; gap: 8px; margin-bottom: 10px; }
+        .vt-kpi-n {
+          display: block;
+          font-size: clamp(14px, 2.2vw, 28px);
+          font-weight: 800;
+          color: var(--vt-navy);
+          letter-spacing: -0.03em;
+        }
+        .vt-kpi-l {
+          display: block;
+          font-size: clamp(6px, 0.7vw, 9px);
+          color: var(--vt-muted);
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+        }
+        .vt-dash-chart {
+          height: 40px;
+          border-radius: 6px;
+          background: linear-gradient(90deg, var(--vt-tint) 0%, rgba(59,130,246,0.15) 100%);
+        }
+
+        /* --- Slide 2: Notification --- */
+        .vt-notice {
+          background: var(--vt-card);
+          border: 1px solid var(--vt-border);
+          border-radius: 18px;
+          padding: clamp(16px, 3vw, 28px);
+          box-shadow: 0 18px 50px rgba(0,0,0,0.1);
+          max-width: 420px;
+          width: 90%;
+          text-align: left;
+        }
+        .vt-notice-title {
+          font-size: clamp(18px, 2.5vw, 26px);
+          font-weight: 800;
+          color: var(--vt-navy);
+          letter-spacing: -0.03em;
+          margin: 0 0 8px;
+        }
+        .vt-notice-body {
+          font-size: clamp(13px, 1.5vw, 18px);
+          color: var(--vt-muted);
+          margin: 0;
+          line-height: 1.4;
+        }
+        .vt-pill {
           display: inline-flex;
           align-items: center;
-          gap: 9px;
-          background: rgba(107,163,255,0.14);
-          border: 1px solid rgba(107,163,255,0.4);
-          color: var(--vt-sky);
-          font-size: clamp(11px, 1.3vw, 14px);
-          font-weight: 800;
-          letter-spacing: 0.14em;
-          text-transform: uppercase;
-          padding: 8px 18px;
-          border-radius: 24px;
-          margin-bottom: 24px;
+          gap: 8px;
+          padding: 7px 14px;
+          border-radius: 99px;
+          background: var(--vt-tint);
+          color: var(--vt-navy);
+          font-weight: 700;
+          font-size: clamp(10px, 1.1vw, 14px);
+          margin-top: 14px;
         }
-        .vt-pulse-dot {
-          width: 8px; height: 8px;
-          border-radius: 50%;
-          background: var(--vt-sky);
+        .vt-pill-sm { margin-top: 10px; }
+        .vt-pill-dot {
+          width: 8px; height: 8px; border-radius: 50%;
+          background: var(--vt-blue);
           animation: vtPulse 1.6s infinite;
         }
         @keyframes vtPulse {
           0%,100% { opacity: 1; transform: scale(1); }
           50% { opacity: 0.4; transform: scale(0.7); }
         }
-
-        .vt-chips {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 10px;
-          justify-content: center;
-          max-width: 680px;
-          margin-top: 28px;
-        }
-        .vt-chip {
-          background: rgba(255,255,255,0.08);
-          border: 1px solid rgba(255,255,255,0.16);
-          border-radius: 12px;
-          padding: 10px 16px;
-          font-size: clamp(11px, 1.3vw, 14px);
-          font-weight: 700;
-          color: var(--vt-cream);
-        }
-        .vt-chip em { font-style: normal; color: var(--vt-sky); margin-right: 4px; }
-        .vt-chip-light {
-          background: #fff;
-          border-color: #e2dcd0;
-          color: var(--vt-navy);
-        }
-        .vt-chip-active {
-          background: var(--vt-blue);
-          border-color: var(--vt-blue);
-          color: #fff;
-          padding: 10px 16px;
-          border-radius: 12px;
-          font-size: clamp(11px, 1.3vw, 14px);
-          font-weight: 700;
+        .vt-muted-hint {
+          font-size: clamp(12px, 1.3vw, 16px);
+          color: var(--vt-muted);
+          margin-top: 18px;
+          font-weight: 600;
+          opacity: 0.7;
         }
 
-        .vt-vals {
-          display: flex;
-          gap: 16px;
-          justify-content: center;
-          flex-wrap: wrap;
-          margin-top: 28px;
+        /* --- Slide 3: AI chat --- */
+        .vt-ai-grid {
+          display: grid;
+          grid-template-columns: 1fr 1.1fr;
+          gap: 28px;
+          width: 100%;
+          height: 100%;
+          align-items: center;
+          text-align: left;
         }
-        .vt-val {
-          background: #fff;
-          border-radius: 14px;
-          padding: 20px 26px;
-          min-width: 150px;
-          box-shadow: 0 10px 32px rgba(18,42,85,0.18);
-        }
-        .vt-val-n {
-          font-size: clamp(22px, 3.6vw, 40px);
-          font-weight: 900;
-          letter-spacing: -0.03em;
-          color: var(--vt-navy);
-          font-variant-numeric: tabular-nums;
+        @media (max-width: 640px) { .vt-ai-grid { grid-template-columns: 1fr; } }
+
+        .vt-ai-desc, .vt-bp-desc {
+          font-size: clamp(12px, 1.4vw, 18px);
+          color: var(--vt-muted);
+          line-height: 1.45;
+          max-width: 400px;
           margin: 0;
         }
-        .vt-val-n em { font-style: normal; color: var(--vt-blue); }
-        .vt-val-l {
-          font-size: 11px;
-          font-weight: 700;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          color: rgba(27,61,122,0.5);
-          margin-top: 6px;
+        .vt-bp-desc { color: rgba(255,255,255,0.6); }
+        .vt-ai-left .vt-h2 { margin-bottom: 10px; }
+
+        .vt-chat {
+          display: grid;
+          gap: 10px;
+        }
+        .vt-bub {
+          padding: 12px 16px;
+          border-radius: 14px;
+          font-size: clamp(11px, 1.2vw, 16px);
+          line-height: 1.4;
+          max-width: 88%;
+        }
+        .vt-bub-lead {
+          background: #F5F7FB;
+          border: 1px solid var(--vt-border);
+          color: #333;
+          justify-self: start;
+          text-align: left;
+        }
+        .vt-bub-ai {
+          background: var(--vt-card);
+          border: 1px solid var(--vt-border);
+          box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+          text-align: left;
+          justify-self: end;
+        }
+        .vt-bub-muted { color: var(--vt-muted); font-size: 0.85em; }
+        .vt-check { color: var(--vt-blue); font-weight: 900; }
+        .vt-check-sm { color: var(--vt-blue); font-weight: 800; font-size: 12px; }
+        .vt-check-lg {
+          font-size: clamp(22px, 3vw, 36px);
+          color: var(--vt-blue);
+          font-weight: 900;
         }
 
-        .vt-phone {
-          background: #fff;
-          border-radius: 18px;
-          padding: 16px;
-          width: min(360px, 80%);
-          box-shadow: 0 18px 50px rgba(0,0,0,0.35);
-          text-align: left;
-          margin-top: 24px;
+        .vt-typing {
+          display: flex !important;
+          align-items: center;
+          gap: 0;
+          padding: 14px 18px;
         }
-        .vt-ph-head {
+        .vt-typing span {
+          width: 7px; height: 7px; border-radius: 50%;
+          background: #C6CDD8;
+          margin-right: 5px;
+          animation: vtTyp 1.2s infinite;
+        }
+        .vt-typing span:nth-child(2) { animation-delay: 0.2s; }
+        .vt-typing span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes vtTyp { 50% { opacity: 0.35; transform: translateY(-2px); } }
+
+        /* --- Slide 4: Pipeline --- */
+        .vt-timeline-card {
+          background: var(--vt-card);
+          border: 1px solid var(--vt-border);
+          border-radius: 18px;
+          padding: clamp(24px, 4vw, 48px) clamp(16px, 3vw, 32px);
+          box-shadow: 0 18px 50px rgba(0,0,0,0.08);
+          width: 90%;
+          max-width: 680px;
+        }
+        .vt-tl-track {
+          height: 4px;
+          border-radius: 99px;
+          background: #DCE8FF;
+          position: relative;
+          margin-bottom: 20px;
+        }
+        .vt-tl-fill {
+          position: absolute;
+          left: 0; top: 0;
+          height: 100%; width: 60%;
+          border-radius: 99px;
+          background: var(--vt-blue);
+        }
+        .vt-milestones {
+          display: grid;
+          grid-template-columns: repeat(5, 1fr);
+          gap: 8px;
+        }
+        .vt-ms {
+          text-align: center;
+          color: var(--vt-muted);
+          font-weight: 700;
+          font-size: clamp(9px, 1.1vw, 14px);
+        }
+        .vt-ms-dot {
+          width: clamp(16px, 2.2vw, 26px);
+          height: clamp(16px, 2.2vw, 26px);
+          background: var(--vt-card);
+          border: 4px solid #DCE8FF;
+          border-radius: 50%;
+          margin: 0 auto 8px;
+        }
+        .vt-ms-done { color: var(--vt-navy); }
+        .vt-ms-done .vt-ms-dot {
+          border-color: var(--vt-blue);
+          box-shadow: 0 0 0 6px var(--vt-tint);
+        }
+
+        /* --- Slide 5: Blueprint --- */
+        .vt-bp-grid {
+          display: grid;
+          grid-template-columns: 1fr 1.1fr;
+          gap: 28px;
+          width: 100%;
+          height: 100%;
+          align-items: center;
+          text-align: left;
+        }
+        @media (max-width: 640px) { .vt-bp-grid { grid-template-columns: 1fr; } }
+
+        .vt-checklist-card {
+          background: var(--vt-card);
+          border-radius: 18px;
+          padding: clamp(14px, 2vw, 24px);
+          box-shadow: 0 18px 50px rgba(0,0,0,0.2);
+        }
+        .vt-row {
           display: flex;
           align-items: center;
           gap: 10px;
-          border-bottom: 1px solid #e8e4dc;
-          padding-bottom: 12px;
-          margin-bottom: 12px;
+          padding: 8px 4px;
+          border-bottom: 1px solid var(--vt-border);
+          font-weight: 700;
+          font-size: clamp(11px, 1.2vw, 15px);
+          color: var(--vt-text);
         }
-        .vt-ph-dot {
-          width: 32px; height: 32px;
-          border-radius: 50%;
+        .vt-row:last-of-type { border-bottom: none; }
+        .vt-box {
+          width: 20px; height: 20px;
+          border-radius: 6px;
           background: var(--vt-blue);
-          display: flex;
-          align-items: center;
-          justify-content: center;
           color: #fff;
-          font-weight: 900;
+          display: grid;
+          place-items: center;
           font-size: 12px;
+          font-weight: 900;
           flex-shrink: 0;
         }
-        .vt-ph-name { font-weight: 800; color: var(--vt-navy); font-size: 13px; }
-        .vt-ph-ai { font-size: 10px; color: var(--vt-blue); font-weight: 700; }
 
-        .vt-bub {
-          max-width: 82%;
-          padding: 9px 13px;
-          border-radius: 12px;
-          font-size: 12px;
-          line-height: 1.45;
-          margin-bottom: 7px;
+        /* --- Slide 6: Import --- */
+        .vt-import-grid {
+          display: grid;
+          grid-template-columns: 1fr 1.2fr;
+          gap: 28px;
+          width: 100%;
+          height: 100%;
+          align-items: center;
+          text-align: left;
         }
-        .vt-bub-lead { background: #eef1f6; color: #222; border-bottom-left-radius: 4px; }
-        .vt-bub-ai { background: var(--vt-blue); color: #fff; margin-left: auto; border-bottom-right-radius: 4px; }
-        .vt-stamp { font-size: 10px; color: #9aa2b1; margin: 2px 6px 8px; }
-        .vt-stamp-r { text-align: right; }
+        @media (max-width: 640px) { .vt-import-grid { grid-template-columns: 1fr; } }
 
+        .vt-import-card {
+          background: var(--vt-card);
+          border: 1px solid var(--vt-border);
+          border-radius: 18px;
+          padding: clamp(14px, 2vw, 24px);
+          box-shadow: 0 18px 50px rgba(0,0,0,0.08);
+        }
+        .vt-metrics {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 16px;
+          margin-bottom: 16px;
+        }
+        .vt-metric-n {
+          display: block;
+          font-size: clamp(26px, 4vw, 52px);
+          font-weight: 800;
+          letter-spacing: -0.05em;
+          color: var(--vt-navy);
+        }
+        .vt-metric-l {
+          display: block;
+          font-size: clamp(9px, 1vw, 14px);
+          color: var(--vt-muted);
+          font-weight: 600;
+        }
+        .vt-bars { display: grid; gap: 10px; }
+        .vt-bar-row {}
+        .vt-bar-label {
+          display: flex;
+          justify-content: space-between;
+          font-size: clamp(9px, 1vw, 13px);
+          color: var(--vt-muted);
+          font-weight: 700;
+          margin-bottom: 4px;
+        }
+        .vt-bar-track {
+          height: 8px;
+          border-radius: 99px;
+          background: #E8EEF8;
+          overflow: hidden;
+        }
+        .vt-bar-fill-h {
+          height: 100%;
+          border-radius: 99px;
+          background: var(--vt-blue);
+        }
+
+        /* --- Slide 7: Integrations --- */
+        .vt-integrations {
+          display: flex;
+          flex-wrap: wrap;
+          gap: clamp(8px, 1.5vw, 16px);
+          justify-content: center;
+          margin-top: 28px;
+          max-width: 700px;
+        }
+        .vt-integ {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 6px;
+          padding: clamp(12px, 2vw, 20px) clamp(14px, 2vw, 24px);
+          background: var(--vt-card);
+          border: 1px solid var(--vt-border);
+          border-radius: 16px;
+          min-width: clamp(70px, 10vw, 110px);
+        }
+        .vt-integ-icon { font-size: clamp(18px, 2.5vw, 28px); }
+        .vt-integ-label {
+          font-size: clamp(9px, 1vw, 13px);
+          font-weight: 700;
+          color: var(--vt-text);
+        }
+
+        /* --- Slide 8: Today's Plan --- */
+        .vt-plan-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 28px;
+          width: 100%;
+          height: 100%;
+          align-items: center;
+          text-align: left;
+        }
+        @media (max-width: 640px) { .vt-plan-grid { grid-template-columns: 1fr; } }
+
+        .vt-todos { display: grid; gap: 10px; margin-top: 18px; }
+        .vt-todo {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          font-weight: 700;
+          font-size: clamp(11px, 1.3vw, 16px);
+          color: var(--vt-navy);
+        }
+        .vt-todo-dot {
+          width: 9px; height: 9px;
+          border-radius: 50%;
+          background: var(--vt-blue);
+          flex-shrink: 0;
+        }
+        .vt-nba-card {
+          background: var(--vt-card);
+          border: 1px solid var(--vt-border);
+          border-radius: 18px;
+          padding: clamp(16px, 2.5vw, 26px);
+          box-shadow: 0 18px 50px rgba(0,0,0,0.08);
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+        .vt-nba-title {
+          font-size: clamp(16px, 2.2vw, 26px);
+          font-weight: 800;
+          letter-spacing: -0.035em;
+          color: var(--vt-navy);
+          margin: 0;
+        }
+
+        /* --- Slide 9: CTA --- */
+        .vt-cta-h {
+          font-size: clamp(22px, 4vw, 48px);
+          font-weight: 800;
+          letter-spacing: -0.04em;
+          line-height: 1.1;
+          color: var(--vt-text);
+          margin: 0;
+        }
         .vt-cta-btn {
           display: inline-block;
           background: var(--vt-blue);
           color: #fff;
           font-weight: 800;
-          font-size: clamp(14px, 1.6vw, 18px);
-          padding: 14px 36px;
+          font-size: clamp(14px, 1.5vw, 18px);
+          padding: 12px 32px;
           border-radius: 12px;
-          margin-top: 28px;
-          box-shadow: 0 12px 36px rgba(59,127,242,0.45);
+          margin-top: 24px;
+          box-shadow: 0 10px 30px rgba(59,130,246,0.35);
           text-decoration: none;
         }
         .vt-cta-btn:hover { filter: brightness(1.08); }
-        .vt-url {
-          font-size: clamp(12px, 1.4vw, 16px);
+        .vt-cta-url {
+          font-size: clamp(12px, 1.3vw, 16px);
           font-weight: 700;
-          letter-spacing: 0.08em;
-          color: rgba(245,240,232,0.55);
-          margin-top: 16px;
+          letter-spacing: 0.06em;
+          color: var(--vt-blue);
+          margin-top: 14px;
         }
 
+        /* --- HUD controls --- */
         .vt-hud {
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 14px;
-          padding: 12px 16px;
-          background: linear-gradient(transparent, rgba(10,20,42,0.7));
+          gap: 12px;
+          padding: 10px 14px;
+          background: linear-gradient(transparent, rgba(0,0,0,0.5));
           position: absolute;
-          bottom: 0;
-          left: 0;
-          right: 0;
+          bottom: 0; left: 0; right: 0;
           z-index: 20;
         }
         .vt-hud-btn {
-          background: rgba(255,255,255,0.12);
-          border: 1px solid rgba(255,255,255,0.22);
+          background: rgba(255,255,255,0.15);
+          border: 1px solid rgba(255,255,255,0.25);
           color: #fff;
           font-weight: 700;
           font-size: 12px;
-          padding: 6px 14px;
+          padding: 5px 12px;
           border-radius: 8px;
           cursor: pointer;
         }
-        .vt-hud-btn:hover { background: rgba(255,255,255,0.22); }
+        .vt-hud-btn:hover { background: rgba(255,255,255,0.25); }
         .vt-hud-btn:disabled { opacity: 0.4; cursor: default; }
         .vt-clock {
           font-size: 11px;
