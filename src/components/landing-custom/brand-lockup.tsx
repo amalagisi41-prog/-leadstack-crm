@@ -58,7 +58,7 @@ export function BrandLockupStacked({
       </span>
 
       {pill && (
-        <span className="my-2 sm:my-3">{pill}</span>
+        <span className="-my-1">{pill}</span>
       )}
 
       {accent && (
