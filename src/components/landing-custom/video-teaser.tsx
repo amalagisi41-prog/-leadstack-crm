@@ -295,7 +295,7 @@ export function VideoTeaser() {
         : "vt-bg-deep";
 
   return (
-    <section className="py-16 md:py-24 bg-gradient-to-b from-background to-muted/30">
+    <section id="video-teaser" className="scroll-mt-8 py-16 md:py-24 bg-gradient-to-b from-background to-muted/30">
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-3xl text-center mb-10">
           <p className="text-sm font-semibold uppercase tracking-wider text-blue-500 mb-3">
