@@ -19,7 +19,7 @@ const SLIDES = Array.from(
 );
 
 const SLIDE_DURATION_MS = 5000;
-const CLOSING_FRAMES = 4;
+const CLOSING_FRAMES = 3;
 const TOTAL_SLIDES = SLIDES.length + CLOSING_FRAMES;
 
 const lifecycle = [
@@ -30,81 +30,15 @@ const lifecycle = [
   { label: "Grow", detail: "Your Business", Icon: BarChart3 },
 ];
 
-function ClosingMark({
-  className,
-  ring = false,
-}: {
-  className?: string;
-  ring?: boolean;
-}) {
-  return (
-    <svg
-      viewBox="0 0 120 120"
-      className={className}
-      aria-hidden="true"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <defs>
-        <linearGradient id="closing-house-gradient" x1="28" y1="72" x2="92" y2="72">
-          <stop offset="0%" stopColor="#FF4F93" />
-          <stop offset="100%" stopColor="#8B3FE0" />
-        </linearGradient>
-      </defs>
-      {ring && (
-        <circle cx="60" cy="60" r="55" fill="none" stroke="#D84A91" strokeWidth="1.5" />
-      )}
-      <path
-        d="M28 47 60 23l32 24"
-        fill="none"
-        stroke="white"
-        strokeWidth="12"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M31 94V61l29-21 29 21v33"
-        fill="none"
-        stroke="url(#closing-house-gradient)"
-        strokeWidth="14"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <rect x="52" y="68" width="7" height="7" rx="1.5" fill="#F6A5D1" />
-      <rect x="61" y="68" width="7" height="7" rx="1.5" fill="#D783D1" />
-      <rect x="52" y="77" width="7" height="7" rx="1.5" fill="#F6A5D1" />
-      <rect x="61" y="77" width="7" height="7" rx="1.5" fill="#D783D1" />
-    </svg>
-  );
-}
-
 function ClosingWordmark({ compact = false }: { compact?: boolean }) {
   return (
-    <div className="flex items-center gap-3 sm:gap-5">
-      <ClosingMark className={compact ? "h-14 w-14 sm:h-20 sm:w-20" : "h-20 w-20 sm:h-32 sm:w-32"} />
-      <div className="text-left">
-        <div
-          className={
-            compact
-              ? "text-2xl font-extrabold tracking-tight text-white sm:text-4xl"
-              : "text-4xl font-extrabold tracking-tight text-white sm:text-6xl md:text-7xl"
-          }
-        >
-          Agent
-          <span className="bg-gradient-to-r from-[#F15AA7] to-[#8B3FE0] bg-clip-text text-transparent">
-            Stack
-          </span>
-        </div>
-        <div
-          className={
-            compact
-              ? "mt-1 text-[7px] font-semibold uppercase tracking-[0.28em] text-white sm:text-[10px]"
-              : "mt-2 text-[9px] font-semibold uppercase tracking-[0.32em] text-white sm:text-sm md:text-base"
-          }
-        >
-          Real Estate Solutions
-        </div>
-      </div>
-    </div>
+    <Image
+      src="/brand/agentstack-closing-logo.png"
+      alt="AgentStack Real Estate Solutions"
+      width={872}
+      height={368}
+      className={compact ? "h-auto w-full max-w-[260px]" : "h-auto w-[80%] max-w-[780px]"}
+    />
   );
 }
 
@@ -143,7 +77,7 @@ export function VideoTeaser() {
     <section id="video-teaser" className="scroll-mt-16 overflow-x-hidden bg-white px-4 pb-16 md:pb-20">
       <div className="mx-auto w-full max-w-6xl">
         <div
-          className="relative mx-auto aspect-video max-w-5xl overflow-hidden rounded-2xl border border-[#173B7A]/10 bg-[#f8f0e5] shadow-2xl"
+          className="relative mx-auto aspect-video w-[calc(100vw-2rem)] max-w-5xl overflow-hidden rounded-2xl border border-[#173B7A]/10 bg-[#f8f0e5] shadow-2xl"
           aria-label="AgentStack product presentation"
         >
           {SLIDES.map((slide, index) => (
@@ -191,12 +125,6 @@ export function VideoTeaser() {
           </FadeFrame>
 
           <FadeFrame active={activeSlide === closingStart + 2}>
-            <div className="flex h-full items-center justify-center">
-              <ClosingMark ring className="h-44 w-44 sm:h-64 sm:w-64" />
-            </div>
-          </FadeFrame>
-
-          <FadeFrame active={activeSlide === closingStart + 3}>
             <div className="flex h-full items-center justify-center px-6">
               <div className="grid w-full max-w-3xl grid-cols-5">
                 {lifecycle.map(({ label, Icon }) => (
@@ -219,7 +147,7 @@ export function VideoTeaser() {
         </div>
 
         <div className="mx-auto mt-8 flex max-w-4xl flex-col items-center gap-6">
-          <div className="w-full rounded-full border border-[#173B7A]/20 bg-[#FFF6E8] px-5 py-3 text-center font-sans text-sm font-semibold text-[#173B7A] sm:text-base">
+          <div className="box-border w-[calc(100vw-2rem)] max-w-4xl rounded-3xl border border-[#173B7A]/20 bg-[#FFF6E8] px-4 py-3 text-center font-sans text-sm font-semibold leading-snug text-[#173B7A] sm:rounded-full sm:px-5 sm:text-base">
             The operating system for modern real estate professionals
           </div>
           <Button
