@@ -1,5 +1,6 @@
 import {
   BRAND_VOICES,
+  DEFAULT_AGENTSTACK_LOGO_SHEET_URL,
   SERVICE_SPECIALTIES,
   type BusinessProfileContent,
 } from "@/types/business-profile";
@@ -117,6 +118,10 @@ export function compileBusinessProfilePrompt(
 
   const assets = [
     line("Agent bio", p.bio),
+    line(
+      "Brand logo sheet",
+      p.logoUrl || DEFAULT_AGENTSTACK_LOGO_SHEET_URL,
+    ),
     line("Buyer guide link", p.buyerGuideUrl),
     line("Seller guide link", p.sellerGuideUrl),
     line("Preferred vendors", p.vendors),

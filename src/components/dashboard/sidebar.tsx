@@ -220,9 +220,7 @@ function SidebarContent() {
               className="h-6 w-auto max-w-[120px] object-contain"
             />
           ) : (
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600">
-              <LogoMark size={16} idSuffix="-sidebar" className="text-white" />
-            </div>
+            <LogoMark size={30} idSuffix="-sidebar" />
           )}
           <span className="truncate text-sm font-semibold text-white">
             {agency.name}

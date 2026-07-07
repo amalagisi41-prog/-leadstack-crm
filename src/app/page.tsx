@@ -57,7 +57,7 @@ export default async function HomePage() {
   if (LANDING_VARIANT === "custom") {
     const brand = await resolveCustomBrand();
     return (
-      <div className="flex min-h-screen flex-col">
+      <div className="flex min-h-screen flex-col bg-[#FFF6E8] text-[#173B7A] [color-scheme:light]">
         <CustomNavbar brand={brand} />
         <main className="flex-1">
           <CustomHero brand={brand} />

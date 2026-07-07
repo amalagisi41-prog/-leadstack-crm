@@ -121,6 +121,9 @@ export interface BusinessProfileDoc extends BusinessProfileContent {
   updatedAt: Timestamp | FieldValue | null;
 }
 
+export const DEFAULT_AGENTSTACK_LOGO_SHEET_URL =
+  "https://agentstackcrm.app/brand/agentstack-logo-sheet.jpg";
+
 export const EMPTY_BUSINESS_PROFILE: BusinessProfileContent = {
   agentName: "",
   brokerage: "",
@@ -146,7 +149,7 @@ export const EMPTY_BUSINESS_PROFILE: BusinessProfileContent = {
   optOutLanguage: "Reply STOP to opt out.",
   bio: "",
   headshotUrl: "",
-  logoUrl: "",
+  logoUrl: DEFAULT_AGENTSTACK_LOGO_SHEET_URL,
   buyerGuideUrl: "",
   sellerGuideUrl: "",
   testimonials: "",

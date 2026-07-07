@@ -2,8 +2,8 @@ import type { ResolvedBrand } from "@/config/landing";
 import { Logo } from "./logo";
 
 const PALETTE = {
-  light: { primary: "#1b3d7a", accent: "#3b7ff2", subline: "#3a5786" },
-  dark: { primary: "#f5f0e8", accent: "#6ba3ff", subline: "#c9d3e3" },
+  light: { primary: "#173B7A", accent: "#DB4F9B", subline: "#173B7A" },
+  dark: { primary: "#f5f0e8", accent: "#F06AAE", subline: "#c9d3e3" },
 } as const;
 
 function splitWordmark(name: string): { primary: string; accent: string } {
@@ -13,32 +13,6 @@ function splitWordmark(name: string): { primary: string; accent: string } {
   return { primary: compact, accent: "" };
 }
 
-function JustifiedWord({
-  word,
-  className,
-  style,
-}: {
-  word: string;
-  className?: string;
-  style?: React.CSSProperties;
-}) {
-  return (
-    <span className={`flex w-full justify-between ${className ?? ""}`} style={style}>
-      {word.split("").map((ch, i) => (
-        <span key={i}>{ch}</span>
-      ))}
-    </span>
-  );
-}
-
-/**
- * Hero lockup — massive centered block with the pill sandwiched
- * between "AGENT" and "STACK":
- *
- *        A  G  E  N  T
- *   ✦ Purpose-built for REALTORS®
- *        S  T  A  C  K
- */
 export function BrandLockupStacked({
   brand,
   tone = "light",
@@ -52,20 +26,19 @@ export function BrandLockupStacked({
   const colors = PALETTE[tone];
 
   return (
-    <span className="inline-flex w-full max-w-[22rem] flex-col items-center sm:max-w-[28rem] md:max-w-[32rem]">
-      <span className="w-full font-sans text-[4.5rem] font-extrabold uppercase leading-[0.95] tracking-tight sm:text-[6rem] md:text-[7rem]">
-        <JustifiedWord word={primary} style={{ color: colors.primary }} />
+    <span className="inline-flex flex-col items-center">
+      <Logo size={96} idSuffix="-hero" />
+      <span className="mt-3 font-sans text-5xl font-extrabold leading-none tracking-tight sm:text-6xl">
+        <span style={{ color: colors.primary }}>{primary}</span>
+        {accent && <span style={{ color: colors.accent }}>{accent}</span>}
       </span>
-
-      {pill && (
-        <span className="-my-1">{pill}</span>
-      )}
-
-      {accent && (
-        <span className="w-full font-sans text-[4.5rem] font-extrabold uppercase leading-[0.95] tracking-tight sm:text-[6rem] md:text-[7rem]">
-          <JustifiedWord word={accent} style={{ color: colors.accent }} />
-        </span>
-      )}
+      <span
+        className="mt-2 text-[10px] font-semibold uppercase sm:text-xs"
+        style={{ color: colors.subline, letterSpacing: "0.28em" }}
+      >
+        Real Estate Solutions
+      </span>
+      {pill && <span className="mt-5">{pill}</span>}
     </span>
   );
 }

@@ -507,6 +507,17 @@ export function BusinessProfileForm() {
             placeholder="11 years serving Essex County. Top 1% in Maplewood. Known for…"
           />
         </Field>
+        <Field
+          label="Brand logo sheet"
+          hint="The approved logo reference your AI tools and website workflows should use."
+        >
+          <input
+            className={input}
+            value={content.logoUrl}
+            onChange={(e) => set("logoUrl", e.target.value)}
+            placeholder="https://…/logo-sheet.jpg"
+          />
+        </Field>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Buyer guide link">
             <input

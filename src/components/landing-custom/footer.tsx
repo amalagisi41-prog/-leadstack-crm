@@ -4,12 +4,12 @@ import { BrandLockup } from "./brand-lockup";
 
 export function Footer({ brand }: { brand: ResolvedBrand }) {
   return (
-    <footer className="border-t py-12">
+    <footer className="border-t border-[#173B7A]/10 bg-[#FFF6E8] py-12 text-[#173B7A]">
       <div className="container mx-auto px-4">
         <div className="grid gap-8 sm:grid-cols-4">
           <div className="sm:col-span-1">
             <Link href="/" className="flex items-center gap-2">
-              {brand.logoUrl ? (
+              {brand.logoUrl && brand.name.toLowerCase() !== "agentstack" ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={brand.logoUrl}
@@ -17,7 +17,7 @@ export function Footer({ brand }: { brand: ResolvedBrand }) {
                   className="h-8 w-auto max-w-[140px] object-contain"
                 />
               ) : (
-                <BrandLockup brand={brand} size="sm" />
+                <BrandLockup brand={brand} size="sm" showMark />
               )}
             </Link>
             <p className="mt-3 text-sm text-muted-foreground">
