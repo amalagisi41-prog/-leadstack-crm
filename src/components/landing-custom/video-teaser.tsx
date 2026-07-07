@@ -1,10 +1,13 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 
 const SLIDES = Array.from(
-  { length: 11 },
+  { length: 8 },
   (_, index) => `/agentstack-presentation/slide-${index + 1}.webp`,
 );
 
@@ -35,11 +38,24 @@ export function VideoTeaser() {
               fill
               priority={index === 0}
               sizes="(max-width: 1024px) 100vw, 1024px"
-              className={`object-cover transition-opacity duration-700 ${
+              className={`object-contain transition-opacity duration-700 ${
                 index === activeSlide ? "opacity-100" : "opacity-0"
               }`}
             />
           ))}
+        </div>
+
+        <div className="mx-auto mt-8 flex max-w-4xl flex-col items-center gap-6">
+          <div className="w-full rounded-full border border-[#173B7A]/20 bg-[#FFF6E8] px-5 py-3 text-center font-sans text-sm font-semibold text-[#173B7A] sm:text-base">
+            The operating system for modern real estate professionals
+          </div>
+          <Button
+            render={<Link href="/signup" />}
+            size="lg"
+            className="bg-[#1a2f50] px-7 text-base text-white hover:bg-[#243d66]"
+          >
+            Start Free <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
         </div>
       </div>
     </section>
