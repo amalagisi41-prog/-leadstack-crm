@@ -1,10 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
 
 const SLIDES = Array.from(
   { length: 11 },
@@ -43,15 +40,6 @@ export function VideoTeaser() {
               }`}
             />
           ))}
-        </div>
-        <div className="mt-8 flex justify-center">
-          <Button
-            render={<Link href="/signup" />}
-            size="lg"
-            className="bg-[#1a2f50] px-7 text-base text-white hover:bg-[#243d66]"
-          >
-            Start Free <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
         </div>
       </div>
     </section>
