@@ -39,7 +39,7 @@ export function AiDemo() {
               </p>
               <h2 className="text-3xl font-semibold tracking-tighter sm:text-4xl mb-4">
                 Every lead answered.{" "}
-                <span className="bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text font-serif font-normal italic text-transparent">
+                <span className="bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text font-sans font-normal italic text-transparent">
                   Even at 2 a.m.
                 </span>
               </h2>

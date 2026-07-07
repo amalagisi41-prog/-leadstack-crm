@@ -41,7 +41,7 @@ const features = [
 
 export function Features() {
   return (
-    <section id="features" className="py-24">
+    <section id="features" className="bg-white py-24">
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">
@@ -49,7 +49,7 @@ export function Features() {
           </p>
           <h2 className="mt-2 text-3xl font-semibold tracking-tighter sm:text-5xl">
             Less configuring.{" "}
-            <span className="bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text font-serif font-normal italic text-transparent">
+            <span className="bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text font-sans font-normal italic text-transparent">
               More closing.
             </span>
           </h2>

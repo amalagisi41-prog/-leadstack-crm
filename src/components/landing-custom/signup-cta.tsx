@@ -76,7 +76,7 @@ export function SignupCta() {
               </p>
               <h2 className="text-3xl font-semibold tracking-tighter text-white sm:text-4xl">
                 Build your business once.{" "}
-                <span className="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text font-serif font-normal italic text-transparent">
+                <span className="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text font-sans font-normal italic text-transparent">
                   Let AgentStack handle the rest.
                 </span>
               </h2>
