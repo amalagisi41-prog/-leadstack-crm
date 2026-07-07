@@ -1,7 +1,10 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 
 const SLIDES = Array.from(
   { length: 11 },
@@ -17,30 +20,14 @@ export function VideoTeaser() {
     const timer = window.setInterval(() => {
       setActiveSlide((current) => (current + 1) % SLIDES.length);
     }, SLIDE_DURATION_MS);
-
     return () => window.clearInterval(timer);
   }, []);
 
   return (
-    <section
-      id="video-teaser"
-      className="scroll-mt-8 bg-gradient-to-b from-[#FFF6E8] to-[#F8E9D5] py-16 md:py-24"
-    >
-      <div className="container mx-auto px-4">
-        <div className="mx-auto mb-10 max-w-3xl text-center">
-          <p className="mb-3 text-sm font-semibold uppercase tracking-wider text-blue-500">
-            See it in action
-          </p>
-          <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-            Watch the AgentStack difference
-          </h2>
-          <p className="mt-3 text-muted-foreground">
-            See how AgentStack turns missed leads into closed deals.
-          </p>
-        </div>
-
+    <section id="video-teaser" className="scroll-mt-16 bg-white px-4 pb-16 md:pb-20">
+      <div className="container mx-auto">
         <div
-          className="relative mx-auto aspect-video max-w-5xl overflow-hidden rounded-2xl border bg-[#f8f0e5] shadow-2xl"
+          className="relative mx-auto aspect-video max-w-5xl overflow-hidden rounded-2xl border border-[#173B7A]/10 bg-[#f8f0e5] shadow-2xl"
           aria-label="AgentStack product presentation"
         >
           {SLIDES.map((slide, index) => (
@@ -56,6 +43,15 @@ export function VideoTeaser() {
               }`}
             />
           ))}
+        </div>
+        <div className="mt-8 flex justify-center">
+          <Button
+            render={<Link href="/signup" />}
+            size="lg"
+            className="bg-[#1a2f50] px-7 text-base text-white hover:bg-[#243d66]"
+          >
+            Start Free <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
         </div>
       </div>
     </section>

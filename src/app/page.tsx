@@ -37,6 +37,7 @@ import { AddOns } from "@/components/landing-custom/add-ons";
 import { FAQ as CustomFAQ } from "@/components/landing-custom/faq";
 import { SignupCta } from "@/components/landing-custom/signup-cta";
 import { VideoTeaser } from "@/components/landing-custom/video-teaser";
+import { ClientPromise } from "@/components/landing-custom/client-promise";
 import { HeroPipelineMockup } from "@/components/landing-custom/hero-pipeline-mockup";
 import { Footer as CustomFooter } from "@/components/landing-custom/footer";
 
@@ -60,8 +61,9 @@ export default async function HomePage() {
       <div className="flex min-h-screen flex-col bg-[#FFF6E8] text-[#173B7A] [color-scheme:light]">
         <CustomNavbar brand={brand} />
         <main className="flex-1">
-          <CustomHero brand={brand} />
+          <CustomHero />
           <VideoTeaser />
+          <ClientPromise />
           <HeroPipelineMockup />
           <PainPoints />
           <CustomHowItWorks />

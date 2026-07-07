@@ -27,8 +27,8 @@ export function Navbar({ brand }: { brand: ResolvedBrand }) {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-[#173B7A]/10 bg-[#FFF6E8]/95 text-[#173B7A] backdrop-blur">
-      <div className="container mx-auto flex h-16 items-center justify-between px-4">
-        <Link href="/" className="flex items-center gap-2">
+      <div className="container relative mx-auto flex h-16 items-center justify-between px-4">
+        <Link href="/" className="absolute left-1/2 flex -translate-x-1/2 items-center">
           {brand.logoUrl && brand.name.toLowerCase() !== "agentstack" ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -37,7 +37,7 @@ export function Navbar({ brand }: { brand: ResolvedBrand }) {
               className="h-8 w-auto max-w-[160px] object-contain"
             />
           ) : (
-            <BrandLockup brand={brand} showMark />
+            <BrandLockup brand={brand} subline="" />
           )}
         </Link>
 
@@ -78,7 +78,7 @@ export function Navbar({ brand }: { brand: ResolvedBrand }) {
           )}
         </div>
 
-        <div className="flex items-center gap-2 md:hidden">
+        <div className="ml-auto flex items-center gap-2 md:hidden">
           <Button
             variant="ghost"
             size="icon"
