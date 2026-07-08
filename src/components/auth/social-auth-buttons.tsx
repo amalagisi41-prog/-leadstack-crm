@@ -21,6 +21,7 @@ export function SocialAuthButtons({
   const router = useRouter();
   const [provider, setProvider] = useState<"google" | "apple" | null>(null);
   const action = mode === "signup" ? "Sign up" : "Log in";
+  const heading = mode === "signup" ? "Sign up with" : "Log in with";
 
   async function authenticate(kind: "google" | "apple") {
     setProvider(kind);
@@ -48,10 +49,24 @@ export function SocialAuthButtons({
 
   return (
     <div className="space-y-3">
+      <p
+        className={
+          tone === "dark"
+            ? "text-xs font-medium uppercase tracking-[0.18em] text-blue-200/70"
+            : "text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground"
+        }
+      >
+        {heading}
+      </p>
       <Button
         type="button"
         variant="outline"
-        className={tone === "dark" ? "w-full border-white/20 bg-white text-[#12203a] hover:bg-white/90" : "w-full"}
+        size="lg"
+        className={
+          tone === "dark"
+            ? "w-full justify-start border-white/20 bg-white px-4 text-[#12203a] hover:bg-white/90"
+            : "w-full justify-start px-4"
+        }
         disabled={provider !== null}
         onClick={() => authenticate("google")}
       >
@@ -61,7 +76,12 @@ export function SocialAuthButtons({
       <Button
         type="button"
         variant="outline"
-        className={tone === "dark" ? "w-full border-white/20 bg-white text-[#12203a] hover:bg-white/90" : "w-full"}
+        size="lg"
+        className={
+          tone === "dark"
+            ? "w-full justify-start border-white/20 bg-white px-4 text-[#12203a] hover:bg-white/90"
+            : "w-full justify-start px-4"
+        }
         disabled={provider !== null}
         onClick={() => authenticate("apple")}
       >
