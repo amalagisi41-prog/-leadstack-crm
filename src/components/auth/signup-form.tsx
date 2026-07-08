@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { SocialAuthButtons } from "@/components/auth/social-auth-buttons";
 
 export function SignupForm() {
   const router = useRouter();
@@ -110,6 +111,7 @@ export function SignupForm() {
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
+          <SocialAuthButtons mode="signup" onError={setError} />
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input

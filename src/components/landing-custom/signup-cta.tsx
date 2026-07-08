@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { signInWithEmail } from "@/lib/firebase/auth";
+import { SocialAuthButtons } from "@/components/auth/social-auth-buttons";
 
 const perks = [
   "No credit card required to start",
@@ -107,7 +108,15 @@ export function SignupCta() {
                 No credit card · cancel anytime
               </p>
 
-              <form onSubmit={handleSubmit} className="mt-5 space-y-3">
+              <div className="mt-5">
+                <SocialAuthButtons
+                  mode="signup"
+                  tone="dark"
+                  onError={setError}
+                />
+              </div>
+
+              <form onSubmit={handleSubmit} className="mt-3 space-y-3">
                 <div>
                   <label className="mb-1.5 block text-xs font-medium text-blue-300/80">
                     Full name

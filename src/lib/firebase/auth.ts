@@ -6,6 +6,9 @@ import {
   EmailAuthProvider,
   reauthenticateWithCredential,
   updatePassword,
+  GoogleAuthProvider,
+  OAuthProvider,
+  signInWithPopup,
   type User,
 } from "firebase/auth";
 import { getFirebaseAuth } from "./client";
@@ -28,6 +31,52 @@ export async function signUpWithEmail(email: string, password: string) {
   );
   await createSessionCookie(credential.user);
   return credential;
+}
+
+export interface SocialAuthResult {
+  redirectTo: string;
+  existing: boolean;
+}
+
+async function signInWithSocialProvider(
+  provider: GoogleAuthProvider | OAuthProvider,
+): Promise<SocialAuthResult> {
+  const credential = await signInWithPopup(getFirebaseAuth(), provider);
+  const idToken = await credential.user.getIdToken();
+  const response = await fetch("/api/auth/oauth-provision", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${idToken}` },
+  });
+  const payload = (await response.json().catch(() => ({}))) as {
+    error?: string;
+    redirectTo?: string;
+    existing?: boolean;
+  };
+  if (!response.ok) {
+    throw new Error(payload.error ?? "Could not finish social sign-in.");
+  }
+
+  // Provisioning sets tenancy claims for first-time users. Force-refresh the
+  // ID token before exchanging it for the middleware session cookie.
+  await credential.user.getIdToken(true);
+  await createSessionCookie(credential.user);
+  return {
+    redirectTo: payload.redirectTo ?? "/dashboard",
+    existing: payload.existing ?? false,
+  };
+}
+
+export function signInWithGoogle(): Promise<SocialAuthResult> {
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: "select_account" });
+  return signInWithSocialProvider(provider);
+}
+
+export function signInWithApple(): Promise<SocialAuthResult> {
+  const provider = new OAuthProvider("apple.com");
+  provider.addScope("email");
+  provider.addScope("name");
+  return signInWithSocialProvider(provider);
 }
 
 export async function signOutUser() {

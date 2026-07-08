@@ -16,6 +16,7 @@ const PUBLIC_PATHS = [
   "/f",
   "/api/forms",
   "/api/auth/signup",
+  "/api/auth/oauth-provision",
   // Workflow Builder step worker — QStash callback, signature-verified inside
   // the route.
   "/api/workflows/step",
