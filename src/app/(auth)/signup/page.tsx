@@ -14,7 +14,7 @@ export default function SignupPage() {
             <h1 className="font-sans text-2xl font-bold">{CUSTOM_BRAND.name}</h1>
           </Link>
           <p className="mt-2 font-sans text-sm text-muted-foreground">
-            Start closing with the CRM your team will actually use.
+            Open beta registration — create a workspace and explore every tool.
           </p>
         </div>
 

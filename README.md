@@ -18,7 +18,7 @@ A two-tier multi-tenant CRM:
 | Surface | What it does |
 |---|---|
 | **Landing page (white-label)** | Branded with your details — edit `CUSTOM_BRAND` in `src/config/landing.ts`. |
-| **Auth** | Email/password signup + login + session cookies. First signup (matching `BOOTSTRAP_ADMIN_EMAIL`) becomes the agency owner; subsequent signups require a typed invite. |
+| **Auth** | Email/password signup + login + session cookies. Invited users join their assigned workspace; all other registrations create an isolated agency and starter sub-account for open beta onboarding. |
 | **Agency dashboard** | Sub-account picker + create new sub-account flow. |
 | **Sub-account dashboard** | Live KPIs, pipeline snapshot, recent activity, quick actions. |
 | **Contacts** | List + search, CRUD, notes + activity timeline, CSV import/export, bulk-email action. |
