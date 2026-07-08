@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { signInWithEmail } from "@/lib/firebase/auth";
+import { SocialAuthButtons } from "@/components/auth/social-auth-buttons";
 
 const perks = [
   "No credit card required to start",
@@ -75,15 +76,15 @@ export function SignupCta() {
                 Get started free
               </p>
               <h2 className="text-3xl font-semibold tracking-tighter text-white sm:text-4xl">
-                Set up your business once.{" "}
-                <span className="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text font-serif font-normal italic text-transparent">
-                  AgentStack runs it.
+                Build your business once.{" "}
+                <span className="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text font-sans font-normal italic text-transparent">
+                  Let AgentStack handle the rest.
                 </span>
               </h2>
               <p className="mt-4 text-blue-200/70">
-                Build your AI Business Profile in 15 minutes. AgentStack
-                handles lead capture, instant response, follow-up, and
-                scheduling — so you can focus on closing.
+                Set up in 15 minutes. AgentStack handles lead capture, instant
+                response, follow-up, and scheduling — so you can focus on
+                closing.
               </p>
               <ul className="mt-6 space-y-3">
                 {perks.map((perk) => (
@@ -107,7 +108,15 @@ export function SignupCta() {
                 No credit card · cancel anytime
               </p>
 
-              <form onSubmit={handleSubmit} className="mt-5 space-y-3">
+              <div className="mt-5">
+                <SocialAuthButtons
+                  mode="signup"
+                  tone="dark"
+                  onError={setError}
+                />
+              </div>
+
+              <form onSubmit={handleSubmit} className="mt-3 space-y-3">
                 <div>
                   <label className="mb-1.5 block text-xs font-medium text-blue-300/80">
                     Full name

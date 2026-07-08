@@ -9,7 +9,7 @@ export function CTA({ brand }: { brand: ResolvedBrand }) {
       <div className="container mx-auto px-4 text-center">
         <h2 className="mx-auto max-w-2xl text-3xl font-semibold tracking-tighter sm:text-5xl">
           Ready to close more deals with{" "}
-          <span className="font-serif font-normal italic">
+          <span className="font-sans font-normal italic">
             less hustle?
           </span>
         </h2>

@@ -13,7 +13,7 @@ interface SignupBody {
 }
 
 type Decision =
-  | { kind: "agencyOwner" }
+  | { kind: "agencyOwner"; bootstrap: boolean }
   | {
       kind: "subAccountMember";
       adminUid: string;
@@ -52,8 +52,10 @@ export async function POST(request: Request) {
   const db = getAdminDb();
   const auth = getAdminAuth();
 
-  // Phase 1 — gate decision in a transaction. Either claim the agency-owner
-  // slot (if appConfig/main doesn't exist yet) or consume a pending invite.
+  // Phase 1 — choose the tenancy path in a transaction. Invited users join
+  // the workspace named by their invite. Every other registrant receives an
+  // isolated agency + starter sub-account so public beta registration stays
+  // open without weakening tenant boundaries.
   let decision: Decision;
   try {
     decision = await db.runTransaction<Decision>(async (tx) => {
@@ -65,7 +67,7 @@ export async function POST(request: Request) {
             "Only the configured bootstrap admin email may claim this agency.",
           );
         }
-        return { kind: "agencyOwner" };
+        return { kind: "agencyOwner", bootstrap: true };
       }
       const cfg = cfgSnap.data() ?? {};
       const adminUid = cfg.adminUid as string | undefined;
@@ -84,9 +86,7 @@ export async function POST(request: Request) {
           .limit(1),
       );
       if (inviteQuery.empty) {
-        throw new Error(
-          "This email is not invited. Ask the agency to invite you.",
-        );
+        return { kind: "agencyOwner", bootstrap: false };
       }
       const inviteDoc = inviteQuery.docs[0];
       const invite = inviteDoc.data();
@@ -291,14 +291,18 @@ export async function POST(request: Request) {
         },
       );
 
-      batch.set(db.doc("appConfig/main"), {
-        adminUid: uid,
-        adminEmail: email,
-        firstAgencyId: agencyId,
-        firstAgencyOwnerUid: uid,
-        bootstrapEmail: email,
-        createdAt: FieldValue.serverTimestamp(),
-      });
+      // appConfig/main identifies only the first bootstrap owner. Public
+      // registrations create independent agencies and must never overwrite it.
+      if (decision.bootstrap) {
+        batch.set(db.doc("appConfig/main"), {
+          adminUid: uid,
+          adminEmail: email,
+          firstAgencyId: agencyId,
+          firstAgencyOwnerUid: uid,
+          bootstrapEmail: email,
+          createdAt: FieldValue.serverTimestamp(),
+        });
+      }
 
       // Seed Welcome email + Welcome SMS templates into the bootstrap
       // sub-account so the agency owner sees usable defaults the first
@@ -317,7 +321,7 @@ export async function POST(request: Request) {
         agencyId,
         agencyRole: "owner",
         subAccountId,
-        redirectTo: "/agency",
+        redirectTo: "/agency/get-started",
       });
     }
 

@@ -55,7 +55,7 @@ export function PipelineDemo() {
           </p>
           <h2 className="text-3xl font-semibold tracking-tighter sm:text-4xl">
             Every deal,{" "}
-            <span className="bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text font-serif font-normal italic text-transparent">
+            <span className="bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text font-sans font-normal italic text-transparent">
               exactly where it stands.
             </span>
           </h2>
@@ -70,7 +70,7 @@ export function PipelineDemo() {
             <div className="h-3 w-3 rounded-full bg-yellow-400/70" />
             <div className="h-3 w-3 rounded-full bg-green-400/70" />
             <span className="ml-2 text-xs font-medium text-muted-foreground">
-              Pipeline — AgentStack
+              Active Clients — AgentStack
             </span>
             <div className="ml-auto flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />

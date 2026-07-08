@@ -15,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { SocialAuthButtons } from "@/components/auth/social-auth-buttons";
 
 type Mode = "signin" | "reset";
 
@@ -157,6 +158,7 @@ export function LoginForm() {
       </CardHeader>
       <form onSubmit={handleSignIn}>
         <CardContent className="space-y-4">
+          <SocialAuthButtons mode="login" onError={setError} />
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input

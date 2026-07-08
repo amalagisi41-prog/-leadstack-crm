@@ -9,7 +9,7 @@ const pains = [
   {
     emoji: "📋",
     heading: "You said you'd follow up — but never did.",
-    body: "Seven touchpoints is the conversion sweet spot. Most agents send one. AgentStack runs the whole sequence automatically so nothing slips through.",
+    body: "Seven touchpoints is the conversion sweet spot. Most agents send one. AgentStack runs the entire follow-up sequence automatically so nothing slips through.",
   },
   {
     emoji: "🧠",
@@ -29,7 +29,7 @@ export function PainPoints() {
           </div>
           <h2 className="text-3xl font-semibold tracking-tighter text-white sm:text-4xl">
             You don&apos;t have a lead problem.{" "}
-            <span className="font-serif font-normal italic text-blue-300">You have a systems problem.</span>
+            <span className="font-sans font-normal italic text-blue-300">You have a systems problem.</span>
           </h2>
         </div>
 

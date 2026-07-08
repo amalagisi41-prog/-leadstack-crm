@@ -145,7 +145,7 @@ export function AddOns() {
           </p>
           <h2 className="text-3xl font-semibold tracking-tighter sm:text-5xl">
             Build the stack{" "}
-            <span className="bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text font-serif font-normal italic text-transparent">
+            <span className="bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text font-sans font-normal italic text-transparent">
               you actually need.
             </span>
           </h2>

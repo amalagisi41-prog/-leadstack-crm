@@ -17,13 +17,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { SocialAuthButtons } from "@/components/auth/social-auth-buttons";
 
 export function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  // Pre-fill email when arriving from an invite link (/signup?email=…). The
-  // signup API still re-validates against the invite doc by email, so this is
-  // pure UX convenience.
+  // Pre-fill email when arriving from an invite link (/signup?email=…).
+  // Invited users join that workspace; everyone else starts a new beta
+  // workspace.
   const initialEmail = searchParams?.get("email") ?? "";
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
@@ -51,8 +52,9 @@ export function SignupForm() {
     setLoading(true);
 
     try {
-      // Server-side gate: enforces "first signup = admin, others must be invited"
-      // and creates the Firebase Auth user + user doc + custom claims.
+      // The server creates the Firebase Auth user, tenancy documents, and
+      // claims. Invited emails join their assigned workspace; all other
+      // registrants receive a new isolated beta workspace.
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -104,11 +106,12 @@ export function SignupForm() {
       <CardHeader>
         <CardTitle>Create Account</CardTitle>
         <CardDescription>
-          Enter your details to create a new account.
+          Create your workspace and begin the onboarding tour.
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
+          <SocialAuthButtons mode="signup" onError={setError} />
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input

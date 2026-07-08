@@ -5,7 +5,7 @@ const steps = [
     number: "01",
     icon: Wrench,
     title: "Build",
-    body: "Create your AI Business Profile. Tell AgentStack about your business one time — it configures everything around it.",
+    body: "Tell AgentStack about your business once — services, hours, follow-up rules. It configures everything around it.",
     iconColor: "text-blue-500",
     iconBg: "bg-blue-500/10",
     numColor: "text-blue-600",
@@ -25,7 +25,7 @@ const steps = [
     number: "03",
     icon: Target,
     title: "Capture",
-    body: "Launch proven lead capture systems — home valuations, buyer consultations, open houses, listing inquiries — with one click.",
+    body: "Launch lead capture systems — home valuations, buyer consultations, open houses, listing inquiries — with one click.",
     iconColor: "text-blue-500",
     iconBg: "bg-blue-500/10",
     numColor: "text-blue-600",
@@ -35,7 +35,7 @@ const steps = [
     number: "04",
     icon: Zap,
     title: "Respond",
-    body: "AI answers every lead immediately. Automatic follow-up begins instantly — even while you're in a showing.",
+    body: "Every lead answered immediately. Automatic follow-up begins instantly — even while you're in a showing.",
     iconColor: "text-indigo-500",
     iconBg: "bg-indigo-500/10",
     numColor: "text-indigo-600",
@@ -73,7 +73,7 @@ export function HowItWorks() {
           </p>
           <h2 className="text-3xl font-semibold tracking-tighter sm:text-5xl">
             Set up once.{" "}
-            <span className="bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text font-serif font-normal italic text-transparent">
+            <span className="bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text font-sans font-normal italic text-transparent">
               It runs everything.
             </span>
           </h2>

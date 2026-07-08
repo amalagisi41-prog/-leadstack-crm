@@ -47,7 +47,7 @@ export function FAQ({ brand }: { brand: ResolvedBrand }) {
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-3xl font-semibold tracking-tighter sm:text-5xl">
             Frequently{" "}
-            <span className="font-serif font-normal italic">asked</span>
+            <span className="font-sans font-normal italic">asked</span>
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
             Can&apos;t find what you&apos;re looking for? Email{" "}
