@@ -17,6 +17,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { signOutUser } from "@/lib/firebase/auth";
 import { maskEmail } from "@/lib/format";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { AskAssistantButton } from "@/components/dashboard/ask-assistant-panel";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
@@ -233,6 +234,7 @@ export function Header({ onMenuClick, onOpenSearch }: HeaderProps) {
         >
           <Search className="h-4 w-4" />
         </Button>
+        <AskAssistantButton />
         <ThemeToggle />
 
         <DropdownMenu>

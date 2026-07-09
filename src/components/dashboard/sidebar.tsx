@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { doc, onSnapshot } from "firebase/firestore";
+import { openAskAssistant } from "@/components/dashboard/ask-assistant-panel";
 import {
   Home,
+  Sparkles,
   Users,
   GitBranch,
   Calendar,
@@ -271,6 +273,15 @@ function SidebarContent() {
 
         {showSubNav && (
           <>
+            <div className="mb-4">
+              <button
+                onClick={openAskAssistant}
+                className="flex w-full items-center gap-2.5 rounded-md bg-white/5 px-2 py-2 text-sm font-medium text-amber-300/90 transition-colors hover:bg-white/10 hover:text-amber-200"
+              >
+                <Sparkles className="h-4 w-4 shrink-0" />
+                Ask AI
+              </button>
+            </div>
             {SUB_ACCOUNT_NAV_SECTIONS.map((section) => (
               <div key={section.label} className="mb-4">
                 <p className="mb-1.5 px-2 text-[10px] font-semibold uppercase tracking-wider text-white/30">
