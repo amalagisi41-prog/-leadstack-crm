@@ -116,10 +116,10 @@ export function FunnelsApp() {
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-muted text-muted-foreground">
           <Lock className="h-5 w-5" />
         </div>
-        <h1 className="text-lg font-semibold">Sales Funnels are a premium add-on</h1>
+        <h1 className="text-lg font-semibold">Marketing Pages are a premium add-on</h1>
         <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
           Build simple, high-converting lead-capture pages in minutes — part of
-          Website Studio. Ask your agency to enable it for your account.
+          AI Website Studio. Ask your agency to enable it for your account.
         </p>
       </div>
     );
@@ -150,7 +150,7 @@ export function FunnelsApp() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Sales Funnels</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Marketing Pages</h1>
         <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
           A funnel is one simple web page with a single job: turn a visitor
           into a lead. Pick a goal, edit a few lines, and publish a link you can

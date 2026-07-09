@@ -42,12 +42,12 @@ captured as leads.
 
 ## SEO basics (get found on Google)
 - Each page needs a clear title + meta description with your market + specialty
-  (e.g. "Fairfield County CT Real Estate | Jane Doe"). Website Studio sets a
+  (e.g. "Fairfield County CT Real Estate | Jane Doe"). AI Website Studio sets a
   sensible title/description from your profile automatically.
 - Local SEO matters most for agents: consistent Name/Address/Phone (NAP) across
   your website, Google Business Profile, and directories.
 - Publish useful local content (neighborhood guides, market updates) — the
-  Website Studio listings + about sections help.
+  AI Website Studio listings + about sections help.
 - Get reviews: this CRM can send Google review requests from a contact (set your
   Google Business "place ID" in the sub-account settings). More reviews lift
   local ranking.

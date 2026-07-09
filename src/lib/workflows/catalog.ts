@@ -11,7 +11,7 @@ export const TRIGGER_LABELS: Record<WorkflowTriggerType, string> = {
   "form.submitted": "Form submitted",
   "contact.created": "Contact created",
   "contact.tag.added": "Tag added to contact",
-  "pipeline.stage.changed": "Pipeline stage changed",
+  "pipeline.stage.changed": "Deal stage changed",
   "booking.created": "Booking created",
   "quote.accepted": "Quote accepted",
 };

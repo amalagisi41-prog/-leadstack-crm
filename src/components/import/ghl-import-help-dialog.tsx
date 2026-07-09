@@ -80,7 +80,7 @@ export function GhlImportHelpDialog({
             <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
               <li>
                 <strong className="text-foreground">
-                  Workflows, funnels, websites/pages, calendars, forms, and saved
+                  Smart Workflows, funnels, websites/pages, calendars, forms, and saved
                   templates
                 </strong>{" "}
                 — GoHighLevel can&apos;t export these, so they&apos;re rebuilt

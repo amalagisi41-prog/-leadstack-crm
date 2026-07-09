@@ -39,7 +39,7 @@ interface Feature {
 const FEATURES: Feature[] = [
   {
     icon: Users,
-    title: "Contacts",
+    title: "People",
     tone: "indigo",
     href: "/contacts",
     description:
@@ -55,7 +55,7 @@ const FEATURES: Feature[] = [
   },
   {
     icon: GitBranch,
-    title: "Pipeline / Kanban",
+    title: "Deals / Kanban",
     tone: "violet",
     href: "/pipeline",
     description:
@@ -87,7 +87,7 @@ const FEATURES: Feature[] = [
   },
   {
     icon: FileText,
-    title: "Forms",
+    title: "Lead Forms",
     tone: "sky",
     href: "/forms",
     description:
@@ -143,7 +143,7 @@ const FEATURES: Feature[] = [
   },
   {
     icon: BarChart3,
-    title: "Reports",
+    title: "Analytics",
     tone: "indigo",
     href: "/reports",
     description:

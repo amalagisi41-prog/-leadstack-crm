@@ -593,7 +593,7 @@ export function OutboundVoiceSection() {
                   href={saPath("/contacts")}
                   className="text-foreground underline-offset-2 hover:underline"
                 >
-                  Contacts
+                  People
                 </Link>
                 , pick an audience and hit <strong>Bulk AI call</strong>.
               </p>

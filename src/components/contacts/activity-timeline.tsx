@@ -209,7 +209,7 @@ function activityVisuals(type: ActivityType): {
     case "pipeline_moved":
       return {
         icon: <GitBranch className="h-3 w-3 text-indigo-500" />,
-        label: "Pipeline updated",
+        label: "Deal updated",
       };
     case "booking_created":
       return {

@@ -14,4 +14,4 @@ export async function websiteStudioGateOpen(subAccountId: string): Promise<boole
 }
 
 export const WEBSITE_STUDIO_LOCKED_MESSAGE =
-  "Website Studio is a premium add-on. Ask your agency to enable it for your account.";
+  "AI Website Studio is a premium add-on. Ask your agency to enable it for your account.";

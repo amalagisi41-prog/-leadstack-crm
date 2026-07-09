@@ -211,7 +211,7 @@ export default function ReportsPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Reports</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Analytics</h1>
           <p className="text-sm text-muted-foreground">
             Live analytics across your contacts and pipeline.
           </p>
@@ -283,7 +283,7 @@ export default function ReportsPage() {
             <section className="rounded-2xl border bg-card p-5">
               <div className="mb-4 flex items-center justify-between">
                 <div>
-                  <h2 className="text-sm font-semibold">Pipeline funnel</h2>
+                  <h2 className="text-sm font-semibold">Deals funnel</h2>
                   <p className="text-xs text-muted-foreground">
                     Current deals by stage · open + closed
                   </p>

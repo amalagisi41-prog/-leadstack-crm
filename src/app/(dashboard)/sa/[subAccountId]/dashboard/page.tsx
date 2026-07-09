@@ -542,7 +542,7 @@ export default function DashboardPage() {
               href={saPath("/reports")}
             />
             <KpiCard
-              label="Active Pipeline"
+              label="Active Deals"
               value={loading ? null : formatCurrency(pipelineValue, currency)}
               delta={`${openDeals.length} open deal${openDeals.length !== 1 ? "s" : ""}`}
               deltaPositive={openDeals.length > 0}
@@ -588,7 +588,7 @@ export default function DashboardPage() {
               <section className="rounded-2xl border bg-card p-5">
                 <div className="mb-4 flex items-center justify-between">
                   <div>
-                    <h2 className="text-sm font-semibold">Pipeline snapshot</h2>
+                    <h2 className="text-sm font-semibold">Deals snapshot</h2>
                     <p className="text-xs text-muted-foreground">
                       Active deals by stage
                     </p>
@@ -640,7 +640,7 @@ export default function DashboardPage() {
               <section className="rounded-2xl border bg-card">
                 <div className="flex items-center justify-between border-b px-5 py-4">
                   <div>
-                    <h2 className="text-sm font-semibold">Recent Contacts</h2>
+                    <h2 className="text-sm font-semibold">Recent People</h2>
                     <p className="text-xs text-muted-foreground">
                       Latest leads in your database
                     </p>

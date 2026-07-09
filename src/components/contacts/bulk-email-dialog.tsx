@@ -291,7 +291,7 @@ export function BulkEmailDialog({
 
           {filterKind === "pipeline_stage" && (
             <div className="space-y-1.5">
-              <Label htmlFor="bulk-filter-stage">Pipeline stage</Label>
+              <Label htmlFor="bulk-filter-stage">Deal stage</Label>
               <select
                 id="bulk-filter-stage"
                 value={filterStage}

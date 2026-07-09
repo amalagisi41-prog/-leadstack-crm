@@ -147,7 +147,7 @@ export function WebsiteStudioApp() {
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-muted text-muted-foreground">
           <Lock className="h-5 w-5" />
         </div>
-        <h1 className="text-lg font-semibold">Website Studio is a premium add-on</h1>
+        <h1 className="text-lg font-semibold">AI Website Studio is a premium add-on</h1>
         <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
           Build a stunning agent website from premium templates with an AI
           Designer — plus guided setup for A2P, chat widgets, SEO, and more.
@@ -188,7 +188,7 @@ export function WebsiteStudioApp() {
       <div className="space-y-4">
         {tabRow}
         <div className="flex h-64 items-center justify-center text-muted-foreground">
-          <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading Website Studio…
+          <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading AI Website Studio…
         </div>
       </div>
     );
@@ -212,7 +212,7 @@ export function WebsiteStudioApp() {
       {/* Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">Website Studio</h1>
+          <h1 className="text-xl font-bold tracking-tight">AI Website Studio</h1>
           <p className="text-xs text-muted-foreground">
             {site.status === "published" ? "Published" : "Draft"} · Template:{" "}
             {template.name}

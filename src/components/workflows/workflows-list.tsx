@@ -65,7 +65,7 @@ export function WorkflowsList({ saId }: { saId: string }) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold">Workflows</h1>
+          <h1 className="text-xl font-semibold">Smart Workflows</h1>
           <p className="text-sm text-muted-foreground">
             Automate follow-up across email, SMS, tasks and more.
           </p>

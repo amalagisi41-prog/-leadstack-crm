@@ -123,7 +123,7 @@ export const CUSTOM_BRAND: CustomBrand = {
       blurb: "For individual agents serious about never missing a lead.",
       features: [
         "Up to 5,000 contacts",
-        "Pipeline + tasks + calendar",
+        "Deals + tasks + calendar",
         "AI SMS & email follow-up",
         "Lead capture forms",
         "Booking pages",
