@@ -91,11 +91,27 @@ function AgencyHomeContent() {
     );
   }
 
-  if (!user || !agencyId) {
+  if (!user) {
     return (
       <div className="rounded-2xl border bg-card p-8 text-center">
         <p className="text-sm text-muted-foreground">
           Sign in to view your agency.
+        </p>
+      </div>
+    );
+  }
+
+  if (!agencyId) {
+    // AuthContext already tried a one-time silent repair for a signed-in
+    // account with no home agency (see repair-workspace) — reaching here
+    // means that failed too. This is a real "contact support" state, not
+    // a sign-in prompt, so don't tell an authenticated user to sign in.
+    return (
+      <div className="rounded-2xl border bg-card p-8 text-center">
+        <p className="text-sm font-medium">Your workspace couldn&apos;t be set up</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Your account is signed in, but we couldn&apos;t link it to an agency.
+          Try reloading the page — if this keeps happening, contact support.
         </p>
       </div>
     );

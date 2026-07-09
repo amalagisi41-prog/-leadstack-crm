@@ -34,20 +34,28 @@ export async function provisionBetaOwner({
   });
 
   const batch = db.batch();
-  batch.set(db.doc(`users/${uid}`), {
-    uid,
-    email,
-    displayName,
-    photoURL: null,
-    stripeCustomerId: null,
-    subscriptionStatus: "inactive",
-    subscriptionPriceId: null,
-    role: "admin" as Role,
-    status: "active",
-    primaryAgencyId: agencyId,
-    createdAt: FieldValue.serverTimestamp(),
-    updatedAt: FieldValue.serverTimestamp(),
-  });
+  // Merge, not overwrite — a repair call (see /api/auth/repair-workspace)
+  // can hit this for a user doc that already exists but is only missing
+  // tenancy fields. A plain set() would clobber real billing/profile state
+  // (stripeCustomerId, subscriptionStatus, photoURL, …) back to defaults.
+  batch.set(
+    db.doc(`users/${uid}`),
+    {
+      uid,
+      email,
+      displayName,
+      photoURL: null,
+      stripeCustomerId: null,
+      subscriptionStatus: "inactive",
+      subscriptionPriceId: null,
+      role: "admin" as Role,
+      status: "active",
+      primaryAgencyId: agencyId,
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    },
+    { merge: true },
+  );
   batch.set(agencyRef, {
     id: agencyId,
     name: agencyName,
