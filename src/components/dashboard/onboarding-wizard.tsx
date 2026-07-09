@@ -304,77 +304,38 @@ export function OnboardingWizard({
     <div className="fixed inset-0 z-50 overflow-y-auto bg-background">
       {/* ── header ── */}
       <header className="sticky top-0 z-10 border-b bg-card/95 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 md:px-8">
+        <div className="mx-auto flex h-16 max-w-2xl items-center justify-between px-4">
           <div className="flex items-center gap-2">
             <LogoMark size={30} idSuffix="-wizard" />
             <span className="text-lg font-bold tracking-tight">{CUSTOM_BRAND.name}</span>
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="hidden text-sm text-muted-foreground sm:block">
             Estimated completion: <span className="font-semibold text-foreground">15 minutes</span>
           </p>
         </div>
       </header>
 
-      <div className="mx-auto flex max-w-6xl gap-8 px-4 py-8 md:px-8 md:py-10">
-        {/* ── setup progress sidebar ── */}
-        <aside className="hidden w-60 shrink-0 md:block">
-          <p className="mb-4 text-xs font-semibold uppercase tracking-[0.15em] text-muted-foreground">
-            Setup progress
-          </p>
-          <ol className="space-y-1">
-            {SETUP_STEPS.map((s, idx) => {
-              const isActive = idx === step;
-              const isDone = idx < step;
-              return (
-                <li
-                  key={s.label}
-                  className={cn(
-                    "flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors",
-                    isActive && "bg-muted/70",
-                  )}
-                >
-                  <span
-                    className={cn(
-                      "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold",
-                      isDone && "bg-emerald-500 text-white",
-                      isActive && "bg-rose-600 text-white",
-                      !isDone && !isActive && "bg-muted text-muted-foreground",
-                    )}
-                  >
-                    {isDone ? <Check className="h-4 w-4" strokeWidth={3} /> : idx + 1}
-                  </span>
-                  <span>
-                    <span
-                      className={cn(
-                        "block text-sm font-semibold leading-tight",
-                        !isActive && !isDone && "text-muted-foreground",
-                      )}
-                    >
-                      {s.label}
-                    </span>
-                    <span className="block text-xs text-muted-foreground">{s.minutes} min</span>
-                  </span>
-                </li>
-              );
-            })}
-          </ol>
-        </aside>
+      <div className="mx-auto max-w-2xl px-4 py-8">
+        {/* ── progress ── */}
+        <div className="mb-8">
+          <div className="mb-2 flex items-center justify-between text-sm">
+            <span className="font-semibold">
+              Step {step + 1} of {SETUP_STEPS.length}
+            </span>
+            <span className="font-medium text-muted-foreground">
+              {SETUP_STEPS[step].label}
+            </span>
+          </div>
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full rounded-full bg-rose-600 transition-all duration-300"
+              style={{ width: `${((step + 1) / SETUP_STEPS.length) * 100}%` }}
+            />
+          </div>
+        </div>
 
         {/* ── main content ── */}
-        <main className="min-w-0 flex-1 pb-16">
-          {/* mobile progress dots */}
-          <div className="mb-6 flex items-center gap-1.5 md:hidden">
-            {SETUP_STEPS.map((_, idx) => (
-              <div
-                key={idx}
-                className={cn(
-                  "h-1.5 rounded-full transition-all",
-                  idx === step ? "w-6 bg-rose-600" : idx < step ? "w-3 bg-emerald-500" : "w-3 bg-muted",
-                )}
-              />
-            ))}
-          </div>
-
+        <main className="pb-16">
           {step === 0 && (
             <StepFrame
               step={1}
@@ -384,7 +345,7 @@ export function OnboardingWizard({
               minutes={3}
               requirement="Required"
             >
-              <div className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
+              <div className="space-y-5">
                 {PROFILE_FIELDS.map((f) => (
                   <label key={f.key} className="block">
                     <span className="mb-1.5 block text-sm font-semibold">
@@ -480,7 +441,7 @@ export function OnboardingWizard({
               minutes={2}
               requirement="Can skip"
             >
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="flex flex-col gap-3">
                 {GOALS.map((g) => {
                   const selected = goals.has(g.id);
                   return (
@@ -530,7 +491,7 @@ export function OnboardingWizard({
               minutes={2}
               requirement="Can skip"
             >
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="flex flex-col gap-3">
                 {MARKETING_SYSTEMS.map((m) => {
                   const selected = systems.has(m.id);
                   return (
@@ -546,13 +507,15 @@ export function OnboardingWizard({
                         })
                       }
                       className={cn(
-                        "flex flex-col items-start gap-3 rounded-2xl border bg-card p-5 text-left transition-all",
+                        "flex items-start gap-4 rounded-2xl border bg-card p-5 text-left transition-all",
                         selected
                           ? "border-rose-500 ring-1 ring-rose-500/40"
                           : "hover:border-muted-foreground/30",
                       )}
                     >
-                      <m.icon className="h-6 w-6" />
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-muted">
+                        <m.icon className="h-5 w-5" />
+                      </span>
                       <span>
                         <span className="block font-semibold">{m.title}</span>
                         <span className="mt-0.5 block text-sm text-muted-foreground">
@@ -574,7 +537,7 @@ export function OnboardingWizard({
           )}
 
           {step === 5 && (
-            <div className="mx-auto max-w-2xl text-center">
+            <div className="text-center">
               <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-rose-100 dark:bg-rose-950/40">
                 <Rocket className="h-8 w-8 text-rose-600" />
               </div>
@@ -666,8 +629,8 @@ function StepFrame({
   return (
     <div>
       <p className="mb-1.5 font-semibold text-rose-600">Step {step}</p>
-      <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{title}</h1>
-      <p className="mt-3 max-w-3xl text-lg text-muted-foreground">{subtitle}</p>
+      <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{title}</h1>
+      <p className="mt-3 text-base text-muted-foreground">{subtitle}</p>
 
       <div className="mt-6 rounded-xl border bg-muted/40 px-5 py-4 text-sm leading-relaxed">
         <span className="font-semibold">Why we&apos;re asking:</span>{" "}
