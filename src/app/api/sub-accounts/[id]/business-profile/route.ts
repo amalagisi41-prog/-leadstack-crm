@@ -32,6 +32,7 @@ const VALID_SERVICES = new Set(SERVICE_SPECIALTIES.map((s) => s.id));
 
 const STRING_KEYS: (keyof BusinessProfileContent)[] = [
   "agentName",
+  "title",
   "brokerage",
   "licenseStates",
   "licenseNumber",

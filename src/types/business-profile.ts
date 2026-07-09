@@ -64,6 +64,7 @@ export interface BusinessFaq {
 export interface BusinessProfileContent {
   // 1. Agent profile
   agentName: string;
+  title: string; // e.g. "Realtor®", "Broker Associate"
   brokerage: string;
   licenseStates: string; // e.g. "NJ, NY"
   licenseNumber: string;
@@ -126,6 +127,7 @@ export const DEFAULT_AGENTSTACK_LOGO_SHEET_URL =
 
 export const EMPTY_BUSINESS_PROFILE: BusinessProfileContent = {
   agentName: "",
+  title: "",
   brokerage: "",
   licenseStates: "",
   licenseNumber: "",
