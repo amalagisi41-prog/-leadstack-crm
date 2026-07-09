@@ -101,7 +101,7 @@ export function SubAccountPipelineSection() {
         toast.error(data.error ?? "Couldn't save the pipeline.");
         return;
       }
-      toast.success("Pipeline updated.");
+      toast.success("Deal stages updated.");
     } catch {
       toast.error("Couldn't save the pipeline. Please try again.");
     } finally {
@@ -133,7 +133,7 @@ export function SubAccountPipelineSection() {
         toast.error(data.error ?? "Couldn't reset the pipeline.");
         return;
       }
-      toast.success("Pipeline reset to defaults.");
+      toast.success("Deal stages reset to defaults.");
     } catch {
       toast.error("Couldn't reset the pipeline. Please try again.");
     } finally {
@@ -148,7 +148,7 @@ export function SubAccountPipelineSection() {
           <GitBranch className="h-4 w-4" />
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="text-sm font-semibold">Pipeline stages</h2>
+          <h2 className="text-sm font-semibold">Deal stages</h2>
           <p className="text-xs text-muted-foreground">
             Rename your deal stages and reorder them to match how your team
             works. The Won and Lost stages stay as the closed states (they

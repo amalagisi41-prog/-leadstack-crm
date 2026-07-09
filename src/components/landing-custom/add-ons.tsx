@@ -15,7 +15,7 @@ interface AddOn {
 const addOns: AddOn[] = [
   {
     category: "Visibility",
-    name: "Website Studio",
+    name: "AI Website Studio",
     tagline: "AI builds your site from premium templates",
     price: "$99",
     billing: "/mo",

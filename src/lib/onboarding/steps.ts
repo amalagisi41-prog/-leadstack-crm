@@ -41,10 +41,10 @@ export interface OnboardingStepMeta {
 export const ONBOARDING_STEPS: readonly OnboardingStepMeta[] = [
   {
     id: "business_profile",
-    title: "Set up your Business Profile",
+    title: "Set up your Business Brain",
     description:
       "Tell AgentStack about your business once — name, brokerage, services, brand voice, compliance rules, and FAQs. Every AI agent, email, and automation pulls from this profile automatically.",
-    cta: "Set Up Business Profile",
+    cta: "Set Up Business Brain",
     href: "/business-profile",
     videoMinutes: 5,
   },
@@ -53,7 +53,7 @@ export const ONBOARDING_STEPS: readonly OnboardingStepMeta[] = [
     title: "Import your contacts",
     description:
       "Upload a CSV from your old CRM or add your first contacts manually. Your entire database lives here.",
-    cta: "Go to Contacts",
+    cta: "Go to People",
     href: "/contacts?import=1",
     videoMinutes: 4,
   },
@@ -89,7 +89,7 @@ export const ONBOARDING_STEPS: readonly OnboardingStepMeta[] = [
     title: "Review your pipeline",
     description:
       "Your pipeline is pre-set for real estate: New Lead → Contacted → Showing Scheduled → Offer Made → Closed. Drag deals as they progress.",
-    cta: "View Pipeline",
+    cta: "View Deals",
     href: "/pipeline",
     videoMinutes: 3,
   },

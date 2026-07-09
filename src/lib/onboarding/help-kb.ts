@@ -14,9 +14,9 @@
 export const ONBOARDING_HELP_KB = `# Setting up your CRM — help topics
 
 ## Importing contacts
-- Go to Contacts in the sidebar. Click "Upload CSV" to import your existing database from another CRM, or "Add contact" to enter one manually.
+- Go to People in the sidebar. Click "Upload CSV" to import your existing database from another CRM, or "Add contact" to enter one manually.
 - The CSV importer maps columns automatically (name, email, phone, tags, source) and lets you fix any mismatches before importing.
-- A downloadable CSV template is available on the Contacts empty state if you want the exact column headers.
+- A downloadable CSV template is available on the People empty state if you want the exact column headers.
 - CSV-imported and manually-created contacts won't appear on the dashboard Leads map (only form-submitted contacts capture location).
 
 ## Connecting your phone number (SMS)
@@ -26,7 +26,7 @@ export const ONBOARDING_HELP_KB = `# Setting up your CRM — help topics
 - Twilio trial accounts can only text phone numbers you've verified in Twilio, and prepend a trial banner. Upgrade for real use.
 
 ## Building a lead capture form
-- Go to Forms → create a form. Drag to reorder fields; pick from the field types; use "mapsTo" to map a field onto a standard contact field (name/email/phone).
+- Go to Lead Forms → create a form. Drag to reorder fields; pick from the field types; use "mapsTo" to map a field onto a standard contact field (name/email/phone).
 - Every form has a public hosted page at /f/[id] and an iframe embed snippet.
 - On submit, the form auto-creates a contact (and optionally a deal) and can trigger your Speed-to-Lead automation.
 
@@ -37,7 +37,7 @@ export const ONBOARDING_HELP_KB = `# Setting up your CRM — help topics
 - Supported merge tags: {{contact.firstName}}, {{contact.lastName}}, {{contact.email}}, {{contact.phone}}, {{owner.firstName}}, {{owner.email}}, {{workspace.name}}, {{bookingLink}}, {{unsubscribeLink}}. Other tags resolve to empty.
 
 ## Your pipeline
-- The Pipeline (Kanban) board is pre-set for real estate: New Lead → Contacted → Showing Scheduled → Offer Made → Closed (plus Lost). Drag deal cards between stages.
+- The Deals (Kanban) board is pre-set for real estate: New Lead → Contacted → Showing Scheduled → Offer Made → Closed (plus Lost). Drag deal cards between stages.
 - You can rename/reorder stages from dashboard settings. Terminal Won/Lost behavior is fixed.
 
 ## Activating your AI agent

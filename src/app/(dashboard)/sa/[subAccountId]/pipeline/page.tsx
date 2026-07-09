@@ -179,7 +179,7 @@ export default function PipelinePage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Pipeline</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Deals</h1>
           <p className="text-sm text-muted-foreground">
             Drag deals across stages. Your team sees every move in real time.
           </p>
@@ -307,7 +307,7 @@ function EmptyState({
           <NewDealDialog contacts={contacts} />
         ) : (
           <Button render={<Link href={saPath("/contacts")} />}>
-            Go to Contacts
+            Go to People
           </Button>
         )}
       </div>

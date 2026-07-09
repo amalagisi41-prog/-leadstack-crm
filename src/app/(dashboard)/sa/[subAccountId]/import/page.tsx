@@ -27,7 +27,7 @@ export default function ImportPage() {
         <p className="mt-1 text-sm text-muted-foreground">
           Bring your contacts (with custom fields + tags), opportunities, and
           notes across. Re-running is safe — records update instead of
-          duplicating. Workflows, funnels, and page designs can&apos;t be
+          duplicating. Smart Workflows, funnels, and page designs can&apos;t be
           exported from GoHighLevel and are rebuilt here.
         </p>
       </header>

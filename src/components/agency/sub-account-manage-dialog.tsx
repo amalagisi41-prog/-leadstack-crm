@@ -424,13 +424,13 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
             onChange={setWebsiteStudioEnabled}
             disabled={saving}
             icon={<LayoutTemplate className="h-3.5 w-3.5 text-indigo-600 dark:text-indigo-400" />}
-            title="Website Studio (premium add-on)"
+            title="AI Website Studio (premium add-on)"
           >
-            When enabled, this sub-account gets Website Studio — the AI-guided,
+            When enabled, this sub-account gets AI Website Studio — the AI-guided,
             premium-template agent website builder, plus its bundled setup
             assists (A2P guidance, chat-widget help, SEO). Sold as a paid
             add-on, so enable it only for sub-accounts that have paid for the
-            tier. Disabling locks the Website Studio sidebar entry and 403s the
+            tier. Disabling locks the AI Website Studio sidebar entry and 403s the
             builder routes; the site draft and any published page are preserved.
           </GateToggle>
 

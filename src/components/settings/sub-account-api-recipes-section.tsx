@@ -363,14 +363,14 @@ function WebsiteFormGuide({
     <div className="mt-4 space-y-4 rounded-lg border bg-background p-4">
       <Step n={1} title="Find your form's ID">
         <p>
-          Open the <strong>Forms</strong> tab in your sidebar (or{" "}
+          Open the <strong>Lead Forms</strong> tab in your sidebar (or{" "}
           <ExtLink href={`/sa/${subAccountId}/forms`}>this link</ExtLink>).
           Click into the form you want to receive submissions for. Copy the
           form id from the URL — it&apos;s the part after <Code>/forms/</Code>.
         </p>
         <p className="mt-2 text-[11px] text-muted-foreground">
           Don&apos;t have a form yet? Click <strong>+ New form</strong> in the
-          Forms tab. The form&apos;s field configuration controls what data
+          Lead Forms tab. The form&apos;s field configuration controls what data
           ends up on the contact.
         </p>
       </Step>
@@ -428,7 +428,7 @@ function WebsiteFormGuide({
       <Step n={4} title="Test from your site">
         <p>
           Submit a real form from your live site (or a staging copy). The
-          new contact should appear in your Contacts list within seconds,
+          new contact should appear in your People list within seconds,
           with <Code>source: website-form</Code> on it. Any automation
           attached to the form (Speed-to-Lead, etc.) fires the same way as
           a submission from an AgentStack-hosted form.
@@ -521,7 +521,7 @@ function SlackAlertGuide() {
 
       <Step n={4} title="Test the end-to-end">
         <p>
-          In AgentStack, create a test contact (Contacts → + New). The Zap
+          In AgentStack, create a test contact (People → + New). The Zap
           should fire within seconds, and the Slack channel should show
           the message. If nothing appears: open Zapier&apos;s{" "}
           <strong>Zap History</strong> to see whether the webhook arrived

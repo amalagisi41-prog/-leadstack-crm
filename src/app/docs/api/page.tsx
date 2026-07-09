@@ -145,7 +145,7 @@ e.g. lsk_live_AB12CD34_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`}</Pre>
         </p>
       </Section>
 
-      <Section id="contacts" title="Contacts">
+      <Section id="contacts" title="People">
         <p>The lead / customer / person record.</p>
         <Endpoint method="GET" path="/v1/contacts" />
         <Endpoint method="POST" path="/v1/contacts" />
@@ -224,7 +224,7 @@ e.g. lsk_live_AB12CD34_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`}</Pre>
         </p>
       </Section>
 
-      <Section id="forms" title="Forms ingest">
+      <Section id="forms" title="Lead Forms ingest">
         <Endpoint method="POST" path="/v1/forms/:form_id/submissions" />
         <p>
           The single endpoint with open CORS. Use a key with{" "}
@@ -366,7 +366,7 @@ function Toc() {
         </li>
         <li>
           <a href="#contacts" className="text-primary hover:underline">
-            Contacts
+            People
           </a>
         </li>
         <li>
@@ -386,7 +386,7 @@ function Toc() {
         </li>
         <li>
           <a href="#forms" className="text-primary hover:underline">
-            Forms ingest
+            Lead Forms ingest
           </a>
         </li>
         <li>

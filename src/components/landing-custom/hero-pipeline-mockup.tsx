@@ -46,7 +46,7 @@ export function HeroPipelineMockup() {
               <div className="h-3 w-3 rounded-full bg-yellow-400/70" />
               <div className="h-3 w-3 rounded-full bg-green-400/70" />
               <span className="ml-2 text-xs font-medium text-muted-foreground">
-                Pipeline — AgentStack
+                Deals — AgentStack
               </span>
             </div>
             <div className="grid grid-cols-2 gap-2 p-3 sm:grid-cols-4 sm:gap-3 sm:p-4">

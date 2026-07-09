@@ -76,8 +76,8 @@ const SUB_ACCOUNT_NAV_SECTIONS: NavSection[] = [
         enabled: true,
         badgeKey: "unreadConversations",
       },
-      { href: "/contacts", label: "Contacts", icon: Users, enabled: true },
-      { href: "/pipeline", label: "Pipeline", icon: GitBranch, enabled: true },
+      { href: "/contacts", label: "People", icon: Users, enabled: true },
+      { href: "/pipeline", label: "Deals", icon: GitBranch, enabled: true },
       { href: "/calendar", label: "Calendar", icon: Calendar, enabled: true },
       {
         href: "/booking",
@@ -92,7 +92,7 @@ const SUB_ACCOUNT_NAV_SECTIONS: NavSection[] = [
         enabled: true,
         badgeKey: "dueToday",
       },
-      { href: "/forms", label: "Forms", icon: FileText, enabled: true },
+      { href: "/forms", label: "Lead Forms", icon: FileText, enabled: true },
       { href: "/quotes", label: "Quotes", icon: FileSignature, enabled: true },
     ],
   },
@@ -101,12 +101,12 @@ const SUB_ACCOUNT_NAV_SECTIONS: NavSection[] = [
     items: [
       {
         href: "/business-profile",
-        label: "Business Profile",
+        label: "Business Brain",
         icon: BookOpen,
         enabled: true,
       },
       { href: "/ai-agents", label: "AI Receptionist", icon: Bot, enabled: true },
-      { href: "/workflows", label: "Workflows", icon: Workflow, enabled: true },
+      { href: "/workflows", label: "Smart Workflows", icon: Workflow, enabled: true },
       { href: "/broadcasts", label: "Broadcasts", icon: Send, enabled: true },
       { href: "/templates", label: "Templates", icon: FileText, enabled: true },
     ],
@@ -114,7 +114,7 @@ const SUB_ACCOUNT_NAV_SECTIONS: NavSection[] = [
   {
     label: "Performance",
     items: [
-      { href: "/reports", label: "Reports", icon: BarChart3, enabled: true },
+      { href: "/reports", label: "Analytics", icon: BarChart3, enabled: true },
       { href: "/logs", label: "Logs", icon: ScrollText, enabled: true },
     ],
   },
@@ -123,8 +123,8 @@ const SUB_ACCOUNT_NAV_SECTIONS: NavSection[] = [
     items: [
       { href: "/products", label: "Products", icon: Package, enabled: true },
       { href: "/website", label: "Website", icon: Globe, enabled: true },
-      { href: "/website-studio", label: "Website Studio", icon: LayoutTemplate, enabled: true },
-      { href: "/funnels", label: "Sales Funnels", icon: Filter, enabled: true },
+      { href: "/website-studio", label: "AI Website Studio", icon: LayoutTemplate, enabled: true },
+      { href: "/funnels", label: "Marketing Pages", icon: Filter, enabled: true },
       { href: "/social", label: "Social Planner", icon: Share2, enabled: true },
       {
         href: "/community",

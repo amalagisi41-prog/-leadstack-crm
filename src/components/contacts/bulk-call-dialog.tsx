@@ -329,7 +329,7 @@ export function BulkCallDialog({
 
           {filterKind === "pipeline_stage" && (
             <div className="space-y-1.5">
-              <Label htmlFor="bulk-call-stage">Pipeline stage</Label>
+              <Label htmlFor="bulk-call-stage">Deal stage</Label>
               <select
                 id="bulk-call-stage"
                 value={filterStage}

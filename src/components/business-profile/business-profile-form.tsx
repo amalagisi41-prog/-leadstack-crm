@@ -153,7 +153,7 @@ export function BusinessProfileForm() {
       };
       if (!res.ok) throw new Error(data.error ?? "Couldn't save.");
       setCompleteness(data.completeness ?? completeness);
-      toast.success("Business Profile saved. Every AI tool now uses it.");
+      toast.success("Business Brain saved. Every AI tool now uses it.");
       return true;
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't save.");
@@ -203,7 +203,7 @@ export function BusinessProfileForm() {
       <div className="rounded-2xl border bg-gradient-to-br from-[#1b3d7a] to-[#16305f] p-6 text-white">
         <div className="flex items-center gap-2">
           <BookOpen className="h-5 w-5" />
-          <h1 className="text-xl font-bold">Your Business Profile</h1>
+          <h1 className="text-xl font-bold">Your Business Brain</h1>
         </div>
         <p className="mt-2 max-w-2xl text-sm text-blue-100/90">
           Tell us about your business once. This is your AgentStack Knowledge

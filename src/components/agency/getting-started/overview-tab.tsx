@@ -100,7 +100,7 @@ export function OverviewTab({ agencyName }: { agencyName: string }) {
                 {
                   icon: UserPlus,
                   label: "Contact created",
-                  detail: "Pipeline: New",
+                  detail: "Deals: New",
                   tone: "violet",
                 },
                 {
@@ -201,8 +201,8 @@ export function OverviewTab({ agencyName }: { agencyName: string }) {
           </WorkflowCard>
 
           <WorkflowCard
-            title="Pipeline → Reports"
-            description="Drag deals through stages on the Kanban board. Reports update automatically — funnel, won-revenue, leads-by-source — all date-rangeable."
+            title="Deals → Analytics"
+            description="Drag deals through stages on the Kanban board. Analytics update automatically — funnel, won-revenue, leads-by-source — all date-rangeable."
           >
             <WorkflowDiagram
               steps={[
@@ -226,7 +226,7 @@ export function OverviewTab({ agencyName }: { agencyName: string }) {
                 },
                 {
                   icon: BarChart3,
-                  label: "Reports update",
+                  label: "Analytics update",
                   detail: "Funnel + revenue",
                   tone: "emerald",
                 },

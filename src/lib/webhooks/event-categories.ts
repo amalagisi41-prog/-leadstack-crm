@@ -21,7 +21,7 @@ export interface WebhookEventCategory {
 
 export const WEBHOOK_EVENT_CATEGORIES: WebhookEventCategory[] = [
   {
-    label: "Contacts",
+    label: "People",
     events: ["contact.created", "contact.updated", "contact.deleted"],
   },
   {
@@ -39,7 +39,7 @@ export const WEBHOOK_EVENT_CATEGORIES: WebhookEventCategory[] = [
     label: "Tasks & Events",
     events: ["task.created", "task.completed", "event.created"],
   },
-  { label: "Forms", events: ["form.submitted"] },
+  { label: "Lead Forms", events: ["form.submitted"] },
   {
     label: "Quotes",
     events: [

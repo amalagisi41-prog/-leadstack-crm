@@ -36,7 +36,7 @@ export const WHATSAPP_STARTER_TEMPLATES: WhatsappStarterTemplate[] = [
     displayName: "Lead acknowledgement",
     description:
       "Auto-confirm you received a new enquiry. Pairs with Speed-to-Lead / form submits.",
-    mapsTo: "Forms / Speed-to-Lead",
+    mapsTo: "Lead Forms / Speed-to-Lead",
     category: "UTILITY",
     language: "en",
     body: "Hi {{1}}, thanks for reaching out to {{2}}! We've got your enquiry and someone will be in touch shortly.",
