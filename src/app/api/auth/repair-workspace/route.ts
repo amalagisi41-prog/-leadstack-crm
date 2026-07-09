@@ -100,6 +100,42 @@ export async function POST(request: Request): Promise<NextResponse> {
     );
   }
 
+  // Transactional claim: the check above and the provision call below
+  // aren't atomic on their own, so two concurrent calls (the automatic
+  // silent retry in AuthContext racing a manual "Retry setup" click, or a
+  // double-click) could both read "no agencyId" and each mint a SEPARATE
+  // agency + Main sub-account — one wins the final custom-claims write,
+  // orphaning the other (still reachable via its own userMemberships row,
+  // just invisible from the winning agency's sub-accounts list). Claim a
+  // short-lived lock on the user doc first so only one call per uid can
+  // actually provision; a stale lock (a previous attempt crashed) expires
+  // after 30s so a genuine retry isn't blocked forever.
+  const LOCK_TTL_MS = 30_000;
+  const userRef = db.doc(`users/${uid}`);
+  const claim = await db.runTransaction(async (tx) => {
+    const snap = await tx.get(userRef);
+    const data = snap.exists ? snap.data() : null;
+    if (data?.primaryAgencyId) {
+      return { status: "already-done" as const, agencyId: data.primaryAgencyId as string };
+    }
+    const lockedAt = data?.repairInProgressAt as number | undefined;
+    if (lockedAt && Date.now() - lockedAt < LOCK_TTL_MS) {
+      return { status: "in-progress" as const };
+    }
+    tx.set(userRef, { repairInProgressAt: Date.now() }, { merge: true });
+    return { status: "claimed" as const };
+  });
+
+  if (claim.status === "already-done") {
+    return NextResponse.json({ repaired: false, agencyId: claim.agencyId });
+  }
+  if (claim.status === "in-progress") {
+    return NextResponse.json(
+      { error: "Setup is already in progress. Please wait a moment and reload." },
+      { status: 409 },
+    );
+  }
+
   const displayName =
     userRecord.displayName?.trim() || email.split("@")[0] || "AgentStack user";
 
@@ -114,6 +150,9 @@ export async function POST(request: Request): Promise<NextResponse> {
     });
     return NextResponse.json({ repaired: true, agencyId: newAgencyId, subAccountId });
   } catch (error) {
+    // Provisioning failed — clear the lock so a retry isn't blocked by
+    // "already in progress" for the rest of the TTL window.
+    await userRef.set({ repairInProgressAt: null }, { merge: true }).catch(() => undefined);
     return NextResponse.json(
       {
         error:

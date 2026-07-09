@@ -25,7 +25,7 @@ import {
 const DESIGN_WIDTH = 1080;
 
 export function WebsiteStudioApp() {
-  const { subAccountId, subAccount } = useSubAccount();
+  const { subAccountId, subAccount, loading: subAccountLoading } = useSubAccount();
   const agency = useAgency();
   const gateOpen = subAccount?.websiteStudioEnabledByAgency === true;
   const brandName = agency.name === "AgentStack" ? "your CRM" : agency.name;
@@ -53,12 +53,15 @@ export function WebsiteStudioApp() {
   }, [site]);
 
   useEffect(() => {
-    // Don't hit the (gated) API until we know the add-on is enabled.
-    if (subAccount && !gateOpen) {
+    // Wait for the sub-account context to settle (success OR failure)
+    // before deciding anything. Previously this only checked `subAccount`
+    // for truthiness, so if it never resolved (e.g. a denied/failed read)
+    // this component span forever on "Loading…" with no way out.
+    if (subAccountLoading) return;
+    if (!gateOpen) {
       setLoading(false);
       return;
     }
-    if (!gateOpen) return; // subAccount not resolved yet — wait.
     let active = true;
     (async () => {
       try {
@@ -67,6 +70,9 @@ export function WebsiteStudioApp() {
         if (!active) return;
         setSite(data.site);
         if (data.site) setContent(data.site.content);
+      } catch {
+        // Network/parse failure — fall through to the empty-site state
+        // (template gallery) instead of spinning forever.
       } finally {
         if (active) setLoading(false);
       }
@@ -74,7 +80,7 @@ export function WebsiteStudioApp() {
     return () => {
       active = false;
     };
-  }, [subAccountId, gateOpen, subAccount]);
+  }, [subAccountId, gateOpen, subAccountLoading]);
 
   const patch = useCallback(
     async (body: Record<string, unknown>) => {
