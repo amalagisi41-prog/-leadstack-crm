@@ -52,6 +52,7 @@ function AgencyHomeContent() {
     agencyId,
     agencyRole,
     memberships,
+    membershipsLoaded,
     repairError,
     retryWorkspaceRepair,
   } = useAuth();
@@ -145,6 +146,20 @@ function AgencyHomeContent() {
         <p className="mt-3 text-xs text-muted-foreground">
           If this keeps happening, contact support.
         </p>
+      </div>
+    );
+  }
+
+  if (!membershipsLoaded) {
+    // `loading` (above) resolves as soon as auth + the user doc load --
+    // BEFORE the separate membership subscription delivers its first
+    // snapshot. Without this gate, a fresh page load renders "you have no
+    // sub-accounts" for a brief window even when real memberships are
+    // about to arrive a moment later.
+    return (
+      <div className="space-y-6">
+        <div className="h-8 w-48 animate-pulse rounded bg-muted" />
+        <div className="h-32 animate-pulse rounded-2xl bg-muted/50" />
       </div>
     );
   }
