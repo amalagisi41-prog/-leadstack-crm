@@ -97,7 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // despite being fully authenticated. Returns the repaired agencyId, or
   // null (and sets `repairError` to the real reason) if it didn't work.
   const runWorkspaceRepair = useCallback(
-    async (firebaseUser: User): Promise<string | null> => {
+    async (): Promise<string | null> => {
       try {
         const repairRes = await fetch("/api/auth/repair-workspace", {
           method: "POST",
@@ -108,19 +108,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             agencyId?: string;
           };
           if (repaired.agencyId) {
-            const fresh = await firebaseUser
-              .getIdTokenResult(true)
-              .catch(() => null);
-            const resolved =
-              (fresh?.claims.agencyId as string | undefined) ??
-              repaired.agencyId;
-            setAgencyId(resolved);
-            setAgencyRole(
-              (fresh?.claims.agencyRole as AgencyRole | null | undefined) ??
-                "owner",
-            );
-            setRepairError(null);
-            return resolved;
+            // Force a full reload instead of patching React state in
+            // place. The sub-account membership listener (set up once per
+            // real auth-state change, using whatever ID token was active
+            // at that moment) doesn't get recreated just because this
+            // function refreshes the token and updates agencyId/agencyRole
+            // — if that listener was established before this account had
+            // its claims/tenancy fully resolved, its permission-denied is
+            // terminal and won't self-heal on its own. A full reload
+            // guarantees a brand-new auth cycle (and a brand-new listener)
+            // against the now-correct server state.
+            if (typeof window !== "undefined") {
+              window.location.reload();
+            }
+            return repaired.agencyId;
           }
           const reason = "Setup response was missing an agency id.";
           console.warn("[auth] repair-workspace succeeded but returned no agencyId");
@@ -158,7 +159,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
     setRepairError(null);
-    await runWorkspaceRepair(firebaseUser);
+    await runWorkspaceRepair();
   }, [runWorkspaceRepair]);
 
   useEffect(() => {
@@ -251,7 +252,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           );
 
           if (!resolvedAgencyId) {
-            resolvedAgencyId = await runWorkspaceRepair(firebaseUser);
+            resolvedAgencyId = await runWorkspaceRepair();
           } else {
             setRepairError(null);
           }
