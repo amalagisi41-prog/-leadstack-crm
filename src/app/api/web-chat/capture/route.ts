@@ -28,7 +28,7 @@ export const dynamic = "force-dynamic";
  *   - Skip: stamp captureSkipped=true on the session so the bot stops
  *     asking. No Contact created.
  *
- * Like /message: no origin gate (iframe is on LeadStack's domain), so
+ * Like /message: no origin gate (iframe is on AgentStack's domain), so
  * gated by channel-enabled + rate limits + sessionId validity.
  */
 

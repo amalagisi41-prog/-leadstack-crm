@@ -6,7 +6,7 @@ import type {
 /**
  * Curated starter gallery for WhatsApp templates. Each entry pre-fills the
  * template builder with a clean, policy-compliant body that approves far
- * more reliably than an improvised one, mapped to a LeadStack feature the
+ * more reliably than an improvised one, mapped to an AgentStack feature the
  * operator already uses. Selecting a starter is a starting point — the
  * operator edits wording + variables before submitting, and each template
  * still goes through Meta approval individually.
@@ -22,7 +22,7 @@ export interface WhatsappStarterTemplate {
   displayName: string;
   /** One-line description shown in the gallery card. */
   description: string;
-  /** The existing LeadStack feature this mirrors. */
+  /** The existing AgentStack feature this mirrors. */
   mapsTo: string;
   category: WhatsappTemplateCategory;
   language: string;

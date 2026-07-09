@@ -130,7 +130,7 @@ export default async function PublicQuotePage({ params }: PageProps) {
 
       <footer className="border-t bg-background py-4">
         <div className="container mx-auto px-4 text-center text-[11px] text-muted-foreground">
-          {quote.kind === "invoice" ? "Invoice" : "Quote"} sent via LeadStack.
+          {quote.kind === "invoice" ? "Invoice" : "Quote"} sent via AgentStack.
           Reply to the email to reach {businessName}.
         </div>
       </footer>

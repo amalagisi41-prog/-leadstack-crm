@@ -42,7 +42,7 @@ export function buildComparisonMetadata(slug: string): Metadata {
       description: comparison.metaDescription,
       url: canonical,
       type: "article",
-      siteName: "LeadStack",
+      siteName: "AgentStack",
     },
     twitter: {
       card: "summary_large_image",

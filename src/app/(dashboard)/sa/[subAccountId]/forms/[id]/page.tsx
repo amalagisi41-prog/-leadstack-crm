@@ -119,7 +119,7 @@ function buildHtmlSnippet(form: LeadForm, origin: string): string {
     })
     .join("\n\n");
 
-  return `<!-- LeadStack form. Style with your own CSS — every element is unstyled. -->
+  return `<!-- AgentStack form. Style with your own CSS — every element is unstyled. -->
 <!-- Submissions create contacts and fire automations in your workspace. -->
 <form data-leadstack-form="${form.id}" novalidate>
 ${fieldsHtml}
@@ -973,7 +973,7 @@ function EmbedAppearanceSection({
             checked={appearance.hideChrome}
             onCheckedChange={(v) => onChange({ hideChrome: !!v })}
           />
-          <span className="text-xs">Hide LeadStack header + footer</span>
+          <span className="text-xs">Hide AgentStack header + footer</span>
         </label>
 
         <label className="flex items-center gap-2">

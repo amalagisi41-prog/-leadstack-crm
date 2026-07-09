@@ -152,7 +152,7 @@ export async function POST(
 
       await sendEmail({
         to: email,
-        subject: `${inviterName} invited you to ${subAccountName} on LeadStack`,
+        subject: `${inviterName} invited you to ${subAccountName} on AgentStack`,
         text: renderInviteText({
           inviterName,
           subAccountName,
@@ -259,7 +259,7 @@ function renderInviteText({
   inviteUrl,
 }: InviteContext): string {
   return [
-    `${inviterName} invited you to join ${subAccountName} on LeadStack as ${roleLabel}.`,
+    `${inviterName} invited you to join ${subAccountName} on AgentStack as ${roleLabel}.`,
     "",
     `Accept the invite by creating your account here:`,
     inviteUrl,
@@ -283,7 +283,7 @@ function renderInviteHtml({
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>You're invited to ${sub} on LeadStack</title>
+  <title>You're invited to ${sub} on AgentStack</title>
 </head>
 <body style="margin:0; padding:0; background:#f6f6f9; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; color:#0a0a0f;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f6f6f9; padding:32px 16px;">
@@ -307,7 +307,7 @@ function renderInviteHtml({
                     </svg>
                   </td>
                   <td style="vertical-align:middle;">
-                    <span style="font-size:18px; font-weight:700; color:#0a0a0f; letter-spacing:-0.01em;">LeadStack</span>
+                    <span style="font-size:18px; font-weight:700; color:#0a0a0f; letter-spacing:-0.01em;">AgentStack</span>
                   </td>
                 </tr>
               </table>
@@ -316,7 +316,7 @@ function renderInviteHtml({
           <tr>
             <td>
               <h1 style="margin:0 0 12px 0; font-size:22px; font-weight:600; color:#0a0a0f; letter-spacing:-0.01em;">You're invited</h1>
-              <p style="margin:0 0 8px 0; font-size:15px; line-height:1.5; color:#4a4a55;">${inviter} invited you to <strong style="color:#0a0a0f;">${sub}</strong> on LeadStack.</p>
+              <p style="margin:0 0 8px 0; font-size:15px; line-height:1.5; color:#4a4a55;">${inviter} invited you to <strong style="color:#0a0a0f;">${sub}</strong> on AgentStack.</p>
               <p style="margin:0 0 24px 0; font-size:15px; line-height:1.5; color:#4a4a55;">You'll join as <strong>${role}</strong>.</p>
               <table role="presentation" cellpadding="0" cellspacing="0">
                 <tr>

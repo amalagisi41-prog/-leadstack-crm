@@ -15,7 +15,7 @@ import type { VoiceChannelConfig } from "@/types/ai";
 
 /**
  * Native outbound-call compliance gate. Enforces — with NO third-party
- * dependency — everything LeadStack can verify itself before an AI call
+ * dependency — everything AgentStack can verify itself before an AI call
  * is placed: a valid number, voice opt-out, per-call consent, the
  * calling window in the contact's own timezone, an optional country
  * allow-list, and rate / daily / per-number frequency caps. A pluggable

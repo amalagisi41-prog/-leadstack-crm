@@ -6,10 +6,10 @@ import { COMPARISON_SLUGS } from "@/data/comparisons";
  * Sitemap. Next.js 15 picks this file up automatically and serves the
  * generated XML at /sitemap.xml.
  *
- * Variant-aware: the LeadStack-branded deployment publishes the public
+ * Variant-aware: the AgentStack-branded deployment publishes the public
  * docs + comparison pages it actually hosts. White-label buyer clones
  * (LANDING_VARIANT === "custom") publish only the buyer's own marketing
- * surface — listing LeadStack's vs pages in their sitemap would
+ * surface — listing AgentStack's vs pages in their sitemap would
  * advertise 404s.
  */
 export default function sitemap(): MetadataRoute.Sitemap {

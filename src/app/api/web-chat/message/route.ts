@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
  *
  * NB: this endpoint deliberately does NOT origin-check against the
  * channel's allowedDomains. The iframe that calls this lives on
- * LeadStack's own domain — so the Origin header always equals our own
+ * AgentStack's own domain — so the Origin header always equals our own
  * host, not the client's site. The domain allowlist is enforced at
  * /api/web-chat/config instead: widget.js calls /config from the
  * parent-page context (where the Origin header DOES reflect the client

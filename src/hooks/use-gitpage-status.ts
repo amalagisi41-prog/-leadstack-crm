@@ -8,7 +8,7 @@ import { getFirebaseDb } from "@/lib/firebase/client";
  * Activation gate state. Driven primarily by whether `GITPAGE_API_KEY`
  * is set — if the operator pasted a key, we trust it. The heartbeat's
  * email-based subscription check is unreliable in practice (the gitpage
- * subscription email often doesn't match the LeadStack agency owner's
+ * subscription email often doesn't match the AgentStack agency owner's
  * email) so it's relegated to telemetry rather than UI gating. If a key
  * turns out to be invalid, the build route's 401 handler flips us to
  * `subscribe-needed` with `lastError: "401_invalid_api_key"`.

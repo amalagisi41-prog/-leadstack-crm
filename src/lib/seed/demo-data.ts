@@ -6,7 +6,7 @@ import {
 } from "firebase-admin/firestore";
 
 /**
- * Demo-data seeder for the LeadStack public demo only.
+ * Demo-data seeder for the AgentStack public demo only.
  *
  * Targets sub-account #1004 by accountNumber. Generates 300 contacts (200
  * jittered around central London, 100 spread across major world cities),
@@ -17,7 +17,7 @@ import {
  * Every seeded contact is tagged "seed" so unseedDemo() can find and
  * remove them later (along with their subcollections + referencing deals).
  *
- * Gated to the LeadStack demo at the API-route layer via LANDING_VARIANT
+ * Gated to the AgentStack demo at the API-route layer via LANDING_VARIANT
  * === "leadstack". Buyer clones never reach this code.
  */
 

@@ -1,38 +1,38 @@
 import type { Comparison } from "@/types/comparisons";
 
 /**
- * GoHighLevel vs LeadStack — the flagship comparison page.
+ * GoHighLevel vs AgentStack — the flagship comparison page.
  *
- * GHL is the direct rival LeadStack is positioned head-to-head against, so
+ * GHL is the direct rival AgentStack is positioned head-to-head against, so
  * this page sees the highest converting search intent. Update pricing +
  * verification date when GHL changes their public tiers.
  *
  * Underlying-stack identifiers (Firebase, Twilio, Vapi, Resend, OpenRouter,
  * Vercel, Next.js, gitpage.site, specific AI model names, etc.) are
  * deliberately kept out of this file. Visitors shouldn't be able to
- * reconstruct LeadStack's architecture from the comparison page — that
+ * reconstruct AgentStack's architecture from the comparison page — that
  * information ships inside the repo they get after purchase.
  */
 export const gohighlevelComparison: Comparison = {
   slug: "gohighlevel",
   competitorName: "GoHighLevel",
   competitorShortName: "GHL",
-  metaTitle: "GoHighLevel vs LeadStack | All-in-One CRM Compared (2026)",
+  metaTitle: "GoHighLevel vs AgentStack | All-in-One CRM Compared (2026)",
   metaDescription:
-    "GoHighLevel vs LeadStack — feature, pricing, and ownership comparison. Why agencies are switching from $297/mo recurring to a self-hosted all-in-one CRM they own outright.",
+    "GoHighLevel vs AgentStack — feature, pricing, and ownership comparison. Why agencies are switching from $297/mo recurring to a self-hosted all-in-one CRM they own outright.",
   lastVerifiedDate: "June 2026",
 
   hero: {
-    h1: "GoHighLevel vs LeadStack",
+    h1: "GoHighLevel vs AgentStack",
     subhead:
       "Both are all-in-one CRMs built for agencies. Only one of them lets you own the code, set your own prices, keep your client data on your own infrastructure, and walk away the day you decide to switch tools.",
-    ctaLabel: "See LeadStack pricing",
+    ctaLabel: "See AgentStack pricing",
   },
 
   pullQuote: {
-    text: "GoHighLevel made the modern agency stack possible — one tool, one bill, every channel. LeadStack is the next step: the same surface area, but you own the code, the data, and the margin instead of renting them.",
-    author: "The LeadStack team",
-    role: "On why LeadStack exists",
+    text: "GoHighLevel made the modern agency stack possible — one tool, one bill, every channel. AgentStack is the next step: the same surface area, but you own the code, the data, and the margin instead of renting them.",
+    author: "The AgentStack team",
+    role: "On why AgentStack exists",
   },
 
   painPoints: {
@@ -56,7 +56,7 @@ export const gohighlevelComparison: Comparison = {
   advantages: [
     {
       title: "You own the code, not a seat",
-      body: "LeadStack is the full source code of an agency CRM you clone, deploy to your own cloud account, and brand as your own product. Every file — the UI, the API routes, the AI agent logic, the booking pages, the quote generator — is yours to read, modify, and extend. There is no platform behind LeadStack waiting to deprecate the feature you depend on.",
+      body: "AgentStack is the full source code of an agency CRM you clone, deploy to your own cloud account, and brand as your own product. Every file — the UI, the API routes, the AI agent logic, the booking pages, the quote generator — is yours to read, modify, and extend. There is no platform behind AgentStack waiting to deprecate the feature you depend on.",
     },
     {
       title: "Pricing is a line on a vendor invoice, not a subscription",
@@ -73,7 +73,7 @@ export const gohighlevelComparison: Comparison = {
   ],
 
   featureTable: {
-    heading: "How LeadStack's base license compares to GoHighLevel's base plan",
+    heading: "How AgentStack's base license compares to GoHighLevel's base plan",
     rows: [
       {
         label: "Unlimited sub-accounts",
@@ -148,7 +148,7 @@ export const gohighlevelComparison: Comparison = {
     leadstack: {
       headline: "One-time license + your real vendor costs",
       detail:
-        "Pay for LeadStack once. The features GoHighLevel sells as paid add-ons — AI Employee, premium support — and capabilities it gates behind higher tiers — the full public API + webhooks — are all included with the license. For most agencies, monthly running costs come in under the price of a cup of coffee — the free tiers across the underlying providers are generous.",
+        "Pay for AgentStack once. The features GoHighLevel sells as paid add-ons — AI Employee, premium support — and capabilities it gates behind higher tiers — the full public API + webhooks — are all included with the license. For most agencies, monthly running costs come in under the price of a cup of coffee — the free tiers across the underlying providers are generous.",
       notes: [
         "AI agents (Web Chat + SMS + Voice): $0/month — included with the license (GoHighLevel's AI Employee is a $97/mo-per-sub-account add-on).",
         "Public API + webhooks: $0 — included with the license (GoHighLevel gates these to higher tiers).",
@@ -180,19 +180,19 @@ export const gohighlevelComparison: Comparison = {
     heading: "Frequently asked questions",
     items: [
       {
-        question: "Is LeadStack a true GoHighLevel replacement?",
+        question: "Is AgentStack a true GoHighLevel replacement?",
         answer:
           "Yes — for the work agencies do every day: contacts, pipeline, calendar, booking pages, quotes, automations, bulk email broadcasts, AI Web Chat + SMS + Voice agents, social post scheduling (Facebook + Instagram), Google review requests, dedicated per-sub-account phone numbers and sending domains, and a full public REST API with webhooks. It's the same surface area you sell today — delivered as code you own.",
       },
       {
         question: "Can I bring my clients across from GoHighLevel?",
         answer:
-          "Yes, on your timeline. Contacts import via CSV and your other records come across through the public REST API. The smooth path most agencies take: onboard new clients straight onto LeadStack, run both side by side, and move existing clients at their natural renewal. No big-bang cutover, no pressure.",
+          "Yes, on your timeline. Contacts import via CSV and your other records come across through the public REST API. The smooth path most agencies take: onboard new clients straight onto AgentStack, run both side by side, and move existing clients at their natural renewal. No big-bang cutover, no pressure.",
       },
       {
         question: "How does the white-label work?",
         answer:
-          "You deploy LeadStack to your own cloud under your own domain and set your brand in one config file — name, logo, tagline, support email, pricing. Every surface your clients touch renders as your brand: the landing page, every dashboard screen, transactional emails, public booking pages, the AI chat widget, and customer-facing quote pages. The LeadStack name never appears. And each sub-account can carry its own sending domain and dedicated phone number, so your clients see fully separate brands right down to the channel.",
+          "You deploy AgentStack to your own cloud under your own domain and set your brand in one config file — name, logo, tagline, support email, pricing. Every surface your clients touch renders as your brand: the landing page, every dashboard screen, transactional emails, public booking pages, the AI chat widget, and customer-facing quote pages. The AgentStack name never appears. And each sub-account can carry its own sending domain and dedicated phone number, so your clients see fully separate brands right down to the channel.",
       },
       {
         question: "What does it actually cost to run?",
@@ -202,15 +202,15 @@ export const gohighlevelComparison: Comparison = {
       {
         question: "Who owns my client data?",
         answer:
-          "You do — completely. Every contact, deal, conversation, and call summary lives in your own cloud project, under your billing and your access control. There's no LeadStack-controlled database in the loop, and you can export everything at any time with your database vendor's standard tools. Your clients' data is your asset, not a vendor's leverage.",
+          "You do — completely. Every contact, deal, conversation, and call summary lives in your own cloud project, under your billing and your access control. There's no AgentStack-controlled database in the loop, and you can export everything at any time with your database vendor's standard tools. Your clients' data is your asset, not a vendor's leverage.",
       },
       {
-        question: "Do I need to be a developer to run LeadStack?",
+        question: "Do I need to be a developer to run AgentStack?",
         answer:
           "No code, ever — once it's deployed, the entire CRM runs in the browser. Setup is a one-time, guided process: you create a few standard provider accounts and paste in the keys, with an AI coding assistant able to walk you through every step. There's nothing to write — just accounts to connect. Budget around a couple of hours if it's your first time and this isn't something you do every day; faster if it is. After that, it's just your CRM.",
       },
       {
-        question: "What if I want to stop using LeadStack one day?",
+        question: "What if I want to stop using AgentStack one day?",
         answer:
           "You keep everything. It's your code on your infrastructure with your data — so your deployment runs as long as you want it to, with or without us. That's the whole point of owning an asset instead of renting access: a SaaS disappears the day the company does; what you own doesn't.",
       },
@@ -219,8 +219,8 @@ export const gohighlevelComparison: Comparison = {
 
   finalCta: {
     headline: "Own your CRM. Stop renting it.",
-    body: "LeadStack gives agencies the full GoHighLevel-style surface area as code they own, on infrastructure they control, with no recurring platform fee on top.",
-    primaryCtaLabel: "See LeadStack pricing",
+    body: "AgentStack gives agencies the full GoHighLevel-style surface area as code they own, on infrastructure they control, with no recurring platform fee on top.",
+    primaryCtaLabel: "See AgentStack pricing",
     primaryCtaHref: "/#pricing",
   },
 };

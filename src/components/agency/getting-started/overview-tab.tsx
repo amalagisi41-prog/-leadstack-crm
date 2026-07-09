@@ -28,7 +28,7 @@ import { WorkflowDiagram } from "./workflow-diagram";
  * the operator's mental model lines up with the codebase.
  *
  * `agencyName` comes from useAgency() upstream so the white-label brand
- * shows through (the LeadStack deployment resolves it to "LeadStack"; a
+ * shows through (the AgentStack deployment resolves it to "AgentStack"; a
  * rebranded buyer's resolves to their own name).
  */
 export function OverviewTab({ agencyName }: { agencyName: string }) {

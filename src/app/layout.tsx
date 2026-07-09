@@ -28,7 +28,7 @@ export const metadata: Metadata =
         description: CUSTOM_BRAND.shortDescription,
       }
     : {
-        title: "LeadStack — The all-in-one CRM for teams that actually close",
+        title: "AgentStack — The all-in-one CRM for teams that actually close",
         description:
           "Capture leads, run pipelines, and book meetings from one simple workspace. Built for small teams that want to replace five tools with one.",
       };

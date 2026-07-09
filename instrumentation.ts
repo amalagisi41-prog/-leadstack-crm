@@ -18,7 +18,7 @@ export async function register() {
   const { installLogRedaction } = await import("./src/lib/api/redact");
   installLogRedaction();
 
-  // Auto-register the LeadStack daily cron schedules in QStash. Lets
+  // Auto-register the AgentStack daily cron schedules in QStash. Lets
   // buyers skip the "click into QStash dashboard, create schedules"
   // onboarding step — the schedules appear on the first production
   // cold start after env vars are set. Idempotent via stable

@@ -146,7 +146,7 @@ export function GhlImportWizard() {
   async function startImport() {
     setBusy(true);
     try {
-      // Create the LeadStack custom-field defs for the fields being imported,
+      // Create the AgentStack custom-field defs for the fields being imported,
       // collecting the generated keys for the mapping.
       const customFields: Record<
         string,

@@ -98,7 +98,7 @@ export default function MySettingsPage() {
           <div>
             <h2 className="text-sm font-semibold">Profile</h2>
             <p className="text-xs text-muted-foreground">
-              How you appear across LeadStack.
+              How you appear across AgentStack.
             </p>
           </div>
         </div>
@@ -188,7 +188,7 @@ export default function MySettingsPage() {
 
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-background p-4">
           <div>
-            <p className="text-sm font-medium">Sign out of LeadStack</p>
+            <p className="text-sm font-medium">Sign out of AgentStack</p>
             <p className="text-xs text-muted-foreground">
               Ends this session on this device. Profile data stays.
             </p>

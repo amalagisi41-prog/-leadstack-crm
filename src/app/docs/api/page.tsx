@@ -4,7 +4,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "API reference",
   description:
-    "Public REST API for the LeadStack CRM platform — authentication, resources, webhooks.",
+    "Public REST API for the AgentStack CRM platform — authentication, resources, webhooks.",
 };
 
 /**
@@ -23,10 +23,10 @@ export default function ApiDocsPage() {
           API Reference · v2026-06-15
         </p>
         <h1 className="mt-1 text-3xl font-bold tracking-tight">
-          LeadStack public API
+          AgentStack public API
         </h1>
         <p className="mt-3 text-sm text-muted-foreground">
-          REST + outbound webhooks for the LeadStack CRM. Sub-account-scoped
+          REST + outbound webhooks for the AgentStack CRM. Sub-account-scoped
           Bearer auth, idempotent writes, signed webhooks, request log
           observability.
         </p>

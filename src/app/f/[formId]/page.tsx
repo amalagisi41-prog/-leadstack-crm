@@ -49,7 +49,7 @@ export default async function PublicFormPage({
         {!appearance.hideChrome && (
           <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
             <span className="inline-block h-4 w-4 rounded-sm bg-gradient-to-br from-indigo-500 via-violet-500 to-pink-500" />
-            <span className="font-medium text-foreground">LeadStack</span>
+            <span className="font-medium text-foreground">AgentStack</span>
           </div>
         )}
         <div className="rounded-2xl border bg-card p-6 shadow-sm sm:p-8">
@@ -69,7 +69,7 @@ export default async function PublicFormPage({
         </div>
         {!appearance.hideChrome && (
           <p className="mt-4 text-center text-[11px] text-muted-foreground">
-            Powered by LeadStack
+            Powered by AgentStack
           </p>
         )}
       </div>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LeadStack CRM Setup Guide</title>
+  <title>AgentStack CRM Setup Guide</title>
   <style>
     :root {
       --bg: #0a0a0b;
@@ -425,7 +425,7 @@
 
   <!-- Header -->
   <div class="header">
-    <h1><span>LeadStack CRM</span> Setup Guide</h1>
+    <h1><span>AgentStack CRM</span> Setup Guide</h1>
     <p>Everything you need to go from zero to a running app. Claude Code will handle most of the heavy lifting.</p>
   </div>
 
@@ -583,7 +583,7 @@ code .</code></pre>
     <div class="card" style="border-left: 3px solid var(--accent-light);">
       <h3>Why Firebase?</h3>
       <p style="color: var(--text-muted); margin-bottom: 0.75rem;">
-        Firebase is Google's app development platform, and LeadStack uses two of its core services: <strong>Authentication</strong> and <strong>Cloud Firestore</strong>.
+        Firebase is Google's app development platform, and AgentStack uses two of its core services: <strong>Authentication</strong> and <strong>Cloud Firestore</strong>.
       </p>
       <p style="color: var(--text-muted); margin-bottom: 0.75rem;">
         <strong>Authentication</strong> handles everything related to user accounts &mdash; signing up, logging in, password resets, and Google sign-in. Instead of building all of that from scratch (which is complex and easy to get wrong from a security standpoint), Firebase gives you a battle-tested system that handles password hashing, session tokens, and OAuth flows. When a user clicks "Sign in with Google" on your app, Firebase is doing all the heavy lifting behind the scenes.
@@ -672,7 +672,7 @@ code .</code></pre>
       </ol>
       <div class="callout callout-info">
         <span class="callout-icon">&#9432;</span>
-        <div>LeadStack ships with strict <strong>owner-scoped</strong> Firestore rules in <code>firestore.rules</code> &mdash; every user can only read/write their own contacts, deals, tasks, etc. That's why you pick <strong>production mode</strong> instead of test mode. We deploy the rules next.</div>
+        <div>AgentStack ships with strict <strong>owner-scoped</strong> Firestore rules in <code>firestore.rules</code> &mdash; every user can only read/write their own contacts, deals, tasks, etc. That's why you pick <strong>production mode</strong> instead of test mode. We deploy the rules next.</div>
       </div>
       <div class="callout callout-tip">
         <span class="callout-icon">&#x1F4A1;</span>
@@ -684,7 +684,7 @@ code .</code></pre>
     <div class="card">
       <h3>Deploy Firestore Rules <span class="badge badge-guided">guided</span></h3>
       <p style="color: var(--text-muted); margin-bottom: 0.75rem;">
-        LeadStack's security rules live in <code>firestore.rules</code> in the repo. They deny all access by default and then explicitly allow each collection (<code>contacts</code>, <code>deals</code>, <code>events</code>, <code>tasks</code>, <code>forms</code>, etc.) to its owner only. Claude Code deploys these to your Firebase project with the Firebase CLI.
+        AgentStack's security rules live in <code>firestore.rules</code> in the repo. They deny all access by default and then explicitly allow each collection (<code>contacts</code>, <code>deals</code>, <code>events</code>, <code>tasks</code>, <code>forms</code>, etc.) to its owner only. Claude Code deploys these to your Firebase project with the Firebase CLI.
       </p>
       <ol class="steps">
         <li>
@@ -707,10 +707,10 @@ code .</code></pre>
     <div class="card" style="border-left: 3px solid var(--accent-light);">
       <h3>Why Resend + Twilio?</h3>
       <p style="color: var(--text-muted); margin-bottom: 0.75rem;">
-        LeadStack lets users send <strong>email</strong> and <strong>SMS</strong> to their contacts directly from a contact profile &mdash; a core part of any CRM. It uses the <strong>shared-sender</strong> model: you (the operator of LeadStack) own one Resend account and one Twilio account, and every user of your CRM sends through them. The cost of each email or SMS is baked into the plan price your users pay; they never have to set up their own comms providers.
+        AgentStack lets users send <strong>email</strong> and <strong>SMS</strong> to their contacts directly from a contact profile &mdash; a core part of any CRM. It uses the <strong>shared-sender</strong> model: you (the operator of AgentStack) own one Resend account and one Twilio account, and every user of your CRM sends through them. The cost of each email or SMS is baked into the plan price your users pay; they never have to set up their own comms providers.
       </p>
       <p style="color: var(--text-muted);">
-        When a user clicks <strong>Send email</strong> on a contact, LeadStack sends the message from your verified domain with the user's own email address on the <code>Reply-To:</code> header &mdash; so when the recipient hits reply, the reply goes straight to the user's inbox, bypassing LeadStack entirely. SMS works the same way through Twilio, sent from your Twilio phone number.
+        When a user clicks <strong>Send email</strong> on a contact, AgentStack sends the message from your verified domain with the user's own email address on the <code>Reply-To:</code> header &mdash; so when the recipient hits reply, the reply goes straight to the user's inbox, bypassing AgentStack entirely. SMS works the same way through Twilio, sent from your Twilio phone number.
       </p>
     </div>
 
@@ -718,7 +718,7 @@ code .</code></pre>
     <div class="card">
       <h3>Resend (Email) <span class="badge badge-guided">guided</span></h3>
       <p style="color: var(--text-muted); margin-bottom: 0.75rem;">
-        <a href="https://resend.com" target="_blank">Resend</a> is a transactional email API with a generous free tier. You add your sending domain, verify DNS, and every email LeadStack sends goes through Resend's infrastructure with proper SPF/DKIM signing.
+        <a href="https://resend.com" target="_blank">Resend</a> is a transactional email API with a generous free tier. You add your sending domain, verify DNS, and every email AgentStack sends goes through Resend's infrastructure with proper SPF/DKIM signing.
       </p>
       <ol class="steps">
         <li>Go to <a href="https://resend.com" target="_blank">resend.com</a> and create an account</li>
@@ -730,7 +730,7 @@ code .</code></pre>
         <thead><tr><th>Value</th><th>Env Variable</th></tr></thead>
         <tbody>
           <tr><td>API key (<code>re_...</code>)</td><td><code>RESEND_API_KEY</code></td></tr>
-          <tr><td>Verified sender (e.g. <code>"LeadStack &lt;notifications@yourdomain.com&gt;"</code>)</td><td><code>EMAIL_FROM</code></td></tr>
+          <tr><td>Verified sender (e.g. <code>"AgentStack &lt;notifications@yourdomain.com&gt;"</code>)</td><td><code>EMAIL_FROM</code></td></tr>
         </tbody>
       </table>
       <div class="callout callout-info">
@@ -739,7 +739,7 @@ code .</code></pre>
       </div>
       <div class="callout callout-tip">
         <span class="callout-icon">&#x1F4A1;</span>
-        <div><strong>Email is optional.</strong> If <code>RESEND_API_KEY</code> or <code>EMAIL_FROM</code> is missing, <code>/api/comms/email/send</code> returns a 503 and the Send email button on a contact profile surfaces a clean error. The rest of LeadStack works normally.</div>
+        <div><strong>Email is optional.</strong> If <code>RESEND_API_KEY</code> or <code>EMAIL_FROM</code> is missing, <code>/api/comms/email/send</code> returns a 503 and the Send email button on a contact profile surfaces a clean error. The rest of AgentStack works normally.</div>
       </div>
     </div>
 
@@ -768,7 +768,7 @@ code .</code></pre>
       </div>
       <div class="callout callout-tip">
         <span class="callout-icon">&#x1F4A1;</span>
-        <div><strong>SMS is optional.</strong> If any of the three Twilio vars are missing, <code>/api/comms/sms/send</code> returns a 503 and the Send SMS button fails with a clean error. The rest of LeadStack works normally.</div>
+        <div><strong>SMS is optional.</strong> If any of the three Twilio vars are missing, <code>/api/comms/sms/send</code> returns a 503 and the Send SMS button fails with a clean error. The rest of AgentStack works normally.</div>
       </div>
     </div>
 
@@ -776,7 +776,7 @@ code .</code></pre>
     <div class="card" style="border-left: 3px solid var(--accent-light);">
       <h3>Why Stripe?</h3>
       <p style="color: var(--text-muted); margin-bottom: 0.75rem;">
-        LeadStack is a SaaS (Software as a Service) CRM, which means users pay a monthly subscription to access Pro and Scale features. Stripe is the payment platform that makes this possible. It handles everything you'd never want to build yourself: securely collecting credit card numbers, processing payments, managing recurring subscriptions, handling failed payments, issuing refunds, and staying compliant with financial regulations.
+        AgentStack is a SaaS (Software as a Service) CRM, which means users pay a monthly subscription to access Pro and Scale features. Stripe is the payment platform that makes this possible. It handles everything you'd never want to build yourself: securely collecting credit card numbers, processing payments, managing recurring subscriptions, handling failed payments, issuing refunds, and staying compliant with financial regulations.
       </p>
       <p style="color: var(--text-muted);">
         You'll set up three things in Stripe: <strong>API keys</strong> (so your app can talk to Stripe's servers), a <strong>product and price</strong> (the "Pro Plan" that users subscribe to), and a <strong>webhook</strong> (so Stripe can notify your app when something happens, like a successful payment or a cancelled subscription). Stripe has a "Test mode" that lets you simulate all of this with fake credit cards &mdash; no real money changes hands during development. The test card number <code>4242 4242 4242 4242</code> always succeeds, which is how you'll verify everything works.

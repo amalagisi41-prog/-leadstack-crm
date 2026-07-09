@@ -23,7 +23,7 @@ const TOPICS = [
 export function BusinessSetupAssistant() {
   const { subAccountId } = useSubAccount();
   const agency = useAgency();
-  const brandName = agency.name === "LeadStack" ? undefined : agency.name;
+  const brandName = agency.name === "AgentStack" ? undefined : agency.name;
 
   const [turns, setTurns] = useState<Turn[]>([]);
   const [input, setInput] = useState("");

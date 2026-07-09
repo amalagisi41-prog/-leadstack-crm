@@ -26,7 +26,7 @@ export type SimplifiedElement = Record<string, unknown>;
 
 export const ARCHITECTURE_ELEMENTS: SimplifiedElement[] = [
   // Title + subtitle
-  { type: "text", id: "title", x: 315, y: 10, text: "LeadStack — eight lines, one platform", fontSize: 26, strokeColor: "#1e1e1e" },
+  { type: "text", id: "title", x: 315, y: 10, text: "AgentStack — eight lines, one platform", fontSize: 26, strokeColor: "#1e1e1e" },
   { type: "text", id: "sub", x: 230, y: 45, text: "Eight product domains. One sub-account. Everything an agency CRM needs.", fontSize: 18, strokeColor: "#757575" },
 
   // === Line 8: Platform (slate) ===

@@ -1,11 +1,11 @@
-/* LeadStack Web Chat widget loader.
+/* AgentStack Web Chat widget loader.
  *
  * Snippet:
  *   <script src="https://leadstack.dev/widget.js" data-sa="sa_xxx" async></script>
  *
  * What this script does, in order:
  *   1. Read data-sa from its own <script> tag.
- *   2. Derive the LeadStack origin from its own src so the same file
+ *   2. Derive the AgentStack origin from its own src so the same file
  *      works on every deployment without hard-coding URLs.
  *   3. GET /api/web-chat/config?sa=... — bail silently if disabled or
  *      the host page's Origin isn't on the allowlist.

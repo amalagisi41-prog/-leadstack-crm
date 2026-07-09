@@ -4,12 +4,12 @@ import { ArchitectureDiagram } from "@/components/docs/architecture-diagram";
 export const metadata: Metadata = {
   title: "Architecture",
   description:
-    "How LeadStack hangs together — eight product domains in one tube-map view.",
+    "How AgentStack hangs together — eight product domains in one tube-map view.",
 };
 
 /**
  * Public architecture diagram page — the "London Tube map" view of
- * LeadStack's surface area. Lives at /docs/architecture and is reachable
+ * AgentStack's surface area. Lives at /docs/architecture and is reachable
  * without authentication because `/docs` is in the middleware's
  * PUBLIC_PATHS allowlist.
  *
@@ -25,7 +25,7 @@ export default function ArchitecturePage() {
           Architecture · one-page view
         </p>
         <h1 className="mt-1 text-3xl font-bold tracking-tight">
-          LeadStack — what&apos;s in the box
+          AgentStack — what&apos;s in the box
         </h1>
         <p className="mt-3 text-sm text-muted-foreground">
           Eight product domains drawn as tube lines. Every line passes

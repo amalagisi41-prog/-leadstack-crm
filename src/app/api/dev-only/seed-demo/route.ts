@@ -7,7 +7,7 @@ import { LANDING_VARIANT } from "@/config/landing";
 import type { MemberStatus, Role } from "@/types";
 
 /**
- * Dev-only seed endpoint for the LeadStack public demo (#1004 sub-account).
+ * Dev-only seed endpoint for the AgentStack public demo (#1004 sub-account).
  *
  * Triple-gated:
  *   1. LANDING_VARIANT must be "leadstack" — buyer clones (variant "custom")

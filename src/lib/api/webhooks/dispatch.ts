@@ -29,7 +29,7 @@ import type { WebhookEventType } from "@/types/webhooks";
  *   - The originating API request should return as soon as the resource
  *     is written. Webhook delivery is async by design.
  *   - Subscriber endpoints can be slow, down, or untrusted — we never
- *     want them in the critical path of an LeadStack write.
+ *     want them in the critical path of an AgentStack write.
  *   - Failures are logged + recoverable via the manual replay endpoint.
  */
 

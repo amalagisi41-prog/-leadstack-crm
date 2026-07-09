@@ -16,7 +16,7 @@ import type { SubAccountMemberDoc } from "@/types/tenancy";
 
 /**
  * Public read-only calendar feed for one sub-account. Powers the
- * "Subscribe to my LeadStack bookings from Google Calendar" UX.
+ * "Subscribe to my AgentStack bookings from Google Calendar" UX.
  *
  *   GET /api/sub-accounts/{id}/calendar.ics?t=<token>
  *
@@ -90,7 +90,7 @@ export async function GET(
   const hostMode = host != null;
 
   // Identify the sub-account for the calendar display name. If the doc
-  // is missing the feed still works, just labelled "LeadStack bookings".
+  // is missing the feed still works, just labelled "AgentStack bookings".
   const subSnap = await db.doc(`subAccounts/${subAccountId}`).get();
   const subName = (subSnap.data()?.name as string | undefined) ?? null;
   let calendarName: string;
@@ -98,11 +98,11 @@ export async function GET(
     const who = hostMemberName ? `${hostMemberName}'s` : "My";
     calendarName = subName
       ? `${subName} — ${who} bookings`
-      : `${who} LeadStack bookings`;
+      : `${who} AgentStack bookings`;
   } else {
     calendarName = subName
-      ? `${subName} — LeadStack bookings`
-      : "LeadStack bookings";
+      ? `${subName} — AgentStack bookings`
+      : "AgentStack bookings";
   }
 
   const lookback = new Date(Date.now() - FEED_LOOKBACK_DAYS * 24 * 60 * 60_000);

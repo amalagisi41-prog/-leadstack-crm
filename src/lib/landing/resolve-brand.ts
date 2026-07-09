@@ -44,7 +44,7 @@ export async function resolveCustomBrand(): Promise<ResolvedBrand> {
 
     return {
       name:
-        agency.name && agency.name !== "LeadStack"
+        agency.name && agency.name !== "AgentStack"
           ? agency.name
           : fallback.name,
       logoUrl: (agency.logoUrl as string | null) ?? null,

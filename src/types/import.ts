@@ -8,7 +8,7 @@ import type { Timestamp, FieldValue } from "firebase/firestore";
  * service. Records carry an `external_id` (the source system's id) so re-runs
  * UPSERT instead of duplicating; child records (deals/tasks/events/notes)
  * carry `contact_external_id` to resolve their parent contact. The mapping
- * `subAccounts/{id}/importMappings/{key}` is the source-id ↔ LeadStack-id
+ * `subAccounts/{id}/importMappings/{key}` is the source-id ↔ AgentStack-id
  * index that powers both dedup and relationship resolution.
  */
 
@@ -66,7 +66,7 @@ export interface ImportJob {
 }
 
 /**
- * source-id ↔ LeadStack-id mapping, at
+ * source-id ↔ AgentStack-id mapping, at
  * `subAccounts/{subAccountId}/importMappings/{key}` where
  * key = `${system}:${entity}:${safe(externalId)}`. Server-only.
  * `parentId` is set for notes (the contact the note lives under) so an

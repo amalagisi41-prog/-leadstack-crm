@@ -1,5 +1,5 @@
 /**
- * GoHighLevel → LeadStack transformers (Phase 4, Slice 1).
+ * GoHighLevel → AgentStack transformers (Phase 4, Slice 1).
  *
  * PURE functions — no network, no Firestore — so they're fully unit/fixture
  * testable without a GHL account. They turn raw GHL API objects into the
@@ -90,13 +90,13 @@ export interface GhlCustomFieldDef {
  */
 export type GhlPhase = "contacts" | "opportunities" | "notes";
 
-/** GHL stage id → one of LeadStack's canonical 6 stages. */
+/** GHL stage id → one of AgentStack's canonical 6 stages. */
 export type GhlStageMap = Record<string, PipelineStageId>;
 
 export interface GhlCustomFieldMapEntry {
   ghlId: string;
   ghlName: string;
-  /** Target LeadStack custom-field key, or null to SKIP this field. */
+  /** Target AgentStack custom-field key, or null to SKIP this field. */
   leadstackKey: string | null;
 }
 
@@ -188,7 +188,7 @@ export interface DealChunkRecord {
 }
 
 /**
- * Resolve an opportunity's LeadStack stage. GHL's terminal STATUS wins over
+ * Resolve an opportunity's AgentStack stage. GHL's terminal STATUS wins over
  * the per-stage map: won → won, lost/abandoned → lost; otherwise the mapped
  * pipeline stage, falling back to `defaultStage`.
  */
@@ -264,7 +264,7 @@ export function suggestStageMap(pipelines: GhlPipeline[]): GhlStageMap {
   return map;
 }
 
-/** Map a GHL custom-field dataType → a LeadStack custom-field type. */
+/** Map a GHL custom-field dataType → an AgentStack custom-field type. */
 export function ghlDataTypeToCustomFieldType(
   dataType: string | undefined,
 ): CustomFieldType {
@@ -303,7 +303,7 @@ export interface SuggestedCustomField {
   options: string[];
 }
 
-/** Propose LeadStack custom-field defs to create from GHL's custom fields. */
+/** Propose AgentStack custom-field defs to create from GHL's custom fields. */
 export function suggestCustomFields(
   defs: GhlCustomFieldDef[],
 ): SuggestedCustomField[] {

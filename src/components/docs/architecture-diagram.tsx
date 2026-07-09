@@ -4,7 +4,7 @@ import {
 } from "./architecture-scene";
 
 /**
- * Static SVG render of the LeadStack architecture tube-map for
+ * Static SVG render of the AgentStack architecture tube-map for
  * /docs/architecture.
  *
  * Implemented as a server component that walks the same
@@ -213,10 +213,10 @@ export function ArchitectureDiagram() {
         className="block h-auto w-full min-w-[900px]"
       >
         <title id="architecture-title">
-          LeadStack architecture — eight product domains, one platform
+          AgentStack architecture — eight product domains, one platform
         </title>
         <desc id="architecture-desc">
-          Tube-map view of LeadStack&rsquo;s product surface. Eight
+          Tube-map view of AgentStack&rsquo;s product surface. Eight
           horizontal coloured lines, each one product domain: Platform
           (slate, top), Capture (blue), AI Agents (purple), CRM (red, the
           central trunk), Sales (amber), Comms (green), Automation (pink),

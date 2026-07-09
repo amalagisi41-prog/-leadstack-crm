@@ -143,7 +143,7 @@ export async function POST(request: Request) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "User-Agent": "LeadStack-Webhooks/1.0",
+        "User-Agent": "AgentStack-Webhooks/1.0",
         "LeadStack-Signature": signed.header,
         "LeadStack-Version": LATEST_API_VERSION,
         "Webhook-Event-Id": event.id,

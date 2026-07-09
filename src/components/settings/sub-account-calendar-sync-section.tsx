@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 
 /**
  * Calendar subscription panel — the .ics feed URL operators paste into
- * Google Calendar / Apple Calendar / Outlook to see their LeadStack
+ * Google Calendar / Apple Calendar / Outlook to see their AgentStack
  * bookings alongside other meetings.
  *
  * Read-only subscription, one-way push. External calendar polls our
@@ -138,7 +138,7 @@ export function SubAccountCalendarSyncSection() {
                   <strong>Add calendar</strong>.
                 </>,
                 <>
-                  Your LeadStack bookings appear within a few hours. Google
+                  Your AgentStack bookings appear within a few hours. Google
                   polls subscribed calendars on its own schedule (typically
                   8&ndash;24 hours).
                 </>,

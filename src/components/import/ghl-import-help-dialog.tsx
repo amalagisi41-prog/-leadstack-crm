@@ -70,7 +70,7 @@ export function GhlImportHelpDialog({
                 ],
                 [
                   "Custom fields",
-                  "GoHighLevel custom fields become LeadStack custom fields — you confirm the names + types before importing.",
+                  "GoHighLevel custom fields become AgentStack custom fields — you confirm the names + types before importing.",
                 ],
               ]}
             />
