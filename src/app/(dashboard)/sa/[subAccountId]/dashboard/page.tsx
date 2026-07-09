@@ -530,7 +530,7 @@ export default function DashboardPage() {
           )}
 
           {/* ── KPI Cards ────────────────────────────────────────────── */}
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <KpiCard
               label="YTD GCI"
               value={loading ? null : formatCurrency(ytdGci, currency)}
@@ -1076,29 +1076,27 @@ function KpiCard({
   return (
     <Link
       href={href}
-      className="block rounded-2xl border bg-card p-4 transition-all hover:border-primary/30 hover:shadow-sm"
+      className="block rounded-2xl border bg-card p-5 transition-all hover:border-primary/30 hover:shadow-sm"
     >
       <span
         className={cn(
-          "flex h-8 w-8 items-center justify-center rounded-lg",
+          "flex h-10 w-10 items-center justify-center rounded-xl",
           bgClass,
           accentClass,
         )}
       >
         {icon}
       </span>
-      <p className="mt-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        {label}
-      </p>
       {value === null ? (
-        <div className="mt-1 h-8 w-28 animate-pulse rounded bg-muted" />
+        <div className="mt-4 h-9 w-24 animate-pulse rounded bg-muted" />
       ) : (
-        <p className="mt-0.5 text-2xl font-bold tracking-tight">{value}</p>
+        <p className="mt-4 text-3xl font-bold tracking-tight">{value}</p>
       )}
+      <p className="mt-1 text-sm text-muted-foreground">{label}</p>
       <p
         className={cn(
-          "mt-0.5 text-xs",
-          deltaPositive ? "text-emerald-600" : "text-muted-foreground",
+          "mt-2 text-xs",
+          deltaPositive ? "text-emerald-600" : "text-muted-foreground/70",
         )}
       >
         {delta}
