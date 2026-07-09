@@ -147,7 +147,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const retryWorkspaceRepair = useCallback(async () => {
     const firebaseUser = getFirebaseAuth().currentUser;
-    if (!firebaseUser) return;
+    if (!firebaseUser) {
+      // Firebase's client SDK has no synchronous current user even though
+      // our own React state still shows one — surface this instead of
+      // silently no-op'ing, which previously left the Retry button looking
+      // like it did nothing at all.
+      setRepairError(
+        "Your sign-in session isn't available right now. Please reload the page.",
+      );
+      return;
+    }
     setRepairError(null);
     await runWorkspaceRepair(firebaseUser);
   }, [runWorkspaceRepair]);
