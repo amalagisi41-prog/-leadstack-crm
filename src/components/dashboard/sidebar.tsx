@@ -156,7 +156,7 @@ function SidebarContent() {
   const pathname = usePathname();
   const dueToday = useDueTodayCount();
   const unreadConversations = useUnreadConversationsCount();
-  const { agencyRole, memberships, loading } = useAuth();
+  const { agencyRole, memberships, membershipsLoaded, loading } = useAuth();
   const agency = useAgency();
   const activeSubId = activeSubAccountFromPath(pathname);
   const subRoot = activeSubId ? `/sa/${activeSubId}` : null;
@@ -366,7 +366,7 @@ function SidebarContent() {
           </>
         )}
 
-        {!showSubNav && !loading && (
+        {!showSubNav && !loading && membershipsLoaded && (
           <p className="rounded-md border border-white/10 px-3 py-3 text-xs text-white/40">
             Pick a sub-account from{" "}
             <Link href="/agency" className="text-blue-400 underline">
