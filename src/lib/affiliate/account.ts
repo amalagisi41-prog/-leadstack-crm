@@ -7,7 +7,7 @@ interface EnsureAccountInput {
   displayName?: string | null;
 }
 
-// Stub — the real affiliate-account logic is LeadStack-marketing-specific.
+// Stub — the real affiliate-account logic is AgentStack-marketing-specific.
 // All three exports are typed no-ops so `webhooks.ts` still type-checks;
 // the affiliate branch of the webhook is gated on
 // LANDING_VARIANT === "leadstack", which the buyer never sets, so these

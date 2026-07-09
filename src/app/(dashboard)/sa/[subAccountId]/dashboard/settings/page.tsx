@@ -149,7 +149,7 @@ export default function SettingsPage() {
               link pages, and PDFs. Independent of agency-level branding. */}
           <SubAccountBrandingSection />
 
-          {/* Subscription — admin only, and only on the LeadStack-branded
+          {/* Subscription — admin only, and only on the AgentStack-branded
               deployment. Buyer clones (LANDING_VARIANT === "custom") collect
               payment off-system and provision sub-accounts by invite, so this
               panel is hidden there. */}

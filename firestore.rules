@@ -1,6 +1,6 @@
 rules_version = '2';
 
-// LeadStack — agency / sub-account multi-tenant rules.
+// AgentStack — agency / sub-account multi-tenant rules.
 //
 // Roles live in two places:
 //   - Custom claims (set by /api/auth/signup and /api/auth/refresh-claims)
@@ -113,7 +113,7 @@ service cloud.firestore {
       allow write: if false;
     }
     // /appConfig/landingMetrics — public pageView + ctaClick counter read
-    // by the LeadStack landing footer. Incremented by /api/landing/metrics
+    // by the AgentStack landing footer. Incremented by /api/landing/metrics
     // via the Admin SDK (bypasses these rules); clients only read.
     match /appConfig/landingMetrics {
       allow read: if true;
@@ -379,7 +379,7 @@ service cloud.firestore {
         allow write: if false;
       }
 
-      // Import id-mappings (source-system id ↔ LeadStack id). Internal only —
+      // Import id-mappings (source-system id ↔ AgentStack id). Internal only —
       // written + read by the admin-SDK import routes; no client access.
       match /importMappings/{refId} {
         allow read, write: if false;

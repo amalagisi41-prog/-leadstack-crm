@@ -5,7 +5,7 @@ import { FieldValue, type Timestamp } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
 
 /**
- * Auto-register the LeadStack daily cron schedules on cold start.
+ * Auto-register the AgentStack daily cron schedules on cold start.
  *
  * Removes the manual "click into the QStash dashboard, create a
  * schedule" step from buyer onboarding. The buyer sets QStash env vars

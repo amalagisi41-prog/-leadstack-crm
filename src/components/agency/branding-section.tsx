@@ -27,7 +27,7 @@ export function BrandingSection() {
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
     if (!agency.loading && !hydrated) {
-      setName(agency.name === "LeadStack" ? "" : agency.name);
+      setName(agency.name === "AgentStack" ? "" : agency.name);
       setLogoUrl(agency.logoUrl ?? "");
       setSupportEmail(agency.supportEmail ?? "");
       setPrimaryDomain(agency.primaryDomain ?? "");
@@ -138,7 +138,7 @@ export function BrandingSection() {
         <p className="text-[11px] text-muted-foreground">
           Public https URL pointing at your logo (SVG or PNG, transparent
           background works best). Renders in the sidebar at 24px tall. Leave
-          blank to fall back to the LeadStack chevron mark.
+          blank to fall back to the AgentStack chevron mark.
         </p>
       </div>
 

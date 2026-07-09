@@ -17,9 +17,9 @@
  *     CUSTOM_BRAND.pricing block below for how to re-enable real
  *     self-serve resale.
  *
- *   - "leadstack" â€" the LeadStack-branded marketing landing that sells
- *     LeadStack itself (used on the leadstack.dev demo site). Only flip
- *     back to this if you're running the public LeadStack demo.
+ *   - "leadstack" â€" the AgentStack-branded marketing landing that sells
+ *     AgentStack itself (used on the leadstack.dev demo site). Only flip
+ *     back to this if you're running the public AgentStack demo.
  *
  * Flip LANDING_VARIANT below to swap which one renders at "/".
  */

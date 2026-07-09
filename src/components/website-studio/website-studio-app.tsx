@@ -28,7 +28,7 @@ export function WebsiteStudioApp() {
   const { subAccountId, subAccount } = useSubAccount();
   const agency = useAgency();
   const gateOpen = subAccount?.websiteStudioEnabledByAgency === true;
-  const brandName = agency.name === "LeadStack" ? "your CRM" : agency.name;
+  const brandName = agency.name === "AgentStack" ? "your CRM" : agency.name;
 
   const [loading, setLoading] = useState(true);
   const [site, setSite] = useState<AgentSiteDoc | null>(null);

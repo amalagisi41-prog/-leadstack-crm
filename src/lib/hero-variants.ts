@@ -1,4 +1,4 @@
-// Stub — the real hero-variant A/B/C test code is LeadStack-marketing-
+// Stub — the real hero-variant A/B/C test code is AgentStack-marketing-
 // specific and is not shipped to the org repo. This stub preserves the
 // public export shape so `webhooks.ts`, `hero-variant-server.ts`, and any
 // other importer still type-checks. None of these exports do anything

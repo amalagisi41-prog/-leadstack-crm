@@ -33,7 +33,7 @@ export interface VoiceCall {
   agencyId: string;
   subAccountId: string;
   /** Vapi's call id — same as `id`, kept duplicated for symmetry with
-   *  other LeadStack doc types that carry their natural key as a field. */
+   *  other AgentStack doc types that carry their natural key as a field. */
   callId: string;
   /** Caller's phone in E.164 from caller ID. Null for web-call tests
    *  invoked from Vapi's Talk widget. */

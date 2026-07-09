@@ -109,7 +109,7 @@ function Advantages({ comparison }: { comparison: Comparison }) {
   return (
     <section className="mb-12 sm:mb-16">
       <h2 className="mb-6 text-2xl font-bold tracking-tight sm:text-3xl">
-        How LeadStack is different
+        How AgentStack is different
       </h2>
       <div className="grid gap-4 sm:grid-cols-2">
         {comparison.advantages.map((advantage) => (
@@ -142,7 +142,7 @@ function FeatureTable({ comparison }: { comparison: Comparison }) {
                 Feature
               </th>
               <th className="px-4 py-3 text-center font-semibold sm:px-6">
-                LeadStack
+                AgentStack
               </th>
               <th className="px-4 py-3 text-center font-semibold sm:px-6">
                 {comparison.competitorShortName ?? comparison.competitorName}
@@ -329,7 +329,7 @@ function CrossLink({ currentSlug }: { currentSlug: string }) {
   return (
     <section className="mb-12 sm:mb-16">
       <h2 className="mb-4 text-xl font-bold tracking-tight">
-        Compare LeadStack to other tools
+        Compare AgentStack to other tools
       </h2>
       <div className="flex flex-wrap gap-2">
         {others.map((other) => (
@@ -338,7 +338,7 @@ function CrossLink({ currentSlug }: { currentSlug: string }) {
             href={`/leadstack-vs-${other.slug}`}
             className="inline-flex items-center gap-1.5 rounded-full border bg-card px-4 py-2 text-sm transition-colors hover:bg-muted"
           >
-            LeadStack vs {other.competitorName}
+            AgentStack vs {other.competitorName}
             <ChevronRight className="h-3.5 w-3.5" />
           </Link>
         ))}
@@ -378,7 +378,7 @@ function Disclaimer({ comparison }: { comparison: Comparison }) {
         Comparison provided for informational purposes; verify current
         {" "}details on the {comparison.competitorName} website before making
         a purchasing decision. All trademarks are property of their
-        respective owners. This is an independent comparison and LeadStack
+        respective owners. This is an independent comparison and AgentStack
         is not affiliated with or endorsed by {comparison.competitorName}.
       </p>
     </footer>

@@ -42,7 +42,7 @@ export type Comparison = {
       body: string;
     }>;
   };
-  /** 4-block advantage grid — what LeadStack does differently. */
+  /** 4-block advantage grid — what AgentStack does differently. */
   advantages: Array<{
     title: string;
     body: string;

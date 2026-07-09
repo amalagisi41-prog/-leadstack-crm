@@ -7,7 +7,7 @@ import { gohighlevelComparison } from "./gohighlevel";
  * The dynamic route reads this map to build generateStaticParams (so every
  * page is prerendered at build time + the HTML is fully crawlable from the
  * initial response — no React hydration required to see body copy), and
- * the LeadStack footer reads it to build the Compare column.
+ * the AgentStack footer reads it to build the Compare column.
  *
  * Add a new competitor:
  *   1. Create src/data/comparisons/{slug}.ts exporting a Comparison.

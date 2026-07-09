@@ -15,14 +15,14 @@ export const metadata: Metadata = {
 };
 
 /**
- * High-level About page. LeadStack-branded — only served on the
+ * High-level About page. AgentStack-branded — only served on the
  * "leadstack" landing variant; under the white-label "custom" variant it
  * 404s (the buyer's own deployment shouldn't expose our company's About).
  */
 
 const APPS = [
   {
-    name: "LeadStack",
+    name: "AgentStack",
     domain: "leadstack.dev",
     href: "https://leadstack.dev",
     blurb: "All-in-one, white-label CRM for agencies and small teams.",

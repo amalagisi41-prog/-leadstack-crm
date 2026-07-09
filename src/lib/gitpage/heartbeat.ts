@@ -5,7 +5,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
 
 /**
- * Liveness ping to gitpage so the upstream team knows this LeadStack
+ * Liveness ping to gitpage so the upstream team knows this AgentStack
  * deployment is alive, plus retrieves whether the agency owner has an
  * active gitpage Agency subscription. The response is cached in
  * `system/gitpageStatus` so the website-builder UI can render

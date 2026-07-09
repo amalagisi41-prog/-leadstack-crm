@@ -105,7 +105,7 @@ export function TeamBookingHelpDialog({
               </li>
               <li>
                 Assignment only considers{" "}
-                <strong className="text-foreground">LeadStack bookings</strong>
+                <strong className="text-foreground">AgentStack bookings</strong>
                 {" "}— it won&apos;t avoid time a host blocked in their personal
                 Google / Outlook calendar yet (that&apos;s the two-way-sync
                 upgrade).

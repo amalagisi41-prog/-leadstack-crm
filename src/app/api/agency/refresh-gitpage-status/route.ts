@@ -45,7 +45,7 @@ export async function POST(request: Request) {
 
   // Backfill: if the heartbeat couldn't confirm activation (network
   // failure, or — more commonly — gitpage's email-based subscription
-  // lookup doesn't match the agency owner email LeadStack sent), check
+  // lookup doesn't match the agency owner email AgentStack sent), check
   // whether any sub-account has a recent successful build. A build that
   // gitpage accepted within the last 7 days is stronger evidence than
   // the heartbeat. This matters when the operator has a working API key

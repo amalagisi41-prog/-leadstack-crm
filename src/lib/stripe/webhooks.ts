@@ -182,7 +182,7 @@ async function handleFoundersCheckout(session: Stripe.Checkout.Session) {
   // try/catch so any Firestore issue is logged and swallowed.
   //
   // Variant gate: the liveVisitors collection only exists on the
-  // LeadStack-branded demo. Buyer clones (LANDING_VARIANT === "custom")
+  // AgentStack-branded demo. Buyer clones (LANDING_VARIANT === "custom")
   // skip this entirely — no doc writes, no map collateral. Founders
   // checkout itself is leadstack-only, so this is defensive belt+braces.
   try {
@@ -240,7 +240,7 @@ async function handleFoundersCheckout(session: Stripe.Checkout.Session) {
     }
   }
 
-  // Affiliate program — only runs on the LeadStack-branded variant. Buyer
+  // Affiliate program — only runs on the AgentStack-branded variant. Buyer
   // clones (LANDING_VARIANT === "custom") skip this whole block; their
   // welcome email goes out without affiliate copy and no Firestore writes
   // hit the affiliates/referrals collections.

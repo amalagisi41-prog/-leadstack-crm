@@ -80,7 +80,7 @@ export function generateIcsFeed(input: FeedInput): string {
   const lines: string[] = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    `PRODID:-//LeadStack//Calendar Feed//${input.domain}//EN`,
+    `PRODID:-//AgentStack//Calendar Feed//${input.domain}//EN`,
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     `X-WR-CALNAME:${escapeIcsText(input.calendarName)}`,

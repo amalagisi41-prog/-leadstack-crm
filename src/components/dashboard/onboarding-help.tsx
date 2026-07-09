@@ -45,7 +45,7 @@ export function OnboardingHelp() {
         body: JSON.stringify({
           question: q,
           history,
-          brandName: agency.name === "LeadStack" ? undefined : agency.name,
+          brandName: agency.name === "AgentStack" ? undefined : agency.name,
         }),
       });
       const data = (await res.json().catch(() => ({}))) as {

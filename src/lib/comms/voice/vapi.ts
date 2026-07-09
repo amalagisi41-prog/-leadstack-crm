@@ -195,7 +195,7 @@ function buildAssistantBody(input: {
   return {
     // Vapi caps name at 40 chars; sub-account ids are ~20 chars so a
     // long prefix overflows. Truncate defensively.
-    name: `LeadStack sa:${input.subAccountId}`.slice(0, 40),
+    name: `AgentStack sa:${input.subAccountId}`.slice(0, 40),
     firstMessage: input.voice.greeting,
     endCallMessage: "Talk soon. Bye.",
     maxDurationSeconds: input.voice.maxCallSeconds,
@@ -391,7 +391,7 @@ export async function ensureVapiPhoneNumber(input: {
       twilioAuthToken: input.twilioConfig.authToken,
       assistantId: input.assistantId,
       // Same 40-char clamp as the assistant for symmetry.
-      name: `LeadStack sa:${input.subAccountId}`.slice(0, 40),
+      name: `AgentStack sa:${input.subAccountId}`.slice(0, 40),
     }),
   });
   return { phoneNumberId: created.id };

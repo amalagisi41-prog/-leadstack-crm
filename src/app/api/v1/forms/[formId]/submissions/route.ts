@@ -18,7 +18,7 @@ import type { FormField } from "@/types/forms";
  *   Body: { values: { [field_id]: string }, attribution?: {...} }
  *
  * Use case: agencies that host their own landing pages or use a different
- * form builder, but want the captured leads to land in their LeadStack
+ * form builder, but want the captured leads to land in their AgentStack
  * sub-account with the same downstream automation as a hosted form.
  *
  * Auth: a key with scope `forms-ingest` OR `admin`. forms-ingest is

@@ -349,7 +349,7 @@ export function VoiceChannelSection() {
                 <p className="mt-0.5 text-muted-foreground">
                   Skip AU regulatory bundles by attaching to a number
                   you provisioned directly in your Vapi dashboard.
-                  We&apos;ll bind it to a LeadStack-managed assistant —
+                  We&apos;ll bind it to an AgentStack-managed assistant —
                   any previously-assigned assistant will be replaced.
                 </p>
               </div>

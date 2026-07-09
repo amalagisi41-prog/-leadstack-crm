@@ -85,7 +85,7 @@ export function generateIcs(input: IcsInput): string {
   const lines: string[] = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    `PRODID:-//LeadStack//Booking//${input.domain}//EN`,
+    `PRODID:-//AgentStack//Booking//${input.domain}//EN`,
     "CALSCALE:GREGORIAN",
     `METHOD:${method}`,
     "BEGIN:VEVENT",
