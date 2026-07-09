@@ -15,6 +15,7 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { useSubAccount } from "@/context/sub-account-context";
 import { subscribeToForms, createForm, deleteForm } from "@/lib/firestore/forms";
+import { describeFirestoreError } from "@/lib/firebase/error";
 import { toDate } from "@/lib/format";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,7 +66,7 @@ export default function FormsPage() {
       window.location.href = saPath(`/forms/${id}`);
     } catch (err) {
       console.error(err);
-      toast.error("Couldn't create form. Try again.");
+      toast.error(`Couldn't create form. ${describeFirestoreError(err)}`);
     } finally {
       setCreating(false);
     }
@@ -85,7 +86,7 @@ export default function FormsPage() {
       window.location.href = saPath(`/forms/${id}`);
     } catch (err) {
       console.error(err);
-      toast.error("Couldn't create contact form. Try again.");
+      toast.error(`Couldn't create contact form. ${describeFirestoreError(err)}`);
     } finally {
       setCreating(false);
     }
