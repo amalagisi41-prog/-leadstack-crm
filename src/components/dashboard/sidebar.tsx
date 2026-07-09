@@ -276,7 +276,7 @@ function SidebarContent() {
             <div className="mb-4">
               <button
                 onClick={openAskAssistant}
-                className="flex w-full items-center gap-2.5 rounded-md bg-white/5 px-2 py-2 text-sm font-medium text-amber-300/90 transition-colors hover:bg-white/10 hover:text-amber-200"
+                className="flex w-full items-center gap-2.5 rounded-md bg-white/5 px-2 py-2 text-sm font-medium text-rose-300/90 transition-colors hover:bg-white/10 hover:text-rose-200"
               >
                 <Sparkles className="h-4 w-4 shrink-0" />
                 Ask AI

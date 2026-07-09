@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { Send, Sparkles, X } from "lucide-react";
+import { Bot, Send, Sparkles, X } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { CUSTOM_BRAND } from "@/config/landing";
 import { cn } from "@/lib/utils";
@@ -126,15 +126,20 @@ export function AskAssistantPanel() {
         aria-label={`Ask ${CUSTOM_BRAND.name}`}
       >
         {/* header */}
-        <div className="flex h-16 shrink-0 items-center justify-between border-b px-4">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-amber-500" />
-            <span className="font-semibold">Ask {CUSTOM_BRAND.name}</span>
+        <div className="flex shrink-0 items-center justify-between gap-3 bg-primary px-4 py-3.5 text-primary-foreground">
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rose-600">
+              <Bot className="h-5 w-5 text-white" />
+            </span>
+            <div>
+              <p className="font-semibold leading-tight">{CUSTOM_BRAND.name} AI</p>
+              <p className="text-xs text-primary-foreground/60">Ask me anything</p>
+            </div>
           </div>
           <button
             onClick={() => setOpen(false)}
             aria-label="Close"
-            className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="rounded-md p-1.5 text-primary-foreground/70 transition-colors hover:bg-white/10 hover:text-primary-foreground"
           >
             <X className="h-4 w-4" />
           </button>
@@ -172,13 +177,14 @@ export function AskAssistantPanel() {
           )}
 
           {messages.length === 0 && !thinking && (
-            <div className="flex flex-wrap gap-2 pt-2">
+            <div className="flex flex-col gap-2 pt-2">
               {suggestions.map((s) => (
                 <button
                   key={s}
                   onClick={() => void ask(s)}
-                  className="rounded-full border bg-background px-3 py-1.5 text-left text-xs transition-colors hover:bg-muted"
+                  className="flex items-center gap-2 rounded-full border bg-background px-3.5 py-2 text-left text-xs transition-colors hover:bg-muted"
                 >
+                  <Sparkles className="h-3.5 w-3.5 shrink-0 text-rose-500" />
                   {s}
                 </button>
               ))}
@@ -198,7 +204,7 @@ export function AskAssistantPanel() {
             ref={inputRef}
             rows={1}
             value={input}
-            placeholder="Ask me anything…"
+            placeholder={`Ask ${CUSTOM_BRAND.name} AI…`}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
@@ -206,13 +212,13 @@ export function AskAssistantPanel() {
                 void ask(input);
               }
             }}
-            className="max-h-32 min-h-[42px] flex-1 resize-none rounded-xl border bg-background px-3.5 py-2.5 text-sm outline-none placeholder:text-muted-foreground/60 focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/30"
+            className="max-h-32 min-h-[44px] flex-1 resize-none rounded-full border bg-muted/60 px-4 py-2.5 text-sm outline-none placeholder:text-muted-foreground/60 focus:border-rose-500/50 focus:ring-1 focus:ring-rose-500/30"
           />
           <button
             type="submit"
             disabled={!input.trim() || thinking}
             aria-label="Send"
-            className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl bg-foreground text-background transition-opacity hover:opacity-90 disabled:opacity-40"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-rose-600 text-white transition-opacity hover:opacity-90 disabled:opacity-40"
           >
             <Send className="h-4 w-4" />
           </button>
@@ -225,8 +231,8 @@ export function AskAssistantPanel() {
 function AssistantBubble({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex gap-2.5">
-      <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-foreground">
-        <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+      <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-rose-600">
+        <Sparkles className="h-3.5 w-3.5 text-white" />
       </span>
       <div className="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-tl-sm border bg-background px-3.5 py-2.5 text-sm leading-relaxed">
         {children}
@@ -254,7 +260,7 @@ export function AskAssistantButton({ className }: { className?: string }) {
         className,
       )}
     >
-      <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+      <Sparkles className="h-3.5 w-3.5 text-rose-500" />
       <span className="hidden sm:inline">Ask {CUSTOM_BRAND.name}</span>
     </button>
   );
