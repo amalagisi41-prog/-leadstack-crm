@@ -155,14 +155,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setAdminUid(cfg?.adminUid ?? null);
           setRole(userDoc.role);
           setStatus(userDoc.status);
-          setAgencyId(
+          let resolvedAgencyId =
             (claims.agencyId as string | undefined) ??
-              userDoc.primaryAgencyId ??
-              null,
-          );
+            userDoc.primaryAgencyId ??
+            null;
+          setAgencyId(resolvedAgencyId);
           setAgencyRole(
             (claims.agencyRole as AgencyRole | null | undefined) ?? null,
           );
+
+          // Self-heal: an active, signed-in user with no home agency
+          // shouldn't happen on the happy path (every signup route —
+          // email/password and OAuth — provisions one before returning),
+          // but a partial failure upstream can leave an account stuck
+          // staring at "sign in to view your agency" despite being fully
+          // authenticated. Try once, silently, to repair it.
+          if (!resolvedAgencyId) {
+            try {
+              const repairRes = await fetch("/api/auth/repair-workspace", {
+                method: "POST",
+                credentials: "include",
+              });
+              if (repairRes.ok) {
+                const repaired = (await repairRes.json()) as {
+                  agencyId?: string;
+                };
+                if (repaired.agencyId) {
+                  const fresh = await firebaseUser
+                    .getIdTokenResult(true)
+                    .catch(() => null);
+                  resolvedAgencyId =
+                    (fresh?.claims.agencyId as string | undefined) ??
+                    repaired.agencyId;
+                  setAgencyId(resolvedAgencyId);
+                  setAgencyRole(
+                    (fresh?.claims.agencyRole as
+                      | AgencyRole
+                      | null
+                      | undefined) ?? "owner",
+                  );
+                }
+              }
+            } catch (err) {
+              console.warn("[auth] repair-workspace failed", err);
+            }
+          }
 
           // Fire-and-forget: claim any pending sub-account invites for
           // this user's email. Handles the "invited to multiple
