@@ -15,7 +15,12 @@ export type FunnelGoalId =
   | "home_valuation"
   | "buyer_leads"
   | "listing_promo"
-  | "email_list";
+  | "email_list"
+  | "buyer_consult"
+  | "showing"
+  | "open_house"
+  | "luxury"
+  | "seller_guide";
 
 export type FunnelStatus = "draft" | "published";
 

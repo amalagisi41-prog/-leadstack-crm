@@ -32,6 +32,8 @@ import { cn } from "@/lib/utils";
 import { LogoMark } from "@/components/brand/logo-mark";
 import { CUSTOM_BRAND } from "@/config/landing";
 import { ONBOARDING_STEP_IDS } from "@/lib/onboarding/steps";
+import { useAuth } from "@/hooks/use-auth";
+import type { FunnelGoalId } from "@/types/funnel";
 
 /* ---------- types ---------- */
 
@@ -151,6 +153,8 @@ export function OnboardingWizard({
   initialCompleted,
 }: WizardProps) {
   const router = useRouter();
+  const { agencyRole } = useAuth();
+  const isAgencyOwner = agencyRole === "owner";
   const [step, setStep] = useState(0);
   const [outcomes, setOutcomes] = useState<Record<number, StepOutcome>>({});
   const [completed, setCompleted] = useState<Set<string>>(
@@ -164,6 +168,7 @@ export function OnboardingWizard({
   // Step 4 + 5 selections
   const [goals, setGoals] = useState<Set<string>>(new Set());
   const [systems, setSystems] = useState<Set<string>>(new Set());
+  const [launching, setLaunching] = useState(false);
 
   // Prefill the profile form from the saved Business Profile.
   useEffect(() => {
@@ -240,6 +245,60 @@ export function OnboardingWizard({
     markDone([...ONBOARDING_STEP_IDS]);
     router.replace(saPath("/dashboard"));
   }, [markDone, router, saPath]);
+
+  async function launchMarketingAndContinue() {
+    if (systems.size === 0) {
+      advance("skipped");
+      return;
+    }
+    setLaunching(true);
+    try {
+      // Funnels (Marketing Pages) are gated behind the Website Studio
+      // add-on. The agency owner going through their own onboarding
+      // wizard IS the person who'd flip that gate on anyway — auto-enable
+      // it here so "launch in one click" actually holds. Non-owners can't
+      // self-enable; their create calls below will 403 with a clear
+      // message instead.
+      if (isAgencyOwner) {
+        await fetch(`/api/agency/sub-accounts/${subAccountId}/feature-gates`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ websiteStudioEnabled: true }),
+        }).catch(() => undefined);
+      }
+
+      let created = 0;
+      let lastError = "";
+      for (const goalId of systems) {
+        const res = await fetch(`/api/sub-accounts/${subAccountId}/funnels`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ goal: goalId as FunnelGoalId }),
+        });
+        if (res.ok) {
+          created += 1;
+        } else {
+          const payload = (await res.json().catch(() => ({}))) as {
+            error?: string;
+          };
+          lastError = payload.error ?? "Couldn't create a marketing page.";
+        }
+      }
+
+      if (created > 0) {
+        toast.success(
+          `Launched ${created} marketing page${created > 1 ? "s" : ""} — find ${
+            created > 1 ? "them" : "it"
+          } under Marketing Pages.`,
+        );
+        advance("complete", ["form", "automation"]);
+      } else {
+        toast.error(lastError || "Couldn't launch marketing pages.");
+      }
+    } finally {
+      setLaunching(false);
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-background">
@@ -507,9 +566,9 @@ export function OnboardingWizard({
               <FooterNav
                 onBack={back}
                 onSkip={() => advance("skipped")}
-                onContinue={() =>
-                  advance(systems.size ? "complete" : "skipped", systems.size ? ["form", "automation"] : [])
-                }
+                onContinue={launchMarketingAndContinue}
+                continueDisabled={launching}
+                continueLabel={launching ? "Launching…" : "Continue"}
               />
             </StepFrame>
           )}
