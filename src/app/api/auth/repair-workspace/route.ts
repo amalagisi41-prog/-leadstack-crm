@@ -27,14 +27,38 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const auth = getAdminAuth();
-  const db = getAdminDb();
+  let auth, db;
+  try {
+    auth = getAdminAuth();
+    db = getAdminDb();
+  } catch (error) {
+    // Admin SDK init failure (e.g. missing/malformed FIREBASE_ADMIN_* env
+    // vars on this deployment) — surface it instead of letting Next.js's
+    // generic uncaught-exception 500 mask the real cause.
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error
+            ? `Server misconfiguration: ${error.message}`
+            : "Server misconfiguration.",
+      },
+      { status: 500 },
+    );
+  }
 
   let userRecord;
   try {
     userRecord = await auth.getUser(uid);
-  } catch {
-    return NextResponse.json({ error: "User account not found" }, { status: 404 });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error
+            ? `User account not found: ${error.message}`
+            : "User account not found",
+      },
+      { status: 404 },
+    );
   }
 
   const email = userRecord.email?.toLowerCase().trim();
@@ -43,8 +67,21 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   const existingAgencyId = userRecord.customClaims?.agencyId as string | undefined;
-  const userSnap = await db.doc(`users/${uid}`).get();
-  const userDoc = userSnap.exists ? userSnap.data() : null;
+  let userDoc: FirebaseFirestore.DocumentData | null;
+  try {
+    const userSnap = await db.doc(`users/${uid}`).get();
+    userDoc = userSnap.exists ? userSnap.data() ?? null : null;
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error
+            ? `Could not read your account: ${error.message}`
+            : "Could not read your account.",
+      },
+      { status: 500 },
+    );
+  }
 
   // Already has a home agency somewhere — nothing to repair. Return
   // whichever source has it so the client can just re-sync.

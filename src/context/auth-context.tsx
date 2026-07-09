@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  useCallback,
   useEffect,
   useState,
   type ReactNode,
@@ -58,6 +59,19 @@ export interface AuthContextValue {
    * gate on this, or it will act against an empty list on refresh.
    */
   membershipsLoaded: boolean;
+  /**
+   * Set when the automatic repair-workspace attempt (see below) ran and
+   * didn't produce an agencyId — either the request itself failed, or the
+   * endpoint responded with an error. Null means either repair hasn't run,
+   * isn't needed, or already succeeded. Surfaced so the "workspace couldn't
+   * be set up" empty state can show the real reason instead of a black box.
+   */
+  repairError: string | null;
+  /**
+   * Re-runs the repair-workspace call on demand (e.g. a "Retry setup"
+   * button) without requiring a full page reload / re-auth.
+   */
+  retryWorkspaceRepair: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextValue | undefined>(
@@ -74,6 +88,69 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [agencyRole, setAgencyRole] = useState<AgencyRole | null>(null);
   const [memberships, setMemberships] = useState<UserSubAccountMembership[]>([]);
   const [membershipsLoaded, setMembershipsLoaded] = useState(false);
+  const [repairError, setRepairError] = useState<string | null>(null);
+
+  // Self-heal: an active, signed-in user with no home agency shouldn't
+  // happen on the happy path (every signup route — email/password and
+  // OAuth — provisions one before returning), but a partial failure
+  // upstream can leave an account stuck staring at an empty agency page
+  // despite being fully authenticated. Returns the repaired agencyId, or
+  // null (and sets `repairError` to the real reason) if it didn't work.
+  const runWorkspaceRepair = useCallback(
+    async (firebaseUser: User): Promise<string | null> => {
+      try {
+        const repairRes = await fetch("/api/auth/repair-workspace", {
+          method: "POST",
+          credentials: "include",
+        });
+        if (repairRes.ok) {
+          const repaired = (await repairRes.json().catch(() => ({}))) as {
+            agencyId?: string;
+          };
+          if (repaired.agencyId) {
+            const fresh = await firebaseUser
+              .getIdTokenResult(true)
+              .catch(() => null);
+            const resolved =
+              (fresh?.claims.agencyId as string | undefined) ??
+              repaired.agencyId;
+            setAgencyId(resolved);
+            setAgencyRole(
+              (fresh?.claims.agencyRole as AgencyRole | null | undefined) ??
+                "owner",
+            );
+            setRepairError(null);
+            return resolved;
+          }
+          const reason = "Setup response was missing an agency id.";
+          console.warn("[auth] repair-workspace succeeded but returned no agencyId");
+          setRepairError(reason);
+          return null;
+        }
+        const body = (await repairRes.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+        const reason = body?.error || `Setup failed (HTTP ${repairRes.status}).`;
+        console.warn("[auth] repair-workspace failed", reason);
+        setRepairError(reason);
+        return null;
+      } catch (err) {
+        const reason =
+          err instanceof Error ? err.message : "Setup request failed.";
+        console.warn("[auth] repair-workspace failed", err);
+        setRepairError(reason);
+        return null;
+      }
+    },
+    [],
+  );
+
+  const retryWorkspaceRepair = useCallback(async () => {
+    const firebaseUser = getFirebaseAuth().currentUser;
+    if (!firebaseUser) return;
+    setRepairError(null);
+    await runWorkspaceRepair(firebaseUser);
+  }, [runWorkspaceRepair]);
 
   useEffect(() => {
     if (!isFirebaseConfigured()) {
@@ -164,41 +241,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             (claims.agencyRole as AgencyRole | null | undefined) ?? null,
           );
 
-          // Self-heal: an active, signed-in user with no home agency
-          // shouldn't happen on the happy path (every signup route —
-          // email/password and OAuth — provisions one before returning),
-          // but a partial failure upstream can leave an account stuck
-          // staring at "sign in to view your agency" despite being fully
-          // authenticated. Try once, silently, to repair it.
           if (!resolvedAgencyId) {
-            try {
-              const repairRes = await fetch("/api/auth/repair-workspace", {
-                method: "POST",
-                credentials: "include",
-              });
-              if (repairRes.ok) {
-                const repaired = (await repairRes.json()) as {
-                  agencyId?: string;
-                };
-                if (repaired.agencyId) {
-                  const fresh = await firebaseUser
-                    .getIdTokenResult(true)
-                    .catch(() => null);
-                  resolvedAgencyId =
-                    (fresh?.claims.agencyId as string | undefined) ??
-                    repaired.agencyId;
-                  setAgencyId(resolvedAgencyId);
-                  setAgencyRole(
-                    (fresh?.claims.agencyRole as
-                      | AgencyRole
-                      | null
-                      | undefined) ?? "owner",
-                  );
-                }
-              }
-            } catch (err) {
-              console.warn("[auth] repair-workspace failed", err);
-            }
+            resolvedAgencyId = await runWorkspaceRepair(firebaseUser);
+          } else {
+            setRepairError(null);
           }
 
           // Fire-and-forget: claim any pending sub-account invites for
@@ -259,7 +305,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       cleanupMembership();
       unsubscribe();
     };
-  }, []);
+  }, [runWorkspaceRepair]);
 
   return (
     <AuthContext.Provider
@@ -273,6 +319,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         agencyRole,
         memberships,
         membershipsLoaded,
+        repairError,
+        retryWorkspaceRepair,
       }}
     >
       {children}
