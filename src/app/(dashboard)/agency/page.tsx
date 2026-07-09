@@ -46,8 +46,17 @@ function ErrorBanner() {
 }
 
 function AgencyHomeContent() {
-  const { user, loading, agencyId, agencyRole, memberships } = useAuth();
+  const {
+    user,
+    loading,
+    agencyId,
+    agencyRole,
+    memberships,
+    repairError,
+    retryWorkspaceRepair,
+  } = useAuth();
   const [filter, setFilter] = useState("");
+  const [retrying, setRetrying] = useState(false);
   const isOwner = agencyRole === "owner";
 
   const visible = memberships.filter((m) =>
@@ -106,12 +115,35 @@ function AgencyHomeContent() {
     // account with no home agency (see repair-workspace) — reaching here
     // means that failed too. This is a real "contact support" state, not
     // a sign-in prompt, so don't tell an authenticated user to sign in.
+    // Surface the actual failure reason (repairError) instead of a black
+    // box, and let them retry without a full reload.
     return (
       <div className="rounded-2xl border bg-card p-8 text-center">
         <p className="text-sm font-medium">Your workspace couldn&apos;t be set up</p>
         <p className="mt-1 text-sm text-muted-foreground">
           Your account is signed in, but we couldn&apos;t link it to an agency.
-          Try reloading the page — if this keeps happening, contact support.
+        </p>
+        {repairError && (
+          <p className="mt-2 rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">
+            {repairError}
+          </p>
+        )}
+        <Button
+          className="mt-4"
+          disabled={retrying}
+          onClick={async () => {
+            setRetrying(true);
+            try {
+              await retryWorkspaceRepair();
+            } finally {
+              setRetrying(false);
+            }
+          }}
+        >
+          {retrying ? "Retrying…" : "Retry setup"}
+        </Button>
+        <p className="mt-3 text-xs text-muted-foreground">
+          If this keeps happening, contact support.
         </p>
       </div>
     );
