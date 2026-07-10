@@ -200,9 +200,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const tokenResult = await firebaseUser.getIdTokenResult(true).catch(() => null);
       const claims = tokenResult?.claims ?? {};
+      let usersDocReadError: { code?: string; message: string } | null = null;
       const userSnap = await getDoc(
         doc(getFirebaseDb(), "users", firebaseUser.uid),
-      ).catch(() => null);
+      ).catch((err) => {
+        usersDocReadError = {
+          code: (err as { code?: string })?.code,
+          message: err instanceof Error ? err.message : String(err),
+        };
+        return null;
+      });
       const userDoc = userSnap?.exists() ? (userSnap.data() as UserDoc) : null;
       setResolutionDebug({
         uid: firebaseUser.uid,
@@ -215,6 +222,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         userDocPrimaryAgencyId: userDoc?.primaryAgencyId ?? null,
         userDocStatus: userDoc?.status ?? null,
         userDocRole: userDoc?.role ?? null,
+        // Surfaced verbatim so a permission-denied (Firestore rules not
+        // deployed / deployed against the wrong project) is visible here
+        // instead of just showing up as three silent nulls above.
+        usersDocReadError,
       });
     } catch {
       // Non-fatal — the page-level render already computes a live fallback
@@ -284,15 +295,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // no claims, and drives the actual agencyId resolution below),
           // permanently stranding the account on "couldn't be set up"
           // with no visible error and no repair attempt ever firing.
+          let userSnapError: { code?: string; message: string } | null = null;
           const [cfgSnap, userSnap] = await Promise.all([
             getDoc(doc(db, "appConfig", "main")).catch(() => null),
-            getDoc(doc(db, "users", firebaseUser.uid)),
+            // Deliberately NOT wrapped in Promise.all-level try/catch — this
+            // read drives the actual agencyId resolution below, so a
+            // failure here must be visible, not silently swallowed by the
+            // outer catch (which previously left role/status/agencyId
+            // frozen at stale defaults with zero diagnostic trail — the
+            // exact "stuck with no visible reason" bug this whole debug
+            // panel exists to kill). Firestore errors carry a `.code`
+            // (e.g. "permission-denied") — surface it verbatim.
+            getDoc(doc(db, "users", firebaseUser.uid)).catch((err) => {
+              userSnapError = {
+                code: (err as { code?: string })?.code,
+                message: err instanceof Error ? err.message : String(err),
+              };
+              return null;
+            }),
           ]);
+
+          if (userSnapError) {
+            const debugSnapshot: Record<string, unknown> = {
+              uid: firebaseUser.uid,
+              email: firebaseUser.email,
+              clientProjectId:
+                getFirebaseAuth().app.options.projectId ?? null,
+              usersDocReadError: userSnapError,
+            };
+            console.warn(
+              "[auth] users/{uid} read failed — this is the actual blocker",
+              debugSnapshot,
+            );
+            setResolutionDebug(debugSnapshot);
+            setRepairError(
+              `Couldn't read your account record (${(userSnapError as { code?: string }).code ?? "unknown error"}). This is almost always a Firestore security-rules deployment issue, not a data problem — see the error code above.`,
+            );
+            setMembershipsLoaded(true);
+            setLoading(false);
+            return;
+          }
 
           const cfg = cfgSnap?.exists()
             ? (cfgSnap.data() as AppConfig)
             : null;
-          const userDoc = userSnap.exists()
+          const userDoc = userSnap?.exists()
             ? (userSnap.data() as UserDoc)
             : null;
 
