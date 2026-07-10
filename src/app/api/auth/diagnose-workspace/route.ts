@@ -77,6 +77,15 @@ export async function GET(request: Request): Promise<NextResponse> {
   return NextResponse.json({
     uid,
     email: userRecord.email ?? null,
+    // The Firebase project this SERVER (Admin SDK) is reading from. Compare
+    // it against `clientProjectId` in the browser's stuck-workspace debug
+    // box: if they differ, the client (NEXT_PUBLIC_FIREBASE_*) and server
+    // (FIREBASE_ADMIN_*) point at different projects — the client can never
+    // see data the server writes, no matter how many times you sign in.
+    serverProjectId:
+      auth.app.options.projectId ??
+      process.env.FIREBASE_ADMIN_PROJECT_ID ??
+      null,
     customClaims: userRecord.customClaims ?? null,
     userDoc: userSnap.exists ? userSnap.data() : null,
     userMembershipsSubAccounts: subAccountRows,

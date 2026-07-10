@@ -193,6 +193,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
     setRepairError(null);
+    // Refresh the debug snapshot on every manual retry too — the automatic
+    // resolution effect only captures it once per real auth-state change,
+    // so a click here would otherwise leave a stale (or never-set) snapshot
+    // behind instead of showing what THIS retry attempt actually saw.
+    try {
+      const tokenResult = await firebaseUser.getIdTokenResult(true).catch(() => null);
+      const claims = tokenResult?.claims ?? {};
+      const userSnap = await getDoc(
+        doc(getFirebaseDb(), "users", firebaseUser.uid),
+      ).catch(() => null);
+      const userDoc = userSnap?.exists() ? (userSnap.data() as UserDoc) : null;
+      setResolutionDebug({
+        uid: firebaseUser.uid,
+        email: firebaseUser.email,
+        clientProjectId: getFirebaseAuth().app.options.projectId ?? null,
+        hasTokenResult: !!tokenResult,
+        claimsAgencyId: claims.agencyId ?? null,
+        claimsAgencyRole: claims.agencyRole ?? null,
+        claimsStatus: claims.status ?? null,
+        userDocPrimaryAgencyId: userDoc?.primaryAgencyId ?? null,
+        userDocStatus: userDoc?.status ?? null,
+        userDocRole: userDoc?.role ?? null,
+      });
+    } catch {
+      // Non-fatal — the page-level render already computes a live fallback
+      // snapshot regardless of this succeeding.
+    }
     await runWorkspaceRepair();
   }, [runWorkspaceRepair]);
 
