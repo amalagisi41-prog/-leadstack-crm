@@ -68,6 +68,18 @@ export interface AuthContextValue {
    */
   repairError: string | null;
   /**
+   * Snapshot of exactly what the client resolved (uid, whether the token
+   * force-refresh succeeded, the raw claims, the raw userDoc fields) right
+   * before a repair attempt fires. Surfaced on the "workspace couldn't be
+   * set up" screen so a stuck account is screenshot-able for debugging
+   * without needing the user to open devtools — this is the only way to
+   * see what THIS browser actually received, since server-side diagnostics
+   * (the diagnose-workspace endpoint) can look completely healthy while the
+   * client still fails if e.g. the client and server Firebase configs
+   * don't point at the same project. Null once resolution succeeds cleanly.
+   */
+  resolutionDebug: Record<string, unknown> | null;
+  /**
    * Re-runs the repair-workspace call on demand (e.g. a "Retry setup"
    * button) without requiring a full page reload / re-auth.
    */
@@ -89,6 +101,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [memberships, setMemberships] = useState<UserSubAccountMembership[]>([]);
   const [membershipsLoaded, setMembershipsLoaded] = useState(false);
   const [repairError, setRepairError] = useState<string | null>(null);
+  const [resolutionDebug, setResolutionDebug] = useState<Record<
+    string,
+    unknown
+  > | null>(null);
 
   // Self-heal: an active, signed-in user with no home agency shouldn't
   // happen on the happy path (every signup route — email/password and
@@ -206,6 +222,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setStatus(null);
           setAgencyId(null);
           setAgencyRole(null);
+          setResolutionDebug(null);
           setMemberships([]);
           setMembershipsLoaded(true); // nothing to load — resolved
           setLoading(false);
@@ -282,21 +299,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           );
 
           if (!resolvedAgencyId) {
-            // Log what we actually saw before repairing — if this fires
-            // repeatedly for an account whose server-side data (custom
-            // claims + userDoc.primaryAgencyId) is known-good, the cause is
-            // almost certainly a stuck/corrupted local ID-token or
-            // IndexedDB persistence state in this specific browser profile,
-            // not a real data problem. That's undiagnosable after the fact
-            // without this line.
-            console.warn("[auth] no agencyId resolved — repairing", {
+            // Capture exactly what THIS browser resolved before repairing.
+            // If server-side diagnostics (diagnose-workspace, via the Admin
+            // SDK) look completely healthy but this snapshot keeps showing
+            // nulls no matter how many times the account signs out and back
+            // in, the client and server likely aren't even talking to the
+            // same Firebase project — clientProjectId here is the one fact
+            // that test needs and that only the browser can report.
+            const debugSnapshot: Record<string, unknown> = {
+              uid: firebaseUser.uid,
+              email: firebaseUser.email,
+              clientProjectId:
+                getFirebaseAuth().app.options.projectId ?? null,
               hasTokenResult: !!tokenResult,
               claimsAgencyId: claims.agencyId ?? null,
+              claimsAgencyRole: claims.agencyRole ?? null,
+              claimsStatus: claims.status ?? null,
               userDocPrimaryAgencyId: userDoc.primaryAgencyId ?? null,
-            });
+              userDocStatus: userDoc.status ?? null,
+              userDocRole: userDoc.role ?? null,
+            };
+            console.warn("[auth] no agencyId resolved — repairing", debugSnapshot);
+            setResolutionDebug(debugSnapshot);
             resolvedAgencyId = await runWorkspaceRepair();
           } else {
             setRepairError(null);
+            setResolutionDebug(null);
             // Resolved cleanly without needing repair — clear the reload
             // loop guard so a genuinely new problem later (a different
             // account signing into this same tab, say) isn't blocked by a
@@ -381,6 +409,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         memberships,
         membershipsLoaded,
         repairError,
+        resolutionDebug,
         retryWorkspaceRepair,
       }}
     >

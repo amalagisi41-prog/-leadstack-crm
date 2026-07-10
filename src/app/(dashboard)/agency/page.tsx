@@ -55,6 +55,7 @@ function AgencyHomeContent() {
     memberships,
     membershipsLoaded,
     repairError,
+    resolutionDebug,
     retryWorkspaceRepair,
   } = useAuth();
   const [filter, setFilter] = useState("");
@@ -130,6 +131,16 @@ function AgencyHomeContent() {
           <p className="mt-2 rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">
             {repairError}
           </p>
+        )}
+        {resolutionDebug && (
+          <div className="mt-3 rounded-lg border border-dashed bg-muted/40 p-3 text-left">
+            <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+              Debug info (screenshot this for support)
+            </p>
+            <pre className="mt-1.5 overflow-x-auto whitespace-pre-wrap break-all font-mono text-[11px] text-muted-foreground">
+              {JSON.stringify(resolutionDebug, null, 2)}
+            </pre>
+          </div>
         )}
         <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
           <Button
