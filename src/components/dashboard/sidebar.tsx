@@ -18,6 +18,7 @@ import {
   BarChart3,
   Settings,
   LogOut,
+  Building,
   Building2,
   Workflow,
   Globe,
@@ -126,6 +127,7 @@ const SUB_ACCOUNT_NAV_SECTIONS: NavSection[] = [
       { href: "/website-studio", label: "AI Website Studio", icon: LayoutTemplate, enabled: true },
       { href: "/funnels", label: "Marketing Pages", icon: Filter, enabled: true },
       { href: "/social", label: "Social Planner", icon: Share2, enabled: true },
+      { href: "/idx", label: "IDX Listings", icon: Building, enabled: true },
       {
         href: "/community",
         label: "Community",
@@ -166,10 +168,12 @@ function SidebarContent() {
   const [websiteStudioGate, setWebsiteStudioGate] = useState<boolean | null>(null);
   const [socialGate, setSocialGate] = useState<boolean | null>(null);
   const [communityGate, setCommunityGate] = useState<boolean | null>(null);
+  const [idxGate, setIdxGate] = useState<boolean | null>(null);
   const [broadcastsHidden, setBroadcastsHidden] = useState(false);
   const [websiteHidden, setWebsiteHidden] = useState(false);
   const [socialHidden, setSocialHidden] = useState(false);
   const [communityHidden, setCommunityHidden] = useState(false);
+  const [idxHidden, setIdxHidden] = useState(false);
 
   useEffect(() => {
     const linkSubIdLocal = activeSubId ?? memberships[0]?.subAccountId ?? null;
@@ -179,6 +183,7 @@ function SidebarContent() {
       setWebsiteStudioGate(null);
       setSocialGate(null);
       setCommunityGate(null);
+      setIdxGate(null);
       return;
     }
     return onSnapshot(
@@ -190,10 +195,12 @@ function SidebarContent() {
         setWebsiteStudioGate(data?.websiteStudioEnabledByAgency === true);
         setSocialGate(data?.socialPlannerEnabledByAgency === true);
         setCommunityGate(data?.communityEnabledByAgency === true);
+        setIdxGate(data?.idxEnabledByAgency === true);
         setBroadcastsHidden(data?.broadcastsHiddenWhenDisabled === true);
         setWebsiteHidden(data?.websiteHiddenWhenDisabled === true);
         setSocialHidden(data?.socialPlannerHiddenWhenDisabled === true);
         setCommunityHidden(data?.communityHiddenWhenDisabled === true);
+        setIdxHidden(data?.idxHiddenWhenDisabled === true);
       },
       () => {
         setBroadcastsGate(null);
@@ -201,6 +208,7 @@ function SidebarContent() {
         setWebsiteStudioGate(null);
         setSocialGate(null);
         setCommunityGate(null);
+        setIdxGate(null);
       },
     );
   }, [activeSubId, memberships]);
@@ -301,7 +309,8 @@ function SidebarContent() {
                       item.href === "/funnels") &&
                       websiteStudioGate === false) ||
                     (item.href === "/social" && socialGate === false) ||
-                    (item.href === "/community" && communityGate === false);
+                    (item.href === "/community" && communityGate === false) ||
+                    (item.href === "/idx" && idxGate === false);
 
                   const gateHidden =
                     (item.href === "/broadcasts" &&
@@ -315,7 +324,10 @@ function SidebarContent() {
                       socialHidden) ||
                     (item.href === "/community" &&
                       communityGate === false &&
-                      communityHidden);
+                      communityHidden) ||
+                    (item.href === "/idx" &&
+                      idxGate === false &&
+                      idxHidden);
 
                   if (gateHidden) return null;
 
