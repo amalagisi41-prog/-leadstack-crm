@@ -29,6 +29,7 @@ import {
   UserX,
   Users,
   Star,
+  Home,
 } from "lucide-react";
 import { subscribeToNotes } from "@/lib/firestore/contacts";
 import { subscribeToActivities } from "@/lib/firestore/activities";
@@ -350,6 +351,11 @@ function activityVisuals(type: ActivityType): {
       return {
         icon: <Users className="h-3 w-3 text-indigo-500" />,
         label: "Booking reassigned",
+      };
+    case "idx_listing_inquiry":
+      return {
+        icon: <Home className="h-3 w-3 text-teal-500" />,
+        label: "Listing inquiry",
       };
     case "note_added":
     default:

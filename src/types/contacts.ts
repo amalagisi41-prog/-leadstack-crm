@@ -222,7 +222,11 @@ export type ActivityType =
   | "booking_completed"
   // Operator/host reassigned a team booking to a different host. Written by
   // /api/events/by-id/[id]/assign.
-  | "booking_reassigned";
+  | "booking_reassigned"
+  // Written by /api/idx/[subAccountId]/[listingId]/inquire when a public
+  // listing-page visitor requests a showing / more info. See
+  // "IDX Listings (IDX Broker) v1".
+  | "idx_listing_inquiry";
 
 export interface Note {
   id: string;

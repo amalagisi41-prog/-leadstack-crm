@@ -87,6 +87,11 @@ const PUBLIC_PATHS = [
   //    visitor can't double-book a slot
   "/b",
   "/api/booking",
+  // Public IDX Listings search + detail pages — /idx/[subAccountId] and
+  // /idx/[subAccountId]/[listingId]. Server-rendered via the Admin SDK;
+  // 404s when the agency gate is off or IDX Broker isn't connected. No
+  // session needed.
+  "/idx",
   // Published agent websites — /agent/[subAccountId]/[slug]. Server-rendered
   // from the site doc via the Admin SDK; only renders when status ===
   // "published". Public marketing pages, no session needed.
