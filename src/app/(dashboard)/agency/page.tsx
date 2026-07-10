@@ -20,6 +20,7 @@ import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { useAgency } from "@/hooks/use-agency";
 import { getFirebaseDb } from "@/lib/firebase/client";
+import { signOutUser } from "@/lib/firebase/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -58,6 +59,7 @@ function AgencyHomeContent() {
   } = useAuth();
   const [filter, setFilter] = useState("");
   const [retrying, setRetrying] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
   const isOwner = agencyRole === "owner";
 
   const visible = memberships.filter((m) =>
@@ -129,20 +131,39 @@ function AgencyHomeContent() {
             {repairError}
           </p>
         )}
-        <Button
-          className="mt-4"
-          disabled={retrying}
-          onClick={async () => {
-            setRetrying(true);
-            try {
-              await retryWorkspaceRepair();
-            } finally {
-              setRetrying(false);
-            }
-          }}
-        >
-          {retrying ? "Retrying…" : "Retry setup"}
-        </Button>
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+          <Button
+            disabled={retrying}
+            onClick={async () => {
+              setRetrying(true);
+              try {
+                await retryWorkspaceRepair();
+              } finally {
+                setRetrying(false);
+              }
+            }}
+          >
+            {retrying ? "Retrying…" : "Retry setup"}
+          </Button>
+          {repairError?.includes("this browser session") && (
+            <Button
+              variant="outline"
+              disabled={signingOut}
+              onClick={async () => {
+                setSigningOut(true);
+                // A repair that reports success server-side but still can't
+                // resolve on a fresh reload usually means this browser's
+                // cached auth token / IndexedDB state is stuck, not that
+                // the account's data is wrong. Signing out fully and back
+                // in mints a brand-new token from scratch, which clears it.
+                await signOutUser().catch(() => undefined);
+                window.location.href = "/login";
+              }}
+            >
+              {signingOut ? "Signing out…" : "Sign out & try again"}
+            </Button>
+          )}
+        </div>
         <p className="mt-3 text-xs text-muted-foreground">
           If this keeps happening, contact support.
         </p>

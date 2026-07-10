@@ -282,6 +282,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           );
 
           if (!resolvedAgencyId) {
+            // Log what we actually saw before repairing — if this fires
+            // repeatedly for an account whose server-side data (custom
+            // claims + userDoc.primaryAgencyId) is known-good, the cause is
+            // almost certainly a stuck/corrupted local ID-token or
+            // IndexedDB persistence state in this specific browser profile,
+            // not a real data problem. That's undiagnosable after the fact
+            // without this line.
+            console.warn("[auth] no agencyId resolved — repairing", {
+              hasTokenResult: !!tokenResult,
+              claimsAgencyId: claims.agencyId ?? null,
+              userDocPrimaryAgencyId: userDoc.primaryAgencyId ?? null,
+            });
             resolvedAgencyId = await runWorkspaceRepair();
           } else {
             setRepairError(null);
