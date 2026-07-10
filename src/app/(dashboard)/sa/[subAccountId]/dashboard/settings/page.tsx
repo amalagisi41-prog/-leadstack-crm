@@ -23,6 +23,7 @@ import { SubAccountMetaSection } from "@/components/settings/sub-account-meta-se
 import { SubAccountEmailDomainSection } from "@/components/settings/sub-account-email-domain-section";
 import { SubAccountPayPalSection } from "@/components/settings/sub-account-paypal-section";
 import { SubAccountGoogleReviewSection } from "@/components/settings/sub-account-google-review-section";
+import { SubAccountIdxSection } from "@/components/settings/sub-account-idx-section";
 import { SubAccountStripeSection } from "@/components/settings/sub-account-stripe-section";
 import { SubAccountApiKeysSection } from "@/components/settings/sub-account-api-keys-section";
 import { SubAccountApiRecipesSection } from "@/components/settings/sub-account-api-recipes-section";
@@ -216,6 +217,11 @@ export default function SettingsPage() {
 
           {/* Stripe Connect — v2 roadmap placeholder. */}
           <SubAccountStripeSection />
+
+          {/* IDX Listings — realtor MLS search powered by the sub-account's
+              own IDX Broker account. Self-gates: renders a "Locked by your
+              agency" state until idxEnabledByAgency is on. */}
+          <SubAccountIdxSection />
 
           {/* Data export */}
           <section className="rounded-2xl border bg-card p-5">

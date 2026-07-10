@@ -28,6 +28,13 @@ const PUBLIC_PATHS = [
   // buyer doesn't need to click into the Firebase console — QStash is
   // already part of their onboarding. Signature-verified inside the route.
   "/api/cron/api-cleanup",
+  // IDX Listings sync — the every-6-hours QStash schedule fan-out trigger,
+  // plus (via the "/api/idx" prefix) the per-sub-account step worker it
+  // calls AND the public listing-detail "request a showing" inquire route.
+  // All signature-verified or otherwise self-gated inside the route. See
+  // "IDX Listings (IDX Broker) v1".
+  "/api/cron/idx-listing-sync",
+  "/api/idx",
   "/api/landing/metrics",
   "/api/landing/recent-purchases",
   // Live-visitors heartbeat ping for the agency dashboard's world map.
@@ -80,6 +87,11 @@ const PUBLIC_PATHS = [
   //    visitor can't double-book a slot
   "/b",
   "/api/booking",
+  // Public IDX Listings search + detail pages — /idx/[subAccountId] and
+  // /idx/[subAccountId]/[listingId]. Server-rendered via the Admin SDK;
+  // 404s when the agency gate is off or IDX Broker isn't connected. No
+  // session needed.
+  "/idx",
   // Published agent websites — /agent/[subAccountId]/[slug]. Server-rendered
   // from the site doc via the Admin SDK; only renders when status ===
   // "published". Public marketing pages, no session needed.

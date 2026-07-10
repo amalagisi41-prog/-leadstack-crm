@@ -210,12 +210,25 @@ export interface SubAccountDoc {
    */
   communityEnabledByAgency?: boolean;
   /**
+   * Agency-controlled gate for the IDX Listings feature — a realtor's own
+   * IDX Broker account synced into a branded public listings search + detail
+   * page, with lead capture wired into Contacts. Only the agency owner can
+   * flip it (PATCH /api/agency/sub-accounts/[id]/feature-gates). When `false`
+   * (or undefined on legacy docs): the IDX Listings sidebar entry renders a
+   * "Locked by your agency" state, the Settings credential section is locked,
+   * and the sync job / public pages / inquire route all 403. No tear-down on
+   * disable — `idxConfig` + synced `idxListings` are preserved, so re-enabling
+   * resumes instantly. Defaults to `false` at creation. Read `=== true` so
+   * legacy docs stay locked. See "IDX Listings (IDX Broker) v1".
+   */
+  idxEnabledByAgency?: boolean;
+  /**
    * Per-feature "hide instead of lock" overrides for the sidebar-gated features
-   * (Broadcasts, Website, Social Planner, Community). They ONLY take effect when
-   * the matching `*EnabledByAgency` gate is off. Default behavior (field
-   * undefined / `false`) is the legacy one: a disabled feature renders a
-   * greyed-out "Locked" sidebar entry so the tenant can see it exists (an
-   * upsell hook). When set `true`, a disabled feature's sidebar entry is
+   * (Broadcasts, Website, Social Planner, Community, IDX Listings). They ONLY
+   * take effect when the matching `*EnabledByAgency` gate is off. Default
+   * behavior (field undefined / `false`) is the legacy one: a disabled feature
+   * renders a greyed-out "Locked" sidebar entry so the tenant can see it exists
+   * (an upsell hook). When set `true`, a disabled feature's sidebar entry is
    * omitted entirely so the sub-account never knows the feature exists — some
    * agency owners prefer this. No effect while the feature is enabled. Only the
    * agency owner can flip these (same PATCH route as the gates). Read `=== true`
@@ -225,6 +238,7 @@ export interface SubAccountDoc {
   websiteHiddenWhenDisabled?: boolean;
   socialPlannerHiddenWhenDisabled?: boolean;
   communityHiddenWhenDisabled?: boolean;
+  idxHiddenWhenDisabled?: boolean;
   /**
    * BETA Facebook Messenger + Instagram DM connection. Null/undefined until the
    * sub-account admin connects a Page (only possible when
@@ -332,6 +346,14 @@ export interface SubAccountDoc {
    * Null until connected; cleared on disconnect.
    */
   ghlImportConfig?: GhlImportConfig | null;
+  /**
+   * IDX Broker connection for the realtor's own MLS listings. Holds the
+   * Platinum API access key (server-only, stored like `twilioConfig.authToken`)
+   * + the approved MLS id it searches. Null until connected; preserved (not
+   * torn down) when the agency `idxEnabledByAgency` gate is disabled. See
+   * "IDX Listings (IDX Broker) v1".
+   */
+  idxConfig?: IdxConfig | null;
 }
 
 export interface GhlImportConfig {
@@ -342,6 +364,20 @@ export interface GhlImportConfig {
   connectedByUid: string | null;
   connectedAt: Timestamp | FieldValue | null;
   lastValidatedAt: Timestamp | FieldValue | null;
+}
+
+export interface IdxConfig {
+  enabled: boolean;
+  /** IDX Broker Platinum API access key. Server-only — never sent to the browser. */
+  accessKey: string;
+  /** Which of the account's approved MLSs to search. Null until the operator picks one. */
+  mlsId: string | null;
+  /** "Listings provided by <MLS name>" attribution line shown on public pages. */
+  displayName: string | null;
+  lastSyncAt: Timestamp | FieldValue | null;
+  lastSyncStatus: "idle" | "syncing" | "success" | "failed";
+  lastSyncError: string | null;
+  listingCount: number;
 }
 
 export interface AccountContact {

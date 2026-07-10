@@ -54,6 +54,13 @@ const SCHEDULES: ScheduleSpec[] = [
     description:
       "Daily sweep of expired apiRequestLogs / apiIdempotency / webhookEvents.",
   },
+  {
+    scheduleId: "leadstack-idx-listing-sync",
+    path: "/api/cron/idx-listing-sync",
+    cron: "0 */6 * * *",
+    description:
+      "Every 6 hours, fan out to sync each IDX-connected sub-account's MLS listings.",
+  },
 ];
 
 const MARKER_PATH = "system/scheduleRegistration";

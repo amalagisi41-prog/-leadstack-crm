@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import {
   AlertTriangle,
   Globe,
+  Home,
   KeyRound,
   LayoutTemplate,
   Loader2,
@@ -38,6 +39,8 @@ import type { SubAccountDoc } from "@/types";
  *   - Public API access (REST + webhooks for /api/v1/*)
  *   - Broadcasts / Outbound AI calling / WhatsApp
  *   - Facebook + Instagram inbox (beta) — master switch, off by default
+ *   - IDX Listings — realtor MLS search powered by the sub-account's own
+ *     IDX Broker account
  *
  * Only visible to the agency owner (the list page gates rendering).
  * Disabling the email gate tears down the verified Resend domain; the API
@@ -64,6 +67,7 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
     subAccount?.websiteStudioEnabledByAgency === true;
   const initialSocial = subAccount?.socialPlannerEnabledByAgency === true;
   const initialCommunity = subAccount?.communityEnabledByAgency === true;
+  const initialIdx = subAccount?.idxEnabledByAgency === true;
   // "Hide instead of lock" overrides for the sidebar-gated features.
   const initialBroadcastsHidden =
     subAccount?.broadcastsHiddenWhenDisabled === true;
@@ -72,6 +76,7 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
     subAccount?.socialPlannerHiddenWhenDisabled === true;
   const initialCommunityHidden =
     subAccount?.communityHiddenWhenDisabled === true;
+  const initialIdxHidden = subAccount?.idxHiddenWhenDisabled === true;
   const hasLiveDomain = !!subAccount?.resendConfig;
   const [emailDomainEnabled, setEmailDomainEnabled] = useState(initialEmail);
   const [apiAccessEnabled, setApiAccessEnabled] = useState(initialApi);
@@ -86,6 +91,7 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
   const [socialPlannerEnabled, setSocialPlannerEnabled] =
     useState(initialSocial);
   const [communityEnabled, setCommunityEnabled] = useState(initialCommunity);
+  const [idxEnabled, setIdxEnabled] = useState(initialIdx);
   const [broadcastsHidden, setBroadcastsHidden] = useState(
     initialBroadcastsHidden,
   );
@@ -94,6 +100,7 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
   const [communityHidden, setCommunityHidden] = useState(
     initialCommunityHidden,
   );
+  const [idxHidden, setIdxHidden] = useState(initialIdxHidden);
   const [saving, setSaving] = useState(false);
   // Whether the deployment has Meta app creds (META_APP_ID/SECRET). null while
   // loading. The FB/IG inbox + Social Planner gates depend on it, so they're
@@ -130,10 +137,12 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
       setWebsiteEnabled(initialWebsite);
       setSocialPlannerEnabled(initialSocial);
       setCommunityEnabled(initialCommunity);
+      setIdxEnabled(initialIdx);
       setBroadcastsHidden(initialBroadcastsHidden);
       setWebsiteHidden(initialWebsiteHidden);
       setSocialHidden(initialSocialHidden);
       setCommunityHidden(initialCommunityHidden);
+      setIdxHidden(initialIdxHidden);
     }
   }, [
     open,
@@ -146,10 +155,12 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
     initialWebsite,
     initialSocial,
     initialCommunity,
+    initialIdx,
     initialBroadcastsHidden,
     initialWebsiteHidden,
     initialSocialHidden,
     initialCommunityHidden,
+    initialIdxHidden,
     subAccount?.id,
   ]);
 
@@ -167,10 +178,12 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
   const websiteStudioDirty = websiteStudioEnabled !== initialWebsiteStudio;
   const socialDirty = socialPlannerEnabled !== initialSocial;
   const communityDirty = communityEnabled !== initialCommunity;
+  const idxDirty = idxEnabled !== initialIdx;
   const broadcastsHiddenDirty = broadcastsHidden !== initialBroadcastsHidden;
   const websiteHiddenDirty = websiteHidden !== initialWebsiteHidden;
   const socialHiddenDirty = socialHidden !== initialSocialHidden;
   const communityHiddenDirty = communityHidden !== initialCommunityHidden;
+  const idxHiddenDirty = idxHidden !== initialIdxHidden;
   const dirty =
     emailDirty ||
     apiDirty ||
@@ -182,10 +195,12 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
     websiteStudioDirty ||
     socialDirty ||
     communityDirty ||
+    idxDirty ||
     broadcastsHiddenDirty ||
     websiteHiddenDirty ||
     socialHiddenDirty ||
-    communityHiddenDirty;
+    communityHiddenDirty ||
+    idxHiddenDirty;
 
   // Meta features can't work without app creds on the deployment. Gray out the
   // two Meta gates when unconfigured — but still allow turning an already-on
@@ -210,10 +225,12 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
         websiteStudioEnabled?: boolean;
         socialPlannerEnabled?: boolean;
         communityEnabled?: boolean;
+        idxEnabled?: boolean;
         broadcastsHiddenWhenDisabled?: boolean;
         websiteHiddenWhenDisabled?: boolean;
         socialPlannerHiddenWhenDisabled?: boolean;
         communityHiddenWhenDisabled?: boolean;
+        idxHiddenWhenDisabled?: boolean;
       } = {};
       if (emailDirty) payload.emailDomainEnabled = emailDomainEnabled;
       if (apiDirty) payload.apiAccessEnabled = apiAccessEnabled;
@@ -226,6 +243,7 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
         payload.websiteStudioEnabled = websiteStudioEnabled;
       if (socialDirty) payload.socialPlannerEnabled = socialPlannerEnabled;
       if (communityDirty) payload.communityEnabled = communityEnabled;
+      if (idxDirty) payload.idxEnabled = idxEnabled;
       if (broadcastsHiddenDirty)
         payload.broadcastsHiddenWhenDisabled = broadcastsHidden;
       if (websiteHiddenDirty)
@@ -234,6 +252,7 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
         payload.socialPlannerHiddenWhenDisabled = socialHidden;
       if (communityHiddenDirty)
         payload.communityHiddenWhenDisabled = communityHidden;
+      if (idxHiddenDirty) payload.idxHiddenWhenDisabled = idxHidden;
 
       const res = await fetch(
         `/api/agency/sub-accounts/${subAccount.id}/feature-gates`,
@@ -319,6 +338,13 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
             : "Community disabled. Members, posts, and courses preserved; the public pages go offline.",
         );
       }
+      if (idxDirty) {
+        parts.push(
+          idxEnabled
+            ? "IDX Listings enabled."
+            : "IDX Listings disabled. IDX Broker credentials + synced listings preserved; the public pages go offline.",
+        );
+      }
       // "Hide instead of lock" changes. Only meaningful while the feature is
       // off; mention the current effect so the agency owner knows what the
       // tenant will see.
@@ -331,6 +357,8 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
         hiddenChanges.push(`Social Planner ${socialHidden ? "hidden" : "shown as Locked"}`);
       if (communityHiddenDirty)
         hiddenChanges.push(`Community ${communityHidden ? "hidden" : "shown as Locked"}`);
+      if (idxHiddenDirty)
+        hiddenChanges.push(`IDX Listings ${idxHidden ? "hidden" : "shown as Locked"}`);
       if (hiddenChanges.length > 0) {
         parts.push(`When disabled: ${hiddenChanges.join(", ")}.`);
       }
@@ -531,6 +559,28 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
             CRM contacts. Disabling locks the Community sidebar entry AND takes
             the public group pages offline; members, posts, and courses are
             preserved, so re-enabling resumes instantly.
+          </GateToggle>
+
+          <GateToggle
+            checked={idxEnabled}
+            onChange={setIdxEnabled}
+            disabled={saving}
+            icon={<Home className="h-3.5 w-3.5 text-teal-600 dark:text-teal-400" />}
+            title="IDX Listings (realtor MLS search)"
+            hideOption={{
+              hidden: idxHidden,
+              onHiddenChange: setIdxHidden,
+              disabled: saving,
+            }}
+          >
+            When enabled, this sub-account can connect its own IDX Broker
+            account and publish a branded, searchable listings site synced
+            from their MLS — every listing view captures a lead into their
+            CRM. The realtor brings their own IDX Broker access key; we don&apos;t
+            provision or resell IDX Broker accounts. Disabling locks the IDX
+            Listings sidebar entry, the Settings credential section, and takes
+            the public listing pages offline; the access key and synced
+            listings are preserved, so re-enabling resumes instantly.
           </GateToggle>
         </div>
 

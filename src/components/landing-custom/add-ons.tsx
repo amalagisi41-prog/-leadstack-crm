@@ -84,6 +84,19 @@ const addOns: AddOn[] = [
     ],
   },
   {
+    category: "Visibility",
+    name: "IDX Core",
+    tagline: "A live, searchable MLS listings site — powered by your own IDX Broker account",
+    price: "$60",
+    billing: "/mo",
+    features: [
+      "Branded public listings search + detail pages",
+      "Auto-synced from your IDX Broker account every 6 hours",
+      "Every listing view captures a lead straight into your CRM",
+      "\"Request a showing\" form on every listing",
+    ],
+  },
+  {
     category: "Social",
     name: "Social Planner",
     tagline: "Schedule once, publish everywhere",

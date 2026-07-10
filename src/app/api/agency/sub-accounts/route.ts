@@ -175,6 +175,7 @@ export async function POST(request: Request) {
       websiteEnabledByAgency: false,
       websiteStudioEnabledByAgency: false,
       communityEnabledByAgency: false,
+      idxEnabledByAgency: false,
       metaConfig: null,
       bookingConfig: null,
       sendWindow: null,
