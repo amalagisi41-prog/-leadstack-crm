@@ -10,3 +10,4 @@ export * from "./whatsapp-templates";
 export * from "./website";
 export * from "./api";
 export * from "./webhooks";
+export * from "./idx";

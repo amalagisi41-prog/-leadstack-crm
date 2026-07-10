@@ -237,6 +237,19 @@ service cloud.firestore {
         allow write: if false;
       }
 
+      // IDX Listings — MLS listings synced from the sub-account's own IDX
+      // Broker account (see "IDX Listings (IDX Broker) v1"). Members read so
+      // the operator's /sa/[id]/idx browser hydrates; the public /idx/* pages
+      // read via the Admin SDK instead (unauthenticated visitors have no
+      // Firebase session). All writes go through the scheduled sync job.
+      match /idxListings/{listingId} {
+        allow read: if canAccessSub(
+          subAccountId,
+          get(/databases/$(database)/documents/subAccounts/$(subAccountId)).data.agencyId
+        );
+        allow write: if false;
+      }
+
       // Legacy AI replies config — pre-refactor. New configs go to
       // aiAgent/* above; this rule stays so the lazy migration helper can
       // still read the old doc on the next webhook hit. Safe to remove

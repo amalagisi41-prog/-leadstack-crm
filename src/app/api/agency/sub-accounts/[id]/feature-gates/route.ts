@@ -25,6 +25,10 @@ import type { ResendConfig } from "@/types";
  *   - `metaInboxEnabled` — BETA master switch for the Facebook Messenger +
  *     Instagram DM inbox channels. Pure toggle today (no consumer slices
  *     yet) so the feature stays inert + invisible while off.
+ *   - `idxEnabled` — IDX Listings (realtor MLS search powered by the
+ *     sub-account's own IDX Broker account). Disabling locks the Settings
+ *     credential section, the sync job, and the public /idx/* pages +
+ *     inquire route, but preserves `idxConfig` + synced listings.
  *
  * Auth: agency owner only (requireSubAccountMember + role check). Sub-account
  * admins can NOT flip their own gates — the whole point is that the agency
@@ -42,6 +46,7 @@ interface PatchBody {
   websiteStudioEnabled?: boolean;
   socialPlannerEnabled?: boolean;
   communityEnabled?: boolean;
+  idxEnabled?: boolean;
   // "Hide instead of lock" overrides for the sidebar-gated features.
   // Only take effect while the matching gate is off. See `*HiddenWhenDisabled`
   // on SubAccountDoc.
@@ -49,6 +54,7 @@ interface PatchBody {
   websiteHiddenWhenDisabled?: boolean;
   socialPlannerHiddenWhenDisabled?: boolean;
   communityHiddenWhenDisabled?: boolean;
+  idxHiddenWhenDisabled?: boolean;
 }
 
 export async function PATCH(
@@ -82,6 +88,7 @@ export async function PATCH(
   const wantsWebsiteStudio = typeof body.websiteStudioEnabled === "boolean";
   const wantsSocialPlanner = typeof body.socialPlannerEnabled === "boolean";
   const wantsCommunity = typeof body.communityEnabled === "boolean";
+  const wantsIdx = typeof body.idxEnabled === "boolean";
   const wantsBroadcastsHidden =
     typeof body.broadcastsHiddenWhenDisabled === "boolean";
   const wantsWebsiteHidden =
@@ -90,6 +97,7 @@ export async function PATCH(
     typeof body.socialPlannerHiddenWhenDisabled === "boolean";
   const wantsCommunityHidden =
     typeof body.communityHiddenWhenDisabled === "boolean";
+  const wantsIdxHidden = typeof body.idxHiddenWhenDisabled === "boolean";
   if (
     !wantsEmail &&
     !wantsApi &&
@@ -101,15 +109,17 @@ export async function PATCH(
     !wantsWebsiteStudio &&
     !wantsSocialPlanner &&
     !wantsCommunity &&
+    !wantsIdx &&
     !wantsBroadcastsHidden &&
     !wantsWebsiteHidden &&
     !wantsSocialPlannerHidden &&
-    !wantsCommunityHidden
+    !wantsCommunityHidden &&
+    !wantsIdxHidden
   ) {
     return NextResponse.json(
       {
         error:
-          "At least one of `emailDomainEnabled`, `apiAccessEnabled`, `broadcastsEnabled`, `outboundVoiceEnabled`, `whatsappEnabled`, `metaInboxEnabled`, `websiteEnabled`, `socialPlannerEnabled`, `broadcastsHiddenWhenDisabled`, `websiteHiddenWhenDisabled`, or `socialPlannerHiddenWhenDisabled` (boolean) is required.",
+          "At least one of `emailDomainEnabled`, `apiAccessEnabled`, `broadcastsEnabled`, `outboundVoiceEnabled`, `whatsappEnabled`, `metaInboxEnabled`, `websiteEnabled`, `socialPlannerEnabled`, `communityEnabled`, `idxEnabled`, `broadcastsHiddenWhenDisabled`, `websiteHiddenWhenDisabled`, `socialPlannerHiddenWhenDisabled`, `communityHiddenWhenDisabled`, or `idxHiddenWhenDisabled` (boolean) is required.",
       },
       { status: 400 },
     );
@@ -242,6 +252,14 @@ export async function PATCH(
     updates.communityEnabledByAgency = body.communityEnabled;
   }
 
+  if (wantsIdx) {
+    // No tear-down — idxConfig + already-synced idxListings are preserved.
+    // Disabling 403s the Settings section, the sync job, and the public
+    // /idx/* pages + inquire route, and locks the sidebar entry; re-enabling
+    // restores everything instantly without re-pasting the access key.
+    updates.idxEnabledByAgency = body.idxEnabled;
+  }
+
   // "Hide instead of lock" overrides. Pure presentation flags — they don't
   // change any runtime enforcement (a disabled feature's routes 403 the same
   // way regardless); they only decide whether the sidebar shows a greyed
@@ -259,6 +277,9 @@ export async function PATCH(
   }
   if (wantsCommunityHidden) {
     updates.communityHiddenWhenDisabled = body.communityHiddenWhenDisabled;
+  }
+  if (wantsIdxHidden) {
+    updates.idxHiddenWhenDisabled = body.idxHiddenWhenDisabled;
   }
 
   await subRef.update(updates);
@@ -281,6 +302,7 @@ export async function PATCH(
       ? { socialPlannerEnabled: body.socialPlannerEnabled }
       : {}),
     ...(wantsCommunity ? { communityEnabled: body.communityEnabled } : {}),
+    ...(wantsIdx ? { idxEnabled: body.idxEnabled } : {}),
     ...(wantsBroadcastsHidden
       ? { broadcastsHiddenWhenDisabled: body.broadcastsHiddenWhenDisabled }
       : {}),
@@ -295,6 +317,9 @@ export async function PATCH(
       : {}),
     ...(wantsCommunityHidden
       ? { communityHiddenWhenDisabled: body.communityHiddenWhenDisabled }
+      : {}),
+    ...(wantsIdxHidden
+      ? { idxHiddenWhenDisabled: body.idxHiddenWhenDisabled }
       : {}),
     ...(clearedDomain ? { clearedDomain: true } : {}),
   });

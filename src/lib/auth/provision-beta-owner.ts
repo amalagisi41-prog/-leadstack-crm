@@ -97,6 +97,7 @@ export async function provisionBetaOwner({
     websiteEnabledByAgency: false,
     websiteStudioEnabledByAgency: false,
     communityEnabledByAgency: false,
+    idxEnabledByAgency: false,
     metaConfig: null,
     bookingConfig: null,
     sendWindow: null,
