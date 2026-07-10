@@ -19,7 +19,7 @@ import {
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { useAgency } from "@/hooks/use-agency";
-import { getFirebaseDb } from "@/lib/firebase/client";
+import { getFirebaseAuth, getFirebaseDb } from "@/lib/firebase/client";
 import { signOutUser } from "@/lib/firebase/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,6 +50,8 @@ function AgencyHomeContent() {
   const {
     user,
     loading,
+    role,
+    status,
     agencyId,
     agencyRole,
     memberships,
@@ -132,16 +134,42 @@ function AgencyHomeContent() {
             {repairError}
           </p>
         )}
-        {resolutionDebug && (
-          <div className="mt-3 rounded-lg border border-dashed bg-muted/40 p-3 text-left">
-            <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-              Debug info (screenshot this for support)
-            </p>
-            <pre className="mt-1.5 overflow-x-auto whitespace-pre-wrap break-all font-mono text-[11px] text-muted-foreground">
-              {JSON.stringify(resolutionDebug, null, 2)}
-            </pre>
-          </div>
-        )}
+        {(() => {
+          // Computed directly at render time from values useAuth() already
+          // exposes on every render, rather than relying on the one-shot
+          // `resolutionDebug` snapshot the auth-resolution effect sets at a
+          // specific moment — that snapshot can be stale-null on this render
+          // (e.g. a bfcache-restored page after the "Sign out & try again"
+          // navigation resumes frozen JS state without re-running the
+          // effect), which was leaving this box missing even though the
+          // stuck error text still showed. Always showing a live snapshot
+          // here guarantees it's never empty in this branch.
+          let clientProjectId: string | null = null;
+          try {
+            clientProjectId = getFirebaseAuth().app.options.projectId ?? null;
+          } catch {
+            clientProjectId = null;
+          }
+          const liveSnapshot = {
+            uid: user?.uid ?? null,
+            email: user?.email ?? null,
+            clientProjectId,
+            role,
+            status,
+            agencyRole,
+            ...(resolutionDebug ?? {}),
+          };
+          return (
+            <div className="mt-3 rounded-lg border border-dashed bg-muted/40 p-3 text-left">
+              <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                Debug info (screenshot this for support)
+              </p>
+              <pre className="mt-1.5 overflow-x-auto whitespace-pre-wrap break-all font-mono text-[11px] text-muted-foreground">
+                {JSON.stringify(liveSnapshot, null, 2)}
+              </pre>
+            </div>
+          );
+        })()}
         <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
           <Button
             disabled={retrying}
