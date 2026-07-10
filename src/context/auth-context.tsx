@@ -118,8 +118,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             // terminal and won't self-heal on its own. A full reload
             // guarantees a brand-new auth cycle (and a brand-new listener)
             // against the now-correct server state.
-            if (typeof window !== "undefined") {
+            //
+            // Guard against a reload loop: if repair keeps "succeeding"
+            // (the server genuinely has an agencyId) but something else
+            // stops the client from resolving it fresh-load after
+            // fresh-load, reloading forever looks exactly like a frozen
+            // screen. Only reload once per browser session.
+            const loopGuardKey = "agentstack:workspace-repair-reloaded";
+            const alreadyReloaded =
+              typeof window !== "undefined" &&
+              window.sessionStorage.getItem(loopGuardKey) === "1";
+            if (!alreadyReloaded && typeof window !== "undefined") {
+              window.sessionStorage.setItem(loopGuardKey, "1");
               window.location.reload();
+              return repaired.agencyId;
+            }
+            if (alreadyReloaded) {
+              setRepairError(
+                "Your account has a valid workspace, but this browser session can't load it. Try signing out and back in, or contact support.",
+              );
+              return null;
             }
             return repaired.agencyId;
           }
@@ -210,12 +228,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const claims = tokenResult?.claims ?? {};
 
           const db = getFirebaseDb();
+          // appConfig/main's rule requires the `status` custom claim
+          // already be on the token (isActive()) — even with the
+          // force-refresh above, Firestore's own re-auth of its active
+          // connection can lag a tick behind the Auth SDK's token cache
+          // update, so this read can still be transiently denied right
+          // after sign-in/claims changes. It's only used for the legacy
+          // `adminUid` field below, so let it fail independently instead
+          // of using Promise.all — otherwise one denied, non-critical read
+          // aborts the users/{uid} read too (which only needs basic auth,
+          // no claims, and drives the actual agencyId resolution below),
+          // permanently stranding the account on "couldn't be set up"
+          // with no visible error and no repair attempt ever firing.
           const [cfgSnap, userSnap] = await Promise.all([
-            getDoc(doc(db, "appConfig", "main")),
+            getDoc(doc(db, "appConfig", "main")).catch(() => null),
             getDoc(doc(db, "users", firebaseUser.uid)),
           ]);
 
-          const cfg = cfgSnap.exists()
+          const cfg = cfgSnap?.exists()
             ? (cfgSnap.data() as AppConfig)
             : null;
           const userDoc = userSnap.exists()
@@ -255,6 +285,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             resolvedAgencyId = await runWorkspaceRepair();
           } else {
             setRepairError(null);
+            // Resolved cleanly without needing repair — clear the reload
+            // loop guard so a genuinely new problem later (a different
+            // account signing into this same tab, say) isn't blocked by a
+            // stale flag from an earlier session.
+            if (typeof window !== "undefined") {
+              window.sessionStorage.removeItem(
+                "agentstack:workspace-repair-reloaded",
+              );
+            }
           }
 
           // Fire-and-forget: claim any pending sub-account invites for
