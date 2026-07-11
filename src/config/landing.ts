@@ -177,7 +177,7 @@ export const CUSTOM_BRAND: CustomBrand = {
       features: [
         "Everything in Broker",
         "White-glove concierge onboarding",
-        "Custom pipeline stages & AI persona tuned for high-end transactions",
+        "A concierge-tuned deal journey & AI assistant for high-end transactions",
         "Geo-targeted luxury Marketing Pages",
         "Premium AI model tier for every conversation",
         "Dedicated account manager",

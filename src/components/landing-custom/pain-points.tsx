@@ -13,8 +13,8 @@ const pains = [
   },
   {
     emoji: "🧠",
-    heading: "Your pipeline lives in your head.",
-    body: "When a deal sits too long at \"Showing Scheduled,\" you don't notice until it's dead. A visual pipeline with stage timers makes the problem obvious.",
+    heading: "Every deal lives in your head, not a system.",
+    body: "When a buyer goes quiet after \"Showing Scheduled,\" you don't notice until they're gone. One glance shows exactly who's stalled and for how long — no spreadsheet, no memory required.",
   },
 ];
 

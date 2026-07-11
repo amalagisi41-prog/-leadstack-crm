@@ -14,7 +14,7 @@ export function CTA({ brand }: { brand: ResolvedBrand }) {
           </span>
         </h2>
         <p className="mx-auto mt-4 max-w-xl text-lg text-muted-foreground">
-          Book a 20-minute call. We&apos;ll import your contacts, configure your pipeline, and have you running with AI follow-up before the week is out.
+          Book a 20-minute call. We&apos;ll import your contacts, set up your deal stages the way you actually work, and have your AI assistant answering leads before the week is out. No tech skills needed — we do the setup with you.
         </p>
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Button

@@ -24,7 +24,7 @@ const faqs = [
   {
     question: "Does it work for teams and brokerages?",
     answer:
-      "Yes. The Broker plan gives each agent their own sub-account (isolated contacts and pipeline) under one brokerage login. Territory assignment routes inbound leads to the right agent automatically. Brokers get a top-level view across all agents. Top-producing luxury teams can start from the Luxury Broker plan for a concierge-tuned setup out of the box.",
+      "Yes. The Broker plan gives each agent their own sub-account (isolated contacts and deals) under one brokerage login. Territory assignment routes inbound leads to the right agent automatically. Brokers get a top-level view across all agents. Top-producing luxury teams can start from the Luxury Broker plan for a concierge-tuned setup out of the box.",
   },
   {
     question: "How does the AI work?",
