@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Home, BedDouble, Bath, MapPin, Heart } from "lucide-react";
+import { Home, BedDouble, Bath, MapPin, Heart, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface HousePalette {
@@ -65,6 +65,53 @@ const statusStyles: Record<Status, string> = {
   New: "bg-emerald-600 text-white",
 };
 
+const filters = ["Price", "Beds", "Baths", "More"];
+
+const mapPins = [
+  { x: 28, y: 30, price: "$489k" },
+  { x: 62, y: 22, price: null },
+  { x: 78, y: 48, price: "$612k" },
+  { x: 40, y: 58, price: null },
+  { x: 55, y: 72, price: null },
+  { x: 20, y: 68, price: null },
+];
+
+function MapPanel() {
+  return (
+    <div className="relative hidden h-full min-h-[150px] w-full overflow-hidden rounded-md bg-[#E4ECE0] sm:block">
+      <svg viewBox="0 0 100 90" className="h-full w-full" preserveAspectRatio="none" aria-hidden="true">
+        <rect width="100" height="90" fill="#E4ECE0" />
+        <path d="M0,20 Q30,10 55,25 T100,15" stroke="#F5F1E6" strokeWidth="2.5" fill="none" />
+        <path d="M0,55 Q35,45 60,60 T100,50" stroke="#F5F1E6" strokeWidth="2.5" fill="none" />
+        <path d="M15,0 Q25,40 20,90" stroke="#F5F1E6" strokeWidth="2" fill="none" />
+        <path d="M70,0 Q75,45 80,90" stroke="#F5F1E6" strokeWidth="2" fill="none" />
+        <circle cx="18" cy="12" r="7" fill="#CFE0C6" />
+        <circle cx="85" cy="70" r="10" fill="#CFE0C6" />
+      </svg>
+      {mapPins.map((p, i) => (
+        <div
+          key={i}
+          className="absolute flex -translate-x-1/2 -translate-y-full flex-col items-center"
+          style={{ left: `${p.x}%`, top: `${p.y}%` }}
+        >
+          {p.price && (
+            <span className="mb-0.5 rounded bg-[#1a2540] px-1 py-[1px] text-[6px] font-bold text-white shadow-sm">
+              {p.price}
+            </span>
+          )}
+          <svg width="10" height="13" viewBox="0 0 10 13" fill="none">
+            <path
+              d="M5 13C5 13 10 7.5 10 4.6C10 2.06 7.76 0 5 0C2.24 0 0 2.06 0 4.6C0 7.5 5 13 5 13Z"
+              fill={p.price ? "#1a2540" : "#4F91FF"}
+            />
+            <circle cx="5" cy="4.6" r="1.8" fill="white" />
+          </svg>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function HouseThumb({ palette, uid }: { palette: HousePalette; uid: string }) {
   const skyId = `idx-sky-${uid}`;
   return (
@@ -110,41 +157,45 @@ function HouseThumb({ palette, uid }: { palette: HousePalette; uid: string }) {
 function ListingCard({
   listing,
   uid,
+  compact,
 }: {
   listing: (typeof listings)[number];
   uid: string;
+  compact?: boolean;
 }) {
   return (
     <div className="overflow-hidden rounded-lg border bg-background shadow-sm">
-      <div className="relative h-16 sm:h-24">
+      <div className={compact ? "relative h-14" : "relative h-16 sm:h-20"}>
         <HouseThumb palette={listing.palette} uid={uid} />
         <div className="absolute left-1 top-1 flex flex-wrap gap-0.5">
-          <span className={`rounded px-1 py-[1px] text-[6px] font-bold uppercase tracking-wide sm:text-[7px] ${statusStyles[listing.status]}`}>
+          <span className={`rounded px-1 py-[1px] text-[6px] font-bold uppercase tracking-wide ${statusStyles[listing.status]}`}>
             {listing.status}
           </span>
-          {listing.tag && (
-            <span className="rounded bg-black/55 px-1 py-[1px] text-[6px] font-semibold text-white sm:text-[7px]">
+          {listing.tag && !compact && (
+            <span className="rounded bg-black/55 px-1 py-[1px] text-[6px] font-semibold text-white">
               {listing.tag}
             </span>
           )}
         </div>
-        <span className="absolute right-1 top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-white/90 shadow-sm sm:h-4 sm:w-4">
-          <Heart className="h-2 w-2 text-slate-500 sm:h-2.5 sm:w-2.5" />
+        <span className="absolute right-1 top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-white/90 shadow-sm">
+          <Heart className="h-2 w-2 text-slate-500" />
         </span>
       </div>
-      <div className="p-2 sm:p-2.5">
-        <p className="text-[11px] font-bold sm:text-sm">{listing.price}</p>
-        <div className="mt-1 flex items-center gap-2 text-[9px] text-muted-foreground sm:text-[10px]">
+      <div className="p-1.5 sm:p-2">
+        <p className="text-[10px] font-bold sm:text-[11px]">{listing.price}</p>
+        <div className="mt-0.5 flex items-center gap-1.5 text-[8px] text-muted-foreground sm:text-[9px]">
           <span className="flex items-center gap-0.5">
-            <BedDouble className="h-2.5 w-2.5" /> {listing.beds}
+            <BedDouble className="h-2 w-2" /> {listing.beds}
           </span>
           <span className="flex items-center gap-0.5">
-            <Bath className="h-2.5 w-2.5" /> {listing.baths}
+            <Bath className="h-2 w-2" /> {listing.baths}
           </span>
         </div>
-        <p className="mt-0.5 flex items-center gap-0.5 truncate text-[9px] text-muted-foreground sm:text-[10px]">
-          <MapPin className="h-2.5 w-2.5 shrink-0" /> {listing.addr}
-        </p>
+        {!compact && (
+          <p className="mt-0.5 flex items-center gap-0.5 truncate text-[8px] text-muted-foreground sm:text-[9px]">
+            <MapPin className="h-2 w-2 shrink-0" /> {listing.addr}
+          </p>
+        )}
       </div>
     </div>
   );
@@ -169,9 +220,9 @@ export function IdxShowcase() {
           </p>
         </div>
 
-        <div className="mx-auto grid max-w-5xl items-center gap-12 lg:grid-cols-2">
+        <div className="mx-auto grid max-w-6xl items-center gap-14 lg:grid-cols-[1.35fr_1fr]">
           {/* Device mockups */}
-          <div className="relative mx-auto w-full max-w-md">
+          <div className="relative mx-auto w-full max-w-xl pb-12 pl-8 sm:pb-16 sm:pl-14">
             {/* Laptop */}
             <div className="rounded-t-xl border-4 border-b-0 border-[#1a2540] bg-[#1a2540] p-1.5 shadow-2xl">
               <div className="overflow-hidden rounded-md bg-background">
@@ -183,24 +234,46 @@ export function IdxShowcase() {
                     yourbrand.com/listings
                   </span>
                 </div>
-                <div className="flex items-center justify-between px-3 pt-2.5">
-                  <span className="text-[10px] font-semibold sm:text-xs">Featured Listings</span>
-                  <span className="text-[9px] font-medium text-blue-500">View All</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2 p-3">
-                  {listings.map((l, i) => (
-                    <ListingCard key={l.addr} listing={l} uid={`lap-${i}`} />
+
+                {/* Filter bar */}
+                <div className="flex items-center gap-1 border-b px-3 py-1.5">
+                  <span className="flex items-center gap-1 rounded border bg-background px-1.5 py-1 text-[7px] text-muted-foreground">
+                    <Search className="h-2 w-2" /> Area, City, ZIP
+                  </span>
+                  {filters.map((f) => (
+                    <span key={f} className="hidden rounded border px-1.5 py-1 text-[7px] text-muted-foreground sm:inline-block">
+                      {f} ▾
+                    </span>
                   ))}
+                  <span className="ml-auto shrink-0 rounded bg-[#1a2540] px-1.5 py-1 text-[7px] font-semibold text-white">
+                    Save Search
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between px-3 pt-2">
+                  <span className="text-[9px] font-bold uppercase tracking-wide sm:text-[10px]">Featured Listings</span>
+                  <span className="text-[8px] font-medium text-blue-500 sm:text-[9px]">View All</span>
+                </div>
+
+                {/* Map + listings split */}
+                <div className="grid grid-cols-1 gap-2 p-2.5 sm:grid-cols-2 sm:p-3">
+                  <MapPanel />
+                  <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
+                    {listings.map((l, i) => (
+                      <ListingCard key={l.addr} listing={l} uid={`lap-${i}`} compact />
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
             {/* Laptop base */}
-            <div className="mx-auto h-3 w-[104%] max-w-[26rem] -translate-x-[2%] rounded-b-xl bg-gradient-to-b from-[#2a3f5f] to-[#1a2540]" />
+            <div className="ml-auto h-3 w-full max-w-[30rem] rounded-b-xl bg-gradient-to-b from-[#2a3f5f] to-[#1a2540]" />
 
-            {/* Phone, overlapping bottom-right — fixed 9:19.5 aspect ratio +
-                notch + home indicator so it actually reads as a phone body
-                rather than a rounded card. */}
-            <div className="absolute -bottom-10 -right-6 w-28 sm:w-32">
+            {/* Phone standing in front, overlapping the laptop's bottom-left
+                corner (mirrors the composition realtors' IDX vendors use:
+                phone in front, laptop behind). Fixed 9:19.5 aspect ratio +
+                notch + home indicator so it actually reads as a phone body. */}
+            <div className="absolute -bottom-4 left-0 z-10 w-28 sm:-bottom-6 sm:w-36">
               <div className="rounded-[2rem] border-[5px] border-[#1a2540] bg-[#1a2540] shadow-2xl">
                 <div
                   className="relative overflow-hidden rounded-[1.5rem] bg-background"
@@ -210,7 +283,7 @@ export function IdxShowcase() {
                   <div className="flex h-full flex-col pt-4">
                     <div className="flex items-center justify-between px-2 pb-1">
                       <Home className="h-2.5 w-2.5 text-blue-500" />
-                      <span className="text-[7px] font-semibold text-muted-foreground">Listings</span>
+                      <span className="text-[7px] font-bold uppercase tracking-wide text-muted-foreground">Featured Listings</span>
                     </div>
                     <div className="flex flex-1 flex-col gap-1.5 overflow-hidden px-1.5">
                       {listings.slice(0, 2).map((l, i) => (
