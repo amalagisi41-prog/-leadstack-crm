@@ -2,17 +2,97 @@ import Link from "next/link";
 import { Home, BedDouble, Bath, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const listings = [
-  { price: "$489,000", beds: 3, baths: 2, addr: "47 Elmwood Ave", tone: "from-blue-400 to-indigo-500" },
-  { price: "$612,500", beds: 4, baths: 3, addr: "22 Maple St", tone: "from-purple-400 to-pink-500" },
-  { price: "$358,900", beds: 2, baths: 1, addr: "9 Birchwood Ln", tone: "from-teal-400 to-blue-500" },
-  { price: "$725,000", beds: 5, baths: 4, addr: "104 Ridgeview Dr", tone: "from-amber-400 to-orange-500" },
+interface HousePalette {
+  skyTop: string;
+  skyBottom: string;
+  ground: string;
+  house: string;
+  roof: string;
+  door: string;
+  tree: string;
+}
+
+const listings: {
+  price: string;
+  beds: number;
+  baths: number;
+  addr: string;
+  palette: HousePalette;
+}[] = [
+  {
+    price: "$489,000",
+    beds: 3,
+    baths: 2,
+    addr: "47 Elmwood Ave",
+    palette: { skyTop: "#DBEAFE", skyBottom: "#EFF6FF", ground: "#C7DFC0", house: "#F8FAFC", roof: "#4338CA", door: "#3730A3", tree: "#4D8C57" },
+  },
+  {
+    price: "$612,500",
+    beds: 4,
+    baths: 3,
+    addr: "22 Maple St",
+    palette: { skyTop: "#FBE7F3", skyBottom: "#FDF2F8", ground: "#CBE3C4", house: "#FDF4FF", roof: "#BE185D", door: "#9D174D", tree: "#4D8C57" },
+  },
+  {
+    price: "$358,900",
+    beds: 2,
+    baths: 1,
+    addr: "9 Birchwood Ln",
+    palette: { skyTop: "#CCFBF1", skyBottom: "#ECFEFF", ground: "#C4E4CB", house: "#F0FDFA", roof: "#0F766E", door: "#115E59", tree: "#4D8C57" },
+  },
+  {
+    price: "$725,000",
+    beds: 5,
+    baths: 4,
+    addr: "104 Ridgeview Dr",
+    palette: { skyTop: "#FDECC8", skyBottom: "#FFF7ED", ground: "#D8E4B8", house: "#FFFBEB", roof: "#C2410C", door: "#9A3412", tree: "#4D8C57" },
+  },
 ];
 
-function ListingCard({ listing }: { listing: (typeof listings)[number] }) {
+function HouseThumb({ palette, uid }: { palette: HousePalette; uid: string }) {
+  const skyId = `idx-sky-${uid}`;
+  return (
+    <svg
+      viewBox="0 0 120 80"
+      className="block h-full w-full"
+      preserveAspectRatio="xMidYMax slice"
+      aria-hidden="true"
+    >
+      <defs>
+        <linearGradient id={skyId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={palette.skyTop} />
+          <stop offset="100%" stopColor={palette.skyBottom} />
+        </linearGradient>
+      </defs>
+      <rect width="120" height="80" fill={`url(#${skyId})`} />
+      <rect x="0" y="62" width="120" height="18" fill={palette.ground} />
+      <rect x="8" y="46" width="4" height="16" fill="#8B5E3C" />
+      <circle cx="10" cy="42" r="10" fill={palette.tree} />
+      <polygon points="30,38 62,15 95,38" fill={palette.roof} />
+      <rect x="35" y="38" width="55" height="30" fill={palette.house} stroke={palette.roof} strokeWidth="1" />
+      <rect x="72" y="51" width="11" height="17" rx="1" fill={palette.door} />
+      <rect x="42" y="45" width="13" height="13" rx="1.5" fill="white" stroke={palette.roof} strokeWidth="1.5" />
+      <line x1="48.5" y1="45" x2="48.5" y2="58" stroke={palette.roof} strokeWidth="0.75" />
+      <line x1="42" y1="51.5" x2="55" y2="51.5" stroke={palette.roof} strokeWidth="0.75" />
+      <rect x="60" y="45" width="13" height="13" rx="1.5" fill="white" stroke={palette.roof} strokeWidth="1.5" />
+      <line x1="66.5" y1="45" x2="66.5" y2="58" stroke={palette.roof} strokeWidth="0.75" />
+      <line x1="60" y1="51.5" x2="73" y2="51.5" stroke={palette.roof} strokeWidth="0.75" />
+    </svg>
+  );
+}
+
+function ListingCard({
+  listing,
+  uid,
+}: {
+  listing: (typeof listings)[number];
+  uid: string;
+}) {
   return (
     <div className="overflow-hidden rounded-lg border bg-background shadow-sm">
-      <div className={`h-14 bg-gradient-to-br ${listing.tone} sm:h-20`} />
+      <div className="h-14 sm:h-20">
+        <HouseThumb palette={listing.palette} uid={uid} />
+      </div>
       <div className="p-2 sm:p-2.5">
         <p className="text-[11px] font-bold sm:text-sm">{listing.price}</p>
         <div className="mt-1 flex items-center gap-2 text-[9px] text-muted-foreground sm:text-[10px]">
@@ -65,8 +145,8 @@ export function IdxShowcase() {
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-2 p-3">
-                  {listings.map((l) => (
-                    <ListingCard key={l.addr} listing={l} />
+                  {listings.map((l, i) => (
+                    <ListingCard key={l.addr} listing={l} uid={`lap-${i}`} />
                   ))}
                 </div>
               </div>
@@ -82,8 +162,8 @@ export function IdxShowcase() {
                   <span className="text-[7px] font-semibold text-muted-foreground">Listings</span>
                 </div>
                 <div className="flex flex-col gap-1.5 px-1.5 pb-2">
-                  {listings.slice(0, 2).map((l) => (
-                    <ListingCard key={l.addr} listing={l} />
+                  {listings.slice(0, 2).map((l, i) => (
+                    <ListingCard key={l.addr} listing={l} uid={`ph-${i}`} />
                   ))}
                 </div>
               </div>
