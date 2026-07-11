@@ -197,17 +197,28 @@ export function IdxShowcase() {
             {/* Laptop base */}
             <div className="mx-auto h-3 w-[104%] max-w-[26rem] -translate-x-[2%] rounded-b-xl bg-gradient-to-b from-[#2a3f5f] to-[#1a2540]" />
 
-            {/* Phone, overlapping bottom-right */}
-            <div className="absolute -bottom-8 -right-4 w-28 rounded-[1.4rem] border-4 border-[#1a2540] bg-[#1a2540] p-1 shadow-2xl sm:w-32">
-              <div className="overflow-hidden rounded-[1rem] bg-background">
-                <div className="flex items-center justify-between px-2 py-1.5">
-                  <Home className="h-2.5 w-2.5 text-blue-500" />
-                  <span className="text-[7px] font-semibold text-muted-foreground">Listings</span>
-                </div>
-                <div className="flex flex-col gap-1.5 px-1.5 pb-2">
-                  {listings.slice(0, 2).map((l, i) => (
-                    <ListingCard key={l.addr} listing={l} uid={`ph-${i}`} />
-                  ))}
+            {/* Phone, overlapping bottom-right — fixed 9:19.5 aspect ratio +
+                notch + home indicator so it actually reads as a phone body
+                rather than a rounded card. */}
+            <div className="absolute -bottom-10 -right-6 w-28 sm:w-32">
+              <div className="rounded-[2rem] border-[5px] border-[#1a2540] bg-[#1a2540] shadow-2xl">
+                <div
+                  className="relative overflow-hidden rounded-[1.5rem] bg-background"
+                  style={{ aspectRatio: "9 / 19.5" }}
+                >
+                  <div className="absolute left-1/2 top-0 z-10 h-3 w-12 -translate-x-1/2 rounded-b-lg bg-[#1a2540]" />
+                  <div className="flex h-full flex-col pt-4">
+                    <div className="flex items-center justify-between px-2 pb-1">
+                      <Home className="h-2.5 w-2.5 text-blue-500" />
+                      <span className="text-[7px] font-semibold text-muted-foreground">Listings</span>
+                    </div>
+                    <div className="flex flex-1 flex-col gap-1.5 overflow-hidden px-1.5">
+                      {listings.slice(0, 2).map((l, i) => (
+                        <ListingCard key={l.addr} listing={l} uid={`ph-${i}`} />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="absolute bottom-1.5 left-1/2 h-[3px] w-9 -translate-x-1/2 rounded-full bg-foreground/25" />
                 </div>
               </div>
             </div>
