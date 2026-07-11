@@ -1,8 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { DM_Sans, Geist_Mono } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { RefTracker } from "@/components/affiliate/ref-tracker";
 import { AnalyticsScripts } from "@/components/analytics-scripts";
+import { RegisterServiceWorker } from "@/components/pwa/register-service-worker";
 import { CUSTOM_BRAND, LANDING_VARIANT } from "@/config/landing";
 import "./globals.css";
 
@@ -26,12 +27,22 @@ export const metadata: Metadata =
     ? {
         title: `${CUSTOM_BRAND.name} — ${CUSTOM_BRAND.tagline}`,
         description: CUSTOM_BRAND.shortDescription,
+        appleWebApp: { title: CUSTOM_BRAND.name, statusBarStyle: "default" },
+        icons: { apple: "/icons/apple-touch-icon.png" },
       }
     : {
         title: "AgentStack — The all-in-one CRM for teams that actually close",
         description:
           "Capture leads, run pipelines, and book meetings from one simple workspace. Built for small teams that want to replace five tools with one.",
+        appleWebApp: { title: "AgentStack", statusBarStyle: "default" },
+        icons: { apple: "/icons/apple-touch-icon.png" },
       };
+
+// Separate from `metadata` per the Next.js 14+ split -- themeColor lives
+// here now, not on the Metadata object.
+export const viewport: Viewport = {
+  themeColor: "#173B7A",
+};
 
 export default function RootLayout({
   children,
@@ -55,6 +66,7 @@ export default function RootLayout({
         )}
         <Providers>{children}</Providers>
         <RefTracker />
+        <RegisterServiceWorker />
         {process.env.NEXT_PUBLIC_META_PIXEL_ID && (
           <noscript>
             {/* Meta Pixel no-JS fallback — must be a bare <img> tag.

@@ -118,6 +118,13 @@ const PUBLIC_PATHS = [
   // reach crawlers unauthenticated.
   "/robots.txt",
   "/sitemap.xml",
+  // PWA installability — the browser fetches these unauthenticated while
+  // deciding whether to offer "Add to Home Screen"; a login redirect here
+  // would make the site permanently uninstallable. /sw.js is also served
+  // from /public but .js isn't in the middleware matcher's static-asset
+  // exclusion list (unlike images), so it still needs an explicit entry.
+  "/manifest.webmanifest",
+  "/sw.js",
   // Affiliate program — own session model (magic-link HMAC cookie), not
   // Firebase Auth. Auth checks happen inside each route/page.
   "/affiliate",

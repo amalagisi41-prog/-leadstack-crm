@@ -5,6 +5,7 @@ import { Sidebar } from "@/components/dashboard/sidebar";
 import { Header } from "@/components/dashboard/header";
 import { CommandPalette } from "@/components/search/command-palette";
 import { AskAssistantPanel } from "@/components/dashboard/ask-assistant-panel";
+import { InstallPrompt } from "@/components/pwa/install-prompt";
 
 export default function DashboardLayout({
   children,
@@ -34,6 +35,7 @@ export default function DashboardLayout({
           onMenuClick={() => setSidebarOpen(true)}
           onOpenSearch={() => setSearchOpen(true)}
         />
+        <InstallPrompt />
         <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
       </div>
       <CommandPalette open={searchOpen} onOpenChange={setSearchOpen} />
