@@ -9,10 +9,11 @@ import type { WorkflowNode, WorkflowTrigger } from "@/types/workflows";
  * immediately: a tailored pipeline, ready email/SMS templates, an AI persona,
  * and draft workflows wired to the right triggers.
  *
- * Three roles: solo_agent, team_builder, broker_office. Applied by
- * lib/snapshots/apply.ts (auto on sub-account creation + the manual
- * apply-snapshot route). Workflows ship as DRAFT — the operator reviews and
- * flips them to Active once their sender (Twilio/Resend) is configured.
+ * Four roles: solo_agent, team_builder, broker_office, luxury_broker.
+ * Applied by lib/snapshots/apply.ts (auto on sub-account creation + the
+ * manual apply-snapshot route). Workflows ship as DRAFT — the operator
+ * reviews and flips them to Active once their sender (Twilio/Resend) is
+ * configured.
  *
  * MERGE TAGS: templates + workflow send/notify nodes may only use the tags
  * the resolver supports — {{contact.firstName/lastName/name/email/phone}},
@@ -20,7 +21,11 @@ import type { WorkflowNode, WorkflowTrigger } from "@/types/workflows";
  * {{unsubscribeLink}}. Anything else resolves to empty.
  */
 
-export type SnapshotId = "solo_agent" | "team_builder" | "broker_office";
+export type SnapshotId =
+  | "solo_agent"
+  | "team_builder"
+  | "broker_office"
+  | "luxury_broker";
 
 export interface SnapshotTemplate {
   key: string;
@@ -87,6 +92,52 @@ Just following up from my earlier note. Whether you're weeks out or just explori
 
 Reply here or book a quick call: {{bookingLink}}
 
+{{owner.firstName}}
+{{workspace.name}}
+
+---
+{{unsubscribeLink}}`,
+};
+
+const LUXURY_SMS: SnapshotTemplate = {
+  key: "luxury_sms",
+  type: "sms",
+  name: "Concierge SMS: Instant Reply",
+  subject: null,
+  body: "Hi {{contact.firstName}}, this is {{owner.firstName}} with {{workspace.name}}. Thank you for reaching out — I'll follow up with you personally shortly. Reply STOP to opt out.",
+};
+
+const LUXURY_EMAIL: SnapshotTemplate = {
+  key: "luxury_email",
+  type: "email",
+  name: "Concierge Email: Instant Reply",
+  subject: "{{contact.firstName}}, thank you for reaching out to {{workspace.name}}",
+  body: `Hi {{contact.firstName}},
+
+Thank you for your interest in {{workspace.name}}. It would be my pleasure to assist with your real estate goals — whether a private sale, a discreet acquisition, or simply gathering information about the market.
+
+I'll follow up with you personally very soon. If you'd like to reserve a time that works best for you, you're welcome to book a private consultation here: {{bookingLink}}
+
+Warm regards,
+{{owner.firstName}}
+{{workspace.name}}
+
+---
+{{unsubscribeLink}}`,
+};
+
+const LUXURY_FOLLOWUP: SnapshotTemplate = {
+  key: "luxury_followup",
+  type: "email",
+  name: "Concierge Follow-Up: Day 3",
+  subject: "Following up on your real estate goals",
+  body: `Hi {{contact.firstName}},
+
+I wanted to follow up personally. Whether you're ready to move forward now or simply exploring your options, I'm happy to prepare a private, no-obligation market overview tailored to your needs.
+
+Please reply directly, or reserve a time that suits you: {{bookingLink}}
+
+Warm regards,
 {{owner.firstName}}
 {{workspace.name}}
 
@@ -230,6 +281,48 @@ export const SNAPSHOTS: Record<SnapshotId, SnapshotDef> = {
         nodes: {
           n1: email("n1", "You're under contract — here's what's next", "Hi {{contact.firstName}},\n\nCongratulations on going under contract with {{workspace.name}}! Your agent will walk you through inspection, appraisal, and closing. Questions any time — just reply." + UNSUB, "n2"),
           n2: task("n2", "Kick off closing checklist for {{contact.firstName}}", 1, null),
+        },
+      },
+    ],
+  },
+
+  luxury_broker: {
+    id: "luxury_broker",
+    name: "Luxury Broker",
+    description:
+      "For top producers in luxury markets (Greenwich, New Canaan, Darien, and similar). A concierge-tone pipeline and AI persona built for high-touch, longer-cycle transactions.",
+    pipelineStages: [
+      { id: "new", label: "New Inquiry", order: 0 },
+      { id: "contacted", label: "Private Consultation", order: 1 },
+      { id: "qualified", label: "Property Preview Scheduled", order: 2 },
+      { id: "proposal", label: "Offer Submitted", order: 3 },
+      { id: "won", label: "Closed", order: 4 },
+      { id: "lost", label: "Lost", order: 5 },
+    ],
+    persona:
+      "You are a discreet, white-glove concierge assistant for a luxury real-estate advisor. Your tone is polished, warm, and unhurried — luxury clients expect a personal touch, not a transactional one. Acknowledge each lead by name, ask whether they're buying, selling, or both, their target area, price range, and timeline, then offer to arrange a private consultation. Never discuss specific pricing, commission, or off-market details, and never invent listings, availability, or market data.",
+    templates: [LUXURY_SMS, LUXURY_EMAIL, LUXURY_FOLLOWUP],
+    workflows: [
+      {
+        key: "concierge_response",
+        name: "Concierge Response",
+        trigger: { type: "form.submitted", filters: { all: [] } },
+        startNodeId: "n1",
+        nodes: {
+          n1: sms("n1", LUXURY_SMS.body, "n2"),
+          n2: email("n2", LUXURY_EMAIL.subject!, LUXURY_EMAIL.body, "n3"),
+          n3: task("n3", "Personally call {{contact.firstName}} — VIP inquiry", 0, "n4"),
+          n4: notify("n4", "New luxury inquiry", "{{contact.name}} ({{contact.email}} · {{contact.phone}}) just came in.", null),
+        },
+      },
+      {
+        key: "offer_checkin",
+        name: "Offer Submitted — Concierge Check-in",
+        trigger: { type: "pipeline.stage.changed", filters: { all: [] }, toStage: "proposal" },
+        startNodeId: "n1",
+        nodes: {
+          n1: email("n1", "Your offer has been submitted", "Hi {{contact.firstName}},\n\nYour offer has been submitted on your behalf. I'll personally keep you informed at every step — inspection, appraisal, and closing — and I'm available any time you have questions." + UNSUB, "n2"),
+          n2: task("n2", "White-glove check-in with {{contact.firstName}}", 1, null),
         },
       },
     ],
