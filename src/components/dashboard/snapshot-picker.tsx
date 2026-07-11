@@ -14,6 +14,7 @@ const ROLES: { id: string; label: string; blurb: string }[] = [
   { id: "solo_agent", label: "Solo Agent", blurb: "Simple pipeline + Speed-to-Lead" },
   { id: "team_builder", label: "Team Builder", blurb: "Lead routing + nurture drip" },
   { id: "broker_office", label: "Broker Office", blurb: "Lead distribution + oversight" },
+  { id: "luxury_broker", label: "Luxury Broker", blurb: "Concierge tone + white-glove touches" },
 ];
 
 export function SnapshotPicker() {
@@ -48,7 +49,7 @@ export function SnapshotPicker() {
       <p className="mb-2 text-xs font-medium text-foreground">
         Set up for your business type
       </p>
-      <div className="grid gap-2 sm:grid-cols-3">
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
         {ROLES.map((r) => {
           const busy = applying === r.id;
           const done = applied === r.id;

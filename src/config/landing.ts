@@ -48,6 +48,7 @@ export interface CustomBrand {
     starter: CustomPricingTier;
     pro: CustomPricingTier;
     scale: CustomPricingTier;
+    luxury: CustomPricingTier;
   };
 }
 
@@ -117,7 +118,7 @@ export const CUSTOM_BRAND: CustomBrand = {
    */
   pricing: {
     starter: {
-      name: "Solo Agent",
+      name: "Solo",
       priceMonthly: 199,
       priceAnnual: 159,
       blurb: "For individual agents serious about never missing a lead.",
@@ -134,7 +135,7 @@ export const CUSTOM_BRAND: CustomBrand = {
       highlighted: false,
     },
     pro: {
-      name: "Top Producer",
+      name: "Team",
       priceMonthly: 299,
       priceAnnual: 239,
       blurb: "For high-volume agents who can't afford to let a lead go cold.",
@@ -151,12 +152,12 @@ export const CUSTOM_BRAND: CustomBrand = {
       highlighted: true,
     },
     scale: {
-      name: "Team & Brokerage",
+      name: "Broker",
       priceMonthly: 399,
       priceAnnual: 319,
       blurb: "For teams and brokerages managing multiple agents.",
       features: [
-        "Everything in Top Producer",
+        "Everything in Team",
         "Unlimited agent seats",
         "Per-agent sub-accounts",
         "Bulk email campaigns",
@@ -165,6 +166,23 @@ export const CUSTOM_BRAND: CustomBrand = {
         "SLA-backed support",
       ],
       cta: "Talk to us",
+      highlighted: false,
+    },
+    luxury: {
+      name: "Luxury Broker",
+      priceMonthly: 599,
+      priceAnnual: 479,
+      blurb:
+        "For top producers in Greenwich, New Canaan, Darien, and other luxury markets.",
+      features: [
+        "Everything in Broker",
+        "White-glove concierge onboarding",
+        "Custom pipeline stages & AI persona tuned for high-end transactions",
+        "Geo-targeted luxury Marketing Pages",
+        "Premium AI model tier for every conversation",
+        "Dedicated account manager",
+      ],
+      cta: "Book a consultation",
       highlighted: false,
     },
   },
