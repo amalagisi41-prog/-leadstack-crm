@@ -4,7 +4,7 @@ const features = [
   {
     icon: Gem,
     title: "Built for how you actually work",
-    body: "Tell it whether you're a Solo Agent, a Team, a Broker, or a Luxury Broker — your pipeline stages, AI persona, and follow-up sequences adjust automatically, from \"Showing Scheduled\" to a white-glove concierge tone for high-end clients.",
+    body: "Tell it whether you're a Solo Agent, a Team, a Broker, or a Luxury Broker — the stages every deal moves through, how your assistant talks to clients, and your follow-up schedule all adjust automatically. Nothing to configure yourself.",
     color: "bg-indigo-500/10 text-indigo-500",
   },
   {
@@ -40,7 +40,7 @@ const features = [
   {
     icon: BarChart3,
     title: "Know your numbers without trying",
-    body: "GCI by month, pipeline value by stage, leads by source. Everything updates live. No Excel exports, no copy-paste errors.",
+    body: "GCI by month, deal value by stage, leads by source. Everything updates live. No Excel exports, no copy-paste errors.",
     color: "bg-rose-500/10 text-rose-500",
   },
 ];
@@ -51,7 +51,7 @@ export function Features() {
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">
-            What AgentStack does for you
+            What happens once it&apos;s set up
           </p>
           <h2 className="mt-2 text-3xl font-semibold tracking-tighter sm:text-5xl">
             Less configuring.{" "}
@@ -60,7 +60,7 @@ export function Features() {
             </span>
           </h2>
           <p className="mt-4 text-lg text-muted-foreground">
-            You shouldn&apos;t need a tech degree to run your business. AgentStack sets up in 15 minutes and pays for itself with one closed deal.
+            You shouldn&apos;t need a tech degree to run your business — and you won&apos;t need one here. AgentStack sets up in 15 minutes, then runs quietly in the background while you work with clients.
           </p>
         </div>
 

@@ -23,7 +23,7 @@ const testimonials = [
   },
   {
     quote:
-      "My team of 6 agents all have their own sub-accounts. I can see everyone's pipeline from one dashboard and route new leads to the right agent automatically. Setup took an afternoon — not a week.",
+      "My team of 6 agents all have their own sub-accounts. I can see everyone's deals from one dashboard and route new leads to the right agent automatically. Setup took an afternoon — not a week.",
     name: "David L.",
     title: "Team Lead · Boca Raton, FL · 6 agents",
     initials: "DL",

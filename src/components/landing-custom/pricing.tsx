@@ -179,7 +179,7 @@ export function Pricing() {
         </div>
 
         <p className="mx-auto mt-8 max-w-lg text-center text-xs text-muted-foreground">
-          All plans include unlimited pipeline stages, lead forms, calendar, and
+          All plans include unlimited deal stages, lead forms, calendar, and
           tasks. No per-contact tax. No per-message metering.
         </p>
       </div>

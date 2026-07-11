@@ -5,7 +5,7 @@ const steps = [
     number: "01",
     icon: Wrench,
     title: "Build",
-    body: "Tell AgentStack whether you're a Solo Agent, a Team, a Broker, or a Luxury Broker. It configures your pipeline stages, AI persona, and follow-up sequences to match — down to the tone your assistant uses with clients.",
+    body: "Tell AgentStack whether you're a Solo Agent, a Team, a Broker, or a Luxury Broker. It sets up the stages every deal moves through, how your assistant talks to clients, and your follow-up schedule to match — no forms to build, no settings to hunt for.",
     iconColor: "text-blue-500",
     iconBg: "bg-blue-500/10",
     numColor: "text-blue-600",

@@ -51,7 +51,7 @@ export function PipelineDemo() {
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-2xl text-center mb-10">
           <p className="text-sm font-semibold uppercase tracking-wide text-blue-600 mb-2">
-            Live pipeline
+            Every deal, live
           </p>
           <h2 className="text-3xl font-semibold tracking-tighter sm:text-4xl">
             Every deal,{" "}
@@ -60,7 +60,7 @@ export function PipelineDemo() {
             </span>
           </h2>
           <p className="mt-3 text-muted-foreground">
-            Drag deals across stages, see days-in-stage timers, and never lose track of a buyer again.
+            No spreadsheet, no sticky notes, no digging through texts. One glance shows who&apos;s stalled and who needs you next — move a deal forward with a single drag.
           </p>
         </div>
 
@@ -101,7 +101,7 @@ export function PipelineDemo() {
           </div>
 
           <div className="border-t bg-muted/20 px-4 py-2.5 flex items-center justify-between text-[10px] text-muted-foreground">
-            <span>9 active deals · $2.2M pipeline value</span>
+            <span>9 active deals · $2.2M in progress</span>
             <span className="text-blue-500 font-medium">Drag to move between stages</span>
           </div>
         </div>
