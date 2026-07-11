@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Home, BedDouble, Bath, MapPin } from "lucide-react";
+import { Home, BedDouble, Bath, MapPin, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface HousePalette {
@@ -12,11 +12,15 @@ interface HousePalette {
   tree: string;
 }
 
+type Status = "Active" | "Pending" | "New";
+
 const listings: {
   price: string;
   beds: number;
   baths: number;
   addr: string;
+  status: Status;
+  tag?: string;
   palette: HousePalette;
 }[] = [
   {
@@ -24,6 +28,8 @@ const listings: {
     beds: 3,
     baths: 2,
     addr: "47 Elmwood Ave",
+    status: "Active",
+    tag: "Virtual Tour",
     palette: { skyTop: "#DBEAFE", skyBottom: "#EFF6FF", ground: "#C7DFC0", house: "#F8FAFC", roof: "#4338CA", door: "#3730A3", tree: "#4D8C57" },
   },
   {
@@ -31,6 +37,7 @@ const listings: {
     beds: 4,
     baths: 3,
     addr: "22 Maple St",
+    status: "Pending",
     palette: { skyTop: "#FBE7F3", skyBottom: "#FDF2F8", ground: "#CBE3C4", house: "#FDF4FF", roof: "#BE185D", door: "#9D174D", tree: "#4D8C57" },
   },
   {
@@ -38,6 +45,7 @@ const listings: {
     beds: 2,
     baths: 1,
     addr: "9 Birchwood Ln",
+    status: "New",
     palette: { skyTop: "#CCFBF1", skyBottom: "#ECFEFF", ground: "#C4E4CB", house: "#F0FDFA", roof: "#0F766E", door: "#115E59", tree: "#4D8C57" },
   },
   {
@@ -45,15 +53,23 @@ const listings: {
     beds: 5,
     baths: 4,
     addr: "104 Ridgeview Dr",
+    status: "Active",
+    tag: "Open House",
     palette: { skyTop: "#FDECC8", skyBottom: "#FFF7ED", ground: "#D8E4B8", house: "#FFFBEB", roof: "#C2410C", door: "#9A3412", tree: "#4D8C57" },
   },
 ];
+
+const statusStyles: Record<Status, string> = {
+  Active: "bg-blue-600 text-white",
+  Pending: "bg-slate-700 text-white",
+  New: "bg-emerald-600 text-white",
+};
 
 function HouseThumb({ palette, uid }: { palette: HousePalette; uid: string }) {
   const skyId = `idx-sky-${uid}`;
   return (
     <svg
-      viewBox="0 0 120 80"
+      viewBox="0 0 120 90"
       className="block h-full w-full"
       preserveAspectRatio="xMidYMax slice"
       aria-hidden="true"
@@ -64,19 +80,29 @@ function HouseThumb({ palette, uid }: { palette: HousePalette; uid: string }) {
           <stop offset="100%" stopColor={palette.skyBottom} />
         </linearGradient>
       </defs>
-      <rect width="120" height="80" fill={`url(#${skyId})`} />
-      <rect x="0" y="62" width="120" height="18" fill={palette.ground} />
-      <rect x="8" y="46" width="4" height="16" fill="#8B5E3C" />
-      <circle cx="10" cy="42" r="10" fill={palette.tree} />
-      <polygon points="30,38 62,15 95,38" fill={palette.roof} />
-      <rect x="35" y="38" width="55" height="30" fill={palette.house} stroke={palette.roof} strokeWidth="1" />
-      <rect x="72" y="51" width="11" height="17" rx="1" fill={palette.door} />
-      <rect x="42" y="45" width="13" height="13" rx="1.5" fill="white" stroke={palette.roof} strokeWidth="1.5" />
-      <line x1="48.5" y1="45" x2="48.5" y2="58" stroke={palette.roof} strokeWidth="0.75" />
-      <line x1="42" y1="51.5" x2="55" y2="51.5" stroke={palette.roof} strokeWidth="0.75" />
-      <rect x="60" y="45" width="13" height="13" rx="1.5" fill="white" stroke={palette.roof} strokeWidth="1.5" />
-      <line x1="66.5" y1="45" x2="66.5" y2="58" stroke={palette.roof} strokeWidth="0.75" />
-      <line x1="60" y1="51.5" x2="73" y2="51.5" stroke={palette.roof} strokeWidth="0.75" />
+      <rect width="120" height="90" fill={`url(#${skyId})`} />
+      <rect x="0" y="70" width="120" height="20" fill={palette.ground} />
+      {/* driveway */}
+      <polygon points="88,90 108,90 100,70 90,70" fill="#D6D3C9" />
+      {/* tree */}
+      <rect x="8" y="52" width="4" height="18" fill="#8B5E3C" />
+      <circle cx="10" cy="48" r="11" fill={palette.tree} />
+      <circle cx="4" cy="52" r="7" fill={palette.tree} opacity="0.85" />
+      {/* roof + house body */}
+      <polygon points="28,44 62,18 96,44" fill={palette.roof} />
+      <rect x="34" y="44" width="56" height="26" fill={palette.house} stroke={palette.roof} strokeWidth="1" />
+      {/* garage */}
+      <rect x="80" y="52" width="16" height="18" fill={palette.house} stroke={palette.roof} strokeWidth="1" />
+      <rect x="82" y="55" width="12" height="13" fill={palette.ground} stroke={palette.roof} strokeWidth="0.75" />
+      {/* door */}
+      <rect x="55" y="53" width="10" height="17" rx="1" fill={palette.door} />
+      {/* windows */}
+      <rect x="39" y="49" width="12" height="12" rx="1.5" fill="white" stroke={palette.roof} strokeWidth="1.5" />
+      <line x1="45" y1="49" x2="45" y2="61" stroke={palette.roof} strokeWidth="0.75" />
+      <line x1="39" y1="55" x2="51" y2="55" stroke={palette.roof} strokeWidth="0.75" />
+      <rect x="70" y="49" width="12" height="12" rx="1.5" fill="white" stroke={palette.roof} strokeWidth="1.5" />
+      <line x1="76" y1="49" x2="76" y2="61" stroke={palette.roof} strokeWidth="0.75" />
+      <line x1="70" y1="55" x2="82" y2="55" stroke={palette.roof} strokeWidth="0.75" />
     </svg>
   );
 }
@@ -90,8 +116,21 @@ function ListingCard({
 }) {
   return (
     <div className="overflow-hidden rounded-lg border bg-background shadow-sm">
-      <div className="h-14 sm:h-20">
+      <div className="relative h-16 sm:h-24">
         <HouseThumb palette={listing.palette} uid={uid} />
+        <div className="absolute left-1 top-1 flex flex-wrap gap-0.5">
+          <span className={`rounded px-1 py-[1px] text-[6px] font-bold uppercase tracking-wide sm:text-[7px] ${statusStyles[listing.status]}`}>
+            {listing.status}
+          </span>
+          {listing.tag && (
+            <span className="rounded bg-black/55 px-1 py-[1px] text-[6px] font-semibold text-white sm:text-[7px]">
+              {listing.tag}
+            </span>
+          )}
+        </div>
+        <span className="absolute right-1 top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-white/90 shadow-sm sm:h-4 sm:w-4">
+          <Heart className="h-2 w-2 text-slate-500 sm:h-2.5 sm:w-2.5" />
+        </span>
       </div>
       <div className="p-2 sm:p-2.5">
         <p className="text-[11px] font-bold sm:text-sm">{listing.price}</p>
@@ -143,6 +182,10 @@ export function IdxShowcase() {
                   <span className="ml-2 truncate rounded bg-background px-2 py-0.5 text-[9px] text-muted-foreground">
                     yourbrand.com/listings
                   </span>
+                </div>
+                <div className="flex items-center justify-between px-3 pt-2.5">
+                  <span className="text-[10px] font-semibold sm:text-xs">Featured Listings</span>
+                  <span className="text-[9px] font-medium text-blue-500">View All</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2 p-3">
                   {listings.map((l, i) => (
