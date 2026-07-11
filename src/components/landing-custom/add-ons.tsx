@@ -89,6 +89,8 @@ const addOns: AddOn[] = [
     tagline: "A live, searchable MLS listings site — powered by your own IDX Broker account",
     price: "$60",
     billing: "/mo",
+    badge: "New",
+    highlight: true,
     features: [
       "Branded public listings search + detail pages",
       "Auto-synced from your IDX Broker account every 6 hours",
