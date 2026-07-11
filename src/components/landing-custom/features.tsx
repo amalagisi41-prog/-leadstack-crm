@@ -1,6 +1,12 @@
-import { Zap, Users, CalendarCheck, Star, Globe, BarChart3 } from "lucide-react";
+import { Zap, Users, CalendarCheck, Star, Globe, BarChart3, Gem } from "lucide-react";
 
 const features = [
+  {
+    icon: Gem,
+    title: "Built for how you actually work",
+    body: "Tell it whether you're a Solo Agent, a Team, a Broker, or a Luxury Broker — your pipeline stages, AI persona, and follow-up sequences adjust automatically, from \"Showing Scheduled\" to a white-glove concierge tone for high-end clients.",
+    color: "bg-indigo-500/10 text-indigo-500",
+  },
   {
     icon: Zap,
     title: "Every lead answered instantly",
