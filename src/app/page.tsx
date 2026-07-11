@@ -33,6 +33,7 @@ import { Territory } from "@/components/landing-custom/territory";
 import { Features as CustomFeatures } from "@/components/landing-custom/features";
 import { Testimonials } from "@/components/landing-custom/testimonials";
 import { Pricing as CustomPricing } from "@/components/landing-custom/pricing";
+import { IdxShowcase } from "@/components/landing-custom/idx-showcase";
 import { AddOns } from "@/components/landing-custom/add-ons";
 import { FAQ as CustomFAQ } from "@/components/landing-custom/faq";
 import { SignupCta } from "@/components/landing-custom/signup-cta";
@@ -73,6 +74,7 @@ export default async function HomePage() {
           <CustomFeatures />
           <Testimonials />
           <CustomPricing />
+          <IdxShowcase />
           <AddOns />
           <CustomFAQ brand={brand} />
           <SignupCta />
