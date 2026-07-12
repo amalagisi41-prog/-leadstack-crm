@@ -1,6 +1,15 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
+      // Marketing-page placeholder property photos in the IDX Listings
+      // device mockup (src/components/landing-custom/idx-showcase.tsx).
+      // Real deployments should swap these for the operator's own
+      // synced IDX Broker listing photos.
+      { protocol: "https", hostname: "images.unsplash.com" },
+    ],
+  },
   async headers() {
     return [
       {
