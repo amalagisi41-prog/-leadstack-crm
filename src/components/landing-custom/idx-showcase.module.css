@@ -804,8 +804,12 @@
   }
 }
 @media (max-width: 640px) {
-  .screen {
-    aspect-ratio: auto;
+  /* Keep the laptop screen the same proportions as desktop instead of
+     letting it grow to fit two stacked cards (that made the mobile laptop
+     read as much taller than the desktop one) -- the listings feed inside
+     scrolls instead. */
+  .screenBody {
+    overflow-y: auto;
   }
   .pScreen {
     height: 330px;
