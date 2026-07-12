@@ -1,324 +1,452 @@
-import Link from "next/link";
-import { Home, BedDouble, Bath, MapPin, Heart, Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import Image from "next/image";
+import styles from "./idx-showcase.module.css";
 
-interface HousePalette {
-  skyTop: string;
-  skyBottom: string;
-  ground: string;
-  house: string;
-  roof: string;
-  door: string;
-  tree: string;
-}
+type Status = "active" | "pending" | "new";
 
-type Status = "Active" | "Pending" | "New";
-
-const listings: {
+interface Listing {
+  photoUrl: string;
+  alt: string;
+  status: Status;
+  photoCount: number;
   price: string;
   beds: number;
   baths: number;
-  addr: string;
-  status: Status;
-  tag?: string;
-  palette: HousePalette;
-}[] = [
+  sqft: string;
+  address: string;
+  agent: string;
+  brokerage: string;
+}
+
+const listings: Listing[] = [
   {
+    photoUrl: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80",
+    alt: "Modern two-story home at dusk — 47 Elmwood Ave",
+    status: "active",
+    photoCount: 24,
     price: "$489,000",
     beds: 3,
     baths: 2,
-    addr: "47 Elmwood Ave",
-    status: "Active",
-    tag: "Virtual Tour",
-    palette: { skyTop: "#DBEAFE", skyBottom: "#EFF6FF", ground: "#C7DFC0", house: "#F8FAFC", roof: "#4338CA", door: "#3730A3", tree: "#4D8C57" },
+    sqft: "1,840",
+    address: "47 Elmwood Ave, Maplewood, NJ 07040",
+    agent: "A. Bianchi",
+    brokerage: "Elm & Main Realty",
   },
   {
+    photoUrl: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80",
+    alt: "Contemporary home — 22 Maple St",
+    status: "pending",
+    photoCount: 18,
     price: "$612,500",
     beds: 4,
     baths: 3,
-    addr: "22 Maple St",
-    status: "Pending",
-    palette: { skyTop: "#FBE7F3", skyBottom: "#FDF2F8", ground: "#CBE3C4", house: "#FDF4FF", roof: "#BE185D", door: "#9D174D", tree: "#4D8C57" },
+    sqft: "2,410",
+    address: "22 Maple St, South Orange, NJ 07079",
+    agent: "M. Rossi",
+    brokerage: "Harbor Lane Group",
   },
   {
+    photoUrl: "https://images.unsplash.com/photo-1570129477492-45c003edd2be?auto=format&fit=crop&w=800&q=80",
+    alt: "Classic white home — 9 Birchwood Ln",
+    status: "new",
+    photoCount: 31,
     price: "$358,900",
     beds: 2,
     baths: 1,
-    addr: "9 Birchwood Ln",
-    status: "New",
-    palette: { skyTop: "#CCFBF1", skyBottom: "#ECFEFF", ground: "#C4E4CB", house: "#F0FDFA", roof: "#0F766E", door: "#115E59", tree: "#4D8C57" },
+    sqft: "1,120",
+    address: "9 Birchwood Ln, Maplewood, NJ 07040",
+    agent: "S. Grant",
+    brokerage: "Northside Realty",
   },
   {
+    photoUrl: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=800&q=80",
+    alt: "Luxury home with pool at dusk — 104 Ridgeview Dr",
+    status: "active",
+    photoCount: 42,
     price: "$725,000",
     beds: 5,
     baths: 4,
-    addr: "104 Ridgeview Dr",
-    status: "Active",
-    tag: "Open House",
-    palette: { skyTop: "#FDECC8", skyBottom: "#FFF7ED", ground: "#D8E4B8", house: "#FFFBEB", roof: "#C2410C", door: "#9A3412", tree: "#4D8C57" },
+    sqft: "3,260",
+    address: "104 Ridgeview Dr, Montclair, NJ 07042",
+    agent: "J. Alvarez",
+    brokerage: "Summit West RE",
   },
 ];
 
-const statusStyles: Record<Status, string> = {
-  Active: "bg-blue-600 text-white",
-  Pending: "bg-slate-700 text-white",
-  New: "bg-emerald-600 text-white",
+const pillClass: Record<Status, string> = {
+  active: styles.pillActive,
+  pending: styles.pillPending,
+  new: styles.pillNew,
+};
+const pillLabel: Record<Status, string> = {
+  active: "Active",
+  pending: "Pending",
+  new: "New",
 };
 
-const filters = ["Price", "Beds", "Baths", "More"];
-
-const mapPins = [
-  { x: 28, y: 30, price: "$489k" },
-  { x: 62, y: 22, price: null },
-  { x: 78, y: 48, price: "$612k" },
-  { x: 40, y: 58, price: null },
-  { x: 55, y: 72, price: null },
-  { x: 20, y: 68, price: null },
-];
-
-function MapPanel() {
+function SearchIcon() {
   return (
-    <div className="relative hidden h-full min-h-[150px] w-full overflow-hidden rounded-md bg-[#E4ECE0] sm:block">
-      <svg viewBox="0 0 100 90" className="h-full w-full" preserveAspectRatio="none" aria-hidden="true">
-        <rect width="100" height="90" fill="#E4ECE0" />
-        <path d="M0,20 Q30,10 55,25 T100,15" stroke="#F5F1E6" strokeWidth="2.5" fill="none" />
-        <path d="M0,55 Q35,45 60,60 T100,50" stroke="#F5F1E6" strokeWidth="2.5" fill="none" />
-        <path d="M15,0 Q25,40 20,90" stroke="#F5F1E6" strokeWidth="2" fill="none" />
-        <path d="M70,0 Q75,45 80,90" stroke="#F5F1E6" strokeWidth="2" fill="none" />
-        <circle cx="18" cy="12" r="7" fill="#CFE0C6" />
-        <circle cx="85" cy="70" r="10" fill="#CFE0C6" />
-      </svg>
-      {mapPins.map((p, i) => (
-        <div
-          key={i}
-          className="absolute flex -translate-x-1/2 -translate-y-full flex-col items-center"
-          style={{ left: `${p.x}%`, top: `${p.y}%` }}
-        >
-          {p.price && (
-            <span className="mb-0.5 rounded bg-[#1a2540] px-1 py-[1px] text-[6px] font-bold text-white shadow-sm">
-              {p.price}
-            </span>
-          )}
-          <svg width="10" height="13" viewBox="0 0 10 13" fill="none">
-            <path
-              d="M5 13C5 13 10 7.5 10 4.6C10 2.06 7.76 0 5 0C2.24 0 0 2.06 0 4.6C0 7.5 5 13 5 13Z"
-              fill={p.price ? "#1a2540" : "#4F91FF"}
-            />
-            <circle cx="5" cy="4.6" r="1.8" fill="white" />
-          </svg>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function HouseThumb({ palette, uid }: { palette: HousePalette; uid: string }) {
-  const skyId = `idx-sky-${uid}`;
-  return (
-    <svg
-      viewBox="0 0 120 90"
-      className="block h-full w-full"
-      preserveAspectRatio="xMidYMax slice"
-      aria-hidden="true"
-    >
-      <defs>
-        <linearGradient id={skyId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={palette.skyTop} />
-          <stop offset="100%" stopColor={palette.skyBottom} />
-        </linearGradient>
-      </defs>
-      <rect width="120" height="90" fill={`url(#${skyId})`} />
-      <rect x="0" y="70" width="120" height="20" fill={palette.ground} />
-      {/* driveway */}
-      <polygon points="88,90 108,90 100,70 90,70" fill="#D6D3C9" />
-      {/* tree */}
-      <rect x="8" y="52" width="4" height="18" fill="#8B5E3C" />
-      <circle cx="10" cy="48" r="11" fill={palette.tree} />
-      <circle cx="4" cy="52" r="7" fill={palette.tree} opacity="0.85" />
-      {/* roof + house body */}
-      <polygon points="28,44 62,18 96,44" fill={palette.roof} />
-      <rect x="34" y="44" width="56" height="26" fill={palette.house} stroke={palette.roof} strokeWidth="1" />
-      {/* garage */}
-      <rect x="80" y="52" width="16" height="18" fill={palette.house} stroke={palette.roof} strokeWidth="1" />
-      <rect x="82" y="55" width="12" height="13" fill={palette.ground} stroke={palette.roof} strokeWidth="0.75" />
-      {/* door */}
-      <rect x="55" y="53" width="10" height="17" rx="1" fill={palette.door} />
-      {/* windows */}
-      <rect x="39" y="49" width="12" height="12" rx="1.5" fill="white" stroke={palette.roof} strokeWidth="1.5" />
-      <line x1="45" y1="49" x2="45" y2="61" stroke={palette.roof} strokeWidth="0.75" />
-      <line x1="39" y1="55" x2="51" y2="55" stroke={palette.roof} strokeWidth="0.75" />
-      <rect x="70" y="49" width="12" height="12" rx="1.5" fill="white" stroke={palette.roof} strokeWidth="1.5" />
-      <line x1="76" y1="49" x2="76" y2="61" stroke={palette.roof} strokeWidth="0.75" />
-      <line x1="70" y1="55" x2="82" y2="55" stroke={palette.roof} strokeWidth="0.75" />
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.5-3.5" />
     </svg>
   );
 }
 
-function ListingCard({
-  listing,
-  uid,
-  compact,
-}: {
-  listing: (typeof listings)[number];
-  uid: string;
-  compact?: boolean;
-}) {
+function ChevronDownIcon() {
   return (
-    <div className="overflow-hidden rounded-lg border bg-background shadow-sm">
-      <div className={compact ? "relative h-14" : "relative h-16 sm:h-20"}>
-        <HouseThumb palette={listing.palette} uid={uid} />
-        <div className="absolute left-1 top-1 flex flex-wrap gap-0.5">
-          <span className={`rounded px-1 py-[1px] text-[6px] font-bold uppercase tracking-wide ${statusStyles[listing.status]}`}>
-            {listing.status}
-          </span>
-          {listing.tag && !compact && (
-            <span className="rounded bg-black/55 px-1 py-[1px] text-[6px] font-semibold text-white">
-              {listing.tag}
-            </span>
-          )}
-        </div>
-        <span className="absolute right-1 top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-white/90 shadow-sm">
-          <Heart className="h-2 w-2 text-slate-500" />
-        </span>
-      </div>
-      <div className="p-1.5 sm:p-2">
-        <p className="text-[10px] font-bold sm:text-[11px]">{listing.price}</p>
-        <div className="mt-0.5 flex items-center gap-1.5 text-[8px] text-muted-foreground sm:text-[9px]">
-          <span className="flex items-center gap-0.5">
-            <BedDouble className="h-2 w-2" /> {listing.beds}
-          </span>
-          <span className="flex items-center gap-0.5">
-            <Bath className="h-2 w-2" /> {listing.baths}
-          </span>
-        </div>
-        {!compact && (
-          <p className="mt-0.5 flex items-center gap-0.5 truncate text-[8px] text-muted-foreground sm:text-[9px]">
-            <MapPin className="h-2 w-2 shrink-0" /> {listing.addr}
-          </p>
-        )}
-      </div>
-    </div>
+    <svg viewBox="0 0 10 6" fill="none" stroke="currentColor" strokeWidth={1.6}>
+      <path d="m1 1 4 4 4-4" />
+    </svg>
   );
 }
 
+function CameraIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      <path d="M4 8h3l2-3h6l2 3h3v12H4z" />
+      <circle cx="12" cy="13" r="3.5" />
+    </svg>
+  );
+}
+
+function HeartIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21.2l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z" />
+    </svg>
+  );
+}
+
+function HouseIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor">
+      <path d="M3 11 12 4l9 7v9h-6v-6h-6v6H3z" />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
+      <path d="M5 13l4 4L19 7" />
+    </svg>
+  );
+}
+
+function ShieldIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      <rect x="4" y="10" width="16" height="10" rx="2" />
+      <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+    </svg>
+  );
+}
+
+function SignalIcon() {
+  return (
+    <svg viewBox="0 0 18 12" fill="#101A3C">
+      <rect x="0" y="7" width="3" height="5" rx="1" />
+      <rect x="5" y="5" width="3" height="7" rx="1" />
+      <rect x="10" y="2.5" width="3" height="9.5" rx="1" />
+      <rect x="15" y="0" width="3" height="12" rx="1" />
+    </svg>
+  );
+}
+
+function WifiIcon() {
+  return (
+    <svg viewBox="0 0 16 12" fill="none" stroke="#101A3C" strokeWidth={1.8} strokeLinecap="round">
+      <path d="M1.5 4.5a10 10 0 0 1 13 0M4 7.2a6.5 6.5 0 0 1 8 0M6.6 9.8a3 3 0 0 1 2.8 0" />
+      <circle cx="8" cy="11" r="0.9" fill="#101A3C" stroke="none" />
+    </svg>
+  );
+}
+
+function BatteryIcon() {
+  return (
+    <svg viewBox="0 0 25 12" fill="none">
+      <rect x="0.8" y="0.8" width="20" height="10.4" rx="3" stroke="#101A3C" strokeWidth={1.2} />
+      <rect x="2.6" y="2.6" width="14" height="6.8" rx="1.6" fill="#101A3C" />
+      <path d="M22.6 4v4a2.2 2.2 0 0 0 0-4z" fill="#101A3C" />
+    </svg>
+  );
+}
+
+function MapFabIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      <path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2zM9 4v14M15 6v14" />
+    </svg>
+  );
+}
+
+const mapPins: { x: number; y: number; w: number; price: string; brand?: boolean }[] = [
+  { x: 30, y: 132, w: 44, price: "$612K" },
+  { x: 96, y: 96, w: 44, price: "$845K" },
+  { x: 158, y: 128, w: 44, price: "$1.2M" },
+  { x: 56, y: 188, w: 44, price: "$489K", brand: true },
+  { x: 132, y: 200, w: 44, price: "$725K" },
+  { x: 34, y: 286, w: 44, price: "$359K" },
+  { x: 120, y: 300, w: 44, price: "$560K" },
+  { x: 168, y: 252, w: 44, price: "$930K" },
+  { x: 72, y: 398, w: 44, price: "$1.4M" },
+  { x: 156, y: 416, w: 44, price: "$675K" },
+];
+
+function ListingCard({
+  listing,
+  sizes,
+  large,
+}: {
+  listing: Listing;
+  sizes: string;
+  large?: boolean;
+}) {
+  return (
+    <article className={large ? `${styles.card} ${styles.cardLg}` : styles.card}>
+      <div className={styles.photo}>
+        <Image src={listing.photoUrl} alt={listing.alt} fill sizes={sizes} style={{ objectFit: "cover" }} />
+        <span className={`${styles.pill} ${pillClass[listing.status]}`}>{pillLabel[listing.status]}</span>
+        <span className={styles.count}>
+          <CameraIcon />
+          {listing.photoCount}
+        </span>
+        <span className={styles.fav}>
+          <HeartIcon />
+        </span>
+      </div>
+      <div className={styles.cardBody}>
+        <div className={styles.price}>{listing.price}</div>
+        <div className={styles.meta}>
+          {listing.beds} beds <i>|</i> {listing.baths} baths <i>|</i> {listing.sqft} SqFt
+        </div>
+        <div className={styles.addr}>{listing.address}</div>
+        <div className={styles.listedby}>
+          <span>
+            Listed by {listing.agent} · {listing.brokerage}
+          </span>
+          <span className={styles.mls}>
+            <HouseIcon />
+            MLS
+          </span>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+const benefits = [
+  { strong: "Branded search + detail pages", rest: "— your logo, your domain" },
+  { strong: "Auto-synced", rest: "from your IDX Broker account every 6 hours" },
+  { strong: "Every listing view captures a lead", rest: "straight into your CRM" },
+  { strong: "“Request a showing” form", rest: "on every listing, no extra setup" },
+];
+
 export function IdxShowcase() {
   return (
-    <section className="py-24">
-      <div className="container mx-auto px-4">
-        <div className="mx-auto max-w-2xl text-center mb-14">
-          <p className="text-sm font-semibold uppercase tracking-wide text-blue-600 mb-2">
+    <section className={styles.idx} id="idx-listings">
+      <div className={styles.idxInner}>
+        <div className={styles.idxHead}>
+          <div className={styles.idxEyebrow}>
+            <span className={styles.dot} />
             IDX Listings
-          </p>
-          <h2 className="text-3xl font-semibold tracking-tighter sm:text-4xl">
-            Your own listings site,{" "}
-            <span className="bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text font-sans font-normal italic text-transparent">
-              live on your laptop and their phone.
-            </span>
+          </div>
+          <h2>
+            Your own listings site, <em>live on your laptop and their phone.</em>
           </h2>
-          <p className="mt-3 text-muted-foreground">
-            Connect your IDX Broker account once. Every listing search, on any device, feeds leads straight into your CRM.
+          <p>
+            Connect your IDX Broker account once. Every listing search, on any device, feeds leads straight into
+            your CRM.
           </p>
         </div>
 
-        <div className="mx-auto grid max-w-6xl items-center gap-14 lg:grid-cols-[1.35fr_1fr]">
-          {/* Device mockups */}
-          <div className="relative mx-auto w-full max-w-xl pb-12 pl-8 sm:pb-16 sm:pl-14">
-            {/* Laptop */}
-            <div className="rounded-t-xl border-4 border-b-0 border-[#1a2540] bg-[#1a2540] p-1.5 shadow-2xl">
-              <div className="overflow-hidden rounded-md bg-background">
-                <div className="flex items-center gap-1.5 border-b bg-muted/40 px-3 py-2">
-                  <div className="h-2 w-2 rounded-full bg-red-400/70" />
-                  <div className="h-2 w-2 rounded-full bg-yellow-400/70" />
-                  <div className="h-2 w-2 rounded-full bg-green-400/70" />
-                  <span className="ml-2 truncate rounded bg-background px-2 py-0.5 text-[9px] text-muted-foreground">
-                    yourbrand.com/listings
-                  </span>
-                </div>
+        <div className={styles.idxGrid}>
+          {/* Device composite */}
+          <div className={styles.device}>
+            <div className={styles.toast} role="status">
+              <span className={styles.sig} />
+              <div>
+                <b>New lead captured</b>
+                <small>47 Elmwood Ave · synced to CRM</small>
+              </div>
+            </div>
 
-                {/* Filter bar */}
-                <div className="flex items-center gap-1 border-b px-3 py-1.5">
-                  <span className="flex items-center gap-1 rounded border bg-background px-1.5 py-1 text-[7px] text-muted-foreground">
-                    <Search className="h-2 w-2" /> Area, City, ZIP
-                  </span>
-                  {filters.map((f) => (
-                    <span key={f} className="hidden rounded border px-1.5 py-1 text-[7px] text-muted-foreground sm:inline-block">
-                      {f} ▾
+            {/* MacBook */}
+            <div className={styles.laptop}>
+              <div className={styles.lid}>
+                <span className={styles.cam} />
+                <div className={styles.screen}>
+                  <div className={styles.topbar}>
+                    <div className={styles.searchbox}>
+                      <SearchIcon />
+                      Area, City, ZIP, School…
+                    </div>
+                    <span className={styles.chip}>
+                      Price <ChevronDownIcon />
                     </span>
-                  ))}
-                  <span className="ml-auto shrink-0 rounded bg-[#1a2540] px-1.5 py-1 text-[7px] font-semibold text-white">
-                    Save Search
-                  </span>
-                </div>
+                    <span className={styles.chip}>
+                      Beds <ChevronDownIcon />
+                    </span>
+                    <span className={styles.chip}>
+                      Baths <ChevronDownIcon />
+                    </span>
+                    <span className={styles.chip}>
+                      More <ChevronDownIcon />
+                    </span>
+                    <span className={styles.saveSearch}>Save Search</span>
+                  </div>
 
-                <div className="flex items-center justify-between px-3 pt-2">
-                  <span className="text-[9px] font-bold uppercase tracking-wide sm:text-[10px]">Featured Listings</span>
-                  <span className="text-[8px] font-medium text-blue-500 sm:text-[9px]">View All</span>
-                </div>
+                  <div className={styles.screenBody}>
+                    <div className={styles.listingsHead}>
+                      <span className={styles.lhTitle}>Featured Listings</span>
+                      <span className={styles.lhTools}>
+                        <span>
+                          Sort by <b>Newest</b> <ChevronDownIcon />
+                        </span>
+                        <span>Hide Map</span>
+                      </span>
+                    </div>
 
-                {/* Map + listings split */}
-                <div className="grid grid-cols-1 gap-2 p-2.5 sm:grid-cols-2 sm:p-3">
-                  <MapPanel />
-                  <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
-                    {listings.map((l, i) => (
-                      <ListingCard key={l.addr} listing={l} uid={`lap-${i}`} compact />
-                    ))}
+                    <div className={styles.split}>
+                      <div className={styles.map} aria-hidden="true">
+                        <svg viewBox="0 0 238 460" preserveAspectRatio="xMidYMid slice">
+                          <rect width="238" height="460" fill="#EAECE7" />
+                          <ellipse cx="48" cy="88" rx="52" ry="40" fill="#CFE6C4" />
+                          <path d="M150 340 q40 -26 88 -10 l0 70 q-50 14 -88 -8 z" fill="#CFE6C4" />
+                          <ellipse cx="205" cy="60" rx="46" ry="34" fill="#BFDCF2" />
+                          <g stroke="#D9DCD4" strokeWidth={7} fill="none">
+                            <path d="M-10 150 C 60 140, 150 170, 250 150" />
+                            <path d="M-10 260 C 70 250, 160 280, 250 262" />
+                            <path d="M60 -10 C 66 120, 52 300, 66 470" />
+                            <path d="M150 -10 C 146 140, 158 320, 148 470" />
+                            <path d="M-10 380 C 80 366, 170 392, 250 376" />
+                          </g>
+                          <g stroke="#FFFFFF" strokeWidth={4.5} fill="none">
+                            <path d="M-10 150 C 60 140, 150 170, 250 150" />
+                            <path d="M-10 260 C 70 250, 160 280, 250 262" />
+                            <path d="M60 -10 C 66 120, 52 300, 66 470" />
+                            <path d="M150 -10 C 146 140, 158 320, 148 470" />
+                            <path d="M-10 380 C 80 366, 170 392, 250 376" />
+                          </g>
+                          <path
+                            d="M-10 210 C 80 196, 170 226, 250 206"
+                            stroke="#E8BD52"
+                            strokeWidth={7}
+                            fill="none"
+                          />
+                          <path
+                            d="M-10 210 C 80 196, 170 226, 250 206"
+                            stroke="#F7D683"
+                            strokeWidth={4.5}
+                            fill="none"
+                          />
+                          <g stroke="#FFFFFF" strokeWidth={2.5} fill="none" opacity={0.85}>
+                            <path d="M0 60 H238 M0 110 H238 M0 320 H238 M0 430 H238 M105 0 V460 M195 0 V460 M25 0 V460" />
+                          </g>
+                          <g fontFamily="Inter,system-ui" fontSize={9.5} fontWeight={700} textAnchor="middle">
+                            {mapPins.map((p) => (
+                              <g key={`${p.x}-${p.y}`}>
+                                <rect
+                                  x={p.x}
+                                  y={p.y}
+                                  width={p.w}
+                                  height={18}
+                                  rx={9}
+                                  fill={p.brand ? "#2E5BFF" : "#111A38"}
+                                />
+                                <text x={p.x + p.w / 2} y={p.y + 13} fill="#fff">
+                                  {p.price}
+                                </text>
+                              </g>
+                            ))}
+                          </g>
+                        </svg>
+                        <div className={styles.mapChips}>
+                          <span className={styles.mapChip}>
+                            Schools <ChevronDownIcon />
+                          </span>
+                          <span className={styles.mapChip}>Draw</span>
+                        </div>
+                        <div className={styles.mapZoom}>
+                          <span>+</span>
+                          <span>−</span>
+                        </div>
+                        <span className={styles.redo}>Redo search in this area</span>
+                      </div>
+
+                      <div className={styles.grid2}>
+                        {listings.map((listing) => (
+                          <ListingCard
+                            key={listing.address}
+                            listing={listing}
+                            sizes="(max-width: 640px) 45vw, 220px"
+                            large
+                          />
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
+              <div className={styles.hinge} />
+              <div className={styles.deck} />
             </div>
-            {/* Laptop base */}
-            <div className="ml-auto h-3 w-full max-w-[30rem] rounded-b-xl bg-gradient-to-b from-[#2a3f5f] to-[#1a2540]" />
 
-            {/* Phone standing in front, overlapping the laptop's bottom-left
-                corner (mirrors the composition realtors' IDX vendors use:
-                phone in front, laptop behind). Fixed 9:19.5 aspect ratio +
-                notch + home indicator so it actually reads as a phone body. */}
-            <div className="absolute -bottom-4 left-0 z-10 w-28 sm:-bottom-6 sm:w-36">
-              <div className="rounded-[2rem] border-[5px] border-[#1a2540] bg-[#1a2540] shadow-2xl">
-                <div
-                  className="relative overflow-hidden rounded-[1.5rem] bg-background"
-                  style={{ aspectRatio: "9 / 19.5" }}
-                >
-                  <div className="absolute left-1/2 top-0 z-10 h-3 w-12 -translate-x-1/2 rounded-b-lg bg-[#1a2540]" />
-                  <div className="flex h-full flex-col pt-4">
-                    <div className="flex items-center justify-between px-2 pb-1">
-                      <Home className="h-2.5 w-2.5 text-blue-500" />
-                      <span className="text-[7px] font-bold uppercase tracking-wide text-muted-foreground">Featured Listings</span>
-                    </div>
-                    <div className="flex flex-1 flex-col gap-1.5 overflow-hidden px-1.5">
-                      {listings.slice(0, 2).map((l, i) => (
-                        <ListingCard key={l.addr} listing={l} uid={`ph-${i}`} />
-                      ))}
-                    </div>
+            {/* iPhone (left) */}
+            <div className={styles.phone} aria-hidden="true">
+              <div className={styles.phoneFrame}>
+                <div className={styles.pScreen}>
+                  <div className={styles.island} />
+                  <div className={styles.statusbar}>
+                    <span>9:41</span>
+                    <span className={styles.icons}>
+                      <SignalIcon />
+                      <WifiIcon />
+                      <BatteryIcon />
+                    </span>
                   </div>
-                  <div className="absolute bottom-1.5 left-1/2 h-[3px] w-9 -translate-x-1/2 rounded-full bg-foreground/25" />
+                  <div className={styles.pSearch}>
+                    <SearchIcon />
+                    Area, City, ZIP…
+                  </div>
+                  <div className={styles.pHead}>
+                    <h4>Featured Listings</h4>
+                    <span>Newest ⇅</span>
+                  </div>
+                  <div className={styles.phoneBody}>
+                    {listings.slice(0, 2).map((listing) => (
+                      <ListingCard key={listing.address} listing={listing} sizes="170px" />
+                    ))}
+                    <span className={styles.mapFab}>
+                      <MapFabIcon />
+                      Map
+                    </span>
+                  </div>
+                  <div className={styles.homebar} />
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Copy */}
+          {/* Benefits + CTA */}
           <div>
-            <ul className="space-y-3">
-              {[
-                "Branded search + detail pages — your logo, your domain",
-                "Auto-synced from your IDX Broker account every 6 hours",
-                "Every listing view captures a lead straight into your CRM",
-                "\"Request a showing\" form on every listing, no extra setup",
-              ].map((item) => (
-                <li key={item} className="flex items-start gap-2.5 text-sm">
-                  <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-blue-500/15 text-blue-600">
-                    ✓
+            <div className={styles.benefits}>
+              {benefits.map((b) => (
+                <div className={styles.benefit} key={b.strong}>
+                  <span className={styles.check}>
+                    <CheckIcon />
                   </span>
-                  {item}
-                </li>
+                  <p>
+                    <strong>{b.strong}</strong> <span>{b.rest}</span>
+                  </p>
+                </div>
               ))}
-            </ul>
-            <div className="mt-6">
-              <Button render={<Link href="#add-ons" />} size="lg" className="px-6">
-                See IDX pricing
-              </Button>
             </div>
+
+            <p className={styles.trustNote}>
+              <ShieldIcon />
+              Powered by your own IDX Broker account
+            </p>
           </div>
         </div>
       </div>
