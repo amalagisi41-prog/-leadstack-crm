@@ -25,6 +25,7 @@ import { LiveVisitorBeacon } from "@/components/landing/live-visitor-beacon";
 
 import { Navbar as CustomNavbar } from "@/components/landing-custom/navbar";
 import { Hero as CustomHero } from "@/components/landing-custom/hero";
+import { WhyAgentStackExists } from "@/components/landing-custom/why-agentstack-exists";
 import { PainPoints } from "@/components/landing-custom/pain-points";
 import { HowItWorks as CustomHowItWorks } from "@/components/landing-custom/how-it-works";
 import { PipelineDemo } from "@/components/landing-custom/pipeline-demo";
@@ -65,19 +66,20 @@ export default async function HomePage() {
         <CustomNavbar brand={brand} />
         <main className="flex-1">
           <CustomHero />
+          <WhyAgentStackExists />
+          <CustomHowItWorks />
           <VideoTeaser />
           <ClientPromise />
           <HeroPipelineMockup />
           <PainPoints />
-          <CustomHowItWorks />
           <PipelineDemo />
           <AiDemo />
           <Territory />
           <IdxShowcase />
           <CustomFeatures />
-          <Testimonials />
           <Imagine />
           <TodayPlan />
+          <Testimonials />
           <CustomPricing />
           <AddOns />
           <CustomFAQ brand={brand} />

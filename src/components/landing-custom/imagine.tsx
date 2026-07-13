@@ -19,10 +19,7 @@ export function Imagine() {
             </span>
           </div>
 
-          <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">
-            Imagine
-          </p>
-          <h2 className="mt-3 text-balance text-3xl font-semibold leading-tight tracking-tighter sm:text-5xl">
+          <h2 className="text-balance text-3xl font-semibold leading-tight tracking-tighter sm:text-5xl">
             You became an agent{" "}
             <span className="font-sans font-normal italic">to help people.</span>
           </h2>
