@@ -13,6 +13,8 @@ import {
   type ServiceSpecialty,
   type BrandVoice,
   type BusinessFaq,
+  type BusinessObjection,
+  type BusinessDocument,
 } from "@/types/business-profile";
 
 /**
@@ -40,6 +42,9 @@ const STRING_KEYS: (keyof BusinessProfileContent)[] = [
   "email",
   "website",
   "languages",
+  "clientExperience",
+  "idealClientProfile",
+  "clientPromise",
   "serviceAreas",
   "priceRanges",
   "specialties",
@@ -57,6 +62,10 @@ const STRING_KEYS: (keyof BusinessProfileContent)[] = [
   "sellerGuideUrl",
   "testimonials",
   "vendors",
+  "buyerProcess",
+  "sellerProcess",
+  "listingCopyStyle",
+  "scripts",
 ];
 
 const BOOL_KEYS: (keyof BusinessProfileContent)[] = [
@@ -97,6 +106,26 @@ function coerce(
         a: String((f as BusinessFaq).a ?? "").slice(0, 1500),
       }))
       .filter((f) => f.q.trim() || f.a.trim())
+      .slice(0, 30);
+  }
+  if (Array.isArray(patch.objections)) {
+    next.objections = (patch.objections as unknown[])
+      .filter((o): o is BusinessObjection => !!o && typeof o === "object")
+      .map((o) => ({
+        objection: String((o as BusinessObjection).objection ?? "").slice(0, 300),
+        response: String((o as BusinessObjection).response ?? "").slice(0, 1500),
+      }))
+      .filter((o) => o.objection.trim() || o.response.trim())
+      .slice(0, 30);
+  }
+  if (Array.isArray(patch.documents)) {
+    next.documents = (patch.documents as unknown[])
+      .filter((d): d is BusinessDocument => !!d && typeof d === "object")
+      .map((d) => ({
+        label: String((d as BusinessDocument).label ?? "").slice(0, 100),
+        url: String((d as BusinessDocument).url ?? "").slice(0, 500),
+      }))
+      .filter((d) => d.label.trim() || d.url.trim())
       .slice(0, 30);
   }
   return next;

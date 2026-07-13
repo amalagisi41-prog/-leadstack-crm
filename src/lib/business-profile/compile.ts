@@ -50,6 +50,9 @@ export function compileBusinessProfilePrompt(
       p.email,
       p.website,
       p.languages,
+      p.clientExperience,
+      p.idealClientProfile,
+      p.clientPromise,
       p.serviceAreas,
       p.priceRanges,
       p.specialties,
@@ -64,9 +67,14 @@ export function compileBusinessProfilePrompt(
       p.sellerGuideUrl,
       p.vendors,
       p.testimonials,
+      p.buyerProcess,
+      p.sellerProcess,
+      p.listingCopyStyle,
     ].some((v) => (v ?? "").trim().length > 0) ||
     p.services.length > 0 ||
-    p.faqs.some((f) => f.q.trim() && f.a.trim());
+    p.faqs.some((f) => f.q.trim() && f.a.trim()) ||
+    p.objections.some((o) => o.objection.trim() && o.response.trim()) ||
+    p.documents.some((d) => d.label.trim() && d.url.trim());
   if (!hasSubstance) return null;
 
   const identity = [
@@ -77,6 +85,15 @@ export function compileBusinessProfilePrompt(
     line("Email", p.email),
     line("Website", p.website),
     line("Languages", p.languages),
+  ].filter(Boolean);
+
+  // Brand DNA — placed right after identity so it shapes the tone and
+  // audience of everything that follows, the same way it's meant to shape
+  // every AI surface, website, and marketing asset.
+  const brandDna = [
+    line("Every interaction should feel", p.clientExperience),
+    line("Ideal client", p.idealClientProfile),
+    line("Client promise", p.clientPromise),
   ].filter(Boolean);
 
   const market = [
@@ -116,6 +133,16 @@ export function compileBusinessProfilePrompt(
     compliance.push(`Opt-out language: ${p.optOutLanguage.trim()}`);
   }
 
+  const process = [
+    line("Buyer process", p.buyerProcess),
+    line("Seller process", p.sellerProcess),
+    line("Listing description style", p.listingCopyStyle),
+  ].filter(Boolean);
+
+  const documentLines = p.documents
+    .filter((d) => d.label.trim() && d.url.trim())
+    .map((d) => line(`Document: ${d.label.trim()}`, d.url));
+
   const assets = [
     line("Agent bio", p.bio),
     line(
@@ -126,21 +153,30 @@ export function compileBusinessProfilePrompt(
     line("Seller guide link", p.sellerGuideUrl),
     line("Preferred vendors", p.vendors),
     line("Testimonials", p.testimonials),
+    ...documentLines,
   ].filter(Boolean);
 
   const faqs = p.faqs
     .filter((f) => f.q.trim() && f.a.trim())
     .map((f) => `Q: ${f.q.trim()}\nA: ${f.a.trim()}`);
 
+  const objections = p.objections
+    .filter((o) => o.objection.trim() && o.response.trim())
+    .map((o) => `Objection: ${o.objection.trim()}\nResponse: ${o.response.trim()}`);
+
   const groups: string[] = [];
   if (identity.length) groups.push(identity.join("\n"));
+  if (brandDna.length) groups.push(brandDna.join("\n"));
   if (market.length) groups.push(market.join("\n"));
   if (rules.length) groups.push(rules.join("\n"));
   if (compliance.length)
     groups.push(`Compliance guardrails (never break these):\n- ${compliance.join("\n- ")}`);
+  if (process.length) groups.push(process.join("\n"));
   if (assets.length) groups.push(assets.join("\n"));
   if (faqs.length)
     groups.push(`Approved FAQ answers (you may use these directly):\n${faqs.join("\n\n")}`);
+  if (objections.length)
+    groups.push(`Common objections and how to respond:\n${objections.join("\n\n")}`);
 
   if (groups.length === 0) return null;
 
@@ -168,6 +204,9 @@ export function businessProfileCompleteness(p: BusinessProfileContent): number {
     !!p.qualificationRules.trim(),
     !!p.bio.trim(),
     p.faqs.some((f) => f.q.trim() && f.a.trim()),
+    !!p.buyerProcess.trim() || !!p.sellerProcess.trim(),
+    p.objections.some((o) => o.objection.trim() && o.response.trim()),
+    !!p.clientPromise.trim(),
   ];
   const done = checks.filter(Boolean).length;
   return Math.round((done / checks.length) * 100);

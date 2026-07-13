@@ -22,6 +22,8 @@ import {
   type BusinessProfileContent,
 } from "@/types/business-profile";
 
+const MAX_LIST_ITEMS = 30;
+
 /**
  * "Tell us about your business once. AgentStack handles the rest."
  *
@@ -133,6 +135,22 @@ export function BusinessProfileForm() {
       const faqs = [...c.faqs];
       faqs[i] = { ...faqs[i], [field]: value };
       return { ...c, faqs };
+    });
+  }
+
+  function setObjection(i: number, field: "objection" | "response", value: string) {
+    setContent((c) => {
+      const objections = [...c.objections];
+      objections[i] = { ...objections[i], [field]: value };
+      return { ...c, objections };
+    });
+  }
+
+  function setDocument(i: number, field: "label" | "url", value: string) {
+    setContent((c) => {
+      const documents = [...c.documents];
+      documents[i] = { ...documents[i], [field]: value };
+      return { ...c, documents };
     });
   }
 
@@ -298,9 +316,51 @@ export function BusinessProfileForm() {
         </div>
       </Section>
 
-      {/* 2. Market areas */}
+      {/* 2. Brand DNA */}
       <Section
-        title="2. Your market"
+        title="2. Your brand DNA"
+        desc="The identity every AI interaction, website, and marketing asset should carry — who you serve, how it should feel, and what you promise."
+      >
+        <Field
+          label="Client experience"
+          hint="The emotional experience every AI interaction should create."
+        >
+          <textarea
+            rows={2}
+            className={input}
+            value={content.clientExperience}
+            onChange={(e) => set("clientExperience", e.target.value)}
+            placeholder="Every interaction should feel calm, confident, and personally attentive — like working with a trusted friend who happens to be a real estate expert."
+          />
+        </Field>
+        <Field
+          label="Ideal client profile"
+          hint="Who this business serves — gives every AI response, website, and marketing asset a clear audience."
+        >
+          <textarea
+            rows={2}
+            className={input}
+            value={content.idealClientProfile}
+            onChange={(e) => set("idealClientProfile", e.target.value)}
+            placeholder="Busy professionals age 30–45 buying their first or second home in Fairfield County — value-driven, not price-obsessed."
+          />
+        </Field>
+        <Field
+          label="Client promise"
+          hint="One sentence. The commitment that stays consistent across every touchpoint."
+        >
+          <input
+            className={input}
+            value={content.clientPromise}
+            onChange={(e) => set("clientPromise", e.target.value)}
+            placeholder="Every client gets a same-day response and zero surprises at closing."
+          />
+        </Field>
+      </Section>
+
+      {/* 3. Market areas */}
+      <Section
+        title="3. Your market"
         desc="Where you work and what you specialize in — so the AI never sends a lead to the wrong town."
       >
         <Field
@@ -337,7 +397,7 @@ export function BusinessProfileForm() {
 
       {/* 3. Services */}
       <Section
-        title="3. What you offer"
+        title="4. What you offer"
         desc="Pick the services you provide. This drives which funnels and follow-up plans AgentStack recommends."
       >
         <div className="flex flex-wrap gap-2">
@@ -364,7 +424,7 @@ export function BusinessProfileForm() {
 
       {/* 4. Brand voice */}
       <Section
-        title="4. Your voice"
+        title="5. Your voice"
         desc="How should the AI sound when it speaks for you?"
       >
         <div className="grid gap-2 sm:grid-cols-3">
@@ -396,7 +456,7 @@ export function BusinessProfileForm() {
 
       {/* 5. Business rules */}
       <Section
-        title="5. How you work"
+        title="6. How you work"
         desc="Your availability and how you want leads handled."
       >
         <div className="grid gap-4 sm:grid-cols-2">
@@ -442,7 +502,7 @@ export function BusinessProfileForm() {
 
       {/* 6. Lead qualification */}
       <Section
-        title="6. Qualifying leads"
+        title="7. Qualifying leads"
         desc="What the AI should find out to tell a serious lead from a tire-kicker."
       >
         <Field label="Qualification questions / criteria">
@@ -458,7 +518,7 @@ export function BusinessProfileForm() {
 
       {/* 7. Compliance */}
       <Section
-        title="7. Compliance guardrails"
+        title="8. Compliance guardrails"
         desc="Rules the AI will never break. Recommended to keep both on."
       >
         <ToggleRow
@@ -495,7 +555,7 @@ export function BusinessProfileForm() {
 
       {/* 8. Assets */}
       <Section
-        title="8. Your assets"
+        title="9. Your assets"
         desc="Bio, links, and vendors the AI can reference and share."
       >
         <Field label="Short bio">
@@ -559,9 +619,176 @@ export function BusinessProfileForm() {
         </Field>
       </Section>
 
-      {/* 9. FAQs */}
+      {/* 9. Buyer & seller process */}
       <Section
-        title="9. FAQs"
+        title="10. Buyer & seller process"
+        desc="What happens after someone inquires — the AI uses this to explain next steps and write on-brand listing copy."
+      >
+        <Field
+          label="Buyer process"
+          hint="Walk through what a buyer lead can expect, step by step."
+        >
+          <textarea
+            rows={3}
+            className={input}
+            value={content.buyerProcess}
+            onChange={(e) => set("buyerProcess", e.target.value)}
+            placeholder="We start with a quick call to understand your budget and timeline, then set up a search and schedule showings within 48 hours."
+          />
+        </Field>
+        <Field
+          label="Seller process"
+          hint="Walk through what a seller lead can expect, step by step."
+        >
+          <textarea
+            rows={3}
+            className={input}
+            value={content.sellerProcess}
+            onChange={(e) => set("sellerProcess", e.target.value)}
+            placeholder="We start with a free valuation and walkthrough, then prep a listing plan and target an on-market date within 2 weeks."
+          />
+        </Field>
+        <Field
+          label="Listing description style"
+          hint="How should AI-written listing descriptions sound?"
+        >
+          <textarea
+            rows={2}
+            className={input}
+            value={content.listingCopyStyle}
+            onChange={(e) => set("listingCopyStyle", e.target.value)}
+            placeholder="Warm and specific — lead with the best feature, avoid clichés like 'must see', always mention the neighborhood."
+          />
+        </Field>
+      </Section>
+
+      {/* 10. Objections */}
+      <Section
+        title="11. Objections"
+        desc="Common pushback and your approved response. The AI uses these to handle objections the way you would."
+      >
+        <div className="space-y-3">
+          {content.objections.map((o, i) => (
+            <div key={i} className="rounded-xl border p-3">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-xs font-medium text-muted-foreground">
+                  Objection {i + 1}
+                </span>
+                <button
+                  onClick={() =>
+                    set(
+                      "objections",
+                      content.objections.filter((_, idx) => idx !== i),
+                    )
+                  }
+                  className="text-muted-foreground hover:text-red-500"
+                  aria-label="Remove objection"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+              <input
+                className={`${input} mb-2`}
+                value={o.objection}
+                onChange={(e) => setObjection(i, "objection", e.target.value)}
+                placeholder="Objection — e.g. I want to wait for rates to drop."
+              />
+              <textarea
+                rows={2}
+                className={input}
+                value={o.response}
+                onChange={(e) => setObjection(i, "response", e.target.value)}
+                placeholder="Approved response — e.g. Totally fair — here's what waiting could cost you in this market..."
+              />
+            </div>
+          ))}
+          {content.objections.length < MAX_LIST_ITEMS ? (
+            <button
+              onClick={() =>
+                set("objections", [
+                  ...content.objections,
+                  { objection: "", response: "" },
+                ])
+              }
+              className="flex items-center gap-1 text-xs font-medium text-[#1b3d7a] hover:underline"
+            >
+              <Plus className="h-3.5 w-3.5" /> Add an objection
+            </button>
+          ) : null}
+        </div>
+      </Section>
+
+      {/* 11. Documents */}
+      <Section
+        title="12. Documents"
+        desc="Links the AI can share — comp sheets, disclosures, checklists, anything beyond the buyer/seller guides above."
+      >
+        <div className="space-y-3">
+          {content.documents.map((d, i) => (
+            <div key={i} className="rounded-xl border p-3">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-xs font-medium text-muted-foreground">
+                  Document {i + 1}
+                </span>
+                <button
+                  onClick={() =>
+                    set(
+                      "documents",
+                      content.documents.filter((_, idx) => idx !== i),
+                    )
+                  }
+                  className="text-muted-foreground hover:text-red-500"
+                  aria-label="Remove document"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+              <input
+                className={`${input} mb-2`}
+                value={d.label}
+                onChange={(e) => setDocument(i, "label", e.target.value)}
+                placeholder="Label — e.g. Pre-listing checklist"
+              />
+              <input
+                className={input}
+                value={d.url}
+                onChange={(e) => setDocument(i, "url", e.target.value)}
+                placeholder="https://…/checklist.pdf"
+              />
+            </div>
+          ))}
+          {content.documents.length < MAX_LIST_ITEMS ? (
+            <button
+              onClick={() =>
+                set("documents", [...content.documents, { label: "", url: "" }])
+              }
+              className="flex items-center gap-1 text-xs font-medium text-[#1b3d7a] hover:underline"
+            >
+              <Plus className="h-3.5 w-3.5" /> Add a document
+            </button>
+          ) : null}
+        </div>
+      </Section>
+
+      {/* 12. Your scripts */}
+      <Section
+        title="13. Your scripts"
+        desc="For your own reference — not sent to leads. Cold-call openers, listing presentation talk tracks, anything in your own voice."
+      >
+        <Field label="Scripts">
+          <textarea
+            rows={4}
+            className={input}
+            value={content.scripts}
+            onChange={(e) => set("scripts", e.target.value)}
+            placeholder="Cold-call opener: Hi, this is Jane with Keller Williams. I noticed..."
+          />
+        </Field>
+      </Section>
+
+      {/* 13. FAQs */}
+      <Section
+        title="14. FAQs"
         desc="Approved answers the AI can use word-for-word. Great for the questions you get all the time."
       >
         <div className="space-y-3">

@@ -66,6 +66,63 @@ describe("compileBusinessProfilePrompt", () => {
     expect(out).toContain("Yes, always free.");
     expect(out).not.toContain("Incomplete");
   });
+
+  it("includes buyer/seller process, objections, and documents", () => {
+    const out = compileBusinessProfilePrompt(
+      make({
+        agentName: "X",
+        buyerProcess: "We start with a quick call.",
+        sellerProcess: "We start with a free valuation.",
+        listingCopyStyle: "Warm and specific.",
+        objections: [
+          { objection: "Waiting for rates to drop", response: "Here's what waiting costs." },
+          { objection: "Incomplete", response: "" },
+        ],
+        documents: [
+          { label: "Pre-listing checklist", url: "https://x.com/checklist.pdf" },
+          { label: "Incomplete", url: "" },
+        ],
+      }),
+    )!;
+    expect(out).toContain("We start with a quick call.");
+    expect(out).toContain("We start with a free valuation.");
+    expect(out).toContain("Warm and specific.");
+    expect(out).toContain("Waiting for rates to drop");
+    expect(out).toContain("Here's what waiting costs.");
+    expect(out).toContain("Pre-listing checklist");
+    expect(out).toContain("https://x.com/checklist.pdf");
+    expect(out).not.toContain("Incomplete");
+  });
+
+  it("never includes scripts — dashboard-only, not sent to the AI", () => {
+    const out = compileBusinessProfilePrompt(
+      make({
+        agentName: "X",
+        scripts: "Cold-call opener: Hi, this is Jane...",
+      }),
+    )!;
+    expect(out).not.toContain("Cold-call opener");
+    expect(out).not.toContain("Hi, this is Jane");
+  });
+
+  it("includes brand DNA, ordered right after identity and before market", () => {
+    const out = compileBusinessProfilePrompt(
+      make({
+        agentName: "X",
+        clientExperience: "Calm and confident.",
+        idealClientProfile: "First-time buyers in Fairfield County.",
+        clientPromise: "Same-day response, always.",
+        serviceAreas: "Maplewood",
+      }),
+    )!;
+    expect(out).toContain("Calm and confident.");
+    expect(out).toContain("First-time buyers in Fairfield County.");
+    expect(out).toContain("Same-day response, always.");
+    expect(out.indexOf("Agent: X")).toBeLessThan(out.indexOf("Calm and confident."));
+    expect(out.indexOf("Calm and confident.")).toBeLessThan(
+      out.indexOf("Service areas: Maplewood"),
+    );
+  });
 });
 
 describe("businessProfileCompleteness", () => {
@@ -85,6 +142,9 @@ describe("businessProfileCompleteness", () => {
       qualificationRules: "budget + timeline",
       bio: "11 years",
       faqs: [{ q: "Q", a: "A" }],
+      buyerProcess: "We start with a quick call.",
+      objections: [{ objection: "Q", response: "A" }],
+      clientPromise: "Same-day response, always.",
     });
     expect(businessProfileCompleteness(full)).toBe(100);
   });
