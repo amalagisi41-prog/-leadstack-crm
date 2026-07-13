@@ -66,9 +66,9 @@ export default async function HomePage() {
         <CustomNavbar brand={brand} />
         <main className="flex-1">
           <CustomHero />
+          <VideoTeaser />
           <WhyAgentStackExists />
           <CustomHowItWorks />
-          <VideoTeaser />
           <ClientPromise />
           <HeroPipelineMockup />
           <PainPoints />
