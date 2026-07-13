@@ -61,6 +61,16 @@ export interface BusinessFaq {
   a: string;
 }
 
+export interface BusinessObjection {
+  objection: string;
+  response: string;
+}
+
+export interface BusinessDocument {
+  label: string;
+  url: string;
+}
+
 export interface BusinessProfileContent {
   // 1. Agent profile
   agentName: string;
@@ -72,6 +82,13 @@ export interface BusinessProfileContent {
   email: string;
   website: string;
   languages: string; // e.g. "English, Spanish"
+
+  // 1b. Brand DNA — the identity every AI surface, website, and marketing
+  // asset should carry. Kept short by design (compiled near the top of the
+  // prompt, right after identity) so it shapes tone without bloating cost.
+  clientExperience: string; // the emotional experience every interaction should create
+  idealClientProfile: string; // who this business serves
+  clientPromise: string; // one-sentence commitment, consistent across every touchpoint
 
   // 4. Market areas
   serviceAreas: string; // towns / neighborhoods served
@@ -108,6 +125,18 @@ export interface BusinessProfileContent {
   testimonials: string;
   vendors: string; // preferred lenders/attorneys/inspectors/photographers
 
+  // 9. Process & scripts
+  buyerProcess: string; // narrative: what happens after a buyer inquires
+  sellerProcess: string; // narrative: what happens after a seller inquires
+  listingCopyStyle: string; // short style guide for AI-written listing descriptions
+  scripts: string; // dashboard-only reference; NOT compiled into the AI prompt
+
+  // 11. Objection handling — approved responses the AI may use directly
+  objections: BusinessObjection[];
+
+  // 12. Documents — general reference links, alongside buyerGuideUrl/sellerGuideUrl
+  documents: BusinessDocument[];
+
   // 10. FAQs — approved answers the AI may quote verbatim
   faqs: BusinessFaq[];
 }
@@ -135,6 +164,9 @@ export const EMPTY_BUSINESS_PROFILE: BusinessProfileContent = {
   email: "",
   website: "",
   languages: "",
+  clientExperience: "",
+  idealClientProfile: "",
+  clientPromise: "",
   serviceAreas: "",
   priceRanges: "",
   specialties: "",
@@ -156,5 +188,11 @@ export const EMPTY_BUSINESS_PROFILE: BusinessProfileContent = {
   sellerGuideUrl: "",
   testimonials: "",
   vendors: "",
+  buyerProcess: "",
+  sellerProcess: "",
+  listingCopyStyle: "",
+  scripts: "",
+  objections: [],
+  documents: [],
   faqs: [],
 };
