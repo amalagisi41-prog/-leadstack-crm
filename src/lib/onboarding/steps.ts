@@ -41,10 +41,10 @@ export interface OnboardingStepMeta {
 export const ONBOARDING_STEPS: readonly OnboardingStepMeta[] = [
   {
     id: "business_profile",
-    title: "Set up your Business Brain",
+    title: "Set up your Business Blueprint",
     description:
       "Tell AgentStack about your business once — name, brokerage, services, brand voice, compliance rules, and FAQs. Every AI agent, email, and automation pulls from this profile automatically.",
-    cta: "Set Up Business Brain",
+    cta: "Set Up Business Blueprint",
     href: "/business-profile",
     videoMinutes: 5,
   },

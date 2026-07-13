@@ -9,7 +9,7 @@ import { SocialAuthButtons } from "@/components/auth/social-auth-buttons";
 
 const perks = [
   "No credit card required to start",
-  "Full AI follow-up from day one",
+  "Every lead followed up automatically, from day one",
   "Import existing contacts in minutes",
   "Cancel anytime, no questions asked",
 ];
@@ -81,10 +81,12 @@ export function SignupCta() {
                   Let AgentStack handle the rest.
                 </span>
               </h2>
-              <p className="mt-4 text-blue-200/70">
-                Set up in 15 minutes. AgentStack handles lead capture, instant
-                response, follow-up, and scheduling — so you can focus on
-                closing.
+              <p className="mt-3 text-sm font-semibold text-blue-300/90">
+                Get your business fully operational in about 15 minutes.
+              </p>
+              <p className="mt-3 text-blue-200/70">
+                AgentStack handles lead capture, instant response, follow-up,
+                and scheduling — so you can focus on closing.
               </p>
               <ul className="mt-6 space-y-3">
                 {perks.map((perk) => (

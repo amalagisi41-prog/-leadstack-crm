@@ -48,7 +48,7 @@ type StepOutcome = "complete" | "skipped";
 /* ---------- step metadata (sidebar) ---------- */
 
 const SETUP_STEPS = [
-  { label: "Business Brain", minutes: 3 },
+  { label: "Business Blueprint", minutes: 3 },
   { label: "Import Contacts", minutes: 2 },
   { label: "Connect Your Business", minutes: 3 },
   { label: "Choose Your Goals", minutes: 2 },
@@ -339,7 +339,7 @@ export function OnboardingWizard({
           {step === 0 && (
             <StepFrame
               step={1}
-              title="Build your AI Business Brain"
+              title="Build your Business Blueprint"
               subtitle="Tell AgentStack about your business one time. This becomes the single source of truth for every AI feature."
               why="Every AI response, follow-up, and automation references this profile. Change one item and the entire platform updates."
               minutes={3}
@@ -550,7 +550,7 @@ export function OnboardingWizard({
 
               <div className="mx-auto mt-8 max-w-lg space-y-3 text-left">
                 {[
-                  { label: "Business Brain", idx: 0 },
+                  { label: "Business Blueprint", idx: 0 },
                   { label: "Import Contacts", idx: 1 },
                   { label: "Connect Business", idx: 2 },
                   { label: "Business Goals", idx: 3 },
@@ -579,7 +579,7 @@ export function OnboardingWizard({
 
               <p className="mt-8 text-sm text-muted-foreground">
                 Click &ldquo;Go Live&rdquo; to start your dashboard. You can complete skipped steps
-                anytime from your Business Brain.
+                anytime from your Business Blueprint.
               </p>
 
               <div className="mt-8 flex items-center justify-between border-t pt-8">

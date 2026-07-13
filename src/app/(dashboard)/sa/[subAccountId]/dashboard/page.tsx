@@ -212,7 +212,7 @@ export default function DashboardPage() {
     });
   }, [events, todayEnd, tomorrowEnd]);
 
-  // ── AI Receptionist feed (recent web chat sessions) ───────────────────────
+  // ── AI Agents feed (recent web chat sessions) ──────────────────────────────
   const recentSessions = sessions.slice(0, 5);
 
   // ── Daily Success Plan priorities ────────────────────────────────────────
@@ -566,7 +566,7 @@ export default function DashboardPage() {
               href={saPath("/contacts")}
             />
             <KpiCard
-              label="AI Receptionist"
+              label="AI Agents"
               value={loading ? null : String(recentSessions.length)}
               delta={
                 recentSessions.length > 0
@@ -921,12 +921,12 @@ export default function DashboardPage() {
                 )}
               </section>
 
-              {/* AI Receptionist feed */}
+              {/* AI Agents feed */}
               <section className="rounded-2xl border bg-card p-5">
                 <div className="mb-4 flex items-center justify-between">
                   <div>
                     <h2 className="text-sm font-semibold">
-                      AI Receptionist
+                      AI Agents
                     </h2>
                     <p className="text-xs text-muted-foreground">
                       Recent web chat sessions
