@@ -34,6 +34,7 @@ import { IdxShowcase } from "@/components/landing-custom/idx-showcase";
 import { Features as CustomFeatures } from "@/components/landing-custom/features";
 import { Testimonials } from "@/components/landing-custom/testimonials";
 import { Imagine } from "@/components/landing-custom/imagine";
+import { TodayPlan } from "@/components/landing-custom/today-plan";
 import { Pricing as CustomPricing } from "@/components/landing-custom/pricing";
 import { AddOns } from "@/components/landing-custom/add-ons";
 import { FAQ as CustomFAQ } from "@/components/landing-custom/faq";
@@ -76,6 +77,7 @@ export default async function HomePage() {
           <CustomFeatures />
           <Testimonials />
           <Imagine />
+          <TodayPlan />
           <CustomPricing />
           <AddOns />
           <CustomFAQ brand={brand} />
