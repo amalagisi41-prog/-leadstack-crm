@@ -125,12 +125,54 @@ const GOALS = [
 /* ---------- step 5 — marketing systems ---------- */
 
 const MARKETING_SYSTEMS = [
-  { id: "home_valuation", icon: Home, title: "Home Valuation", conversion: "12–18%" },
-  { id: "buyer_consult", icon: Search, title: "Buyer Consultation", conversion: "25–35%" },
-  { id: "showing", icon: Key, title: "Schedule a Showing", conversion: "40–50%" },
-  { id: "open_house", icon: BookOpen, title: "Open House Registration", conversion: "30–45%" },
-  { id: "luxury", icon: Crown, title: "Luxury Buyer", conversion: "10–20%" },
-  { id: "seller_guide", icon: BookOpen, title: "Seller Guide", conversion: "15–25%" },
+  {
+    id: "home_valuation",
+    icon: Home,
+    title: "Home Valuation",
+    conversion: "12–18%",
+    bestFor: "Sellers curious what their home is worth",
+    why: "Homeowners check their value on a whim — this captures that exact moment.",
+  },
+  {
+    id: "buyer_consult",
+    icon: Search,
+    title: "Buyer Consultation",
+    conversion: "25–35%",
+    bestFor: "Early-stage buyers still exploring",
+    why: "A short questionnaire qualifies budget and timeline before you ever talk.",
+  },
+  {
+    id: "showing",
+    icon: Key,
+    title: "Schedule a Showing",
+    conversion: "40–50%",
+    bestFor: "Buyers ready to see a specific listing",
+    why: "High intent, high conversion — they're already asking to meet.",
+  },
+  {
+    id: "open_house",
+    icon: BookOpen,
+    title: "Open House Registration",
+    conversion: "30–45%",
+    bestFor: "Walk-in traffic at live showings",
+    why: "Turns foot traffic into a follow-up list you actually own.",
+  },
+  {
+    id: "luxury",
+    icon: Crown,
+    title: "Luxury Buyer",
+    conversion: "10–20%",
+    bestFor: "High-end listings and discreet buyers",
+    why: "A concierge-tuned intake that matches a luxury client's expectations.",
+  },
+  {
+    id: "seller_guide",
+    icon: BookOpen,
+    title: "Seller Guide",
+    conversion: "15–25%",
+    bestFor: "Sellers still deciding whether to list",
+    why: "Educational content earns trust before they're ready to commit.",
+  },
 ] as const;
 
 /* ---------- persist helper ---------- */
@@ -153,8 +195,9 @@ export function OnboardingWizard({
   initialCompleted,
 }: WizardProps) {
   const router = useRouter();
-  const { agencyRole } = useAuth();
+  const { agencyRole, user } = useAuth();
   const isAgencyOwner = agencyRole === "owner";
+  const [showWelcome, setShowWelcome] = useState(true);
   const [step, setStep] = useState(0);
   const [outcomes, setOutcomes] = useState<Record<number, StepOutcome>>({});
   const [completed, setCompleted] = useState<Set<string>>(
@@ -300,6 +343,63 @@ export function OnboardingWizard({
     }
   }
 
+  if (showWelcome) {
+    const firstName = user?.displayName?.split(" ")[0];
+    const totalMinutes = SETUP_STEPS.reduce((sum, s) => sum + s.minutes, 0);
+    return (
+      <div className="fixed inset-0 z-50 overflow-y-auto bg-background">
+        <div className="mx-auto flex min-h-full max-w-lg flex-col justify-center px-4 py-16">
+          <div className="mb-6 flex items-center gap-2">
+            <LogoMark size={30} idSuffix="-welcome" />
+            <span className="text-lg font-bold tracking-tight">{CUSTOM_BRAND.name}</span>
+          </div>
+
+          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            Welcome{firstName ? `, ${firstName}` : ""}.
+          </h1>
+          <p className="mt-3 text-lg text-muted-foreground">
+            Let&apos;s build your real estate business in about{" "}
+            <span className="font-semibold text-foreground">{totalMinutes} minutes</span>.
+          </p>
+
+          <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+            <div className="h-full w-0 rounded-full bg-rose-600" />
+          </div>
+
+          <p className="mb-3 mt-8 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            What happens next
+          </p>
+          <div className="space-y-2.5">
+            {SETUP_STEPS.map((s, i) => (
+              <div
+                key={s.label}
+                className="flex items-center gap-3 rounded-xl border bg-card px-4 py-3"
+              >
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold">
+                  {i + 1}
+                </span>
+                <span className="flex-1 text-sm font-medium">{s.label}</span>
+                <span className="text-xs text-muted-foreground">{s.minutes} min</span>
+              </div>
+            ))}
+          </div>
+
+          <button
+            onClick={() => setShowWelcome(false)}
+            className="mt-8 flex w-full items-center justify-center gap-2 rounded-full bg-foreground px-6 py-3.5 text-sm font-semibold text-background transition-opacity hover:opacity-90"
+          >
+            Let&apos;s build my business
+            <ArrowRight className="h-4 w-4" />
+          </button>
+          <p className="mt-3 text-center text-xs text-muted-foreground">
+            You can skip most steps and finish them later — nothing here is a
+            dead end.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-background">
       {/* ── header ── */}
@@ -373,8 +473,8 @@ export function OnboardingWizard({
           {step === 1 && (
             <StepFrame
               step={2}
-              title="Import your contacts"
-              subtitle="Bring your database with you. Upload a CSV from your old CRM or add contacts manually — AgentStack handles mapping and duplicates."
+              title="Bring your business with you"
+              subtitle="We'll organize your entire database automatically. Upload a CSV from your old CRM or add contacts manually — AgentStack handles mapping and duplicates."
               why="Your follow-up, pipeline, and AI responses all start from your contact list. Even a partial import gets the system working immediately."
               minutes={2}
               requirement="Can skip"
@@ -519,7 +619,10 @@ export function OnboardingWizard({
                       <span>
                         <span className="block font-semibold">{m.title}</span>
                         <span className="mt-0.5 block text-sm text-muted-foreground">
-                          Conversion: {m.conversion}
+                          Best for: {m.bestFor} · Conversion: {m.conversion}
+                        </span>
+                        <span className="mt-1 block text-xs text-muted-foreground/80">
+                          {m.why}
                         </span>
                       </span>
                     </button>
@@ -536,69 +639,111 @@ export function OnboardingWizard({
             </StepFrame>
           )}
 
-          {step === 5 && (
-            <div className="text-center">
-              <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-rose-100 dark:bg-rose-950/40">
-                <Rocket className="h-8 w-8 text-rose-600" />
-              </div>
-              <p className="mb-2 font-semibold text-rose-600">Step 6</p>
-              <h1 className="text-4xl font-bold tracking-tight">You&apos;re ready to go live</h1>
-              <p className="mx-auto mt-4 max-w-md text-lg text-muted-foreground">
-                AgentStack is now configured around your business. Here&apos;s what&apos;s set up and
-                ready to run:
-              </p>
+          {step === 5 && (() => {
+            const firstName = user?.displayName?.split(" ")[0];
+            const launchedSystem =
+              systems.size > 0
+                ? MARKETING_SYSTEMS.find((m) => systems.has(m.id))
+                : undefined;
+            const recommendation = launchedSystem ?? MARKETING_SYSTEMS[0];
 
-              <div className="mx-auto mt-8 max-w-lg space-y-3 text-left">
-                {[
-                  { label: "Business Blueprint", idx: 0 },
-                  { label: "Import Contacts", idx: 1 },
-                  { label: "Connect Business", idx: 2 },
-                  { label: "Business Goals", idx: 3 },
-                  { label: "Marketing Systems", idx: 4 },
-                ].map((row) => {
-                  const done = outcomes[row.idx] === "complete";
-                  return (
-                    <div
-                      key={row.label}
-                      className="flex items-center justify-between rounded-2xl border bg-card px-5 py-4"
-                    >
-                      <span className="font-semibold">{row.label}</span>
-                      <span
-                        className={cn(
-                          "flex items-center gap-1.5 text-sm",
-                          done ? "text-emerald-600" : "text-muted-foreground",
-                        )}
+            return (
+              <div className="text-center">
+                <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-rose-100 dark:bg-rose-950/40">
+                  <Rocket className="h-8 w-8 text-rose-600" />
+                </div>
+                <p className="mb-2 font-semibold text-rose-600">🎉 Business Ready</p>
+                <h1 className="text-4xl font-bold tracking-tight">
+                  Your business is ready{firstName ? `, ${firstName}` : ""}.
+                </h1>
+                <p className="mx-auto mt-4 max-w-md text-lg text-muted-foreground">
+                  AgentStack is now configured around your business. Here&apos;s what&apos;s
+                  set up and ready to run:
+                </p>
+
+                <div className="mx-auto mt-8 max-w-lg space-y-2.5 text-left">
+                  {[
+                    { label: "Business Blueprint", idx: 0 },
+                    { label: "Import Contacts", idx: 1 },
+                    { label: "Connect Business", idx: 2 },
+                    { label: "Business Goals", idx: 3 },
+                    { label: "Marketing Systems", idx: 4 },
+                  ].map((row) => {
+                    const done = outcomes[row.idx] === "complete";
+                    return (
+                      <div
+                        key={row.label}
+                        className="flex items-center gap-3 rounded-2xl border bg-card px-5 py-4"
                       >
-                        {done && <Check className="h-4 w-4" strokeWidth={3} />}
-                        {done ? "Complete" : "Skipped"}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
+                        <span
+                          className={cn(
+                            "flex h-6 w-6 shrink-0 items-center justify-center rounded-full",
+                            done
+                              ? "bg-emerald-500/15 text-emerald-600"
+                              : "border-2 border-muted-foreground/25",
+                          )}
+                        >
+                          {done && <Check className="h-3.5 w-3.5" strokeWidth={3} />}
+                        </span>
+                        <span className="flex-1 font-semibold">{row.label}</span>
+                        <span
+                          className={cn(
+                            "text-sm",
+                            done ? "text-emerald-600" : "text-muted-foreground",
+                          )}
+                        >
+                          {done ? "Complete" : "Skipped"}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
 
-              <p className="mt-8 text-sm text-muted-foreground">
-                Click &ldquo;Go Live&rdquo; to start your dashboard. You can complete skipped steps
-                anytime from your Business Blueprint.
-              </p>
+                <div className="mx-auto mt-6 max-w-lg rounded-2xl border border-blue-500/20 bg-blue-500/5 p-5 text-left">
+                  <p className="text-sm leading-relaxed">
+                    <span className="font-semibold">
+                      Hi{firstName ? ` ${firstName}` : ""}, I&apos;ve finished setting up
+                      your business.
+                    </span>{" "}
+                    {launchedSystem ? (
+                      <>
+                        Your{" "}
+                        <span className="font-semibold">{launchedSystem.title}</span>{" "}
+                        system is live and ready to capture leads.
+                      </>
+                    ) : (
+                      <>
+                        Based on your goals, I recommend launching your{" "}
+                        <span className="font-semibold">{recommendation.title}</span>{" "}
+                        system first.
+                      </>
+                    )}
+                  </p>
+                </div>
 
-              <div className="mt-8 flex items-center justify-between border-t pt-8">
-                <button
-                  onClick={back}
-                  className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  <ArrowLeft className="h-4 w-4" />
-                  Back
-                </button>
-                <button
-                  onClick={goLive}
-                  className="rounded-full bg-foreground px-8 py-3 text-sm font-semibold text-background transition-opacity hover:opacity-90"
-                >
-                  Go Live
-                </button>
+                <p className="mt-8 text-sm text-muted-foreground">
+                  Click &ldquo;Go Live&rdquo; to start your dashboard. You can complete skipped
+                  steps anytime from your Business Blueprint.
+                </p>
+
+                <div className="mt-8 flex items-center justify-between border-t pt-8">
+                  <button
+                    onClick={back}
+                    className="flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Back
+                  </button>
+                  <button
+                    onClick={goLive}
+                    className="rounded-full bg-foreground px-8 py-3 text-sm font-semibold text-background transition-opacity hover:opacity-90"
+                  >
+                    Go Live
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </main>
       </div>
     </div>
