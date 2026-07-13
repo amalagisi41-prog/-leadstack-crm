@@ -102,11 +102,11 @@ const SUB_ACCOUNT_NAV_SECTIONS: NavSection[] = [
     items: [
       {
         href: "/business-profile",
-        label: "Business Brain",
+        label: "Business Blueprint",
         icon: BookOpen,
         enabled: true,
       },
-      { href: "/ai-agents", label: "AI Receptionist", icon: Bot, enabled: true },
+      { href: "/ai-agents", label: "AI Agents", icon: Bot, enabled: true },
       { href: "/workflows", label: "Smart Workflows", icon: Workflow, enabled: true },
       { href: "/broadcasts", label: "Broadcasts", icon: Send, enabled: true },
       { href: "/templates", label: "Templates", icon: FileText, enabled: true },

@@ -48,7 +48,7 @@ export async function POST(
   ]);
   if (!bizSnap.exists) {
     return NextResponse.json(
-      { error: "Fill in your Business Brain first." },
+      { error: "Fill in your Business Blueprint first." },
       { status: 400 },
     );
   }
@@ -56,7 +56,7 @@ export async function POST(
   const compiled = compileBusinessProfilePrompt(profile);
   if (!compiled) {
     return NextResponse.json(
-      { error: "Add a few details to your Business Brain first." },
+      { error: "Add a few details to your Business Blueprint first." },
       { status: 400 },
     );
   }

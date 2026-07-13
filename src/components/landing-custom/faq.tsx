@@ -9,7 +9,7 @@ const faqs = [
   {
     question: "I already use Chime / Follow Up Boss / KvCORE. Why switch?",
     answer:
-      "Those are CRMs — they store your contacts. AgentStack is a business operating system — it tells you what to do next, responds to leads for you, and keeps every follow-up moving automatically. Set up your Business Brain once and AgentStack configures AI, lead capture, and follow-up around it. No per-seat surprises.",
+      "Those are CRMs — they store your contacts. AgentStack is a business operating system — it tells you what to do next, responds to leads for you, and keeps every follow-up moving automatically. Set up your Business Blueprint once and AgentStack configures AI, lead capture, and follow-up around it. No per-seat surprises.",
   },
   {
     question: "How fast will leads get a response?",
@@ -29,7 +29,7 @@ const faqs = [
   {
     question: "How does the AI work?",
     answer:
-      "You never write prompts or build automations. You answer simple business questions in your Business Brain — hours, services, preferred vendors, brand voice — and AgentStack configures the AI automatically. It handles inbound texts, web chat, and phone calls — qualifying leads, answering questions, and booking showings. When someone's ready to move, the AI flags it and alerts you immediately.",
+      "You never write prompts or build automations. You answer simple business questions in your Business Blueprint — hours, services, preferred vendors, brand voice — and AgentStack configures the AI automatically. It handles inbound texts, web chat, and phone calls — qualifying leads, answering questions, and booking showings. When someone's ready to move, you get flagged and alerted immediately.",
   },
   {
     question: "Is my client data safe?",
