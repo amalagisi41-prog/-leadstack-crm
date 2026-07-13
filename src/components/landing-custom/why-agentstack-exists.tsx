@@ -1,6 +1,6 @@
 export function WhyAgentStackExists() {
   return (
-    <section className="bg-white px-4 py-16 text-center md:py-24">
+    <section className="bg-white px-4 pb-16 pt-2 text-center md:pb-20 md:pt-3">
       <div className="container mx-auto">
         <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-blue-600">
           Why AgentStack exists
