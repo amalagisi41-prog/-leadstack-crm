@@ -54,6 +54,7 @@ import {
   GITPAGE_DESIGN_TYPOGRAPHY,
   GITPAGE_LANGUAGES,
 } from "@/lib/website/gitpage-values";
+import type { SiteLinks } from "@/lib/public-site/site-links";
 
 type BuildMode = "standard_local" | "standard_vsl" | "niche";
 
@@ -68,11 +69,16 @@ export function WebsiteBuilder({
   subAccountId,
   doc,
   gateBlocked,
+  siteLinks,
 }: {
   subAccountId: string;
   doc: WebsiteDoc;
   /** True when the gitpage subscription is needed — Build + the form are hidden. */
   gateBlocked: boolean;
+  /** This sub-account's other public pages (IDX search, booking pages) —
+   *  offered as one-click fills for the call-to-action link field below.
+   *  Null while the parent's fetch hasn't resolved yet. */
+  siteLinks?: SiteLinks | null;
 }) {
   const siteId = doc.id;
   const [config, setConfig] = useState<WebsiteConfig>(() => ({
@@ -717,6 +723,10 @@ export function WebsiteBuilder({
                             onChange={(e) => update("cta_link", e.target.value)}
                             placeholder="https://book.acme.com"
                           />
+                          <CtaLinkQuickPicks
+                            siteLinks={siteLinks}
+                            onPick={(url) => update("cta_link", url)}
+                          />
                         </Field>
                       </div>
                     </div>
@@ -1151,6 +1161,46 @@ function Field({
       ) : hint ? (
         <p className="text-[11px] text-muted-foreground">{hint}</p>
       ) : null}
+    </div>
+  );
+}
+
+/**
+ * One-click fills for the call-to-action link, offered from the sub-
+ * account's OWN already-live pages (published booking pages, IDX listings
+ * search) instead of requiring the operator to know and hand-type the URL.
+ * Renders nothing when there's nothing to offer yet.
+ */
+function CtaLinkQuickPicks({
+  siteLinks,
+  onPick,
+}: {
+  siteLinks?: SiteLinks | null;
+  onPick: (url: string) => void;
+}) {
+  if (!siteLinks) return null;
+  const options: { label: string; url: string }[] = [];
+  if (siteLinks.listings) {
+    options.push({ label: "Listings search", url: siteLinks.listings.url });
+  }
+  for (const b of siteLinks.booking) {
+    options.push({ label: b.name || "Booking page", url: b.url });
+  }
+  if (options.length === 0) return null;
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+      <span className="text-[11px] text-muted-foreground">Use one of your pages:</span>
+      {options.map((o) => (
+        <button
+          key={o.url}
+          type="button"
+          onClick={() => onPick(o.url)}
+          className="rounded-full border bg-background px-2.5 py-1 text-[11px] font-medium transition-colors hover:bg-muted"
+        >
+          {o.label}
+        </button>
+      ))}
     </div>
   );
 }

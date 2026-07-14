@@ -4,6 +4,7 @@ import { getAdminDb } from "@/lib/firebase/admin";
 import { emailIsConfigured, sendEmail, tenantFrom } from "@/lib/comms/resend";
 import { requireContactAccessible, requireUid } from "@/lib/comms/route-auth";
 import { recordSend } from "@/lib/comms/usage";
+import { markContactContacted } from "@/lib/contacts/mark-contacted";
 import type { SubAccountDoc } from "@/types";
 
 type Body = { contactId?: string; subject?: string; body?: string };
@@ -91,6 +92,7 @@ export async function POST(request: Request) {
   }
 
   await recordSend(auth.uid, "email");
+  void markContactContacted(contactId);
 
   return NextResponse.json({ ok: true, id: messageId });
 }

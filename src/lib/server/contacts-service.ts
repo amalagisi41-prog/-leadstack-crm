@@ -48,6 +48,8 @@ export interface CreateContactInput {
   tags: string[];
   pipelineStage?: string | null;
   territoryId?: string | null;
+  birthday?: string | null;
+  homeAnniversary?: string | null;
   attribution?: ContactAttribution | null;
   /** Optional resolved location (form submit supplies this; UI doesn't). */
   location?: {
@@ -85,6 +87,8 @@ export async function createContactServerSide(
     source: input.source,
     tags: input.tags,
     pipelineStage: input.pipelineStage ?? null,
+    birthday: input.birthday ?? null,
+    homeAnniversary: input.homeAnniversary ?? null,
     attribution: input.attribution ?? null,
     emailOptedOut: false,
     smsOptedOut: false,
@@ -142,6 +146,8 @@ export interface UpdateContactPatch {
   source?: string;
   tags?: string[];
   pipelineStage?: string | null;
+  birthday?: string | null;
+  homeAnniversary?: string | null;
 }
 
 /**

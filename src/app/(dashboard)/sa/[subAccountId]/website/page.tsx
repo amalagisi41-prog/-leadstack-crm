@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { collection, onSnapshot } from "firebase/firestore";
-import { ExternalLink, Globe, Loader2, Lock, Plus, RefreshCw } from "lucide-react";
+import { Copy, ExternalLink, Globe, Loader2, Lock, Plus, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { useSubAccount } from "@/context/sub-account-context";
 import { getFirebaseDb } from "@/lib/firebase/client";
@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { WebsiteBuilder } from "@/components/website/website-builder";
 import { MAX_WEBSITES_PER_SUBACCOUNT } from "@/lib/website/limits";
+import type { SiteLinks } from "@/lib/public-site/site-links";
 import type { WebsiteDoc } from "@/types/website";
 
 /**
@@ -27,7 +28,28 @@ export default function WebsitePage() {
   const [sites, setSites] = useState<WebsiteDoc[]>([]);
   const [hydrated, setHydrated] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [siteLinks, setSiteLinks] = useState<SiteLinks | null>(null);
   const { state: gateState, refresh: refreshGate } = useGitpageStatus();
+
+  // The sub-account's OTHER public pages (IDX listings search, published
+  // booking pages) — gitpage only generates the homepage, so these are
+  // surfaced here too ("compose, don't rebuild"; see the "Your other
+  // pages" card below and the cta_link quick-pick passed into each card).
+  useEffect(() => {
+    if (!subAccountId) return;
+    let cancelled = false;
+    fetch(`/api/sub-accounts/${subAccountId}/site-links`)
+      .then((res) => (res.ok ? (res.json() as Promise<SiteLinks>) : null))
+      .then((data) => {
+        if (!cancelled && data) setSiteLinks(data);
+      })
+      .catch(() => {
+        /* best-effort — the quick-pick + card just don't render */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [subAccountId]);
 
   // Re-fire the heartbeat when the tab regains focus. Operators who go to
   // gitpage.site to subscribe and come back get an instant status update.
@@ -137,6 +159,8 @@ export default function WebsitePage() {
         <ActivationGate state={gateState} onRefresh={refreshGate} />
       )}
 
+      <OtherPagesCard links={siteLinks} />
+
       {orderedSites.length === 0 ? (
         <div className="rounded-2xl border bg-card p-8 text-center">
           <p className="text-sm font-medium">No websites yet</p>
@@ -166,6 +190,7 @@ export default function WebsitePage() {
               subAccountId={subAccountId}
               doc={site}
               gateBlocked={gateBlocked}
+              siteLinks={siteLinks}
             />
           ))}
 
@@ -273,6 +298,74 @@ function ActivationGate({
           </div>
         </div>
       </div>
+    </section>
+  );
+}
+
+/**
+ * "Your website" is more than the gitpage page(s) below — this sub-account
+ * may also have a public IDX listings search and/or published booking
+ * pages. Surfaced here so an operator who only ever looks at the Website
+ * tab still discovers them. Renders nothing while loading or when there's
+ * genuinely nothing to show (no IDX, no published booking pages) — the
+ * gitpage site list below is the primary content either way.
+ */
+function OtherPagesCard({ links }: { links: SiteLinks | null }) {
+  if (!links) return null;
+  const rows: { label: string; url: string }[] = [];
+  if (links.listings) rows.push({ label: "Listings search", url: links.listings.url });
+  for (const b of links.booking) {
+    rows.push({ label: b.name || "Booking page", url: b.url });
+  }
+  if (rows.length === 0) return null;
+
+  function copy(url: string) {
+    void navigator.clipboard.writeText(url);
+    toast.success("Link copied.");
+  }
+
+  return (
+    <section className="rounded-2xl border bg-card p-4">
+      <h2 className="text-sm font-semibold">Your other pages</h2>
+      <p className="mt-0.5 text-xs text-muted-foreground">
+        These are already live and worth linking from your homepage&apos;s
+        call-to-action.
+      </p>
+      <ul className="mt-3 space-y-2">
+        {rows.map((r) => (
+          <li
+            key={r.url}
+            className="flex items-center justify-between gap-3 rounded-lg border bg-muted/20 px-3 py-2"
+          >
+            <div className="min-w-0">
+              <p className="text-xs font-medium">{r.label}</p>
+              <p className="truncate font-mono text-[11px] text-muted-foreground">
+                {r.url}
+              </p>
+            </div>
+            <div className="flex shrink-0 items-center gap-1.5">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => copy(r.url)}
+              >
+                <Copy className="mr-1 h-3.5 w-3.5" />
+                Copy
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                render={<a href={r.url} target="_blank" rel="noreferrer" />}
+              >
+                <ExternalLink className="mr-1 h-3.5 w-3.5" />
+                Open
+              </Button>
+            </div>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }

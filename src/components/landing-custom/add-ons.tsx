@@ -1,5 +1,11 @@
-import Link from "next/link";
+"use client";
+
+import { useState } from "react";
+import { toast } from "sonner";
+import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { openCrispChat } from "@/lib/crisp";
+import type { AddOnKey } from "@/lib/stripe/addon-catalog";
 
 interface AddOn {
   category: string;
@@ -10,6 +16,11 @@ interface AddOn {
   features: string[];
   badge?: string;
   highlight?: boolean;
+  /** Only the 3 add-ons with a real in-app feature gate get self-serve
+   *  checkout — see "Real self-serve billing". The other 6 are done-for-you
+   *  services with nothing to auto-activate; their card links to support
+   *  instead of a checkbox. */
+  addOnKey?: AddOnKey;
 }
 
 const addOns: AddOn[] = [
@@ -21,6 +32,7 @@ const addOns: AddOn[] = [
     billing: "/mo",
     badge: "New",
     highlight: true,
+    addOnKey: "website_studio",
     features: [
       "Premium templates + an AI Designer that interviews you",
       "Edit your brand & content any time · keep drafts",
@@ -91,6 +103,7 @@ const addOns: AddOn[] = [
     billing: "/mo",
     badge: "New",
     highlight: true,
+    addOnKey: "idx",
     features: [
       "Branded public listings search + detail pages",
       "Auto-synced from your IDX Broker account every 6 hours",
@@ -104,6 +117,7 @@ const addOns: AddOn[] = [
     tagline: "Schedule once, publish everywhere",
     price: "$29",
     billing: "/mo",
+    addOnKey: "social",
     features: [
       "Drag-and-drop content calendar",
       "AI captions from your listings",
@@ -149,7 +163,46 @@ const categoryColors: Record<string, string> = {
   Onboarding: "bg-rose-500",
 };
 
+const DEFAULT_PLAN_KEY = "starter" as const;
+
 export function AddOns() {
+  const [selected, setSelected] = useState<Set<AddOnKey>>(new Set());
+  const [checkingOut, setCheckingOut] = useState(false);
+
+  function toggle(key: AddOnKey) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+
+  async function handleContinue() {
+    setCheckingOut(true);
+    try {
+      const res = await fetch("/api/checkout/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          planKey: DEFAULT_PLAN_KEY,
+          addOnKeys: Array.from(selected),
+        }),
+      });
+      const payload = (await res.json().catch(() => ({}))) as {
+        url?: string;
+        error?: string;
+      };
+      if (!res.ok || !payload.url) {
+        throw new Error(payload.error ?? "Could not start checkout.");
+      }
+      window.location.href = payload.url;
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not start checkout.");
+      setCheckingOut(false);
+    }
+  }
+
   return (
     <section id="add-ons" className="py-24">
       <div className="container mx-auto px-4">
@@ -174,11 +227,13 @@ export function AddOns() {
         <div className="mx-auto mt-14 grid max-w-5xl gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {addOns.map((addon) => {
             const dot = categoryColors[addon.category] ?? "bg-blue-500";
+            const isSelfServe = !!addon.addOnKey;
+            const isChecked = addon.addOnKey ? selected.has(addon.addOnKey) : false;
             return (
               <div
                 key={addon.name}
                 className={`relative flex flex-col rounded-2xl border bg-card p-6 shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 ${
-                  addon.highlight
+                  addon.highlight || isChecked
                     ? "border-[#1a2f50]/30 ring-1 ring-[#1a2f50]/20"
                     : "border-border"
                 }`}
@@ -239,12 +294,41 @@ export function AddOns() {
                     </li>
                   ))}
                 </ul>
+
+                {/* Action */}
+                <div className="mt-5">
+                  {isSelfServe ? (
+                    <button
+                      type="button"
+                      onClick={() => toggle(addon.addOnKey!)}
+                      className={`flex w-full items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-semibold transition-colors ${
+                        isChecked
+                          ? "border-[#1a2f50] bg-[#1a2f50] text-white"
+                          : "border-border text-foreground hover:bg-muted"
+                      }`}
+                    >
+                      {isChecked && <Check className="h-4 w-4" />}
+                      {isChecked ? "Added to my plan" : "Add to my plan"}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => openCrispChat()}
+                      className="w-full rounded-lg border border-border px-3 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
+                    >
+                      Contact us
+                    </button>
+                  )}
+                </div>
               </div>
             );
           })}
         </div>
 
-        {/* Bundle banner */}
+        {/* Bundle banner — doubles as the checkout bar once ≥1 add-on is
+            selected. The 15% claim is only literally true once the
+            operator configures STRIPE_ADDON_BUNDLE_COUPON_ID — see
+            /api/checkout/subscribe. */}
         <div className="mx-auto mt-12 max-w-3xl overflow-hidden rounded-2xl bg-[#1a2f50]">
           <div className="flex flex-col items-center gap-4 px-8 py-7 text-center sm:flex-row sm:text-left">
             <div className="flex-1">
@@ -252,15 +336,19 @@ export function AddOns() {
                 Stack 3 or more add-ons — save 15%.
               </p>
               <p className="mt-1 text-sm text-blue-200/70">
-                The discount applies automatically when you add any three or more services to your plan.
+                {selected.size > 0
+                  ? `${selected.size} add-on${selected.size !== 1 ? "s" : ""} selected — continue to add them to your plan.`
+                  : "Tick any add-ons above, then continue to checkout with your plan."}
               </p>
             </div>
             <Button
-              render={<Link href="#signup" />}
+              type="button"
+              onClick={() => void handleContinue()}
+              disabled={selected.size === 0 || checkingOut}
               className="shrink-0 bg-white text-[#1a2f50] hover:bg-blue-50 font-semibold"
               size="sm"
             >
-              Get started
+              {checkingOut ? "Redirecting…" : "Continue to checkout"}
             </Button>
           </div>
         </div>

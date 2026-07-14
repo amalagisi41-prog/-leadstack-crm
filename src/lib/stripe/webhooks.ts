@@ -2,7 +2,9 @@ import type Stripe from "stripe";
 import { createHash } from "node:crypto";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
+import { getStripeServer } from "@/lib/stripe/server";
 import { sendFoundersWelcomeEmail } from "@/lib/stripe/welcome-email";
+import { gateFieldForPriceId } from "@/lib/stripe/catalog";
 import { LANDING_VARIANT } from "@/config/landing";
 import { ensureAffiliateAccount } from "@/lib/affiliate/account";
 import { createReferral } from "@/lib/affiliate/referrals";
@@ -20,6 +22,15 @@ export async function handleCheckoutCompleted(
   // Branch on `metadata.kind` so we don't break legacy subscription flow.
   if (session.metadata?.kind === "founders") {
     await handleFoundersCheckout(session);
+    return;
+  }
+
+  // Real self-serve billing: a stranger paid to start a brand-new agency.
+  // No uid yet either — see "Real self-serve billing" — the claim-token
+  // flow (/api/auth/claim-subscription) is what actually creates the user
+  // + agency, once they redeem the token this handler mints below.
+  if (session.metadata?.mode === "new_agency") {
+    await handleNewAgencyCheckout(session);
     return;
   }
 
@@ -349,48 +360,130 @@ async function handleFoundersCheckout(session: Stripe.Checkout.Session) {
   }
 }
 
-export async function handleSubscriptionUpdated(
-  subscription: Stripe.Subscription,
-) {
-  const customerId = subscription.customer as string;
-
-  const usersSnapshot = await getAdminDb()
-    .collection("users")
-    .where("stripeCustomerId", "==", customerId)
-    .limit(1)
-    .get();
-
-  if (usersSnapshot.empty) {
-    console.error(`No user found for Stripe customer ${customerId}`);
+/**
+ * A stranger paid for a brand-new agency (base plan + optional add-ons, one
+ * combined subscription). The buyer has no Firebase Auth user yet — this
+ * just records the purchase; `/api/auth/claim-subscription` is what
+ * actually creates the user, provisions the agency (via
+ * `lib/auth/provision-agency.ts`), and flips the purchased add-on gates,
+ * once the buyer redeems the claim token this handler mints the hash for.
+ *
+ * Idempotency mirrors `handleFoundersCheckout`: `purchases/{sessionId}` is
+ * created with `.create()`, which throws ALREADY_EXISTS (code 6) on a
+ * Stripe webhook retry — caught and treated as a no-op.
+ */
+async function handleNewAgencyCheckout(session: Stripe.Checkout.Session) {
+  const sessionId = session.id;
+  const email = session.customer_details?.email ?? session.customer_email;
+  if (!email) {
+    console.error(
+      `[new-agency] Session ${sessionId} completed without a buyer email — cannot send claim link`,
+    );
     return;
   }
 
-  const userDoc = usersSnapshot.docs[0];
-  await userDoc.ref.update({
-    subscriptionStatus: subscription.status as SubscriptionStatus,
-    updatedAt: new Date(),
+  const meta = session.metadata ?? {};
+  const claimToken = meta.claimToken;
+  const claimTokenHash =
+    typeof claimToken === "string" && claimToken.length > 0
+      ? createHash("sha256").update(claimToken, "utf8").digest("hex")
+      : null;
+  if (!claimTokenHash) {
+    console.error(
+      `[new-agency] Session ${sessionId} completed without a claimToken — cannot be claimed`,
+    );
+    return;
+  }
+
+  // Expand line items to know exactly which price ids were purchased — the
+  // webhook payload doesn't include them by default.
+  const stripe = getStripeServer();
+  const lineItems = await stripe.checkout.sessions.listLineItems(sessionId, {
+    limit: 100,
   });
+  const purchasedPriceIds = lineItems.data
+    .map((li) => li.price?.id)
+    .filter((id): id is string => !!id);
+
+  // /api/checkout/subscribe always lists the plan price first, followed by
+  // any add-on prices — see line_items construction there.
+  const planPriceId = purchasedPriceIds[0] ?? null;
+  const addOnGates = purchasedPriceIds
+    .map((id) => gateFieldForPriceId(id))
+    .filter((gate): gate is string => !!gate);
+
+  const purchaseRef = getAdminDb().collection("purchases").doc(sessionId);
+  try {
+    await purchaseRef.create({
+      sessionId,
+      kind: "subscription",
+      mode: "new_agency",
+      email,
+      stripeCustomerId: (session.customer as string | null) ?? null,
+      stripeSubscriptionId: (session.subscription as string | null) ?? null,
+      planPriceId,
+      addOnGates,
+      claimTokenHash,
+      claimed: false,
+      claimedAt: null,
+      claimedByUid: null,
+      createdAt: FieldValue.serverTimestamp(),
+    });
+  } catch (err) {
+    const code = (err as { code?: number })?.code;
+    if (code === 6) {
+      console.log(
+        `[new-agency] Skipping duplicate webhook for session ${sessionId}`,
+      );
+      return;
+    }
+    throw err;
+  }
+}
+
+/**
+ * Billing lives at agency scope under the current tenancy model (see
+ * `AgencyDoc.stripeCustomerId`), but the pre-tenancy legacy flow stamped it
+ * on `users/{uid}` instead. Update whichever doc(s) actually carry this
+ * customer id — both, one, or (for a customer that never completed
+ * checkout through either path) neither.
+ */
+async function syncSubscriptionStatus(
+  customerId: string,
+  status: SubscriptionStatus,
+) {
+  const db = getAdminDb();
+  const [agencySnapshot, usersSnapshot] = await Promise.all([
+    db.collection("agencies").where("stripeCustomerId", "==", customerId).limit(1).get(),
+    db.collection("users").where("stripeCustomerId", "==", customerId).limit(1).get(),
+  ]);
+
+  if (agencySnapshot.empty && usersSnapshot.empty) {
+    console.error(`No agency or user found for Stripe customer ${customerId}`);
+    return;
+  }
+
+  await Promise.all([
+    ...agencySnapshot.docs.map((d) =>
+      d.ref.update({ subscriptionStatus: status, updatedAt: FieldValue.serverTimestamp() }),
+    ),
+    ...usersSnapshot.docs.map((d) =>
+      d.ref.update({ subscriptionStatus: status, updatedAt: new Date() }),
+    ),
+  ]);
+}
+
+export async function handleSubscriptionUpdated(
+  subscription: Stripe.Subscription,
+) {
+  await syncSubscriptionStatus(
+    subscription.customer as string,
+    subscription.status as SubscriptionStatus,
+  );
 }
 
 export async function handleSubscriptionDeleted(
   subscription: Stripe.Subscription,
 ) {
-  const customerId = subscription.customer as string;
-
-  const usersSnapshot = await getAdminDb()
-    .collection("users")
-    .where("stripeCustomerId", "==", customerId)
-    .limit(1)
-    .get();
-
-  if (usersSnapshot.empty) {
-    console.error(`No user found for Stripe customer ${customerId}`);
-    return;
-  }
-
-  const userDoc = usersSnapshot.docs[0];
-  await userDoc.ref.update({
-    subscriptionStatus: "inactive" as SubscriptionStatus,
-    updatedAt: new Date(),
-  });
+  await syncSubscriptionStatus(subscription.customer as string, "inactive" as SubscriptionStatus);
 }

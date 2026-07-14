@@ -8,7 +8,7 @@ import {
   websiteStudioGateOpen,
   WEBSITE_STUDIO_LOCKED_MESSAGE,
 } from "@/lib/website-studio/gate";
-import { getFunnelGoal } from "@/lib/funnels/catalog";
+import { FUNNEL_GOALS, getFunnelGoal } from "@/lib/funnels/catalog";
 import type { FunnelContent, FunnelDoc, FunnelGoalId } from "@/types/funnel";
 
 /**
@@ -22,17 +22,11 @@ import type { FunnelContent, FunnelDoc, FunnelGoalId } from "@/types/funnel";
  * bundle per the pricing decision.
  */
 
-const VALID_GOALS: FunnelGoalId[] = [
-  "home_valuation",
-  "buyer_leads",
-  "listing_promo",
-  "email_list",
-  "buyer_consult",
-  "showing",
-  "open_house",
-  "luxury",
-  "seller_guide",
-];
+// Derived from the catalog (not hand-duplicated) so a new goal preset in
+// FUNNEL_GOALS is automatically accepted here — see funnel-builder's plan
+// notes about this file having its own allowlist previously drifting out
+// of sync with the catalog.
+const VALID_GOALS: FunnelGoalId[] = FUNNEL_GOALS.map((g) => g.id);
 
 function slugify(s: string): string {
   return (

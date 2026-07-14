@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAdminDb } from "@/lib/firebase/admin";
+import { getSubAccountSiteLinks } from "@/lib/public-site/site-links";
+import { PublicSiteNav } from "@/components/public-site/public-site-nav";
 import type { SubAccountDoc } from "@/types";
 import type { IdxListingDoc } from "@/types/idx";
 
@@ -69,27 +71,14 @@ export default async function IdxSearchPage({ params, searchParams }: PageProps)
   }
 
   const displayName = sub.idxConfig.displayName || sub.name || "Listings";
+  const links = await getSubAccountSiteLinks(subAccountId);
 
   return (
     <div className="min-h-screen bg-neutral-50">
-      <header className="border-b bg-white">
-        <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-5">
-          {sub.logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element -- arbitrary external host, matches the rest of the codebase's public-page image convention
-            <img
-              src={sub.logoUrl}
-              alt={sub.name}
-              className="h-10 w-10 rounded-lg object-cover"
-            />
-          ) : null}
-          <div>
-            <h1 className="text-xl font-semibold text-neutral-900">{sub.name}</h1>
-            <p className="text-sm text-neutral-500">Search current listings</p>
-          </div>
-        </div>
-      </header>
+      <PublicSiteNav sub={sub} links={links} current="listings" />
 
       <main className="mx-auto max-w-6xl px-4 py-8">
+        <p className="mb-6 text-sm text-neutral-500">Search current listings</p>
         <form className="mb-8 flex flex-wrap items-end gap-3 rounded-xl border bg-white p-4">
           <div className="flex flex-col gap-1">
             <label htmlFor="city" className="text-xs font-medium text-neutral-600">

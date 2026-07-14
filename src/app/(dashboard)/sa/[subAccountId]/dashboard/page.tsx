@@ -236,6 +236,30 @@ export default function DashboardPage() {
       });
     }
 
+    // Stale leads — no outbound email/SMS/WhatsApp/call in 14+ days. Same
+    // "last contact" signal (lastContactedAt / lastOutboundCallAt) the
+    // contact.stale Smart Workflows trigger uses, computed here client-side
+    // over the contacts already subscribed on this page.
+    const STALE_DAYS = 14;
+    const staleCutoff = Date.now() - STALE_DAYS * 86400000;
+    const staleLeads = contacts.filter((c) => {
+      const lastTouch = Math.max(
+        toDate(c.lastContactedAt)?.getTime() ?? 0,
+        toDate(c.lastOutboundCallAt)?.getTime() ?? 0,
+      );
+      return lastTouch > 0 && lastTouch < staleCutoff;
+    });
+    if (staleLeads.length > 0) {
+      items.push({
+        id: "stale_leads",
+        icon: <Clock className="h-4 w-4" />,
+        iconBg: "bg-orange-100 text-orange-600 dark:bg-orange-900/40",
+        label: `${staleLeads.length} lead${staleLeads.length !== 1 ? "s" : ""} haven't heard from you in ${STALE_DAYS}+ days`,
+        href: saPath("/contacts"),
+        urgency: "medium",
+      });
+    }
+
     // Overdue + due-today tasks
     const overdueTasks = tasks.filter((t) => {
       if (t.completed) return false;

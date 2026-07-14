@@ -3,7 +3,7 @@ import "server-only";
 import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
-import { seedDefaultTemplates } from "@/lib/automations/seed-templates";
+import { provisionNewAgency } from "@/lib/auth/provision-agency";
 import { GLOBAL_TERRITORY_ID, type Role } from "@/types";
 
 interface SignupBody {
@@ -156,165 +156,12 @@ export async function POST(request: Request) {
   // graph, and finalize. If anything fails we delete the orphan auth user.
   try {
     if (decision.kind === "agencyOwner") {
-      const agencyRef = db.collection("agencies").doc();
-      const subAccountRef = db.collection("subAccounts").doc();
-      const agencyId = agencyRef.id;
-      const subAccountId = subAccountRef.id;
-      const agencyName = `${displayName || email.split("@")[0]}'s Agency`;
-
-      await auth.setCustomUserClaims(uid, {
-        // Legacy claim — still consumed by the existing dashboard pages
-        // until Phase 2 swaps them out. agencyOwner == admin everywhere.
-        role: "admin" as Role,
-        status: "active",
-        // Agency-model claims.
-        agencyId,
-        agencyRole: "owner",
-      });
-
-      const batch = db.batch();
-
-      batch.set(db.doc(`users/${uid}`), {
+      const { agencyId, subAccountId } = await provisionNewAgency({
         uid,
         email,
         displayName,
-        photoURL: null,
-        stripeCustomerId: null,
-        subscriptionStatus: "inactive",
-        subscriptionPriceId: null,
-        role: "admin" as Role,
-        status: "active",
-        primaryAgencyId: agencyId,
-        createdAt: FieldValue.serverTimestamp(),
-        updatedAt: FieldValue.serverTimestamp(),
+        bootstrap: decision.bootstrap,
       });
-
-      batch.set(agencyRef, {
-        id: agencyId,
-        name: agencyName,
-        ownerUid: uid,
-        stripeCustomerId: null,
-        subscriptionStatus: "inactive",
-        subscriptionPriceId: null,
-        logoUrl: null,
-        createdAt: FieldValue.serverTimestamp(),
-        updatedAt: FieldValue.serverTimestamp(),
-      });
-
-      batch.set(
-        agencyRef.collection("agencyMembers").doc(uid),
-        {
-          uid,
-          agencyId,
-          role: "owner",
-          status: "active",
-          email,
-          displayName,
-          addedAt: FieldValue.serverTimestamp(),
-          addedByUid: uid,
-        },
-      );
-
-      batch.set(subAccountRef, {
-        id: subAccountId,
-        agencyId,
-        accountNumber: 1000,
-        name: "Main",
-        slug: "main",
-        status: "active",
-        timezone: "UTC",
-        createdByUid: uid,
-        createdAt: FieldValue.serverTimestamp(),
-        updatedAt: FieldValue.serverTimestamp(),
-        twilioConfig: null,
-        resendConfig: null,
-        emailDomainEnabledByAgency: false,
-        outboundVoiceEnabledByAgency: false,
-        whatsappEnabledByAgency: false,
-        metaInboxEnabledByAgency: false,
-        websiteEnabledByAgency: false,
-        websiteStudioEnabledByAgency: false,
-        communityEnabledByAgency: false,
-        idxEnabledByAgency: false,
-        metaConfig: null,
-        bookingConfig: null,
-        sendWindow: null,
-        bookingLink: null,
-        replyToEmail: null,
-        automationsPaused: false,
-      });
-
-      // Seed the per-agency counter so the next sub-account picks up at
-      // 1001. Lives at agencies/{agencyId}/counters/subAccount; mutated
-      // exclusively by /api/agency/sub-accounts inside a transaction.
-      batch.set(
-        agencyRef.collection("counters").doc("subAccount"),
-        { next: 1001 },
-      );
-
-      batch.set(
-        subAccountRef.collection("subAccountMembers").doc(uid),
-        {
-          uid,
-          subAccountId,
-          agencyId,
-          role: "admin",
-          status: "active",
-          email,
-          displayName,
-          addedAt: FieldValue.serverTimestamp(),
-          addedByUid: uid,
-          // Default to Global so the member sees everything if scoping
-          // is later enabled before the admin carves out territories.
-          // (Owners/admins are exempt at runtime anyway.)
-          assignedTerritoryIds: [GLOBAL_TERRITORY_ID],
-        },
-      );
-
-      // Per-user denormalized index, used by the sub-account switcher.
-      batch.set(
-        db.doc(`userMemberships/${uid}/agencies/${agencyId}`),
-        {
-          agencyId,
-          role: "owner",
-          name: agencyName,
-        },
-      );
-      batch.set(
-        db.doc(`userMemberships/${uid}/subAccounts/${subAccountId}`),
-        {
-          subAccountId,
-          agencyId,
-          accountNumber: 1000,
-          role: "admin",
-          name: "Main",
-          addedAt: FieldValue.serverTimestamp(),
-        },
-      );
-
-      // appConfig/main identifies only the first bootstrap owner. Public
-      // registrations create independent agencies and must never overwrite it.
-      if (decision.bootstrap) {
-        batch.set(db.doc("appConfig/main"), {
-          adminUid: uid,
-          adminEmail: email,
-          firstAgencyId: agencyId,
-          firstAgencyOwnerUid: uid,
-          bootstrapEmail: email,
-          createdAt: FieldValue.serverTimestamp(),
-        });
-      }
-
-      // Seed Welcome email + Welcome SMS templates into the bootstrap
-      // sub-account so the agency owner sees usable defaults the first
-      // time they open Automations → Templates.
-      seedDefaultTemplates(db, (ref, data) => batch.set(ref, data), {
-        agencyId,
-        subAccountId,
-        createdByUid: uid,
-      });
-
-      await batch.commit();
 
       return NextResponse.json({
         uid,

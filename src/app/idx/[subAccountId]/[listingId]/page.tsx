@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getAdminDb } from "@/lib/firebase/admin";
+import { getSubAccountSiteLinks } from "@/lib/public-site/site-links";
+import { PublicSiteNav } from "@/components/public-site/public-site-nav";
 import { ListingInquiryForm } from "@/components/idx/listing-inquiry-form";
 import type { SubAccountDoc } from "@/types";
 import type { IdxListingDoc } from "@/types/idx";
@@ -33,21 +35,20 @@ export default async function IdxListingDetailPage({ params }: PageProps) {
   const listing = listingSnap.data() as IdxListingDoc;
   const isOffMarket = listing.status === "off-market" || listing.status === "sold";
 
+  const links = await getSubAccountSiteLinks(subAccountId);
+
   return (
     <div className="min-h-screen bg-neutral-50">
-      <header className="border-b bg-white">
-        <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-5">
-          <h1 className="text-lg font-semibold text-neutral-900">{sub.name}</h1>
-          <Link
-            href={`/idx/${subAccountId}`}
-            className="text-sm font-medium text-neutral-600 hover:text-neutral-900"
-          >
-            ← All listings
-          </Link>
-        </div>
-      </header>
+      <PublicSiteNav sub={sub} links={links} current="listings" />
 
       <main className="mx-auto max-w-4xl px-4 py-8">
+        <Link
+          href={`/idx/${subAccountId}`}
+          className="mb-4 inline-block text-sm font-medium text-neutral-600 hover:text-neutral-900"
+        >
+          ← All listings
+        </Link>
+
         {isOffMarket && (
           <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-800">
             This listing is no longer active.

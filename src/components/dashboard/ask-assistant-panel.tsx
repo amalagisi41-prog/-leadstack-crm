@@ -19,8 +19,23 @@ import { cn } from "@/lib/utils";
 
 const OPEN_EVENT = "agentstack:ask-assistant";
 
-export function openAskAssistant() {
-  window.dispatchEvent(new CustomEvent(OPEN_EVENT));
+interface OpenAskAssistantOptions {
+  /**
+   * Pre-seeded question fired immediately on open — used by contextual
+   * triggers elsewhere in the app (e.g. "Summarize this conversation" on a
+   * Conversation thread, "Suggest next action" on a Contact profile) so the
+   * operator gets an answer in one click instead of composing the prompt
+   * themselves.
+   */
+  prompt?: string;
+}
+
+export function openAskAssistant(options?: OpenAskAssistantOptions) {
+  window.dispatchEvent(
+    new CustomEvent<OpenAskAssistantOptions>(OPEN_EVENT, {
+      detail: options ?? {},
+    }),
+  );
 }
 
 const STUDIO_PATHS = ["/website-studio", "/social", "/funnels", "/broadcasts", "/templates", "/website"];
@@ -60,9 +75,14 @@ export function AskAssistantPanel() {
   const suggestions = isStudio ? STUDIO_SUGGESTIONS : CRM_SUGGESTIONS;
 
   useEffect(() => {
-    function onOpen() {
+    function onOpen(e: Event) {
+      const prompt = (e as CustomEvent<OpenAskAssistantOptions>).detail?.prompt;
       setOpen(true);
-      setTimeout(() => inputRef.current?.focus(), 50);
+      if (prompt && prompt.trim()) {
+        askRef.current(prompt);
+      } else {
+        setTimeout(() => inputRef.current?.focus(), 50);
+      }
     }
     window.addEventListener(OPEN_EVENT, onOpen);
     return () => window.removeEventListener(OPEN_EVENT, onOpen);
@@ -71,6 +91,10 @@ export function AskAssistantPanel() {
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
   }, [messages, thinking]);
+
+  // Always-current ref so the open-event listener (attached once on mount)
+  // can fire the latest `ask` without a stale closure over `messages`.
+  const askRef = useRef<(q: string) => void>(() => {});
 
   const ask = useCallback(
     async (question: string) => {
@@ -110,6 +134,10 @@ export function AskAssistantPanel() {
     },
     [messages, thinking, subAccountId, isStudio, firstName],
   );
+
+  useEffect(() => {
+    askRef.current = (q: string) => void ask(q);
+  }, [ask]);
 
   if (!open) return null;
 
@@ -254,7 +282,7 @@ function Dot({ delay }: { delay: string }) {
 export function AskAssistantButton({ className }: { className?: string }) {
   return (
     <button
-      onClick={openAskAssistant}
+      onClick={() => openAskAssistant()}
       className={cn(
         "flex items-center gap-1.5 rounded-full border bg-card px-3.5 py-2 text-sm font-medium transition-colors hover:bg-muted",
         className,

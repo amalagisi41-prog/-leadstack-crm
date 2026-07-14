@@ -15,7 +15,7 @@ import type { MessageDoc } from "@/types/messages";
 import type { ConversationChannel } from "@/types/conversations";
 import type { ConversationTheme } from "@/hooks/use-conversation-theme";
 
-type ChannelMessage = MessageDoc & { channel: ConversationChannel };
+export type ChannelMessage = MessageDoc & { channel: ConversationChannel };
 
 const CHANNEL_LABEL: Record<ConversationChannel, string> = {
   sms: "SMS",
@@ -44,9 +44,14 @@ type MetaMessageDoc = MessageDoc & { channel?: ConversationChannel };
 export function ConversationThread({
   contactId,
   theme = "standard",
+  onMessages,
 }: {
   contactId: string;
   theme?: ConversationTheme;
+  /** Reports the merged, time-ordered thread up on every change — lets a
+   * parent (e.g. the "Summarize this conversation" action) build a
+   * transcript without duplicating the three-subcollection merge here. */
+  onMessages?: (messages: ChannelMessage[]) => void;
 }) {
   const [sms, setSms] = useState<MessageDoc[]>([]);
   const [wa, setWa] = useState<MessageDoc[]>([]);
@@ -121,6 +126,11 @@ export function ConversationThread({
       scrollerRef.current.scrollTop = scrollerRef.current.scrollHeight;
     }
   }, [merged.length]);
+
+  useEffect(() => {
+    if (hydrated) onMessages?.(merged);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [merged, hydrated]);
 
   return (
     <div

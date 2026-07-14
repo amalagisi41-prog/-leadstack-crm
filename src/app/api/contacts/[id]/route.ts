@@ -61,6 +61,13 @@ function str(v: unknown, max = 500): string {
   return typeof v === "string" ? v.trim().slice(0, max) : "";
 }
 
+/** "YYYY-MM-DD" or null — anything else (malformed, empty) coerces to null. */
+function dateOrNull(v: unknown): string | null {
+  if (typeof v !== "string") return null;
+  const trimmed = v.trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(trimmed) ? trimmed : null;
+}
+
 /**
  * Update a contact's plain fields + emit `contact.updated`. Any active
  * member may edit (matches the old client-SDK write rule). Territory moves
@@ -106,6 +113,12 @@ export async function PATCH(
   if (body.pipelineStage === null || typeof body.pipelineStage === "string") {
     patch.pipelineStage =
       typeof body.pipelineStage === "string" ? body.pipelineStage : null;
+  }
+  if (body.birthday === null || typeof body.birthday === "string") {
+    patch.birthday = dateOrNull(body.birthday);
+  }
+  if (body.homeAnniversary === null || typeof body.homeAnniversary === "string") {
+    patch.homeAnniversary = dateOrNull(body.homeAnniversary);
   }
 
   const result = await updateContactServerSide({

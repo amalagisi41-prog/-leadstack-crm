@@ -24,6 +24,7 @@ import { SubAccountEmailDomainSection } from "@/components/settings/sub-account-
 import { SubAccountPayPalSection } from "@/components/settings/sub-account-paypal-section";
 import { SubAccountGoogleReviewSection } from "@/components/settings/sub-account-google-review-section";
 import { SubAccountIdxSection } from "@/components/settings/sub-account-idx-section";
+import { SubAccountAddOnsSection } from "@/components/settings/sub-account-add-ons-section";
 import { SubAccountStripeSection } from "@/components/settings/sub-account-stripe-section";
 import { SubAccountApiKeysSection } from "@/components/settings/sub-account-api-keys-section";
 import { SubAccountApiRecipesSection } from "@/components/settings/sub-account-api-recipes-section";
@@ -222,6 +223,11 @@ export default function SettingsPage() {
               own IDX Broker account. Self-gates: renders a "Locked by your
               agency" state until idxEnabledByAgency is on. */}
           <SubAccountIdxSection />
+
+          {/* Add-ons — this IS real billing (unlike the roadmap "Subscription"
+              card above, which is about agencies billing their own clients).
+              Extends the agency's live AgentStack subscription directly. */}
+          <SubAccountAddOnsSection />
 
           {/* Data export */}
           <section className="rounded-2xl border bg-card p-5">

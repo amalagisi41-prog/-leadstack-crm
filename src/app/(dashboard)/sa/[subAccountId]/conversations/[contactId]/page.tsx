@@ -9,6 +9,7 @@ import {
   MessagesSquare,
   PanelRight,
   Smartphone,
+  Sparkles,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useSubAccount } from "@/context/sub-account-context";
@@ -20,7 +21,11 @@ import {
   subscribeToConversation,
 } from "@/lib/firestore/conversations";
 import { Button } from "@/components/ui/button";
-import { ConversationThread } from "@/components/conversations/conversation-thread";
+import { openAskAssistant } from "@/components/dashboard/ask-assistant-panel";
+import {
+  ConversationThread,
+  type ChannelMessage,
+} from "@/components/conversations/conversation-thread";
 import { ConversationComposer } from "@/components/conversations/conversation-composer";
 import { ConversationAiControls } from "@/components/conversations/conversation-ai-controls";
 import { ConversationDraftCard } from "@/components/conversations/conversation-draft-card";
@@ -39,6 +44,7 @@ export default function ConversationDetailPage() {
   const [contact, setContact] = useState<Contact | null>(null);
   const [conversation, setConversation] = useState<ConversationDoc | null>(null);
   const [loading, setLoading] = useState(true);
+  const [threadMessages, setThreadMessages] = useState<ChannelMessage[]>([]);
   // Right-hand contact panel — collapsed by default; remembered across
   // conversations via localStorage (desktop only; hidden under lg).
   const [panelOpen, setPanelOpen] = useState(false);
@@ -110,6 +116,17 @@ export default function ConversationDetailPage() {
 
   const title = contact?.name || contact?.phone || "Conversation";
 
+  function handleSummarize() {
+    const name = contact?.name || contact?.phone || "this lead";
+    const transcript = threadMessages
+      .slice(-40)
+      .map((m) => `${m.direction === "outbound" ? "Agent" : name}: ${m.body}`)
+      .join("\n");
+    openAskAssistant({
+      prompt: `Summarize this conversation with ${name}. Give me the key points, where things stand, and what I should do next.\n\n--- TRANSCRIPT ---\n${transcript}\n--- END TRANSCRIPT ---`,
+    });
+  }
+
   return (
     <div
       className={cn(
@@ -165,6 +182,17 @@ export default function ConversationDetailPage() {
               />
             </span>
           </button>
+          {threadMessages.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSummarize}
+              title="Ask AgentStack to summarize this conversation"
+            >
+              <Sparkles className="mr-1 h-3.5 w-3.5 text-rose-500" />
+              <span className="hidden sm:inline">Summarize</span>
+            </Button>
+          )}
           {contact && (
             <Button
               variant={panelOpen ? "secondary" : "outline"}
@@ -200,7 +228,11 @@ export default function ConversationDetailPage() {
           {conversation && (
             <ConversationAiControls conversation={conversation} />
           )}
-          <ConversationThread contactId={contactId} theme={theme} />
+          <ConversationThread
+            contactId={contactId}
+            theme={theme}
+            onMessages={setThreadMessages}
+          />
           {conversation?.pendingDraft && (
             <ConversationDraftCard
               contact={contact}

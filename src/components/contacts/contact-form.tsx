@@ -54,6 +54,10 @@ export function ContactForm({
   const [address, setAddress] = useState(initial?.address ?? "");
   const [source, setSource] = useState<ContactSource>(initial?.source ?? "");
   const [tagsInput, setTagsInput] = useState((initial?.tags ?? []).join(", "));
+  const [birthday, setBirthday] = useState(initial?.birthday ?? "");
+  const [homeAnniversary, setHomeAnniversary] = useState(
+    initial?.homeAnniversary ?? "",
+  );
   const [territoryId, setTerritoryId] = useState<string | null>(
     initial?.territoryId ?? null,
   );
@@ -109,6 +113,8 @@ export function ContactForm({
         address: address.trim(),
         source,
         tags,
+        birthday: birthday || null,
+        homeAnniversary: homeAnniversary || null,
         customFields: cf.value,
       };
       // Only include territoryId when scoping is on AND (creating OR
@@ -179,6 +185,33 @@ export function ContactForm({
             onChange={(e) => setCompany(e.target.value)}
             placeholder="Acme Inc."
           />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="space-y-1.5">
+          <Label htmlFor="c-birthday">Birthday</Label>
+          <Input
+            id="c-birthday"
+            type="date"
+            value={birthday}
+            onChange={(e) => setBirthday(e.target.value)}
+          />
+          <p className="text-xs text-muted-foreground">
+            Powers the Birthday Greeting workflow.
+          </p>
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="c-home-anniversary">Home anniversary</Label>
+          <Input
+            id="c-home-anniversary"
+            type="date"
+            value={homeAnniversary}
+            onChange={(e) => setHomeAnniversary(e.target.value)}
+          />
+          <p className="text-xs text-muted-foreground">
+            When they closed — powers the Home Anniversary workflow.
+          </p>
         </div>
       </div>
 
