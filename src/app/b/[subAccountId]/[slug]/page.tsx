@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { PublicBookingView } from "@/components/booking/public-booking-view";
+import { getSubAccountSiteLinks } from "@/lib/public-site/site-links";
+import { PublicSiteNav } from "@/components/public-site/public-site-nav";
 import type { BookingPage } from "@/types/booking";
 import type { SubAccountDoc } from "@/types";
 
@@ -61,11 +63,20 @@ export default async function PublicBookingPage({ params }: PageProps) {
     updatedAt: null,
   };
 
+  const links = await getSubAccountSiteLinks(subAccountId);
+
   return (
-    <PublicBookingView
-      subAccountId={subAccountId}
-      page={pageForClient}
-      branding={branding}
-    />
+    <>
+      <PublicSiteNav
+        sub={{ name: branding.name, logoUrl: branding.logoUrl }}
+        links={links}
+        current="booking"
+      />
+      <PublicBookingView
+        subAccountId={subAccountId}
+        page={pageForClient}
+        branding={branding}
+      />
+    </>
   );
 }
