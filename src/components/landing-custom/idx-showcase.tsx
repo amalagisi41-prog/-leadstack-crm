@@ -288,7 +288,13 @@ export function IdxShowcase() {
                 <p className={styles.idxStepBody}>{s.body}</p>
                 {s.cta ? (
                   <div className={styles.idxStepCta}>
-                    <span className={styles.idxBrandMark}>IDX Broker</span>
+                    <Image
+                      src="/brand/idx-broker-logo.png"
+                      alt="IDX Broker"
+                      width={72}
+                      height={20}
+                      className={styles.idxBrandMark}
+                    />
                     <span className={styles.idxCtaLink}>{s.cta} →</span>
                   </div>
                 ) : null}
