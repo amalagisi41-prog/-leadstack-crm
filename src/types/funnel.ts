@@ -20,7 +20,15 @@ export type FunnelGoalId =
   | "showing"
   | "open_house"
   | "luxury"
-  | "seller_guide";
+  | "seller_guide"
+  | "seller_consult"
+  | "market_report"
+  | "investor_guide"
+  | "neighborhood_guide"
+  | "downsizing_guide"
+  | "probate"
+  | "divorce"
+  | "relocation";
 
 export type FunnelStatus = "draft" | "published";
 
@@ -44,6 +52,16 @@ export interface FunnelContent {
   /** Shown after they submit. */
   thankYouMessage: string;
   theme: FunnelTheme;
+  /** Optional public URL to a PDF/file — shown as a "Download now" link
+   *  on the thank-you state (no upload infra; same convention as
+   *  imageUrl / logoUrl). */
+  downloadUrl?: string;
+  /** When true, submit also creates a Deal at the "New" stage — parity
+   *  with Forms' createDeal/dealTitleTemplate/dealValue settings. */
+  createDeal?: boolean;
+  /** Merge-tag-free template, e.g. "Lead from {{funnelName}}". */
+  dealTitleTemplate?: string;
+  dealValue?: number;
 }
 
 export interface FunnelDoc {

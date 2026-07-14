@@ -523,6 +523,56 @@ function FunnelWizard({
                     placeholder={goal.starter.thankYouMessage}
                   />
                 </Field>
+                <Field label="Free download link (optional)">
+                  <input
+                    value={content.downloadUrl ?? ""}
+                    onChange={(e) => set("downloadUrl", e.target.value)}
+                    className={inputCls}
+                    placeholder="https://…/your-guide.pdf"
+                  />
+                  <p className="mt-1 text-[11px] text-muted-foreground">
+                    Paste a public link to a PDF or file. A &quot;Download
+                    now&quot; button appears on the thank-you page — great
+                    for guides and reports. Leave blank to skip.
+                  </p>
+                </Field>
+                <ToggleRow
+                  label="Also create a deal"
+                  hint="Adds every submission to your pipeline at the New stage, not just as a contact."
+                  checked={!!content.createDeal}
+                  onChange={(v) => set("createDeal", v)}
+                />
+                {content.createDeal ? (
+                  <div className="space-y-3 pl-1">
+                    <Field label="Deal title template">
+                      <input
+                        value={content.dealTitleTemplate ?? ""}
+                        onChange={(e) =>
+                          set("dealTitleTemplate", e.target.value)
+                        }
+                        className={inputCls}
+                        placeholder="New lead — {{name}}"
+                      />
+                      <p className="mt-1 text-[11px] text-muted-foreground">
+                        Use {"{{name}}"} to insert the lead&apos;s name.
+                      </p>
+                    </Field>
+                    <Field label="Default deal value (optional)">
+                      <input
+                        type="number"
+                        value={content.dealValue ?? ""}
+                        onChange={(e) =>
+                          set(
+                            "dealValue",
+                            e.target.value === "" ? undefined : Number(e.target.value),
+                          )
+                        }
+                        className={inputCls}
+                        placeholder="0"
+                      />
+                    </Field>
+                  </div>
+                ) : null}
               </div>
             ) : null}
 

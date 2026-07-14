@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Loader2 } from "lucide-react";
+import { Check, Download, Loader2 } from "lucide-react";
 import type { FunnelContent } from "@/types/funnel";
 
 /**
@@ -141,6 +141,21 @@ export function FunnelRenderer({
               <p className={`text-base font-medium ${headingColor}`}>
                 {content.thankYouMessage || "Thanks! We'll be in touch shortly."}
               </p>
+              {content.downloadUrl ? (
+                <a
+                  href={content.downloadUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`mt-4 inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition-colors ${
+                    dark
+                      ? "bg-blue-500 text-white hover:bg-blue-400"
+                      : "bg-[#1b3d7a] text-white hover:bg-[#16305f]"
+                  }`}
+                >
+                  <Download className="h-4 w-4" />
+                  Download now
+                </a>
+              ) : null}
             </div>
           ) : (
             <form onSubmit={onSubmit} className="space-y-3">

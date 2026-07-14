@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { createContactServerSide } from "@/lib/server/contacts-service";
+import { createDealServerSide } from "@/lib/server/deals-service";
 import {
   EMPTY_LOCATION,
   ipFromRequest,
@@ -108,8 +109,9 @@ export async function POST(
 
   const goal = getFunnelGoal(funnel.content.goal);
 
+  let contactId: string;
   try {
-    await createContactServerSide({
+    const result = await createContactServerSide({
       subAccountId,
       agencyId,
       createdByUid: funnel.createdByUid || "funnel-submission",
@@ -130,12 +132,40 @@ export async function POST(
         lng: location.lng,
       },
     });
+    contactId = result.id;
   } catch (err) {
     console.error("[funnel/submit] contact create failed", err);
     return jsonWithCors(
       { error: "We couldn't save your details. Please try again." },
       { status: 500 },
     );
+  }
+
+  // Optional: also open a deal (parity with Forms' createDeal setting).
+  // Best-effort — a failure here shouldn't fail the visitor's submission,
+  // the contact is already saved.
+  if (funnel.content.createDeal) {
+    try {
+      const title =
+        (funnel.content.dealTitleTemplate || "New lead — {{name}}").replace(
+          /\{\{name\}\}/g,
+          name,
+        ) || "New lead";
+      await createDealServerSide({
+        subAccountId,
+        agencyId,
+        createdByUid: funnel.createdByUid || "funnel-submission",
+        mode: "live",
+        title,
+        value: funnel.content.dealValue || 0,
+        currency: "USD",
+        contactId,
+        stageId: "new",
+        priority: "medium",
+      });
+    } catch (err) {
+      console.error("[funnel/submit] deal create failed", err);
+    }
   }
 
   // Bump the funnel's submission counter (best-effort).
