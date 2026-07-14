@@ -20,6 +20,16 @@ export async function POST(request: Request) {
     );
   }
 
+  if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
+    console.error(
+      "[webhooks/stripe] STRIPE_SECRET_KEY or STRIPE_WEBHOOK_SECRET is not configured",
+    );
+    return NextResponse.json(
+      { error: "Stripe isn't configured on this deployment." },
+      { status: 503 },
+    );
+  }
+
   const stripe = getStripeServer();
   let event: Stripe.Event;
 
@@ -27,7 +37,7 @@ export async function POST(request: Request) {
     event = stripe.webhooks.constructEvent(
       body,
       signature,
-      process.env.STRIPE_WEBHOOK_SECRET!,
+      process.env.STRIPE_WEBHOOK_SECRET,
     );
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
