@@ -242,6 +242,25 @@ const benefits = [
   { strong: "“Request a showing” form", rest: "on every listing, no extra setup" },
 ];
 
+const idxSteps = [
+  {
+    n: "1",
+    title: "Sign up with IDX Broker",
+    body: "Already have an account? Skip to step 2.",
+    cta: "Sign up with IDX",
+  },
+  {
+    n: "2",
+    title: "Connect your key",
+    body: "Paste it into AgentStack — takes about 2 minutes.",
+  },
+  {
+    n: "3",
+    title: "Go live",
+    body: "Or skip the setup entirely — we'll do it for you.",
+  },
+];
+
 export function IdxShowcase() {
   return (
     <section className={styles.idx} id="idx-listings">
@@ -255,9 +274,27 @@ export function IdxShowcase() {
             Your own listings site, <em>live on your laptop and their phone.</em>
           </h2>
           <p>
-            Connect your IDX Broker account once. Every listing search, on any device, feeds leads straight into
-            your CRM.
+            Sign up with IDX Broker, connect your key, and you&apos;re live — or skip the setup
+            and let us do it for you.
           </p>
+        </div>
+
+        <div className={styles.idxSteps}>
+          {idxSteps.map((s) => (
+            <div className={styles.idxStep} key={s.n}>
+              <span className={styles.idxStepNum}>{s.n}</span>
+              <div>
+                <p className={styles.idxStepTitle}>{s.title}</p>
+                <p className={styles.idxStepBody}>{s.body}</p>
+                {s.cta ? (
+                  <div className={styles.idxStepCta}>
+                    <span className={styles.idxBrandMark}>IDX Broker</span>
+                    <span className={styles.idxCtaLink}>{s.cta} →</span>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          ))}
         </div>
 
         <div className={styles.idxGrid}>
