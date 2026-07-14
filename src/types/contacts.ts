@@ -132,6 +132,29 @@ export interface Contact {
    */
   reviewRequestedAt?: Timestamp | FieldValue | null;
   /**
+   * `YYYY-MM-DD`, entered via a native date input. Only the month/day are
+   * read (by the Smart Workflows `contact.birthday` time-based trigger) —
+   * the year is cosmetic and may be inaccurate/unknown. Null/undefined =
+   * not set.
+   */
+  birthday?: string | null;
+  /**
+   * `YYYY-MM-DD` — when this contact "became a client" (e.g. closed on
+   * their home), for home-anniversary campaigns. Same month/day-only
+   * matching as `birthday`. Null/undefined = not set.
+   */
+  homeAnniversary?: string | null;
+  /**
+   * Denormalised stamp of the last outbound email/SMS/WhatsApp sent to this
+   * contact (see `lib/contacts/mark-contacted.ts`). Powers the Smart
+   * Workflows `contact.stale` time-based trigger without scanning every
+   * message subcollection. Voice calls stamp the separate
+   * `lastOutboundCallAt` field instead — the stale check reads whichever of
+   * the two is more recent. Undefined = never contacted via a tracked
+   * channel.
+   */
+  lastContactedAt?: Timestamp | FieldValue | null;
+  /**
    * Page-scoped Meta user id (PSID / IGSID) for a contact who has messaged this
    * sub-account via the BETA Facebook Messenger / Instagram DM inbox. Server-
    * managed (stamped by /api/webhooks/meta on first inbound) and used to
@@ -164,7 +187,15 @@ export interface Contact {
 
 export type ContactFormData = Pick<
   Contact,
-  "name" | "email" | "phone" | "company" | "address" | "source" | "tags"
+  | "name"
+  | "email"
+  | "phone"
+  | "company"
+  | "address"
+  | "source"
+  | "tags"
+  | "birthday"
+  | "homeAnniversary"
 > & {
   territoryId?: string | null;
   customFields?: Record<string, import("./custom-fields").CustomFieldValue> | null;

@@ -4,10 +4,17 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
-import { Loader2, Plus, Trash2, Workflow, Zap } from "lucide-react";
+import { ChevronDown, Loader2, Plus, Trash2, Workflow, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { WorkflowStatusBadge } from "./workflow-status-badge";
 import { TRIGGER_LABELS } from "@/lib/workflows/catalog";
+import { WORKFLOW_STARTER_TEMPLATES } from "@/lib/workflows/starter-templates";
 import type { WorkflowStatus, WorkflowTriggerType } from "@/types/workflows";
 
 interface Row {
@@ -33,7 +40,7 @@ export function WorkflowsList({ saId }: { saId: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [saId]);
 
-  async function create(template?: "speed-to-lead") {
+  async function create(template?: string) {
     setCreating(true);
     try {
       const res = await fetch(`/api/sub-accounts/${saId}/workflows`, {
@@ -71,13 +78,28 @@ export function WorkflowsList({ saId }: { saId: string }) {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => create("speed-to-lead")}
-            disabled={creating}
-          >
-            <Zap className="mr-1 h-4 w-4" /> Speed-to-Lead
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={<Button variant="outline" disabled={creating} />}
+            >
+              <Zap className="mr-1 h-4 w-4" /> Start from a template
+              <ChevronDown className="ml-1 h-3.5 w-3.5" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-72">
+              {WORKFLOW_STARTER_TEMPLATES.map((t) => (
+                <DropdownMenuItem
+                  key={t.key}
+                  onClick={() => create(t.key)}
+                  className="flex-col items-start gap-0.5 py-2"
+                >
+                  <span className="font-medium">{t.displayName}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {t.description}
+                  </span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button onClick={() => create()} disabled={creating}>
             {creating ? (
               <Loader2 className="mr-1 h-4 w-4 animate-spin" />

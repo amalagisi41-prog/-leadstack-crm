@@ -28,6 +28,13 @@ function strArray(v: unknown): string[] {
     .slice(0, 50);
 }
 
+/** "YYYY-MM-DD" or null — anything else (malformed, empty) coerces to null. */
+function dateOrNull(v: unknown): string | null {
+  if (typeof v !== "string") return null;
+  const trimmed = v.trim();
+  return /^\d{4}-\d{2}-\d{2}$/.test(trimmed) ? trimmed : null;
+}
+
 export async function POST(request: Request) {
   let body: Record<string, unknown>;
   try {
@@ -72,6 +79,8 @@ export async function POST(request: Request) {
     source: str(body.source),
     tags: strArray(body.tags),
     territoryId: typeof body.territoryId === "string" ? body.territoryId : null,
+    birthday: dateOrNull(body.birthday),
+    homeAnniversary: dateOrNull(body.homeAnniversary),
   });
 
   return NextResponse.json({ id, contact }, { status: 201 });

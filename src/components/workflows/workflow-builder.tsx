@@ -70,6 +70,9 @@ const TRIGGER_TYPES: WorkflowTriggerType[] = [
   "pipeline.stage.changed",
   "booking.created",
   "quote.accepted",
+  "contact.birthday",
+  "contact.home_anniversary",
+  "contact.stale",
 ];
 
 const ICONS: Record<WorkflowNodeType, typeof Mail> = {
@@ -324,6 +327,38 @@ export function WorkflowBuilder({
                 </option>
               ))}
             </select>
+          )}
+
+          {trigger.type === "contact.stale" && (
+            <div className="mt-2 flex items-center gap-2">
+              <input
+                type="number"
+                min={1}
+                step={1}
+                value={trigger.staleDays ?? ""}
+                onChange={(e) =>
+                  setTrigger({
+                    ...trigger,
+                    staleDays: e.target.value ? Number(e.target.value) : null,
+                  })
+                }
+                placeholder="14"
+                className="border-input bg-background h-9 w-24 rounded-md border px-2 text-sm"
+              />
+              <span className="text-muted-foreground text-sm">
+                days since the last email/SMS/WhatsApp/call
+              </span>
+            </div>
+          )}
+
+          {(trigger.type === "contact.birthday" ||
+            trigger.type === "contact.home_anniversary") && (
+            <p className="text-muted-foreground mt-2 text-xs">
+              Checked once daily against the contact&apos;s{" "}
+              {trigger.type === "contact.birthday" ? "birthday" : "home anniversary"}{" "}
+              field — set that field on the contact profile. Fires once per
+              calendar year per contact.
+            </p>
           )}
 
           <div className="mt-3 border-t pt-3">

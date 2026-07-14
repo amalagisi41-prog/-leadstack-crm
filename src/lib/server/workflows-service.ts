@@ -2,6 +2,7 @@ import "server-only";
 
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
+import { getWorkflowStarterTemplate } from "@/lib/workflows/starter-templates";
 import type {
   WorkflowDoc,
   WorkflowNode,
@@ -39,49 +40,15 @@ export async function getWorkflow(
   return wf.subAccountId === subAccountId ? wf : null;
 }
 
-export type WorkflowTemplate = "blank" | "speed-to-lead";
-
-/** The Speed-to-Lead starter, rebuilt on the new engine (replaces the legacy
- *  recipe): form submit → instant SMS + email to the lead → notify the team. */
-function speedToLeadSeed(): Pick<
-  WorkflowDoc,
-  "trigger" | "nodes" | "startNodeId"
-> {
-  const nodes: Record<string, WorkflowNode> = {
-    n1: {
-      id: "n1",
-      type: "send_sms",
-      config: {
-        body: "Hi {{contact.firstName}}, thanks for reaching out — we got your message and will be in touch shortly.",
-      },
-      next: "n2",
-    },
-    n2: {
-      id: "n2",
-      type: "send_email",
-      config: {
-        subject: "Thanks for reaching out",
-        body: "Hi {{contact.firstName}},\n\nThanks for getting in touch. A member of our team will follow up shortly.\n\n{{unsubscribeLink}}",
-      },
-      next: "n3",
-    },
-    n3: {
-      id: "n3",
-      type: "notify",
-      config: {
-        to: "",
-        subject: "New lead from your form",
-        body: "{{contact.name}} ({{contact.email}} · {{contact.phone}}) just submitted a form.",
-      },
-      next: null,
-    },
-  };
-  return {
-    trigger: { type: "form.submitted", filters: { all: [] } },
-    nodes,
-    startNodeId: "n1",
-  };
-}
+/**
+ * `"blank"` (or any unrecognized/absent key) creates an empty draft. Any
+ * other value is looked up in `WORKFLOW_STARTER_TEMPLATES` — see
+ * `lib/workflows/starter-templates.ts` for the actual catalog (Speed-to-Lead,
+ * Stale Lead Revive, Birthday Greeting, Home Anniversary Greeting, Review
+ * Request on Won). Kept as `string` rather than a union so the starter
+ * catalog can grow without touching this file.
+ */
+export type WorkflowTemplate = string;
 
 export async function createWorkflowServerSide(opts: {
   subAccountId: string;
@@ -93,14 +60,17 @@ export async function createWorkflowServerSide(opts: {
   const subSnap = await db.doc(`subAccounts/${opts.subAccountId}`).get();
   const agencyId = (subSnap.data()?.agencyId as string) ?? "";
 
-  const seed =
-    opts.template === "speed-to-lead"
-      ? speedToLeadSeed()
-      : {
-          trigger: { type: "form.submitted" as const, filters: { all: [] } },
-          nodes: {},
-          startNodeId: null,
-        };
+  const starter =
+    opts.template && opts.template !== "blank"
+      ? getWorkflowStarterTemplate(opts.template)
+      : undefined;
+  const seed = starter
+    ? starter.seed()
+    : {
+        trigger: { type: "form.submitted" as const, filters: { all: [] } },
+        nodes: {},
+        startNodeId: null,
+      };
 
   const ref = db.collection("workflows").doc();
   const doc: Omit<WorkflowDoc, "id"> = {

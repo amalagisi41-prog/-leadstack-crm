@@ -15,7 +15,13 @@ export type WorkflowTriggerType =
   | "form.submitted"
   | "pipeline.stage.changed"
   | "booking.created"
-  | "quote.accepted";
+  | "quote.accepted"
+  // Time-based triggers — fired by a daily sweep (lib/workflows/time-triggers.ts)
+  // rather than synchronously from a write path. "Today" and "this year" are
+  // evaluated in the sub-account's sendWindow timezone.
+  | "contact.birthday"
+  | "contact.home_anniversary"
+  | "contact.stale";
 
 /* ------------------------------ Conditions ----------------------------- */
 
@@ -50,6 +56,8 @@ export interface WorkflowTrigger {
   formId?: string | null;
   /** Restrict `pipeline.stage.changed` to one target stage. */
   toStage?: string | null;
+  /** `contact.stale` only: how many days of no outbound contact qualifies. */
+  staleDays?: number | null;
 }
 
 /* --------------------------------- Nodes ------------------------------- */

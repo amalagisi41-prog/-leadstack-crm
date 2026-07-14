@@ -7,6 +7,7 @@ import {
 } from "@/lib/comms/twilio";
 import { requireContactAccessible, requireUid } from "@/lib/comms/route-auth";
 import { resolveTemplateVariables } from "@/lib/comms/whatsapp/resolve-template-variables";
+import { markContactContacted } from "@/lib/contacts/mark-contacted";
 import type { MergeTagSubject } from "@/lib/automations/merge-tags";
 import type { AgencyDoc, SubAccountDoc } from "@/types";
 import type { WhatsappTemplateDoc } from "@/types/whatsapp-templates";
@@ -218,6 +219,7 @@ export async function POST(request: Request) {
   } catch (err) {
     console.warn("[whatsapp/send-template] message-row write failed", err);
   }
+  void markContactContacted(contactId);
 
   return NextResponse.json({ ok: true, sid });
 }

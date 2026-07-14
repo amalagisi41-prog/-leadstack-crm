@@ -61,6 +61,13 @@ const SCHEDULES: ScheduleSpec[] = [
     description:
       "Every 6 hours, fan out to sync each IDX-connected sub-account's MLS listings.",
   },
+  {
+    scheduleId: "leadstack-workflow-time-triggers",
+    path: "/api/cron/workflow-time-triggers",
+    cron: "0 9 * * *",
+    description:
+      "Daily sweep for the contact.birthday / contact.home_anniversary / contact.stale Smart Workflows triggers.",
+  },
 ];
 
 const MARKER_PATH = "system/scheduleRegistration";

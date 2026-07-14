@@ -8,6 +8,7 @@ import {
 import { getChannelConfig } from "@/lib/comms/ai/agent";
 import { requireContactAccessible, requireUid } from "@/lib/comms/route-auth";
 import { upsertConversationForMessage } from "@/lib/server/conversations-service";
+import { markContactContacted } from "@/lib/contacts/mark-contacted";
 import type { SubAccountDoc } from "@/types";
 
 type Body = { contactId?: string; body?: string };
@@ -194,6 +195,7 @@ export async function POST(request: Request) {
     body,
     pauseBot: true,
   });
+  void markContactContacted(contactId);
 
   return NextResponse.json({ ok: true, sid });
 }

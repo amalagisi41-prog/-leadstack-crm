@@ -35,6 +35,9 @@ const PUBLIC_PATHS = [
   // "IDX Listings (IDX Broker) v1".
   "/api/cron/idx-listing-sync",
   "/api/idx",
+  // Smart Workflows time-based triggers — daily fan-out + its per-sub-account
+  // step worker. Both signature-verified inside the route.
+  "/api/cron/workflow-time-triggers",
   "/api/landing/metrics",
   "/api/landing/recent-purchases",
   // Live-visitors heartbeat ping for the agency dashboard's world map.
