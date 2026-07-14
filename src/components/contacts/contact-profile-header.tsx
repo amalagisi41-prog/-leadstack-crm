@@ -13,11 +13,13 @@ import {
   MapPinned,
   MessageSquare,
   PhoneOutgoing,
+  Sparkles,
   Star,
   Trash2,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { openAskAssistant } from "@/components/dashboard/ask-assistant-panel";
 import {
   Sheet,
   SheetContent,
@@ -176,6 +178,23 @@ export function ContactProfileHeader({ contact }: { contact: Contact }) {
 
   const contactName = contact.name || contact.email || "this contact";
 
+  function handleSuggestNextAction() {
+    const facts = [
+      `Name: ${contactName}`,
+      contact.company ? `Company: ${contact.company}` : null,
+      `Source: ${contact.source || "unknown"}`,
+      contact.tags?.length ? `Tags: ${contact.tags.join(", ")}` : null,
+      contact.email ? `Has email on file` : `No email on file`,
+      contact.phone ? `Has phone on file` : `No phone on file`,
+      `Added: ${formatContactDate(contact.createdAt)}`,
+    ]
+      .filter(Boolean)
+      .join("\n");
+    openAskAssistant({
+      prompt: `Based on this contact, what should I do next? Give me 1-3 concrete, specific actions — not generic advice.\n\n--- CONTACT ---\n${facts}\n--- END CONTACT ---`,
+    });
+  }
+
   // Open the delete modal and run the dry-run link check. If the contact is
   // linked to anything the modal explains what's blocking it; otherwise it
   // shows a final confirm.
@@ -256,6 +275,15 @@ export function ContactProfileHeader({ contact }: { contact: Contact }) {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSuggestNextAction}
+              title="Ask AgentStack what to do next with this contact"
+            >
+              <Sparkles className="mr-1 h-3.5 w-3.5 text-rose-500" />
+              Suggest next action
+            </Button>
             <Button
               variant="outline"
               size="sm"
