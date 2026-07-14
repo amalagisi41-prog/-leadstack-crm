@@ -18,6 +18,7 @@ import { BrandLockup } from "./brand-lockup";
 const links = [
   { href: "#how-it-works", label: "The Method" },
   { href: "#features", label: "Features" },
+  { href: "#pricing", label: "Pricing" },
   { href: "#faq", label: "FAQ" },
 ];
 

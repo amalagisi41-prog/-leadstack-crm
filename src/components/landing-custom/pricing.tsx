@@ -1,21 +1,61 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
+import { toast } from "sonner";
 import { Check, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { openCrispChat } from "@/lib/crisp";
 import { CUSTOM_BRAND, type CustomPricingTier } from "@/config/landing";
+
+/**
+ * Only Starter/Solo and Pro/Team are genuinely self-serve ("Start free
+ * trial" — real Stripe checkout via /api/checkout/subscribe). Scale/Broker
+ * and Luxury are deliberately sales-assisted ("Talk to us" / "Book a
+ * consultation") — their buttons open the support chat instead, matching
+ * the CTA copy already on the tier config.
+ */
+type SelfServePlanKey = "starter" | "pro";
+const SELF_SERVE_KEYS: SelfServePlanKey[] = ["starter", "pro"];
 
 export function Pricing() {
   const [annual, setAnnual] = useState(false);
+  const [checkingOut, setCheckingOut] = useState<string | null>(null);
 
-  const tiers: CustomPricingTier[] = [
-    CUSTOM_BRAND.pricing.starter,
-    CUSTOM_BRAND.pricing.pro,
-    CUSTOM_BRAND.pricing.scale,
-    CUSTOM_BRAND.pricing.luxury,
+  const tiers: { key: string; tier: CustomPricingTier }[] = [
+    { key: "starter", tier: CUSTOM_BRAND.pricing.starter },
+    { key: "pro", tier: CUSTOM_BRAND.pricing.pro },
+    { key: "scale", tier: CUSTOM_BRAND.pricing.scale },
+    { key: "luxury", tier: CUSTOM_BRAND.pricing.luxury },
   ];
+
+  async function handleSelectTier(key: string) {
+    if (!SELF_SERVE_KEYS.includes(key as SelfServePlanKey)) {
+      openCrispChat();
+      return;
+    }
+    setCheckingOut(key);
+    try {
+      const res = await fetch("/api/checkout/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ planKey: key }),
+      });
+      const payload = (await res.json().catch(() => ({}))) as {
+        url?: string;
+        error?: string;
+      };
+      if (!res.ok || !payload.url) {
+        throw new Error(payload.error ?? "Could not start checkout.");
+      }
+      window.location.href = payload.url;
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Could not start checkout.",
+      );
+      setCheckingOut(null);
+    }
+  }
 
   return (
     <section id="pricing" className="py-24">
@@ -65,7 +105,7 @@ export function Pricing() {
         </div>
 
         <div className="mx-auto mt-12 grid max-w-6xl gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {tiers.map((tier) => {
+          {tiers.map(({ key, tier }) => {
             const price = annual ? tier.priceAnnual : tier.priceMonthly;
             const isFree = price === 0;
             return (
@@ -161,7 +201,9 @@ export function Pricing() {
                   </ul>
                   <div className="mt-6">
                     <Button
-                      render={<Link href="/signup" />}
+                      type="button"
+                      onClick={() => void handleSelectTier(key)}
+                      disabled={checkingOut !== null}
                       variant={tier.highlighted ? "default" : "outline"}
                       className={cn(
                         "w-full",
@@ -169,7 +211,7 @@ export function Pricing() {
                           "bg-[#1a2f50] hover:bg-[#243d66] text-white",
                       )}
                     >
-                      {tier.cta}
+                      {checkingOut === key ? "Redirecting…" : tier.cta}
                     </Button>
                   </div>
                 </div>

@@ -16,6 +16,16 @@ export interface AgencyDoc {
   subscriptionStatus: SubscriptionStatus;
   subscriptionPriceId: string | null;
   /**
+   * The Stripe Subscription object id (distinct from `subscriptionPriceId`,
+   * which is just the base plan's price). Needed to add a subscription item
+   * (an add-on) to an already-active subscription via the Subscription
+   * Items API — see `lib/stripe/webhooks.ts` (stamped on checkout complete)
+   * and `/api/sub-accounts/[id]/add-ons/purchase` (reads it to extend the
+   * live subscription). Null until the agency's first paid checkout
+   * completes.
+   */
+  subscriptionId?: string | null;
+  /**
    * Optional URL of the agency's logo. When set, the dashboard sidebar +
    * browser tab title swap AgentStack's chevron mark + wordmark for the
    * agency's brand. The URL is rendered as <img src="…" />, so any public

@@ -17,6 +17,11 @@ const PUBLIC_PATHS = [
   "/api/forms",
   "/api/auth/signup",
   "/api/auth/oauth-provision",
+  // Real self-serve billing claim flow — a stranger lands here straight
+  // from Stripe with no session yet. Token-gated inside the route, not by
+  // auth. See "Real self-serve billing".
+  "/welcome",
+  "/api/auth/claim-subscription",
   // Workflow Builder step worker — QStash callback, signature-verified inside
   // the route.
   "/api/workflows/step",
