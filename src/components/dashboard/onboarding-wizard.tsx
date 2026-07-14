@@ -33,6 +33,7 @@ import { LogoMark } from "@/components/brand/logo-mark";
 import { CUSTOM_BRAND } from "@/config/landing";
 import { ONBOARDING_STEP_IDS } from "@/lib/onboarding/steps";
 import { useAuth } from "@/hooks/use-auth";
+import { SubAccountIdxSection } from "@/components/settings/sub-account-idx-section";
 import type { FunnelGoalId } from "@/types/funnel";
 
 /* ---------- types ---------- */
@@ -51,6 +52,7 @@ const SETUP_STEPS = [
   { label: "Business Blueprint", minutes: 3 },
   { label: "Import Contacts", minutes: 2 },
   { label: "Connect Your Business", minutes: 3 },
+  { label: "IDX Listings", minutes: 2 },
   { label: "Choose Your Goals", minutes: 2 },
   { label: "Launch Marketing", minutes: 2 },
   { label: "Go Live", minutes: 1 },
@@ -535,6 +537,37 @@ export function OnboardingWizard({
           {step === 3 && (
             <StepFrame
               step={4}
+              title="Connect your listings"
+              subtitle="Bring your own IDX Broker account and AgentStack turns it into a branded, searchable listings site — synced automatically, with every view captured as a lead."
+              why="Your MLS access stays yours — AgentStack never shares or resells listing data. Connect your own IDX Broker key and it's wired in for good."
+              minutes={2}
+              requirement="Can skip"
+            >
+              <SubAccountIdxSection />
+              <p className="mt-4 text-center text-xs text-muted-foreground">
+                Don&apos;t have an IDX Broker account yet?{" "}
+                <a
+                  href="https://www.idxbroker.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-medium text-rose-600 hover:underline"
+                >
+                  Sign up with IDX
+                </a>
+                . Or skip this step entirely — reach out anytime and we&apos;ll set it up for
+                you.
+              </p>
+              <FooterNav
+                onBack={back}
+                onSkip={() => advance("skipped")}
+                onContinue={() => advance("complete")}
+              />
+            </StepFrame>
+          )}
+
+          {step === 4 && (
+            <StepFrame
+              step={5}
               title="Choose your business goals"
               subtitle="Your goals shape what AgentStack prioritizes. We'll recommend the right systems and automations based on what matters most to you."
               why="Different goals require different systems. This helps us recommend the right lead capture, follow-up, and reporting."
@@ -582,9 +615,9 @@ export function OnboardingWizard({
             </StepFrame>
           )}
 
-          {step === 4 && (
+          {step === 5 && (
             <StepFrame
-              step={5}
+              step={6}
               title="Launch recommended marketing"
               subtitle="Based on your goals, we recommend these proven lead capture systems. Each one is pre-built and ready to launch in one click."
               why="Launching even one system starts generating leads immediately. You can add more anytime."
@@ -639,7 +672,7 @@ export function OnboardingWizard({
             </StepFrame>
           )}
 
-          {step === 5 && (() => {
+          {step === 6 && (() => {
             const firstName = user?.displayName?.split(" ")[0];
             const launchedSystem =
               systems.size > 0
@@ -666,8 +699,9 @@ export function OnboardingWizard({
                     { label: "Business Blueprint", idx: 0 },
                     { label: "Import Contacts", idx: 1 },
                     { label: "Connect Business", idx: 2 },
-                    { label: "Business Goals", idx: 3 },
-                    { label: "Marketing Systems", idx: 4 },
+                    { label: "IDX Listings", idx: 3 },
+                    { label: "Business Goals", idx: 4 },
+                    { label: "Marketing Systems", idx: 5 },
                   ].map((row) => {
                     const done = outcomes[row.idx] === "complete";
                     return (

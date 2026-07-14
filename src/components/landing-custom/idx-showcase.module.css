@@ -84,6 +84,68 @@
   color: var(--slate);
 }
 
+/* ---------- 3-step strip ---------- */
+.idxSteps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+  max-width: 980px;
+  margin: 0 auto 72px;
+}
+.idxStep {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 20px;
+  border-radius: 16px;
+  background: rgba(23, 59, 122, 0.04);
+  border: 1px solid rgba(23, 59, 122, 0.1);
+}
+.idxStepNum {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--navy);
+  color: #fff;
+  font-weight: 800;
+  font-size: 15px;
+}
+.idxStepTitle {
+  font-weight: 800;
+  font-size: 16px;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+.idxStepBody {
+  margin-top: 3px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--slate);
+}
+.idxStepCta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+.idxBrandMark {
+  height: 22px;
+  width: auto;
+  object-fit: contain;
+  background: var(--navy);
+  border: 1px solid rgba(23, 59, 122, 0.16);
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+.idxCtaLink {
+  font-weight: 700;
+  font-size: 12.5px;
+  color: var(--blue);
+}
+
 /* ---------- Layout ---------- */
 .idxGrid {
   display: grid;
@@ -788,6 +850,9 @@
   }
 }
 @media (max-width: 1024px) {
+  .idxSteps {
+    grid-template-columns: 1fr;
+  }
   .idxGrid {
     grid-template-columns: 1fr;
     gap: 88px;

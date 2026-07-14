@@ -1,6 +1,8 @@
 # LeadStack CRM
 
 > **Product vision:** see [PRODUCT.md](PRODUCT.md) for the AgentStack Master Product Prompt — the north-star design principles, navigation vocabulary, onboarding philosophy, and success criteria that every feature should align with.
+>
+> **IDX strategy:** see [IDX-STRATEGY.md](IDX-STRATEGY.md) for the IDX compliance model (why every sub-account must connect its own IDX Broker key — never a shared feed), the "done-for-you" IDX concierge onboarding opportunity, and IDX-related positioning against competitors.
 
 ## Audience for this document
 
