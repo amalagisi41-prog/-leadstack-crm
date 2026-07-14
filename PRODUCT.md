@@ -75,7 +75,7 @@ One platform for:
 - Marketing
 - Lead Capture
 - Smart Workflows
-- Business Brain
+- Business Blueprint
 - Analytics
 - Client Communication
 - Business Growth
@@ -100,7 +100,7 @@ Preferred navigation:
 - Lead Forms
 - Smart Workflows
 - AI Assistant
-- Business Brain
+- Business Blueprint
 - Analytics
 - Settings
 
@@ -124,9 +124,9 @@ Everything possible should already be configured.
 
 ---
 
-## Business Brain
+## Business Blueprint
 
-Every workspace begins with a Business Brain. This becomes the central knowledge source for the platform.
+Every workspace begins with a Business Blueprint. This becomes the central knowledge source for the platform.
 
 Store:
 
@@ -147,7 +147,7 @@ Store:
 - Email templates
 - SMS templates
 
-Every AI feature references the Business Brain before responding.
+Every AI feature references the Business Blueprint before responding.
 
 One source of truth.
 
@@ -240,7 +240,7 @@ Everything above plus:
 - Office Locations
 - Recruiting
 - Team CRM
-- Shared Business Brain
+- Shared Business Blueprint
 - Lead Distribution
 - Team Dashboard
 - Office Calendar
@@ -291,7 +291,7 @@ The AI then automatically creates:
 - Blog categories
 - FAQs
 - Calls-to-action
-- Business Brain
+- Business Blueprint
 - AI Assistant prompts
 - Email templates
 - SMS templates
@@ -346,7 +346,7 @@ One-click page creation for:
 Every page automatically connects to:
 
 - CRM
-- Business Brain
+- Business Blueprint
 - AI Assistant
 - Smart Workflows
 - Analytics
