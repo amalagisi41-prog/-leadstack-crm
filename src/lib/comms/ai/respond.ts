@@ -13,6 +13,7 @@ import {
 } from "@/lib/comms/ai/agent";
 import { buildContactContextBlock } from "@/lib/comms/ai/context";
 import { buildSystemPrompt } from "@/lib/comms/ai/prompt";
+import { retrieveRelevantChunks } from "@/lib/knowledge-base/retrieve";
 import {
   matchEscalationKeyword,
   sendEscalationNotification,
@@ -388,7 +389,7 @@ export async function maybeRespondWithAi(
   // Build LLM context and call the model.
   let completion;
   try {
-    const [history, contextBlock] = await Promise.all([
+    const [history, contextBlock, retrievedChunks] = await Promise.all([
       loadRecentHistory(
         contact.id,
         eff.contextMessageCount,
@@ -402,12 +403,14 @@ export async function maybeRespondWithAi(
         );
         return null;
       }),
+      retrieveRelevantChunks(subAccountId, incomingMessage),
     ]);
     const systemPrompt = buildSystemPrompt({
       agent,
       channelId,
       fallbackBusinessName: subAccount.name ?? "the business",
       contactContextBlock: contextBlock,
+      retrievedChunks,
     });
     const messages: AiChatMessage[] = [
       { role: "system", content: systemPrompt },

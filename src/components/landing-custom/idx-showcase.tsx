@@ -486,10 +486,19 @@ export function IdxShowcase() {
               ))}
             </div>
 
-            <p className={styles.trustNote}>
-              <ShieldIcon />
-              Powered by your own IDX Broker account
-            </p>
+            <div className={styles.trustBlock}>
+              <Image
+                src="/brand/idx-broker-logo.png"
+                alt="IDX Broker"
+                width={140}
+                height={39}
+                className={styles.trustLogo}
+              />
+              <p className={styles.trustNote}>
+                <ShieldIcon />
+                Powered by your own IDX Broker account
+              </p>
+            </div>
           </div>
         </div>
       </div>

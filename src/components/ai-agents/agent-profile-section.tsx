@@ -7,21 +7,13 @@ import {
   type FormEvent,
 } from "react";
 import { toast } from "sonner";
-import { Eye, Loader2, RefreshCcw, Sparkles, User } from "lucide-react";
+import { Loader2, Sparkles, User } from "lucide-react";
 import { useSubAccount } from "@/context/sub-account-context";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { TimezoneSelect } from "@/components/ui/timezone-select";
-import { formatRelativeTime } from "@/lib/format";
 import type { AiAgentProfile } from "@/types/ai";
 
 const HOURS_OPTIONS = Array.from({ length: 24 }, (_, i) => i);
@@ -56,11 +48,8 @@ export function AgentProfileSection() {
     "manager, human, complaint, stop ai",
   );
   const [notifyEmail, setNotifyEmail] = useState("");
-  const [websiteUrl, setWebsiteUrl] = useState("");
 
   const [saving, setSaving] = useState(false);
-  const [refreshingKb, setRefreshingKb] = useState(false);
-  const [kbModalOpen, setKbModalOpen] = useState(false);
 
   // Test panel
   const [testMessage, setTestMessage] = useState("");
@@ -92,7 +81,6 @@ export function AgentProfileSection() {
         setTimezone(data.profile.timezone);
         setKeywordsText(data.profile.escalationKeywords.join(", "));
         setNotifyEmail(data.profile.escalationNotifyEmail ?? "");
-        setWebsiteUrl(data.profile.websiteUrl ?? "");
       } else {
         // First-time setup — pre-fill the suggested persona as real
         // content (not just a placeholder) so the operator can save it
@@ -137,7 +125,6 @@ export function AgentProfileSection() {
             timezone,
             escalationKeywords: keywords,
             escalationNotifyEmail: notifyEmail.trim() || null,
-            websiteUrl: websiteUrl.trim() || null,
           }),
         },
       );
@@ -152,48 +139,12 @@ export function AgentProfileSection() {
       }
       if (data.profile) {
         setProfile(data.profile);
-        // Re-sync the URL input from the server's normalised value so a
-        // harmless transform (e.g. trailing-slash) doesn't make the Refresh
-        // button look stuck. Same goes for an invalid URL the server
-        // rejected — the input snaps back to the last saved value.
-        setWebsiteUrl(data.profile.websiteUrl ?? "");
       }
       toast.success("Agent profile saved");
     } catch {
       toast.error("Network error — try again");
     } finally {
       setSaving(false);
-    }
-  }
-
-  async function handleRefreshKb() {
-    setRefreshingKb(true);
-    try {
-      const res = await fetch(
-        `/api/sub-accounts/${subAccountId}/ai-agent/profile/refresh-kb`,
-        { method: "POST" },
-      );
-      const data = (await res.json()) as {
-        ok?: boolean;
-        error?: string;
-        profile?: AiAgentProfile;
-        chars?: number;
-        truncated?: boolean;
-      };
-      if (!res.ok) {
-        toast.error(data.error ?? "Failed to refresh website context");
-        return;
-      }
-      if (data.profile) setProfile(data.profile);
-      toast.success(
-        data.truncated
-          ? `Captured ${data.chars} chars (homepage was longer — trimmed).`
-          : `Captured ${data.chars} chars from the homepage.`,
-      );
-    } catch {
-      toast.error("Network error — try again");
-    } finally {
-      setRefreshingKb(false);
     }
   }
 
@@ -350,84 +301,6 @@ export function AgentProfileSection() {
             </p>
           </div>
 
-          <div className="rounded-xl border bg-muted/20 p-4 space-y-3">
-            <div>
-              <Label htmlFor="profile-website-url">Website context</Label>
-              <p className="mt-1 text-[11px] text-muted-foreground">
-                Optional. Paste this client&rsquo;s public website. Save the
-                profile, then click <strong>Refresh KB</strong> to crawl the
-                homepage — the agent will reference it when replying.
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <Input
-                id="profile-website-url"
-                type="url"
-                value={websiteUrl}
-                onChange={(e) => setWebsiteUrl(e.target.value)}
-                placeholder="https://your-client.com"
-                className="flex-1"
-              />
-              {(() => {
-                // The server normalises URLs (e.g. trailing slash, https://
-                // prefix) so a strict compare with raw input falsely flags
-                // "unsaved". Compare on a canonical form instead.
-                const canon = (s: string) =>
-                  s.trim().replace(/\/+$/, "").toLowerCase();
-                const urlMatchesSaved =
-                  !!profile?.websiteUrl &&
-                  canon(profile.websiteUrl) === canon(websiteUrl);
-                return (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleRefreshKb}
-                disabled={refreshingKb || !urlMatchesSaved}
-                title={
-                  !profile?.websiteUrl
-                    ? "Save a website URL first"
-                    : !urlMatchesSaved
-                      ? "Save the changed URL before refreshing"
-                      : "Re-crawl the homepage"
-                }
-              >
-                {refreshingKb ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <RefreshCcw className="h-3.5 w-3.5" />
-                )}
-                Refresh KB
-              </Button>
-                );
-              })()}
-            </div>
-            {profile?.websiteKb ? (
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
-                <span>KB captured ({profile.websiteKb.length} chars)</span>
-                {profile.websiteKbFetchedAt && (
-                  <span>
-                    · last refreshed{" "}
-                    <span className="text-foreground">
-                      {formatRelativeTime(profile.websiteKbFetchedAt)}
-                    </span>
-                  </span>
-                )}
-                <button
-                  type="button"
-                  onClick={() => setKbModalOpen(true)}
-                  className="ml-auto inline-flex items-center gap-1 rounded-md border border-input bg-background px-2 py-1 text-[11px] font-medium text-foreground transition-colors hover:bg-accent"
-                >
-                  <Eye className="h-3 w-3" />
-                  View KB
-                </button>
-              </div>
-            ) : (
-              <p className="text-[11px] text-muted-foreground">
-                No KB captured yet.
-              </p>
-            )}
-          </div>
-
           <div className="flex items-center justify-end pt-2">
             <Button type="submit" disabled={saving}>
               {saving ? (
@@ -485,30 +358,6 @@ export function AgentProfileSection() {
           )}
         </div>
       )}
-
-      <Dialog open={kbModalOpen} onOpenChange={setKbModalOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Website context</DialogTitle>
-            <DialogDescription>
-              {profile?.websiteUrl ?? "—"}
-              {profile?.websiteKbFetchedAt && (
-                <>
-                  {" · "}captured{" "}
-                  {formatRelativeTime(profile.websiteKbFetchedAt)}
-                </>
-              )}
-            </DialogDescription>
-          </DialogHeader>
-          <pre className="max-h-[60vh] overflow-y-auto whitespace-pre-wrap rounded-lg border bg-muted/30 p-4 text-xs leading-relaxed">
-            {profile?.websiteKb ?? "(empty)"}
-          </pre>
-          <p className="text-[11px] text-muted-foreground">
-            This is the exact snapshot fed to the AI as context. Re-click{" "}
-            <strong>Refresh KB</strong> after the site changes.
-          </p>
-        </DialogContent>
-      </Dialog>
     </section>
   );
 }

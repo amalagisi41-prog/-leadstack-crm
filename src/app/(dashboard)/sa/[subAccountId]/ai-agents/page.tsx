@@ -6,6 +6,7 @@ import { useSubAccount } from "@/context/sub-account-context";
 import { VISIBLE_AI_CHANNELS } from "@/components/ai-agents/channels";
 import { ChannelStatusCard } from "@/components/ai-agents/channel-status-card";
 import { AgentProfileSection } from "@/components/ai-agents/agent-profile-section";
+import { KnowledgeBaseSection } from "@/components/ai-agents/knowledge-base-section";
 import type { AiChannelConfig } from "@/types/ai";
 
 /**
@@ -123,6 +124,8 @@ export default function AiAgentsOverviewPage() {
       )}
 
       <AgentProfileSection />
+
+      <KnowledgeBaseSection />
 
       <section>
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">

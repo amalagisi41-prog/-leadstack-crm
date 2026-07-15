@@ -825,13 +825,26 @@
 .benefit p span {
   color: var(--slate);
 }
+.trustBlock {
+  margin-top: 30px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+.trustLogo {
+  display: block;
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+  background: var(--navy);
+  border: 1px solid rgba(23, 59, 122, 0.16);
+  padding: 8px 14px;
+  border-radius: 8px;
+  margin-bottom: 14px;
+}
 .trustNote {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 30px;
-  padding-top: 22px;
-  border-top: 1px solid var(--line);
   font-size: 13px;
   font-weight: 500;
   color: var(--muted);

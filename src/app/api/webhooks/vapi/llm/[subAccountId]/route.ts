@@ -6,6 +6,7 @@ import { callAi, type AiChatMessage } from "@/lib/comms/ai/openrouter";
 import { incrementChannelTokens, resolveAgent } from "@/lib/comms/ai/agent";
 import { buildContactContextBlock } from "@/lib/comms/ai/context";
 import { buildSystemPrompt } from "@/lib/comms/ai/prompt";
+import { retrieveRelevantChunks } from "@/lib/knowledge-base/retrieve";
 import type { SubAccountDoc } from "@/types";
 import type { Contact } from "@/types/contacts";
 
@@ -245,12 +246,21 @@ export async function POST(
   const personaOverride =
     isOutbound && outboundPersona ? outboundPersona : null;
 
+  const latestUserMessage =
+    [...(body.messages ?? [])].reverse().find((m) => m.role === "user")
+      ?.content ?? "";
+  const retrievedChunks = await retrieveRelevantChunks(
+    subAccountId,
+    latestUserMessage,
+  );
+
   const systemPrompt = buildSystemPrompt({
     agent,
     channelId: "voice",
     fallbackBusinessName: subAccount.name ?? "the business",
     contactContextBlock: contextBlock,
     personaOverride,
+    retrievedChunks,
   });
 
   // Strip Vapi's own system message — the persona we want is the one
