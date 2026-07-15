@@ -177,6 +177,9 @@ const PUBLIC_PATH_PATTERNS: RegExp[] = [
   // WhatsApp template approval poll: /api/sub-accounts/{id}/whatsapp-templates/poll
   // QStash callback, signature-verified inside the route.
   /^\/api\/sub-accounts\/[^/]+\/whatsapp-templates\/poll$/,
+  // Knowledge Base source ingestion: /api/sub-accounts/{id}/knowledge-base/sources/{sourceId}/ingest-step
+  // QStash callback, signature-verified inside the route.
+  /^\/api\/sub-accounts\/[^/]+\/knowledge-base\/sources\/[^/]+\/ingest-step$/,
   // Calendar subscription feed: /api/sub-accounts/{id}/calendar.ics
   // Token-gated inside the route via verifyCalendarFeedToken — Google /
   // Apple / Outlook pollers are unauthenticated, so session-cookie auth

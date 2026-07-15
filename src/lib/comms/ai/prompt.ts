@@ -13,8 +13,11 @@ import type { ConfiguredChannelId } from "@/lib/comms/ai/agent";
  * Sections, in order:
  *   1. Persona (from the shared agent profile)
  *   2. Channel-specific safety rails (different per transport)
- *   3. Website KB block (if the profile has a populated KB)
- *   4. Contact context block (if the channel/session has an identified contact)
+ *   3. Business Profile block (structured, always fully included)
+ *   4. Retrieved Knowledge Base chunks (top-K relevant snippets — see
+ *      lib/knowledge-base/retrieve.ts; replaces the old flat single-page
+ *      websiteKb dump, which is no longer read here)
+ *   5. Contact context block (if the channel/session has an identified contact)
  *
  * Nulls are skipped — sections are joined with blank lines so the model
  * sees clean delimiters.
@@ -26,6 +29,10 @@ export interface BuildSystemPromptInput {
   fallbackBusinessName: string;
   /** Pre-built contact context (null when no identified contact). */
   contactContextBlock: string | null;
+  /** Top-K chunks from lib/knowledge-base/retrieve.ts::retrieveRelevantChunks(),
+   *  already scoped to the current inbound message. Null/empty → section
+   *  omitted (no KB configured yet, or nothing relevant matched). */
+  retrievedChunks?: string[] | null;
   /** Replaces the shared profile persona for THIS call only. Used by the
    *  voice LLM webhook on outbound calls so they run a proactive
    *  outbound persona instead of the inbound receptionist one. Blank /
@@ -46,29 +53,31 @@ export function buildSystemPrompt(input: BuildSystemPromptInput): string {
   const safetyRails = buildSafetyRails(channelId, businessNameForPrompt);
 
   // The central Agent Business Profile (Knowledge Base). Placed right after
-  // the persona so it outranks the scraped-homepage KB — it's authoritative
-  // structured fact the agent typed, not crawled prose.
+  // the persona so it outranks retrieved KB chunks — it's authoritative
+  // structured fact the agent typed, not bulk reference material.
   const businessKnowledge = agent.effective.businessKnowledge?.trim() || null;
 
-  const kb = agent.effective.websiteKb?.trim();
-  const kbBlock = kb ? buildKbBlock(kb) : null;
+  const retrievedChunks = (input.retrievedChunks ?? []).filter((c) => c.trim());
+  const retrievedBlock =
+    retrievedChunks.length > 0 ? buildRetrievedKnowledgeBlock(retrievedChunks) : null;
 
   const sections = [
     persona,
     safetyRails,
     businessKnowledge,
-    kbBlock,
+    retrievedBlock,
     contactContextBlock,
   ].filter((s): s is string => !!s);
   return sections.join("\n\n");
 }
 
-function buildKbBlock(kb: string): string {
-  return `--- WEBSITE KNOWLEDGE BASE ---
-The following is a snapshot of the business's public homepage. Use it as factual reference only — never quote raw markdown or links. If the user asks something outside this content, fall back to "let me check with the team".
+function buildRetrievedKnowledgeBlock(chunks: string[]): string {
+  const numbered = chunks.map((c, i) => `[${i + 1}] ${c.trim()}`).join("\n\n");
+  return `--- RELEVANT KNOWLEDGE ---
+The following snippets were retrieved from the business's knowledge base because they're relevant to the current message. Use them as factual reference only — never quote raw markdown or links. If the answer isn't covered here, fall back to "let me check with the team".
 
-${kb}
---- END KB ---`;
+${numbered}
+--- END RELEVANT KNOWLEDGE ---`;
 }
 
 function buildSafetyRails(

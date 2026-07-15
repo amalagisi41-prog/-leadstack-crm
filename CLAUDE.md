@@ -453,7 +453,7 @@ A single AI agent powers multiple channels per sub-account. Shipped inbound chan
 
 The pre-refactor layout had one combined doc per channel. The current model splits that into:
 
-- **Profile** (`subAccounts/{id}/aiAgent/profile`) — the agent's identity. `systemPrompt`, `businessName`, `hoursStart/End`, `timezone`, `escalationKeywords[]`, `escalationNotifyEmail`. Plus the **website KB** fields: `websiteUrl`, `websiteKb` (markdown snapshot capped at ~6000 chars / ~1500 tokens), `websiteKbFetchedAt`.
+- **Profile** (`subAccounts/{id}/aiAgent/profile`) — the agent's identity. `systemPrompt`, `businessName`, `hoursStart/End`, `timezone`, `escalationKeywords[]`, `escalationNotifyEmail`. Also carries the **legacy** single-page KB fields (`websiteUrl`, `websiteKb`, `websiteKbFetchedAt`) — frozen since Knowledge Base v2 shipped (see below): still readable, no longer written to, auto-migrated into a real KB source on first read.
 - **Per-channel** (`subAccounts/{id}/aiAgent/{channelId}`) — operational toggles. `enabled`, `contextMessageCount`, `modelOverride`, `escalationKeywordsOverride` (null = inherit from profile), `escalationNotifyEmailOverride`, `totalTokensUsed`. The `web-chat` doc nests a `webChat: { allowedDomains, welcomeMessage, accentColor, position }` block; SMS leaves it null.
 
 [src/lib/comms/ai/agent.ts](src/lib/comms/ai/agent.ts) `resolveAgent(subAccountId, channelId)` reads both in parallel and produces a `ResolvedAiAgent` with an `effective` block applying channel overrides. The orchestrators only consume `effective`. Lazy migration: `maybeMigrateLegacy()` runs on every read and silently splits the legacy `aiConfig/main` doc into the new shape one time per sub-account.
@@ -464,19 +464,29 @@ The pre-refactor layout had one combined doc per channel. The current model spli
 
 ### System prompt — channel-aware safety rails + KB
 
-[src/lib/comms/ai/prompt.ts](src/lib/comms/ai/prompt.ts) `buildSystemPrompt()` is the single source of truth for the LLM system message. It composes 4 sections: persona (from profile) → channel-specific safety rails → website KB block (when populated) → contact context block (when a contact is identified). Both SMS and Web Chat orchestrators AND the "Test this persona" dry-run endpoint use it, so what you preview matches what the bot actually receives.
+[src/lib/comms/ai/prompt.ts](src/lib/comms/ai/prompt.ts) `buildSystemPrompt()` is the single source of truth for the LLM system message. It composes 5 sections: persona (from profile) → channel-specific safety rails → Business Profile block (always fully included when populated) → retrieved Knowledge Base chunks (top-K relevant snippets — see "Knowledge Base v2 (RAG)" below) → contact context block (when a contact is identified). Every orchestrator (SMS, WhatsApp, Voice, Web Chat) AND the "Test this persona" dry-run endpoint use it, so what you preview matches what the bot actually receives.
 
 Safety rails differ per channel:
 - **SMS**: ≤320 chars, no emoji, no markdown, no specific prices/medical/legal commitments.
 - **Web Chat**: 1-3 short paragraphs, light markdown allowed, at most one emoji per reply, plus instructions for the `[[form fields="…"]]` and `[[capture …]]` lead-capture markers (see "Lead capture" below).
 
-The KB block tells the model: "Use this as factual reference only — never quote raw markdown or links. Outside this content, fall back to 'let me check with the team'."
+The retrieved-knowledge block tells the model: "Use them as factual reference only — never quote raw markdown or links. If the answer isn't covered here, fall back to 'let me check with the team'."
 
-### Website KB — Firecrawl
+### Knowledge Base v2 (RAG) — multi-source, retrieval-backed
 
-[src/lib/firecrawl/client.ts](src/lib/firecrawl/client.ts) `scrapeUrl(url)` POSTs to `https://api.firecrawl.dev/v1/scrape` with `formats: ["markdown"], onlyMainContent: true`. 30s timeout. Returns markdown + the page title. `POST /api/sub-accounts/[id]/ai-agent/profile/refresh-kb` is admin-only and calls Firecrawl with the profile's saved `websiteUrl`, stores the result (capped at 6000 chars), and stamps `websiteKbFetchedAt`. Failure leaves the previous snapshot intact. The profile route auto-clears the KB whenever `websiteUrl` changes so the bot can't quote a stale site.
+Replaces the old single Firecrawl-scraped homepage snapshot with a real multi-source knowledge base: operators add any number of sources, each ingested in the background and chunked + embedded, and only the chunks relevant to the *current* inbound message get pulled into the prompt — instead of concatenating the entire KB into every single turn. This is what lets a sub-account attach a genuinely large knowledge base (a multi-page site, several PDFs, dozens of manual Q&As) without every reply ballooning in cost or blowing past context limits.
 
-Firecrawl is **optional** — the bot works without it, just without homepage factual context. Single-page scrape only in v1; multi-page crawl was considered and rejected for v1 (cost scales fast, signal-to-noise drops). One agency-level key shared across all sub-accounts.
+**Sources.** `subAccounts/{id}/knowledgeBase/{sourceId}` — one doc per source, four types: `"url"` (a single webpage or PDF — Firecrawl scrapes PDFs natively, no separate parser needed), `"crawl"` (a root URL crawled up to `maxPages`, default 20), `"qa"` (a manual question/answer pair), `"text"` (pasted long-form content for anything not hosted at a public URL — a policy, a script). Each carries `status` (`pending → processing → ready | failed`), `errorMessage`, `chunkCount`, `lastSyncedAt`. Managed from AI Agents → Overview → **Knowledge base** ([src/components/ai-agents/knowledge-base-section.tsx](src/components/ai-agents/knowledge-base-section.tsx)) — an `onSnapshot`-driven list with per-source Re-sync/Remove actions and an "Add source" dialog.
+
+**Ingestion pipeline** (async, QStash-backed — mirrors the website builder's poll-until-terminal pattern): `POST /api/sub-accounts/[id]/knowledge-base/sources` creates the source doc and schedules the first ingest step via `publishCallback()`. `POST .../sources/[sourceId]/ingest-step` (public, `Upstash-Signature`-verified, in `PUBLIC_PATH_PATTERNS`) is the worker — fetches content by type (`scrapeUrl()`/`startCrawl()`+`getCrawlStatus()` from [src/lib/firecrawl/client.ts](src/lib/firecrawl/client.ts) for `url`/`crawl`; direct for `qa`/`text`), chunks it via [src/lib/knowledge-base/chunk.ts](src/lib/knowledge-base/chunk.ts)::`chunkText()` (paragraph-aware, ~2800 chars with ~100-char overlap, no tokenizer dependency), embeds every chunk via [src/lib/embeddings/openai.ts](src/lib/embeddings/openai.ts)::`embedTexts()` (`text-embedding-3-small`, 1536 dimensions), and writes them to the `chunks` subcollection with `FieldValue.vector(embedding)`. A `"crawl"` source is async on Firecrawl's side — if not done within one worker invocation, it reschedules itself (20s interval, 45-attempt/~15-min cap) exactly like [src/app/api/sub-accounts/[id]/website/[siteId]/poll/route.ts](src/app/api/sub-accounts/[id]/website/[siteId]/poll/route.ts) does for gitpage builds. `POST .../sources/[sourceId]/resync` re-runs ingestion (re-fetch + re-chunk + re-embed, overwriting old chunks); `DELETE .../sources/[sourceId]` removes the source + its chunks (`recursiveDelete`).
+
+**Retrieval.** [src/lib/knowledge-base/retrieve.ts](src/lib/knowledge-base/retrieve.ts)::`retrieveRelevantChunks(subAccountId, queryText, topK=5)` embeds the current inbound message and runs a Firestore vector search — `collectionGroup("chunks").where("subAccountId","==",id).findNearest({vectorField:"embedding", queryVector, limit: topK, distanceMeasure:"COSINE"})` — returning only the top-K matching chunks' text. Best-effort by design: any failure (embeddings not configured, no index yet, a transient API error) returns `[]` rather than throwing — a knowledge base is enrichment, never something that should block a reply from going out. Called once per inbound message by every orchestrator (`lib/comms/ai/respond.ts` for SMS/WhatsApp, `lib/comms/web-chat/respond.ts`, the Vapi voice LLM webhook) right before `buildSystemPrompt()`.
+
+**The Business Profile stays separate and untouched.** It's compact, operator-typed, always fully included — retrieval doesn't apply there, only to this bulk-reference-material system.
+
+**Legacy migration.** The pre-v2 single-page KB (`profile.websiteUrl`/`websiteKb`) auto-migrates: the first time the sources list loads for a sub-account, [src/lib/knowledge-base/migrate-legacy.ts](src/lib/knowledge-base/migrate-legacy.ts)::`maybeMigrateLegacyWebsiteUrl()` checks for an existing `"url"`-type source pointing at the saved `websiteUrl`; if none exists, it creates one and schedules ingestion — same lazy one-time-split shape as `agent.ts::maybeMigrateLegacy()`. The legacy fields stay on the profile doc afterward (harmless, unread) but stop being written to.
+
+**Setup contract.** New optional env var `OPENAI_API_KEY` (separate provider from `OPENROUTER_API_KEY` — OpenRouter only proxies chat completions, not embeddings). Without it, sources can still be added but ingestion returns a friendly "OpenAI embeddings aren't configured" error and stays stuck at `pending`. **Requires a Firestore vector index** — declared in `firestore.indexes.json` (`chunks` collection group, `subAccountId` ASC + `embedding` VECTOR dimension 1536) and deployed the same way as every other index: `firebase deploy --only firestore:rules,firestore:indexes`. Without the index, `findNearest()` queries fail and retrieval silently returns `[]` (graceful — replies still go out, just without KB grounding) until the index finishes building.
 
 ### SMS channel
 
@@ -947,14 +957,21 @@ Without `GITPAGE_API_KEY`, `/api/sub-accounts/[id]/website/[siteId]/build` retur
 
 Without `OPENROUTER_API_KEY`, the AI Agents settings UI still renders but every channel stays silent: the SMS inbound webhook short-circuits past `maybeRespondWithAi`, the Web Chat `/api/web-chat/message` endpoint returns the fallback "I had trouble reaching the server" reply, and the `/api/sub-accounts/[id]/ai-agent/test` endpoint returns 503.
 
-### Optional — Firecrawl (powers the website KB on the AI Agent profile)
+### Optional — Firecrawl (powers "url"/"crawl" Knowledge Base sources)
 | Var | Source |
 |---|---|
 | `FIRECRAWL_API_KEY` | [firecrawl.dev](https://firecrawl.dev) → Dashboard → API Keys, format `fc_…`. One agency-level key shared across all sub-accounts. |
 
-Without this, the AI Agents → Overview page still renders and the agent still works — but the "Refresh KB" button under the website URL field returns 503 with a friendly message. Without a KB the bot can't answer factual questions about the client's services/pricing/etc; it falls back to "let me check with the team and get back to you" for anything outside the persona prompt.
+Without this, the AI Agents → Overview → Knowledge Base section still renders — "Manual Q&A" and "Paste text" sources still work — but "Webpage or PDF" and "Crawl a site" sources fail ingestion with a friendly 503. Without any KB source, the bot falls back to "let me check with the team and get back to you" for anything outside the persona + Business Profile.
 
-Single-page scrape only (`/v1/scrape` endpoint). The bot's stored snapshot is capped at 6000 chars (~1500 tokens) so it doesn't bloat the prompt on every reply. Re-crawl on demand; stale KB is cleared automatically whenever the operator changes the website URL.
+### Optional — OpenAI embeddings (powers Knowledge Base retrieval — see "Knowledge Base v2 (RAG)")
+| Var | Source |
+|---|---|
+| `OPENAI_API_KEY` | [platform.openai.com](https://platform.openai.com) → API keys. One agency-level key shared across all sub-accounts. A separate provider from `OPENROUTER_API_KEY` — OpenRouter proxies chat completions only, not embeddings. |
+
+Without this, Knowledge Base sources can still be added but ingestion returns a friendly "OpenAI embeddings aren't configured" error and stays stuck at `pending` — nothing gets embedded, so retrieval has nothing to search. Cost is negligible: `text-embedding-3-small` runs ~$0.02 per 1M tokens.
+
+**Also requires a Firestore vector index** (`chunks` collection group) — see `firestore.indexes.json` and the Firebase setup step below. Without it, ingestion still succeeds but retrieval queries fail soft (return no chunks) until the index finishes building.
 
 ### Optional — Vapi (powers the AI Voice Agent channel — inbound + Outbound Voice)
 | Var | Source |
@@ -1245,15 +1262,18 @@ Write to `.env.local`:
 
 Without this, the AI Agents settings page still loads but channels stay silent — every channel toggle is rejected with a friendly "Set the persona first" message that's actually masking the missing key.
 
-#### Firecrawl (optional — powers AI Agent website KB)
-Skip this if the buyer doesn't care about the bot referencing their clients' actual website content. The bot still works, it just falls back to "let me check with the team" for anything outside the persona prompt.
+#### Firecrawl + OpenAI (optional — powers the AI Agent Knowledge Base)
+Skip this if the buyer doesn't care about the bot referencing real reference material (their clients' website, PDFs, policies). The bot still works, it just falls back to "let me check with the team" for anything outside the persona + Business Profile. Both keys are needed together — Firecrawl fetches "Webpage or PDF" / "Crawl a site" sources, OpenAI embeds every source so retrieval can find the relevant snippet per message (see "Knowledge Base v2 (RAG)" for the full architecture).
 
-> Go to [firecrawl.dev](https://firecrawl.dev), sign up. The free tier covers a few hundred scrapes/month which is plenty since each sub-account only refreshes its KB on demand. Then **Dashboard** → **API Keys** → copy the `fc-…` key.
+> Go to [firecrawl.dev](https://firecrawl.dev), sign up. Then **Dashboard** → **API Keys** → copy the `fc-…` key.
+>
+> Go to [platform.openai.com](https://platform.openai.com), sign up, add a few dollars of credit (embeddings are cheap — `text-embedding-3-small` runs ~$0.02/1M tokens). Then **API keys** → create a key.
 
 Write to `.env.local`:
-- `FIRECRAWL_API_KEY` — paste the key. One agency-level key shared across all sub-accounts.
+- `FIRECRAWL_API_KEY` — paste the Firecrawl key. One agency-level key shared across all sub-accounts.
+- `OPENAI_API_KEY` — paste the OpenAI key. One agency-level key shared across all sub-accounts. Separate from `OPENROUTER_API_KEY` (OpenRouter doesn't do embeddings).
 
-Once set, the AI Agents → Overview page exposes a "Refresh KB" button next to the website URL field. Clicking it scrapes the homepage (single-page, no crawl) and stores the markdown for the bot to reference.
+Once set, the AI Agents → Overview → **Knowledge base** section lets operators add sources — a webpage, a PDF link, a multi-page crawl, a manual Q&A, or pasted text — each ingested (chunked + embedded) in the background. **Also run `firebase deploy --only firestore:rules,firestore:indexes`** if you haven't already — this feature needs the `chunks` collection group's vector index, which won't exist on a fresh Firebase project until you deploy it.
 
 #### Vapi (optional — powers the AI Voice Agent channel)
 Skip this entire section if the buyer isn't enabling voice yet. SMS + Web Chat agents work without it. Voice attaches to the sub-account's **existing dedicated Twilio number** via Vapi BYOC (or to a Vapi-managed number if the buyer wants to skip Twilio regulatory bundles — useful for AU clients in particular).
@@ -1388,7 +1408,7 @@ Then restart `pnpm dev` so the new value is picked up. Now go back to Twilio (Ph
    - QStash (`QSTASH_URL`, `QSTASH_TOKEN`, `QSTASH_CURRENT_SIGNING_KEY`, `QSTASH_NEXT_SIGNING_KEY`) and `AUTOMATIONS_TOKEN_SECRET`
    - gitpage (`GITPAGE_API_KEY`, optionally `GITPAGE_API_URL`)
    - AI Agents: `OPENROUTER_API_KEY` (required for bot replies) + optional `AI_REPLIES_DEFAULT_MODEL`
-   - AI Agents KB: optional `FIRECRAWL_API_KEY` (powers the "Refresh KB" button on the agent profile)
+   - AI Agents Knowledge Base: optional `FIRECRAWL_API_KEY` + `OPENAI_API_KEY` (powers multi-source ingestion + retrieval — see "Knowledge Base v2 (RAG)"). If enabling this, also deploy the `chunks` vector index (`firebase deploy --only firestore:rules,firestore:indexes`) against the production Firebase project.
    - AI Voice Agent: optional `VAPI_API_KEY` + `VAPI_WEBHOOK_SECRET` (powers the AI Agents → Voice channel). Skip both if you're not enabling voice yet.
 4. For `FIREBASE_ADMIN_PRIVATE_KEY`, paste the full key including the `-----BEGIN/END-----` markers. Vercel handles the newlines automatically.
 5. Deploy.
@@ -1424,8 +1444,11 @@ Common issues and fixes:
 - **AI Agents channel toggle won't enable** — "Set the persona first" error means `aiAgent/profile.systemPrompt` is empty for that sub-account. Open AI Agents → Overview, fill in the persona prompt (or leave the pre-filled default), click Save profile, then retry the channel toggle.
 - **Web Chat widget doesn't render on the client's site** — likely the parent-page hostname isn't in the channel's `webChat.allowedDomains`. The widget loader receives `{enabled: false}` from `/api/web-chat/config` and silently no-ops. Check the browser console for the config response and add the missing hostname under AI Agents → Web Chat → Allowed domains.
 - **Web Chat returns "I had trouble reaching the server"** — most often `OPENROUTER_API_KEY` is missing or out of credits; server logs show `[web-chat/respond] LLM call failed`. Also possible: rate limit hit (60/IP/hour or 30/session) — logs return 429 with a Retry-After header.
-- **Refresh KB button returns 503** — `FIRECRAWL_API_KEY` isn't set on the deployment. The KB is optional; either set the key or live without site-aware bot context.
-- **Refresh KB returns 502 with a Firecrawl error** — usually the URL is paywalled, behind Cloudflare anti-bot, or returned a 404. Try a simpler URL (the bare domain root) or check the site is publicly accessible without JS.
+- **Knowledge Base source stuck at "pending" forever** — QStash can't reach the ingest-step callback. Check `QSTASH_TOKEN`/`QSTASH_URL` match the signing keys' region, and that `NEXT_PUBLIC_APP_URL` is publicly reachable (same class of issue as a hung website build).
+- **Knowledge Base source flips straight to "failed" with "OpenAI embeddings aren't configured"** — `OPENAI_API_KEY` isn't set on the deployment. Set it (a separate key from `OPENROUTER_API_KEY` — OpenRouter doesn't do embeddings) and click Re-sync.
+- **Knowledge Base source "ready" but the bot never uses it** — almost always the vector index isn't deployed yet. Run `firebase deploy --only firestore:rules,firestore:indexes` (the `chunks` collectionGroup vector index is declared in `firestore.indexes.json`) and wait a few minutes for it to finish building (Firebase Console → Firestore → Indexes). Until it's ready, `retrieveRelevantChunks()` fails soft and returns no chunks — replies still send, just without KB grounding, so this fails silently rather than erroring.
+- **A "url" or "crawl" source fails immediately** — usually the same causes as the old single-page KB: paywalled, behind Cloudflare anti-bot, or a 404. Try a simpler URL (the bare domain root) or check the site is publicly accessible without JS. The source's `errorMessage` (shown inline in the Knowledge Base list) has the specific Firecrawl error.
+- **"Crawl a site" source stuck at "processing" for 15+ minutes** — hit the poll cap (45 attempts × 20s). Firecrawl may still finish on its own, but the source is marked `failed` past the cap so it doesn't spin forever; try a smaller `maxPages` and Re-sync.
 - **Captured a Web Chat lead but no follow-up email arrived** — the agent profile's `escalationNotifyEmail` is blank (or Resend isn't configured). The Task still creates, only the email is skipped. Set the email on AI Agents → Overview → "Default escalation email" or use the per-channel override.
 - **Inline capture form doesn't appear after asking for details** — the bot didn't emit the `[[form fields="…"]]` marker. Open AI Agents → Overview → "Test this persona" and ask the same question — if the marker doesn't appear in your test reply, the persona prompt may be overriding the safety-rail instructions (e.g. "always be concise" can suppress markers). Tweak the persona to not contradict the lead-capture instructions.
 - **Voice channel enable returns 503 "Vapi isn't configured"** — `VAPI_API_KEY` or `VAPI_WEBHOOK_SECRET` missing on the deployment. Set both, redeploy (Vercel doesn't hot-reload env vars), retry the save.

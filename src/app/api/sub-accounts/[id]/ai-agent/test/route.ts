@@ -7,6 +7,7 @@ import {
 } from "@/lib/comms/ai/agent";
 import { aiIsConfigured, callAi } from "@/lib/comms/ai/openrouter";
 import { buildSystemPrompt } from "@/lib/comms/ai/prompt";
+import { retrieveRelevantChunks } from "@/lib/knowledge-base/retrieve";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { compileBusinessProfilePrompt } from "@/lib/business-profile/compile";
 import { DEFAULT_AI_CHANNEL_CONFIG } from "@/types/ai";
@@ -106,11 +107,14 @@ export async function POST(
     },
   };
 
+  const retrievedChunks = await retrieveRelevantChunks(id, message);
+
   const systemPrompt = buildSystemPrompt({
     agent,
     channelId,
     fallbackBusinessName: subAccount?.name ?? "the business",
     contactContextBlock: null,
+    retrievedChunks,
   });
 
   try {

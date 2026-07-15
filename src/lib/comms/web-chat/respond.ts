@@ -9,6 +9,7 @@ import {
 } from "@/lib/comms/ai/agent";
 import { buildContactContextBlock } from "@/lib/comms/ai/context";
 import { buildSystemPrompt } from "@/lib/comms/ai/prompt";
+import { retrieveRelevantChunks } from "@/lib/knowledge-base/retrieve";
 import {
   matchEscalationKeyword,
   sendEscalationNotification,
@@ -248,7 +249,10 @@ export async function respondToWebChat(
     input.incomingMessage,
   );
 
-  const saSnap = await db.doc(`subAccounts/${input.subAccountId}`).get();
+  const [saSnap, retrievedChunks] = await Promise.all([
+    db.doc(`subAccounts/${input.subAccountId}`).get(),
+    retrieveRelevantChunks(input.subAccountId, input.incomingMessage),
+  ]);
   const subAccount = saSnap.data() as SubAccountDoc | undefined;
 
   let systemPrompt = buildSystemPrompt({
@@ -256,6 +260,7 @@ export async function respondToWebChat(
     channelId: "web-chat",
     fallbackBusinessName: subAccount?.name ?? "the business",
     contactContextBlock: contextBlock,
+    retrievedChunks,
   });
 
   // Tack a session-state hint onto the prompt when capture is already

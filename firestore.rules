@@ -392,6 +392,24 @@ service cloud.firestore {
         allow write: if false;
       }
 
+      // AI Agent Knowledge Base v2 sources. Member-readable so the Sources
+      // list UI can render status live; all writes go through the
+      // Admin-SDK routes at /api/sub-accounts/[id]/knowledge-base/sources.
+      // The chunks subcollection (raw text + embeddings) is fully
+      // server-only — operators never need to see individual chunks, only
+      // the source-level status, and retrieval reads happen via the Admin
+      // SDK (lib/knowledge-base/retrieve.ts), which bypasses rules.
+      match /knowledgeBase/{sourceId} {
+        allow read: if canAccessSub(
+          subAccountId,
+          get(/databases/$(database)/documents/subAccounts/$(subAccountId)).data.agencyId
+        );
+        allow write: if false;
+        match /chunks/{chunkId} {
+          allow read, write: if false;
+        }
+      }
+
       // Import id-mappings (source-system id ↔ AgentStack id). Internal only —
       // written + read by the admin-SDK import routes; no client access.
       match /importMappings/{refId} {

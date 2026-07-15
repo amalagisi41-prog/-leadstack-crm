@@ -1,6 +1,17 @@
 {
   "indexes": [
     {
+      "collectionGroup": "chunks",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "subAccountId", "order": "ASCENDING" },
+        {
+          "fieldPath": "embedding",
+          "vectorConfig": { "dimension": 1536, "flat": {} }
+        }
+      ]
+    },
+    {
       "collectionGroup": "voiceCalls",
       "queryScope": "COLLECTION",
       "fields": [
