@@ -44,6 +44,22 @@ export function Footer({ brand }: { brand: ResolvedBrand }) {
                   FAQ
                 </a>
               </li>
+              <li>
+                <Link
+                  href="/about"
+                  className="transition-colors hover:text-[#173B7A]"
+                >
+                  About
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/help"
+                  className="transition-colors hover:text-[#173B7A]"
+                >
+                  Help Center
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -66,12 +82,28 @@ export function Footer({ brand }: { brand: ResolvedBrand }) {
                   Privacy Policy
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/security"
+                  className="transition-colors hover:text-[#173B7A]"
+                >
+                  Security
+                </Link>
+              </li>
             </ul>
           </div>
 
           <div>
             <h3 className="mb-3 text-sm font-semibold">Contact</h3>
             <ul className="space-y-2 text-sm text-[#526078]">
+              <li>
+                <a
+                  href={`mailto:${brand.supportEmail}`}
+                  className="transition-colors hover:text-[#173B7A]"
+                >
+                  Contact
+                </a>
+              </li>
               <li>
                 <a
                   href={`mailto:${brand.supportEmail}`}
