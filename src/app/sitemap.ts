@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { LANDING_VARIANT } from "@/config/landing";
 import { COMPARISON_SLUGS, getComparisonPath } from "@/data/comparisons";
+import { getHelpArticles } from "@/lib/help-center/articles";
 
 /**
  * Sitemap. Next.js 15 picks this file up automatically and serves the
@@ -17,11 +18,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
     process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ??
     "https://leadstack.dev";
   const now = new Date();
+  const helpArticles = getHelpArticles();
 
   const sharedEntries: MetadataRoute.Sitemap = [
     { url: `${baseUrl}/`, lastModified: now, changeFrequency: "weekly", priority: 1.0 },
     { url: `${baseUrl}/about`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
     { url: `${baseUrl}/help`, lastModified: now, changeFrequency: "weekly", priority: 0.5 },
+    ...helpArticles.map((article) => ({
+      url: `${baseUrl}/help/${article.slug}`,
+      lastModified: now,
+      changeFrequency: "monthly" as const,
+      priority: 0.5,
+    })),
     { url: `${baseUrl}/playbook`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
     { url: `${baseUrl}/security`, lastModified: now, changeFrequency: "monthly", priority: 0.4 },
     { url: `${baseUrl}/terms`, lastModified: now, changeFrequency: "yearly", priority: 0.3 },

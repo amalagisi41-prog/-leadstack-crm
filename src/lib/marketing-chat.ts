@@ -22,6 +22,7 @@ export function shouldRenderMarketingChat(
   const subAccountId = getMarketingWebChatSubAccountId();
   if (!subAccountId || !pathname) return false;
   if (MARKETING_CHAT_PUBLIC_ROUTES.has(pathname)) return true;
+  if (pathname.startsWith("/help/")) return true;
   return pathname.startsWith("/compare/");
 }
 

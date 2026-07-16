@@ -1,22 +1,24 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CUSTOM_BRAND } from "@/config/landing";
+import { getHelpArticles } from "@/lib/help-center/articles";
 
 export const metadata: Metadata = {
   title: `${CUSTOM_BRAND.name} Help Center`,
   description: `Start here for setup, imports, billing, IDX Broker connection, and support.`,
 };
 
-const TOPICS = [
-  "Getting started",
-  "Importing contacts",
-  "Billing and plan changes",
-  "IDX Broker connection",
-  "AI follow-up and persona setup",
-  "Booking pages and lead forms",
-];
-
 export default function HelpPage() {
+  const articles = getHelpArticles();
+  const categories = articles.reduce<Record<string, typeof articles>>(
+    (acc, article) => {
+      acc[article.category] ??= [];
+      acc[article.category].push(article);
+      return acc;
+    },
+    {},
+  );
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-16">
       <Link
@@ -36,12 +38,20 @@ export default function HelpPage() {
           start here.
         </p>
 
-        <h2>Common help topics</h2>
-        <ul>
-          {TOPICS.map((topic) => (
-            <li key={topic}>{topic}</li>
-          ))}
-        </ul>
+        <h2>Help articles</h2>
+        {Object.entries(categories).map(([category, entries]) => (
+          <div key={category}>
+            <h3>{category}</h3>
+            <ul>
+              {entries.map((article) => (
+                <li key={article.slug}>
+                  <Link href={`/help/${article.slug}`}>{article.title}</Link>
+                  {article.description ? ` — ${article.description}` : ""}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
 
         <p>
           Need a hand right away? Email{" "}
@@ -49,8 +59,8 @@ export default function HelpPage() {
         </p>
 
         <p>
-          We&apos;ll expand this Help Center with guided setup articles and deeper
-          troubleshooting documentation as the support library grows.
+          This library lives inside the product so setup guides stay close to
+          the workflows they support.
         </p>
       </article>
     </div>
