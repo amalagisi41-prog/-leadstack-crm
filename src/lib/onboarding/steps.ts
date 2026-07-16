@@ -38,13 +38,29 @@ export interface OnboardingStepMeta {
   videoMinutes: number;
 }
 
+export type OnboardingMethodStepId =
+  | "build"
+  | "connect"
+  | "capture"
+  | "respond";
+
+export interface OnboardingMethodStepMeta {
+  id: OnboardingMethodStepId;
+  title: string;
+  description: string;
+  cta: string;
+  href: string;
+  videoMinutes: number;
+  stepIds: readonly OnboardingStepId[];
+}
+
 export const ONBOARDING_STEPS: readonly OnboardingStepMeta[] = [
   {
     id: "business_profile",
-    title: "Set up your Business Blueprint",
+    title: "Set up your business profile",
     description:
       "Tell AgentStack about your business once — name, brokerage, services, brand voice, compliance rules, and FAQs. Every AI agent, email, and automation pulls from this profile automatically.",
-    cta: "Set Up Business Blueprint",
+    cta: "Set up business profile",
     href: "/business-profile",
     videoMinutes: 5,
   },
@@ -116,6 +132,52 @@ export const ONBOARDING_STEPS: readonly OnboardingStepMeta[] = [
 export const ONBOARDING_STEP_IDS: readonly OnboardingStepId[] =
   ONBOARDING_STEPS.map((s) => s.id);
 
+export const ONBOARDING_METHOD_STEPS: readonly OnboardingMethodStepMeta[] = [
+  {
+    id: "build",
+    title: "Build your business setup",
+    description:
+      "Set your business profile so AgentStack knows your services, voice, hours, and FAQs before anything goes live.",
+    cta: "Open Build step",
+    href: "/get-started?step=build",
+    videoMinutes: 5,
+    stepIds: ["business_profile"],
+  },
+  {
+    id: "connect",
+    title: "Connect your people and channels",
+    description:
+      "Import contacts and connect your phone number so every lead lands in one place with a real conversation history.",
+    cta: "Open Connect step",
+    href: "/get-started?step=connect",
+    videoMinutes: 5,
+    stepIds: ["contacts", "sms"],
+  },
+  {
+    id: "capture",
+    title: "Capture every new inquiry",
+    description:
+      "Launch your lead forms and connect the public site pieces that feed fresh opportunities into your workspace automatically.",
+    cta: "Open Capture step",
+    href: "/get-started?step=capture",
+    videoMinutes: 4,
+    stepIds: ["form", "domain"],
+  },
+  {
+    id: "respond",
+    title: "Respond automatically",
+    description:
+      "Turn on Speed-to-Lead, review your pipeline, and activate your AI follow-up so nothing sits untouched after a lead comes in.",
+    cta: "Open Respond step",
+    href: "/get-started?step=respond",
+    videoMinutes: 5,
+    stepIds: ["automation", "pipeline", "ai"],
+  },
+] as const;
+
+export const ONBOARDING_METHOD_STEP_IDS: readonly OnboardingMethodStepId[] =
+  ONBOARDING_METHOD_STEPS.map((step) => step.id);
+
 /** True once every onboarding step id is present in `completed`. */
 export function isOnboardingComplete(
   completed: readonly string[] | null | undefined,
@@ -127,3 +189,24 @@ export function isOnboardingComplete(
 
 /** Per-step walkthrough video URLs, keyed by step id. */
 export type OnboardingVideos = Partial<Record<OnboardingStepId, string>>;
+
+export function isOnboardingMethodStepComplete(
+  step: OnboardingMethodStepMeta,
+  completed: readonly string[] | null | undefined,
+): boolean {
+  if (!completed) return false;
+  const set = new Set(completed);
+  return step.stepIds.every((id) => set.has(id));
+}
+
+export function getOnboardingMethodVideoUrl(
+  step: OnboardingMethodStepMeta,
+  videos: OnboardingVideos | null | undefined,
+): string | null {
+  if (!videos) return null;
+  for (const id of step.stepIds) {
+    const url = videos[id]?.trim();
+    if (url) return url;
+  }
+  return null;
+}

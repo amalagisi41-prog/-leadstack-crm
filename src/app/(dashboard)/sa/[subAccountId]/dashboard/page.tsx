@@ -34,8 +34,11 @@ import type { WebChatSession } from "@/types/web-chat";
 import { Button } from "@/components/ui/button";
 import { NewDealDialog } from "@/components/pipeline/new-deal-dialog";
 import { cn } from "@/lib/utils";
-import { isOnboardingComplete, ONBOARDING_STEPS } from "@/lib/onboarding/steps";
-import { computeOnboardingState } from "@/lib/onboarding/state-machine";
+import {
+  isOnboardingComplete,
+  isOnboardingMethodStepComplete,
+  ONBOARDING_METHOD_STEPS,
+} from "@/lib/onboarding/steps";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const STALLED_AFTER_MS = 7 * DAY_MS;
@@ -244,22 +247,22 @@ export default function DashboardPage() {
     events.length === 0 &&
     sessions.length === 0;
 
-  // Single source of truth for "what's the next setup step" — shared with
-  // the onboarding wizard's resume logic and the /onboarding API's
-  // next_recommended_action, so this card can never drift out of sync with
-  // either of those.
-  const onboardingState = useMemo(
-    () => computeOnboardingState(subAccount?.onboardingStepsCompleted),
-    [subAccount?.onboardingStepsCompleted],
+  const completedOnboardingSteps = ONBOARDING_METHOD_STEPS.filter((step) =>
+    isOnboardingMethodStepComplete(
+      step,
+      subAccount?.onboardingStepsCompleted ?? [],
+    ),
   );
-  const nextOnboardingStep = onboardingState.nextRecommendedAction
-    ? ONBOARDING_STEPS.find(
-        (step) => step.id === onboardingState.nextRecommendedAction!.id,
-      )
-    : undefined;
-  const onboardingProgress = onboardingState.totalSteps
+  const nextOnboardingStep = ONBOARDING_METHOD_STEPS.find(
+    (step) =>
+      !isOnboardingMethodStepComplete(
+        step,
+        subAccount?.onboardingStepsCompleted ?? [],
+      ),
+  );
+  const onboardingProgress = ONBOARDING_METHOD_STEPS.length
     ? Math.round(
-        (onboardingState.completedCount / onboardingState.totalSteps) * 100,
+        (completedOnboardingSteps.length / ONBOARDING_METHOD_STEPS.length) * 100,
       )
     : 0;
 
@@ -572,7 +575,10 @@ export default function DashboardPage() {
           )}
 
           {isWorkspaceEmpty ? (
-            <EmptyWorkspaceState saPath={saPath} />
+            <div className="space-y-4">
+              <NextBestActionCard action={nextBestAction} />
+              <EmptyWorkspaceState saPath={saPath} />
+            </div>
           ) : (
             <div className="grid gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.6fr)]">
               <div className="space-y-4">
@@ -868,7 +874,7 @@ function SetupProgressCard({
   saPath,
 }: {
   progress: number;
-  nextStep: (typeof ONBOARDING_STEPS)[number] | undefined;
+  nextStep: (typeof ONBOARDING_METHOD_STEPS)[number] | undefined;
   saPath: (path: string) => string;
 }) {
   if (!nextStep) return null;
@@ -879,7 +885,7 @@ function SetupProgressCard({
         <div className="max-w-2xl space-y-3">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
-              Business setup
+              The AgentStack Method
             </p>
             <h2 className="mt-1 text-lg font-semibold tracking-tight">
               Your business is {progress}% ready
@@ -912,8 +918,8 @@ function SetupProgressCard({
               style={{ width: `${progress}%` }}
             />
           </div>
-          <Button className="mt-4 w-full" render={<Link href={saPath("/get-started")} />}>
-            Continue setup
+          <Button className="mt-4 w-full" render={<Link href={saPath(nextStep.href)} />}>
+            Continue with {nextStep.title}
             <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
           </Button>
         </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -29,12 +29,29 @@ import { AGENTSTACK_METHOD_NAME } from "@/config/landing";
 /* ---------- types ---------- */
 
 type WizardStep = 0 | 1 | 2 | 3 | 4 | 5;
+export type OnboardingWizardStepKey =
+  | "build"
+  | "connect"
+  | "capture"
+  | "respond"
+  | "nurture"
+  | "close";
 
 interface WizardProps {
   subAccountId: string;
   saPath: (p: string) => string;
   initialCompleted: string[];
+  initialStep?: OnboardingWizardStepKey | null;
 }
+
+const WIZARD_STEP_INDEX: Record<OnboardingWizardStepKey, WizardStep> = {
+  build: 0,
+  connect: 1,
+  capture: 2,
+  respond: 3,
+  nurture: 4,
+  close: 5,
+};
 
 /* ---------- step metadata ---------- */
 
@@ -43,7 +60,7 @@ const WIZARD_STEPS = [
     id: "build" as const,
     label: "Business Profile",
     icon: Building2,
-    tagline: "Your Business Brain",
+    tagline: "Your business profile",
   },
   {
     id: "connect" as const,
@@ -116,18 +133,25 @@ export function OnboardingWizard({
   subAccountId,
   saPath,
   initialCompleted,
+  initialStep,
 }: WizardProps) {
   const router = useRouter();
-  // Resume at the first screen with an incomplete step id instead of always
-  // restarting at 0 — a user who navigated away mid-wizard (or completed
-  // some steps from the standalone checklist) picks up where they left off.
   const [currentStep, setCurrentStep] = useState<WizardStep>(
-    () => (computeOnboardingState(initialCompleted).nextWizardStepIndex ?? 5) as WizardStep,
+    () =>
+      initialStep
+        ? WIZARD_STEP_INDEX[initialStep]
+        : ((computeOnboardingState(initialCompleted).nextWizardStepIndex ??
+            5) as WizardStep),
   );
   const [completed, setCompleted] = useState<Set<string>>(
     () => new Set(initialCompleted),
   );
   const [chosenFunnel, setChosenFunnel] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!initialStep) return;
+    setCurrentStep(WIZARD_STEP_INDEX[initialStep]);
+  }, [initialStep]);
 
   const markDone = useCallback(
     (ids: string[]) => {
@@ -268,7 +292,7 @@ export function OnboardingWizard({
 }
 
 /* ════════════════════════════════════════════════════════════
-   Step 1 — BUILD: Your Business Brain
+   Step 1 — BUILD: Your business profile
    ════════════════════════════════════════════════════════════ */
 
 function StepBuild({
@@ -282,7 +306,7 @@ function StepBuild({
     <StepShell
       icon={<Building2 className="h-6 w-6 text-blue-600" />}
       eyebrow="Step 1: Build · 5 min"
-      title="Build your Business Brain"
+      title="Build your business profile"
       subtitle="This is the foundation of everything. You tell AgentStack about your business once — name, brokerage, services, brand voice, compliance rules, and FAQs. Every AI agent, email, SMS template, and automation pulls from this profile automatically. Set it once, and everything else just works."
     >
       <div className="grid gap-3 sm:grid-cols-3 my-6">
@@ -327,7 +351,7 @@ function StepBuild({
       </div>
 
       <TeachingNote>
-        Think of your Business Profile as your &ldquo;Business Brain&rdquo; — a single source of truth
+        Think of your Business Profile as your single source of truth
         that feeds every feature in AgentStack. You don&apos;t have to fill everything in right now.
         Even your name, brokerage, and service areas make a big difference. You can always come back
         to add FAQs, brand voice, and compliance rules later.
@@ -550,7 +574,7 @@ function StepRespond({
       icon={<Zap className="h-6 w-6 text-indigo-600" />}
       eyebrow="Step 4: Respond · 3 min"
       title="Enable instant AI response"
-      subtitle="This is where AgentStack earns its keep. You don't build automations — you enable them. Your AI agent is already pre-configured with your Business Brain. It responds to every lead within 60 seconds across SMS, web chat, and more."
+      subtitle="This is where AgentStack earns its keep. You don't build automations — you enable them. Your AI agent is already pre-configured with your Business Profile. It responds to every lead within 60 seconds across SMS, web chat, and more."
     >
       <div className="grid gap-3 sm:grid-cols-2 my-6">
         {[
@@ -564,7 +588,7 @@ function StepRespond({
           {
             icon: <Bot className="h-5 w-5 text-indigo-500" />,
             title: "AI Receptionist",
-            description: "Your AI agent handles inbound texts and web chat 24/7. It reads your Business Brain, qualifies leads, and books callbacks.",
+            description: "Your AI agent handles inbound texts and web chat 24/7. It reads your Business Profile, qualifies leads, and books callbacks.",
             badge: "Pre-configured",
             badgeColor: "blue",
           },
@@ -609,7 +633,7 @@ function StepRespond({
 
       <TeachingNote>
         Speed-to-Lead is already wired to your lead capture forms. Just enable it and every new
-        inquiry fires an SMS + email automatically. Your AI agent reads your Business Brain so it
+        inquiry fires an SMS + email automatically. Your AI agent reads your Business Profile so it
         already knows your name, brokerage, service areas, and brand voice — review the persona,
         flip the toggle, and go live. No configuration required.
       </TeachingNote>

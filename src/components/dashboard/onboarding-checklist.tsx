@@ -7,17 +7,13 @@ import {
   Circle,
   ChevronDown,
   ChevronUp,
-  Users,
-  Phone,
-  Bot,
+  Building2,
+  Link2,
+  Target,
   Zap,
-  KanbanSquare,
-  FileText,
   Rocket,
   Sparkles,
   PlayCircle,
-  Globe,
-  BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -25,23 +21,21 @@ import { useAgency } from "@/hooks/use-agency";
 import { OnboardingHelp } from "@/components/dashboard/onboarding-help";
 import { SnapshotPicker } from "@/components/dashboard/snapshot-picker";
 import {
-  ONBOARDING_STEPS,
-  type OnboardingStepId,
-  type OnboardingStepMeta,
+  ONBOARDING_METHOD_STEPS,
+  getOnboardingMethodVideoUrl,
+  isOnboardingMethodStepComplete,
+  type OnboardingMethodStepId,
+  type OnboardingMethodStepMeta,
   type OnboardingVideos,
 } from "@/lib/onboarding/steps";
 
 // Icon per step id lives here (client-only) so the shared step metadata in
 // lib/onboarding/steps.ts stays plain data, importable by server code.
-const STEP_ICONS: Record<OnboardingStepId, React.ElementType> = {
-  business_profile: BookOpen,
-  contacts: Users,
-  sms: Phone,
-  form: FileText,
-  automation: Zap,
-  pipeline: KanbanSquare,
-  ai: Bot,
-  domain: Globe,
+const STEP_ICONS: Record<OnboardingMethodStepId, React.ElementType> = {
+  build: Building2,
+  connect: Link2,
+  capture: Target,
+  respond: Zap,
 };
 
 function StepRow({
@@ -52,7 +46,7 @@ function StepRow({
   preview,
   onToggle,
 }: {
-  step: OnboardingStepMeta;
+  step: OnboardingMethodStepMeta;
   videoUrl: string | null;
   done: boolean;
   saPath?: (p: string) => string;
@@ -194,11 +188,15 @@ export function OnboardingChecklist({
 
   const videos = preview ? (videosOverride ?? {}) : agency.onboardingVideos;
 
-  const toggle = (id: string) =>
+  const toggle = (step: OnboardingMethodStepMeta) =>
     setCompleted((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      const done = step.stepIds.every((id) => next.has(id));
+      if (done) {
+        step.stepIds.forEach((id) => next.delete(id));
+      } else {
+        step.stepIds.forEach((id) => next.add(id));
+      }
       // Persist (fire-and-forget) so progress survives reloads + gates login.
       if (subAccountId) {
         void fetch(`/api/sub-accounts/${subAccountId}/onboarding`, {
@@ -210,8 +208,10 @@ export function OnboardingChecklist({
       return next;
     });
 
-  const doneCount = completed.size;
-  const totalCount = ONBOARDING_STEPS.length;
+  const doneCount = ONBOARDING_METHOD_STEPS.filter((step) =>
+    isOnboardingMethodStepComplete(step, Array.from(completed)),
+  ).length;
+  const totalCount = ONBOARDING_METHOD_STEPS.length;
   const allDone = doneCount === totalCount;
   const progressPct = Math.round((doneCount / totalCount) * 100);
 
@@ -225,7 +225,7 @@ export function OnboardingChecklist({
           </div>
           <div>
             <h2 className="font-semibold tracking-tight">
-              {allDone ? "You're all set!" : `Get set up in ${totalCount} steps`}
+              {allDone ? "You're all set!" : `Get set up in ${totalCount} method steps`}
             </h2>
             <p className="text-xs text-muted-foreground">
               {allDone
@@ -265,15 +265,15 @@ export function OnboardingChecklist({
 
       {/* Steps */}
       <div className="mt-4 space-y-2">
-        {ONBOARDING_STEPS.map((step) => (
+        {ONBOARDING_METHOD_STEPS.map((step) => (
           <StepRow
             key={step.id}
             step={step}
-            videoUrl={videos[step.id] ?? null}
-            done={completed.has(step.id)}
+            videoUrl={getOnboardingMethodVideoUrl(step, videos)}
+            done={isOnboardingMethodStepComplete(step, Array.from(completed))}
             saPath={saPath}
             preview={preview}
-            onToggle={() => toggle(step.id)}
+            onToggle={() => toggle(step)}
           />
         ))}
       </div>
