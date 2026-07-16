@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Wrench, Link2, Target, Zap, RefreshCw, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AGENTSTACK_METHOD_NAME } from "@/config/landing";
 
 const steps = [
   {
@@ -72,7 +73,7 @@ export function HowItWorks() {
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-3xl text-center mb-14">
           <p className="mb-3 text-xs font-semibold uppercase tracking-[0.28em] text-[#173B7A]">
-            The AgentStack Method™
+            {AGENTSTACK_METHOD_NAME}
           </p>
           <h2 className="text-balance text-4xl font-semibold tracking-[-0.04em] text-[#173B7A] sm:text-6xl">
             Set up your business once.{" "}

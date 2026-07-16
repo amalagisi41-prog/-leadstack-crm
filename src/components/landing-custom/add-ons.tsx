@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { MARKETING_ADD_ON_NAMES } from "@/config/landing";
 
 interface AddOn {
   category: string;
@@ -15,7 +16,7 @@ interface AddOn {
 const addOns: AddOn[] = [
   {
     category: "Visibility",
-    name: "Website Studio",
+    name: MARKETING_ADD_ON_NAMES.aiWebsiteStudio,
     tagline: "AI builds your site from premium templates",
     price: "$99",
     billing: "/mo",
@@ -30,7 +31,7 @@ const addOns: AddOn[] = [
   },
   {
     category: "Visibility",
-    name: "Custom Website Build",
+    name: MARKETING_ADD_ON_NAMES.customWebsiteBuild,
     tagline: "A fully custom site built from scratch",
     price: "$1,500",
     billing: " one-time",
@@ -44,7 +45,7 @@ const addOns: AddOn[] = [
   },
   {
     category: "Reputation",
-    name: "Review Manager",
+    name: MARKETING_ADD_ON_NAMES.reviewManager,
     tagline: "5-star reviews on autopilot",
     price: "$49",
     billing: "/mo",
@@ -59,7 +60,7 @@ const addOns: AddOn[] = [
   },
   {
     category: "Local SEO",
-    name: "Google Business Profile",
+    name: MARKETING_ADD_ON_NAMES.googleBusinessProfile,
     tagline: "Stay active and rank locally",
     price: "$29",
     billing: "/mo",
@@ -72,7 +73,7 @@ const addOns: AddOn[] = [
   },
   {
     category: "Paid Ads",
-    name: "Google Ads Management",
+    name: MARKETING_ADD_ON_NAMES.googleAdsManagement,
     tagline: "Managed campaigns that convert",
     price: "$149",
     billing: "/mo",
@@ -85,7 +86,7 @@ const addOns: AddOn[] = [
   },
   {
     category: "Social",
-    name: "Social Planner",
+    name: MARKETING_ADD_ON_NAMES.socialPlanner,
     tagline: "Schedule once, publish everywhere",
     price: "$29",
     billing: "/mo",
@@ -98,7 +99,7 @@ const addOns: AddOn[] = [
   },
   {
     category: "Content",
-    name: "AI Listing Copy",
+    name: MARKETING_ADD_ON_NAMES.aiListingCopy,
     tagline: "Polished copy in seconds",
     price: "$19",
     billing: "/mo",
@@ -111,7 +112,7 @@ const addOns: AddOn[] = [
   },
   {
     category: "Onboarding",
-    name: "White-Glove Setup",
+    name: MARKETING_ADD_ON_NAMES.whiteGloveSetup,
     tagline: "Our team configures everything for you",
     price: "$299",
     billing: " one-time",

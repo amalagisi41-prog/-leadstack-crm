@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ONBOARDING_STEP_IDS } from "@/lib/onboarding/steps";
 import { computeOnboardingState } from "@/lib/onboarding/state-machine";
+import { AGENTSTACK_METHOD_NAME } from "@/config/landing";
 
 /* ---------- types ---------- */
 
@@ -177,7 +178,7 @@ export function OnboardingWizard({
         {/* ── left sidebar — The AgentStack Method™ ── */}
         <aside className="hidden md:flex flex-col gap-1 w-52 shrink-0 pt-2">
           <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            The AgentStack Method&trade;
+            {AGENTSTACK_METHOD_NAME}
           </p>
           {WIZARD_STEPS.map((step, idx) => {
             const isActive = idx === currentStep;
@@ -700,7 +701,7 @@ function StepClose({
       icon={<Star className="h-6 w-6 text-amber-500" />}
       eyebrow="Step 6: Close"
       title="Your system is ready"
-      subtitle="Build. Connect. Capture. Respond. Nurture. Close. That's the AgentStack Method — and you just set it up. Your AI receptionist is standing by, your pipeline is live, and every new lead gets instant follow-up."
+      subtitle={`Build. Connect. Capture. Respond. Nurture. Close. That's ${AGENTSTACK_METHOD_NAME} — and you just set it up. Your AI receptionist is standing by, your pipeline is live, and every new lead gets instant follow-up.`}
     >
       <div className="my-6 rounded-xl border border-emerald-200 bg-emerald-50/60 dark:border-emerald-800/40 dark:bg-emerald-950/20 p-5">
         <div className="flex items-center gap-2 mb-3">

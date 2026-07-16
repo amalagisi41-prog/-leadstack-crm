@@ -8,16 +8,50 @@ import "./globals.css";
 // Metadata follows the same variant the landing page renders. The custom
 // variant derives title + description from CUSTOM_BRAND so the buyer edits
 // one config file to brand both the page chrome and the rendered landing.
+const CUSTOM_SITE_URL = `https://${CUSTOM_BRAND.primaryDomain}`;
+const LEADSTACK_SITE_URL = "https://leadstack.dev";
+const CUSTOM_TITLE = `${CUSTOM_BRAND.name} — ${CUSTOM_BRAND.tagline}`;
+const LEADSTACK_TITLE = "LeadStack — The all-in-one CRM for teams that actually close";
+const LEADSTACK_DESCRIPTION =
+  "Capture leads, run pipelines, and book meetings from one simple workspace. Built for small teams that want to replace five tools with one.";
+
 export const metadata: Metadata =
   LANDING_VARIANT === "custom"
     ? {
-        title: `${CUSTOM_BRAND.name} — ${CUSTOM_BRAND.tagline}`,
+        metadataBase: new URL(CUSTOM_SITE_URL),
+        alternates: { canonical: "/" },
+        title: CUSTOM_TITLE,
         description: CUSTOM_BRAND.shortDescription,
+        openGraph: {
+          title: CUSTOM_TITLE,
+          description: CUSTOM_BRAND.shortDescription,
+          url: CUSTOM_SITE_URL,
+          siteName: CUSTOM_BRAND.name,
+          type: "website",
+        },
+        twitter: {
+          card: "summary_large_image",
+          title: CUSTOM_TITLE,
+          description: CUSTOM_BRAND.shortDescription,
+        },
       }
     : {
-        title: "LeadStack — The all-in-one CRM for teams that actually close",
-        description:
-          "Capture leads, run pipelines, and book meetings from one simple workspace. Built for small teams that want to replace five tools with one.",
+        metadataBase: new URL(LEADSTACK_SITE_URL),
+        alternates: { canonical: "/" },
+        title: LEADSTACK_TITLE,
+        description: LEADSTACK_DESCRIPTION,
+        openGraph: {
+          title: LEADSTACK_TITLE,
+          description: LEADSTACK_DESCRIPTION,
+          url: LEADSTACK_SITE_URL,
+          siteName: "LeadStack",
+          type: "website",
+        },
+        twitter: {
+          card: "summary_large_image",
+          title: LEADSTACK_TITLE,
+          description: LEADSTACK_DESCRIPTION,
+        },
       };
 
 // viewport-fit=cover lets the installed PWA draw under the iOS notch/home

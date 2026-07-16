@@ -27,6 +27,19 @@
 export type LandingVariant = "leadstack" | "custom";
 
 export const LANDING_VARIANT: LandingVariant = "custom";
+export const AGENTSTACK_METHOD_NAME = "The AgentStack Method™";
+export const IDX_BROKER_NAME = "IDX Broker";
+
+export const MARKETING_ADD_ON_NAMES = {
+  aiWebsiteStudio: "AI Website Studio",
+  customWebsiteBuild: "Custom Website Build",
+  reviewManager: "Review Manager",
+  googleBusinessProfile: "Google Business Profile",
+  googleAdsManagement: "Google Ads Management",
+  socialPlanner: "Social Planner",
+  aiListingCopy: "AI Listing Copy",
+  whiteGloveSetup: "White-Glove Setup",
+} as const;
 
 export const MARKETING_PLAN_KEYS = [
   "starter",

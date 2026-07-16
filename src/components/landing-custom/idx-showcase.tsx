@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { IDX_BROKER_NAME } from "@/config/landing";
 import styles from "./idx-showcase.module.css";
 
 type Status = "active" | "pending" | "new";
@@ -237,7 +238,7 @@ function ListingCard({
 
 const benefits = [
   { strong: "Branded search + detail pages", rest: "— your logo, your domain" },
-  { strong: "Auto-synced", rest: "from your IDX Broker account every 6 hours" },
+  { strong: "Auto-synced", rest: `from your ${IDX_BROKER_NAME} account every 6 hours` },
   { strong: "Every listing view captures a lead", rest: "straight into your CRM" },
   { strong: '"Request a showing" form', rest: "on every listing, no extra setup" },
 ];
@@ -245,7 +246,7 @@ const benefits = [
 const idxSteps = [
   {
     n: "1",
-    title: "Sign up with IDX Broker",
+    title: `Sign up with ${IDX_BROKER_NAME}`,
     body: "Already have an account? Skip to step 2.",
     cta: "Sign up with IDX",
   },
@@ -274,8 +275,8 @@ export function IdxShowcase() {
             Your own listings site, <em>live on your laptop and their phone.</em>
           </h2>
           <p>
-            Sign up with IDX Broker, connect your key, and you&apos;re live — or skip the setup
-            and let us do it for you.
+            Sign up with {IDX_BROKER_NAME}, connect your key, and you&apos;re live — or skip
+            the setup and let us do it for you.
           </p>
         </div>
 
@@ -290,7 +291,7 @@ export function IdxShowcase() {
                   <div className={styles.idxStepCta}>
                     <Image
                       src="/brand/idx-broker-logo.png"
-                      alt="IDX Broker"
+                      alt={IDX_BROKER_NAME}
                       width={92}
                       height={28}
                       className={styles.idxBrandMark}
@@ -485,14 +486,14 @@ export function IdxShowcase() {
             <div className={styles.trustBlock}>
               <Image
                 src="/brand/idx-broker-logo.png"
-                alt="IDX Broker"
+                alt={IDX_BROKER_NAME}
                 width={164}
                 height={50}
                 className={styles.trustLogo}
               />
               <p className={styles.trustNote}>
                 <ShieldIcon />
-                Powered by your own IDX Broker account
+                Powered by your own {IDX_BROKER_NAME} account
               </p>
             </div>
           </div>
