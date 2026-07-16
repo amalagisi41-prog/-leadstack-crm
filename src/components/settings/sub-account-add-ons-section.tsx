@@ -1,17 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { CheckCircle2, Loader2, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useSubAccount } from "@/context/sub-account-context";
 import { Button } from "@/components/ui/button";
-import {
-  ADD_ON_GATE_FIELD,
-  ADD_ON_KEYS,
-  ADD_ON_LABELS,
-  type AddOnKey,
-} from "@/lib/stripe/addon-catalog";
+import { ADD_ON_GATE_FIELD, ADD_ON_KEYS, ADD_ON_LABELS, type AddOnKey } from "@/lib/stripe/addon-catalog";
 
 /**
  * Lets an already-subscribed agency owner add one of the 3 real-gate
@@ -30,31 +25,75 @@ import {
 export function SubAccountAddOnsSection() {
   const { agencyRole } = useAuth();
   const { subAccountId, subAccount, isAdmin } = useSubAccount();
-  const [purchasing, setPurchasing] = useState<AddOnKey | null>(null);
-
-  if (!isAdmin || !subAccount) return null;
+  const [busy, setBusy] = useState<AddOnKey | null>(null);
+  const [bundleMessage, setBundleMessage] = useState<string>(
+    "Bundle savings turn on automatically when 3 or more add-ons are active.",
+  );
   const isOwner = agencyRole === "owner";
 
-  async function handlePurchase(key: AddOnKey) {
-    setPurchasing(key);
+  useEffect(() => {
+    if (!isOwner) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const res = await fetch("/api/agency/billing", {
+          credentials: "include",
+        });
+        const data = (await res.json().catch(() => ({}))) as {
+          summary?: {
+            activeAddOnCount: number;
+            bundleDiscountActive: boolean;
+            bundleCouponConfigured: boolean;
+          };
+        };
+        if (!cancelled && data.summary) {
+          setBundleMessage(readBundleMessage(data.summary));
+        }
+      } catch {
+        // Best effort only — the section still works without this prefetch.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isOwner]);
+
+  if (!isAdmin || !subAccount) return null;
+
+  async function handleToggle(key: AddOnKey, enabled: boolean) {
+    setBusy(key);
     try {
-      const res = await fetch(`/api/sub-accounts/${subAccountId}/add-ons/purchase`, {
-        method: "POST",
+      const res = await fetch(`/api/sub-accounts/${subAccountId}/add-ons`, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ addOnKey: key }),
+        body: JSON.stringify({ addOnKey: key, enabled }),
       });
       const data = (await res.json().catch(() => ({}))) as {
         ok?: boolean;
         error?: string;
+        summary?: {
+          activeAddOnCount: number;
+          bundleDiscountActive: boolean;
+          bundleCouponConfigured: boolean;
+        } | null;
       };
       if (!res.ok || !data.ok) {
-        throw new Error(data.error ?? "Could not add this add-on.");
+        throw new Error(data.error ?? "Could not update this add-on.");
       }
-      toast.success(`${ADD_ON_LABELS[key].name} is now active.`);
+      if (data.summary) {
+        setBundleMessage(readBundleMessage(data.summary));
+      }
+      toast.success(
+        enabled
+          ? `${ADD_ON_LABELS[key].name} is now active.`
+          : `${ADD_ON_LABELS[key].name} was removed from your plan.`,
+      );
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not add this add-on.");
+      toast.error(
+        err instanceof Error ? err.message : "Could not update this add-on.",
+      );
     } finally {
-      setPurchasing(null);
+      setBusy(null);
     }
   }
 
@@ -88,22 +127,44 @@ export function SubAccountAddOnsSection() {
                 <p className="text-xs text-muted-foreground">{label.price}</p>
               </div>
               {active ? (
-                <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  Active
-                </span>
+                isOwner ? (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => void handleToggle(key, false)}
+                    disabled={busy !== null}
+                  >
+                    {busy === key ? (
+                      <>
+                        <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+                        Removing…
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
+                        Active · Remove
+                      </>
+                    )}
+                  </Button>
+                ) : (
+                  <span className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Active
+                  </span>
+                )
               ) : isOwner ? (
                 <Button
                   type="button"
                   size="sm"
                   variant="outline"
-                  onClick={() => void handlePurchase(key)}
-                  disabled={purchasing !== null}
+                  onClick={() => void handleToggle(key, true)}
+                  disabled={busy !== null}
                 >
-                  {purchasing === key ? (
+                  {busy === key ? (
                     <>
                       <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
-                      Adding…
+                      Updating…
                     </>
                   ) : (
                     "Add to my plan"
@@ -118,6 +179,23 @@ export function SubAccountAddOnsSection() {
           );
         })}
       </ul>
+
+      <p className="mt-3 text-xs text-muted-foreground">{bundleMessage}</p>
     </section>
   );
+}
+
+function readBundleMessage(summary: {
+  activeAddOnCount: number;
+  bundleDiscountActive: boolean;
+  bundleCouponConfigured: boolean;
+}) {
+  if (!summary.bundleCouponConfigured) {
+    return "Bundle savings will turn on automatically once your billing coupon is configured.";
+  }
+  if (summary.bundleDiscountActive) {
+    return "Bundle savings are active — 15% off because 3 or more add-ons are on your subscription.";
+  }
+  const remaining = Math.max(0, 3 - summary.activeAddOnCount);
+  return `${remaining} more add-on${remaining === 1 ? "" : "s"} unlocks 15% off automatically.`;
 }

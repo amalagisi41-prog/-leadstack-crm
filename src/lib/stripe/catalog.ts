@@ -36,6 +36,13 @@ export function planPriceId(key: PlanKey): string | null {
   }
 }
 
+export function planKeyForPriceId(priceId: string): PlanKey | null {
+  for (const key of PLAN_KEYS) {
+    if (planPriceId(key) === priceId) return key;
+  }
+  return null;
+}
+
 export function addOnPriceId(key: AddOnKey): string | null {
   switch (key) {
     case "idx":
@@ -45,6 +52,13 @@ export function addOnPriceId(key: AddOnKey): string | null {
     case "website_studio":
       return process.env.STRIPE_ADDON_WEBSITE_STUDIO_PRICE_ID ?? null;
   }
+}
+
+export function addOnKeyForPriceId(priceId: string): AddOnKey | null {
+  for (const key of ADD_ON_KEYS) {
+    if (addOnPriceId(key) === priceId) return key;
+  }
+  return null;
 }
 
 /** Reverse lookup used by the checkout webhook: which gate (if any) does
