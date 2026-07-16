@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { updateProfile } from "firebase/auth";
 import {
+  Bell,
   Mail,
   Shield,
   Sparkles,
@@ -15,13 +16,24 @@ import { getFirebaseAuth } from "@/lib/firebase/client";
 import { signOutUser } from "@/lib/firebase/auth";
 import { getUserDoc, updateUserDoc } from "@/lib/firestore/users";
 import { maskEmail } from "@/lib/format";
+import {
+  NOTIFICATION_CHANNELS,
+  NOTIFICATION_EVENTS,
+  normalizeNotificationPreferences,
+} from "@/lib/notifications/preferences";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { PasswordSection } from "@/components/settings/password-section";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { UserDoc } from "@/types";
+import type {
+  NotificationChannel,
+  NotificationEventKey,
+  NotificationPreferences,
+  UserDoc,
+} from "@/types";
 
 /**
  * User-level settings — same identity across every sub-account the
@@ -39,6 +51,9 @@ export default function MySettingsPage() {
   const [profile, setProfile] = useState<UserDoc | null>(null);
   const [displayName, setDisplayName] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
+  const [notificationPreferences, setNotificationPreferences] =
+    useState<NotificationPreferences>(normalizeNotificationPreferences());
+  const [savingNotifications, setSavingNotifications] = useState(false);
   // Email defaults to masked so screenshares + demo recordings don't
   // leak the operator's address. Per-session toggle, not persisted.
   const [emailShown, setEmailShown] = useState(false);
@@ -46,7 +61,12 @@ export default function MySettingsPage() {
   useEffect(() => {
     if (!user) return;
     setDisplayName(user.displayName ?? "");
-    getUserDoc(user.uid).then((d) => setProfile(d));
+    getUserDoc(user.uid).then((d) => {
+      setProfile(d);
+      setNotificationPreferences(
+        normalizeNotificationPreferences(d?.notificationPreferences),
+      );
+    });
   }, [user]);
 
   const initials = user?.displayName
@@ -75,6 +95,44 @@ export default function MySettingsPage() {
       toast.error("Failed to update profile. Please try again.");
     } finally {
       setSavingProfile(false);
+    }
+  }
+
+  function handleNotificationToggle(
+    eventKey: NotificationEventKey,
+    channel: NotificationChannel,
+    checked: boolean,
+  ) {
+    setNotificationPreferences((current) => ({
+      ...current,
+      [eventKey]: {
+        ...current[eventKey],
+        [channel]: checked,
+      },
+    }));
+  }
+
+  async function handleNotificationSave() {
+    if (!user) return;
+    setSavingNotifications(true);
+    try {
+      await updateUserDoc(user.uid, {
+        notificationPreferences,
+      });
+      setProfile((current) =>
+        current
+          ? {
+              ...current,
+              notificationPreferences,
+            }
+          : current,
+      );
+      toast.success("Notification preferences updated");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update notification preferences. Please try again.");
+    } finally {
+      setSavingNotifications(false);
     }
   }
 
@@ -169,6 +227,75 @@ export default function MySettingsPage() {
             </div>
           </div>
           <ThemeToggle />
+        </div>
+      </section>
+
+      {/* Notifications */}
+      <section className="rounded-2xl border bg-card p-5">
+        <div className="mb-4 flex items-center gap-2">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400">
+            <Bell className="h-4 w-4" />
+          </span>
+          <div>
+            <h2 className="text-sm font-semibold">Notifications</h2>
+            <p className="text-xs text-muted-foreground">
+              Choose how AgentStack gets your attention for the updates that
+              matter most.
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          {NOTIFICATION_EVENTS.map((event) => (
+            <div
+              key={event.key}
+              className="rounded-lg border bg-background p-4"
+            >
+              <div className="mb-3">
+                <p className="text-sm font-medium">{event.label}</p>
+                <p className="text-xs text-muted-foreground">
+                  {event.description}
+                </p>
+              </div>
+
+              <div className="grid gap-2 sm:grid-cols-3">
+                {NOTIFICATION_CHANNELS.map((channel) => (
+                  <label
+                    key={channel.key}
+                    className="flex items-center justify-between rounded-lg border bg-muted/20 px-3 py-2"
+                  >
+                    <span className="text-xs font-medium text-muted-foreground">
+                      {channel.label}
+                    </span>
+                    <Checkbox
+                      checked={notificationPreferences[event.key][channel.key]}
+                      onCheckedChange={(checked) =>
+                        handleNotificationToggle(
+                          event.key,
+                          channel.key,
+                          checked === true,
+                        )
+                      }
+                    />
+                  </label>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-4 flex items-center justify-between gap-3 rounded-lg border bg-background p-4">
+          <p className="text-xs text-muted-foreground">
+            Push notifications show up in-app or in your browser when that
+            device allows them.
+          </p>
+          <Button
+            type="button"
+            onClick={() => void handleNotificationSave()}
+            disabled={savingNotifications}
+          >
+            {savingNotifications ? "Saving…" : "Save preferences"}
+          </Button>
         </div>
       </section>
 

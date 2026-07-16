@@ -9,6 +9,21 @@ export type Role = "admin" | "collaborator";
 
 export type MemberStatus = "active" | "removed";
 
+export type NotificationChannel = "sms" | "email" | "push";
+
+export type NotificationEventKey =
+  | "new_lead"
+  | "showing_booked"
+  | "task_due"
+  | "deal_stage_changed"
+  | "review_activity"
+  | "billing_updates";
+
+export type NotificationPreferences = Record<
+  NotificationEventKey,
+  Record<NotificationChannel, boolean>
+>;
+
 export interface UserDoc {
   uid: string;
   email: string;
@@ -24,6 +39,7 @@ export interface UserDoc {
   status: MemberStatus;
   // Tenancy: which agency this user was minted into (their "home" agency).
   primaryAgencyId: string | null;
+  notificationPreferences?: NotificationPreferences;
   createdAt: Date;
   updatedAt: Date;
 }

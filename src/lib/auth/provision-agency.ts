@@ -4,6 +4,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import { seedDefaultTemplates } from "@/lib/automations/seed-templates";
 import { seedMethodTemplates } from "@/lib/provisioning/method-templates";
+import { defaultNotificationPreferences } from "@/lib/notifications/preferences";
 import { queueOnboardingLifecycleSequence } from "@/lib/onboarding/lifecycle-email";
 import { GLOBAL_TERRITORY_ID, type Role } from "@/types";
 
@@ -97,6 +98,7 @@ export async function provisionNewAgency(
       role: "admin" as Role,
       status: "active",
       primaryAgencyId: agencyId,
+      notificationPreferences: defaultNotificationPreferences(),
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     },

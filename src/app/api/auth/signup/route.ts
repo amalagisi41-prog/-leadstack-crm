@@ -5,6 +5,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import { provisionNewAgency } from "@/lib/auth/provision-agency";
 import { isMarketingPlanKey } from "@/config/landing";
+import { defaultNotificationPreferences } from "@/lib/notifications/preferences";
 import { GLOBAL_TERRITORY_ID, type Role } from "@/types";
 
 interface SignupBody {
@@ -211,6 +212,7 @@ export async function POST(request: Request) {
       role: (subAccountRole === "admin" ? "admin" : "collaborator") as Role,
       status: "active",
       primaryAgencyId: agencyId,
+      notificationPreferences: defaultNotificationPreferences(),
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     });
