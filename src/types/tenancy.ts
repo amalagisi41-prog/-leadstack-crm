@@ -410,6 +410,13 @@ export interface SubAccountDoc {
    * sessions.
    */
   a2pRegistration?: A2pRegistration | null;
+  /**
+   * Lifecycle setup-email state for the day 0 / 1 / 3 / 7 onboarding
+   * sequence. Used to ensure each cadence sends once at most, track which
+   * Method step the email pointed at, and stop the sequence once onboarding
+   * is complete.
+   */
+  onboardingLifecycleEmails?: OnboardingLifecycleEmails | null;
 }
 
 export interface GhlImportConfig {
@@ -460,6 +467,35 @@ export interface A2pRegistration {
   submittedAt: Timestamp | FieldValue | null;
   approvedAt: Timestamp | FieldValue | null;
   rejectedAt: Timestamp | FieldValue | null;
+}
+
+export type OnboardingLifecycleCadenceId =
+  | "day0"
+  | "day1"
+  | "day3"
+  | "day7";
+
+export interface OnboardingLifecycleEmails {
+  queuedAt?: Timestamp | FieldValue | null;
+  queueLockedAt?: number | null;
+  lastQueueAttemptAt?: Timestamp | FieldValue | null;
+  completedAt?: Timestamp | FieldValue | null;
+  day0SentAt?: Timestamp | FieldValue | null;
+  day0MessageId?: string | null;
+  day0RecipientEmail?: string | null;
+  day0StepId?: string | null;
+  day1SentAt?: Timestamp | FieldValue | null;
+  day1MessageId?: string | null;
+  day1RecipientEmail?: string | null;
+  day1StepId?: string | null;
+  day3SentAt?: Timestamp | FieldValue | null;
+  day3MessageId?: string | null;
+  day3RecipientEmail?: string | null;
+  day3StepId?: string | null;
+  day7SentAt?: Timestamp | FieldValue | null;
+  day7MessageId?: string | null;
+  day7RecipientEmail?: string | null;
+  day7StepId?: string | null;
 }
 
 export interface AccountContact {

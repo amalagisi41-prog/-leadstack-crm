@@ -5,6 +5,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import { seedDefaultTemplates } from "@/lib/automations/seed-templates";
 import { seedMethodTemplates } from "@/lib/provisioning/method-templates";
+import { queueOnboardingLifecycleSequence } from "@/lib/onboarding/lifecycle-email";
 import { applySnapshot } from "@/lib/snapshots/apply";
 import { GLOBAL_TERRITORY_ID, type MemberStatus, type Role } from "@/types";
 
@@ -262,6 +263,16 @@ export async function POST(request: Request) {
     snapshotApplied = true;
   } catch (err) {
     console.error("[sub-accounts] snapshot apply failed", subAccountId, err);
+  }
+
+  try {
+    await queueOnboardingLifecycleSequence(subAccountId);
+  } catch (err) {
+    console.error(
+      "[sub-accounts] onboarding lifecycle queue failed",
+      subAccountId,
+      err,
+    );
   }
 
   return NextResponse.json({

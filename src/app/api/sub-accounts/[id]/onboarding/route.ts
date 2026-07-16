@@ -4,8 +4,12 @@ import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { requireSubAccountMember } from "@/lib/auth/require-tenancy";
-import { ONBOARDING_STEP_IDS } from "@/lib/onboarding/steps";
+import {
+  ONBOARDING_STEP_IDS,
+  isOnboardingComplete,
+} from "@/lib/onboarding/steps";
 import { computeOnboardingState } from "@/lib/onboarding/state-machine";
+import { queueOnboardingLifecycleSequence } from "@/lib/onboarding/lifecycle-email";
 
 /**
  * GET /api/sub-accounts/[id]/onboarding
@@ -65,10 +69,28 @@ export async function PATCH(
     new Set(body.steps.filter((s): s is string => typeof s === "string" && known.has(s))),
   );
 
-  await getAdminDb().doc(`subAccounts/${subAccountId}`).update({
+  const update: Record<string, unknown> = {
     onboardingStepsCompleted: steps,
     updatedAt: FieldValue.serverTimestamp(),
-  });
+  };
+  if (isOnboardingComplete(steps)) {
+    update["onboardingLifecycleEmails.completedAt"] =
+      FieldValue.serverTimestamp();
+  }
+
+  await getAdminDb().doc(`subAccounts/${subAccountId}`).update(update);
+
+  if (!isOnboardingComplete(steps)) {
+    try {
+      await queueOnboardingLifecycleSequence(subAccountId);
+    } catch (err) {
+      console.error(
+        "[onboarding] lifecycle queue failed",
+        subAccountId,
+        err,
+      );
+    }
+  }
 
   return NextResponse.json({ ok: true, steps });
 }

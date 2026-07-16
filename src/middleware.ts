@@ -28,6 +28,7 @@ const PUBLIC_PATHS = [
   // the route.
   "/api/workflows/step",
   "/api/broadcasts/email/step",
+  "/api/onboarding/lifecycle/step",
   "/api/checkout",
   "/api/cron/gitpage-heartbeat",
   // Daily sweep for the public API's TTL'd collections (apiRequestLogs,
