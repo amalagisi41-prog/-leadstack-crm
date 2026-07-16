@@ -1,6 +1,17 @@
 import { Star } from "lucide-react";
 
-const testimonials = [
+interface Testimonial {
+  quote: string;
+  name: string;
+  title: string;
+  initials: string;
+  metric: string;
+  metricLabel: string;
+  color: string;
+  verified: boolean;
+}
+
+const testimonials: Testimonial[] = [
   {
     quote:
       "I used to lose 2–3 leads a week just because I was with another client when they called. Now every Zillow lead gets qualified immediately, even when I can't pick up. I closed an extra $24k in commissions last month alone.",
@@ -10,6 +21,7 @@ const testimonials = [
     metric: "$24k",
     metricLabel: "extra commissions last month",
     color: "bg-blue-500",
+    verified: false,
   },
   {
     quote:
@@ -20,6 +32,7 @@ const testimonials = [
     metric: "90+ days",
     metricLabel: "still using it every morning",
     color: "bg-indigo-500",
+    verified: false,
   },
   {
     quote:
@@ -30,6 +43,7 @@ const testimonials = [
     metric: "6 agents",
     metricLabel: "all in one dashboard",
     color: "bg-blue-600",
+    verified: false,
   },
 ];
 
@@ -44,6 +58,17 @@ function Stars() {
 }
 
 export function Testimonials() {
+  const hasVerifiedTestimonials = testimonials.some((testimonial) => testimonial.verified);
+  const hasIllustrativeTestimonials = testimonials.some(
+    (testimonial) => !testimonial.verified,
+  );
+
+  const disclaimer = hasVerifiedTestimonials
+    ? hasIllustrativeTestimonials
+      ? "This section mixes verified pilot stories with illustrative examples while we replace placeholders with real customer stories."
+      : "Verified pilot stories from real AgentStack customers."
+    : "Illustrative examples of outcomes AgentStack is built to drive. Real customer stories will replace these as they come in.";
+
   return (
     <section className="bg-[#FFF8EF] py-24 md:py-28">
       <div className="container mx-auto px-4">
@@ -58,8 +83,7 @@ export function Testimonials() {
             </span>
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-[#526078]">
-            Illustrative examples of outcomes AgentStack is built to drive. Real
-            customer stories will replace these as they come in.
+            {disclaimer}
           </p>
         </div>
 
