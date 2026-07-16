@@ -9,6 +9,7 @@ const PUBLIC_PATHS = [
   "/terms",
   "/privacy",
   "/about",
+  "/playbook",
   "/thank-you",
   // Public docs (e.g. /docs/updating — the "keeping your app up to date"
   // guide linked from /thank-you and shareable as a stable URL).
@@ -16,6 +17,7 @@ const PUBLIC_PATHS = [
   "/f",
   "/api/forms",
   "/api/auth/signup",
+  "/api/marketing",
   "/api/auth/oauth-provision",
   // Real self-serve billing claim flow — a stranger lands here straight
   // from Stripe with no session yet. Token-gated inside the route, not by

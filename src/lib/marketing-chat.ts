@@ -2,6 +2,7 @@ const MARKETING_CHAT_PUBLIC_ROUTES = new Set([
   "/",
   "/about",
   "/help",
+  "/playbook",
   "/security",
   "/terms",
   "/privacy",

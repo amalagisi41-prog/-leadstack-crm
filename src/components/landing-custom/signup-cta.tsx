@@ -206,6 +206,15 @@ export function SignupCta() {
                     Sign in
                   </Link>
                 </p>
+                <p className="mt-2 text-xs text-[#7B8AA1]">
+                  Not ready yet?{" "}
+                  <Link
+                    href="/playbook"
+                    className="text-[#173B7A] transition-colors hover:text-[#DB4F9B]"
+                  >
+                    Get The AgentStack Method playbook
+                  </Link>
+                </p>
               </div>
             </div>
           </div>
