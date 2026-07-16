@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { CreditCard, Download } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { usePipelineStages } from "@/hooks/use-pipeline-stages";
 import { useSubAccount } from "@/context/sub-account-context";
 import { getUserDoc } from "@/lib/firestore/users";
 import { subscribeToContacts } from "@/lib/firestore/contacts";
+import { subscribeToDeals } from "@/lib/firestore/deals";
 import { serializeCsv, downloadCsv } from "@/lib/csv";
 import { toDate } from "@/lib/format";
 import { LANDING_VARIANT } from "@/config/landing";
@@ -36,6 +38,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { UserDoc, SubscriptionStatus } from "@/types";
 import type { Contact } from "@/types/contacts";
+import { getStage, type Deal } from "@/types/deals";
 
 const PLAN_LABEL: Record<SubscriptionStatus, { label: string; tone: string }> =
   {
@@ -64,9 +67,11 @@ const PLAN_LABEL: Record<SubscriptionStatus, { label: string; tone: string }> =
 export default function SettingsPage() {
   const { user, role } = useAuth();
   const { subAccountId, agencyId, subAccount } = useSubAccount();
+  const pipelineStages = usePipelineStages();
   const workspaceName = subAccount?.name ?? "this sub-account";
   const [profile, setProfile] = useState<UserDoc | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const [deals, setDeals] = useState<Deal[]>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -82,12 +87,27 @@ export default function SettingsPage() {
     return () => unsub();
   }, [user, agencyId, subAccountId]);
 
-  function handleExportContacts() {
-    if (contacts.length === 0) {
-      toast.error("No contacts to export yet.");
+  useEffect(() => {
+    if (!user || !agencyId) return;
+    const unsub = subscribeToDeals(
+      { agencyId, subAccountId },
+      setDeals,
+    );
+    return () => unsub();
+  }, [user, agencyId, subAccountId]);
+
+  const contactById = useMemo(
+    () => new Map(contacts.map((contact) => [contact.id, contact])),
+    [contacts],
+  );
+
+  function handleExportWorkspace() {
+    if (contacts.length === 0 && deals.length === 0) {
+      toast.error("No contacts or deals to export yet.");
       return;
     }
-    const headers = [
+
+    const contactHeaders = [
       "name",
       "email",
       "phone",
@@ -97,7 +117,7 @@ export default function SettingsPage() {
       "pipelineStage",
       "createdAt",
     ];
-    const rows = contacts.map((c) => ({
+    const contactRows = contacts.map((c) => ({
       name: c.name,
       email: c.email,
       phone: c.phone,
@@ -107,10 +127,53 @@ export default function SettingsPage() {
       pipelineStage: c.pipelineStage ?? "",
       createdAt: toDate(c.createdAt)?.toISOString() ?? "",
     }));
-    const csv = serializeCsv(headers, rows);
+
+    const dealHeaders = [
+      "title",
+      "value",
+      "currency",
+      "stage",
+      "priority",
+      "contactName",
+      "contactEmail",
+      "territoryId",
+      "lostReason",
+      "createdAt",
+      "updatedAt",
+      "stageChangedAt",
+    ];
+    const dealRows = deals.map((deal) => {
+      const contact = contactById.get(deal.contactId);
+      return {
+        title: deal.title,
+        value: deal.value,
+        currency: deal.currency,
+        stage: getStage(deal.stageId, pipelineStages).label,
+        priority: deal.priority,
+        contactName: contact?.name ?? "",
+        contactEmail: contact?.email ?? "",
+        territoryId: deal.territoryId ?? "",
+        lostReason: deal.lostReason ?? "",
+        createdAt: toDate(deal.createdAt)?.toISOString() ?? "",
+        updatedAt: toDate(deal.updatedAt)?.toISOString() ?? "",
+        stageChangedAt: toDate(deal.stageChangedAt)?.toISOString() ?? "",
+      };
+    });
+
     const stamp = new Date().toISOString().slice(0, 10);
-    downloadCsv(`leadstack-contacts-${stamp}.csv`, csv);
-    toast.success(`Exported ${rows.length} contacts`);
+    if (contactRows.length > 0) {
+      const contactsCsv = serializeCsv(contactHeaders, contactRows);
+      downloadCsv(`leadstack-contacts-${stamp}.csv`, contactsCsv);
+    }
+    if (dealRows.length > 0) {
+      const dealsCsv = serializeCsv(dealHeaders, dealRows);
+      window.setTimeout(() => {
+        downloadCsv(`leadstack-deals-${stamp}.csv`, dealsCsv);
+      }, 150);
+    }
+    toast.success(
+      `Exported ${contactRows.length} contact${contactRows.length === 1 ? "" : "s"} and ${dealRows.length} deal${dealRows.length === 1 ? "" : "s"}.`,
+    );
   }
 
   const plan = profile?.subscriptionStatus
@@ -247,20 +310,21 @@ export default function SettingsPage() {
 
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-background p-4">
               <div>
-                <p className="text-sm font-medium">Export contacts</p>
+                <p className="text-sm font-medium">Export workspace data</p>
                 <p className="text-xs text-muted-foreground">
-                  {contacts.length} contact{contacts.length === 1 ? "" : "s"} ·
-                  CSV with tags, source, and timestamps
+                  {contacts.length} contact{contacts.length === 1 ? "" : "s"} ·{" "}
+                  {deals.length} deal{deals.length === 1 ? "" : "s"} ·
+                  downloads both CSV files in one click
                 </p>
               </div>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleExportContacts}
-                disabled={contacts.length === 0}
+                onClick={handleExportWorkspace}
+                disabled={contacts.length === 0 && deals.length === 0}
               >
                 <Download className="mr-1 h-3.5 w-3.5" />
-                Download CSV
+                Export CSVs
               </Button>
             </div>
           </section>
