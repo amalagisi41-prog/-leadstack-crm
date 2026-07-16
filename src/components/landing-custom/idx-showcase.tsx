@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { IDX_BROKER_NAME } from "@/config/landing";
+import { CANONICAL_DEMO_LISTING, IDX_BROKER_NAME } from "@/config/landing";
 import styles from "./idx-showcase.module.css";
 
 type Status = "active" | "pending" | "new";
@@ -21,14 +21,14 @@ interface Listing {
 const listings: Listing[] = [
   {
     photoUrl: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80",
-    alt: "Modern two-story home at dusk - 47 Elmwood Ave",
+    alt: `Modern two-story home at dusk - ${CANONICAL_DEMO_LISTING.shortAddress}`,
     status: "active",
     photoCount: 24,
-    price: "$489,000",
-    beds: 3,
-    baths: 2,
-    sqft: "1,840",
-    address: "47 Elmwood Ave, Maplewood, NJ 07040",
+    price: CANONICAL_DEMO_LISTING.price,
+    beds: CANONICAL_DEMO_LISTING.beds,
+    baths: CANONICAL_DEMO_LISTING.baths,
+    sqft: CANONICAL_DEMO_LISTING.sqft,
+    address: CANONICAL_DEMO_LISTING.fullAddress,
     agent: "A. Bianchi",
     brokerage: "Elm & Main Realty",
   },
@@ -310,7 +310,7 @@ export function IdxShowcase() {
               <span className={styles.sig} />
               <div>
                 <b>New lead captured</b>
-                <small>47 Elmwood Ave · synced to CRM</small>
+                <small>{CANONICAL_DEMO_LISTING.shortAddress} · synced to CRM</small>
               </div>
             </div>
 

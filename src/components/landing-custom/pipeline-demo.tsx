@@ -1,12 +1,14 @@
+import { CANONICAL_DEMO_LISTING } from "@/config/landing";
+
 const columns = [
   {
     stage: "New Inquiry",
     color: "bg-blue-500/10 border-blue-500/20 text-blue-700 dark:text-blue-400",
     dot: "bg-blue-500",
     cards: [
-      { name: "Jennifer K.", note: "Zillow · 3BR inquiry", time: "just now" },
-      { name: "Alex T.", note: "Website form · buyer", time: "14m ago" },
-      { name: "Robin O.", note: "Yard sign text", time: "31m ago" },
+      { name: "Jennifer K.", note: `Zillow · ${CANONICAL_DEMO_LISTING.shortAddress}`, time: "just now" },
+      { name: "Alex T.", note: "Website form · buyer consult", time: "14m ago" },
+      { name: "Robin O.", note: "Yard sign · Maplewood buyer", time: "31m ago" },
     ],
   },
   {
@@ -14,8 +16,8 @@ const columns = [
     color: "bg-indigo-500/10 border-indigo-500/20 text-indigo-700 dark:text-indigo-400",
     dot: "bg-indigo-500",
     cards: [
-      { name: "Chen Family", note: "22 Maple · Sat 10am", time: "1h ago" },
-      { name: "David K.", note: "87 Park Ave · Sat 2pm", time: "2h ago" },
+      { name: "Chen Family", note: `${CANONICAL_DEMO_LISTING.shortAddress} · Sat 10am`, time: "1h ago" },
+      { name: "David K.", note: "Sunday 2pm · follow-up showing", time: "2h ago" },
     ],
   },
   {
@@ -23,8 +25,8 @@ const columns = [
     color: "bg-purple-500/10 border-purple-500/20 text-purple-700 dark:text-purple-400",
     dot: "bg-purple-500",
     cards: [
-      { name: "Williams Family", note: "$512k · accepted", time: "Yesterday" },
-      { name: "Patel & Son", note: "$489k · countered", time: "Yesterday" },
+      { name: "Williams Family", note: `${CANONICAL_DEMO_LISTING.price} · offer sent`, time: "Yesterday" },
+      { name: "Patel & Son", note: `${CANONICAL_DEMO_LISTING.price} · countered`, time: "Yesterday" },
     ],
   },
   {
@@ -32,7 +34,7 @@ const columns = [
     color: "bg-blue-600/10 border-blue-600/20 text-blue-800 dark:text-blue-300",
     dot: "bg-blue-700",
     cards: [
-      { name: "J. Henderson", note: "Close Jan 10 · $638k", time: "3d ago" },
+      { name: "J. Henderson", note: `${CANONICAL_DEMO_LISTING.shortAddress} · docs pending`, time: "3d ago" },
     ],
   },
   {
@@ -40,7 +42,7 @@ const columns = [
     color: "bg-green-500/10 border-green-500/20 text-green-700 dark:text-green-400",
     dot: "bg-green-500",
     cards: [
-      { name: "Kim & Park", note: "$580k · comm. $17.4k", time: "Last week" },
+      { name: "Kim & Park", note: `${CANONICAL_DEMO_LISTING.price} · closed`, time: "Last week" },
     ],
   },
 ];

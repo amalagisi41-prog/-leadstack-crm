@@ -1,13 +1,14 @@
 import { Bot, User } from "lucide-react";
+import { CANONICAL_DEMO_LISTING } from "@/config/landing";
 
 const chatMessages = [
   {
     from: "visitor",
-    text: "Hey, I saw your listing on Zillow — the 3BR in Maplewood. Is it still available?",
+    text: `Hey, I saw ${CANONICAL_DEMO_LISTING.shortAddress} on Zillow. Is it still available?`,
   },
   {
     from: "bot",
-    text: "Hi Jennifer! Yes, 47 Elmwood Ave is still available at $489,000 — 3 bed, 2 bath, newly renovated kitchen. Are you looking to schedule a showing?",
+    text: `Hi Jennifer! Yes, ${CANONICAL_DEMO_LISTING.shortAddress} is still available at ${CANONICAL_DEMO_LISTING.price} — ${CANONICAL_DEMO_LISTING.beds} bed, ${CANONICAL_DEMO_LISTING.baths} bath, newly renovated kitchen. Are you looking to schedule a showing?`,
   },
   {
     from: "visitor",
@@ -23,7 +24,7 @@ const chatMessages = [
   },
   {
     from: "bot",
-    text: "Perfect — you're confirmed for Saturday at 1pm at 47 Elmwood Ave. I've sent the listing packet to your email. Marcus will meet you there! 🏡",
+    text: `Perfect — you're confirmed for Saturday at 1pm at ${CANONICAL_DEMO_LISTING.shortAddress}. I've sent the listing packet to your email. Marcus will meet you there! 🏡`,
   },
 ];
 

@@ -41,6 +41,16 @@ export const MARKETING_ADD_ON_NAMES = {
   whiteGloveSetup: "White-Glove Setup",
 } as const;
 
+export const CANONICAL_DEMO_LISTING = {
+  shortAddress: "47 Elmwood Ave",
+  fullAddress: "47 Elmwood Ave, Maplewood, NJ 07040",
+  city: "Maplewood",
+  price: "$489,000",
+  beds: 3,
+  baths: 2,
+  sqft: "1,840",
+} as const;
+
 export const MARKETING_PLAN_KEYS = [
   "starter",
   "pro",
