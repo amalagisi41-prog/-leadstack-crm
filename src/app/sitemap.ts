@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { LANDING_VARIANT } from "@/config/landing";
-import { COMPARISON_SLUGS } from "@/data/comparisons";
+import { COMPARISON_SLUGS, getComparisonPath } from "@/data/comparisons";
 
 /**
  * Sitemap. Next.js 15 picks this file up automatically and serves the
@@ -25,6 +25,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/security`, lastModified: now, changeFrequency: "monthly", priority: 0.4 },
     { url: `${baseUrl}/terms`, lastModified: now, changeFrequency: "yearly", priority: 0.3 },
     { url: `${baseUrl}/privacy`, lastModified: now, changeFrequency: "yearly", priority: 0.3 },
+    ...COMPARISON_SLUGS.map((slug) => ({
+      url: `${baseUrl}${getComparisonPath(slug)}`,
+      lastModified: now,
+      changeFrequency: "monthly" as const,
+      priority: 0.8,
+    })),
   ];
 
   if (LANDING_VARIANT !== "leadstack") {
@@ -36,12 +42,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/docs/architecture`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
     { url: `${baseUrl}/docs/updating`, lastModified: now, changeFrequency: "monthly", priority: 0.4 },
     { url: `${baseUrl}/affiliate-program`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
-    ...COMPARISON_SLUGS.map((slug) => ({
-      url: `${baseUrl}/leadstack-vs-${slug}`,
-      lastModified: now,
-      changeFrequency: "monthly" as const,
-      priority: 0.8,
-    })),
   ];
 
   return [...sharedEntries, ...leadstackOnly];

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { LANDING_VARIANT } from "@/config/landing";
-import { getComparison } from "@/data/comparisons";
+import { getComparison, getComparisonPath } from "@/data/comparisons";
 import { ComparisonPage } from "@/components/compare/comparison-page";
 import { ComparisonSchema } from "@/components/compare/comparison-schema";
 import { Navbar } from "@/components/landing/navbar";
@@ -32,7 +32,7 @@ export function buildComparisonMetadata(slug: string): Metadata {
   const baseUrl =
     process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ??
     "https://leadstack.dev";
-  const canonical = `${baseUrl}/leadstack-vs-${comparison.slug}`;
+  const canonical = `${baseUrl}${getComparisonPath(comparison.slug)}`;
   return {
     title: comparison.metaTitle,
     description: comparison.metaDescription,

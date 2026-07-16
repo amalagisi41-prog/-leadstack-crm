@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Check, X, Sparkles, Quote, ChevronRight } from "lucide-react";
 import type { Comparison } from "@/types/comparisons";
-import { listComparisons } from "@/data/comparisons";
+import { getComparisonPath, listComparisons } from "@/data/comparisons";
 import { ComparisonCalculator } from "@/components/compare/comparison-calculator";
 
 /**
@@ -23,6 +23,7 @@ export function ComparisonPage({ comparison }: { comparison: Comparison }) {
       <Advantages comparison={comparison} />
       <FeatureTable comparison={comparison} />
       <PricingTable comparison={comparison} />
+      <Verification comparison={comparison} />
       <ComparisonCalculator />
       <CompetitorWins comparison={comparison} />
       <FAQ comparison={comparison} />
@@ -30,6 +31,78 @@ export function ComparisonPage({ comparison }: { comparison: Comparison }) {
       <FinalCta comparison={comparison} />
       <Disclaimer comparison={comparison} />
     </article>
+  );
+}
+
+function Verification({ comparison }: { comparison: Comparison }) {
+  const verification = comparison.verification;
+  if (!verification) return null;
+
+  return (
+    <section className="mb-12 sm:mb-16">
+      <h2 className="mb-3 text-2xl font-bold tracking-tight sm:text-3xl">
+        {verification.heading}
+      </h2>
+      {verification.intro ? (
+        <p className="mb-6 max-w-3xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+          {verification.intro}
+        </p>
+      ) : null}
+      <div className="overflow-hidden rounded-2xl border bg-card">
+        <table className="w-full text-sm">
+          <thead className="bg-muted/40">
+            <tr>
+              <th className="px-4 py-3 text-left font-semibold sm:px-6">
+                What buyers can verify
+              </th>
+              <th className="px-4 py-3 text-left font-semibold sm:px-6">
+                AgentStack
+              </th>
+              <th className="px-4 py-3 text-left font-semibold sm:px-6">
+                {comparison.competitorShortName ?? comparison.competitorName}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {verification.items.map((item, i) => (
+              <tr
+                key={item.label}
+                className={i % 2 === 0 ? "bg-background" : "bg-muted/20"}
+              >
+                <td className="px-4 py-4 align-top sm:px-6">
+                  <p className="font-medium text-foreground">{item.label}</p>
+                  {item.note ? (
+                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                      {item.note}
+                    </p>
+                  ) : null}
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {item.sources.map((source) => (
+                      <a
+                        key={`${item.label}-${source.url}`}
+                        href={source.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1.5 rounded-full border bg-background px-3 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted"
+                      >
+                        {source.label}
+                        <ChevronRight className="h-3 w-3" />
+                      </a>
+                    ))}
+                  </div>
+                </td>
+                <td className="px-4 py-4 align-top text-muted-foreground sm:px-6">
+                  {item.leadstack}
+                </td>
+                <td className="px-4 py-4 align-top text-muted-foreground sm:px-6">
+                  {item.competitor}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
   );
 }
 
@@ -335,7 +408,7 @@ function CrossLink({ currentSlug }: { currentSlug: string }) {
         {others.map((other) => (
           <Link
             key={other.slug}
-            href={`/leadstack-vs-${other.slug}`}
+            href={getComparisonPath(other.slug)}
             className="inline-flex items-center gap-1.5 rounded-full border bg-card px-4 py-2 text-sm transition-colors hover:bg-muted"
           >
             AgentStack vs {other.competitorName}

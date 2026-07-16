@@ -1,5 +1,7 @@
 import type { Comparison } from "@/types/comparisons";
 import { gohighlevelComparison } from "./gohighlevel";
+import followUpBossData from "./follow-up-boss.json";
+import kvcoreData from "./kvcore.json";
 
 /**
  * Manifest of every competitor comparison published at /leadstack-vs-{slug}.
@@ -16,6 +18,8 @@ import { gohighlevelComparison } from "./gohighlevel";
  */
 export const COMPARISONS: Record<string, Comparison> = {
   [gohighlevelComparison.slug]: gohighlevelComparison,
+  [followUpBossData.slug]: followUpBossData as Comparison,
+  [kvcoreData.slug]: kvcoreData as Comparison,
 };
 
 export const COMPARISON_SLUGS = Object.keys(COMPARISONS);
@@ -26,4 +30,8 @@ export function getComparison(slug: string): Comparison | null {
 
 export function listComparisons(): Comparison[] {
   return Object.values(COMPARISONS);
+}
+
+export function getComparisonPath(slug: string): string {
+  return `/compare/${slug}`;
 }

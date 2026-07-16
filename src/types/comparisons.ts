@@ -94,4 +94,19 @@ export type Comparison = {
     primaryCtaLabel: string;
     primaryCtaHref: string;
   };
+  /** Directly sourced verification notes for public buyer claims. */
+  verification?: {
+    heading: string;
+    intro?: string;
+    items: Array<{
+      label: string;
+      leadstack: string;
+      competitor: string;
+      note?: string;
+      sources: Array<{
+        label: string;
+        url: string;
+      }>;
+    }>;
+  };
 };

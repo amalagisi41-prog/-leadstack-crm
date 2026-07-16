@@ -199,6 +199,9 @@ const PUBLIC_PATH_PATTERNS: RegExp[] = [
   // no auth required. Each competitor has its own static route under
   // src/app/leadstack-vs-{slug}/page.tsx; this regex catches them all.
   /^\/leadstack-vs-[a-z0-9-]+$/,
+  // Public comparison routes under /compare/{slug}. Static, read-only
+  // marketing content with no auth requirement.
+  /^\/compare\/[a-z0-9-]+$/,
 ];
 
 function isPublicPath(pathname: string): boolean {

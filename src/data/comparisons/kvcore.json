@@ -1,0 +1,231 @@
+{
+  "slug": "kvcore",
+  "competitorName": "kvCORE",
+  "competitorShortName": "kvCORE",
+  "metaTitle": "kvCORE vs AgentStack | Real Estate CRM Comparison (2026)",
+  "metaDescription": "kvCORE vs AgentStack — compare what a public buyer can actually verify about pricing, AI, setup, and transparency before booking a demo.",
+  "lastVerifiedDate": "July 16, 2026",
+  "hero": {
+    "h1": "kvCORE vs AgentStack",
+    "subhead": "If you are evaluating kvCORE, the biggest difference is not just features — it is how much a buyer can verify up front. AgentStack publishes the pricing, the setup path, and the operating model directly on the site.",
+    "ctaLabel": "See AgentStack pricing"
+  },
+  "pullQuote": {
+    "text": "Some platforms are easier to understand after a sales call. AgentStack is designed to be easier to understand before one.",
+    "author": "The AgentStack team",
+    "role": "On evaluation clarity"
+  },
+  "painPoints": {
+    "heading": "Where the evaluation experience differs",
+    "bullets": [
+      {
+        "title": "Public pricing is not the starting point",
+        "body": "On the official pages we could verify on July 16, 2026, kvCORE did not present a live public pricing page. That creates a more sales-led buying motion from the very first step."
+      },
+      {
+        "title": "Key buyer details are harder to verify before the conversation",
+        "body": "We could not verify public contract-term, AI-inclusion, or setup-time details from the accessible official kvCORE pages reviewed. That does not mean kvCORE lacks them — it means a public buyer learns them later in the process."
+      },
+      {
+        "title": "Operator clarity matters when you are moving fast",
+        "body": "If you are trying to decide quickly, public clarity becomes part of the product. AgentStack makes that part visible immediately: plans, method, add-ons, and the actual setup flow are all spelled out on the marketing site."
+      }
+    ]
+  },
+  "advantages": [
+    {
+      "title": "Published pricing, not a request-first buying path",
+      "body": "AgentStack tells you the plans and the positioning directly on the public site, so an agent, team lead, or broker can qualify themselves before they ever book time."
+    },
+    {
+      "title": "AI and onboarding are part of the product story",
+      "body": "The public AgentStack experience makes the AI follow-up engine and method-led onboarding visible immediately. You can understand how it works before entering a sales process."
+    },
+    {
+      "title": "Built around one clear real-estate operating method",
+      "body": "The landing page, setup flow, onboarding checklist, and in-product next actions all speak the same language. That makes the system easier to adopt across solo agents, teams, and brokerages."
+    },
+    {
+      "title": "The product is legible before implementation starts",
+      "body": "From IDX to reviews to AI follow-up, the buying path explains what happens next. That reduces the uncertainty that often slows down CRM decisions."
+    }
+  ],
+  "featureTable": {
+    "heading": "What a public buyer can verify without booking a sales call",
+    "rows": [
+      {
+        "label": "Published public pricing",
+        "leadstack": true,
+        "competitor": "Not publicly listed"
+      },
+      {
+        "label": "Public contract-term language",
+        "leadstack": true,
+        "competitor": "Not verified"
+      },
+      {
+        "label": "AI inclusion clearly explained on accessible pages",
+        "leadstack": true,
+        "competitor": "Not verified"
+      },
+      {
+        "label": "Visible setup path before signup",
+        "leadstack": true,
+        "competitor": "Not verified"
+      },
+      {
+        "label": "Method-led onboarding narrative",
+        "leadstack": true,
+        "competitor": "Sales-led"
+      },
+      {
+        "label": "IDX called out directly in the buyer journey",
+        "leadstack": true,
+        "competitor": "Not verified"
+      },
+      {
+        "label": "Self-serve trial messaging",
+        "leadstack": true,
+        "competitor": "Not verified"
+      },
+      {
+        "label": "Transparent starting plan on the public site",
+        "leadstack": "$199/mo",
+        "competitor": "Contact sales"
+      }
+    ]
+  },
+  "pricing": {
+    "heading": "Pricing compared honestly",
+    "leadstack": {
+      "headline": "Published plans starting at $199/month",
+      "detail": "AgentStack publicly lists Solo, Team, and Broker pricing, plus add-ons, so buyers can self-qualify before they ever speak to anyone.",
+      "notes": [
+        "Solo starts at $199/month.",
+        "Team starts at $299/month.",
+        "Broker starts at $399/month.",
+        "Add-ons are listed publicly on the site."
+      ]
+    },
+    "competitor": {
+      "headline": "Contact sales",
+      "detail": "On the official kvCORE pages we could verify on July 16, 2026, we did not find a live public pricing page. The official /pricing URL returned a page-not-found response, so this comparison treats kvCORE as a sales-led quote process rather than guessing at a number.",
+      "notes": [
+        "The official kvCORE root page currently presents a login experience.",
+        "The official /pricing page did not resolve to live pricing during verification.",
+        "We are intentionally not publishing an unsourced monthly price here."
+      ]
+    },
+    "summary": "This is less a statement that kvCORE is expensive or cheap, and more a statement about transparency. AgentStack tells buyers the terms up front; kvCORE currently asks the buyer to continue the conversation first."
+  },
+  "competitorWins": {
+    "heading": "Where kvCORE may still be the right fit",
+    "bullets": [
+      "If you prefer a sales-led buying process, that can be useful for larger organizations that want a guided procurement path.",
+      "If you are already committed to the kvCORE ecosystem, staying inside one familiar workflow may reduce change-management friction.",
+      "Some teams prefer discovering details through a demo rather than through a fully self-serve evaluation."
+    ],
+    "closing": "This page is not claiming kvCORE lacks depth. It is simply pointing out that AgentStack makes more of the buying decision verifiable before the first call."
+  },
+  "faq": {
+    "heading": "Frequently asked questions",
+    "items": [
+      {
+        "question": "Why does this page focus so much on what is publicly verifiable?",
+        "answer": "Because that is the fairest comparison we can make without inventing details. The point is to compare what a buyer can actually confirm from official pages before entering a sales process."
+      },
+      {
+        "question": "Are you saying kvCORE has no AI or onboarding?",
+        "answer": "No. We are saying we did not verify those details from the accessible official pages reviewed on July 16, 2026, so we are not going to fill the gaps with guesses."
+      },
+      {
+        "question": "What is AgentStack's advantage for a busy team lead?",
+        "answer": "Clarity and speed. You can see the pricing, method, add-ons, AI story, and IDX positioning immediately, then decide whether it fits before spending time in a sales loop."
+      },
+      {
+        "question": "What if I still want to evaluate kvCORE seriously?",
+        "answer": "You should. Just verify the current pricing, contract terms, AI offer, and onboarding scope directly with kvCORE during the buying process. That is exactly why this page keeps those cells conservative."
+      },
+      {
+        "question": "Who should choose AgentStack instead?",
+        "answer": "Choose AgentStack if you want a more self-serve, operator-readable path with public pricing, a visible setup method, and an AI-led operating story that is already legible on the site."
+      }
+    ]
+  },
+  "finalCta": {
+    "headline": "If you want clarity before the sales call, start here",
+    "body": "AgentStack is built so a real estate operator can understand the offer, the rollout path, and the next step without needing to decode the product first.",
+    "primaryCtaLabel": "Start with AgentStack",
+    "primaryCtaHref": "/signup"
+  },
+  "verification": {
+    "heading": "What we verified directly on the official sites",
+    "intro": "Because kvCORE's current public footprint is more sales-led, we kept this section intentionally conservative. If a detail was not clearly stated on accessible official pages, we marked it that way instead of guessing.",
+    "items": [
+      {
+        "label": "Pricing",
+        "leadstack": "Published publicly: Solo $199/mo, Team $299/mo, Broker $399/mo.",
+        "competitor": "We did not verify a live public kvCORE pricing page. The official root page presents a login experience, and the official /pricing URL returned a page-not-found response during review.",
+        "sources": [
+          {
+            "label": "AgentStack pricing",
+            "url": "https://agentstackcrm.app/#pricing"
+          },
+          {
+            "label": "kvCORE home",
+            "url": "https://www.kvcore.com/"
+          },
+          {
+            "label": "kvCORE pricing URL",
+            "url": "https://www.kvcore.com/pricing/"
+          }
+        ]
+      },
+      {
+        "label": "Contract terms",
+        "leadstack": "Public plans are presented directly on the site.",
+        "competitor": "We did not verify public contract-term language from the accessible official kvCORE pages reviewed on July 16, 2026.",
+        "sources": [
+          {
+            "label": "AgentStack pricing",
+            "url": "https://agentstackcrm.app/#pricing"
+          },
+          {
+            "label": "kvCORE home",
+            "url": "https://www.kvcore.com/"
+          }
+        ]
+      },
+      {
+        "label": "AI inclusion",
+        "leadstack": "AI follow-up is part of the core product story on the public site.",
+        "competitor": "We did not verify public AI-inclusion language from the accessible official kvCORE pages reviewed on July 16, 2026.",
+        "sources": [
+          {
+            "label": "AgentStack home",
+            "url": "https://agentstackcrm.app/"
+          },
+          {
+            "label": "kvCORE home",
+            "url": "https://www.kvcore.com/"
+          }
+        ]
+      },
+      {
+        "label": "Setup path",
+        "leadstack": "The public site shows a clear method-led setup path: Build, Connect, Capture, Respond.",
+        "competitor": "We did not verify a public setup-time or setup-path promise from the accessible official kvCORE pages reviewed on July 16, 2026.",
+        "sources": [
+          {
+            "label": "AgentStack method",
+            "url": "https://agentstackcrm.app/#how-it-works"
+          },
+          {
+            "label": "kvCORE home",
+            "url": "https://www.kvcore.com/"
+          }
+        ]
+      }
+    ]
+  }
+}

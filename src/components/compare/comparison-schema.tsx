@@ -1,4 +1,5 @@
 import type { Comparison } from "@/types/comparisons";
+import { getComparisonPath } from "@/data/comparisons";
 
 /**
  * Server-rendered JSON-LD for a competitor comparison page.
@@ -20,7 +21,7 @@ export function ComparisonSchema({
   comparison: Comparison;
   baseUrl: string;
 }) {
-  const url = `${baseUrl}/leadstack-vs-${comparison.slug}`;
+  const url = `${baseUrl}${getComparisonPath(comparison.slug)}`;
 
   const softwareApplication = {
     "@context": "https://schema.org",

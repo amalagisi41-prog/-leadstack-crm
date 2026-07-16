@@ -1,0 +1,228 @@
+{
+  "slug": "follow-up-boss",
+  "competitorName": "Follow Up Boss",
+  "competitorShortName": "FUB",
+  "metaTitle": "Follow Up Boss vs AgentStack | Real Estate CRM Comparison (2026)",
+  "metaDescription": "Follow Up Boss vs AgentStack — compare public pricing, AI inclusion, onboarding, and ownership before you choose your next real estate CRM.",
+  "lastVerifiedDate": "July 16, 2026",
+  "hero": {
+    "h1": "Follow Up Boss vs AgentStack",
+    "subhead": "Follow Up Boss is a mature real estate CRM with strong team workflows. AgentStack takes a more operator-owned approach: transparent plans, built-in AI follow-up, and a full business operating system designed around one real estate brand at a time.",
+    "ctaLabel": "See AgentStack pricing"
+  },
+  "pullQuote": {
+    "text": "Follow Up Boss is well known for lead routing and team collaboration. AgentStack is built for operators who want the same day-to-day momentum plus more ownership, more built-in automation, and less per-user pricing drag.",
+    "author": "The AgentStack team",
+    "role": "On the tradeoff"
+  },
+  "painPoints": {
+    "heading": "Where operators start to feel the difference",
+    "bullets": [
+      {
+        "title": "Per-user pricing grows with the team",
+        "body": "Follow Up Boss publishes user-based pricing, so the bill rises as you add agents. AgentStack's core plans are built around operating the business, not paying a new CRM tax every time headcount changes."
+      },
+      {
+        "title": "Calling is still an add-on on the entry plan",
+        "body": "Follow Up Boss includes AI features on its pricing page, but notes that some of them rely on the paid Calling add-on on Grow. AgentStack ships web chat, SMS follow-up, and voice-ready workflows as part of the product offer."
+      },
+      {
+        "title": "You are still buying a CRM, not your operating layer",
+        "body": "Follow Up Boss is excellent at organizing leads. AgentStack is designed to pair that CRM discipline with onboarding checklists, owned workflows, and an operator-first setup that turns the business process itself into the product."
+      }
+    ]
+  },
+  "advantages": [
+    {
+      "title": "Pricing stays simpler as the team scales",
+      "body": "AgentStack's published plans are straightforward and brand-led. You pick the tier that fits the business model, not a per-seat math problem every time the roster changes."
+    },
+    {
+      "title": "AI is part of the workflow, not an edge case",
+      "body": "Instant web chat, SMS follow-up, and guided next actions are built into AgentStack's core operating flow so the team always knows what should happen next."
+    },
+    {
+      "title": "The onboarding path mirrors the business",
+      "body": "Build, Connect, Capture, Respond — AgentStack's checklist is designed around how agents actually launch. That means fewer blank screens and less guessing about what to configure first."
+    },
+    {
+      "title": "Everything points toward one real estate operating system",
+      "body": "Lead capture, pipeline movement, scheduling, reviews, IDX, and add-ons sit in one coherent motion. You are not stitching together one CRM, one chat layer, and a stack of outside services just to stay responsive."
+    }
+  ],
+  "featureTable": {
+    "heading": "What each product clearly emphasizes",
+    "rows": [
+      {
+        "label": "Lead source and website connection",
+        "leadstack": true,
+        "competitor": true
+      },
+      {
+        "label": "Lead routing and distribution",
+        "leadstack": true,
+        "competitor": true
+      },
+      {
+        "label": "Built-in AI follow-up in the product story",
+        "leadstack": true,
+        "competitor": true
+      },
+      {
+        "label": "Publicly published no-contract pricing",
+        "leadstack": true,
+        "competitor": true
+      },
+      {
+        "label": "Calling required on entry plan for stronger AI outcomes",
+        "leadstack": false,
+        "competitor": "Grow add-on"
+      },
+      {
+        "label": "Business-method onboarding checklist",
+        "leadstack": true,
+        "competitor": "Setup + training"
+      },
+      {
+        "label": "IDX positioning on public marketing pages",
+        "leadstack": true,
+        "competitor": true
+      },
+      {
+        "label": "Transparent monthly plan entry point",
+        "leadstack": "$199/mo",
+        "competitor": "$69/user/mo"
+      }
+    ]
+  },
+  "pricing": {
+    "heading": "Pricing compared honestly",
+    "leadstack": {
+      "headline": "Published plans starting at $199/month",
+      "detail": "AgentStack publishes clear tiered pricing for Solo, Team, and Broker use cases, with AI follow-up already central to the offer and no separate CRM seat math for every new agent.",
+      "notes": [
+        "Solo starts at $199/month.",
+        "Team starts at $299/month.",
+        "Broker starts at $399/month.",
+        "AI web chat, SMS follow-up, and the onboarding system are part of the product direction from day one."
+      ]
+    },
+    "competitor": {
+      "headline": "From $69/user/month on Grow",
+      "detail": "Follow Up Boss publicly lists monthly and annual pricing, says there are no contracts, and includes AI features in the offer — with the important caveat that some AI features depend on the paid Calling add-on on Grow.",
+      "notes": [
+        "Grow: $69 per user per month, with Calling as a $39 per user add-on on the monthly plan.",
+        "Grow annual pricing is listed at $58 per user per month, with Calling as a $33 per user add-on.",
+        "Pro: $499/month including 10 users, with additional users at $49/month.",
+        "Platform: $1000/month including 30 users, with additional users at $20/month."
+      ]
+    },
+    "summary": "Follow Up Boss is much more transparent than many real estate CRMs, which we respect. AgentStack's edge is not that FUB hides pricing — it's that AgentStack turns the CRM into a more complete operating system with a clearer real-estate-specific launch path."
+  },
+  "competitorWins": {
+    "heading": "Where Follow Up Boss deserves credit",
+    "bullets": [
+      "Their pricing page is unusually clear for this category.",
+      "They explicitly advertise setup, training, guided onboarding, and seven-day-a-week support.",
+      "For teams already bought into the FUB way of working, the learning curve is low."
+    ],
+    "closing": "If you want a proven CRM with clear pricing and strong team features, Follow Up Boss is a serious option. AgentStack is the better fit when you want the CRM plus the operating method around it."
+  },
+  "faq": {
+    "heading": "Frequently asked questions",
+    "items": [
+      {
+        "question": "Is this saying Follow Up Boss is bad?",
+        "answer": "No. Follow Up Boss is one of the more straightforward real estate CRM products to evaluate publicly. This page is about fit: FUB is a CRM with strong routing and collaboration; AgentStack is trying to be the operating system wrapped around the real estate workflow."
+      },
+      {
+        "question": "What is the biggest difference for an agent or team lead?",
+        "answer": "The biggest difference is how much of the operating process is guided for you. AgentStack is built around the setup path, AI follow-up, recommended next action, and related systems that keep the business moving even when you are with clients."
+      },
+      {
+        "question": "Does Follow Up Boss publish pricing and contract terms?",
+        "answer": "Yes. Their live pricing page states \"Simple pricing, free trial, no contracts\" and lists monthly and annual pricing tiers."
+      },
+      {
+        "question": "Does Follow Up Boss include AI?",
+        "answer": "Their pricing page says AI features are included, and also notes that some AI features use data from the paid Calling add-on on the Grow plan."
+      },
+      {
+        "question": "Who should choose AgentStack instead?",
+        "answer": "Choose AgentStack if you want a CRM decision that also solves launch sequence, AI follow-up, IDX positioning, lead capture systems, and the operator workflow around the CRM instead of stopping at lead organization."
+      }
+    ]
+  },
+  "finalCta": {
+    "headline": "Choose the CRM that also moves the business forward",
+    "body": "If you want transparent pricing and a stronger real-estate operating layer on top of the CRM itself, AgentStack is built for that job.",
+    "primaryCtaLabel": "Start with AgentStack",
+    "primaryCtaHref": "/signup"
+  },
+  "verification": {
+    "heading": "What we verified directly on the official sites",
+    "intro": "These are the buyer-facing details we could confirm from the live official pages on July 16, 2026 — no rumor, no third-party review summaries.",
+    "items": [
+      {
+        "label": "Pricing",
+        "leadstack": "Published on the marketing site: Solo $199/mo, Team $299/mo, Broker $399/mo.",
+        "competitor": "Published by Follow Up Boss: Grow starts at $69/user/month on the monthly plan, Pro is $499/month including 10 users, and Platform is $1000/month including 30 users.",
+        "sources": [
+          {
+            "label": "AgentStack pricing",
+            "url": "https://agentstackcrm.app/#pricing"
+          },
+          {
+            "label": "Follow Up Boss pricing",
+            "url": "https://www.followupboss.com/pricing"
+          }
+        ]
+      },
+      {
+        "label": "Contract terms",
+        "leadstack": "Monthly or annual pricing with self-serve public plans.",
+        "competitor": "The Follow Up Boss pricing page explicitly says: \"Simple pricing, free trial, no contracts.\"",
+        "sources": [
+          {
+            "label": "AgentStack pricing",
+            "url": "https://agentstackcrm.app/#pricing"
+          },
+          {
+            "label": "Follow Up Boss pricing",
+            "url": "https://www.followupboss.com/pricing"
+          }
+        ]
+      },
+      {
+        "label": "AI inclusion",
+        "leadstack": "AI follow-up is part of the core marketing promise across web chat, SMS, and the broader operating flow.",
+        "competitor": "The Follow Up Boss pricing page says AI features are included, while noting that some AI features rely on data from the paid Calling add-on on Grow.",
+        "sources": [
+          {
+            "label": "AgentStack home",
+            "url": "https://agentstackcrm.app/"
+          },
+          {
+            "label": "Follow Up Boss pricing",
+            "url": "https://www.followupboss.com/pricing"
+          }
+        ]
+      },
+      {
+        "label": "Setup path",
+        "leadstack": "A public method-led launch path is shown on the marketing site: Build, Connect, Capture, Respond.",
+        "competitor": "Follow Up Boss publicly advertises setup and training, help importing contacts, help connecting lead sources, guided onboarding, and personalized onboarding on higher tiers.",
+        "sources": [
+          {
+            "label": "AgentStack method",
+            "url": "https://agentstackcrm.app/#how-it-works"
+          },
+          {
+            "label": "Follow Up Boss pricing",
+            "url": "https://www.followupboss.com/pricing"
+          }
+        ]
+      }
+    ]
+  }
+}
