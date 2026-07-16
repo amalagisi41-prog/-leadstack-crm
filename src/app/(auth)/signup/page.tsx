@@ -2,9 +2,22 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { SignupForm } from "@/components/auth/signup-form";
 import { LogoMark } from "@/components/brand/logo-mark";
-import { CUSTOM_BRAND } from "@/config/landing";
+import {
+  CUSTOM_BRAND,
+  isMarketingPlanKey,
+  type MarketingPlanKey,
+} from "@/config/landing";
 
-export default function SignupPage() {
+export default async function SignupPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ plan?: string }>;
+}) {
+  const params = (await searchParams) ?? {};
+  const planKey: MarketingPlanKey | null = isMarketingPlanKey(params.plan)
+    ? params.plan
+    : null;
+
   return (
     <div className="flex min-h-screen items-center justify-center px-4 py-10 font-sans">
       <div className="w-full max-w-lg space-y-6">
@@ -21,7 +34,7 @@ export default function SignupPage() {
         {/* Suspense required because SignupForm reads ?email= via
             useSearchParams to pre-fill from invite links. */}
         <Suspense fallback={<div className="h-[480px] rounded-xl border bg-card" />}>
-          <SignupForm />
+          <SignupForm planKey={planKey} />
         </Suspense>
       </div>
     </div>

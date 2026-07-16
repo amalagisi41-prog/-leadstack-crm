@@ -28,6 +28,21 @@ export type LandingVariant = "leadstack" | "custom";
 
 export const LANDING_VARIANT: LandingVariant = "custom";
 
+export const MARKETING_PLAN_KEYS = [
+  "starter",
+  "pro",
+  "scale",
+  "luxury",
+] as const;
+
+export type MarketingPlanKey = (typeof MARKETING_PLAN_KEYS)[number];
+
+export const SELF_SERVE_PLAN_KEYS = ["starter", "pro"] as const;
+export type SelfServePlanKey = (typeof SELF_SERVE_PLAN_KEYS)[number];
+
+export const SALES_ASSISTED_PLAN_KEYS = ["scale", "luxury"] as const;
+export type SalesAssistedPlanKey = (typeof SALES_ASSISTED_PLAN_KEYS)[number];
+
 export interface CustomPricingTier {
   name: string;
   priceMonthly: number;
@@ -44,12 +59,7 @@ export interface CustomBrand {
   shortDescription: string;
   supportEmail: string;
   primaryDomain: string;
-  pricing: {
-    starter: CustomPricingTier;
-    pro: CustomPricingTier;
-    scale: CustomPricingTier;
-    luxury: CustomPricingTier;
-  };
+  pricing: Record<MarketingPlanKey, CustomPricingTier>;
 }
 
 /**
@@ -187,3 +197,29 @@ export const CUSTOM_BRAND: CustomBrand = {
     },
   },
 };
+
+export function isMarketingPlanKey(
+  value: string | null | undefined,
+): value is MarketingPlanKey {
+  return !!value && MARKETING_PLAN_KEYS.includes(value as MarketingPlanKey);
+}
+
+export function isSelfServePlanKey(
+  value: string | null | undefined,
+): value is SelfServePlanKey {
+  return !!value && SELF_SERVE_PLAN_KEYS.includes(value as SelfServePlanKey);
+}
+
+export function getMarketingPlan(key: MarketingPlanKey): CustomPricingTier {
+  return CUSTOM_BRAND.pricing[key];
+}
+
+export function getMarketingPlanEntries(): readonly {
+  key: MarketingPlanKey;
+  tier: CustomPricingTier;
+}[] {
+  return MARKETING_PLAN_KEYS.map((key) => ({
+    key,
+    tier: getMarketingPlan(key),
+  }));
+}

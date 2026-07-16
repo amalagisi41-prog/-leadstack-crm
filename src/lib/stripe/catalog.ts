@@ -1,6 +1,7 @@
 import "server-only";
 
 import { ADD_ON_GATE_FIELD, ADD_ON_KEYS, type AddOnKey } from "./addon-catalog";
+import { SELF_SERVE_PLAN_KEYS, type SelfServePlanKey } from "@/config/landing";
 
 /**
  * Resolves the stable plan/add-on KEYS the client sends into real Stripe
@@ -23,8 +24,8 @@ import { ADD_ON_GATE_FIELD, ADD_ON_KEYS, type AddOnKey } from "./addon-catalog";
 export type { AddOnKey };
 export { ADD_ON_KEYS, ADD_ON_GATE_FIELD };
 
-export type PlanKey = "starter" | "pro" | "scale";
-export const PLAN_KEYS: PlanKey[] = ["starter", "pro", "scale"];
+export type PlanKey = SelfServePlanKey;
+export const PLAN_KEYS: readonly PlanKey[] = SELF_SERVE_PLAN_KEYS;
 
 export function planPriceId(key: PlanKey): string | null {
   switch (key) {
@@ -32,8 +33,6 @@ export function planPriceId(key: PlanKey): string | null {
       return process.env.STRIPE_STARTER_PRICE_ID ?? null;
     case "pro":
       return process.env.STRIPE_PRO_PRICE_ID ?? null;
-    case "scale":
-      return process.env.STRIPE_SCALE_PRICE_ID ?? null;
   }
 }
 

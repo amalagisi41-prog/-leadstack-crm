@@ -3,7 +3,10 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { ResolvedBrand } from "@/config/landing";
+import { getMarketingPlan, type ResolvedBrand } from "@/config/landing";
+
+const brokerPlanName = getMarketingPlan("scale").name;
+const luxuryPlanName = getMarketingPlan("luxury").name;
 
 const faqs = [
   {
@@ -24,7 +27,7 @@ const faqs = [
   {
     question: "Does it work for teams and brokerages?",
     answer:
-      "Yes. The Broker plan gives each agent their own sub-account (isolated contacts and deals) under one brokerage login. Territory assignment routes inbound leads to the right agent automatically. Brokers get a top-level view across all agents. Top-producing luxury teams can start from the Luxury Broker plan for a concierge-tuned setup out of the box.",
+      `Yes. The ${brokerPlanName} plan gives each agent their own sub-account (isolated contacts and deals) under one brokerage login. Territory assignment routes inbound leads to the right agent automatically. Brokers get a top-level view across all agents. Top-producing luxury teams can start from the ${luxuryPlanName} plan for a concierge-tuned setup out of the box.`,
   },
   {
     question: "How does the AI work?",

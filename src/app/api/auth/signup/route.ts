@@ -4,12 +4,14 @@ import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import { provisionNewAgency } from "@/lib/auth/provision-agency";
+import { isMarketingPlanKey } from "@/config/landing";
 import { GLOBAL_TERRITORY_ID, type Role } from "@/types";
 
 interface SignupBody {
   email?: string;
   password?: string;
   displayName?: string;
+  planKey?: string;
 }
 
 type Decision =
@@ -35,6 +37,7 @@ export async function POST(request: Request) {
   const email = body.email?.trim().toLowerCase();
   const password = body.password;
   const displayName = body.displayName?.trim() || email?.split("@")[0] || "";
+  const planKey = isMarketingPlanKey(body.planKey) ? body.planKey : null;
 
   if (!email || !password) {
     return NextResponse.json(
@@ -170,6 +173,7 @@ export async function POST(request: Request) {
         agencyId,
         agencyRole: "owner",
         subAccountId,
+        planKey,
         redirectTo: "/agency/get-started",
       });
     }
@@ -252,6 +256,7 @@ export async function POST(request: Request) {
       role: subAccountRole,
       agencyId,
       subAccountId,
+      planKey,
       redirectTo: `/sa/${subAccountId}/dashboard`,
     });
   } catch (err) {

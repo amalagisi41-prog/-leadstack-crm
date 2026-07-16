@@ -18,14 +18,25 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { SocialAuthButtons } from "@/components/auth/social-auth-buttons";
+import {
+  isMarketingPlanKey,
+  type MarketingPlanKey,
+} from "@/config/landing";
 
-export function SignupForm() {
+export function SignupForm({
+  planKey: planKeyProp,
+}: {
+  planKey?: MarketingPlanKey | null;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   // Pre-fill email when arriving from an invite link (/signup?email=…).
   // Invited users join that workspace; everyone else starts a new beta
   // workspace.
   const initialEmail = searchParams?.get("email") ?? "";
+  const planFromUrl = searchParams?.get("plan");
+  const planKey =
+    planKeyProp ?? (isMarketingPlanKey(planFromUrl) ? planFromUrl : null);
   const [email, setEmail] = useState(initialEmail);
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -62,6 +73,7 @@ export function SignupForm() {
           email,
           password,
           displayName: email.split("@")[0],
+          ...(planKey ? { planKey } : {}),
         }),
       });
 
