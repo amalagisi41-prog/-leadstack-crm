@@ -1,8 +1,14 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle } from "lucide-react";
+import {
+  Upload,
+  FileSpreadsheet,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+} from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -35,6 +41,74 @@ interface ImportContactsDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
+interface PreparedRow {
+  rowNumber: number;
+  data: ContactFormData;
+}
+
+interface PreviewState {
+  readyIndexes: number[];
+  readyCount: number;
+  duplicateCount: number;
+  invalidCount: number;
+  existingDuplicateCount: number;
+  fileDuplicateCount: number;
+  skippedMessages: string[];
+}
+
+function prepareRows(
+  rows: Record<string, string>[],
+  mapping: Record<string, MappableField | "">,
+): {
+  valid: PreparedRow[];
+  invalidCount: number;
+  invalidMessages: string[];
+} {
+  const valid: PreparedRow[] = [];
+  const invalidMessages: string[] = [];
+  let invalidCount = 0;
+
+  for (let idx = 0; idx < rows.length; idx++) {
+    const row = rows[idx];
+    const data: ContactFormData = {
+      name: "",
+      email: "",
+      phone: "",
+      company: "",
+      address: "",
+      source: "",
+      tags: [],
+    };
+    for (const [header, field] of Object.entries(mapping)) {
+      if (!field) continue;
+      const value = (row[header] ?? "").trim();
+      if (!value) continue;
+      if (field === "tags") {
+        data.tags = value
+          .split(/[,;]/)
+          .map((t) => t.trim())
+          .filter(Boolean);
+      } else if (field === "source") {
+        const normalized = value.toLowerCase();
+        const matched = VALID_SOURCES.find((s) => s && s === normalized);
+        data.source = (matched ?? "other") as ContactSource;
+      } else {
+        data[field] = value;
+      }
+    }
+    if (!data.email || !isValidEmail(data.email)) {
+      invalidCount++;
+      if (invalidMessages.length < 5) {
+        invalidMessages.push(`Row ${idx + 2}: missing or invalid email`);
+      }
+      continue;
+    }
+    valid.push({ rowNumber: idx + 2, data });
+  }
+
+  return { valid, invalidCount, invalidMessages };
+}
+
 export function ImportContactsDialog({
   open,
   onOpenChange,
@@ -45,6 +119,8 @@ export function ImportContactsDialog({
   const [headers, setHeaders] = useState<string[]>([]);
   const [rows, setRows] = useState<Record<string, string>[]>([]);
   const [mapping, setMapping] = useState<Record<string, MappableField | "">>({});
+  const [previewing, setPreviewing] = useState(false);
+  const [preview, setPreview] = useState<PreviewState | null>(null);
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState<{
     created: number;
@@ -57,6 +133,8 @@ export function ImportContactsDialog({
     setHeaders([]);
     setRows([]);
     setMapping({});
+    setPreviewing(false);
+    setPreview(null);
     setResult(null);
     setImporting(false);
     if (inputRef.current) inputRef.current.value = "";
@@ -77,6 +155,7 @@ export function ImportContactsDialog({
       next[h] = guessContactField(h) ?? "";
     }
     setMapping(next);
+    setPreview(null);
     setResult(null);
   }
 
@@ -85,63 +164,104 @@ export function ImportContactsDialog({
     [mapping],
   );
   const hasEmailColumn = Object.values(mapping).includes("email");
+  const prepared = useMemo(() => prepareRows(rows, mapping), [rows, mapping]);
+
+  useEffect(() => {
+    if (headers.length > 0) {
+      setPreview(null);
+    }
+  }, [mapping, rows, headers.length]);
 
   // Per-request row cap — keep in step with MAX_ROWS in the import route so
   // a big CSV is split into multiple requests that each stay under Vercel's
   // function timeout.
   const CHUNK = 200;
 
-  async function runImport() {
+  async function runPreview() {
     if (!hasEmailColumn) {
-      toast.error("Map at least one column to Email before importing.");
+      toast.error("Map at least one column to Email before previewing.");
       return;
     }
+    if (prepared.valid.length === 0) {
+      setPreview({
+        readyIndexes: [],
+        readyCount: 0,
+        duplicateCount: 0,
+        invalidCount: prepared.invalidCount,
+        existingDuplicateCount: 0,
+        fileDuplicateCount: 0,
+        skippedMessages: prepared.invalidMessages,
+      });
+      toast.error("No valid contacts to import yet.");
+      return;
+    }
+
+    setPreviewing(true);
+    try {
+      const res = await fetch("/api/contacts/import/preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          subAccountId,
+          contacts: prepared.valid.map((row) => ({
+            ...row.data,
+            __rowNumber: row.rowNumber,
+          })),
+        }),
+      });
+      const payload = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+        readyIndexes?: number[];
+        skipped?: Array<{ rowNumber: number; reason: string }>;
+        summary?: {
+          readyCount?: number;
+          duplicateCount?: number;
+          existingDuplicateCount?: number;
+          fileDuplicateCount?: number;
+        };
+      };
+      if (!res.ok || !payload.ok) {
+        throw new Error(payload.error ?? "Preview failed.");
+      }
+      const skippedMessages = [
+        ...prepared.invalidMessages,
+        ...((payload.skipped ?? [])
+          .slice(0, 5)
+          .map((row) => `Row ${row.rowNumber}: ${row.reason}`)),
+      ];
+      setPreview({
+        readyIndexes: payload.readyIndexes ?? [],
+        readyCount: payload.summary?.readyCount ?? 0,
+        duplicateCount: payload.summary?.duplicateCount ?? 0,
+        invalidCount: prepared.invalidCount,
+        existingDuplicateCount: payload.summary?.existingDuplicateCount ?? 0,
+        fileDuplicateCount: payload.summary?.fileDuplicateCount ?? 0,
+        skippedMessages,
+      });
+      toast.success("Preview ready. Review duplicates before importing.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Preview failed.");
+    } finally {
+      setPreviewing(false);
+    }
+  }
+
+  async function runImport() {
+    if (!preview) {
+      toast.error("Preview the import first so we can catch duplicates.");
+      return;
+    }
+
     setImporting(true);
     const errors: string[] = [];
     let created = 0;
-    let skipped = 0;
+    let skipped = preview.invalidCount + preview.duplicateCount;
 
-    // Map + validate every row locally first; rows without a valid email are
-    // skipped client-side (same as before). Valid rows go to the server in
-    // chunks — each created contact fires its own contact.created webhook.
-    const valid: ContactFormData[] = [];
-    for (let idx = 0; idx < rows.length; idx++) {
-      const row = rows[idx];
-      const data: ContactFormData = {
-        name: "",
-        email: "",
-        phone: "",
-        company: "",
-        address: "",
-        source: "",
-        tags: [],
-      };
-      for (const [header, field] of Object.entries(mapping)) {
-        if (!field) continue;
-        const value = (row[header] ?? "").trim();
-        if (!value) continue;
-        if (field === "tags") {
-          data.tags = value
-            .split(/[,;]/)
-            .map((t) => t.trim())
-            .filter(Boolean);
-        } else if (field === "source") {
-          const normalized = value.toLowerCase();
-          const matched = VALID_SOURCES.find((s) => s && s === normalized);
-          data.source = (matched ?? "other") as ContactSource;
-        } else {
-          data[field] = value;
-        }
-      }
-      if (!data.email || !isValidEmail(data.email)) {
-        skipped++;
-        if (errors.length < 5) {
-          errors.push(`Row ${idx + 2}: missing or invalid email`);
-        }
-        continue;
-      }
-      valid.push(data);
-    }
+    const readyIndexSet = new Set(preview.readyIndexes);
+    const valid = prepared.valid
+      .filter((_, idx) => readyIndexSet.has(idx))
+      .map((row) => row.data);
 
     try {
       for (let i = 0; i < valid.length; i += CHUNK) {
@@ -308,6 +428,40 @@ export function ImportContactsDialog({
                 )}
               </div>
 
+              <div className="rounded-lg border bg-muted/20 p-3 text-sm">
+                <p className="font-medium">Preview before import</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  We&apos;ll check for duplicate emails and phone numbers already
+                  in this workspace, plus duplicates inside this CSV, before we
+                  write anything.
+                </p>
+                {preview && (
+                  <div className="mt-3 space-y-2 rounded-lg border bg-background p-3">
+                    <p className="flex items-center gap-2 font-medium">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                      Ready: {preview.readyCount} · Duplicates:{" "}
+                      {preview.duplicateCount} · Invalid email rows:{" "}
+                      {preview.invalidCount}
+                    </p>
+                    {(preview.existingDuplicateCount > 0 ||
+                      preview.fileDuplicateCount > 0) && (
+                      <p className="text-xs text-muted-foreground">
+                        Existing workspace duplicates:{" "}
+                        {preview.existingDuplicateCount} · Duplicate rows inside
+                        this file: {preview.fileDuplicateCount}
+                      </p>
+                    )}
+                    {preview.skippedMessages.length > 0 && (
+                      <ul className="ml-6 list-disc space-y-0.5 text-xs text-muted-foreground">
+                        {preview.skippedMessages.map((message, index) => (
+                          <li key={index}>{message}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </div>
+
               {result && (
                 <div className="space-y-2 rounded-lg border bg-card p-3 text-sm">
                   <p className="flex items-center gap-2 font-medium">
@@ -333,12 +487,34 @@ export function ImportContactsDialog({
                   Close
                 </Button>
                 <Button
+                  variant="outline"
+                  onClick={runPreview}
+                  disabled={previewing || importing || !hasEmailColumn}
+                >
+                  {previewing ? (
+                    <>
+                      <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+                      Previewing…
+                    </>
+                  ) : (
+                    "Preview import"
+                  )}
+                </Button>
+                <Button
                   onClick={runImport}
-                  disabled={importing || !hasEmailColumn}
+                  disabled={
+                    importing ||
+                    previewing ||
+                    !hasEmailColumn ||
+                    !preview ||
+                    preview.readyCount === 0
+                  }
                 >
                   {importing
                     ? "Importing…"
-                    : `Import ${rows.length} row${rows.length === 1 ? "" : "s"}`}
+                    : `Import ${preview?.readyCount ?? 0} contact${
+                        (preview?.readyCount ?? 0) === 1 ? "" : "s"
+                      }`}
                 </Button>
               </div>
             </>

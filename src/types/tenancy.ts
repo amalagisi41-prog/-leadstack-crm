@@ -403,6 +403,13 @@ export interface SubAccountDoc {
    * "IDX Listings (IDX Broker) v1".
    */
   idxConfig?: IdxConfig | null;
+  /**
+   * Guided A2P 10DLC setup state for this sub-account's texting number. Holds
+   * the business details, use-case summary, sample copy, and current
+   * carrier-review status so operators can finish setup over multiple
+   * sessions.
+   */
+  a2pRegistration?: A2pRegistration | null;
 }
 
 export interface GhlImportConfig {
@@ -427,6 +434,32 @@ export interface IdxConfig {
   lastSyncStatus: "idle" | "syncing" | "success" | "failed";
   lastSyncError: string | null;
   listingCount: number;
+}
+
+export type A2pCarrierStatus =
+  | "not_started"
+  | "draft"
+  | "submitted"
+  | "in_review"
+  | "approved"
+  | "rejected";
+
+export interface A2pRegistration {
+  status: A2pCarrierStatus;
+  businessLegalName: string;
+  businessType: string;
+  supportEmail: string;
+  supportPhone: string;
+  websiteUrl: string;
+  useCaseSummary: string;
+  sampleMessages: string[];
+  emailUpdates: boolean;
+  updateEmail: string | null;
+  lastStatusNote: string | null;
+  lastStatusChangedAt: Timestamp | FieldValue | null;
+  submittedAt: Timestamp | FieldValue | null;
+  approvedAt: Timestamp | FieldValue | null;
+  rejectedAt: Timestamp | FieldValue | null;
 }
 
 export interface AccountContact {

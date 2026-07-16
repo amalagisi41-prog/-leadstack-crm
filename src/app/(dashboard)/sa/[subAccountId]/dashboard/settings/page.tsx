@@ -19,6 +19,7 @@ import { SubAccountCustomFieldsSection } from "@/components/settings/sub-account
 import { SubAccountPipelineSection } from "@/components/settings/sub-account-pipeline-section";
 import { GhlImportWizard } from "@/components/import/ghl-import-wizard";
 import { SubAccountSmsSection } from "@/components/settings/sub-account-sms-section";
+import { SubAccountA2pSection } from "@/components/settings/sub-account-a2p-section";
 import { SubAccountMetaSection } from "@/components/settings/sub-account-meta-section";
 import { SubAccountEmailDomainSection } from "@/components/settings/sub-account-email-domain-section";
 import { SubAccountPayPalSection } from "@/components/settings/sub-account-paypal-section";
@@ -280,6 +281,9 @@ export default function SettingsPage() {
         <TabsContent value="messaging" className="mt-6 space-y-6">
           {/* SMS — opt-in dedicated Twilio number (also hosts the WhatsApp sender). */}
           <SubAccountSmsSection />
+
+          {/* A2P registration — guided 10DLC setup + manual carrier status tracking. */}
+          <SubAccountA2pSection />
 
           {/* Facebook + Instagram inbox (beta) — self-gates: renders only when
               the agency flipped metaInboxEnabledByAgency on for this sub-account. */}

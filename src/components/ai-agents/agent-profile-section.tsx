@@ -28,6 +28,17 @@ const NATIVE_SELECT_CLASSES =
 
 const DEFAULT_PROMPT_PLACEHOLDER = `You are a friendly receptionist for {{businessName}}. Help leads with quick questions about services and hours. If they want a quote, capture their name + best time to call and confirm someone will reach out. Stay short and warm — you're texting, not writing essays.`;
 
+const PROMPT_REVISIONS = {
+  warmer:
+    "Sound warm, reassuring, and conversational. Avoid stiff or corporate phrasing.",
+  shorter:
+    "Keep replies brief — usually 2 to 4 short sentences unless the lead asks for more detail.",
+  qualify:
+    "Ask the next best qualifying question early so the conversation moves toward a showing, consultation, or human handoff.",
+} as const;
+
+type SandboxTurn = { role: "user" | "assistant"; content: string };
+
 /**
  * Agent Profile editor — the shared identity used by every active channel.
  * Lives on the AI Agents → Overview page. Channels inherit this and only
@@ -36,7 +47,6 @@ const DEFAULT_PROMPT_PLACEHOLDER = `You are a friendly receptionist for {{busine
 export function AgentProfileSection() {
   const { subAccountId, subAccount, isAdmin } = useSubAccount();
 
-  const [profile, setProfile] = useState<AiAgentProfile | null>(null);
   const [loaded, setLoaded] = useState(false);
 
   const [systemPrompt, setSystemPrompt] = useState("");
@@ -54,8 +64,8 @@ export function AgentProfileSection() {
   // Test panel
   const [testMessage, setTestMessage] = useState("");
   const [testing, setTesting] = useState(false);
-  const [testReply, setTestReply] = useState<string | null>(null);
   const [testError, setTestError] = useState<string | null>(null);
+  const [sandboxHistory, setSandboxHistory] = useState<SandboxTurn[]>([]);
 
   const hydrate = useCallback(async () => {
     setLoaded(false);
@@ -65,7 +75,6 @@ export function AgentProfileSection() {
       );
       if (!res.ok) throw new Error("Failed to load agent profile");
       const data = (await res.json()) as { profile: AiAgentProfile | null };
-      setProfile(data.profile);
       if (data.profile) {
         // Saved profile exists — hydrate from server. Backfill the
         // suggestion if the saved prompt is somehow empty (e.g. legacy
@@ -137,9 +146,6 @@ export function AgentProfileSection() {
         toast.error(data.error ?? "Failed to save profile");
         return;
       }
-      if (data.profile) {
-        setProfile(data.profile);
-      }
       toast.success("Agent profile saved");
     } catch {
       toast.error("Network error — try again");
@@ -150,7 +156,6 @@ export function AgentProfileSection() {
 
   async function handleTest() {
     setTesting(true);
-    setTestReply(null);
     setTestError(null);
     try {
       const res = await fetch(
@@ -158,7 +163,22 @@ export function AgentProfileSection() {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: testMessage }),
+          body: JSON.stringify({
+            message: testMessage,
+            history: sandboxHistory,
+            draftProfile: {
+              systemPrompt,
+              businessName,
+              hoursStart,
+              hoursEnd,
+              timezone,
+              escalationKeywords: keywordsText
+                .split(",")
+                .map((s) => s.trim())
+                .filter((s) => s.length > 0),
+              escalationNotifyEmail: notifyEmail.trim() || null,
+            },
+          }),
         },
       );
       const data = (await res.json()) as {
@@ -170,12 +190,37 @@ export function AgentProfileSection() {
         setTestError(data.error ?? "Test failed");
         return;
       }
-      setTestReply(data.reply);
+      setSandboxHistory((prev) => [
+        ...prev,
+        { role: "user", content: testMessage.trim() },
+        { role: "assistant", content: data.reply ?? "" },
+      ]);
+      setTestMessage("");
     } catch {
       setTestError("Network error");
     } finally {
       setTesting(false);
     }
+  }
+
+  function applyPromptRevision(
+    kind: keyof typeof PROMPT_REVISIONS,
+    label: string,
+  ) {
+    const addition = PROMPT_REVISIONS[kind];
+    setSystemPrompt((prev) => {
+      const trimmed = prev.trim();
+      if (!trimmed) return addition;
+      if (trimmed.includes(addition)) return trimmed;
+      return `${trimmed}\n\n${addition}`;
+    });
+    toast.success(`${label} added to the draft persona.`);
+  }
+
+  function clearSandbox() {
+    setSandboxHistory([]);
+    setTestMessage("");
+    setTestError(null);
   }
 
   return (
@@ -316,21 +361,70 @@ export function AgentProfileSection() {
         </form>
       )}
 
-      {loaded && profile && systemPrompt.trim().length > 0 && (
+      {loaded && systemPrompt.trim().length > 0 && (
         <div className="mt-6 rounded-xl border bg-muted/20 p-4">
           <div className="mb-3 flex items-center gap-2">
             <Sparkles className="h-3.5 w-3.5 text-violet-500" />
-            <h3 className="text-sm font-medium">Test this persona</h3>
+            <h3 className="text-sm font-medium">Persona sandbox</h3>
           </div>
           <p className="text-xs text-muted-foreground">
-            Dry-run the LLM with the saved persona + safety rails. No SMS
-            sent, no contact touched.
+            Dry-run the current draft against your Business Blueprint before
+            you activate it. No SMS sent, no contact touched.
           </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => applyPromptRevision("warmer", "Warmer tone")}
+            >
+              Warm it up
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => applyPromptRevision("shorter", "Shorter replies")}
+            >
+              Tighten replies
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => applyPromptRevision("qualify", "Earlier qualification")}
+            >
+              Qualify sooner
+            </Button>
+            {sandboxHistory.length > 0 && (
+              <Button type="button" variant="ghost" size="sm" onClick={clearSandbox}>
+                Clear test
+              </Button>
+            )}
+          </div>
+          {sandboxHistory.length > 0 && (
+            <div className="mt-3 space-y-2 rounded-lg border bg-background p-3 text-sm">
+              {sandboxHistory.map((turn, index) => (
+                <div key={`${turn.role}-${index}`} className="space-y-1">
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                    {turn.role === "assistant" ? "AgentStack AI" : "Test lead"}
+                  </p>
+                  <p className="whitespace-pre-wrap rounded-lg bg-muted/30 px-3 py-2">
+                    {turn.content}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
           <div className="mt-3 flex gap-2">
             <Input
               value={testMessage}
               onChange={(e) => setTestMessage(e.target.value)}
-              placeholder="Pretend you're a lead. Type a message..."
+              placeholder={
+                sandboxHistory.length > 0
+                  ? "Send the next message in the test conversation..."
+                  : "Pretend you're a lead. Type the first message..."
+              }
               className="flex-1"
             />
             <Button
@@ -345,14 +439,6 @@ export function AgentProfileSection() {
               )}
             </Button>
           </div>
-          {testReply && (
-            <div className="mt-3 rounded-lg border bg-background p-3 text-sm">
-              <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                AI would reply
-              </p>
-              <p className="mt-1.5 whitespace-pre-wrap">{testReply}</p>
-            </div>
-          )}
           {testError && (
             <p className="mt-3 text-xs text-destructive">{testError}</p>
           )}

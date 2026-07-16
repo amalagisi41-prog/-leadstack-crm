@@ -1,8 +1,16 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { toast } from "sonner";
-import { CheckCircle2, Home, Loader2, Lock, RefreshCw } from "lucide-react";
+import {
+  CheckCircle2,
+  Copy,
+  ExternalLink,
+  Home,
+  Loader2,
+  Lock,
+  RefreshCw,
+} from "lucide-react";
 import { useSubAccount } from "@/context/sub-account-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,12 +32,21 @@ export function SubAccountIdxSection() {
   const gateOpen = subAccount?.idxEnabledByAgency === true;
   const cfg = subAccount?.idxConfig ?? null;
   const connected = !!cfg?.accessKey;
+  const syncPassed = cfg?.lastSyncStatus === "success" && (cfg?.listingCount ?? 0) > 0;
 
   const [accessKey, setAccessKey] = useState("");
   const [mlsId, setMlsId] = useState(cfg?.mlsId ?? "");
   const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
+
+  const publicIdxUrl = useMemo(() => {
+    const base =
+      typeof window !== "undefined"
+        ? window.location.origin
+        : (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "");
+    return `${base}/idx/${subAccountId}`;
+  }, [subAccountId]);
 
   if (!isAdmin) return null;
 
@@ -144,6 +161,11 @@ export function SubAccountIdxSection() {
     }
   }
 
+  function copyPublicUrl() {
+    void navigator.clipboard.writeText(publicIdxUrl);
+    toast.success("Public IDX URL copied.");
+  }
+
   return (
     <section className="rounded-2xl border bg-card p-6">
       <header className="mb-4 flex items-start gap-3">
@@ -159,6 +181,45 @@ export function SubAccountIdxSection() {
           </p>
         </div>
       </header>
+
+      <div className="mb-5 grid gap-3 md:grid-cols-3">
+        {[
+          {
+            number: 1,
+            title: "Credentials",
+            body: connected
+              ? "Your access key is saved. Update it any time if the account changes."
+              : "Paste your IDX Broker Platinum key and optional MLS id to connect the feed.",
+            done: connected,
+          },
+          {
+            number: 2,
+            title: "Sync test",
+            body: syncPassed
+              ? `Last sync passed with ${cfg?.listingCount ?? 0} live listings.`
+              : "Run one manual sync to confirm listings are flowing before you send traffic.",
+            done: syncPassed,
+          },
+          {
+            number: 3,
+            title: "Go live",
+            body: connected
+              ? "Open or copy your public listings URL when you're ready to launch."
+              : "Once connected, you'll get a branded public listings URL to share.",
+            done: connected && syncPassed,
+          },
+        ].map((step) => (
+          <div key={step.number} className="rounded-xl border bg-background p-4">
+            <div className="mb-2 flex items-center gap-2">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#173B7A] text-sm font-semibold text-white">
+                {step.done ? <CheckCircle2 className="h-4 w-4" /> : step.number}
+              </span>
+              <p className="text-sm font-medium">{step.title}</p>
+            </div>
+            <p className="text-xs text-muted-foreground">{step.body}</p>
+          </div>
+        ))}
+      </div>
 
       {connected ? (
         <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4">
@@ -183,7 +244,39 @@ export function SubAccountIdxSection() {
               Last sync failed: {cfg.lastSyncError}
             </p>
           )}
+          <div className="mt-4 rounded-lg border bg-background p-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Public listings URL
+            </p>
+            <p className="mt-1 break-all text-sm">{publicIdxUrl}</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              This is the page you can link from your site, ads, or email once
+              your sync test looks right.
+            </p>
+          </div>
           <div className="mt-4 flex flex-wrap justify-end gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={copyPublicUrl}
+              disabled={disconnecting || syncing}
+            >
+              <Copy className="mr-1 h-3.5 w-3.5" />
+              Copy URL
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              render={
+                <a href={publicIdxUrl} target="_blank" rel="noreferrer" />
+              }
+              disabled={disconnecting || syncing}
+            >
+              <ExternalLink className="mr-1 h-3.5 w-3.5" />
+              Open site
+            </Button>
             <Button
               type="button"
               variant="outline"
