@@ -15,6 +15,10 @@ import {
   sendEscalationNotification,
 } from "@/lib/comms/ai/escalation";
 import {
+  getMarketingChatKnowledgeChunks,
+} from "@/lib/landing/marketing-chat-kb";
+import { isMarketingWebChatSubAccount } from "@/lib/marketing-chat";
+import {
   appendMessage,
   getOrCreateSession,
   loadRecentHistory,
@@ -254,13 +258,16 @@ export async function respondToWebChat(
     retrieveRelevantChunks(input.subAccountId, input.incomingMessage),
   ]);
   const subAccount = saSnap.data() as SubAccountDoc | undefined;
+  const marketingKnowledge = isMarketingWebChatSubAccount(input.subAccountId)
+    ? getMarketingChatKnowledgeChunks()
+    : [];
 
   let systemPrompt = buildSystemPrompt({
     agent,
     channelId: "web-chat",
     fallbackBusinessName: subAccount?.name ?? "the business",
     contactContextBlock: contextBlock,
-    retrievedChunks,
+    retrievedChunks: [...marketingKnowledge, ...retrievedChunks],
   });
 
   // Tack a session-state hint onto the prompt when capture is already

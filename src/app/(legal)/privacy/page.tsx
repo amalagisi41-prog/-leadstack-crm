@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { openCrispChat } from "@/lib/crisp";
+import { openSupportChat } from "@/lib/support-chat";
 import { CUSTOM_BRAND } from "@/config/landing";
 
 export default function PrivacyPage() {
@@ -96,7 +96,7 @@ export default function PrivacyPage() {
           For questions about this Privacy Policy,{" "}
           <button
             type="button"
-            onClick={openCrispChat}
+            onClick={openSupportChat}
             className="underline-offset-4 hover:underline"
           >
             contact support via Chat

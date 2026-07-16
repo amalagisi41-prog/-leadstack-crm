@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { openCrispChat } from "@/lib/crisp";
+import { openSupportChat } from "@/lib/support-chat";
 import { CUSTOM_BRAND } from "@/config/landing";
 
 export default function TermsPage() {
@@ -161,7 +161,7 @@ export default function TermsPage() {
           For questions about these Terms,{" "}
           <button
             type="button"
-            onClick={openCrispChat}
+            onClick={openSupportChat}
             className="underline-offset-4 hover:underline"
           >
             contact support via Chat

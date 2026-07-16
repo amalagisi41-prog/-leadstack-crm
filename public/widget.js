@@ -57,6 +57,40 @@
   var isOpen = false;
   var config = null;
 
+  function shouldAutoOpen() {
+    try {
+      return new URLSearchParams(window.location.search).get("chat") === "1";
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function drainQueuedActions() {
+    var queue = window.__agentStackSupportChatQueue;
+    if (!queue || !queue.length) return;
+    while (queue.length) {
+      var action = queue.shift();
+      if (action === "open") openIframe();
+      else if (action === "close") collapseIframe();
+      else if (action === "toggle") {
+        if (isOpen) collapseIframe();
+        else openIframe();
+      }
+    }
+  }
+
+  function publishApi() {
+    window.AgentStackSupportChat = {
+      open: openIframe,
+      close: collapseIframe,
+      toggle: function () {
+        if (isOpen) collapseIframe();
+        else openIframe();
+      },
+    };
+    drainQueuedActions();
+  }
+
   fetch(BASE + "/api/web-chat/config?sa=" + encodeURIComponent(saId), {
     method: "GET",
     credentials: "omit",
@@ -69,6 +103,8 @@
       config = data;
       mountBubble();
       listenForIframeMessages();
+      publishApi();
+      if (shouldAutoOpen()) openIframe();
     })
     .catch(function () {
       // Network failure: silently degrade. The buyer's site shouldn't
@@ -105,6 +141,7 @@
 
   // ---- Step 5: iframe ---------------------------------------------
   function openIframe() {
+    if (isOpen) return;
     if (!iframe) {
       iframe = document.createElement("iframe");
       // Pass the parent's URL into the iframe so the chat UI can stamp
@@ -150,6 +187,8 @@
 
   function collapseIframe() {
     if (!iframe) return;
+    if (!isOpen && iframe.style.display === "none") return;
+    isOpen = false;
     iframe.style.opacity = "0";
     iframe.style.transform = "translateY(8px) scale(0.98)";
     // Keep the iframe in the DOM (preserves React state, no reload on
@@ -157,7 +196,6 @@
     setTimeout(function () {
       if (iframe && !isOpen) iframe.style.display = "none";
     }, 200);
-    isOpen = false;
     bubble.setAttribute("aria-label", "Open chat");
     bubble.innerHTML = "&#128172;";
   }
