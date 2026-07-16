@@ -3,6 +3,7 @@ import "server-only";
 import { NextResponse } from "next/server";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import { provisionBetaOwner } from "@/lib/auth/provision-beta-owner";
+import { resolveAgencyAccess } from "@/lib/auth/resolve-agency-access";
 
 export async function POST(request: Request) {
   const authorization = request.headers.get("authorization") ?? "";
@@ -14,7 +15,6 @@ export async function POST(request: Request) {
   }
 
   const auth = getAdminAuth();
-  const db = getAdminDb();
   const decoded = await auth.verifyIdToken(idToken).catch(() => null);
   if (!decoded?.uid || !decoded.email) {
     return NextResponse.json({ error: "Invalid social sign-in." }, { status: 401 });
@@ -22,17 +22,29 @@ export async function POST(request: Request) {
 
   const uid = decoded.uid;
   const email = decoded.email.trim().toLowerCase();
-  const existing = await db.doc(`users/${uid}`).get();
-  if (existing.exists) {
-    const data = existing.data() ?? {};
-    const agencyRole = (await auth.getUser(uid)).customClaims?.agencyRole;
+  const resolved = await resolveAgencyAccess(uid);
+  if (resolved) {
+    const legacyRole =
+      resolved.agencyRole === "owner" ? "admin" : "collaborator";
+
+    // Repair stale/missing tenancy claims whenever an existing user signs in.
+    // This is especially important after Firebase Admin credentials are fixed:
+    // the account may exist while the browser token still lacks agencyId.
+    await auth.setCustomUserClaims(uid, {
+      role: legacyRole,
+      status: resolved.status,
+      agencyId: resolved.agencyId,
+      agencyRole: resolved.agencyRole,
+    });
     return NextResponse.json({
-      redirectTo: agencyRole === "owner" ? "/agency" : "/dashboard",
+      redirectTo: resolved.agencyRole === "owner" ? "/agency" : "/dashboard",
       existing: true,
-      agencyId: data.primaryAgencyId ?? null,
+      agencyId: resolved.agencyId,
+      recoveredAgencyId: resolved.repairedPrimaryAgencyId,
     });
   }
 
+  const db = getAdminDb();
   const userRecord = await auth.getUser(uid);
   const displayName =
     userRecord.displayName?.trim() || email.split("@")[0] || "AgentStack user";

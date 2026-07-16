@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Compass } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useAgency } from "@/hooks/use-agency";
@@ -15,6 +16,7 @@ import { NextStepsTab } from "@/components/agency/getting-started/next-steps-tab
  * API calls.
  */
 export default function GetStartedPage() {
+  const router = useRouter();
   const { user, loading, agencyRole, memberships } = useAuth();
   const firstSubAccountId = memberships[0]?.subAccountId ?? null;
   const agency = useAgency();
@@ -22,6 +24,12 @@ export default function GetStartedPage() {
   useEffect(() => {
     document.title = `Get started · ${agency.name}`;
   }, [agency.name]);
+
+  useEffect(() => {
+    if (!loading && user && firstSubAccountId) {
+      router.replace(`/sa/${firstSubAccountId}/get-started`);
+    }
+  }, [firstSubAccountId, loading, router, user]);
 
   if (loading) {
     return (
@@ -44,6 +52,15 @@ export default function GetStartedPage() {
     return (
       <div className="mx-auto max-w-5xl rounded-2xl border bg-card p-8 text-center text-sm text-muted-foreground">
         Only the agency owner can view this orientation page.
+      </div>
+    );
+  }
+
+  if (firstSubAccountId) {
+    return (
+      <div className="mx-auto max-w-5xl space-y-4">
+        <div className="h-8 w-48 animate-pulse rounded bg-muted" />
+        <div className="h-64 animate-pulse rounded-2xl bg-muted/40" />
       </div>
     );
   }

@@ -45,45 +45,45 @@ function Stars() {
 
 export function Testimonials() {
   return (
-    <section className="bg-[#1a2540] py-24">
+    <section className="bg-[#FFF8EF] py-24 md:py-28">
       <div className="container mx-auto px-4">
-        <div className="mx-auto max-w-2xl text-center mb-14">
-          <p className="text-sm font-semibold uppercase tracking-wide text-blue-400 mb-2">
+        <div className="mx-auto mb-14 max-w-3xl text-center">
+          <p className="mb-2 text-sm font-semibold uppercase tracking-[0.28em] text-[#173B7A]">
             The kind of results agents see
           </p>
-          <h2 className="text-3xl font-semibold tracking-tighter text-white sm:text-5xl">
+          <h2 className="text-3xl font-semibold tracking-tight text-[#173B7A] sm:text-5xl">
             Stop{" "}
-            <span className="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text font-sans font-normal italic text-transparent">
+            <span className="font-sans font-normal italic text-[#DB4F9B]">
               losing leads
             </span>
           </h2>
-          <p className="mt-3 text-xs text-blue-200/60">
+          <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-[#526078]">
             Illustrative examples of outcomes AgentStack is built to drive. Real
             customer stories will replace these as they come in.
           </p>
         </div>
 
-        <div className="mx-auto max-w-5xl grid gap-6 sm:grid-cols-3">
+        <div className="mx-auto grid max-w-6xl gap-6 sm:grid-cols-3">
           {testimonials.map(({ quote, name, title, initials, metric, metricLabel, color }) => (
             <div
               key={name}
-              className="flex flex-col gap-4 rounded-2xl border border-[#2a3f5f]/60 bg-[#1e3050]/50 p-6"
+              className="flex flex-col gap-4 rounded-[1.75rem] border border-[#E7DCC7] bg-[#FFFDFC] p-6 shadow-[0_14px_40px_rgba(23,59,122,0.06)]"
             >
               <Stars />
-              <div className="rounded-xl bg-blue-600/10 border border-blue-600/20 px-3 py-2 text-center">
-                <span className="text-xl font-bold text-blue-400">{metric}</span>
-                <p className="text-[10px] text-blue-300/70 mt-0.5">{metricLabel}</p>
+              <div className="rounded-xl border border-[#E7DCC7] bg-[#FFF8EF] px-3 py-2 text-center">
+                <span className="text-xl font-semibold text-[#173B7A]">{metric}</span>
+                <p className="mt-0.5 text-[10px] text-[#7B8AA1]">{metricLabel}</p>
               </div>
-              <p className="text-sm leading-relaxed text-blue-100/70 flex-1">
+              <p className="flex-1 text-sm leading-relaxed text-[#526078]">
                 &ldquo;{quote}&rdquo;
               </p>
-              <div className="flex items-center gap-3 pt-2 border-t border-[#2a3f5f]/60">
+              <div className="flex items-center gap-3 border-t border-[#EFE4D3] pt-2">
                 <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${color} text-white text-sm font-bold`}>
                   {initials}
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-white">{name}</p>
-                  <p className="text-xs text-blue-300/60">{title}</p>
+                  <p className="text-sm font-semibold text-[#173B7A]">{name}</p>
+                  <p className="text-xs text-[#7B8AA1]">{title}</p>
                 </div>
               </div>
             </div>

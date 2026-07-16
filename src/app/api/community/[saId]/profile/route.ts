@@ -6,8 +6,8 @@ import { getAdminDb } from "@/lib/firebase/admin";
 
 export const dynamic = "force-dynamic";
 
-export const BIO_MAX = 300;
-export const NAME_MAX = 60;
+const BIO_MAX = 300;
+const NAME_MAX = 60;
 
 /** Member: update their own display name + bio. */
 export async function PATCH(

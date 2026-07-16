@@ -42,18 +42,23 @@ export function FAQ({ brand }: { brand: ResolvedBrand }) {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section id="faq" className="py-24">
+    <section id="faq" className="bg-white py-24 md:py-28">
       <div className="container mx-auto px-4">
-        <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-semibold tracking-tighter sm:text-5xl">
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#173B7A]">
+            Frequently asked
+          </p>
+          <h2 className="mt-4 text-3xl font-semibold tracking-tight text-[#173B7A] sm:text-5xl">
             Frequently{" "}
-            <span className="font-sans font-normal italic">asked</span>
+            <span className="font-sans font-normal italic text-[#DB4F9B]">
+              asked
+            </span>
           </h2>
-          <p className="mt-4 text-lg text-muted-foreground">
+          <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-[#526078] sm:text-lg">
             Can&apos;t find what you&apos;re looking for? Email{" "}
             <a
               href={`mailto:${brand.supportEmail}`}
-              className="text-primary hover:underline"
+              className="text-[#173B7A] underline decoration-[#173B7A]/30 decoration-2 underline-offset-4 hover:decoration-[#173B7A]/60"
             >
               {brand.supportEmail}
             </a>
@@ -61,19 +66,22 @@ export function FAQ({ brand }: { brand: ResolvedBrand }) {
           </p>
         </div>
 
-        <div className="mx-auto mt-12 max-w-2xl divide-y">
+        <div className="mx-auto mt-12 max-w-4xl space-y-4">
           {faqs.map(({ question, answer }, index) => (
-            <div key={question}>
+            <div
+              key={question}
+              className="overflow-hidden rounded-[1.5rem] border border-[#E7DCC7] bg-[#FFF8EF] shadow-[0_12px_32px_rgba(23,59,122,0.05)]"
+            >
               <button
                 onClick={() =>
                   setOpenIndex(openIndex === index ? null : index)
                 }
-                className="flex w-full items-center justify-between py-5 text-left text-sm font-medium transition-colors hover:text-primary"
+                className="flex w-full items-center justify-between px-5 py-5 text-left text-base font-medium text-[#173B7A] transition-colors hover:text-[#DB4F9B] sm:px-6"
               >
                 {question}
                 <ChevronDown
                   className={cn(
-                    "ml-4 h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200",
+                    "ml-4 h-4 w-4 shrink-0 text-[#7B8AA1] transition-transform duration-200",
                     openIndex === index && "rotate-180",
                   )}
                 />
@@ -82,12 +90,12 @@ export function FAQ({ brand }: { brand: ResolvedBrand }) {
                 className={cn(
                   "grid transition-all duration-200",
                   openIndex === index
-                    ? "grid-rows-[1fr] pb-5"
+                    ? "grid-rows-[1fr] px-5 pb-5 sm:px-6"
                     : "grid-rows-[0fr]",
                 )}
               >
                 <div className="overflow-hidden">
-                  <p className="text-sm leading-relaxed text-muted-foreground">
+                  <p className="text-sm leading-7 text-[#526078] sm:text-base">
                     {answer}
                   </p>
                 </div>

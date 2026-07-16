@@ -1,12 +1,6 @@
-import { Zap, Users, CalendarCheck, Star, Globe, BarChart3, Gem } from "lucide-react";
+import { Zap, Users, CalendarCheck, Star, Globe, BarChart3 } from "lucide-react";
 
 const features = [
-  {
-    icon: Gem,
-    title: "Built for how you actually work",
-    body: "Tell it whether you're a Solo Agent, a Team, a Broker, or a Luxury Broker — the stages every deal moves through, how your assistant talks to clients, and your follow-up schedule all adjust automatically. Nothing to configure yourself.",
-    color: "bg-indigo-500/10 text-indigo-500",
-  },
   {
     icon: Zap,
     title: "Every lead answered instantly",
@@ -40,41 +34,41 @@ const features = [
   {
     icon: BarChart3,
     title: "Know your numbers without trying",
-    body: "GCI by month, deal value by stage, leads by source. Everything updates live. No Excel exports, no copy-paste errors.",
+    body: "GCI by month, pipeline value by stage, leads by source. Everything updates live. No Excel exports, no copy-paste errors.",
     color: "bg-rose-500/10 text-rose-500",
   },
 ];
 
 export function Features() {
   return (
-    <section id="features" className="bg-white py-24">
+    <section id="features" className="bg-[#FFF8EF] py-24 md:py-28">
       <div className="container mx-auto px-4">
-        <div className="mx-auto max-w-2xl text-center">
-          <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">
-            What happens once it&apos;s set up
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#173B7A]">
+            What AgentStack does for you
           </p>
-          <h2 className="mt-2 text-3xl font-semibold tracking-tighter sm:text-5xl">
+          <h2 className="mt-4 text-3xl font-semibold tracking-tight text-[#173B7A] sm:text-5xl">
             Less configuring.{" "}
-            <span className="bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text font-sans font-normal italic text-transparent">
+            <span className="font-sans font-normal italic text-[#DB4F9B]">
               More closing.
             </span>
           </h2>
-          <p className="mt-4 text-lg text-muted-foreground">
-            You shouldn&apos;t need a tech degree to run your business — and you won&apos;t need one here. AgentStack sets up in 15 minutes, then runs quietly in the background while you work with clients.
+          <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-[#526078] sm:text-lg">
+            You shouldn&apos;t need a tech degree to run your business. AgentStack sets up in 15 minutes and pays for itself with one closed deal.
           </p>
         </div>
 
-        <div className="mx-auto mt-16 grid max-w-5xl gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mx-auto mt-14 grid max-w-6xl gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {features.map(({ icon: Icon, title, body, color }) => (
             <div
               key={title}
-              className="group rounded-2xl border bg-card p-6 transition-all hover:-translate-y-0.5 hover:shadow-md"
+              className="group rounded-[1.5rem] border border-[#E7DCC7] bg-[#FFFDFC] p-5 shadow-[0_12px_32px_rgba(23,59,122,0.05)] transition-all hover:-translate-y-1 hover:shadow-[0_18px_48px_rgba(23,59,122,0.08)] sm:p-6"
             >
-              <span className={`mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg ${color}`}>
+              <span className={`mb-4 inline-flex h-10 w-10 items-center justify-center rounded-xl ${color}`}>
                 <Icon className="h-5 w-5" />
               </span>
-              <h3 className="text-base font-semibold">{title}</h3>
-              <p className="mt-1.5 text-sm text-muted-foreground">{body}</p>
+              <h3 className="text-base font-semibold text-[#173B7A]">{title}</h3>
+              <p className="mt-1.5 text-sm leading-6 text-[#526078]">{body}</p>
             </div>
           ))}
         </div>

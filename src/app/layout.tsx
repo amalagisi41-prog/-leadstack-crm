@@ -1,23 +1,9 @@
-import type { Metadata, Viewport } from "next";
-import { DM_Sans, Geist_Mono } from "next/font/google";
+import type { Metadata } from "next";
 import { Providers } from "@/components/providers";
 import { RefTracker } from "@/components/affiliate/ref-tracker";
 import { AnalyticsScripts } from "@/components/analytics-scripts";
-import { RegisterServiceWorker } from "@/components/pwa/register-service-worker";
 import { CUSTOM_BRAND, LANDING_VARIANT } from "@/config/landing";
 import "./globals.css";
-
-const dmSans = DM_Sans({
-  variable: "--font-dm-sans",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  style: ["normal", "italic"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 // Metadata follows the same variant the landing page renders. The custom
 // variant derives title + description from CUSTOM_BRAND so the buyer edits
@@ -27,22 +13,12 @@ export const metadata: Metadata =
     ? {
         title: `${CUSTOM_BRAND.name} — ${CUSTOM_BRAND.tagline}`,
         description: CUSTOM_BRAND.shortDescription,
-        appleWebApp: { title: CUSTOM_BRAND.name, statusBarStyle: "default" },
-        icons: { apple: "/icons/apple-touch-icon.png" },
       }
     : {
-        title: "AgentStack — The all-in-one CRM for teams that actually close",
+        title: "LeadStack — The all-in-one CRM for teams that actually close",
         description:
           "Capture leads, run pipelines, and book meetings from one simple workspace. Built for small teams that want to replace five tools with one.",
-        appleWebApp: { title: "AgentStack", statusBarStyle: "default" },
-        icons: { apple: "/icons/apple-touch-icon.png" },
       };
-
-// Separate from `metadata` per the Next.js 14+ split -- themeColor lives
-// here now, not on the Metadata object.
-export const viewport: Viewport = {
-  themeColor: "#173B7A",
-};
 
 export default function RootLayout({
   children,
@@ -51,9 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${dmSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className="antialiased">
         {process.env.NEXT_PUBLIC_GTM_ID && (
           <noscript>
             <iframe
@@ -66,7 +40,6 @@ export default function RootLayout({
         )}
         <Providers>{children}</Providers>
         <RefTracker />
-        <RegisterServiceWorker />
         {process.env.NEXT_PUBLIC_META_PIXEL_ID && (
           <noscript>
             {/* Meta Pixel no-JS fallback — must be a bare <img> tag.

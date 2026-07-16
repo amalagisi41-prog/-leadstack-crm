@@ -68,27 +68,26 @@
 }
 
 :root {
-  /* Near-white, barely-warm neutrals — cleaner and easier to scan at a
-     glance than the previous cream tone (higher chroma read as tinted/busy
-     next to plain white cards). */
-  --background: oklch(0.985 0.006 78);
+  --font-dm-sans: "DM Sans", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-geist-mono: "Geist Mono", "SFMono-Regular", ui-monospace, "Cascadia Mono", "Segoe UI Mono", "Roboto Mono", monospace;
+  --background: oklch(0.97 0.025 78);
   --foreground: oklch(0.145 0 0);
-  --card: oklch(0.995 0.002 75);
+  --card: oklch(0.99 0.012 75);
   --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(0.995 0.002 75);
+  --popover: oklch(0.99 0.012 75);
   --popover-foreground: oklch(0.145 0 0);
-  /* Muted navy — complements the near-white background */
+  /* Muted navy — complements cream background */
   --primary: oklch(0.38 0.12 248);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.96 0.006 78);
+  --secondary: oklch(0.94 0.015 78);
   --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.96 0.006 78);
-  --muted-foreground: oklch(0.50 0.012 75);
-  --accent: oklch(0.91 0.02 248);
+  --muted: oklch(0.94 0.015 78);
+  --muted-foreground: oklch(0.50 0.018 75);
+  --accent: oklch(0.91 0.025 248);
   --accent-foreground: oklch(0.38 0.12 248);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.91 0.008 78);
-  --input: oklch(0.91 0.008 78);
+  --border: oklch(0.88 0.025 78);
+  --input: oklch(0.88 0.025 78);
   --ring: oklch(0.38 0.12 248);
   --chart-1: oklch(0.546 0.245 262.881);
   --chart-2: oklch(0.623 0.214 259.815);

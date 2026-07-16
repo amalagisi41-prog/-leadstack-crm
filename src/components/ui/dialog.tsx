@@ -20,7 +20,13 @@ function DialogPortal({ ...props }: DialogPrimitive.Portal.Props) {
 }
 
 function DialogClose({ ...props }: DialogPrimitive.Close.Props) {
-  return <DialogPrimitive.Close data-slot="dialog-close" {...props} />
+  return (
+    <DialogPrimitive.Close
+      data-slot="dialog-close"
+      nativeButton={false}
+      {...props}
+    />
+  )
 }
 
 function DialogOverlay({
@@ -62,8 +68,10 @@ function DialogContent({
         {showCloseButton && (
           <DialogPrimitive.Close
             data-slot="dialog-close"
+            nativeButton={false}
             render={
               <Button
+                nativeButton={false}
                 variant="ghost"
                 className="absolute top-2 right-2"
                 size="icon-sm"
@@ -109,7 +117,10 @@ function DialogFooter({
     >
       {children}
       {showCloseButton && (
-        <DialogPrimitive.Close render={<Button variant="outline" />}>
+        <DialogPrimitive.Close
+          nativeButton={false}
+          render={<Button nativeButton={false} variant="outline" />}
+        >
           Close
         </DialogPrimitive.Close>
       )}

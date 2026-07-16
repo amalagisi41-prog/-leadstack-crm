@@ -10,7 +10,6 @@ import {
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetClose,
 } from "@/components/ui/sheet";
 import type { ResolvedBrand } from "@/config/landing";
 import { BrandLockup } from "./brand-lockup";
@@ -28,8 +27,11 @@ export function Navbar({ brand }: { brand: ResolvedBrand }) {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-[#173B7A]/10 bg-[#FFF6E8]/95 text-[#173B7A] backdrop-blur">
-      <div className="container relative mx-auto flex h-16 items-center justify-between px-4">
-        <Link href="/" className="absolute left-1/2 flex -translate-x-1/2 items-center">
+      <div className="container mx-auto flex h-16 items-center gap-4 px-4">
+        <Link
+          href="/"
+          className="shrink-0"
+        >
           {brand.logoUrl && brand.name.toLowerCase() !== "agentstack" ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -38,38 +40,42 @@ export function Navbar({ brand }: { brand: ResolvedBrand }) {
               className="h-8 w-auto max-w-[160px] object-contain"
             />
           ) : (
-            <BrandLockup brand={brand} subline="" />
+            <BrandLockup brand={brand} showMark size="sm" subline="" />
           )}
         </Link>
 
-        <nav className="hidden items-center gap-6 md:flex">
+        <nav className="hidden flex-1 items-center justify-center gap-6 md:flex">
           {links.map(({ href, label }) => (
             <a
               key={href}
               href={href}
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              className="text-sm font-medium text-[#526078] transition-colors hover:text-[#173B7A]"
             >
               {label}
             </a>
           ))}
         </nav>
 
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="hidden shrink-0 items-center gap-3 md:flex">
           {!loading && (
             <>
               {user ? (
                 <Button render={<Link href="/dashboard" />} size="sm">
-                  Dashboard
+                  Open Workspace
                 </Button>
               ) : (
                 <>
-                  <Button render={<Link href="/login" />} variant="ghost" size="sm">
+                  <Button
+                    render={<Link href="/login" />}
+                    variant="ghost"
+                    size="sm"
+                  >
                     Sign in
                   </Button>
                   <Button
                     render={<Link href="/signup" />}
                     size="sm"
-                    className="bg-[#1a2f50] hover:bg-[#243d66] text-white"
+                    className="bg-[#1a2f50] text-white hover:bg-[#243d66]"
                   >
                     Start Free
                   </Button>
@@ -97,38 +103,45 @@ export function Navbar({ brand }: { brand: ResolvedBrand }) {
             </SheetHeader>
             <nav className="flex flex-col gap-4 p-4">
               {links.map(({ href, label }) => (
-                <SheetClose
+                <a
                   key={href}
-                  render={<a href={href} />}
-                  className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                  href={href}
+                  onClick={() => setOpen(false)}
+                  className="text-muted-foreground hover:text-foreground text-sm font-medium transition-colors"
                 >
                   {label}
-                </SheetClose>
+                </a>
               ))}
               {!loading && (
                 <>
                   {user ? (
-                    <SheetClose render={<span />}>
-                      <Button render={<Link href="/dashboard" />} className="w-full" size="sm">
-                        Dashboard
-                      </Button>
-                    </SheetClose>
+                    <Button
+                      render={<Link href="/dashboard" />}
+                      className="w-full"
+                      size="sm"
+                      onClick={() => setOpen(false)}
+                    >
+                      Open Workspace
+                    </Button>
                   ) : (
                     <>
-                      <SheetClose render={<span />}>
-                        <Button render={<Link href="/login" />} variant="ghost" className="w-full" size="sm">
-                          Sign in
-                        </Button>
-                      </SheetClose>
-                      <SheetClose render={<span />}>
-                        <Button
-                          render={<Link href="/signup" />}
-                          className="w-full bg-[#1a2f50] hover:bg-[#243d66] text-white"
-                          size="sm"
-                        >
-                          Start Free
-                        </Button>
-                      </SheetClose>
+                      <Button
+                        render={<Link href="/login" />}
+                        variant="ghost"
+                        className="w-full"
+                        size="sm"
+                        onClick={() => setOpen(false)}
+                      >
+                        Sign in
+                      </Button>
+                      <Button
+                        render={<Link href="/signup" />}
+                        className="w-full bg-[#1a2f50] text-white hover:bg-[#243d66]"
+                        size="sm"
+                        onClick={() => setOpen(false)}
+                      >
+                        Start Free
+                      </Button>
                     </>
                   )}
                 </>

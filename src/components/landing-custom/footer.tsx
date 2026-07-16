@@ -4,7 +4,7 @@ import { BrandLockup } from "./brand-lockup";
 
 export function Footer({ brand }: { brand: ResolvedBrand }) {
   return (
-    <footer className="border-t border-[#173B7A]/10 bg-[#FFF6E8] py-12 text-[#173B7A]">
+    <footer className="border-t border-[#E7DCC7] bg-[#FFF8EF] py-12 text-[#173B7A]">
       <div className="container mx-auto px-4">
         <div className="grid gap-8 sm:grid-cols-4">
           <div className="sm:col-span-1">
@@ -20,18 +20,18 @@ export function Footer({ brand }: { brand: ResolvedBrand }) {
                 <BrandLockup brand={brand} size="sm" showMark />
               )}
             </Link>
-            <p className="mt-3 text-sm text-muted-foreground">
+            <p className="mt-3 text-sm leading-6 text-[#526078]">
               {brand.tagline}.
             </p>
           </div>
 
           <div>
             <h3 className="mb-3 text-sm font-semibold">Product</h3>
-            <ul className="space-y-2 text-sm text-muted-foreground">
+            <ul className="space-y-2 text-sm text-[#526078]">
               <li>
                 <a
                   href="#features"
-                  className="transition-colors hover:text-foreground"
+                  className="transition-colors hover:text-[#173B7A]"
                 >
                   Features
                 </a>
@@ -39,7 +39,7 @@ export function Footer({ brand }: { brand: ResolvedBrand }) {
               <li>
                 <a
                   href="#faq"
-                  className="transition-colors hover:text-foreground"
+                  className="transition-colors hover:text-[#173B7A]"
                 >
                   FAQ
                 </a>
@@ -49,11 +49,11 @@ export function Footer({ brand }: { brand: ResolvedBrand }) {
 
           <div>
             <h3 className="mb-3 text-sm font-semibold">Legal</h3>
-            <ul className="space-y-2 text-sm text-muted-foreground">
+            <ul className="space-y-2 text-sm text-[#526078]">
               <li>
                 <Link
                   href="/terms"
-                  className="transition-colors hover:text-foreground"
+                  className="transition-colors hover:text-[#173B7A]"
                 >
                   Terms of Service
                 </Link>
@@ -61,7 +61,7 @@ export function Footer({ brand }: { brand: ResolvedBrand }) {
               <li>
                 <Link
                   href="/privacy"
-                  className="transition-colors hover:text-foreground"
+                  className="transition-colors hover:text-[#173B7A]"
                 >
                   Privacy Policy
                 </Link>
@@ -71,11 +71,11 @@ export function Footer({ brand }: { brand: ResolvedBrand }) {
 
           <div>
             <h3 className="mb-3 text-sm font-semibold">Contact</h3>
-            <ul className="space-y-2 text-sm text-muted-foreground">
+            <ul className="space-y-2 text-sm text-[#526078]">
               <li>
                 <a
                   href={`mailto:${brand.supportEmail}`}
-                  className="transition-colors hover:text-foreground"
+                  className="transition-colors hover:text-[#173B7A]"
                 >
                   {brand.supportEmail}
                 </a>
@@ -83,7 +83,7 @@ export function Footer({ brand }: { brand: ResolvedBrand }) {
               <li>
                 <a
                   href={`https://${brand.primaryDomain}`}
-                  className="transition-colors hover:text-foreground"
+                  className="transition-colors hover:text-[#173B7A]"
                 >
                   {brand.primaryDomain}
                 </a>
@@ -92,7 +92,7 @@ export function Footer({ brand }: { brand: ResolvedBrand }) {
           </div>
         </div>
 
-        <div className="mt-8 border-t pt-8 text-center text-sm text-muted-foreground">
+        <div className="mt-8 border-t border-[#EFE4D3] pt-8 text-center text-sm text-[#7B8AA1]">
           &copy; {new Date().getFullYear()} {brand.name} &middot; The easiest way to run a modern real estate business.
         </div>
       </div>

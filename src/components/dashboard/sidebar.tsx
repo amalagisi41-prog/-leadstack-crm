@@ -34,7 +34,6 @@ import {
   GraduationCap,
   Filter,
   BookOpen,
-  ChevronDown,
 } from "lucide-react";
 import { getFirebaseDb } from "@/lib/firebase/client";
 import { signOutUser } from "@/lib/firebase/auth";
@@ -42,7 +41,6 @@ import { useDueTodayCount } from "@/hooks/use-due-today";
 import { useUnreadConversationsCount } from "@/hooks/use-unread-conversations";
 import { useAuth } from "@/hooks/use-auth";
 import { useAgency } from "@/hooks/use-agency";
-import { Button } from "@/components/ui/button";
 import { LogoMark } from "@/components/brand/logo-mark";
 import { cn } from "@/lib/utils";
 import {
@@ -69,7 +67,7 @@ const SUB_ACCOUNT_NAV_SECTIONS: NavSection[] = [
   {
     label: "Workspace",
     items: [
-      { href: "/dashboard", label: "Dashboard", icon: Home, enabled: true },
+      { href: "/dashboard", label: "Today", icon: Home, enabled: true },
       {
         href: "/conversations",
         label: "Conversations",
@@ -241,7 +239,7 @@ function SidebarContent() {
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-3 py-4">
         {/* Agency-level links */}
-        {(agencyRole === "owner" || memberships.length > 1) && (
+        {agencyRole === "owner" && (
           <div className="mb-4">
             <p className="mb-1.5 px-2 text-[10px] font-semibold uppercase tracking-wider text-white/30">
               Agency
@@ -380,11 +378,7 @@ function SidebarContent() {
 
         {!showSubNav && !loading && membershipsLoaded && (
           <p className="rounded-md border border-white/10 px-3 py-3 text-xs text-white/40">
-            Pick a sub-account from{" "}
-            <Link href="/agency" className="text-blue-400 underline">
-              Agency home
-            </Link>{" "}
-            to see its data.
+            Pick a workspace from the switcher above to see its data.
           </p>
         )}
       </nav>

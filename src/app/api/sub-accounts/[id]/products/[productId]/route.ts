@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { requireSubAccountMember } from "@/lib/auth/require-tenancy";
-import { sanitizeProductPayload } from "@/app/api/sub-accounts/[id]/products/route";
+import { sanitizeProductPayload } from "@/lib/products/sanitize-product";
 
 export const dynamic = "force-dynamic";
 

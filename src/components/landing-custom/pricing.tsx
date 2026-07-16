@@ -1,88 +1,47 @@
 "use client";
 
 import { useState } from "react";
-import { toast } from "sonner";
+import Link from "next/link";
 import { Check, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { openCrispChat } from "@/lib/crisp";
 import { CUSTOM_BRAND, type CustomPricingTier } from "@/config/landing";
-
-/**
- * Only Starter/Solo and Pro/Team are genuinely self-serve ("Start free
- * trial" — real Stripe checkout via /api/checkout/subscribe). Scale/Broker
- * and Luxury are deliberately sales-assisted ("Talk to us" / "Book a
- * consultation") — their buttons open the support chat instead, matching
- * the CTA copy already on the tier config.
- */
-type SelfServePlanKey = "starter" | "pro";
-const SELF_SERVE_KEYS: SelfServePlanKey[] = ["starter", "pro"];
 
 export function Pricing() {
   const [annual, setAnnual] = useState(false);
-  const [checkingOut, setCheckingOut] = useState<string | null>(null);
 
-  const tiers: { key: string; tier: CustomPricingTier }[] = [
-    { key: "starter", tier: CUSTOM_BRAND.pricing.starter },
-    { key: "pro", tier: CUSTOM_BRAND.pricing.pro },
-    { key: "scale", tier: CUSTOM_BRAND.pricing.scale },
-    { key: "luxury", tier: CUSTOM_BRAND.pricing.luxury },
+  const tiers: CustomPricingTier[] = [
+    CUSTOM_BRAND.pricing.starter,
+    CUSTOM_BRAND.pricing.pro,
+    CUSTOM_BRAND.pricing.scale,
   ];
 
-  async function handleSelectTier(key: string) {
-    if (!SELF_SERVE_KEYS.includes(key as SelfServePlanKey)) {
-      openCrispChat();
-      return;
-    }
-    setCheckingOut(key);
-    try {
-      const res = await fetch("/api/checkout/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planKey: key }),
-      });
-      const payload = (await res.json().catch(() => ({}))) as {
-        url?: string;
-        error?: string;
-      };
-      if (!res.ok || !payload.url) {
-        throw new Error(payload.error ?? "Could not start checkout.");
-      }
-      window.location.href = payload.url;
-    } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Could not start checkout.",
-      );
-      setCheckingOut(null);
-    }
-  }
-
   return (
-    <section id="pricing" className="py-24">
+    <section id="pricing" className="bg-white py-24 md:py-28">
       <div className="container mx-auto px-4">
-        <div className="mx-auto max-w-2xl text-center">
-          <p className="text-sm font-semibold uppercase tracking-wide text-blue-600 mb-2">
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="mb-2 text-sm font-semibold uppercase tracking-[0.28em] text-[#173B7A]">
             Pricing
           </p>
-          <h2 className="text-3xl font-semibold tracking-tighter sm:text-5xl">
+          <h2 className="text-3xl font-semibold tracking-tight text-[#173B7A] sm:text-5xl">
             Simple pricing.{" "}
-            <span className="bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text font-sans font-normal italic text-transparent">
+            <span className="font-sans font-normal italic text-[#DB4F9B]">
               Cancel anytime.
             </span>
           </h2>
-          <p className="mt-4 text-lg text-muted-foreground">
+          <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-[#526078] sm:text-lg">
             Pick the plan that fits your volume. Upgrade, downgrade, or cancel
             from your account in two clicks.
           </p>
 
-          <div className="mx-auto mt-8 inline-flex items-center gap-1 rounded-full border bg-muted/50 p-1">
+          <div className="mx-auto mt-8 inline-flex items-center gap-1 rounded-full border border-[#E7DCC7] bg-[#FFF8EF] p-1">
             <button
               onClick={() => setAnnual(false)}
               className={cn(
                 "rounded-full px-4 py-1.5 text-sm font-medium transition-all",
                 !annual
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
+                  ? "bg-white text-[#173B7A] shadow-sm"
+                  : "text-[#7B8AA1] hover:text-[#173B7A]",
               )}
             >
               Monthly
@@ -92,52 +51,51 @@ export function Pricing() {
               className={cn(
                 "flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium transition-all",
                 annual
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
+                  ? "bg-white text-[#173B7A] shadow-sm"
+                  : "text-[#7B8AA1] hover:text-[#173B7A]",
               )}
             >
               Annual
-              <span className="rounded-full bg-blue-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-blue-600">
+              <span className="rounded-full bg-[#DB4F9B]/10 px-1.5 py-0.5 text-[10px] font-semibold text-[#DB4F9B]">
                 save 20%
               </span>
             </button>
           </div>
         </div>
 
-        <div className="mx-auto mt-12 grid max-w-6xl gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {tiers.map(({ key, tier }) => {
+        <div className="mx-auto mt-12 grid max-w-6xl gap-6 md:grid-cols-3">
+          {tiers.map((tier) => {
             const price = annual ? tier.priceAnnual : tier.priceMonthly;
             const isFree = price === 0;
             return (
               <div
                 key={tier.name}
                 className={cn(
-                  "relative flex flex-col overflow-hidden rounded-2xl border bg-card",
+                  "relative flex flex-col overflow-hidden rounded-[1.75rem] border bg-[#FFFDFC]",
                   tier.highlighted
-                    ? "border-[#1a2f50]/40 shadow-xl shadow-[#1a2f50]/10 ring-2 ring-[#1a2f50]/20"
-                    : "border-border shadow-sm",
+                    ? "border-[#173B7A]/20 shadow-[0_20px_60px_rgba(23,59,122,0.10)] ring-1 ring-[#173B7A]/10"
+                    : "border-[#E7DCC7] shadow-[0_12px_32px_rgba(23,59,122,0.05)]",
                 )}
               >
                 {tier.highlighted && (
                   <div className="absolute -top-px left-1/2 -translate-x-1/2">
-                    <div className="flex items-center gap-1 rounded-b-full bg-[#1a2f50] px-3 py-1 text-xs font-semibold text-white">
+                    <div className="flex items-center gap-1 rounded-b-full bg-[#173B7A] px-3 py-1 text-xs font-semibold text-white">
                       <Sparkles className="h-3 w-3" />
                       Most popular
                     </div>
                   </div>
                 )}
 
-                {/* Card header */}
                 <div
                   className={cn(
-                    "px-6 pt-8 pb-5",
-                    tier.highlighted ? "bg-[#1a2f50]" : "",
+                    "px-6 pb-5 pt-8",
+                    tier.highlighted ? "bg-[#173B7A]" : "bg-[#FFF8EF]",
                   )}
                 >
                   <p
                     className={cn(
                       "text-lg font-semibold",
-                      tier.highlighted ? "text-white" : "text-foreground",
+                      tier.highlighted ? "text-white" : "text-[#173B7A]",
                     )}
                   >
                     {tier.name}
@@ -145,7 +103,7 @@ export function Pricing() {
                   <p
                     className={cn(
                       "mt-1 text-sm",
-                      tier.highlighted ? "text-blue-200/70" : "text-muted-foreground",
+                      tier.highlighted ? "text-blue-100/70" : "text-[#526078]",
                     )}
                   >
                     {tier.blurb}
@@ -154,7 +112,7 @@ export function Pricing() {
                     <span
                       className={cn(
                         "text-4xl font-bold tracking-tight",
-                        tier.highlighted ? "text-white" : "text-foreground",
+                        tier.highlighted ? "text-white" : "text-[#173B7A]",
                       )}
                     >
                       {isFree ? "Free" : `$${price}`}
@@ -162,9 +120,7 @@ export function Pricing() {
                     {!isFree && (
                       <span
                         className={cn(
-                          tier.highlighted
-                            ? "text-blue-200/60"
-                            : "text-muted-foreground",
+                          tier.highlighted ? "text-blue-100/60" : "text-[#7B8AA1]",
                         )}
                       >
                         /mo
@@ -175,9 +131,7 @@ export function Pricing() {
                     <p
                       className={cn(
                         "mt-1 text-xs",
-                        tier.highlighted
-                          ? "text-blue-200/50"
-                          : "text-muted-foreground",
+                        tier.highlighted ? "text-blue-100/50" : "text-[#7B8AA1]",
                       )}
                     >
                       {annual
@@ -187,31 +141,28 @@ export function Pricing() {
                   )}
                 </div>
 
-                {/* Features + CTA */}
                 <div className="flex flex-1 flex-col px-6 py-5">
                   <ul className="flex-1 space-y-3">
                     {tier.features.map((feature) => (
                       <li key={feature} className="flex items-start gap-2 text-sm">
-                        <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                        <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#4F91FF]/15 text-[#4F91FF]">
                           <Check className="h-3 w-3" />
                         </span>
-                        <span className="text-foreground">{feature}</span>
+                        <span className="text-[#173B7A]">{feature}</span>
                       </li>
                     ))}
                   </ul>
                   <div className="mt-6">
                     <Button
-                      type="button"
-                      onClick={() => void handleSelectTier(key)}
-                      disabled={checkingOut !== null}
+                      render={<Link href="/signup" />}
                       variant={tier.highlighted ? "default" : "outline"}
                       className={cn(
                         "w-full",
                         tier.highlighted &&
-                          "bg-[#1a2f50] hover:bg-[#243d66] text-white",
+                          "bg-white text-[#173B7A] hover:bg-blue-50",
                       )}
                     >
-                      {checkingOut === key ? "Redirecting…" : tier.cta}
+                      {tier.cta}
                     </Button>
                   </div>
                 </div>
@@ -220,8 +171,8 @@ export function Pricing() {
           })}
         </div>
 
-        <p className="mx-auto mt-8 max-w-lg text-center text-xs text-muted-foreground">
-          All plans include unlimited deal stages, lead forms, calendar, and
+        <p className="mx-auto mt-8 max-w-lg text-center text-xs leading-6 text-[#7B8AA1]">
+          All plans include unlimited pipeline stages, lead forms, calendar, and
           tasks. No per-contact tax. No per-message metering.
         </p>
       </div>

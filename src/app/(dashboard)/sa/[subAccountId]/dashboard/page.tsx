@@ -1,28 +1,20 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
-  Plus,
-  TrendingUp,
-  Users,
-  Zap,
-  ArrowRight,
-  Clock,
-  Phone,
-  Mail,
-  MessageSquare,
-  Calendar as CalendarIcon,
-  MapPin,
-  CheckCircle2,
   AlertCircle,
+  ArrowRight,
   Bot,
-  Upload,
-  Download,
-  ChevronRight,
-  Star,
+  Calendar as CalendarIcon,
+  CheckCircle2,
+  Clock,
+  MapPin,
+  Plus,
   PhoneCall,
   Sparkles,
+  Users,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useSubAccount } from "@/context/sub-account-context";
@@ -32,7 +24,7 @@ import { subscribeToDeals } from "@/lib/firestore/deals";
 import { subscribeToEvents } from "@/lib/firestore/events";
 import { subscribeToTasks } from "@/lib/firestore/tasks";
 import { subscribeToWebChatSessions } from "@/lib/firestore/web-chat-sessions";
-import { formatCurrency, toDate } from "@/lib/format";
+import { toDate } from "@/lib/format";
 import { getStage, type Deal } from "@/types/deals";
 import { usePipelineStages } from "@/hooks/use-pipeline-stages";
 import type { Contact } from "@/types/contacts";
@@ -42,8 +34,10 @@ import type { WebChatSession } from "@/types/web-chat";
 import { Button } from "@/components/ui/button";
 import { NewDealDialog } from "@/components/pipeline/new-deal-dialog";
 import { cn } from "@/lib/utils";
-import { useRouter } from "next/navigation";
-import { isOnboardingComplete } from "@/lib/onboarding/steps";
+import { isOnboardingComplete, ONBOARDING_STEPS } from "@/lib/onboarding/steps";
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const STALLED_AFTER_MS = 7 * DAY_MS;
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -55,6 +49,7 @@ export default function DashboardPage() {
   const onboardingDone = isOnboardingComplete(
     subAccount?.onboardingStepsCompleted,
   );
+
   useEffect(() => {
     if (subAccount && !onboardingDone) {
       router.replace(saPath("/get-started"));
@@ -70,25 +65,54 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!user || !agencyId || !filterReady) return;
+
+    setLoading(true);
+
     const scope = { agencyId, subAccountId };
-    let dealsReady = false;
     let contactsReady = false;
+    let dealsReady = false;
+    let eventsReady = false;
+    let tasksReady = false;
+    let sessionsReady = false;
+
     const settle = () => {
-      if (dealsReady && contactsReady) setLoading(false);
+      if (
+        contactsReady &&
+        dealsReady &&
+        eventsReady &&
+        tasksReady &&
+        sessionsReady
+      ) {
+        setLoading(false);
+      }
     };
-    const unsubC = subscribeToContacts(scope, { territoryFilter }, (l) => {
-      setContacts(l);
+
+    const unsubC = subscribeToContacts(scope, { territoryFilter }, (list) => {
+      setContacts(list);
       contactsReady = true;
       settle();
     });
-    const unsubD = subscribeToDeals(scope, { territoryFilter }, (l) => {
-      setDeals(l);
+    const unsubD = subscribeToDeals(scope, { territoryFilter }, (list) => {
+      setDeals(list);
       dealsReady = true;
       settle();
     });
-    const unsubE = subscribeToEvents(scope, setEvents);
-    const unsubT = subscribeToTasks(scope, setTasks);
-    const unsubS = subscribeToWebChatSessions(subAccountId, setSessions);
+    const unsubE = subscribeToEvents(scope, (list) => {
+      setEvents(list);
+      eventsReady = true;
+      settle();
+    });
+    const unsubT = subscribeToTasks(scope, (list) => {
+      setTasks(list);
+      tasksReady = true;
+      settle();
+    });
+    const unsubS = subscribeToWebChatSessions(subAccountId, (list) => {
+      setSessions(list);
+      sessionsReady = true;
+      settle();
+    });
+
     return () => {
       unsubC();
       unsubD();
@@ -98,357 +122,400 @@ export default function DashboardPage() {
     };
   }, [user, agencyId, subAccountId, filterReady, territoryFilter]);
 
-  const displayName = (user?.displayName ?? user?.email ?? "").split("@")[0];
-
   const now = new Date();
   const today = now.toLocaleDateString("en-US", {
     weekday: "long",
     month: "long",
     day: "numeric",
   });
-
   const hour = now.getHours();
   const greeting =
     hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const nowMs = now.getTime();
 
-  // ── KPI calculations ─────────────────────────────────────────────────────
-  const currency = deals[0]?.currency ?? "USD";
+  const displayName =
+    user?.displayName?.trim() ||
+    user?.email?.split("@")[0] ||
+    "there";
 
-  const ytdGci = useMemo(() => {
-    const yearStart = new Date(now.getFullYear(), 0, 1).getTime();
-    return deals
-      .filter((d) => d.stageId === "won")
-      .filter((d) => {
-        const t = toDate(d.stageChangedAt)?.getTime() ?? 0;
-        return t >= yearStart;
-      })
-      .reduce((s, d) => s + (d.value ?? 0), 0);
-  }, [deals]);
+  const workspaceName = subAccount?.name?.trim() || "your workspace";
 
-  const openDeals = useMemo(
-    () => deals.filter((d) => d.stageId !== "won" && d.stageId !== "lost"),
-    [deals],
-  );
-  const pipelineValue = openDeals.reduce((s, d) => s + (d.value ?? 0), 0);
-
-  const leadsThisMonth = useMemo(() => {
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-    return contacts.filter((c) => {
-      const t = toDate(c.createdAt)?.getTime() ?? 0;
-      return t >= monthStart;
-    }).length;
-  }, [contacts]);
-
-  const leadsLastMonth = useMemo(() => {
-    const start = new Date(now.getFullYear(), now.getMonth() - 1, 1).getTime();
-    const end = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-    return contacts.filter((c) => {
-      const t = toDate(c.createdAt)?.getTime() ?? 0;
-      return t >= start && t < end;
-    }).length;
-  }, [contacts]);
-
-  const leadsDelta =
-    leadsLastMonth > 0
-      ? Math.round(((leadsThisMonth - leadsLastMonth) / leadsLastMonth) * 100)
-      : null;
-
-  // ── Monthly GCI for chart (last 6 months) ───────────────────────────────
-  const monthlyGci = useMemo(() => {
-    const months: { label: string; value: number }[] = [];
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const start = d.getTime();
-      const end = new Date(d.getFullYear(), d.getMonth() + 1, 1).getTime();
-      const label = d.toLocaleString("en-US", { month: "short" });
-      const value = deals
-        .filter((deal) => deal.stageId === "won")
-        .filter((deal) => {
-          const t = toDate(deal.stageChangedAt)?.getTime() ?? 0;
-          return t >= start && t < end;
-        })
-        .reduce((s, deal) => s + (deal.value ?? 0), 0);
-      months.push({ label, value });
-    }
-    return months;
-  }, [deals]);
-
-  const maxGci = Math.max(1, ...monthlyGci.map((m) => m.value));
-
-  // ── Pipeline snapshot ─────────────────────────────────────────────────────
-  const stages = usePipelineStages();
-  const stageCounts = useMemo(() => {
-    const m = new Map<string, number>();
-    const stageValues = new Map<string, number>();
-    for (const s of stages) {
-      m.set(s.id, 0);
-      stageValues.set(s.id, 0);
-    }
-    for (const d of openDeals) {
-      m.set(d.stageId, (m.get(d.stageId) ?? 0) + 1);
-      stageValues.set(d.stageId, (stageValues.get(d.stageId) ?? 0) + (d.value ?? 0));
-    }
-    return { counts: m, values: stageValues };
-  }, [openDeals, stages]);
-
-  // ── Today's events ────────────────────────────────────────────────────────
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  const todayEnd = todayStart + 86400000;
-  const tomorrowEnd = todayEnd + 86400000;
-
-  const todayEvents = useMemo(() => {
-    return events
-      .filter((e) => {
-        const t = toDate(e.startAt)?.getTime() ?? 0;
-        return t >= todayStart && t < todayEnd;
-      })
-      .slice(0, 5);
-  }, [events, todayStart, todayEnd]);
-
-  const tomorrowEvents = useMemo(() => {
-    return events.filter((e) => {
-      const t = toDate(e.startAt)?.getTime() ?? 0;
-      return t >= todayEnd && t < tomorrowEnd;
-    });
-  }, [events, todayEnd, tomorrowEnd]);
-
-  // ── AI Agents feed (recent web chat sessions) ──────────────────────────────
-  const recentSessions = sessions.slice(0, 5);
-
-  // ── Daily Success Plan priorities ────────────────────────────────────────
-  const priorities = useMemo(() => {
-    const items: Priority[] = [];
-
-    // New leads (contacts created in last 24h)
-    const oneDayAgo = Date.now() - 86400000;
-    const newLeads = contacts.filter((c) => {
-      const t = toDate(c.createdAt)?.getTime() ?? 0;
-      return t >= oneDayAgo;
-    });
-    if (newLeads.length > 0) {
-      items.push({
-        id: "new_leads",
-        icon: <Users className="h-4 w-4" />,
-        iconBg: "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40",
-        label: `Respond to ${newLeads.length} new lead${newLeads.length !== 1 ? "s" : ""}`,
-        href: saPath("/contacts"),
-        urgency: "high",
-      });
-    }
-
-    // Stale leads — no outbound email/SMS/WhatsApp/call in 14+ days. Same
-    // "last contact" signal (lastContactedAt / lastOutboundCallAt) the
-    // contact.stale Smart Workflows trigger uses, computed here client-side
-    // over the contacts already subscribed on this page.
-    const STALE_DAYS = 14;
-    const staleCutoff = Date.now() - STALE_DAYS * 86400000;
-    const staleLeads = contacts.filter((c) => {
-      const lastTouch = Math.max(
-        toDate(c.lastContactedAt)?.getTime() ?? 0,
-        toDate(c.lastOutboundCallAt)?.getTime() ?? 0,
-      );
-      return lastTouch > 0 && lastTouch < staleCutoff;
-    });
-    if (staleLeads.length > 0) {
-      items.push({
-        id: "stale_leads",
-        icon: <Clock className="h-4 w-4" />,
-        iconBg: "bg-orange-100 text-orange-600 dark:bg-orange-900/40",
-        label: `${staleLeads.length} lead${staleLeads.length !== 1 ? "s" : ""} haven't heard from you in ${STALE_DAYS}+ days`,
-        href: saPath("/contacts"),
-        urgency: "medium",
-      });
-    }
-
-    // Overdue + due-today tasks
-    const overdueTasks = tasks.filter((t) => {
-      if (t.completed) return false;
-      const due = toDate(t.dueAt)?.getTime();
-      return due != null && due < todayEnd;
-    });
-    if (overdueTasks.length > 0) {
-      const overdueCount = overdueTasks.filter((t) => {
-        const due = toDate(t.dueAt)?.getTime();
-        return due != null && due < todayStart;
-      }).length;
-      items.push({
-        id: "tasks",
-        icon: <CheckCircle2 className="h-4 w-4" />,
-        iconBg: overdueCount > 0
-          ? "bg-red-100 text-red-600 dark:bg-red-900/40"
-          : "bg-amber-100 text-amber-600 dark:bg-amber-900/40",
-        label: overdueCount > 0
-          ? `Complete ${overdueTasks.length} task${overdueTasks.length !== 1 ? "s" : ""} (${overdueCount} overdue)`
-          : `Complete ${overdueTasks.length} task${overdueTasks.length !== 1 ? "s" : ""} due today`,
-        href: saPath("/tasks"),
-        urgency: overdueCount > 0 ? "high" : "medium",
-      });
-    }
-
-    // Warm prospects — contacts at 'contacted' or 'qualified' stage
-    const warmStages = new Set(["contacted", "qualified"]);
-    const warmDeals = openDeals.filter((d) => warmStages.has(d.stageId));
-    if (warmDeals.length > 0) {
-      items.push({
-        id: "warm_prospects",
-        icon: <PhoneCall className="h-4 w-4" />,
-        iconBg: "bg-blue-100 text-blue-600 dark:bg-blue-900/40",
-        label: `Follow up with ${warmDeals.length} warm prospect${warmDeals.length !== 1 ? "s" : ""}`,
-        href: saPath("/pipeline"),
-        urgency: "medium",
-      });
-    }
-
-    // Tomorrow's appointments to confirm
-    if (tomorrowEvents.length > 0) {
-      items.push({
-        id: "confirm_appointments",
-        icon: <CalendarIcon className="h-4 w-4" />,
-        iconBg: "bg-violet-100 text-violet-600 dark:bg-violet-900/40",
-        label: `Confirm ${tomorrowEvents.length} appointment${tomorrowEvents.length !== 1 ? "s" : ""} for tomorrow`,
-        href: saPath("/calendar"),
-        urgency: "medium",
-      });
-    }
-
-    // Recently closed deals — suggest requesting reviews
-    const sevenDaysAgo = Date.now() - 7 * 86400000;
-    const recentWins = deals.filter((d) => {
-      if (d.stageId !== "won") return false;
-      const t = toDate(d.stageChangedAt)?.getTime() ?? 0;
-      return t >= sevenDaysAgo;
-    });
-    if (recentWins.length > 0) {
-      items.push({
-        id: "request_reviews",
-        icon: <Star className="h-4 w-4" />,
-        iconBg: "bg-amber-100 text-amber-600 dark:bg-amber-900/40",
-        label: `Request reviews from ${recentWins.length} recent closing${recentWins.length !== 1 ? "s" : ""}`,
-        href: saPath("/contacts"),
-        urgency: "low",
-      });
-    }
-
-    // Active web chat sessions needing attention
-    const activeSessions = sessions.filter((s) => s.status === "escalated");
-    if (activeSessions.length > 0) {
-      items.push({
-        id: "escalated_chats",
-        icon: <MessageSquare className="h-4 w-4" />,
-        iconBg: "bg-red-100 text-red-600 dark:bg-red-900/40",
-        label: `${activeSessions.length} escalated chat${activeSessions.length !== 1 ? "s" : ""} need your attention`,
-        href: saPath("/ai-agents/web-chat/sessions"),
-        urgency: "high",
-      });
-    }
-
-    // Sort by urgency
-    const urgencyOrder = { high: 0, medium: 1, low: 2 };
-    items.sort((a, b) => urgencyOrder[a.urgency] - urgencyOrder[b.urgency]);
-
-    return items.slice(0, 6);
-  }, [contacts, tasks, openDeals, tomorrowEvents, sessions, deals, saPath, todayStart, todayEnd]);
-
-  // ── Next Best Action ──────────────────────────────────────────────────────
-  const nextBestAction = useMemo(() => {
-    // Escalated chats are highest priority
-    const escalated = sessions.filter((s) => s.status === "escalated");
-    if (escalated.length > 0) {
-      const s = escalated[0];
-      const identity = s.capturedName ?? s.capturedEmail ?? s.capturedPhone ?? "A visitor";
-      return {
-        title: `${identity} needs your help`,
-        description: "This chat was escalated by your AI agent. The visitor asked something the AI couldn’t handle.",
-        cta: "Open conversation",
-        href: saPath(`/ai-agents/web-chat/sessions/${s.id}`),
-        accent: "border-red-200 bg-red-50/60 dark:border-red-800/40 dark:bg-red-950/20",
-        iconColor: "text-red-600",
-      };
-    }
-
-    // Newest contact with no deal — highest conversion potential
-    const oneDayAgo = Date.now() - 86400000;
-    const freshLeads = contacts
-      .filter((c) => {
-        const t = toDate(c.createdAt)?.getTime() ?? 0;
-        return t >= oneDayAgo;
-      })
-      .filter((c) => !deals.some((d) => d.contactId === c.id));
-    if (freshLeads.length > 0) {
-      const lead = freshLeads[0];
-      const name = lead.name || lead.email || lead.phone || "New lead";
-      const source = lead.source ? ` from ${lead.source.replace(/-/g, " ")}` : "";
-      return {
-        title: `Reach out to ${name}`,
-        description: `${name} came in${source} and hasn’t been contacted yet. Speed-to-lead matters — the first agent to respond wins 78% of the time.`,
-        cta: "View contact",
-        href: saPath(`/contacts/${lead.id}`),
-        accent: "border-emerald-200 bg-emerald-50/60 dark:border-emerald-800/40 dark:bg-emerald-950/20",
-        iconColor: "text-emerald-600",
-      };
-    }
-
-    // Overdue tasks
-    const overdue = tasks.filter((t) => {
-      if (t.completed) return false;
-      const due = toDate(t.dueAt)?.getTime();
-      return due != null && due < todayStart;
-    });
-    if (overdue.length > 0) {
-      const task = overdue[0];
-      return {
-        title: task.title,
-        description: "This task is overdue. Completing it keeps your pipeline moving.",
-        cta: "View tasks",
-        href: saPath("/tasks"),
-        accent: "border-amber-200 bg-amber-50/60 dark:border-amber-800/40 dark:bg-amber-950/20",
-        iconColor: "text-amber-600",
-      };
-    }
-
-    // Warm deal to follow up on
-    if (openDeals.length > 0) {
-      const oldest = [...openDeals].sort((a, b) => {
-        const ta = toDate(a.stageChangedAt)?.getTime() ?? 0;
-        const tb = toDate(b.stageChangedAt)?.getTime() ?? 0;
-        return ta - tb;
-      })[0];
-      const contact = contacts.find((c) => c.id === oldest.contactId);
-      const name = contact?.name || "A prospect";
-      const stage = getStage(oldest.stageId, stages);
-      return {
-        title: `Follow up with ${name}`,
-        description: `This deal has been at "${stage?.label ?? oldest.stageId}" the longest. A quick check-in can move it forward.`,
-        cta: "View deal",
-        href: saPath("/pipeline"),
-        accent: "border-blue-200 bg-blue-50/60 dark:border-blue-800/40 dark:bg-blue-950/20",
-        iconColor: "text-blue-600",
-      };
-    }
-
-    return null;
-  }, [contacts, deals, tasks, sessions, openDeals, stages, saPath, todayStart]);
-
-  // ── Recent contacts table ─────────────────────────────────────────────────
-  const recentContacts = useMemo(
-    () =>
-      [...contacts]
-        .sort(
-          (a, b) =>
-            (toDate(b.createdAt)?.getTime() ?? 0) -
-            (toDate(a.createdAt)?.getTime() ?? 0),
-        )
-        .slice(0, 8),
-    [contacts],
-  );
+  const todayStart = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+  ).getTime();
+  const todayEnd = todayStart + DAY_MS;
+  const tomorrowEnd = todayEnd + DAY_MS;
 
   const contactById = useMemo(() => {
-    const m = new Map<string, Contact>();
-    for (const c of contacts) m.set(c.id, c);
-    return m;
+    const map = new Map<string, Contact>();
+    for (const contact of contacts) map.set(contact.id, contact);
+    return map;
   }, [contacts]);
 
-  const isEmpty = !loading && contacts.length === 0 && deals.length === 0;
+  const stages = usePipelineStages();
+  const openDeals = useMemo(
+    () => deals.filter((deal) => deal.stageId !== "won" && deal.stageId !== "lost"),
+    [deals],
+  );
+
+  const todayEvents = useMemo(
+    () =>
+      events
+        .filter((event) => {
+          const time = toDate(event.startAt)?.getTime() ?? 0;
+          return time >= todayStart && time < todayEnd;
+        })
+        .slice(0, 4),
+    [events, todayStart, todayEnd],
+  );
+
+  const tomorrowEvents = useMemo(
+    () =>
+      events.filter((event) => {
+        const time = toDate(event.startAt)?.getTime() ?? 0;
+        return time >= todayEnd && time < tomorrowEnd;
+      }),
+    [events, todayEnd, tomorrowEnd],
+  );
+
+  const overdueTasks = useMemo(
+    () =>
+      tasks.filter((task) => {
+        if (task.completed) return false;
+        const due = toDate(task.dueAt)?.getTime();
+        return due != null && due < todayEnd;
+      }),
+    [tasks, todayEnd],
+  );
+
+  const dueTodayTasks = useMemo(
+    () =>
+      tasks.filter((task) => {
+        if (task.completed) return false;
+        const due = toDate(task.dueAt)?.getTime();
+        return due != null && due >= todayStart && due < todayEnd;
+      }),
+    [tasks, todayStart, todayEnd],
+  );
+
+  const warmDeals = useMemo(
+    () =>
+      openDeals.filter((deal) =>
+        new Set(["contacted", "qualified"]).has(deal.stageId),
+      ),
+    [openDeals],
+  );
+
+  const stalledDeals = useMemo(
+    () =>
+      openDeals.filter((deal) => {
+        if (deal.stageId === "new") return false;
+      const changed = toDate(deal.stageChangedAt)?.getTime() ?? 0;
+        return changed > 0 && nowMs - changed >= STALLED_AFTER_MS;
+    }),
+    [openDeals, nowMs],
+  );
+
+  const escalatedSessions = useMemo(
+    () => sessions.filter((session) => session.status === "escalated"),
+    [sessions],
+  );
+
+  const newLeads = useMemo(() => {
+    const cutoff = nowMs - DAY_MS;
+    return contacts.filter((contact) => {
+      const created = toDate(contact.createdAt)?.getTime() ?? 0;
+      return created >= cutoff;
+    });
+  }, [contacts, nowMs]);
+
+  const isWorkspaceEmpty =
+    contacts.length === 0 &&
+    deals.length === 0 &&
+    tasks.length === 0 &&
+    events.length === 0 &&
+    sessions.length === 0;
+
+  const onboardingStepSet = useMemo(
+    () => new Set(subAccount?.onboardingStepsCompleted ?? []),
+    [subAccount?.onboardingStepsCompleted],
+  );
+  const completedOnboardingSteps = ONBOARDING_STEPS.filter((step) =>
+    onboardingStepSet.has(step.id),
+  );
+  const nextOnboardingStep = ONBOARDING_STEPS.find(
+    (step) => !onboardingStepSet.has(step.id),
+  );
+  const onboardingProgress = ONBOARDING_STEPS.length
+    ? Math.round(
+        (completedOnboardingSteps.length / ONBOARDING_STEPS.length) * 100,
+      )
+    : 0;
+
+  const nextBestAction = useMemo<NextBestAction>(() => {
+    const currentNow = new Date(nowMs);
+
+    const escalated = escalatedSessions[0];
+    if (escalated) {
+      const identity =
+        escalated.capturedName ??
+        escalated.capturedEmail ??
+        escalated.capturedPhone ??
+        "A visitor";
+      const touchedAt =
+        toDate(escalated.updatedAt) ?? toDate(escalated.createdAt);
+      return {
+        title: `${identity} needs a reply`,
+        description:
+          "Your AI assistant escalated this conversation. A quick human reply can keep the lead warm.",
+        waitingLabel: touchedAt
+          ? `Waiting ${formatElapsed(touchedAt, currentNow)}`
+          : "Waiting now",
+        recommendedAction: "Reply now and keep the conversation moving.",
+        accentClass:
+          "border-red-200 bg-red-50/60 dark:border-red-800/40 dark:bg-red-950/20",
+        icon: <AlertCircle className="h-4 w-4 text-red-600" />,
+        contactLabel: identity,
+        primary: {
+          label: "Complete",
+          href: saPath(`/ai-agents/web-chat/sessions/${escalated.id}`),
+        },
+        secondary: {
+          label: "Message",
+          href: saPath(`/ai-agents/web-chat/sessions/${escalated.id}`),
+        },
+        tertiary: {
+          label: "Schedule",
+          href: saPath("/calendar"),
+        },
+      };
+    }
+
+    const freshLead = newLeads.find(
+      (contact) => !deals.some((deal) => deal.contactId === contact.id),
+    );
+    if (freshLead) {
+      const createdAt = toDate(freshLead.createdAt);
+      const source = freshLead.source ? freshLead.source.replace(/-/g, " ") : "new inquiry";
+      return {
+        title: `${freshLead.name || freshLead.email || "New lead"} is waiting`,
+        description: `A ${source} just landed and has no deal yet. The first reply keeps the momentum with you.`,
+        waitingLabel: createdAt
+          ? `Waiting ${formatElapsed(createdAt, currentNow)}`
+          : "Waiting now",
+        recommendedAction: "Send a quick intro and offer a time to connect.",
+        accentClass:
+          "border-emerald-200 bg-emerald-50/60 dark:border-emerald-800/40 dark:bg-emerald-950/20",
+        icon: <Users className="h-4 w-4 text-emerald-600" />,
+        contactLabel: freshLead.name || freshLead.email || freshLead.phone || "Lead",
+        primary: {
+          label: "Complete",
+          href: saPath(`/contacts/${freshLead.id}`),
+        },
+        secondary: {
+          label: "Message",
+          href: saPath(`/contacts/${freshLead.id}`),
+        },
+        tertiary: {
+          label: "Schedule",
+          href: saPath("/calendar"),
+        },
+      };
+    }
+
+    const overdue = overdueTasks[0];
+    if (overdue) {
+      const contact = overdue.contactId ? contactById.get(overdue.contactId) : null;
+      const dueAt = toDate(overdue.dueAt);
+      return {
+        title: overdue.title,
+        description:
+          "This task is overdue. Finishing it will keep the next client move in motion.",
+        waitingLabel: dueAt
+          ? `Due ${formatElapsed(dueAt, currentNow)} ago`
+          : "Due now",
+        recommendedAction: "Complete the task and clear the path forward.",
+        accentClass:
+          "border-amber-200 bg-amber-50/60 dark:border-amber-800/40 dark:bg-amber-950/20",
+        icon: <CheckCircle2 className="h-4 w-4 text-amber-600" />,
+        contactLabel: contact?.name ?? "Task",
+        primary: {
+          label: "Complete",
+          href: saPath("/tasks"),
+        },
+        secondary: {
+          label: "Message",
+          href: contact ? saPath(`/contacts/${contact.id}`) : saPath("/tasks"),
+        },
+        tertiary: {
+          label: "Schedule",
+          href: saPath("/calendar"),
+        },
+      };
+    }
+
+    const stalled = stalledDeals[0];
+    if (stalled) {
+      const contact = contactById.get(stalled.contactId);
+      const stage = getStage(stalled.stageId, stages);
+      const stalledSince = toDate(stalled.stageChangedAt);
+      return {
+        title: `${contact?.name ?? "A client journey"} has stalled`,
+        description: `This deal has been sitting in ${stage.label.toLowerCase()} longer than it should.`,
+        waitingLabel: stalledSince
+          ? `Stalled ${formatElapsed(stalledSince, currentNow)}`
+          : "Stalled for a while",
+        recommendedAction: "Nudge the journey and ask for the next step.",
+        accentClass:
+          "border-blue-200 bg-blue-50/60 dark:border-blue-800/40 dark:bg-blue-950/20",
+        icon: <PhoneCall className="h-4 w-4 text-blue-600" />,
+        contactLabel: contact?.name ?? stage.label,
+        primary: {
+          label: "Complete",
+          href: saPath("/pipeline"),
+        },
+        secondary: {
+          label: "Message",
+          href: contact ? saPath(`/contacts/${contact.id}`) : saPath("/pipeline"),
+        },
+        tertiary: {
+          label: "Schedule",
+          href: saPath("/calendar"),
+        },
+      };
+    }
+
+    if (isWorkspaceEmpty) {
+      return {
+        title: "No leads yet",
+        description:
+          "Import contacts or activate Lead Capture so the next inquiry lands here automatically.",
+        waitingLabel: "Ready when you are",
+        recommendedAction: "Turn on the first capture flow.",
+        accentClass:
+          "border-slate-200 bg-slate-50/80 dark:border-slate-800/60 dark:bg-slate-950/20",
+        icon: <Sparkles className="h-4 w-4 text-slate-600" />,
+        contactLabel: null,
+        primary: {
+          label: "Complete",
+          href: saPath("/forms"),
+        },
+        secondary: {
+          label: "Message",
+          href: saPath("/contacts?import=1"),
+        },
+        tertiary: {
+          label: "Schedule",
+          href: saPath("/calendar"),
+        },
+      };
+    }
+
+    return {
+      title: "You’re caught up",
+      description:
+        "Nothing urgent is waiting right now. Keep your capture systems live so the next lead appears here first.",
+      waitingLabel: "No action waiting",
+      recommendedAction: "Review your lead capture and keep the system warm.",
+      accentClass:
+        "border-slate-200 bg-slate-50/80 dark:border-slate-800/60 dark:bg-slate-950/20",
+      icon: <Sparkles className="h-4 w-4 text-slate-600" />,
+      contactLabel: null,
+      primary: {
+        label: "Complete",
+        href: saPath("/forms"),
+      },
+      secondary: {
+        label: "Message",
+        href: saPath("/contacts"),
+      },
+      tertiary: {
+        label: "Schedule",
+        href: saPath("/calendar"),
+      },
+    };
+  }, [
+    contactById,
+    deals,
+    escalatedSessions,
+    isWorkspaceEmpty,
+    newLeads,
+    nowMs,
+    overdueTasks,
+    saPath,
+    stages,
+    stalledDeals,
+  ]);
+
+  const priorities = useMemo<TodayPriority[]>(() => {
+    return [
+      {
+        id: "new-leads",
+        label: "New leads",
+        description: "Captured in the last 24 hours",
+        count: newLeads.length,
+        href: saPath("/contacts"),
+        icon: <Users className="h-4 w-4" />,
+        iconBg: "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40",
+      },
+      {
+        id: "replies",
+        label: "Replies needing attention",
+        description: "Escalated chats waiting for a human reply",
+        count: escalatedSessions.length,
+        href: saPath("/ai-agents/web-chat/sessions"),
+        icon: <AlertCircle className="h-4 w-4" />,
+        iconBg: "bg-red-100 text-red-600 dark:bg-red-900/40",
+      },
+      {
+        id: "follow-ups",
+        label: "Follow-ups due",
+        description: "Overdue tasks and warm deals ready to move",
+        count: overdueTasks.length + warmDeals.length,
+        href: saPath("/tasks"),
+        icon: <PhoneCall className="h-4 w-4" />,
+        iconBg: "bg-blue-100 text-blue-600 dark:bg-blue-900/40",
+      },
+      {
+        id: "appointments",
+        label: "Appointments",
+        description: "Meetings scheduled for today",
+        count: todayEvents.length,
+        href: saPath("/calendar"),
+        icon: <CalendarIcon className="h-4 w-4" />,
+        iconBg: "bg-violet-100 text-violet-600 dark:bg-violet-900/40",
+      },
+      {
+        id: "tasks",
+        label: "Tasks",
+        description: "Open tasks due today or earlier",
+        count: overdueTasks.length + dueTodayTasks.length,
+        href: saPath("/tasks"),
+        icon: <CheckCircle2 className="h-4 w-4" />,
+        iconBg: "bg-amber-100 text-amber-600 dark:bg-amber-900/40",
+      },
+      {
+        id: "stalled-journeys",
+        label: "Stalled client journeys",
+        description: "Deals that have gone quiet for too long",
+        count: stalledDeals.length,
+        href: saPath("/pipeline"),
+        icon: <Bot className="h-4 w-4" />,
+        iconBg: "bg-slate-100 text-slate-600 dark:bg-slate-800/80",
+      },
+    ];
+  }, [
+    dueTodayTasks.length,
+    escalatedSessions.length,
+    newLeads.length,
+    overdueTasks.length,
+    saPath,
+    stalledDeals.length,
+    todayEvents.length,
+    warmDeals.length,
+  ]);
 
   if (subAccount && !onboardingDone) {
     return (
@@ -458,34 +525,23 @@ export default function DashboardPage() {
     );
   }
 
-  // ── Stage display names ───────────────────────────────────────────────────
-  const stageDisplay: Record<string, { label: string; color: string }> = {
-    new: { label: "Inquiry", color: "bg-slate-100 text-slate-600" },
-    contacted: { label: "Showing", color: "bg-blue-100 text-blue-700" },
-    qualified: { label: "Offer In", color: "bg-violet-100 text-violet-700" },
-    proposal: { label: "Contract", color: "bg-amber-100 text-amber-700" },
-    won: { label: "Closed", color: "bg-emerald-100 text-emerald-700" },
-    lost: { label: "Lost", color: "bg-red-100 text-red-600" },
-  };
-
   return (
-    <div className="space-y-5">
-      {/* ── Daily Success Plan Header ─────────────────────────────────── */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="space-y-1">
+          <p className="text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
             {today}
           </p>
-          <h1 className="mt-0.5 text-2xl font-semibold tracking-tight">
-            {greeting}
-            {displayName ? (
-              <span className="font-normal text-muted-foreground">
-                , {displayName}
-              </span>
-            ) : null}
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {greeting}, {displayName}
           </h1>
+          <p className="max-w-2xl text-sm text-muted-foreground">
+            {workspaceName === "your workspace"
+              ? "Your workspace is ready for today’s work."
+              : `${workspaceName} is ready for the next move. Keep the day focused on leads, follow-up, and appointments.`}
+          </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <NewDealDialog contacts={contacts} />
           <Button size="sm" variant="outline" render={<Link href={saPath("/contacts")} />}>
             <Plus className="mr-1.5 h-3.5 w-3.5" />
@@ -494,703 +550,420 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {isEmpty ? (
-        <GettingStarted saPath={saPath} contacts={contacts} />
+      {loading ? (
+        <LoadingState />
       ) : (
         <>
-          {/* ── Daily Success Plan ────────────────────────────────────── */}
-          {!loading && (priorities.length > 0 || nextBestAction) && (
-            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-              {/* Today's priorities */}
-              {priorities.length > 0 && (
-                <section className="rounded-2xl border bg-card p-5">
-                  <div className="mb-4">
-                    <h2 className="text-sm font-semibold">Today&apos;s Priorities</h2>
-                    <p className="text-xs text-muted-foreground">
-                      Your daily action plan — complete these to stay ahead
-                    </p>
-                  </div>
-                  <ul className="space-y-2">
-                    {priorities.map((p) => (
-                      <li key={p.id}>
-                        <Link
-                          href={p.href}
-                          className="group flex items-center gap-3 rounded-xl border bg-muted/20 px-3.5 py-3 transition-all hover:bg-muted/40 hover:border-primary/20"
-                        >
-                          <span className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg", p.iconBg)}>
-                            {p.icon}
-                          </span>
-                          <span className="flex-1 text-sm font-medium">{p.label}</span>
-                          <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              )}
-
-              {/* Next Best Action */}
-              {nextBestAction && (
-                <section className={cn("rounded-2xl border p-5", nextBestAction.accent)}>
-                  <div className="mb-1 flex items-center gap-2">
-                    <Sparkles className={cn("h-4 w-4", nextBestAction.iconColor)} />
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                      Next Best Action
-                    </p>
-                  </div>
-                  <h3 className="text-lg font-semibold tracking-tight">
-                    {nextBestAction.title}
-                  </h3>
-                  <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">
-                    {nextBestAction.description}
-                  </p>
-                  <Button size="sm" className="mt-4" render={<Link href={nextBestAction.href} />}>
-                    {nextBestAction.cta}
-                    <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-                  </Button>
-                </section>
-              )}
-            </div>
+          {!onboardingDone && (
+            <SetupProgressCard
+              progress={onboardingProgress}
+              nextStep={nextOnboardingStep}
+              saPath={saPath}
+            />
           )}
 
-          {/* ── KPI Cards ────────────────────────────────────────────── */}
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <KpiCard
-              label="YTD GCI"
-              value={loading ? null : formatCurrency(ytdGci, currency)}
-              delta={ytdGci > 0 ? "Closed this year" : "No closed deals yet"}
-              deltaPositive={ytdGci > 0}
-              icon={<TrendingUp className="h-4 w-4" />}
-              accentClass="text-emerald-600"
-              bgClass="bg-emerald-50"
-              href={saPath("/reports")}
-            />
-            <KpiCard
-              label="Active Deals"
-              value={loading ? null : formatCurrency(pipelineValue, currency)}
-              delta={`${openDeals.length} open deal${openDeals.length !== 1 ? "s" : ""}`}
-              deltaPositive={openDeals.length > 0}
-              icon={<TrendingUp className="h-4 w-4" />}
-              accentClass="text-blue-600"
-              bgClass="bg-blue-50"
-              href={saPath("/pipeline")}
-            />
-            <KpiCard
-              label="Leads This Month"
-              value={loading ? null : String(leadsThisMonth)}
-              delta={
-                leadsDelta !== null
-                  ? `${leadsDelta >= 0 ? "+" : ""}${leadsDelta}% vs last month`
-                  : "First month of data"
-              }
-              deltaPositive={leadsDelta === null || leadsDelta >= 0}
-              icon={<Users className="h-4 w-4" />}
-              accentClass="text-violet-600"
-              bgClass="bg-violet-50"
-              href={saPath("/contacts")}
-            />
-            <KpiCard
-              label="AI Agents"
-              value={loading ? null : String(recentSessions.length)}
-              delta={
-                recentSessions.length > 0
-                  ? `${recentSessions.filter((s) => s.status === "active").length} active sessions`
-                  : "No sessions yet"
-              }
-              deltaPositive={recentSessions.length > 0}
-              icon={<Bot className="h-4 w-4" />}
-              accentClass="text-amber-600"
-              bgClass="bg-amber-50"
-              href={saPath("/ai-agents/web-chat/sessions")}
-            />
-          </div>
+          {isWorkspaceEmpty ? (
+            <EmptyWorkspaceState saPath={saPath} />
+          ) : (
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.6fr)]">
+              <div className="space-y-4">
+                <NextBestActionCard action={nextBestAction} />
+                <TodayPrioritiesCard priorities={priorities} />
+              </div>
 
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-            {/* ── Left column ──────────────────────────────────────────── */}
-            <div className="space-y-4">
-              {/* Pipeline snapshot */}
-              <section className="rounded-2xl border bg-card p-5">
-                <div className="mb-4 flex items-center justify-between">
-                  <div>
-                    <h2 className="text-sm font-semibold">Deals snapshot</h2>
-                    <p className="text-xs text-muted-foreground">
-                      Active deals by stage
-                    </p>
-                  </div>
-                  <Button size="sm" variant="ghost" className="gap-1" render={<Link href={saPath("/pipeline")} />}>
-                    Open board <ArrowRight className="h-3 w-3" />
-                  </Button>
-                </div>
-                <div className="grid grid-cols-5 gap-2">
-                  {stages
-                    .filter((s) => s.id !== "lost")
-                    .slice(0, 5)
-                    .map((s) => {
-                      const count = stageCounts.counts.get(s.id) ?? 0;
-                      const value = stageCounts.values.get(s.id) ?? 0;
-                      const display = stageDisplay[s.id] ?? {
-                        label: s.label,
-                        color: "bg-slate-100 text-slate-600",
-                      };
-                      return (
-                        <Link
-                          key={s.id}
-                          href={saPath("/pipeline")}
-                          className="group flex flex-col items-center rounded-xl border bg-muted/30 p-3 text-center transition-all hover:border-primary/30 hover:bg-muted/50"
-                        >
-                          <span className="text-2xl font-bold tabular-nums">
-                            {count}
-                          </span>
-                          <span
-                            className={cn(
-                              "mt-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
-                              display.color,
-                            )}
-                          >
-                            {display.label}
-                          </span>
-                          {value > 0 && (
-                            <span className="mt-1 text-[11px] text-muted-foreground">
-                              {formatCurrency(value, currency, { compact: true })}
-                            </span>
-                          )}
-                        </Link>
-                      );
-                    })}
-                </div>
-              </section>
-
-              {/* Recent contacts table */}
-              <section className="rounded-2xl border bg-card">
-                <div className="flex items-center justify-between border-b px-5 py-4">
-                  <div>
-                    <h2 className="text-sm font-semibold">Recent People</h2>
-                    <p className="text-xs text-muted-foreground">
-                      Latest leads in your database
-                    </p>
-                  </div>
-                  <Button size="sm" variant="ghost" className="gap-1" render={<Link href={saPath("/contacts")} />}>
-                    View all <ArrowRight className="h-3 w-3" />
-                  </Button>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b text-left text-xs text-muted-foreground">
-                        <th className="px-5 py-2.5 font-medium">Name</th>
-                        <th className="px-3 py-2.5 font-medium">Contact</th>
-                        <th className="px-3 py-2.5 font-medium">Source</th>
-                        <th className="px-3 py-2.5 font-medium">Stage</th>
-                        <th className="px-3 py-2.5 pr-5 font-medium">Added</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {recentContacts.length === 0 ? (
-                        <tr>
-                          <td
-                            colSpan={5}
-                            className="px-5 py-8 text-center text-xs text-muted-foreground"
-                          >
-                            No contacts yet
-                          </td>
-                        </tr>
-                      ) : (
-                        recentContacts.map((c) => {
-                          const initials = (c.name || c.email || "?")
-                            .split(" ")
-                            .map((s) => s[0])
-                            .slice(0, 2)
-                            .join("")
-                            .toUpperCase();
-                          const contactDeals = deals.filter(
-                            (d) => d.contactId === c.id,
-                          );
-                          const activeDeal = contactDeals.find(
-                            (d) =>
-                              d.stageId !== "won" && d.stageId !== "lost",
-                          );
-                          const stage = activeDeal
-                            ? getStage(activeDeal.stageId, stages)
-                            : null;
-                          const stageDisp = stage
-                            ? stageDisplay[stage.id] ?? {
-                                label: stage.label,
-                                color: "bg-slate-100 text-slate-600",
-                              }
-                            : null;
-                          const addedDays = c.createdAt
-                            ? Math.floor(
-                                (Date.now() -
-                                  (toDate(c.createdAt)?.getTime() ?? 0)) /
-                                  86400000,
-                              )
-                            : null;
-                          return (
-                            <tr
-                              key={c.id}
-                              className="border-b last:border-0 hover:bg-muted/30"
-                            >
-                              <td className="px-5 py-3">
-                                <Link
-                                  href={saPath(`/contacts/${c.id}`)}
-                                  className="flex items-center gap-2.5"
-                                >
-                                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400/70 to-teal-500/70 text-[10px] font-bold text-white">
-                                    {initials}
-                                  </span>
-                                  <div className="min-w-0">
-                                    <p className="truncate font-medium">
-                                      {c.name || "Unnamed"}
-                                    </p>
-                                    {c.company && (
-                                      <p className="truncate text-xs text-muted-foreground">
-                                        {c.company}
-                                      </p>
-                                    )}
-                                  </div>
-                                </Link>
-                              </td>
-                              <td className="px-3 py-3">
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                  {c.phone && (
-                                    <span className="flex items-center gap-1">
-                                      <Phone className="h-3 w-3" />
-                                      {c.phone}
-                                    </span>
-                                  )}
-                                  {!c.phone && c.email && (
-                                    <span className="flex items-center gap-1 truncate">
-                                      <Mail className="h-3 w-3 shrink-0" />
-                                      {c.email}
-                                    </span>
-                                  )}
-                                  {!c.phone && !c.email && "—"}
-                                </div>
-                              </td>
-                              <td className="px-3 py-3">
-                                {c.source ? (
-                                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium capitalize text-slate-600">
-                                    {c.source.replace(/-/g, " ")}
-                                  </span>
-                                ) : (
-                                  <span className="text-xs text-muted-foreground">
-                                    &mdash;
-                                  </span>
-                                )}
-                              </td>
-                              <td className="px-3 py-3">
-                                {stageDisp ? (
-                                  <span
-                                    className={cn(
-                                      "rounded-full px-2 py-0.5 text-[11px] font-medium",
-                                      stageDisp.color,
-                                    )}
-                                  >
-                                    {stageDisp.label}
-                                  </span>
-                                ) : (
-                                  <span className="text-xs text-muted-foreground">
-                                    No deal
-                                  </span>
-                                )}
-                              </td>
-                              <td className="px-3 py-3 pr-5 text-xs text-muted-foreground">
-                                {addedDays !== null
-                                  ? addedDays === 0
-                                    ? "Today"
-                                    : `${addedDays}d ago`
-                                  : "—"}
-                              </td>
-                            </tr>
-                          );
-                        })
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </section>
-
-              {/* GCI chart */}
-              <section className="rounded-2xl border bg-card p-5">
-                <div className="mb-4 flex items-center justify-between">
-                  <div>
-                    <h2 className="text-sm font-semibold">Monthly GCI</h2>
-                    <p className="text-xs text-muted-foreground">
-                      Closed commission income &mdash; last 6 months
-                    </p>
-                  </div>
-                </div>
-                <div className="flex h-36 items-end gap-2">
-                  {monthlyGci.map((m) => {
-                    const pct = maxGci > 0 ? (m.value / maxGci) * 100 : 0;
-                    const isCurrentMonth = m.label === now.toLocaleString("en-US", { month: "short" });
-                    return (
-                      <div
-                        key={m.label}
-                        className="group flex flex-1 flex-col items-center gap-1"
-                      >
-                        <div className="relative flex w-full flex-col items-center justify-end" style={{ height: "112px" }}>
-                          {m.value > 0 && (
-                            <span className="mb-1 hidden text-[10px] font-medium text-muted-foreground group-hover:block">
-                              {formatCurrency(m.value, currency, { compact: true })}
-                            </span>
-                          )}
-                          <div
-                            className={cn(
-                              "w-full rounded-t-md transition-all",
-                              isCurrentMonth
-                                ? "bg-emerald-600"
-                                : "bg-emerald-200 group-hover:bg-emerald-400",
-                            )}
-                            style={{ height: `${Math.max(4, pct)}%` }}
-                          />
-                        </div>
-                        <span
-                          className={cn(
-                            "text-[11px]",
-                            isCurrentMonth
-                              ? "font-semibold text-emerald-700"
-                              : "text-muted-foreground",
-                          )}
-                        >
-                          {m.label}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
+              <div className="space-y-4">
+                <ScheduleCard
+                  todayEvents={todayEvents}
+                  tomorrowCount={tomorrowEvents.length}
+                  contactById={contactById}
+                  saPath={saPath}
+                />
+              </div>
             </div>
-
-            {/* ── Right column ─────────────────────────────────────────── */}
-            <div className="space-y-4">
-              {/* Today's schedule */}
-              <section className="rounded-2xl border bg-card p-5">
-                <div className="mb-4 flex items-center justify-between">
-                  <div>
-                    <h2 className="text-sm font-semibold">Today&apos;s Schedule</h2>
-                    <p className="text-xs text-muted-foreground">
-                      {todayEvents.length === 0
-                        ? "Nothing scheduled"
-                        : `${todayEvents.length} appointment${todayEvents.length !== 1 ? "s" : ""}`}
-                    </p>
-                  </div>
-                  <Button size="sm" variant="ghost" className="gap-1" render={<Link href={saPath("/calendar")} />}>
-                    <CalendarIcon className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-                {todayEvents.length === 0 ? (
-                  <div className="flex flex-col items-center py-6 text-center">
-                    <CalendarIcon className="mb-2 h-8 w-8 text-muted-foreground/30" />
-                    <p className="text-xs text-muted-foreground">
-                      No appointments today.
-                    </p>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="mt-3"
-                      render={<Link href={saPath("/calendar")} />}
-                    >
-                      <Plus className="mr-1.5 h-3.5 w-3.5" />
-                      Add appointment
-                    </Button>
-                  </div>
-                ) : (
-                  <ul className="space-y-2.5">
-                    {todayEvents.map((e) => {
-                      const start = toDate(e.startAt);
-                      const time = start?.toLocaleTimeString("en-US", {
-                        hour: "numeric",
-                        minute: "2-digit",
-                      });
-                      const contactForEvent = e.contactId
-                        ? contactById.get(e.contactId)
-                        : null;
-                      return (
-                        <li
-                          key={e.id}
-                          className="flex items-start gap-3 rounded-xl border bg-muted/20 p-3"
-                        >
-                          <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
-                            <CalendarIcon className="h-4 w-4" />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-medium">
-                              {e.title}
-                            </p>
-                            <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-                              {time && (
-                                <span className="flex items-center gap-1">
-                                  <Clock className="h-3 w-3" />
-                                  {time}
-                                </span>
-                              )}
-                              {contactForEvent && (
-                                <span className="truncate">
-                                  {contactForEvent.name}
-                                </span>
-                              )}
-                              {e.location && (
-                                <span className="flex items-center gap-1 truncate">
-                                  <MapPin className="h-3 w-3 shrink-0" />
-                                  {e.location}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </section>
-
-              {/* AI Agents feed */}
-              <section className="rounded-2xl border bg-card p-5">
-                <div className="mb-4 flex items-center justify-between">
-                  <div>
-                    <h2 className="text-sm font-semibold">
-                      AI Agents
-                    </h2>
-                    <p className="text-xs text-muted-foreground">
-                      Recent web chat sessions
-                    </p>
-                  </div>
-                  <Button size="sm" variant="ghost" className="gap-1" render={<Link href={saPath("/ai-agents/web-chat/sessions")} />}>
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-                {recentSessions.length === 0 ? (
-                  <div className="flex flex-col items-center py-6 text-center">
-                    <Bot className="mb-2 h-8 w-8 text-muted-foreground/30" />
-                    <p className="text-xs text-muted-foreground">
-                      No sessions yet.
-                    </p>
-                    <Button size="sm" variant="outline" className="mt-3" render={<Link href={saPath("/ai-agents/web-chat")} />}>
-                      Configure Web Chat
-                    </Button>
-                  </div>
-                ) : (
-                  <ul className="space-y-2">
-                    {recentSessions.map((s) => {
-                      const identity =
-                        s.capturedName ??
-                        s.capturedEmail ??
-                        s.capturedPhone ??
-                        "Anonymous visitor";
-                      const statusColor =
-                        s.status === "active"
-                          ? "text-emerald-600"
-                          : s.status === "escalated"
-                            ? "text-amber-600"
-                            : "text-muted-foreground";
-                      const StatusIcon =
-                        s.status === "active"
-                          ? CheckCircle2
-                          : s.status === "escalated"
-                            ? AlertCircle
-                            : MessageSquare;
-                      return (
-                        <li key={s.id}>
-                          <Link
-                            href={saPath(
-                              `/ai-agents/web-chat/sessions/${s.id}`,
-                            )}
-                            className="flex items-center gap-3 rounded-xl border bg-muted/20 px-3 py-2.5 transition-colors hover:bg-muted/40"
-                          >
-                            <StatusIcon
-                              className={cn("h-4 w-4 shrink-0", statusColor)}
-                            />
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-medium">
-                                {identity}
-                              </p>
-                              <p className="truncate text-xs text-muted-foreground">
-                                {s.messageCount} message
-                                {s.messageCount !== 1 ? "s" : ""}
-                                {s.pageUrl && ` · ${s.pageUrl}`}
-                              </p>
-                            </div>
-                            <span
-                              className={cn(
-                                "text-[10px] font-medium capitalize",
-                                statusColor,
-                              )}
-                            >
-                              {s.status}
-                            </span>
-                          </Link>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </section>
-
-              {/* Quick actions */}
-              <section className="rounded-2xl border bg-card p-5">
-                <h2 className="mb-3 text-sm font-semibold">Quick Actions</h2>
-                <div className="grid grid-cols-2 gap-2">
-                  <QuickAction
-                    href={saPath("/contacts")}
-                    icon={<Users className="h-4 w-4" />}
-                    label="Add Contact"
-                    color="bg-emerald-50 text-emerald-600"
-                  />
-                  <QuickAction
-                    href={saPath("/calendar")}
-                    icon={<CalendarIcon className="h-4 w-4" />}
-                    label="Book Showing"
-                    color="bg-blue-50 text-blue-600"
-                  />
-                  <QuickAction
-                    href={saPath("/quotes/new")}
-                    icon={<Zap className="h-4 w-4" />}
-                    label="New Quote"
-                    color="bg-violet-50 text-violet-600"
-                  />
-                  <QuickAction
-                    href={saPath("/broadcasts")}
-                    icon={<Mail className="h-4 w-4" />}
-                    label="Send Blast"
-                    color="bg-amber-50 text-amber-600"
-                  />
-                </div>
-              </section>
-            </div>
-          </div>
+          )}
         </>
       )}
     </div>
   );
 }
 
-// ── Types ────────────────────────────────────────────────────────────────────
-
-interface Priority {
-  id: string;
-  icon: React.ReactNode;
-  iconBg: string;
-  label: string;
-  href: string;
-  urgency: "high" | "medium" | "low";
-}
-
-// ── Sub-components ────────────────────────────────────────────────────────────
-
-function KpiCard({
-  label,
-  value,
-  delta,
-  deltaPositive,
-  icon,
-  accentClass,
-  bgClass,
-  href,
-}: {
-  label: string;
-  value: string | null;
-  delta: string;
-  deltaPositive: boolean;
-  icon: React.ReactNode;
+interface NextBestAction {
+  title: string;
+  description: string;
+  waitingLabel: string;
+  recommendedAction: string;
   accentClass: string;
-  bgClass: string;
-  href: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="block rounded-2xl border bg-card p-5 transition-all hover:border-primary/30 hover:shadow-sm"
-    >
-      <span
-        className={cn(
-          "flex h-10 w-10 items-center justify-center rounded-xl",
-          bgClass,
-          accentClass,
-        )}
-      >
-        {icon}
-      </span>
-      {value === null ? (
-        <div className="mt-4 h-9 w-24 animate-pulse rounded bg-muted" />
-      ) : (
-        <p className="mt-4 text-3xl font-bold tracking-tight">{value}</p>
-      )}
-      <p className="mt-1 text-sm text-muted-foreground">{label}</p>
-      <p
-        className={cn(
-          "mt-2 text-xs",
-          deltaPositive ? "text-emerald-600" : "text-muted-foreground/70",
-        )}
-      >
-        {delta}
-      </p>
-    </Link>
-  );
+  icon: ReactNode;
+  contactLabel: string | null;
+  primary: { label: string; href: string };
+  secondary: { label: string; href: string };
+  tertiary: { label: string; href: string };
 }
 
-function QuickAction({
-  href,
-  icon,
-  label,
-  color,
-}: {
-  href: string;
-  icon: React.ReactNode;
+interface TodayPriority {
+  id: string;
   label: string;
-  color: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="flex flex-col items-center gap-2 rounded-xl border bg-muted/20 p-3 text-center transition-all hover:bg-muted/40"
-    >
-      <span
-        className={cn(
-          "flex h-9 w-9 items-center justify-center rounded-lg",
-          color,
-        )}
-      >
-        {icon}
-      </span>
-      <span className="text-xs font-medium">{label}</span>
-    </Link>
-  );
+  description: string;
+  count: number;
+  href: string;
+  icon: ReactNode;
+  iconBg: string;
 }
 
-function GettingStarted({
-  saPath,
-  contacts,
-}: {
-  saPath: (path: string) => string;
-  contacts: Contact[];
-}) {
+function LoadingState() {
   return (
-    <div className="rounded-2xl border border-dashed bg-gradient-to-br from-emerald-500/5 via-teal-500/5 to-cyan-500/5 p-10 text-center">
-      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white">
-        <Users className="h-6 w-6" />
+    <div className="grid gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.6fr)]">
+      <div className="space-y-4">
+        <div className="rounded-2xl border bg-card p-5">
+          <div className="h-4 w-32 animate-pulse rounded bg-muted" />
+          <div className="mt-3 h-6 w-64 animate-pulse rounded bg-muted" />
+          <div className="mt-3 h-4 w-full max-w-xl animate-pulse rounded bg-muted" />
+          <div className="mt-6 grid gap-2 sm:grid-cols-3">
+            <div className="h-10 animate-pulse rounded-xl bg-muted" />
+            <div className="h-10 animate-pulse rounded-xl bg-muted" />
+            <div className="h-10 animate-pulse rounded-xl bg-muted" />
+          </div>
+        </div>
+        <div className="rounded-2xl border bg-card p-5">
+          <div className="h-4 w-40 animate-pulse rounded bg-muted" />
+          <div className="mt-4 space-y-2">
+            {Array.from({ length: 6 }).map((_, idx) => (
+              <div key={idx} className="h-16 animate-pulse rounded-xl bg-muted/70" />
+            ))}
+          </div>
+        </div>
       </div>
-      <h2 className="text-xl font-semibold tracking-tight">
-        Let&apos;s get your first lead in
-      </h2>
-      <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-        Add a single contact to get started, or upload your full list from
-        another CRM.
-      </p>
-      <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-        <Button render={<Link href={saPath("/contacts")} />}>
-          <Users className="mr-1 h-4 w-4" />
-          Add your first contact
-        </Button>
-        <Button variant="outline" render={<Link href={`${saPath("/contacts")}?import=1`} />}>
-          <Upload className="mr-1 h-4 w-4" />
-          Upload CSV
-        </Button>
-        <Button variant="ghost" size="sm" render={<a href="/contacts-template.csv" download="leadstack-contacts-template.csv" />}>
-          <Download className="mr-1 h-3.5 w-3.5" />
-          Download template
-        </Button>
+      <div className="space-y-4">
+        <div className="rounded-2xl border bg-card p-5">
+          <div className="h-4 w-32 animate-pulse rounded bg-muted" />
+          <div className="mt-4 space-y-2">
+            {Array.from({ length: 3 }).map((_, idx) => (
+              <div key={idx} className="h-14 animate-pulse rounded-xl bg-muted/70" />
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
+}
+
+function NextBestActionCard({
+  action,
+}: {
+  action: NextBestAction;
+}) {
+  return (
+    <section className={cn("rounded-2xl border p-5", action.accentClass)}>
+      <div className="mb-4 flex items-center gap-2">
+        <Sparkles className="h-4 w-4 text-muted-foreground" />
+        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+          Next best action
+        </p>
+      </div>
+      <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
+        <div>
+          <div className="flex flex-wrap items-center gap-2">
+            <h2 className="text-xl font-semibold tracking-tight">{action.title}</h2>
+            {action.icon}
+          </div>
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+            {action.description}
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2 text-xs">
+            <span className="rounded-full border bg-background/70 px-3 py-1 font-medium text-foreground">
+              {action.contactLabel ? `Contact: ${action.contactLabel}` : "No contact assigned"}
+            </span>
+            <span className="rounded-full border bg-background/70 px-3 py-1 font-medium text-foreground">
+              {action.waitingLabel}
+            </span>
+            <span className="rounded-full border bg-background/70 px-3 py-1 font-medium text-foreground">
+              Recommend: {action.recommendedAction}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2 md:min-w-40">
+          <Button size="sm" render={<Link href={action.primary.href} />}>
+            {action.primary.label}
+            <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+          </Button>
+          <Button size="sm" variant="outline" render={<Link href={action.secondary.href} />}>
+            {action.secondary.label}
+          </Button>
+          <Button size="sm" variant="ghost" render={<Link href={action.tertiary.href} />}>
+            {action.tertiary.label}
+          </Button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function TodayPrioritiesCard({
+  priorities,
+}: {
+  priorities: TodayPriority[];
+}) {
+  return (
+    <section className="rounded-2xl border bg-card p-5">
+      <div className="mb-4">
+        <h2 className="text-sm font-semibold">Today&apos;s priorities</h2>
+        <p className="text-xs text-muted-foreground">
+          The six signals that tell you what to do next
+        </p>
+      </div>
+      <ul className="space-y-2.5">
+        {priorities.map((priority) => (
+          <li key={priority.id}>
+            <Link
+              href={priority.href}
+              className="group flex items-center gap-3 rounded-xl border bg-muted/20 px-4 py-3 transition-all hover:border-primary/20 hover:bg-muted/40"
+            >
+              <span
+                className={cn(
+                  "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
+                  priority.iconBg,
+                )}
+              >
+                {priority.icon}
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <p className="truncate text-sm font-medium">{priority.label}</p>
+                  {priority.count === 0 && (
+                    <span className="rounded-full bg-background px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      All caught up
+                    </span>
+                  )}
+                </div>
+                <p className="truncate text-xs text-muted-foreground">
+                  {priority.description}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-lg font-semibold tabular-nums">
+                  {priority.count}
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  {priority.count > 0 ? "Needs attention" : "Quiet"}
+                </p>
+              </div>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function ScheduleCard({
+  todayEvents,
+  tomorrowCount,
+  contactById,
+  saPath,
+}: {
+  todayEvents: CalendarEvent[];
+  tomorrowCount: number;
+  contactById: Map<string, Contact>;
+  saPath: (path: string) => string;
+}) {
+  return (
+    <section className="rounded-2xl border bg-card p-5">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-semibold">Today&apos;s schedule</h2>
+          <p className="text-xs text-muted-foreground">
+            {todayEvents.length === 0
+              ? "Nothing booked right now"
+              : `${todayEvents.length} appointment${todayEvents.length !== 1 ? "s" : ""}`}
+          </p>
+        </div>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="gap-1"
+          render={<Link href={saPath("/calendar")} />}
+        >
+          <CalendarIcon className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+
+      {todayEvents.length === 0 ? (
+        <div className="rounded-xl border border-dashed bg-muted/10 p-5 text-center">
+          <CalendarIcon className="mx-auto h-8 w-8 text-muted-foreground/40" />
+          <p className="mt-2 text-sm font-medium">No appointments today</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {tomorrowCount > 0
+              ? `${tomorrowCount} appointment${tomorrowCount !== 1 ? "s" : ""} tomorrow.`
+              : "Add a showing or connect your calendar to start booking here."}
+          </p>
+          <Button
+            size="sm"
+            className="mt-4"
+            render={<Link href={saPath("/calendar")} />}
+          >
+            <Plus className="mr-1.5 h-3.5 w-3.5" />
+            Add appointment
+          </Button>
+        </div>
+      ) : (
+        <ul className="space-y-2.5">
+          {todayEvents.map((event) => {
+            const start = toDate(event.startAt);
+            const time = start?.toLocaleTimeString("en-US", {
+              hour: "numeric",
+              minute: "2-digit",
+            });
+            const contact = event.contactId
+              ? contactById.get(event.contactId)
+              : null;
+            return (
+              <li key={event.id} className="rounded-xl border bg-muted/20 p-3">
+                <div className="flex items-start gap-3">
+                  <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-600 dark:bg-violet-900/40">
+                    <CalendarIcon className="h-4 w-4" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{event.title}</p>
+                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      {time && (
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {time}
+                        </span>
+                      )}
+                      {contact && (
+                        <span className="truncate">{contact.name}</span>
+                      )}
+                      {event.location && (
+                        <span className="flex items-center gap-1 truncate">
+                          <MapPin className="h-3 w-3 shrink-0" />
+                          {event.location}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
+  );
+}
+
+function SetupProgressCard({
+  progress,
+  nextStep,
+  saPath,
+}: {
+  progress: number;
+  nextStep: (typeof ONBOARDING_STEPS)[number] | undefined;
+  saPath: (path: string) => string;
+}) {
+  if (!nextStep) return null;
+
+  return (
+    <section className="rounded-2xl border bg-card p-5">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="max-w-2xl space-y-3">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+              Business setup
+            </p>
+            <h2 className="mt-1 text-lg font-semibold tracking-tight">
+              Your business is {progress}% ready
+            </h2>
+          </div>
+          <div>
+            <p className="text-sm font-medium">{nextStep.title}</p>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+              {nextStep.description}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+            <span className="rounded-full border bg-muted/20 px-3 py-1 font-medium">
+              About {nextStep.videoMinutes} min
+            </span>
+            <span className="rounded-full border bg-muted/20 px-3 py-1 font-medium">
+              Progress saves as you go
+            </span>
+          </div>
+        </div>
+
+        <div className="w-full max-w-xs rounded-xl border bg-muted/10 p-4">
+          <div className="mb-2 flex items-center justify-between text-xs">
+            <span className="font-medium text-foreground">Onboarding progress</span>
+            <span className="text-muted-foreground">{progress}%</span>
+          </div>
+          <div className="h-2 rounded-full bg-muted">
+            <div
+              className="h-2 rounded-full bg-blue-600"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <Button className="mt-4 w-full" render={<Link href={saPath("/get-started")} />}>
+            Continue setup
+            <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function EmptyWorkspaceState({
+  saPath,
+}: {
+  saPath: (path: string) => string;
+}) {
+  return (
+    <section className="rounded-2xl border bg-card p-8">
+      <div className="mx-auto flex max-w-2xl flex-col items-center text-center">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-pink-500 text-white shadow-sm">
+          <Users className="h-6 w-6" />
+        </div>
+        <h2 className="mt-4 text-xl font-semibold tracking-tight">
+          No leads yet
+        </h2>
+        <p className="mt-2 max-w-lg text-sm text-muted-foreground">
+          Bring in your first contacts or activate a lead capture flow so the
+          Today page can start surfacing real next actions for your business.
+        </p>
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+          <Button render={<Link href={saPath("/contacts?import=1")} />}>
+            <Users className="mr-1.5 h-4 w-4" />
+            Import contacts
+          </Button>
+          <Button
+            variant="outline"
+            render={<Link href={saPath("/forms")} />}
+          >
+            <Sparkles className="mr-1.5 h-4 w-4" />
+            Activate Lead Capture
+          </Button>
+          <Button
+            variant="ghost"
+            render={<Link href={saPath("/calendar")} />}
+          >
+            <CalendarIcon className="mr-1.5 h-4 w-4" />
+            Connect calendar
+          </Button>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function formatElapsed(start: Date, end: Date): string {
+  const diff = Math.max(0, end.getTime() - start.getTime());
+  const minutes = Math.max(1, Math.round(diff / 60000));
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours}h`;
+  const days = Math.round(hours / 24);
+  if (days < 7) return `${days}d`;
+  const weeks = Math.round(days / 7);
+  return `${weeks}w`;
 }

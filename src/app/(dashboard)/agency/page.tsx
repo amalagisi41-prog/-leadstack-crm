@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import {
   collection,
   onSnapshot,
@@ -19,8 +19,7 @@ import {
 import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { useAgency } from "@/hooks/use-agency";
-import { getFirebaseAuth, getFirebaseDb } from "@/lib/firebase/client";
-import { signOutUser } from "@/lib/firebase/auth";
+import { getFirebaseDb } from "@/lib/firebase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -28,6 +27,7 @@ import { StatusTab } from "@/components/agency/status-tab";
 import { SubAccountManageDialog } from "@/components/agency/sub-account-manage-dialog";
 import { LANDING_VARIANT } from "@/config/landing";
 import type { SubAccountDoc } from "@/types";
+import { useRouter } from "next/navigation";
 
 function ErrorBanner() {
   const searchParams = useSearchParams();
@@ -47,22 +47,12 @@ function ErrorBanner() {
 }
 
 function AgencyHomeContent() {
-  const {
-    user,
-    loading,
-    role,
-    status,
-    agencyId,
-    agencyRole,
-    memberships,
-    membershipsLoaded,
-    repairError,
-    resolutionDebug,
-    retryWorkspaceRepair,
-  } = useAuth();
+  const { user, loading, agencyId, agencyRole, memberships, membershipsLoaded } = useAuth();
+  const router = useRouter();
   const [filter, setFilter] = useState("");
-  const [retrying, setRetrying] = useState(false);
-  const [signingOut, setSigningOut] = useState(false);
+  const [repairingSession, setRepairingSession] = useState(false);
+  const [repairFailed, setRepairFailed] = useState(false);
+  const attemptedRepair = useRef(false);
   const isOwner = agencyRole === "owner";
 
   const visible = memberships.filter((m) =>
@@ -97,6 +87,36 @@ function AgencyHomeContent() {
     document.title = `Agency · ${agency.name}`;
   }, [agency.name]);
 
+  useEffect(() => {
+    if (loading || !user || !membershipsLoaded) return;
+    if (agencyRole === "owner") return;
+    const firstMembership = memberships[0];
+    if (!firstMembership) return;
+    router.replace(`/sa/${firstMembership.subAccountId}/dashboard`);
+  }, [agencyRole, loading, memberships, membershipsLoaded, router, user]);
+
+  useEffect(() => {
+    if (loading || !user || !membershipsLoaded || agencyId || attemptedRepair.current) return;
+    if (agencyRole !== "owner" && memberships.length > 0) return;
+    attemptedRepair.current = true;
+    setRepairingSession(true);
+
+    void fetch("/api/auth/refresh-claims", {
+      method: "POST",
+      headers: { "x-user-uid": user.uid },
+      credentials: "include",
+    })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Could not restore workspace access.");
+        await user.getIdToken(true);
+        window.location.reload();
+      })
+      .catch(() => {
+        setRepairFailed(true);
+        setRepairingSession(false);
+      });
+  }, [agencyId, agencyRole, loading, memberships, membershipsLoaded, user]);
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -117,109 +137,23 @@ function AgencyHomeContent() {
   }
 
   if (!agencyId) {
-    // AuthContext already tried a one-time silent repair for a signed-in
-    // account with no home agency (see repair-workspace) — reaching here
-    // means that failed too. This is a real "contact support" state, not
-    // a sign-in prompt, so don't tell an authenticated user to sign in.
-    // Surface the actual failure reason (repairError) instead of a black
-    // box, and let them retry without a full reload.
     return (
       <div className="rounded-2xl border bg-card p-8 text-center">
-        <p className="text-sm font-medium">Your workspace couldn&apos;t be set up</p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Your account is signed in, but we couldn&apos;t link it to an agency.
+        <p className="text-sm font-medium">
+          {repairingSession
+            ? "Finishing your workspace setup…"
+            : "Your sign-in worked, but workspace access is incomplete."}
         </p>
-        {repairError && (
-          <p className="mt-2 rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">
-            {repairError}
-          </p>
-        )}
-        {(() => {
-          // Computed directly at render time from values useAuth() already
-          // exposes on every render, rather than relying on the one-shot
-          // `resolutionDebug` snapshot the auth-resolution effect sets at a
-          // specific moment — that snapshot can be stale-null on this render
-          // (e.g. a bfcache-restored page after the "Sign out & try again"
-          // navigation resumes frozen JS state without re-running the
-          // effect), which was leaving this box missing even though the
-          // stuck error text still showed. Always showing a live snapshot
-          // here guarantees it's never empty in this branch.
-          let clientProjectId: string | null = null;
-          try {
-            clientProjectId = getFirebaseAuth().app.options.projectId ?? null;
-          } catch {
-            clientProjectId = null;
-          }
-          const liveSnapshot = {
-            uid: user?.uid ?? null,
-            email: user?.email ?? null,
-            clientProjectId,
-            role,
-            status,
-            agencyRole,
-            ...(resolutionDebug ?? {}),
-          };
-          return (
-            <div className="mt-3 rounded-lg border border-dashed bg-muted/40 p-3 text-left">
-              <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
-                Debug info (screenshot this for support)
-              </p>
-              <pre className="mt-1.5 overflow-x-auto whitespace-pre-wrap break-all font-mono text-[11px] text-muted-foreground">
-                {JSON.stringify(liveSnapshot, null, 2)}
-              </pre>
-            </div>
-          );
-        })()}
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-          <Button
-            disabled={retrying}
-            onClick={async () => {
-              setRetrying(true);
-              try {
-                await retryWorkspaceRepair();
-              } finally {
-                setRetrying(false);
-              }
-            }}
-          >
-            {retrying ? "Retrying…" : "Retry setup"}
+        <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+          {repairFailed
+            ? "Sign out and sign in again to refresh your AgentStack workspace."
+            : "We’re securely refreshing your agency access. This page will reload automatically."}
+        </p>
+        {repairFailed && (
+          <Button className="mt-4" onClick={() => window.location.assign("/login")}>
+            Return to sign in
           </Button>
-          {repairError?.includes("this browser session") && (
-            <Button
-              variant="outline"
-              disabled={signingOut}
-              onClick={async () => {
-                setSigningOut(true);
-                // A repair that reports success server-side but still can't
-                // resolve on a fresh reload usually means this browser's
-                // cached auth token / IndexedDB state is stuck, not that
-                // the account's data is wrong. Signing out fully and back
-                // in mints a brand-new token from scratch, which clears it.
-                await signOutUser().catch(() => undefined);
-                window.location.href = "/login";
-              }}
-            >
-              {signingOut ? "Signing out…" : "Sign out & try again"}
-            </Button>
-          )}
-        </div>
-        <p className="mt-3 text-xs text-muted-foreground">
-          If this keeps happening, contact support.
-        </p>
-      </div>
-    );
-  }
-
-  if (!membershipsLoaded) {
-    // `loading` (above) resolves as soon as auth + the user doc load --
-    // BEFORE the separate membership subscription delivers its first
-    // snapshot. Without this gate, a fresh page load renders "you have no
-    // sub-accounts" for a brief window even when real memberships are
-    // about to arrive a moment later.
-    return (
-      <div className="space-y-6">
-        <div className="h-8 w-48 animate-pulse rounded bg-muted" />
-        <div className="h-32 animate-pulse rounded-2xl bg-muted/50" />
+        )}
       </div>
     );
   }

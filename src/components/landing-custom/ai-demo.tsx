@@ -29,21 +29,21 @@ const chatMessages = [
 
 export function AiDemo() {
   return (
-    <section id="ai-demo" className="py-24 bg-muted/30">
+    <section id="ai-demo" className="bg-[#FFF8EF] py-24 md:py-28">
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-5xl">
           <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-wide text-blue-600 mb-2">
+              <p className="mb-2 text-sm font-semibold uppercase tracking-[0.28em] text-[#173B7A]">
                 Never miss an inquiry
               </p>
-              <h2 className="text-3xl font-semibold tracking-tighter sm:text-4xl mb-4">
+              <h2 className="mb-4 text-3xl font-semibold tracking-tight text-[#173B7A] sm:text-5xl">
                 Every lead answered.{" "}
-                <span className="bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text font-sans font-normal italic text-transparent">
+                <span className="font-sans font-normal italic text-[#DB4F9B]">
                   Even at 2 a.m.
                 </span>
               </h2>
-              <p className="text-muted-foreground leading-relaxed mb-6">
+              <p className="mb-6 max-w-xl leading-7 text-[#526078]">
                 AgentStack responds to inbound texts, web chat, and calls around the clock — qualifying buyers, booking showings, and sending listing docs before you even see the notification.
               </p>
               <ul className="space-y-3">
@@ -54,7 +54,7 @@ export function AiDemo() {
                   "Escalates hot leads to you immediately",
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2.5 text-sm">
-                    <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-blue-500/15 text-blue-600">
+                    <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#4F91FF]/15 text-[#4F91FF]">
                       ✓
                     </span>
                     {item}
@@ -64,30 +64,30 @@ export function AiDemo() {
             </div>
 
             {/* Chat mockup */}
-            <div className="rounded-2xl border bg-card shadow-xl overflow-hidden">
-              <div className="flex items-center gap-3 border-b px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20">
+            <div className="overflow-hidden rounded-[1.75rem] border border-[#E7DCC7] bg-white shadow-[0_24px_70px_rgba(23,59,122,0.08)]">
+              <div className="flex items-center gap-3 border-b border-[#EFE4D3] bg-[#FFF8EF] px-4 py-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#173B7A]">
                   <Bot className="h-4 w-4 text-white" />
                 </div>
                 <div>
-                  <p className="text-xs font-semibold text-white">AgentStack</p>
-                  <p className="text-[10px] text-blue-100">Powered by AgentStack AI · Online</p>
+                  <p className="text-xs font-semibold text-[#173B7A]">AgentStack</p>
+                  <p className="text-[10px] text-[#7B8AA1]">Powered by AgentStack AI · Online</p>
                 </div>
                 <div className="ml-auto flex items-center gap-1">
-                  <span className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
-                  <span className="text-[10px] text-blue-100">live</span>
+                  <span className="h-2 w-2 animate-pulse rounded-full bg-[#28C840]" />
+                  <span className="text-[10px] text-[#7B8AA1]">live</span>
                 </div>
               </div>
 
-              <div className="flex flex-col gap-3 p-4 max-h-72 overflow-y-auto bg-background">
+              <div className="flex max-h-72 flex-col gap-3 overflow-y-auto bg-[#FFFDFC] p-4">
                 {chatMessages.map((msg, i) => (
                   <div
                     key={i}
                     className={`flex gap-2 ${msg.from === "visitor" ? "flex-row-reverse" : ""}`}
                   >
-                    <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${msg.from === "bot" ? "bg-blue-500/10" : "bg-blue-600"}`}>
+                    <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${msg.from === "bot" ? "bg-[#173B7A]/10" : "bg-[#173B7A]"}`}>
                       {msg.from === "bot" ? (
-                        <Bot className="h-3 w-3 text-blue-500" />
+                        <Bot className="h-3 w-3 text-[#173B7A]" />
                       ) : (
                         <User className="h-3 w-3 text-white" />
                       )}
@@ -95,8 +95,8 @@ export function AiDemo() {
                     <div
                       className={`max-w-[80%] rounded-xl px-3 py-2 text-xs leading-relaxed ${
                         msg.from === "bot"
-                          ? "bg-muted text-foreground"
-                          : "bg-blue-600 text-white"
+                          ? "bg-[#FFF8EF] text-[#173B7A]"
+                          : "bg-[#173B7A] text-white"
                       }`}
                     >
                       {msg.text}
@@ -105,11 +105,11 @@ export function AiDemo() {
                 ))}
               </div>
 
-              <div className="border-t px-4 py-3 flex items-center gap-2 bg-background">
-                <div className="flex-1 rounded-lg border bg-muted/50 px-3 py-1.5 text-xs text-muted-foreground">
+              <div className="flex items-center gap-2 border-t border-[#EFE4D3] bg-[#FFF8EF] px-4 py-3">
+                <div className="flex-1 rounded-lg border border-[#E7DCC7] bg-white px-3 py-1.5 text-xs text-[#7B8AA1]">
                   Type a message...
                 </div>
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition-colors cursor-pointer">
+                <div className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg bg-[#173B7A] text-sm font-bold text-white transition-colors hover:bg-[#214b95]">
                   ↑
                 </div>
               </div>

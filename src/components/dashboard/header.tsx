@@ -41,8 +41,9 @@ const TITLES: Array<[RegExp, string]> = [
   [/^\/agency\/members/, "Agency staff"],
   [/^\/agency\/get-started/, "Get started"],
   [/^\/agency$/, "Agency"],
+  [/^\/dashboard$/, "Today"],
   [/^\/sa\/[^/]+\/dashboard\/settings/, "Settings"],
-  [/^\/sa\/[^/]+\/dashboard$/, "Dashboard"],
+  [/^\/sa\/[^/]+\/dashboard$/, "Today"],
   [/^\/sa\/[^/]+\/conversations\/[^/]+/, "Conversation"],
   [/^\/sa\/[^/]+\/conversations/, "Conversations"],
   [/^\/sa\/[^/]+\/contacts\/[^/]+/, "Contact"],
@@ -83,11 +84,12 @@ function activeSubAccountFromPath(pathname: string): string | null {
 }
 
 export function Header({ onMenuClick, onOpenSearch }: HeaderProps) {
-  const { user, memberships } = useAuth();
+  const { user, memberships, agencyRole } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const title = titleFor(pathname);
   const activeSubId = activeSubAccountFromPath(pathname);
+  const homeSubId = activeSubId ?? memberships[0]?.subAccountId ?? null;
   // Defer auth-dependent rendering until after hydration. Without this gate
   // the conditional sub-account switcher dropdown is absent on the server
   // (auth is client-side only) but present on the client once Firebase auth
@@ -105,9 +107,11 @@ export function Header({ onMenuClick, onOpenSearch }: HeaderProps) {
   //   - "Billing" → whichever sub-account's settings is active (subscription
   //     lives at sub-account scope per the three-tier model). Falls back
   //     to agency settings when no sub-account is selected.
-  const billingHref = activeSubId
-    ? `/sa/${activeSubId}/dashboard/settings`
-    : "/agency/settings";
+  const billingHref = homeSubId
+    ? `/sa/${homeSubId}/dashboard/settings`
+    : agencyRole === "owner"
+      ? "/agency/settings"
+      : "/me/settings";
   // Email defaults to masked in the dropdown header so screenshares don't
   // leak the operator's address. Per-session toggle.
   const [emailShown, setEmailShown] = useState(false);
@@ -128,6 +132,10 @@ export function Header({ onMenuClick, onOpenSearch }: HeaderProps) {
     const tail = pathname.replace(/^\/sa\/[^/]+/, "");
     router.push(`/sa/${targetSubId}${tail || "/dashboard"}`);
   }
+
+  const workspaceHomeHref = homeSubId
+    ? `/sa/${homeSubId}/dashboard`
+    : "/dashboard";
 
   const initials = user?.displayName
     ? user.displayName
@@ -201,11 +209,11 @@ export function Header({ onMenuClick, onOpenSearch }: HeaderProps) {
             ))}
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => router.push("/agency")}
+              onClick={() => router.push(workspaceHomeHref)}
               className="text-xs"
             >
               <Building2 className="mr-2 h-3.5 w-3.5" />
-              Agency home
+              {agencyRole === "owner" ? "Agency home" : "Workspace home"}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

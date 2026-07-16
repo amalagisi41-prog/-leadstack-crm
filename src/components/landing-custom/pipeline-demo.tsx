@@ -47,34 +47,34 @@ const columns = [
 
 export function PipelineDemo() {
   return (
-    <section className="py-20 bg-muted/20">
+    <section className="bg-white py-24 md:py-28">
       <div className="container mx-auto px-4">
-        <div className="mx-auto max-w-2xl text-center mb-10">
-          <p className="text-sm font-semibold uppercase tracking-wide text-blue-600 mb-2">
-            Every deal, live
+        <div className="mx-auto mb-12 max-w-3xl text-center">
+          <p className="mb-2 text-sm font-semibold uppercase tracking-[0.28em] text-[#173B7A]">
+            Live pipeline
           </p>
-          <h2 className="text-3xl font-semibold tracking-tighter sm:text-4xl">
+          <h2 className="text-3xl font-semibold tracking-tight text-[#173B7A] sm:text-5xl">
             Every deal,{" "}
-            <span className="bg-gradient-to-r from-blue-500 to-indigo-500 bg-clip-text font-sans font-normal italic text-transparent">
+            <span className="font-sans font-normal italic text-[#DB4F9B]">
               exactly where it stands.
             </span>
           </h2>
-          <p className="mt-3 text-muted-foreground">
-            No spreadsheet, no sticky notes, no digging through texts. One glance shows who&apos;s stalled and who needs you next — move a deal forward with a single drag.
+          <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-[#526078] sm:text-lg">
+            Drag deals across stages, see days-in-stage timers, and never lose track of a buyer again.
           </p>
         </div>
 
-        <div className="mx-auto max-w-6xl overflow-x-auto rounded-2xl border bg-card shadow-xl">
-          <div className="flex items-center gap-2 border-b bg-muted/30 px-4 py-3">
-            <div className="h-3 w-3 rounded-full bg-red-400/70" />
-            <div className="h-3 w-3 rounded-full bg-yellow-400/70" />
-            <div className="h-3 w-3 rounded-full bg-green-400/70" />
-            <span className="ml-2 text-xs font-medium text-muted-foreground">
+        <div className="mx-auto max-w-6xl overflow-x-auto rounded-[2rem] border border-[#E7DCC7] bg-[#FFFDFC] shadow-[0_24px_70px_rgba(23,59,122,0.08)]">
+          <div className="flex items-center gap-2 border-b border-[#EFE4D3] bg-[#FFF8EF] px-4 py-3">
+            <div className="h-3 w-3 rounded-full bg-[#FF5F57]/80" />
+            <div className="h-3 w-3 rounded-full bg-[#FEBC2E]/80" />
+            <div className="h-3 w-3 rounded-full bg-[#28C840]/80" />
+            <span className="ml-2 text-xs font-medium text-[#526078]">
               Active Clients — AgentStack
             </span>
             <div className="ml-auto flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-blue-500 animate-pulse" />
-              <span className="text-[10px] text-muted-foreground">live</span>
+              <span className="h-2 w-2 animate-pulse rounded-full bg-[#DB4F9B]" />
+              <span className="text-[10px] text-[#526078]">live</span>
             </div>
           </div>
 
@@ -87,12 +87,12 @@ export function PipelineDemo() {
                 </div>
                 <div className="flex flex-col gap-2">
                   {col.cards.map((c) => (
-                    <div key={c.name} className="rounded-lg border bg-background p-2.5 shadow-sm">
+                    <div key={c.name} className="rounded-lg border border-[#E7DCC7] bg-white p-2.5 shadow-sm">
                       <div className="flex items-start justify-between gap-1">
-                        <span className="text-xs font-semibold leading-tight">{c.name}</span>
-                        <span className="shrink-0 text-[9px] text-muted-foreground">{c.time}</span>
+                        <span className="text-xs font-semibold leading-tight text-[#173B7A]">{c.name}</span>
+                        <span className="shrink-0 text-[9px] text-[#7B8AA1]">{c.time}</span>
                       </div>
-                      <p className="mt-0.5 text-[10px] text-muted-foreground leading-snug">{c.note}</p>
+                      <p className="mt-0.5 text-[10px] leading-snug text-[#526078]">{c.note}</p>
                     </div>
                   ))}
                 </div>
@@ -100,9 +100,9 @@ export function PipelineDemo() {
             ))}
           </div>
 
-          <div className="border-t bg-muted/20 px-4 py-2.5 flex items-center justify-between text-[10px] text-muted-foreground">
-            <span>9 active deals · $2.2M in progress</span>
-            <span className="text-blue-500 font-medium">Drag to move between stages</span>
+          <div className="flex items-center justify-between border-t border-[#EFE4D3] bg-[#FFF8EF] px-4 py-2.5 text-[10px] text-[#526078]">
+            <span>9 active deals · $2.2M pipeline value</span>
+            <span className="font-medium text-[#173B7A]">Drag to move between stages</span>
           </div>
         </div>
       </div>

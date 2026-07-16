@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { requireSubAccountMember } from "@/lib/auth/require-tenancy";
+import {
+  sanitizeProductPayload,
+  type CreateProductPayload,
+} from "@/lib/products/sanitize-product";
 import { DEFAULT_PRODUCT } from "@/types/products";
 import type { Product } from "@/types/products";
 
@@ -41,7 +45,7 @@ export async function POST(
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const sanitized = sanitizePayload(body);
+  const sanitized = sanitizeProductPayload(body);
   if (!sanitized.name) {
     return NextResponse.json(
       { error: "name is required" },
@@ -82,42 +86,4 @@ export async function POST(
   }
 
   return NextResponse.json({ id: docRef.id }, { status: 201 });
-}
-
-// ─── Helpers ─────────────────────────────────────────────────────
-
-interface CreateProductPayload {
-  name?: string;
-  description?: string;
-  unitPriceCents?: number;
-  currency?: string;
-  active?: boolean;
-}
-
-export function sanitizeProductPayload(
-  body: CreateProductPayload,
-): Partial<Product> {
-  return sanitizePayload(body);
-}
-
-function sanitizePayload(body: CreateProductPayload): Partial<Product> {
-  const out: Partial<Product> = {};
-
-  if (typeof body.name === "string") {
-    out.name = body.name.trim().slice(0, 200);
-  }
-  if (typeof body.description === "string") {
-    out.description = body.description.trim().slice(0, 2_000);
-  }
-  if (typeof body.unitPriceCents === "number" && Number.isFinite(body.unitPriceCents)) {
-    out.unitPriceCents = Math.max(0, Math.round(body.unitPriceCents));
-  }
-  if (typeof body.currency === "string" && body.currency.trim()) {
-    out.currency = body.currency.trim().toUpperCase().slice(0, 3);
-  }
-  if (typeof body.active === "boolean") {
-    out.active = body.active;
-  }
-
-  return out;
 }

@@ -1,398 +1,450 @@
 # AgentStack Master Product Prompt
 
-You are the Lead Product Designer, UX Architect, SaaS Product Manager, Brand Strategist, and AI Systems Architect for AgentStack.
+OBJECTIVE
 
-Your mission is to build the easiest, most intuitive AI-powered business operating system for real estate professionals.
+Transform AgentStack from a feature-focused CRM into a process-driven operating system for real estate professionals. Every design decision, page, feature, and piece of copy should reinforce one core promise:
 
-AgentStack is NOT another CRM.
+"The easiest way to run a modern real estate business."
 
-It is a complete business operating system that helps agents attract leads, manage relationships, automate follow-up, build websites, market listings, and grow their business — all from one beautifully designed platform.
+Do not simply redesign the UI. Reposition the entire product experience around simplicity, guidance, automation, and confidence for non-technical Realtors.
 
-## Core Mission
+--------------------------------------------------------
 
-Design every feature around one principle:
+CORE BRAND POSITION
 
-**Make complex tasks feel effortless.**
+AgentStack is NOT a CRM.
 
-Before adding functionality, always ask:
+AgentStack is a guided business operating system that tells agents exactly what to do next.
 
-- Can this be simpler?
-- Can AI automate this?
-- Can this be done in fewer clicks?
-- Would a non-technical Realtor understand this immediately?
-- Does this reduce customer support?
+The software should feel like hiring an experienced business coach rather than learning new technology.
 
-The goal is confidence, not complexity.
+Replace feature selling with outcome selling.
 
----
+Every page should answer:
 
-## Target User
+• What is this?
+• Why does it matter?
+• What should I do next?
 
-Real estate professionals who want to grow their business without learning complicated software.
+--------------------------------------------------------
 
-Including:
+NEW BRAND PROMISE
 
-- New agents
-- Solo agents
-- Experienced agents
-- Teams
-- Brokerages
-- Referral agents
+Set up your business once.
 
-Users should feel productive within their first 10 minutes.
+AgentStack builds and runs everything around it.
 
-No training.
-No confusing setup.
-No technical knowledge required.
+--------------------------------------------------------
 
----
+HERO SECTION
 
-## Brand Personality
+Headline:
 
-Premium.
-Modern.
-Minimal.
-Professional.
-Calm.
-Organized.
-Fast.
-Helpful.
-Never overwhelming.
+"The easiest way to run your real estate business."
 
-Think Apple, Linear, Notion, and Stripe — not legacy CRM software.
+Subheadline:
 
----
+"Capture leads, respond instantly, stay organized, and close more transactions with one simple system powered by AI."
 
-## Core Positioning
+Primary CTA
 
-AgentStack is your AI-powered real estate operating system.
+Start Free
 
-One platform for:
+Secondary CTA
 
-- CRM
-- AI Assistant
-- Website Creation
-- Marketing
-- Lead Capture
-- Smart Workflows
-- Business Blueprint
-- Analytics
-- Client Communication
-- Business Growth
+See How It Works (90 Seconds)
 
-Everything works together.
-Everything is preconfigured.
-Everything is designed to save time.
+--------------------------------------------------------
 
----
+REBUILD THE WEBSITE AROUND THE AGENTSTACK METHOD™
 
-## Navigation
+Replace feature-first messaging with this six-step framework.
 
-Use simple language. Avoid software jargon whenever possible.
+1. Build
 
-Preferred navigation:
+Create your AI Business Profile.
 
-- Dashboard
-- People
-- Deals
-- Marketing Pages
-- AI Website Studio
-- Lead Forms
-- Smart Workflows
-- AI Assistant
-- Business Blueprint
-- Analytics
-- Settings
+Tell AgentStack about your business one time.
 
-Users should never have to wonder what something means.
+2. Connect
 
----
+Import contacts.
 
-## Onboarding
+Connect email.
 
-Keep onboarding extremely simple.
+Phone.
 
-**Step 1** — Tell us about your business.
+Calendar.
 
-**Step 2** — AgentStack automatically builds your workspace.
+Google Business Profile.
 
-**Step 3** — Import your contacts or start fresh.
+Website.
 
-Done.
+Social accounts.
 
-Everything possible should already be configured.
+3. Capture
 
----
+Launch proven Lead Capture Systems.
 
-## Business Blueprint
+(Home Valuation, Buyer Consultation, Open House, Listing Inquiry, Investor, Appointment Request.)
 
-Every workspace begins with a Business Blueprint. This becomes the central knowledge source for the platform.
+4. Respond
 
-Store:
+AI answers immediately.
 
-- Company information
-- Biography
-- Branding
-- FAQs
-- Services
-- Office information
-- Marketing copy
-- Listing presentation language
-- Buyer process
-- Seller process
-- Team policies
-- Documents
-- Scripts
-- Objection handling
-- Email templates
-- SMS templates
+Automatic Follow-Up begins instantly.
 
-Every AI feature references the Business Blueprint before responding.
+5. Nurture
 
-One source of truth.
+AgentStack keeps every conversation moving until someone responds.
 
----
+No manual reminders.
 
-## AI Assistant
+No forgotten leads.
 
-The AI Assistant should:
+6. Close
 
-- Answer questions
-- Draft emails
-- Create social posts
-- Write listing descriptions
-- Generate follow-up
-- Summarize conversations
-- Suggest next actions
-- Help users complete tasks
+Appointments.
 
-The AI should proactively guide users throughout the platform.
+Transactions.
 
----
+Reviews.
 
-## Smart Workflows
+Referrals.
 
-Automate repetitive tasks.
+Repeat.
+
+Every section of the homepage should reinforce this process.
+
+--------------------------------------------------------
+
+FIRST-TIME USER EXPERIENCE
+
+Completely redesign onboarding.
+
+Do NOT drop users into a dashboard.
+
+Instead launch a guided setup experience.
+
+Estimated completion:
+
+15 Minutes
+
+Progress Bar
+
+Step 1
+Business Profile
+
+Step 2
+Import Existing Contacts
+
+Step 3
+Connect Your Business
+
+Step 4
+Choose Your Business Goals
+
+Step 5
+Launch Recommended Marketing
+
+Step 6
+Go Live
+
+Each step explains:
+
+Why we're asking.
+
+Estimated setup time.
+
+Whether it can be skipped.
+
+--------------------------------------------------------
+
+BUSINESS PROFILE (formerly Knowledge Base)
+
+Rename "Knowledge Base" to:
+
+Business Profile
+
+or
+
+AI Business Profile
+
+This becomes the single source of truth for the platform.
+
+It contains:
+
+• Agent information
+• Brokerage
+• Brand voice
+• Service areas
+• Office hours
+• Communication preferences
+• Team members
+• FAQs
+• Buyer services
+• Seller services
+• Investor services
+• Preferred vendors
+• Brand assets
+• Compliance settings
+
+Every AI feature references this profile automatically.
+
+Changing one item updates the entire platform.
+
+--------------------------------------------------------
+
+IMPORT CONTACTS
+
+Immediately after creating the Business Profile:
+
+"Bring Your Business With You."
+
+Support importing from:
+
+CSV
+
+Excel
+
+Google Contacts
+
+Outlook
+
+Existing CRMs
+
+AI automatically:
+
+Remove duplicates
+
+Standardize records
+
+Categorize contacts
+
+Tag buyers
+
+Tag sellers
+
+Tag investors
+
+Tag vendors
+
+Tag past clients
+
+Identify incomplete records
+
+Display a summary:
+
+Imported
+
+Duplicates removed
+
+Categories created
+
+Contacts requiring attention
+
+--------------------------------------------------------
+
+SIMPLIFY PRODUCT LANGUAGE
+
+Replace technical software terms.
+
+CRM
+
+→ Business Hub
+
+Workflow
+
+→ Automatic Follow-Up
+
+Pipeline
+
+→ Active Clients
+
+Campaign
+
+→ Marketing Plan
+
+Automation
+
+→ Runs Automatically
+
+Trigger
+
+→ Starts When
+
+Funnel
+
+→ Lead Capture System
+
+Opportunity
+
+→ Client Journey
+
+Sequence
+
+→ Follow-Up Plan
+
+--------------------------------------------------------
+
+BUILT-IN COACHING
+
+Every page includes an expandable panel:
+
+What is this?
+
+Why does it matter?
+
+When should I use it?
+
+Typical conversion rate
+
+Best practices
+
+Common mistakes
+
+Recommended for beginners?
+
+Do NOT rely on an external help center.
+
+Teach users while they build.
+
+--------------------------------------------------------
+
+LEAD CAPTURE SYSTEMS
+
+Instead of generic funnels:
+
+Present proven marketing systems.
 
 Examples:
 
-- Lead follow-up
-- Appointment reminders
-- Review requests
-- Email sequences
-- SMS campaigns
-- Birthday messages
-- Home anniversary campaigns
-- Listing alerts
-- Pipeline movement
+Home Valuation
 
-Every workflow should be editable but already built.
+Buyer Consultation
 
----
+Schedule a Showing
 
-## AI Website Studio
+Investment Property
 
-Build a premium AI-powered website builder specifically for real estate professionals.
+Open House Registration
 
-This is not a generic website builder. It should feel like hiring a professional web design agency.
+Luxury Buyer
 
-The AI should generate complete websites using proven conversion strategies. The process should require little or no technical knowledge.
+Seller Guide
 
-### Website Packages
+Relocation
 
-#### Solo Agent
+Every system explains:
 
-Automatically generate:
+Purpose
 
-- Homepage
-- About
-- Buyers
-- Sellers
-- Contact
-- Testimonials
-- Featured Listings
-- Home Valuation
-- Consultation Booking
-- Blog
-- AI Chat Assistant
-- Lead Forms
+Expected conversion
 
-#### Established Agent
+Best traffic source
 
-Everything above plus:
+Recommended follow-up
 
-- Community Guides
-- Open Houses
-- Market Reports
-- Resources
-- Downloadable Guides
-- Video Pages
-- Multiple Landing Pages
-- Review Collection
-- SEO Pages
+Time to launch
 
-#### Team / Brokerage
+One-click activation
 
-Everything above plus:
+--------------------------------------------------------
 
-- Team Directory
-- Agent Pages
-- Office Locations
-- Recruiting
-- Team CRM
-- Shared Business Blueprint
-- Lead Distribution
-- Team Dashboard
-- Office Calendar
+AI EXPERIENCE
 
-#### Enterprise
+Users never write prompts.
 
-Support:
+Users never build automations.
 
-- Multiple offices
-- Multiple brands
-- White labeling
-- Franchise management
-- Enterprise permissions
-- API integrations
-- Advanced reporting
+Users answer business questions.
 
-### AI Website Wizard
+AgentStack configures AI automatically.
 
-Ask users:
+Every AI assistant references the Business Profile before generating responses.
 
-- Business name
-- Brokerage
-- Service areas
-- Brand colors
-- Logo
-- Headshot
-- Target audience
-- Specialties
-- Contact information
-- Social media
-- Phone
-- Email
+--------------------------------------------------------
 
-The AI then automatically creates:
+DASHBOARD REDESIGN
 
-- Complete website
-- Navigation
-- Homepage
-- About page
-- Service pages
-- Community pages
-- SEO titles
-- Meta descriptions
-- Schema markup
-- Lead forms
-- Booking pages
-- Home valuation page
-- Blog categories
-- FAQs
-- Calls-to-action
-- Business Blueprint
-- AI Assistant prompts
-- Email templates
-- SMS templates
+Remove clutter.
 
-### High-Converting Templates
+Replace analytics-first with action-first.
 
-Offer professionally designed templates for:
+Greeting:
 
-- Individual Agent
-- Luxury
-- First-Time Buyers
-- Sellers
-- Investors
-- New Construction
-- Waterfront
-- Relocation
-- 55+ Communities
-- Commercial
-- Rentals
-- Open Houses
-- Listing Marketing
-- Coming Soon
-- Home Valuation
-- Buyer Consultation
-- Seller Consultation
+Good Morning, [Name]
 
-Every template should follow proven conversion principles with trust signals, social proof, reviews, appointment booking, lead capture, and strong calls to action.
+Today's Priorities
 
----
+New Leads
 
-## Marketing Pages
+Follow-Ups Due
 
-One-click page creation for:
+Appointments
 
-- Home Valuation
-- IDX Search
-- Open House Registration
-- Listing Promotion
-- Buyer Consultation
-- Seller Consultation
-- Market Report
-- Investor Guide
-- Neighborhood Guide
-- Mortgage Calculator
-- Downsizing Guide
-- Probate
-- Divorce
-- Luxury
-- Relocation
-- Free Downloads
+Transactions
 
-Every page automatically connects to:
+Review Requests
 
-- CRM
-- Business Blueprint
-- AI Assistant
-- Smart Workflows
-- Analytics
-- Lead tracking
+Show ONE highlighted card:
 
----
+Next Best Action
 
-## Design Standards
+Example:
 
-- Large typography
-- Generous whitespace
-- Minimal interface
-- Rounded corners
-- Premium iconography
-- Responsive layouts
-- Fast loading
-- SEO optimized
-- ADA accessible
-- WCAG compliant
-- Modular components
-- Consistent design system
+"Call Sarah.
 
-Every screen should answer:
+She requested a home valuation yesterday and has not been contacted."
 
-1. Where am I?
-2. What should I do next?
-3. What is the primary action?
+The dashboard should feel like a daily business coach.
 
----
+--------------------------------------------------------
 
-## Success Criteria
+VISUAL DESIGN
 
-A new user should be able to:
+Maintain a premium SaaS aesthetic inspired by:
 
-1. Create an account.
-2. Complete onboarding.
-3. Launch a professional website.
-4. Import contacts.
-5. Activate AI.
-6. Capture leads.
-7. Begin automated follow-up.
+Apple
 
-— all within 10 minutes.
+Linear
 
-The product should feel elegant, effortless, intelligent, and premium.
+Stripe
 
-The ultimate goal is not to build the platform with the most features.
+Notion
 
-The ultimate goal is to build the platform that real estate professionals love because it makes running their business dramatically easier.
+Vercel
+
+Use:
+
+Generous whitespace
+
+Minimal borders
+
+Large typography
+
+Simple icons
+
+Soft shadows
+
+Clear hierarchy
+
+Fast scanning
+
+Reduce visual clutter throughout.
+
+--------------------------------------------------------
+
+OVERALL GOAL
+
+Every page should reduce anxiety, eliminate decision fatigue, and make agents feel guided.
+
+The experience should feel less like configuring software and more like following a proven business system.
+
+The final product should position AgentStack as:
+
+"The operating system for modern real estate professionals."
+
+Every design, interaction, workflow, and piece of copy should reinforce this positioning consistently across the entire application.
+
+This is a full product repositioning — it touches the landing page, onboarding, dashboard, settings, and copy across the entire app. The highest-impact starting point is the landing page since that's the first thing prospects see, and we've been iterating on it.

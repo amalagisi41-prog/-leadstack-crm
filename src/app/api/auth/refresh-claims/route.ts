@@ -1,7 +1,8 @@
 import "server-only";
 
 import { NextResponse } from "next/server";
-import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
+import { getAdminAuth } from "@/lib/firebase/admin";
+import { resolveAgencyAccess } from "@/lib/auth/resolve-agency-access";
 
 /**
  * Re-emit the caller's custom claims from their current Firestore state.
@@ -24,45 +25,32 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const db = getAdminDb();
   const auth = getAdminAuth();
-
-  const userSnap = await db.doc(`users/${uid}`).get();
-  if (!userSnap.exists) {
+  const resolved = await resolveAgencyAccess(uid);
+  if (!resolved) {
     return NextResponse.json({ error: "No user record" }, { status: 404 });
-  }
-  const user = userSnap.data() ?? {};
-  const status = user.status === "removed" ? "removed" : "active";
-  const agencyId = (user.primaryAgencyId as string | null) ?? null;
-
-  let agencyRole: "owner" | "staff" | null = null;
-  if (agencyId) {
-    const memberSnap = await db
-      .doc(`agencies/${agencyId}/agencyMembers/${uid}`)
-      .get();
-    if (memberSnap.exists) {
-      const role = memberSnap.data()?.role;
-      if (role === "owner" || role === "staff") {
-        agencyRole = role;
-      }
-    }
   }
 
   // Legacy "role" claim — kept until the dashboard pages migrate off it.
+  const userRole = resolved.agencyRole === "owner" ? "admin" : "collaborator";
   const legacyRole =
-    agencyRole === "owner"
-      ? "admin"
-      : ((user.role as "admin" | "collaborator" | undefined) ?? "collaborator");
+    userRole ?? "collaborator";
 
   await auth.setCustomUserClaims(uid, {
     role: legacyRole,
-    status,
-    agencyId,
-    agencyRole,
+    status: resolved.status,
+    agencyId: resolved.agencyId,
+    agencyRole: resolved.agencyRole,
   });
 
   return NextResponse.json({
     ok: true,
-    claims: { role: legacyRole, status, agencyId, agencyRole },
+    recoveredAgencyId: resolved.repairedPrimaryAgencyId,
+    claims: {
+      role: legacyRole,
+      status: resolved.status,
+      agencyId: resolved.agencyId,
+      agencyRole: resolved.agencyRole,
+    },
   });
 }

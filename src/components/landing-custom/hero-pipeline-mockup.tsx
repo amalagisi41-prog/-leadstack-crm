@@ -1,84 +1,59 @@
-const pipelineStages = [
-  {
-    stage: "New Inquiry",
-    color: "bg-blue-500/10 border-blue-500/20 text-blue-700",
-    dot: "bg-blue-500",
-    contacts: [
-      { name: "Jennifer K.", note: "Zillow · 3BR Maplewood", time: "2m ago" },
-      { name: "Alex T.", note: "Website · Buyer pre-approved", time: "18m ago" },
-    ],
-  },
-  {
-    stage: "Showing Scheduled",
-    color: "bg-indigo-500/10 border-indigo-500/20 text-indigo-700",
-    dot: "bg-indigo-500",
-    contacts: [
-      { name: "Marcus D.", note: "47 Oak St · Sat 11am", time: "1h ago" },
-      { name: "Priya S.", note: "Westfield · Sun 2pm", time: "3h ago" },
-    ],
-  },
-  {
-    stage: "Offer In",
-    color: "bg-purple-500/10 border-purple-500/20 text-purple-700",
-    dot: "bg-purple-500",
-    contacts: [
-      { name: "Sarah W.", note: "$485k · 57 Elm · countered", time: "Yesterday" },
-    ],
-  },
-  {
-    stage: "Under Contract",
-    color: "bg-blue-500/10 border-blue-500/20 text-blue-700",
-    dot: "bg-blue-600",
-    contacts: [
-      { name: "Chen Family", note: "Close Dec 15 · $620k", time: "3d ago" },
-    ],
-  },
+import { Clock3, Database, Search, Tags } from "lucide-react";
+
+const leads = [
+  { name: "Sarah Thompson", source: "Website", status: "New", tone: "bg-pink-50 text-pink-600", time: "Just now" },
+  { name: "Michael Rivera", source: "Zillow", status: "Contacted", tone: "bg-violet-50 text-violet-600", time: "1h ago" },
+  { name: "Jessica Lee", source: "Referral", status: "Qualified", tone: "bg-emerald-50 text-emerald-600", time: "Yesterday" },
+  { name: "David Chen", source: "Open House", status: "Showing", tone: "bg-sky-50 text-sky-600", time: "2d ago" },
+  { name: "Amanda Foster", source: "Facebook Ad", status: "Nurture", tone: "bg-amber-50 text-amber-600", time: "3d ago" },
+];
+
+const benefits = [
+  { icon: Database, title: "Centralized CRM", detail: "Every lead in one place." },
+  { icon: Clock3, title: "Activity Timeline", detail: "See every interaction." },
+  { icon: Tags, title: "Smart Tags & Filters", detail: "Find what matters fast." },
 ];
 
 export function HeroPipelineMockup() {
   return (
-    <section className="pb-14 md:pb-16">
-      <div className="container mx-auto px-4">
-        <div className="relative mx-auto max-w-4xl">
-          <div className="rounded-2xl border bg-card shadow-2xl overflow-hidden">
-            <div className="flex items-center gap-2 border-b bg-muted/40 px-4 py-3">
-              <div className="h-3 w-3 rounded-full bg-red-400/70" />
-              <div className="h-3 w-3 rounded-full bg-yellow-400/70" />
-              <div className="h-3 w-3 rounded-full bg-green-400/70" />
-              <span className="ml-2 text-xs font-medium text-muted-foreground">
-                Deals — AgentStack
-              </span>
+    <section className="bg-[#FFF6E8] px-4 py-16 md:py-24">
+      <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[0.72fr_1.28fr]">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#173B7A]/65">One organized system</p>
+          <h2 className="mt-4 text-4xl font-semibold leading-[1.05] tracking-[-0.04em] text-[#173B7A] sm:text-5xl">
+            All leads. <span className="font-normal italic text-[#DB4F9B]">Organized automatically.</span>
+          </h2>
+          <p className="mt-5 max-w-md text-base leading-7 text-[#526078]">
+            Every lead and conversation is captured, prioritized, and organized for you—without another spreadsheet or forgotten follow-up.
+          </p>
+          <div className="mt-7 space-y-4">
+            {benefits.map(({ icon: Icon, title, detail }) => (
+              <div key={title} className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#DB4F9B] text-white shadow-sm"><Icon className="h-4 w-4" /></span>
+                <div><p className="text-sm font-semibold text-[#173B7A]">{title}</p><p className="text-xs text-[#526078]">{detail}</p></div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="relative rounded-[2rem] border border-[#173B7A]/10 bg-gradient-to-br from-[#fbe4e5] via-[#f4efff] to-[#dce9f1] p-4 shadow-[0_30px_80px_rgba(23,59,122,0.16)] sm:p-8">
+          <div className="overflow-hidden rounded-2xl border border-[#173B7A]/15 bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b px-4 py-3">
+              <div><p className="text-sm font-bold text-[#173B7A]">Leads</p><p className="text-[10px] text-[#526078]">Five people need your attention</p></div>
+              <div className="flex items-center gap-2"><span className="hidden items-center gap-1 rounded-lg border px-2 py-1 text-[10px] text-[#526078] sm:flex"><Search className="h-3 w-3" /> Search leads</span><span className="rounded-lg bg-[#DB4F9B] px-3 py-1.5 text-[10px] font-semibold text-white">+ Add lead</span></div>
             </div>
-            <div className="grid grid-cols-2 gap-2 p-3 sm:grid-cols-4 sm:gap-3 sm:p-4">
-              {pipelineStages.map((col) => (
-                <div key={col.stage} className="flex flex-col gap-2">
-                  <div className={`flex items-center gap-1.5 rounded-md border px-2 py-1.5 text-xs font-semibold ${col.color}`}>
-                    <span className={`h-1.5 w-1.5 rounded-full ${col.dot}`} />
-                    <span className="truncate">{col.stage}</span>
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    {col.contacts.map((c) => (
-                      <div
-                        key={c.name}
-                        className="rounded-lg border bg-background p-2 shadow-sm"
-                      >
-                        <div className="flex items-center justify-between gap-1">
-                          <span className="truncate text-xs font-semibold">{c.name}</span>
-                          <span className="shrink-0 text-[10px] text-muted-foreground">{c.time}</span>
-                        </div>
-                        <p className="mt-0.5 truncate text-[10px] text-muted-foreground">{c.note}</p>
-                      </div>
-                    ))}
-                  </div>
+            <div className="flex gap-4 overflow-hidden border-b px-4 py-2 text-[10px] font-medium text-[#526078]"><span className="rounded-full bg-pink-50 px-2 py-1 text-[#DB4F9B]">All Leads</span><span>New</span><span>Contacted</span><span>Qualified</span><span>Showing</span><span>Closed</span></div>
+            <div className="divide-y">
+              {leads.map((lead, index) => (
+                <div key={lead.name} className="grid grid-cols-[1.4fr_.8fr_.8fr] items-center gap-2 px-4 py-3 text-[10px] sm:grid-cols-[1.5fr_.8fr_.8fr_.7fr]">
+                  <div className="flex min-w-0 items-center gap-2"><span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#173B7A] font-semibold text-white">{lead.name.split(" ").map((part) => part[0]).join("")}</span><div className="min-w-0"><p className="truncate font-semibold text-[#173B7A]">{lead.name}</p><p className="truncate text-[#526078]">lead{index + 1}@example.com</p></div></div>
+                  <span className="text-[#526078]">{lead.source}</span>
+                  <span className={`w-fit rounded-full px-2 py-1 font-medium ${lead.tone}`}>{lead.status}</span>
+                  <span className="hidden text-right text-[#526078] sm:block">{lead.time}</span>
                 </div>
               ))}
             </div>
-            <div className="border-t bg-muted/30 px-4 py-2.5 flex items-center justify-between">
-              <span className="text-[10px] text-muted-foreground">6 active leads · 2 need follow-up</span>
-              <span className="text-[10px] font-medium text-blue-500">Updated just now</span>
-            </div>
           </div>
-          <div className="pointer-events-none absolute -bottom-6 -right-6 -z-10 h-48 w-48 rounded-full bg-blue-500/10 blur-3xl" />
         </div>
       </div>
     </section>
