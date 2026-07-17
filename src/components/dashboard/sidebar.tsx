@@ -215,6 +215,15 @@ function SidebarContent() {
   const linkSubId = activeSubId ?? fallbackSub;
   const showSubNav = !!linkSubId;
 
+  // Solo Beta: outside multi-account mode, the brand line reads as the
+  // workspace/sub-account name rather than the agency's — a single-operator
+  // agency and its one workspace are the same thing to the user.
+  const linkedMembership = memberships.find((m) => m.subAccountId === linkSubId) ?? null;
+  const displayBrandName =
+    !agency.multiAccountModeEnabled && linkedMembership?.name
+      ? linkedMembership.name
+      : agency.name;
+
   return (
     <div className="flex h-full flex-col bg-[#0f1117] text-slate-300">
       {/* Logo / brand */}
@@ -224,56 +233,51 @@ function SidebarContent() {
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={agency.logoUrl}
-              alt={agency.name}
+              alt={displayBrandName}
               className="h-6 w-auto max-w-[120px] object-contain"
             />
           ) : (
             <LogoMark size={30} idSuffix="-sidebar" />
           )}
           <span className="truncate text-sm font-semibold text-white">
-            {agency.name}
+            {displayBrandName}
           </span>
         </Link>
       </div>
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-3 py-4">
-        {/* Agency-level links */}
-        {agencyRole === "owner" && (
+        {/* Agency-level links — Solo Beta hides these until the agency has
+            graduated to multi-account mode (see AgencyDoc.multiAccountModeEnabled) */}
+        {agencyRole === "owner" && agency.multiAccountModeEnabled && (
           <div className="mb-4">
             <p className="mb-1.5 px-2 text-[10px] font-semibold uppercase tracking-wider text-white/30">
               Agency
             </p>
-            {agencyRole === "owner" && (
-              <SidebarLink
-                href="/agency/get-started"
-                label="Get started"
-                icon={Compass}
-                active={pathname.startsWith("/agency/get-started")}
-              />
-            )}
+            <SidebarLink
+              href="/agency/get-started"
+              label="Get started"
+              icon={Compass}
+              active={pathname.startsWith("/agency/get-started")}
+            />
             <SidebarLink
               href="/agency"
               label="Agency home"
               icon={Building2}
               active={pathname === "/agency"}
             />
-            {agencyRole === "owner" && (
-              <SidebarLink
-                href="/agency/sub-accounts"
-                label="Sub-accounts"
-                icon={Users}
-                active={pathname.startsWith("/agency/sub-accounts")}
-              />
-            )}
-            {agencyRole === "owner" && (
-              <SidebarLink
-                href="/agency/settings"
-                label="Agency settings"
-                icon={Settings}
-                active={pathname.startsWith("/agency/settings")}
-              />
-            )}
+            <SidebarLink
+              href="/agency/sub-accounts"
+              label="Sub-accounts"
+              icon={Users}
+              active={pathname.startsWith("/agency/sub-accounts")}
+            />
+            <SidebarLink
+              href="/agency/settings"
+              label="Agency settings"
+              icon={Settings}
+              active={pathname.startsWith("/agency/settings")}
+            />
           </div>
         )}
 

@@ -159,7 +159,9 @@ export function Header({ onMenuClick, onOpenSearch }: HeaderProps) {
 
       <h1 className="text-lg font-semibold">{title}</h1>
 
-      {authReady && memberships.length > 0 && (activeSubId || memberships.length > 1) && (
+      {/* Solo Beta: a switcher with nothing to switch to is dead weight —
+          only render it once there's a second sub-account to pick from. */}
+      {authReady && memberships.length > 1 && (
         <DropdownMenu>
           <DropdownMenuTrigger
             render={

@@ -150,10 +150,24 @@ export async function POST(request: Request) {
   // agencies (no counter doc yet) pick up smoothly.
   const accountNumber = await db.runTransaction<number>(async (tx) => {
     const counterSnap = await tx.get(counterRef);
+    // The counter doc is only missing when this is the agency's very
+    // first-ever sub-account (e.g. repairing a broken bootstrap that
+    // produced zero sub-accounts) — that case must NOT graduate the
+    // agency out of Solo Beta. Every other call is a genuine 2nd+
+    // sub-account, which is exactly the "Team/Brokerage intentionally
+    // introduced" moment the product spec calls for.
+    const isFirstEverSubAccount = !counterSnap.exists;
     const current = counterSnap.exists
       ? (counterSnap.data()?.next as number | undefined) ?? STARTING_ACCOUNT_NUMBER
       : STARTING_ACCOUNT_NUMBER;
     tx.set(counterRef, { next: current + 1 });
+    if (!isFirstEverSubAccount) {
+      tx.set(
+        db.doc(`agencies/${agencyId}`),
+        { multiAccountModeEnabled: true, updatedAt: FieldValue.serverTimestamp() },
+        { merge: true },
+      );
+    }
 
     tx.set(subRef, {
       id: subAccountId,

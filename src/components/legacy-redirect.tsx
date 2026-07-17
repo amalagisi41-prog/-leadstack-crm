@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/use-auth";
+import { useAgency } from "@/hooks/use-agency";
 
 /**
  * Stub page that redirects users hitting a legacy single-tenant path
@@ -26,24 +27,41 @@ export function LegacyRedirect({
 }) {
   const router = useRouter();
   const { loading, memberships, agencyRole } = useAuth();
+  const { multiAccountModeEnabled, loading: agencyLoading } = useAgency();
 
   useEffect(() => {
     if (loading) return;
     const target = memberships[0];
     if (!target) {
-      // No sub-accounts: agency owner lands on /agency to create one;
-      // anyone else lands on /agency to see the no-access state.
+      // No sub-accounts at all (including a broken bootstrap): /agency is
+      // the only place that can create one or show the no-access state,
+      // regardless of Solo Beta — there's nowhere else to send them.
       router.replace("/agency");
       return;
     }
-    // Agency owners with no current sub-account context land on /agency
-    // when they hit the bare /dashboard URL — gives them the picker.
+    // Agency owners with no current sub-account context historically land
+    // on /agency's picker when they hit the bare /dashboard URL. In Solo
+    // Beta (the default — see AgencyDoc.multiAccountModeEnabled) that
+    // picker is redundant for a single-sub-account agency, so skip it and
+    // go straight into the one workspace. Wait for the agency doc to
+    // hydrate first so we don't flash /agency then bounce again.
     if (agencyRole === "owner" && toSubPath === "/dashboard") {
-      router.replace("/agency");
-      return;
+      if (agencyLoading) return;
+      if (multiAccountModeEnabled) {
+        router.replace("/agency");
+        return;
+      }
     }
     router.replace(`/sa/${target.subAccountId}${toSubPath}`);
-  }, [loading, memberships, agencyRole, toSubPath, router]);
+  }, [
+    loading,
+    memberships,
+    agencyRole,
+    toSubPath,
+    router,
+    agencyLoading,
+    multiAccountModeEnabled,
+  ]);
 
   return (
     <div className="flex h-full items-center justify-center p-12">
