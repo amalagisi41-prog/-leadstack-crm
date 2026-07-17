@@ -12,6 +12,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { friendlyErrorMessage } from "@/lib/format-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -280,7 +281,7 @@ export function WebsiteBuilder({
       toast.success("Build started — gitpage will let us know when it's live.");
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Could not start build.",
+        friendlyErrorMessage(err, "Could not start build."),
       );
     } finally {
       setSubmitting(false);
@@ -309,7 +310,7 @@ export function WebsiteBuilder({
         toast.success("Still building — restarted the poll loop.");
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not re-check.");
+      toast.error(friendlyErrorMessage(err, "Could not re-check."));
     } finally {
       setRechecking(false);
     }
@@ -332,7 +333,7 @@ export function WebsiteBuilder({
       if (!res.ok) throw new Error(payload.error ?? "Could not reset.");
       toast.success("Reset to draft. Edit the form and click Build site.");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not reset.");
+      toast.error(friendlyErrorMessage(err, "Could not reset."));
     } finally {
       setResetting(false);
     }
@@ -355,7 +356,7 @@ export function WebsiteBuilder({
       if (!res.ok) throw new Error(payload.error ?? "Could not remove.");
       toast.success("Website removed.");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not remove.");
+      toast.error(friendlyErrorMessage(err, "Could not remove."));
     } finally {
       setRemoving(false);
     }
