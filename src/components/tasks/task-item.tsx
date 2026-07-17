@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Clock, User, AlertTriangle } from "lucide-react";
+import { Clock, User, AlertTriangle, UserCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { toDate } from "@/lib/format";
@@ -15,6 +15,11 @@ export interface TaskItemProps {
   task: Task;
   contact?: Contact;
   onClick?: (task: Task) => void;
+  /** Shown only when set — the parent resolves this to the assignee's
+   *  display name and omits it entirely when viewing "Mine" (redundant
+   *  "assigned to you" on your own list) or when the assignee is the
+   *  viewer. */
+  assigneeName?: string;
 }
 
 function formatDueLabel(d: Date): {
@@ -59,7 +64,7 @@ function formatDueLabel(d: Date): {
   };
 }
 
-export function TaskItem({ task, contact, onClick }: TaskItemProps) {
+export function TaskItem({ task, contact, onClick, assigneeName }: TaskItemProps) {
   const { saPath } = useSubAccount();
   const [toggling, setToggling] = useState(false);
 
@@ -152,6 +157,12 @@ export function TaskItem({ task, contact, onClick }: TaskItemProps) {
               <User className="h-3 w-3" />
               {contact.name || contact.email}
             </Link>
+          )}
+          {assigneeName && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-muted-foreground">
+              <UserCircle2 className="h-3 w-3" />
+              {assigneeName}
+            </span>
           )}
         </div>
       </div>

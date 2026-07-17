@@ -42,13 +42,27 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "title is required" }, { status: 400 });
   }
 
-  const subSnap = await getAdminDb().doc(`subAccounts/${subAccountId}`).get();
+  const db = getAdminDb();
+  const subSnap = await db.doc(`subAccounts/${subAccountId}`).get();
   const agencyId = (subSnap.data()?.agencyId as string) ?? access.agencyId ?? "";
+
+  // Only assign to a real member of this sub-account — falls back to the
+  // creator (also always a member) rather than trusting an arbitrary uid.
+  const requestedAssignee =
+    typeof body.assignedToUid === "string" ? body.assignedToUid : null;
+  let assignedToUid = access.uid;
+  if (requestedAssignee && requestedAssignee !== access.uid) {
+    const memberSnap = await db
+      .doc(`subAccounts/${subAccountId}/subAccountMembers/${requestedAssignee}`)
+      .get();
+    if (memberSnap.exists) assignedToUid = requestedAssignee;
+  }
 
   const { id, task } = await createTaskServerSide({
     subAccountId,
     agencyId,
     createdByUid: access.uid,
+    assignedToUid,
     mode: "live",
     title,
     notes: str(body.notes),

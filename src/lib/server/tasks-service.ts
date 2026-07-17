@@ -41,6 +41,10 @@ export interface CreateTaskInput {
   contactId: string | null;
   dealId: string | null;
   eventId: string | null;
+  /** Who this task is for. Defaults to createdByUid when omitted — every
+   *  task belongs to someone's individual daily list from the moment
+   *  it's created. */
+  assignedToUid?: string | null;
 }
 
 export interface TaskWriteResult {
@@ -68,6 +72,7 @@ export async function createTaskServerSide(
     agencyId: input.agencyId,
     subAccountId: input.subAccountId,
     createdByUid: input.createdByUid,
+    assignedToUid: input.assignedToUid ?? input.createdByUid,
     territoryId,
     mode: input.mode,
     createdAt: FieldValue.serverTimestamp(),

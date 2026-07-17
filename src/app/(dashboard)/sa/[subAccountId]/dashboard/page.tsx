@@ -180,24 +180,29 @@ export default function DashboardPage() {
     [events, todayEnd, tomorrowEnd],
   );
 
+  // Each person's daily priorities reflect their own assigned tasks, not
+  // the whole team's — same "Mine" default as the Tasks page and the
+  // sidebar badge.
   const overdueTasks = useMemo(
     () =>
       tasks.filter((task) => {
         if (task.completed) return false;
+        if ((task.assignedToUid ?? task.createdByUid) !== user?.uid) return false;
         const due = toDate(task.dueAt)?.getTime();
         return due != null && due < todayEnd;
       }),
-    [tasks, todayEnd],
+    [tasks, todayEnd, user],
   );
 
   const dueTodayTasks = useMemo(
     () =>
       tasks.filter((task) => {
         if (task.completed) return false;
+        if ((task.assignedToUid ?? task.createdByUid) !== user?.uid) return false;
         const due = toDate(task.dueAt)?.getTime();
         return due != null && due >= todayStart && due < todayEnd;
       }),
-    [tasks, todayStart, todayEnd],
+    [tasks, todayStart, todayEnd, user],
   );
 
   const warmDeals = useMemo(
