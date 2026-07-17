@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
-import { Building2, Mail, Phone, User as UserIcon } from "lucide-react";
+import { Building2, Mail, Phone, User as UserIcon, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { useSubAccount } from "@/context/sub-account-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import type { BusinessProfileContent } from "@/types/business-profile";
 
 export function SubAccountContactSection() {
   const { subAccount, subAccountId, isAdmin } = useSubAccount();
@@ -15,6 +16,7 @@ export function SubAccountContactSection() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [saving, setSaving] = useState(false);
+  const [copyingFromBlueprint, setCopyingFromBlueprint] = useState(false);
 
   useEffect(() => {
     setName(subAccount?.accountContact?.name ?? "");
@@ -23,6 +25,36 @@ export function SubAccountContactSection() {
   }, [subAccount]);
 
   if (!isAdmin) return null;
+
+  // One-time copy, not a live sync — the Blueprint's agent identity and
+  // this "who to reach at this client" contact are legitimately different
+  // things for a multi-agent brokerage sub-account, but for the common
+  // single-operator case they're the same person typed twice. This just
+  // saves the retype; it never overwrites without the operator clicking.
+  async function copyFromBlueprint() {
+    setCopyingFromBlueprint(true);
+    try {
+      const res = await fetch(`/api/sub-accounts/${subAccountId}/business-profile`);
+      if (!res.ok) throw new Error("request failed");
+      const data = (await res.json()) as { profile?: Partial<BusinessProfileContent> };
+      const profile = data.profile ?? {};
+      const blueprintName = profile.agentName?.trim() ?? "";
+      const blueprintEmail = profile.email?.trim() ?? "";
+      const blueprintPhone = profile.phone?.trim() ?? "";
+      if (!blueprintName && !blueprintEmail && !blueprintPhone) {
+        toast.info("Your Business Blueprint doesn't have contact info yet.");
+        return;
+      }
+      setName(blueprintName);
+      setEmail(blueprintEmail);
+      setPhone(blueprintPhone);
+      toast.success("Copied from your Business Blueprint — review and save.");
+    } catch {
+      toast.error("Couldn't load your Business Blueprint.");
+    } finally {
+      setCopyingFromBlueprint(false);
+    }
+  }
 
   async function handleSave(e: FormEvent) {
     e.preventDefault();
@@ -52,16 +84,29 @@ export function SubAccountContactSection() {
 
   return (
     <section className="rounded-2xl border bg-card p-5">
-      <div className="mb-4 flex items-center gap-2">
-        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400">
-          <Building2 className="h-4 w-4" />
-        </span>
-        <div>
-          <h2 className="text-sm font-semibold">Account contact</h2>
-          <p className="text-xs text-muted-foreground">
-            Primary point of contact at the client. Shown on the dashboard.
-          </p>
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400">
+            <Building2 className="h-4 w-4" />
+          </span>
+          <div>
+            <h2 className="text-sm font-semibold">Account contact</h2>
+            <p className="text-xs text-muted-foreground">
+              Primary point of contact at the client. Shown on the dashboard.
+            </p>
+          </div>
         </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="shrink-0 text-xs"
+          onClick={copyFromBlueprint}
+          disabled={copyingFromBlueprint}
+        >
+          <Wand2 className="mr-1 h-3.5 w-3.5" />
+          {copyingFromBlueprint ? "Copying…" : "Copy from Blueprint"}
+        </Button>
       </div>
 
       <form onSubmit={handleSave} className="space-y-4">
