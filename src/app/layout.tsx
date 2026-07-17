@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Providers } from "@/components/providers";
 import { RefTracker } from "@/components/affiliate/ref-tracker";
 import { AnalyticsScripts } from "@/components/analytics-scripts";
@@ -19,6 +19,16 @@ export const metadata: Metadata =
         description:
           "Capture leads, run pipelines, and book meetings from one simple workspace. Built for small teams that want to replace five tools with one.",
       };
+
+// viewport-fit=cover lets the installed PWA draw under the iOS notch/home
+// indicator; paired with the safe-area-inset-* CSS vars in globals.css so
+// fixed dashboard chrome (sidebar, header, floating buttons) pads around
+// them instead of being obscured.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
 
 export default function RootLayout({
   children,

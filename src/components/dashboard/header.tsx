@@ -146,11 +146,11 @@ export function Header({ onMenuClick, onOpenSearch }: HeaderProps) {
     : user?.email?.[0]?.toUpperCase() ?? "U";
 
   return (
-    <header className="flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
+    <header className="pt-safe flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
       <Button
         variant="ghost"
         size="icon"
-        className="md:hidden"
+        className="size-11 md:hidden"
         onClick={onMenuClick}
         aria-label="Open sidebar"
       >
@@ -239,7 +239,7 @@ export function Header({ onMenuClick, onOpenSearch }: HeaderProps) {
         <Button
           variant="ghost"
           size="icon"
-          className="sm:hidden"
+          className="size-11 sm:hidden"
           onClick={onOpenSearch}
           aria-label="Search"
         >

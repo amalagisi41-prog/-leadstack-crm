@@ -160,7 +160,7 @@ function activeSubAccountFromPath(pathname: string): string | null {
   return match ? match[1] : null;
 }
 
-function SidebarContent() {
+function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const dueToday = useDueTodayCount();
   const unreadConversations = useUnreadConversationsCount();
@@ -233,7 +233,7 @@ function SidebarContent() {
       : agency.name;
 
   return (
-    <div className="flex h-full flex-col bg-[#0f1117] text-slate-300">
+    <div className="pl-safe flex h-full flex-col bg-[#0f1117] text-slate-300">
       {/* Logo / brand */}
       <div className="flex h-16 items-center border-b border-white/10 px-5">
         <Link href="/" className="flex items-center gap-2.5">
@@ -254,7 +254,15 @@ function SidebarContent() {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4">
+      <nav
+        className="flex-1 overflow-y-auto px-3 py-4"
+        onClick={(e) => {
+          // Event delegation so the mobile Sheet drawer closes on any nav
+          // link tap without threading an onNavigate prop through every
+          // <SidebarLink> call site individually.
+          if ((e.target as HTMLElement).closest("a")) onNavigate?.();
+        }}
+      >
         {/* Agency-level links — Solo Beta hides these until the agency has
             graduated to multi-account mode (see AgencyDoc.multiAccountModeEnabled) */}
         {agencyRole === "owner" && agency.multiAccountModeEnabled && (
@@ -294,7 +302,7 @@ function SidebarContent() {
             <div className="mb-4">
               <button
                 onClick={() => openAskAssistant()}
-                className="flex w-full items-center gap-2.5 rounded-md bg-white/5 px-2 py-2 text-sm font-medium text-rose-300/90 transition-colors hover:bg-white/10 hover:text-rose-200"
+                className="flex min-h-11 w-full items-center gap-2.5 rounded-md bg-white/5 px-2 py-2 text-sm font-medium text-rose-300/90 transition-colors hover:bg-white/10 hover:text-rose-200"
               >
                 <Sparkles className="h-4 w-4 shrink-0" />
                 Ask AI
@@ -345,7 +353,7 @@ function SidebarContent() {
                     return (
                       <div
                         key={item.href}
-                        className="flex cursor-not-allowed items-center justify-between gap-2.5 rounded-md px-2 py-1.5 text-sm text-white/20"
+                        className="flex min-h-11 cursor-not-allowed items-center justify-between gap-2.5 rounded-md px-2 py-1.5 text-sm text-white/20"
                         title={
                           gateLocked
                             ? "Disabled by your agency administrator"
@@ -396,9 +404,9 @@ function SidebarContent() {
       </nav>
 
       {/* User footer */}
-      <div className="border-t border-white/10 p-3">
+      <div className="pb-safe border-t border-white/10 p-3">
         <button
-          className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-sm text-white/50 transition-colors hover:bg-white/5 hover:text-white/80"
+          className="flex min-h-11 w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-sm text-white/50 transition-colors hover:bg-white/5 hover:text-white/80"
           onClick={() => signOutUser()}
         >
           <LogOut className="h-4 w-4" />
@@ -426,7 +434,7 @@ function SidebarLink({
     <Link
       href={href}
       className={cn(
-        "flex items-center justify-between gap-2.5 rounded-md px-2 py-1.5 text-sm font-medium transition-colors",
+        "flex min-h-11 items-center justify-between gap-2.5 rounded-md px-2 py-1.5 text-sm font-medium transition-colors",
         active
           ? "bg-blue-600/20 text-blue-400"
           : "text-white/50 hover:bg-white/5 hover:text-white/80",
@@ -464,7 +472,7 @@ export function Sidebar({ open, onOpenChange }: SidebarProps) {
           <SheetHeader className="sr-only">
             <SheetTitle>Navigation</SheetTitle>
           </SheetHeader>
-          <SidebarContent />
+          <SidebarContent onNavigate={() => onOpenChange(false)} />
         </SheetContent>
       </Sheet>
     </>

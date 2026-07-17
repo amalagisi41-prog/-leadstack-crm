@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { Download, Share, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CUSTOM_BRAND, LANDING_VARIANT } from "@/config/landing";
@@ -26,6 +27,13 @@ interface BeforeInstallPromptEvent extends Event {
  *    we show static instructions instead of a button there.
  */
 export function InstallPrompt() {
+  const pathname = usePathname();
+  // Onboarding wants full attention with no competing banners — checked at
+  // render time (not just inside the mount effect below) so navigating in
+  // or out of onboarding within the persisted dashboard layout reactively
+  // hides/reveals the prompt instead of freezing whatever was true on
+  // first mount.
+  const isOnboarding = pathname?.includes("/get-started") ?? false;
   const [installEvent, setInstallEvent] =
     useState<BeforeInstallPromptEvent | null>(null);
   const [platform, setPlatform] = useState<"android" | "ios" | null>(null);
@@ -77,7 +85,7 @@ export function InstallPrompt() {
     else dismiss();
   }
 
-  if (dismissed || !platform) return null;
+  if (dismissed || !platform || isOnboarding) return null;
 
   const brandName =
     LANDING_VARIANT === "custom" ? CUSTOM_BRAND.name : "AgentStack";
