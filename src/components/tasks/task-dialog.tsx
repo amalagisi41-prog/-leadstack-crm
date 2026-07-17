@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import { collection, onSnapshot } from "firebase/firestore";
 import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
 import {
@@ -15,11 +16,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ContactPicker } from "@/components/quotes/contact-picker";
+import { useAuth } from "@/hooks/use-auth";
 import { useSubAccount } from "@/context/sub-account-context";
+import { getFirebaseDb } from "@/lib/firebase/client";
 import { updateTask, deleteTask } from "@/lib/firestore/tasks";
 import { toDate } from "@/lib/format";
 import type { Task, TaskFormData } from "@/types/tasks";
 import type { Contact } from "@/types/contacts";
+import type { SubAccountMemberDoc } from "@/types/tenancy";
 
 interface TaskDialogProps {
   open: boolean;
@@ -50,6 +54,7 @@ export function TaskDialog({
   defaultContactId,
 }: TaskDialogProps) {
   const { subAccountId } = useSubAccount();
+  const { user } = useAuth();
   const isEdit = !!task;
 
   const [title, setTitle] = useState("");
@@ -57,9 +62,25 @@ export function TaskDialog({
   const [dueDate, setDueDate] = useState("");
   const [dueTime, setDueTime] = useState("");
   const [contactId, setContactId] = useState<string | null>(null);
+  const [assignedToUid, setAssignedToUid] = useState<string | null>(null);
+  const [members, setMembers] = useState<SubAccountMemberDoc[]>([]);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const unsub = onSnapshot(
+      collection(getFirebaseDb(), `subAccounts/${subAccountId}/subAccountMembers`),
+      (snap) => {
+        setMembers(
+          snap.docs
+            .map((d) => d.data() as SubAccountMemberDoc)
+            .filter((m) => m.status === "active"),
+        );
+      },
+    );
+    return () => unsub();
+  }, [subAccountId]);
 
   useEffect(() => {
     if (!open) return;
@@ -70,15 +91,17 @@ export function TaskDialog({
       setDueDate(d ? toDateInput(d) : "");
       setDueTime(d ? toTimeInput(d) : "");
       setContactId(task.contactId);
+      setAssignedToUid(task.assignedToUid ?? task.createdByUid);
     } else {
       setTitle("");
       setNotes("");
       setDueDate("");
       setDueTime("");
       setContactId(defaultContactId ?? null);
+      setAssignedToUid(user?.uid ?? null);
     }
     setErrors({});
-  }, [open, task, defaultContactId]);
+  }, [open, task, defaultContactId, user?.uid]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -100,6 +123,7 @@ export function TaskDialog({
       contactId,
       dealId: task?.dealId ?? null,
       eventId: task?.eventId ?? null,
+      assignedToUid,
     };
 
     setSaving(true);
@@ -121,6 +145,7 @@ export function TaskDialog({
             contactId: payload.contactId,
             dealId: payload.dealId,
             eventId: payload.eventId,
+            assignedToUid: payload.assignedToUid,
           }),
         });
         if (!res.ok) {
@@ -204,6 +229,29 @@ export function TaskDialog({
                 disabled={!dueDate}
               />
             </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="task-assignee">Assigned to</Label>
+            <select
+              id="task-assignee"
+              value={assignedToUid ?? ""}
+              onChange={(e) => setAssignedToUid(e.target.value || null)}
+              className="flex h-9 w-full rounded-lg border border-input bg-background px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 [&_option]:bg-background [&_option]:text-foreground"
+            >
+              {members
+                .slice()
+                .sort((a, b) => a.displayName.localeCompare(b.displayName))
+                .map((m) => (
+                  <option key={m.uid} value={m.uid}>
+                    {m.displayName || m.email}
+                    {m.uid === user?.uid ? " (you)" : ""}
+                  </option>
+                ))}
+            </select>
+            <p className="text-[11px] text-muted-foreground">
+              This task shows up on their daily list, not the whole team&rsquo;s.
+            </p>
           </div>
 
           <div className="space-y-1.5">

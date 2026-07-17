@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { collection, onSnapshot } from "firebase/firestore";
 import { CheckSquare, Plus } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useSubAccount } from "@/context/sub-account-context";
+import { getFirebaseDb } from "@/lib/firebase/client";
 import { subscribeToContacts } from "@/lib/firestore/contacts";
 import { subscribeToTasks } from "@/lib/firestore/tasks";
 import { useEffectiveTerritoryFilter } from "@/hooks/use-effective-territory-filter";
@@ -14,6 +16,9 @@ import { TaskItem } from "@/components/tasks/task-item";
 import { cn } from "@/lib/utils";
 import type { Contact } from "@/types/contacts";
 import type { Task, TaskFilter } from "@/types/tasks";
+import type { SubAccountMemberDoc } from "@/types/tenancy";
+
+type TaskViewMode = "mine" | "everyone";
 
 export default function TasksPage() {
   const { user, loading: authLoading } = useAuth();
@@ -22,10 +27,26 @@ export default function TasksPage() {
     useEffectiveTerritoryFilter();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const [members, setMembers] = useState<SubAccountMemberDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<TaskFilter>("today");
+  const [viewMode, setViewMode] = useState<TaskViewMode>("mine");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editTask, setEditTask] = useState<Task | null>(null);
+
+  useEffect(() => {
+    const unsub = onSnapshot(
+      collection(getFirebaseDb(), `subAccounts/${subAccountId}/subAccountMembers`),
+      (snap) => {
+        setMembers(
+          snap.docs
+            .map((d) => d.data() as SubAccountMemberDoc)
+            .filter((m) => m.status === "active"),
+        );
+      },
+    );
+    return () => unsub();
+  }, [subAccountId]);
 
   useEffect(() => {
     if (authLoading || !user || !agencyId) return;
@@ -59,6 +80,21 @@ export default function TasksPage() {
     return m;
   }, [contacts]);
 
+  const memberNameByUid = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const mem of members) m.set(mem.uid, mem.displayName || mem.email);
+    return m;
+  }, [members]);
+
+  // Each person's daily list is their own assigned tasks by default —
+  // "Everyone" opts into the shared team view. Tasks created before
+  // assignment existed have no assignedToUid, so they fall back to
+  // whoever created them.
+  const visibleTasks = useMemo(() => {
+    if (viewMode === "everyone" || !user) return tasks;
+    return tasks.filter((t) => (t.assignedToUid ?? t.createdByUid) === user.uid);
+  }, [tasks, viewMode, user]);
+
   const buckets = useMemo(() => {
     const now = Date.now();
     const today = new Date();
@@ -71,7 +107,7 @@ export default function TasksPage() {
     const upcoming: Task[] = [];
     const done: Task[] = [];
 
-    for (const t of tasks) {
+    for (const t of visibleTasks) {
       if (t.completed) {
         done.push(t);
         continue;
@@ -92,14 +128,14 @@ export default function TasksPage() {
       }
     }
     return { overdue, today: todayList, upcoming, done };
-  }, [tasks]);
+  }, [visibleTasks]);
 
   const counts = {
     today: buckets.today.length + buckets.overdue.length,
     overdue: buckets.overdue.length,
     upcoming: buckets.upcoming.length,
     done: buckets.done.length,
-    all: tasks.length,
+    all: visibleTasks.length,
   };
 
   const shown =
@@ -111,7 +147,7 @@ export default function TasksPage() {
           ? buckets.upcoming
           : filter === "done"
             ? buckets.done.slice(0, 100)
-            : tasks;
+            : visibleTasks;
 
   function openNew() {
     setEditTask(null);
@@ -143,6 +179,25 @@ export default function TasksPage() {
           <Plus className="mr-1 h-4 w-4" />
           New Task
         </Button>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex gap-1 rounded-xl border bg-muted/30 p-1">
+          {(["mine", "everyone"] as const).map((mode) => (
+            <button
+              key={mode}
+              onClick={() => setViewMode(mode)}
+              className={cn(
+                "rounded-lg px-3 py-1.5 text-sm font-medium transition-all",
+                viewMode === mode
+                  ? "bg-background shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {mode === "mine" ? "My tasks" : "Everyone"}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-1 rounded-xl border bg-muted/30 p-1">
@@ -179,14 +234,19 @@ export default function TasksPage() {
         <EmptyState filter={filter} onAdd={openNew} />
       ) : (
         <div className="space-y-2">
-          {shown.map((t) => (
-            <TaskItem
-              key={t.id}
-              task={t}
-              contact={t.contactId ? contactById.get(t.contactId) : undefined}
-              onClick={openEdit}
-            />
-          ))}
+          {shown.map((t) => {
+            const assigneeUid = t.assignedToUid ?? t.createdByUid;
+            const showAssignee = viewMode === "everyone" && assigneeUid !== user?.uid;
+            return (
+              <TaskItem
+                key={t.id}
+                task={t}
+                contact={t.contactId ? contactById.get(t.contactId) : undefined}
+                onClick={openEdit}
+                assigneeName={showAssignee ? memberNameByUid.get(assigneeUid) : undefined}
+              />
+            );
+          })}
         </div>
       )}
 

@@ -36,6 +36,7 @@ function dueToPatch(data: Partial<TaskFormData>): Record<string, unknown> {
   if (data.notes !== undefined) patch.notes = data.notes;
   if (data.dueAt !== undefined)
     patch.dueAt = data.dueAt ? Timestamp.fromDate(data.dueAt) : null;
+  if (data.assignedToUid !== undefined) patch.assignedToUid = data.assignedToUid;
   if (data.contactId !== undefined) patch.contactId = data.contactId;
   if (data.dealId !== undefined) patch.dealId = data.dealId;
   if (data.eventId !== undefined) patch.eventId = data.eventId;
@@ -162,6 +163,7 @@ export async function createTask(
     agencyId: scope.agencyId,
     subAccountId: scope.subAccountId,
     createdByUid,
+    assignedToUid: data.assignedToUid ?? createdByUid,
     territoryId,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),

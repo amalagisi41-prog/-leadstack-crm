@@ -38,6 +38,9 @@ export function useDueTodayCount(): number {
         let n = 0;
         for (const t of tasks) {
           if (t.completed) continue;
+          // Each person's badge reflects their own daily list, not the
+          // whole team's — same "Mine" default as the Tasks page.
+          if ((t.assignedToUid ?? t.createdByUid) !== user.uid) continue;
           const d = toDate(t.dueAt);
           if (!d) continue;
           // overdue or due today
