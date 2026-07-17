@@ -20,6 +20,7 @@ import {
 import { buildUnsubscribeUrl } from "@/lib/automations/unsubscribe-token";
 import { publishCallback, qstashIsConfigured } from "@/lib/automations/qstash";
 import { evalConditionGroup } from "./conditions";
+import { isSendGatedNodeType, secondsUntilSendWindow } from "./send-window";
 import type { Contact } from "@/types/contacts";
 import type { AgencyDoc, SubAccountDoc } from "@/types";
 import type { WhatsappTemplateDoc } from "@/types/whatsapp-templates";
@@ -553,13 +554,19 @@ async function enroll(
 async function scheduleNode(
   runRef: FirebaseFirestore.DocumentReference,
   nodeId: string,
-  delaySeconds: number
+  delaySeconds: number,
+  /** Set when rescheduling the SAME node that was just evaluated (e.g. a
+   *  quiet-hours defer) — without a nonce, the dedup id would collide with
+   *  the message that just fired and QStash would drop the reschedule. */
+  dedupNonce?: string
 ): Promise<void> {
   const res = await publishCallback({
     pathname: STEP_PATH,
     body: { runId: runRef.id, nodeId },
     delaySeconds,
-    deduplicationId: `wf_${runRef.id}_${nodeId}`,
+    deduplicationId: dedupNonce
+      ? `wf_${runRef.id}_${nodeId}_${dedupNonce}`
+      : `wf_${runRef.id}_${nodeId}`,
   });
   if (!res) {
     await runRef.update({
@@ -653,6 +660,19 @@ export async function runStep(runId: string, nodeId: string): Promise<void> {
       updatedAt: FieldValue.serverTimestamp(),
     });
     return;
+  }
+
+  // Quiet-hours gate: send_sms/send_email/whatsapp_template nodes defer to
+  // the sub-account's configured send window rather than reaching a contact
+  // at 2am. Deferring does NOT write a history entry — only real execution
+  // does — so the idempotency check above still allows this same node to
+  // run once the window opens.
+  if (isSendGatedNodeType(node.type)) {
+    const deferSeconds = secondsUntilSendWindow(subAccount?.sendWindow);
+    if (deferSeconds > 0) {
+      await scheduleNode(runRef, nodeId, deferSeconds, `qh${Date.now()}`);
+      return;
+    }
   }
 
   const owner = await loadOwner(agency);

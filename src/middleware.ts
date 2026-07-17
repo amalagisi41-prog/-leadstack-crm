@@ -43,6 +43,10 @@ const PUBLIC_PATHS = [
   // Smart Workflows time-based triggers — daily fan-out + its per-sub-account
   // step worker. Both signature-verified inside the route.
   "/api/cron/workflow-time-triggers",
+  // Daily Briefing email — hourly fan-out (each sub-account only actually
+  // sends once, at ~7am local) + its per-sub-account step worker. Both
+  // signature-verified inside the route.
+  "/api/cron/daily-briefing",
   "/api/landing/metrics",
   "/api/landing/recent-purchases",
   // Live-visitors heartbeat ping for the agency dashboard's world map.

@@ -68,6 +68,13 @@ const SCHEDULES: ScheduleSpec[] = [
     description:
       "Daily sweep for the contact.birthday / contact.home_anniversary / contact.stale Smart Workflows triggers.",
   },
+  {
+    scheduleId: "leadstack-daily-briefing",
+    path: "/api/cron/daily-briefing",
+    cron: "0 * * * *",
+    description:
+      "Hourly sweep for the Daily Briefing email — each sub-account only actually sends once at ~7am in its own timezone (deduped via lastBriefingSentDate).",
+  },
 ];
 
 const MARKER_PATH = "system/scheduleRegistration";

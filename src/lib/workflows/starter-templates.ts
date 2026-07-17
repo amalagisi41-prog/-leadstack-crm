@@ -148,7 +148,7 @@ export const WORKFLOW_STARTER_TEMPLATES: WorkflowStarterTemplate[] = [
     key: "review-request-on-won",
     displayName: "Review Request on Won",
     description:
-      "A deal moves to Won → a few days later, ask the client for a review.",
+      "A deal moves to Won → a few days later, send a personal note. Skip this if Settings → Google Review Requests is already on — that one fires separately on deal completion and sends the real review link, so running both asks twice.",
     seed: () =>
       blankSeed(
         {
@@ -167,8 +167,8 @@ export const WORKFLOW_STARTER_TEMPLATES: WorkflowStarterTemplate[] = [
             id: "n2",
             type: "send_email",
             config: {
-              subject: "Would you mind leaving us a review?",
-              body: "Hi {{contact.firstName}},\n\nCongrats again on closing! If you have a minute, a quick review would mean a lot — it helps other buyers and sellers find us.\n\n{{unsubscribeLink}}",
+              subject: "Congrats again!",
+              body: "Hi {{contact.firstName}},\n\nCongrats again on closing! It was a pleasure working with you, and I'm just a call or text away if anything comes up.\n\n{{unsubscribeLink}}",
             },
             next: null,
           },
