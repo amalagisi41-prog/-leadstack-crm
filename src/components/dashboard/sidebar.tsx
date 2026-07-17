@@ -34,6 +34,7 @@ import {
   GraduationCap,
   Filter,
   BookOpen,
+  Plug,
 } from "lucide-react";
 import { getFirebaseDb } from "@/lib/firebase/client";
 import { signOutUser } from "@/lib/firebase/auth";
@@ -128,6 +129,12 @@ const SUB_ACCOUNT_NAV_SECTIONS: NavSection[] = [
         enabled: true,
       },
       { href: "/ai-agents", label: "AI Assistants", icon: Bot, enabled: true },
+      {
+        href: "/connect",
+        label: "Connect Your Business",
+        icon: Plug,
+        enabled: true,
+      },
       { href: "/products", label: "Products", icon: Package, enabled: true },
       { href: "/website", label: "Website", icon: Globe, enabled: true },
       { href: "/website-studio", label: "AI Website Studio", icon: LayoutTemplate, enabled: true },
