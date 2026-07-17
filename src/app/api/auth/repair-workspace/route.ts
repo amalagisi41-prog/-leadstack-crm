@@ -2,7 +2,7 @@ import "server-only";
 
 import { NextResponse } from "next/server";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
-import { provisionBetaOwner } from "@/lib/auth/provision-beta-owner";
+import { provisionNewAgency } from "@/lib/auth/provision-agency";
 
 /**
  * POST /api/auth/repair-workspace
@@ -140,9 +140,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     userRecord.displayName?.trim() || email.split("@")[0] || "AgentStack user";
 
   try {
-    const { agencyId: newAgencyId, subAccountId } = await provisionBetaOwner({
-      auth,
-      db,
+    const { agencyId: newAgencyId, subAccountId } = await provisionNewAgency({
       uid,
       email,
       displayName,

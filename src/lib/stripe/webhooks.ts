@@ -1,6 +1,6 @@
 import type Stripe from "stripe";
 import { createHash } from "node:crypto";
-import { FieldValue } from "firebase-admin/firestore";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { getStripeServer } from "@/lib/stripe/server";
 import { sendFoundersWelcomeEmail } from "@/lib/stripe/welcome-email";
@@ -11,6 +11,10 @@ import { createReferral } from "@/lib/affiliate/referrals";
 import { mintGitpageAgencyCode } from "@/lib/gitpage/agency-code";
 import { REMINDER_DELAY_SECONDS } from "@/lib/gitpage/reminder-config";
 import { publishCallback, qstashIsConfigured } from "@/lib/automations/qstash";
+import {
+  CLAIM_REMINDER_DELAY_SECONDS,
+  CLAIM_TOKEN_TTL_SECONDS,
+} from "@/lib/checkout/claim-config";
 import { isHeroVariantId } from "@/lib/hero-variants";
 import type { SubscriptionStatus } from "@/types";
 
@@ -424,9 +428,14 @@ async function handleNewAgencyCheckout(session: Stripe.Checkout.Session) {
       planPriceId,
       addOnGates,
       claimTokenHash,
+      claimExpiresAt: Timestamp.fromMillis(
+        Date.now() + CLAIM_TOKEN_TTL_SECONDS * 1000,
+      ),
       claimed: false,
       claimedAt: null,
       claimedByUid: null,
+      claimReminderSentAt: null,
+      claimReminderMessageId: null,
       createdAt: FieldValue.serverTimestamp(),
     });
   } catch (err) {
@@ -438,6 +447,26 @@ async function handleNewAgencyCheckout(session: Stripe.Checkout.Session) {
       return;
     }
     throw err;
+  }
+
+  // Best-effort: a buyer who paid but hasn't come back to /welcome yet gets
+  // one reminder with a fresh (re-extended) claim link — see
+  // /api/checkout/claim-reminder/step. Scheduling failure must never break
+  // the purchase flow itself.
+  if (qstashIsConfigured()) {
+    try {
+      await publishCallback({
+        pathname: "/api/checkout/claim-reminder/step",
+        body: { sessionId },
+        delaySeconds: CLAIM_REMINDER_DELAY_SECONDS,
+        deduplicationId: `claim-reminder-${sessionId}`,
+      });
+    } catch (err) {
+      console.error(
+        `[new-agency] failed to schedule claim reminder for ${sessionId}`,
+        err,
+      );
+    }
   }
 }
 
