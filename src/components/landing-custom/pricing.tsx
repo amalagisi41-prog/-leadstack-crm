@@ -10,11 +10,10 @@ import { CUSTOM_BRAND, type CustomPricingTier } from "@/config/landing";
 export function Pricing() {
   const [annual, setAnnual] = useState(false);
 
-  const tiers: CustomPricingTier[] = [
-    CUSTOM_BRAND.pricing.starter,
-    CUSTOM_BRAND.pricing.pro,
-    CUSTOM_BRAND.pricing.scale,
-  ];
+  // Solo Beta: Team/Broker/Luxury Broker stay defined in CUSTOM_BRAND.pricing
+  // (so re-enabling them post-beta is a one-line revert) but aren't offered
+  // on the public landing page while the product is Solo-only.
+  const tiers: CustomPricingTier[] = [CUSTOM_BRAND.pricing.starter];
 
   return (
     <section id="pricing" className="bg-white py-24 md:py-28">
@@ -63,7 +62,7 @@ export function Pricing() {
           </div>
         </div>
 
-        <div className="mx-auto mt-12 grid max-w-6xl gap-6 md:grid-cols-3">
+        <div className="mx-auto mt-12 grid max-w-md gap-6">
           {tiers.map((tier) => {
             const price = annual ? tier.priceAnnual : tier.priceMonthly;
             const isFree = price === 0;
