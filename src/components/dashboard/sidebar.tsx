@@ -65,9 +65,12 @@ interface NavSection {
 
 const SUB_ACCOUNT_NAV_SECTIONS: NavSection[] = [
   {
-    label: "Workspace",
+    label: "Today",
+    items: [{ href: "/dashboard", label: "Today", icon: Home, enabled: true }],
+  },
+  {
+    label: "Clients",
     items: [
-      { href: "/dashboard", label: "Today", icon: Home, enabled: true },
       {
         href: "/conversations",
         label: "Conversations",
@@ -76,7 +79,12 @@ const SUB_ACCOUNT_NAV_SECTIONS: NavSection[] = [
         badgeKey: "unreadConversations",
       },
       { href: "/contacts", label: "People", icon: Users, enabled: true },
-      { href: "/pipeline", label: "Deals", icon: GitBranch, enabled: true },
+      {
+        href: "/pipeline",
+        label: "Client Journeys",
+        icon: GitBranch,
+        enabled: true,
+      },
       { href: "/calendar", label: "Calendar", icon: Calendar, enabled: true },
       {
         href: "/booking",
@@ -91,12 +99,27 @@ const SUB_ACCOUNT_NAV_SECTIONS: NavSection[] = [
         enabled: true,
         badgeKey: "dueToday",
       },
-      { href: "/forms", label: "Lead Forms", icon: FileText, enabled: true },
+    ],
+  },
+  {
+    label: "Growth",
+    items: [
+      { href: "/forms", label: "Lead Capture", icon: FileText, enabled: true },
+      {
+        href: "/workflows",
+        label: "Follow-Up Plans",
+        icon: Workflow,
+        enabled: true,
+      },
+      { href: "/funnels", label: "Marketing Pages", icon: Filter, enabled: true },
+      { href: "/broadcasts", label: "Broadcasts", icon: Send, enabled: true },
+      { href: "/social", label: "Social Planner", icon: Share2, enabled: true },
+      { href: "/idx", label: "IDX Listings", icon: Building, enabled: true },
       { href: "/quotes", label: "Quotes", icon: FileSignature, enabled: true },
     ],
   },
   {
-    label: "AI & Automation",
+    label: "Business",
     items: [
       {
         href: "/business-profile",
@@ -104,34 +127,19 @@ const SUB_ACCOUNT_NAV_SECTIONS: NavSection[] = [
         icon: BookOpen,
         enabled: true,
       },
-      { href: "/ai-agents", label: "AI Agents", icon: Bot, enabled: true },
-      { href: "/workflows", label: "Smart Workflows", icon: Workflow, enabled: true },
-      { href: "/broadcasts", label: "Broadcasts", icon: Send, enabled: true },
-      { href: "/templates", label: "Templates", icon: FileText, enabled: true },
-    ],
-  },
-  {
-    label: "Performance",
-    items: [
-      { href: "/reports", label: "Analytics", icon: BarChart3, enabled: true },
-      { href: "/logs", label: "Logs", icon: ScrollText, enabled: true },
-    ],
-  },
-  {
-    label: "Brokerage",
-    items: [
+      { href: "/ai-agents", label: "AI Assistants", icon: Bot, enabled: true },
       { href: "/products", label: "Products", icon: Package, enabled: true },
       { href: "/website", label: "Website", icon: Globe, enabled: true },
       { href: "/website-studio", label: "AI Website Studio", icon: LayoutTemplate, enabled: true },
-      { href: "/funnels", label: "Marketing Pages", icon: Filter, enabled: true },
-      { href: "/social", label: "Social Planner", icon: Share2, enabled: true },
-      { href: "/idx", label: "IDX Listings", icon: Building, enabled: true },
       {
         href: "/community",
         label: "Community",
         icon: GraduationCap,
         enabled: true,
       },
+      { href: "/templates", label: "Templates", icon: FileText, enabled: true },
+      { href: "/reports", label: "Analytics", icon: BarChart3, enabled: true },
+      { href: "/logs", label: "Logs", icon: ScrollText, enabled: true },
       {
         href: "/dashboard/settings",
         label: "Settings",
