@@ -6,6 +6,7 @@ import {
   BookOpen,
   ArrowRight,
   Check,
+  Eye,
   Loader2,
   Plus,
   Shield,
@@ -15,6 +16,14 @@ import {
 import { toast } from "sonner";
 import { useSubAccount } from "@/context/sub-account-context";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { compileBusinessProfilePrompt } from "@/lib/business-profile/compile";
 import {
   BRAND_VOICES,
   EMPTY_BUSINESS_PROFILE,
@@ -90,6 +99,7 @@ export function BusinessProfileForm() {
   const [saving, setSaving] = useState(false);
   const [completeness, setCompleteness] = useState(0);
   const [generating, setGenerating] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -219,9 +229,21 @@ export function BusinessProfileForm() {
     <div className="space-y-5 pb-24">
       {/* Header */}
       <div className="rounded-2xl border bg-gradient-to-br from-[#1b3d7a] to-[#16305f] p-6 text-white">
-        <div className="flex items-center gap-2">
-          <BookOpen className="h-5 w-5" />
-          <h1 className="text-xl font-bold">Your Business Blueprint</h1>
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <BookOpen className="h-5 w-5" />
+            <h1 className="text-xl font-bold">Your Business Blueprint</h1>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="shrink-0 border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+            onClick={() => setPreviewOpen(true)}
+          >
+            <Eye className="mr-1.5 h-3.5 w-3.5" />
+            Preview what AgentStack knows
+          </Button>
         </div>
         <p className="mt-2 max-w-2xl text-sm text-blue-100/90">
           Tell us about your business once. This is your AgentStack Knowledge
@@ -902,6 +924,34 @@ export function BusinessProfileForm() {
           </div>
         </div>
       </div>
+
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-h-[80vh] max-w-xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>What AgentStack knows about your business</DialogTitle>
+            <DialogDescription>
+              The exact text every AI assistant reads before replying —
+              updates live as you edit the Blueprint below. Nothing here is
+              ever spoken verbatim; it&rsquo;s reference material the AI
+              draws on.
+            </DialogDescription>
+          </DialogHeader>
+          {(() => {
+            const compiled = compileBusinessProfilePrompt(content);
+            return compiled ? (
+              <pre className="whitespace-pre-wrap rounded-lg border bg-muted/30 p-4 font-mono text-xs leading-relaxed">
+                {compiled}
+              </pre>
+            ) : (
+              <p className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+                Nothing to show yet — fill in a few fields below (like your
+                name, brokerage, or service areas) and they&rsquo;ll appear
+                here.
+              </p>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

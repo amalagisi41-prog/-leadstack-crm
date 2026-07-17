@@ -83,7 +83,7 @@ const KIND_META: Record<Result["kind"], { label: string; icon: React.ElementType
     tone: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
   },
   deal: {
-    label: "Deals",
+    label: "Client Journeys",
     icon: Briefcase,
     tone: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
   },
@@ -98,7 +98,7 @@ const KIND_META: Record<Result["kind"], { label: string; icon: React.ElementType
     tone: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
   },
   form: {
-    label: "Lead Forms",
+    label: "Lead Capture",
     icon: FileText,
     tone: "bg-pink-500/10 text-pink-600 dark:text-pink-400",
   },

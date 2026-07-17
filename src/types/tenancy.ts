@@ -62,6 +62,18 @@ export interface AgencyDoc {
    * per step that has a URL. Absent / null = no videos configured yet.
    */
   onboardingVideos?: import("../lib/onboarding/steps").OnboardingVideos | null;
+  /**
+   * Solo Beta simplification gate. `undefined`/`false` (the default for
+   * every new agency, including the one created at first signup) means the
+   * agency is treated as a single-operator workspace: the Agency home,
+   * sub-account switcher, and agency-level nav are hidden, and the owner is
+   * routed straight into their one sub-account. Flips to `true`
+   * automatically the moment a second sub-account is created (see
+   * `POST /api/agency/sub-accounts`) — that's the "Team/Brokerage
+   * intentionally introduced" moment the product spec calls for. Never
+   * flips back to `false` automatically.
+   */
+  multiAccountModeEnabled?: boolean;
 }
 
 export interface SubAccountDoc {

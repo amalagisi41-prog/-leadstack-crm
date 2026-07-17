@@ -1,8 +1,8 @@
 import "server-only";
 
 import { NextResponse } from "next/server";
-import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
-import { provisionBetaOwner } from "@/lib/auth/provision-beta-owner";
+import { getAdminAuth } from "@/lib/firebase/admin";
+import { provisionNewAgency } from "@/lib/auth/provision-agency";
 import { resolveAgencyAccess } from "@/lib/auth/resolve-agency-access";
 
 export async function POST(request: Request) {
@@ -44,19 +44,21 @@ export async function POST(request: Request) {
     });
   }
 
-  const db = getAdminDb();
   const userRecord = await auth.getUser(uid);
   const displayName =
     userRecord.displayName?.trim() || email.split("@")[0] || "AgentStack user";
 
   try {
-    const { agencyId, subAccountId } = await provisionBetaOwner({
-      auth,
-      db,
+    const { agencyId, subAccountId } = await provisionNewAgency({
       uid,
       email,
       displayName,
       bootstrap: false,
+      // Google/Apple sign-in already confirms the address with the
+      // provider, so Firebase sets emailVerified=true itself — this is a
+      // no-op in practice, kept true for consistency with the other
+      // brand-new-account paths.
+      requiresEmailVerification: true,
     });
     return NextResponse.json({
       redirectTo: "/agency/get-started",

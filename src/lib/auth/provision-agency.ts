@@ -7,14 +7,19 @@ import { GLOBAL_TERRITORY_ID, type Role } from "@/types";
 
 /**
  * The agency/sub-account/membership/claims batch-write shared by every path
- * that mints a brand-new agency for a brand-new Firebase Auth user:
+ * that mints a brand-new agency for a Firebase Auth user:
  *   - `/api/auth/signup`'s bootstrap + public-registration branches
  *   - `/api/auth/claim-subscription` (paid self-serve signup — see "Real
  *     self-serve billing")
+ *   - `/api/auth/oauth-provision` (first-time Google/Apple sign-in)
+ *   - `/api/auth/repair-workspace` (self-heal for an authenticated user
+ *     with no tenancy — `uid` may already have a `users/{uid}` doc here,
+ *     which is why the write below merges rather than overwrites)
  *
- * Extracted so both call sites stay behavior-identical instead of drifting.
- * Caller is responsible for creating the Firebase Auth user FIRST and
- * deleting it on failure — this function assumes `uid` already exists.
+ * Extracted so every call site stays behavior-identical instead of
+ * drifting. Caller is responsible for creating the Firebase Auth user
+ * FIRST and deleting it on failure — this function assumes `uid` already
+ * exists.
  */
 
 export interface ProvisionNewAgencyInput {
@@ -29,6 +34,17 @@ export interface ProvisionNewAgencyInput {
    * overwrite that singleton.
    */
   bootstrap: boolean;
+  /**
+   * Stamps `requiresEmailVerification: true` on the custom claims, which
+   * middleware.ts uses to redirect to /verify-email until the address is
+   * confirmed. MUST be `false` for `/api/auth/repair-workspace` — that path
+   * fixes tenancy for a Firebase Auth user who may have been active for a
+   * long time already; stamping it there would suddenly lock out an
+   * existing account that was never asked to verify. Every genuinely new
+   * account-creation path (signup, claim-subscription, oauth-provision)
+   * passes `true`.
+   */
+  requiresEmailVerification: boolean;
 }
 
 export interface ProvisionNewAgencyResult {
@@ -39,7 +55,7 @@ export interface ProvisionNewAgencyResult {
 export async function provisionNewAgency(
   input: ProvisionNewAgencyInput,
 ): Promise<ProvisionNewAgencyResult> {
-  const { uid, email, displayName, bootstrap } = input;
+  const { uid, email, displayName, bootstrap, requiresEmailVerification } = input;
   const db = getAdminDb();
   const auth = getAdminAuth();
 
@@ -57,24 +73,33 @@ export async function provisionNewAgency(
     // Agency-model claims.
     agencyId,
     agencyRole: "owner",
+    ...(requiresEmailVerification ? { requiresEmailVerification: true } : {}),
   });
 
   const batch = db.batch();
 
-  batch.set(db.doc(`users/${uid}`), {
-    uid,
-    email,
-    displayName,
-    photoURL: null,
-    stripeCustomerId: null,
-    subscriptionStatus: "inactive",
-    subscriptionPriceId: null,
-    role: "admin" as Role,
-    status: "active",
-    primaryAgencyId: agencyId,
-    createdAt: FieldValue.serverTimestamp(),
-    updatedAt: FieldValue.serverTimestamp(),
-  });
+  // Merge, not overwrite — a repair call (see /api/auth/repair-workspace)
+  // can hit this for a user doc that already exists but is only missing
+  // tenancy fields. A plain set() would clobber real billing/profile state
+  // (stripeCustomerId, subscriptionStatus, photoURL, …) back to defaults.
+  batch.set(
+    db.doc(`users/${uid}`),
+    {
+      uid,
+      email,
+      displayName,
+      photoURL: null,
+      stripeCustomerId: null,
+      subscriptionStatus: "inactive",
+      subscriptionPriceId: null,
+      role: "admin" as Role,
+      status: "active",
+      primaryAgencyId: agencyId,
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    },
+    { merge: true },
+  );
 
   batch.set(agencyRef, {
     id: agencyId,

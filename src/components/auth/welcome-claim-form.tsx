@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signInWithEmail } from "@/lib/firebase/auth";
+import { signInWithEmail, sendVerificationEmail } from "@/lib/firebase/auth";
 import { sendWelcomeEmail } from "@/lib/firestore/mail";
 import {
   Card,
@@ -20,6 +20,7 @@ type Status =
   | { kind: "checking" }
   | { kind: "not_ready" }
   | { kind: "invalid" }
+  | { kind: "expired" }
   | { kind: "already_claimed" }
   | { kind: "ready"; email: string };
 
@@ -74,9 +75,10 @@ export function WelcomeClaimForm() {
           ready?: boolean;
           claimed?: boolean;
           email?: string;
+          expired?: boolean;
         };
         if (!res.ok) {
-          setStatus({ kind: "invalid" });
+          setStatus(data.expired ? { kind: "expired" } : { kind: "invalid" });
           return;
         }
         if (data.claimed) {
@@ -119,7 +121,10 @@ export function WelcomeClaimForm() {
       }
 
       const email = payload.email ?? (status.kind === "ready" ? status.email : "");
-      await signInWithEmail(email, password);
+      const credential = await signInWithEmail(email, password);
+      void sendVerificationEmail(credential.user).catch((err) =>
+        console.warn("sendVerificationEmail failed", err),
+      );
       void sendWelcomeEmail(email, displayName || email.split("@")[0]).catch((err) =>
         console.warn("sendWelcomeEmail failed", err),
       );
@@ -163,9 +168,23 @@ export function WelcomeClaimForm() {
         <CardHeader>
           <CardTitle>This link isn&apos;t valid</CardTitle>
           <CardDescription>
-            The claim link is missing, malformed, or has expired. If you just
-            paid, check your email for the confirmation link, or contact
-            support.
+            The claim link is missing or malformed. If you just paid, check
+            your email for the confirmation link, or contact support.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
+  if (status.kind === "expired") {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>This link has expired</CardTitle>
+          <CardDescription>
+            We email a fresh link about a day after purchase if you haven&apos;t
+            finished setup yet — check your inbox (and spam folder) for a
+            newer email, or contact support with your payment confirmation.
           </CardDescription>
         </CardHeader>
       </Card>

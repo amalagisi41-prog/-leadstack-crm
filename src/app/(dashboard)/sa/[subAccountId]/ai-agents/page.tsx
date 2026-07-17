@@ -83,7 +83,7 @@ export default function AiAgentsOverviewPage() {
           <Bot className="h-6 w-6" />
         </span>
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">AI Agents</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">AI Assistants</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             One persona, every channel. Configure the agent below — channels
             inherit and can override specific settings.

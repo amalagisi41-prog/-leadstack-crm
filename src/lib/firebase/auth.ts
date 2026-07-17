@@ -3,6 +3,7 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   sendPasswordResetEmail,
+  sendEmailVerification as firebaseSendEmailVerification,
   EmailAuthProvider,
   reauthenticateWithCredential,
   updatePassword,
@@ -116,6 +117,28 @@ export async function changePassword(
   const credential = EmailAuthProvider.credential(user.email, currentPassword);
   await reauthenticateWithCredential(user, credential);
   await updatePassword(user, newPassword);
+}
+
+/**
+ * Sends Firebase's default-templated "verify your email" link. Fired
+ * best-effort right after a brand-new account signs in for the first time
+ * (see signup-form.tsx, welcome-claim-form.tsx) — a send failure shouldn't
+ * block the user from reaching the app, they can retry from /verify-email.
+ */
+export async function sendVerificationEmail(user: User): Promise<void> {
+  await firebaseSendEmailVerification(user);
+}
+
+/**
+ * Re-mints the __session cookie from a freshly-refreshed ID token. Used by
+ * /verify-email after the user clicks the link in a different tab —
+ * middleware reads email_verified off the cookie's embedded token, which
+ * only updates once we force a refresh and re-exchange it, exactly like
+ * the tenancy-claims refresh pattern in oauth-provision.
+ */
+export async function refreshSessionCookie(user: User): Promise<void> {
+  await user.getIdToken(true);
+  await createSessionCookie(user);
 }
 
 /**

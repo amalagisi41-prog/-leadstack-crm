@@ -48,27 +48,28 @@ const TITLES: Array<[RegExp, string]> = [
   [/^\/sa\/[^/]+\/conversations/, "Conversations"],
   [/^\/sa\/[^/]+\/contacts\/[^/]+/, "Contact"],
   [/^\/sa\/[^/]+\/contacts/, "People"],
-  [/^\/sa\/[^/]+\/pipeline/, "Deals"],
+  [/^\/sa\/[^/]+\/pipeline/, "Client Journeys"],
   [/^\/sa\/[^/]+\/calendar/, "Calendar"],
   [/^\/sa\/[^/]+\/tasks/, "Tasks"],
   [/^\/sa\/[^/]+\/forms\/[^/]+/, "Form builder"],
-  [/^\/sa\/[^/]+\/forms/, "Lead Forms"],
+  [/^\/sa\/[^/]+\/forms/, "Lead Capture"],
   [/^\/sa\/[^/]+\/website/, "Website"],
   [/^\/sa\/[^/]+\/templates\/new/, "New template"],
   [/^\/sa\/[^/]+\/templates\/[^/]+/, "Edit template"],
   [/^\/sa\/[^/]+\/templates/, "Templates"],
   [/^\/sa\/[^/]+\/workflows\/[^/]+\/runs/, "Workflow runs"],
   [/^\/sa\/[^/]+\/workflows\/[^/]+/, "Edit workflow"],
-  [/^\/sa\/[^/]+\/workflows/, "Smart Workflows"],
-  [/^\/sa\/[^/]+\/ai-agents\/sms/, "AI Agents · SMS"],
-  [/^\/sa\/[^/]+\/ai-agents\/voice/, "AI Agents · Voice"],
-  [/^\/sa\/[^/]+\/ai-agents\/email/, "AI Agents · Email"],
-  [/^\/sa\/[^/]+\/ai-agents\/web-chat/, "AI Agents · Web Chat"],
-  [/^\/sa\/[^/]+\/ai-agents\/google-business/, "AI Agents · Google Business"],
-  [/^\/sa\/[^/]+\/ai-agents/, "AI Agents"],
+  [/^\/sa\/[^/]+\/workflows/, "Follow-Up Plans"],
+  [/^\/sa\/[^/]+\/ai-agents\/sms/, "AI Assistants · SMS"],
+  [/^\/sa\/[^/]+\/ai-agents\/voice/, "AI Assistants · Voice"],
+  [/^\/sa\/[^/]+\/ai-agents\/email/, "AI Assistants · Email"],
+  [/^\/sa\/[^/]+\/ai-agents\/web-chat/, "AI Assistants · Web Chat"],
+  [/^\/sa\/[^/]+\/ai-agents\/google-business/, "AI Assistants · Google Business"],
+  [/^\/sa\/[^/]+\/ai-agents/, "AI Assistants"],
   [/^\/sa\/[^/]+\/reports/, "Analytics"],
   [/^\/sa\/[^/]+\/logs/, "Logs"],
   [/^\/sa\/[^/]+\/idx/, "IDX Listings"],
+  [/^\/sa\/[^/]+\/connect/, "Connect Your Business"],
 ];
 
 function titleFor(pathname: string): string {
@@ -146,11 +147,11 @@ export function Header({ onMenuClick, onOpenSearch }: HeaderProps) {
     : user?.email?.[0]?.toUpperCase() ?? "U";
 
   return (
-    <header className="flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
+    <header className="pt-safe flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
       <Button
         variant="ghost"
         size="icon"
-        className="md:hidden"
+        className="size-11 md:hidden"
         onClick={onMenuClick}
         aria-label="Open sidebar"
       >
@@ -159,7 +160,9 @@ export function Header({ onMenuClick, onOpenSearch }: HeaderProps) {
 
       <h1 className="text-lg font-semibold">{title}</h1>
 
-      {authReady && memberships.length > 0 && (activeSubId || memberships.length > 1) && (
+      {/* Solo Beta: a switcher with nothing to switch to is dead weight —
+          only render it once there's a second sub-account to pick from. */}
+      {authReady && memberships.length > 1 && (
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
@@ -237,7 +240,7 @@ export function Header({ onMenuClick, onOpenSearch }: HeaderProps) {
         <Button
           variant="ghost"
           size="icon"
-          className="sm:hidden"
+          className="size-11 sm:hidden"
           onClick={onOpenSearch}
           aria-label="Search"
         >

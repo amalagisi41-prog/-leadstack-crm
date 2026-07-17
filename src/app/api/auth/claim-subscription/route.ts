@@ -2,7 +2,7 @@ import "server-only";
 
 import { NextResponse } from "next/server";
 import crypto from "node:crypto";
-import { FieldValue } from "firebase-admin/firestore";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import { provisionNewAgency } from "@/lib/auth/provision-agency";
 
@@ -33,6 +33,7 @@ interface PurchaseDoc {
   planPriceId?: string | null;
   addOnGates?: string[];
   claimTokenHash?: string;
+  claimExpiresAt?: Timestamp | null;
   claimed?: boolean;
 }
 
@@ -43,13 +44,17 @@ function hashToken(token: string): string {
 async function loadPurchase(sessionId: string, token: string) {
   const ref = getAdminDb().collection("purchases").doc(sessionId);
   const snap = await ref.get();
-  if (!snap.exists) return { ref, purchase: null as PurchaseDoc | null, valid: false };
+  if (!snap.exists) return { ref, purchase: null as PurchaseDoc | null, valid: false, expired: false };
   const purchase = snap.data() as PurchaseDoc;
+  // Purchases created before claim expiry shipped have no claimExpiresAt —
+  // treat as never-expiring rather than already-expired.
+  const expired = !!purchase.claimExpiresAt && purchase.claimExpiresAt.toMillis() < Date.now();
   const valid =
+    !expired &&
     purchase.mode === "new_agency" &&
     !!purchase.claimTokenHash &&
     purchase.claimTokenHash === hashToken(token);
-  return { ref, purchase, valid };
+  return { ref, purchase, valid, expired };
 }
 
 export async function GET(request: Request) {
@@ -60,14 +65,25 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Missing session_id or t" }, { status: 400 });
   }
 
-  const { purchase, valid } = await loadPurchase(sessionId, token);
+  const { purchase, valid, expired } = await loadPurchase(sessionId, token);
   if (!purchase) {
     // Webhook may not have landed yet — race-condition safe, same pattern
     // documented for the founders/GitHub-invite flow. Client auto-retries.
     return NextResponse.json({ ready: false }, { status: 425 });
   }
   if (!valid) {
-    return NextResponse.json({ error: "Invalid or expired link." }, { status: 403 });
+    // A reminder with a fresh link is emailed ~24h after purchase if still
+    // unclaimed (see /api/checkout/claim-reminder/step) — surface that so
+    // an expired visit isn't a dead end.
+    return NextResponse.json(
+      {
+        error: expired
+          ? "This link has expired. Check your email for a newer one, or contact support."
+          : "Invalid or expired link.",
+        expired,
+      },
+      { status: 403 },
+    );
   }
   if (purchase.claimed) {
     return NextResponse.json({ ready: true, claimed: true, email: purchase.email ?? null });
@@ -107,12 +123,20 @@ export async function POST(request: Request) {
     );
   }
 
-  const { ref: purchaseRef, purchase, valid } = await loadPurchase(sessionId, token);
+  const { ref: purchaseRef, purchase, valid, expired } = await loadPurchase(sessionId, token);
   if (!purchase) {
     return NextResponse.json({ error: "Purchase not found yet — try again shortly." }, { status: 425 });
   }
   if (!valid) {
-    return NextResponse.json({ error: "Invalid or expired link." }, { status: 403 });
+    return NextResponse.json(
+      {
+        error: expired
+          ? "This link has expired. Check your email for a newer one, or contact support."
+          : "Invalid or expired link.",
+        expired,
+      },
+      { status: 403 },
+    );
   }
   if (purchase.claimed) {
     return NextResponse.json(
@@ -154,6 +178,7 @@ export async function POST(request: Request) {
       email,
       displayName,
       bootstrap: false,
+      requiresEmailVerification: true,
     });
 
     const db = getAdminDb();

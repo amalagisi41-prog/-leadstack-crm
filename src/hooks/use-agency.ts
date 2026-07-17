@@ -18,6 +18,13 @@ interface AgencySummary {
   primaryDomain: string | null;
   /** Per-step onboarding walkthrough video URLs. Empty until set in Agency → Settings. */
   onboardingVideos: OnboardingVideos;
+  /**
+   * Solo Beta gate. False (the default) means this agency is a
+   * single-operator workspace — Agency home, the sub-account switcher, and
+   * agency-level nav should stay hidden. True once a 2nd sub-account has
+   * been created. See `AgencyDoc.multiAccountModeEnabled`.
+   */
+  multiAccountModeEnabled: boolean;
   /** True until the Firestore snapshot has resolved. UI shouldn't render brand chrome before this flips false. */
   loading: boolean;
 }
@@ -28,6 +35,7 @@ interface AgencyData {
   supportEmail: string | null;
   primaryDomain: string | null;
   onboardingVideos: OnboardingVideos;
+  multiAccountModeEnabled: boolean;
 }
 
 /**
@@ -44,6 +52,7 @@ export function useAgency(): AgencySummary {
     supportEmail: null,
     primaryDomain: null,
     onboardingVideos: {},
+    multiAccountModeEnabled: false,
   });
   const [loading, setLoading] = useState<boolean>(!!agencyId);
 
@@ -65,6 +74,7 @@ export function useAgency(): AgencySummary {
             primaryDomain: (d.primaryDomain as string | null) ?? null,
             onboardingVideos:
               (d.onboardingVideos as OnboardingVideos | null) ?? {},
+            multiAccountModeEnabled: d.multiAccountModeEnabled === true,
           });
         }
         setLoading(false);

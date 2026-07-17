@@ -34,6 +34,7 @@ import {
   GraduationCap,
   Filter,
   BookOpen,
+  Plug,
 } from "lucide-react";
 import { getFirebaseDb } from "@/lib/firebase/client";
 import { signOutUser } from "@/lib/firebase/auth";
@@ -65,9 +66,12 @@ interface NavSection {
 
 const SUB_ACCOUNT_NAV_SECTIONS: NavSection[] = [
   {
-    label: "Workspace",
+    label: "Today",
+    items: [{ href: "/dashboard", label: "Today", icon: Home, enabled: true }],
+  },
+  {
+    label: "Clients",
     items: [
-      { href: "/dashboard", label: "Today", icon: Home, enabled: true },
       {
         href: "/conversations",
         label: "Conversations",
@@ -76,7 +80,12 @@ const SUB_ACCOUNT_NAV_SECTIONS: NavSection[] = [
         badgeKey: "unreadConversations",
       },
       { href: "/contacts", label: "People", icon: Users, enabled: true },
-      { href: "/pipeline", label: "Deals", icon: GitBranch, enabled: true },
+      {
+        href: "/pipeline",
+        label: "Client Journeys",
+        icon: GitBranch,
+        enabled: true,
+      },
       { href: "/calendar", label: "Calendar", icon: Calendar, enabled: true },
       {
         href: "/booking",
@@ -91,12 +100,27 @@ const SUB_ACCOUNT_NAV_SECTIONS: NavSection[] = [
         enabled: true,
         badgeKey: "dueToday",
       },
-      { href: "/forms", label: "Lead Forms", icon: FileText, enabled: true },
+    ],
+  },
+  {
+    label: "Growth",
+    items: [
+      { href: "/forms", label: "Lead Capture", icon: FileText, enabled: true },
+      {
+        href: "/workflows",
+        label: "Follow-Up Plans",
+        icon: Workflow,
+        enabled: true,
+      },
+      { href: "/funnels", label: "Marketing Pages", icon: Filter, enabled: true },
+      { href: "/broadcasts", label: "Broadcasts", icon: Send, enabled: true },
+      { href: "/social", label: "Social Planner", icon: Share2, enabled: true },
+      { href: "/idx", label: "IDX Listings", icon: Building, enabled: true },
       { href: "/quotes", label: "Quotes", icon: FileSignature, enabled: true },
     ],
   },
   {
-    label: "AI & Automation",
+    label: "Business",
     items: [
       {
         href: "/business-profile",
@@ -104,34 +128,25 @@ const SUB_ACCOUNT_NAV_SECTIONS: NavSection[] = [
         icon: BookOpen,
         enabled: true,
       },
-      { href: "/ai-agents", label: "AI Agents", icon: Bot, enabled: true },
-      { href: "/workflows", label: "Smart Workflows", icon: Workflow, enabled: true },
-      { href: "/broadcasts", label: "Broadcasts", icon: Send, enabled: true },
-      { href: "/templates", label: "Templates", icon: FileText, enabled: true },
-    ],
-  },
-  {
-    label: "Performance",
-    items: [
-      { href: "/reports", label: "Analytics", icon: BarChart3, enabled: true },
-      { href: "/logs", label: "Logs", icon: ScrollText, enabled: true },
-    ],
-  },
-  {
-    label: "Brokerage",
-    items: [
+      { href: "/ai-agents", label: "AI Assistants", icon: Bot, enabled: true },
+      {
+        href: "/connect",
+        label: "Connect Your Business",
+        icon: Plug,
+        enabled: true,
+      },
       { href: "/products", label: "Products", icon: Package, enabled: true },
       { href: "/website", label: "Website", icon: Globe, enabled: true },
       { href: "/website-studio", label: "AI Website Studio", icon: LayoutTemplate, enabled: true },
-      { href: "/funnels", label: "Marketing Pages", icon: Filter, enabled: true },
-      { href: "/social", label: "Social Planner", icon: Share2, enabled: true },
-      { href: "/idx", label: "IDX Listings", icon: Building, enabled: true },
       {
         href: "/community",
         label: "Community",
         icon: GraduationCap,
         enabled: true,
       },
+      { href: "/templates", label: "Templates", icon: FileText, enabled: true },
+      { href: "/reports", label: "Analytics", icon: BarChart3, enabled: true },
+      { href: "/logs", label: "Logs", icon: ScrollText, enabled: true },
       {
         href: "/dashboard/settings",
         label: "Settings",
@@ -152,7 +167,7 @@ function activeSubAccountFromPath(pathname: string): string | null {
   return match ? match[1] : null;
 }
 
-function SidebarContent() {
+function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const dueToday = useDueTodayCount();
   const unreadConversations = useUnreadConversationsCount();
@@ -215,8 +230,17 @@ function SidebarContent() {
   const linkSubId = activeSubId ?? fallbackSub;
   const showSubNav = !!linkSubId;
 
+  // Solo Beta: outside multi-account mode, the brand line reads as the
+  // workspace/sub-account name rather than the agency's — a single-operator
+  // agency and its one workspace are the same thing to the user.
+  const linkedMembership = memberships.find((m) => m.subAccountId === linkSubId) ?? null;
+  const displayBrandName =
+    !agency.multiAccountModeEnabled && linkedMembership?.name
+      ? linkedMembership.name
+      : agency.name;
+
   return (
-    <div className="flex h-full flex-col bg-[#0f1117] text-slate-300">
+    <div className="pl-safe flex h-full flex-col bg-[#0f1117] text-slate-300">
       {/* Logo / brand */}
       <div className="flex h-16 items-center border-b border-white/10 px-5">
         <Link href="/" className="flex items-center gap-2.5">
@@ -224,56 +248,59 @@ function SidebarContent() {
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={agency.logoUrl}
-              alt={agency.name}
+              alt={displayBrandName}
               className="h-6 w-auto max-w-[120px] object-contain"
             />
           ) : (
             <LogoMark size={30} idSuffix="-sidebar" />
           )}
           <span className="truncate text-sm font-semibold text-white">
-            {agency.name}
+            {displayBrandName}
           </span>
         </Link>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4">
-        {/* Agency-level links */}
-        {agencyRole === "owner" && (
+      <nav
+        className="flex-1 overflow-y-auto px-3 py-4"
+        onClick={(e) => {
+          // Event delegation so the mobile Sheet drawer closes on any nav
+          // link tap without threading an onNavigate prop through every
+          // <SidebarLink> call site individually.
+          if ((e.target as HTMLElement).closest("a")) onNavigate?.();
+        }}
+      >
+        {/* Agency-level links — Solo Beta hides these until the agency has
+            graduated to multi-account mode (see AgencyDoc.multiAccountModeEnabled) */}
+        {agencyRole === "owner" && agency.multiAccountModeEnabled && (
           <div className="mb-4">
             <p className="mb-1.5 px-2 text-[10px] font-semibold uppercase tracking-wider text-white/30">
               Agency
             </p>
-            {agencyRole === "owner" && (
-              <SidebarLink
-                href="/agency/get-started"
-                label="Get started"
-                icon={Compass}
-                active={pathname.startsWith("/agency/get-started")}
-              />
-            )}
+            <SidebarLink
+              href="/agency/get-started"
+              label="Get started"
+              icon={Compass}
+              active={pathname.startsWith("/agency/get-started")}
+            />
             <SidebarLink
               href="/agency"
               label="Agency home"
               icon={Building2}
               active={pathname === "/agency"}
             />
-            {agencyRole === "owner" && (
-              <SidebarLink
-                href="/agency/sub-accounts"
-                label="Sub-accounts"
-                icon={Users}
-                active={pathname.startsWith("/agency/sub-accounts")}
-              />
-            )}
-            {agencyRole === "owner" && (
-              <SidebarLink
-                href="/agency/settings"
-                label="Agency settings"
-                icon={Settings}
-                active={pathname.startsWith("/agency/settings")}
-              />
-            )}
+            <SidebarLink
+              href="/agency/sub-accounts"
+              label="Sub-accounts"
+              icon={Users}
+              active={pathname.startsWith("/agency/sub-accounts")}
+            />
+            <SidebarLink
+              href="/agency/settings"
+              label="Agency settings"
+              icon={Settings}
+              active={pathname.startsWith("/agency/settings")}
+            />
           </div>
         )}
 
@@ -282,7 +309,7 @@ function SidebarContent() {
             <div className="mb-4">
               <button
                 onClick={() => openAskAssistant()}
-                className="flex w-full items-center gap-2.5 rounded-md bg-white/5 px-2 py-2 text-sm font-medium text-rose-300/90 transition-colors hover:bg-white/10 hover:text-rose-200"
+                className="flex min-h-11 w-full items-center gap-2.5 rounded-md bg-white/5 px-2 py-2 text-sm font-medium text-rose-300/90 transition-colors hover:bg-white/10 hover:text-rose-200"
               >
                 <Sparkles className="h-4 w-4 shrink-0" />
                 Ask AI
@@ -333,7 +360,7 @@ function SidebarContent() {
                     return (
                       <div
                         key={item.href}
-                        className="flex cursor-not-allowed items-center justify-between gap-2.5 rounded-md px-2 py-1.5 text-sm text-white/20"
+                        className="flex min-h-11 cursor-not-allowed items-center justify-between gap-2.5 rounded-md px-2 py-1.5 text-sm text-white/20"
                         title={
                           gateLocked
                             ? "Disabled by your agency administrator"
@@ -384,9 +411,9 @@ function SidebarContent() {
       </nav>
 
       {/* User footer */}
-      <div className="border-t border-white/10 p-3">
+      <div className="pb-safe border-t border-white/10 p-3">
         <button
-          className="flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-sm text-white/50 transition-colors hover:bg-white/5 hover:text-white/80"
+          className="flex min-h-11 w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-sm text-white/50 transition-colors hover:bg-white/5 hover:text-white/80"
           onClick={() => signOutUser()}
         >
           <LogOut className="h-4 w-4" />
@@ -414,7 +441,7 @@ function SidebarLink({
     <Link
       href={href}
       className={cn(
-        "flex items-center justify-between gap-2.5 rounded-md px-2 py-1.5 text-sm font-medium transition-colors",
+        "flex min-h-11 items-center justify-between gap-2.5 rounded-md px-2 py-1.5 text-sm font-medium transition-colors",
         active
           ? "bg-blue-600/20 text-blue-400"
           : "text-white/50 hover:bg-white/5 hover:text-white/80",
@@ -452,7 +479,7 @@ export function Sidebar({ open, onOpenChange }: SidebarProps) {
           <SheetHeader className="sr-only">
             <SheetTitle>Navigation</SheetTitle>
           </SheetHeader>
-          <SidebarContent />
+          <SidebarContent onNavigate={() => onOpenChange(false)} />
         </SheetContent>
       </Sheet>
     </>
