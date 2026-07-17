@@ -249,11 +249,21 @@ export async function resolveAgent(
 
   const profile = profileSnap.data() as AiAgentProfile;
   const channel = channelSnap.data() as AiChannelConfig;
-  const businessKnowledge = businessSnap.exists
-    ? compileBusinessProfilePrompt(
-        businessSnap.data() as BusinessProfileContent,
-      )
+  const businessProfileContent = businessSnap.exists
+    ? (businessSnap.data() as BusinessProfileContent)
     : null;
+  const businessKnowledge = businessProfileContent
+    ? compileBusinessProfilePrompt(businessProfileContent)
+    : null;
+  // The Business Blueprint is the canonical source for the agent's name —
+  // aiAgent/profile.businessName only exists as a narrower override (e.g. a
+  // channel-specific brand name). An operator who filled in the Blueprint
+  // but never separately typed a name here shouldn't have the AI introduce
+  // itself as the sub-account's internal workspace name.
+  const businessNameFromBlueprint =
+    businessProfileContent?.agentName?.trim() ||
+    businessProfileContent?.brokerage?.trim() ||
+    "";
 
   return {
     profile,
@@ -261,7 +271,7 @@ export async function resolveAgent(
     effective: {
       enabled: channel.enabled,
       systemPrompt: profile.systemPrompt,
-      businessName: profile.businessName,
+      businessName: profile.businessName?.trim() || businessNameFromBlueprint,
       hoursStart: profile.hoursStart,
       hoursEnd: profile.hoursEnd,
       timezone: profile.timezone,
