@@ -161,6 +161,7 @@ export async function POST(request: Request) {
         email,
         displayName,
         bootstrap: decision.bootstrap,
+        requiresEmailVerification: true,
       });
 
       return NextResponse.json({
@@ -187,6 +188,10 @@ export async function POST(request: Request) {
       status: "active",
       agencyId,
       agencyRole: null,
+      // Brand-new account (invited teammate's first signup) — same
+      // verify-once requirement as every other new-account path. See
+      // middleware.ts + /verify-email.
+      requiresEmailVerification: true,
     });
 
     const batch = db.batch();

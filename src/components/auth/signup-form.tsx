@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { signInWithEmail } from "@/lib/firebase/auth";
+import { signInWithEmail, sendVerificationEmail } from "@/lib/firebase/auth";
 import { sendWelcomeEmail } from "@/lib/firestore/mail";
 import {
   Card,
@@ -84,7 +84,11 @@ export function SignupForm() {
 
       // Sign in client-side to mint the Firebase ID token, then exchange it
       // for the __session cookie middleware reads.
-      await signInWithEmail(email, password);
+      const credential = await signInWithEmail(email, password);
+
+      void sendVerificationEmail(credential.user).catch((err) =>
+        console.warn("sendVerificationEmail failed", err),
+      );
 
       void sendWelcomeEmail(email, email.split("@")[0]).catch((err) =>
         console.warn("sendWelcomeEmail failed", err),

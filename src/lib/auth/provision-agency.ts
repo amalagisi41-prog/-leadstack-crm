@@ -34,6 +34,17 @@ export interface ProvisionNewAgencyInput {
    * overwrite that singleton.
    */
   bootstrap: boolean;
+  /**
+   * Stamps `requiresEmailVerification: true` on the custom claims, which
+   * middleware.ts uses to redirect to /verify-email until the address is
+   * confirmed. MUST be `false` for `/api/auth/repair-workspace` — that path
+   * fixes tenancy for a Firebase Auth user who may have been active for a
+   * long time already; stamping it there would suddenly lock out an
+   * existing account that was never asked to verify. Every genuinely new
+   * account-creation path (signup, claim-subscription, oauth-provision)
+   * passes `true`.
+   */
+  requiresEmailVerification: boolean;
 }
 
 export interface ProvisionNewAgencyResult {
@@ -44,7 +55,7 @@ export interface ProvisionNewAgencyResult {
 export async function provisionNewAgency(
   input: ProvisionNewAgencyInput,
 ): Promise<ProvisionNewAgencyResult> {
-  const { uid, email, displayName, bootstrap } = input;
+  const { uid, email, displayName, bootstrap, requiresEmailVerification } = input;
   const db = getAdminDb();
   const auth = getAdminAuth();
 
@@ -62,6 +73,7 @@ export async function provisionNewAgency(
     // Agency-model claims.
     agencyId,
     agencyRole: "owner",
+    ...(requiresEmailVerification ? { requiresEmailVerification: true } : {}),
   });
 
   const batch = db.batch();

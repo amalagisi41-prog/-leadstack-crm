@@ -145,6 +145,10 @@ export async function POST(request: Request): Promise<NextResponse> {
       email,
       displayName,
       bootstrap: false,
+      // This repairs tenancy for a user who may have been active for a
+      // long time already — never retroactively require verification for
+      // an existing account that was never asked for it.
+      requiresEmailVerification: false,
     });
     return NextResponse.json({ repaired: true, agencyId: newAgencyId, subAccountId });
   } catch (error) {

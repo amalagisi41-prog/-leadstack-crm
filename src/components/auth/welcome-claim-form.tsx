@@ -2,7 +2,7 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signInWithEmail } from "@/lib/firebase/auth";
+import { signInWithEmail, sendVerificationEmail } from "@/lib/firebase/auth";
 import { sendWelcomeEmail } from "@/lib/firestore/mail";
 import {
   Card,
@@ -121,7 +121,10 @@ export function WelcomeClaimForm() {
       }
 
       const email = payload.email ?? (status.kind === "ready" ? status.email : "");
-      await signInWithEmail(email, password);
+      const credential = await signInWithEmail(email, password);
+      void sendVerificationEmail(credential.user).catch((err) =>
+        console.warn("sendVerificationEmail failed", err),
+      );
       void sendWelcomeEmail(email, displayName || email.split("@")[0]).catch((err) =>
         console.warn("sendWelcomeEmail failed", err),
       );

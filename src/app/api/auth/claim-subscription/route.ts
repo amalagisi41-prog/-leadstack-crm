@@ -178,6 +178,7 @@ export async function POST(request: Request) {
       email,
       displayName,
       bootstrap: false,
+      requiresEmailVerification: true,
     });
 
     const db = getAdminDb();

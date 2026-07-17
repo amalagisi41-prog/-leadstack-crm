@@ -233,6 +233,33 @@ const CATEGORY_LABELS: Record<IntegrationHealth["category"], string> = {
   billing: "Billing",
 };
 
+// This panel is reached by any agency owner, not just a platform admin —
+// the underlying checks in lib/health/checks.ts are named for the engineer
+// wiring credentials (SDK names, service names), not the operator reading
+// this screen. Translate the handful of known top-level labels to plain
+// language; anything unmapped (new checks added later) falls back to the
+// raw label rather than silently hiding it.
+const FRIENDLY_INTEGRATION_LABELS: Record<string, string> = {
+  "App core": "Core setup",
+  "Firebase (Client SDK)": "Sign-in & database",
+  "Firebase Admin SDK + Firestore": "Server connection",
+  "Stripe (Billing)": "Payments",
+  "Resend (Email)": "Email sending",
+  "Twilio (SMS)": "Text messaging",
+  "Meta (Facebook + Instagram)": "Facebook & Instagram",
+  "OpenRouter (AI Agents)": "AI replies",
+  "Firecrawl (Website KB)": "Website knowledge base",
+  "Vapi (AI Voice Agent)": "AI voice calls",
+  "Upstash QStash": "Automation scheduling",
+  "Automations token secret": "Unsubscribe link security",
+  "gitpage.site (Website builder)": "Website builder",
+  "Mapbox (Leads map)": "Leads map",
+};
+
+function friendlyIntegrationLabel(label: string): string {
+  return FRIENDLY_INTEGRATION_LABELS[label] ?? label;
+}
+
 function HealthCard({
   health,
   expanded,
@@ -254,7 +281,9 @@ function HealthCard({
       >
         <StatusLight status={health.status} required={health.required} />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium">{health.label}</p>
+          <p className="text-sm font-medium">
+            {friendlyIntegrationLabel(health.label)}
+          </p>
           <p className="truncate text-xs text-muted-foreground">
             {health.message}
           </p>

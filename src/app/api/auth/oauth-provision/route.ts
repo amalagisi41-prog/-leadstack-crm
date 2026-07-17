@@ -54,6 +54,11 @@ export async function POST(request: Request) {
       email,
       displayName,
       bootstrap: false,
+      // Google/Apple sign-in already confirms the address with the
+      // provider, so Firebase sets emailVerified=true itself — this is a
+      // no-op in practice, kept true for consistency with the other
+      // brand-new-account paths.
+      requiresEmailVerification: true,
     });
     return NextResponse.json({
       redirectTo: "/agency/get-started",

@@ -244,6 +244,27 @@ export default function middleware(request: NextRequest) {
       headers.set("x-user-uid", decodedToken.uid);
       headers.set("x-user-email", decodedToken.email ?? "");
 
+      // Solo Beta routing: "New unverified user → Verify email once". Only
+      // accounts created after this shipped carry requiresEmailVerification
+      // (see lib/auth/provision-agency.ts) — every pre-existing account
+      // never gets stamped with it, so this can't retroactively lock
+      // anyone out. API routes and public paths are exempt so marketing
+      // pages, auth endpoints, and the verify page itself never loop.
+      const pathname = request.nextUrl.pathname;
+      const requiresVerification = decodedToken.requiresEmailVerification === true;
+      const isVerified = decodedToken.email_verified === true;
+      if (
+        requiresVerification &&
+        !isVerified &&
+        pathname !== "/verify-email" &&
+        !pathname.startsWith("/api/") &&
+        !isPublicPath(pathname)
+      ) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/verify-email";
+        return NextResponse.redirect(url);
+      }
+
       return NextResponse.next({ request: { headers } });
     },
     handleInvalidToken: async () => {
