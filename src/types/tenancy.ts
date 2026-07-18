@@ -295,6 +295,24 @@ export interface SubAccountDoc {
    */
   automationsPaused: boolean;
   /**
+   * Opts this sub-account into the Daily Briefing — a once-a-day email
+   * summarizing new leads, tasks due/overdue, today's appointments, deals
+   * won, and escalated AI conversations, sent to active admin members at
+   * ~7am in `timezone`. Undefined/false = off (default at creation).
+   * Self-serve toggle (any admin, not agency-gated) since it costs the
+   * agency nothing beyond one Resend send/day and reads no third-party
+   * credential. See `lib/briefing/`.
+   */
+  dailyBriefingEnabled?: boolean;
+  /**
+   * Local calendar date (`YYYY-MM-DD` in `timezone`) the briefing last sent
+   * on — the dedup guard for the hourly sweep so a sub-account only gets one
+   * email per local day even though the cron checks every sub-account every
+   * hour looking for whoever's local clock just hit 7am. Null/undefined =
+   * never sent.
+   */
+  lastBriefingSentDate?: string | null;
+  /**
    * Primary point of contact at the client this sub-account belongs to —
    * the person the agency speaks to about this workspace. All fields
    * optional. Sub-accounts used for internal teams (not external clients)

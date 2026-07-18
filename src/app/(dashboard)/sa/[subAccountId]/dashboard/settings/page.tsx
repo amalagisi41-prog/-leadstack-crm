@@ -23,6 +23,7 @@ import { SubAccountMetaSection } from "@/components/settings/sub-account-meta-se
 import { SubAccountEmailDomainSection } from "@/components/settings/sub-account-email-domain-section";
 import { SubAccountPayPalSection } from "@/components/settings/sub-account-paypal-section";
 import { SubAccountGoogleReviewSection } from "@/components/settings/sub-account-google-review-section";
+import { SubAccountDailyBriefingSection } from "@/components/settings/sub-account-daily-briefing-section";
 import { SubAccountIdxSection } from "@/components/settings/sub-account-idx-section";
 import { SubAccountAddOnsSection } from "@/components/settings/sub-account-add-ons-section";
 import { SubAccountStripeSection } from "@/components/settings/sub-account-stripe-section";
@@ -289,6 +290,9 @@ export default function SettingsPage() {
 
           {/* Google reviews — SMS / WhatsApp review-request sends. */}
           <SubAccountGoogleReviewSection />
+
+          {/* Daily briefing — once-a-day summary email, self-serve toggle. */}
+          <SubAccountDailyBriefingSection />
         </TabsContent>
 
         {/* ---------- API: recipes, keys, webhooks ---------- */}

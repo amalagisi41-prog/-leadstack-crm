@@ -16,6 +16,16 @@ export type WorkflowTriggerType =
   | "pipeline.stage.changed"
   | "booking.created"
   | "quote.accepted"
+  // Fired from the Vapi end-of-call handler (lib/comms/voice/end-of-call.ts)
+  // for an INBOUND call to the Voice AI number that ended without a real
+  // exchange (caller hung up before engaging, very short call, no-answer-
+  // like ended reason). An inbound-initiated trigger — see
+  // lib/workflows/guardrails.ts's quiet-hours exemption.
+  | "contact.missed_call"
+  // Fired from PATCH /api/deals/[id] when a Won deal's `completed` flag
+  // flips false → true. Distinct from `pipeline.stage.changed` because a
+  // deal can be marked completed without its stage changing on that write.
+  | "deal.completed"
   // Time-based triggers — fired by a daily sweep (lib/workflows/time-triggers.ts)
   // rather than synchronously from a write path. "Today" and "this year" are
   // evaluated in the sub-account's sendWindow timezone.
@@ -75,7 +85,13 @@ export type WorkflowNodeType =
   | "update_field"
   | "create_task"
   | "notify"
-  | "webhook";
+  | "webhook"
+  // Delegates to the real Google Review Requests feature
+  // (lib/reviews/request.ts::maybeSendReviewRequest) instead of sending a
+  // canned message — reuses the sub-account's own configured review link,
+  // channel, and cooldown so a Method Template can drive the send without
+  // duplicating (or fighting) the dedicated feature's config/UI.
+  | "google_review_request";
 
 export interface WorkflowNode {
   id: string;
@@ -100,6 +116,16 @@ export interface WorkflowDoc {
   startNodeId: string | null;
   nodes: Record<string, WorkflowNode>;
   stats: { enrolled: number; completed: number };
+  /**
+   * Set only when this workflow was seeded from a Method Template
+   * (`/templates`) — either automatically at provisioning time or manually
+   * from the starter gallery. `templateVersion` mirrors the template's
+   * `version` at seed time so a future migration pass can detect
+   * workspaces still on an older shipped version. Null/undefined for
+   * hand-built workflows.
+   */
+  templateKey?: string | null;
+  templateVersion?: number | null;
   createdAt: Timestamp | FieldValue | null;
   updatedAt: Timestamp | FieldValue | null;
 }

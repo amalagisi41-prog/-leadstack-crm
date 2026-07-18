@@ -19,7 +19,14 @@ import {
 } from "@/lib/automations/merge-tags";
 import { buildUnsubscribeUrl } from "@/lib/automations/unsubscribe-token";
 import { publishCallback, qstashIsConfigured } from "@/lib/automations/qstash";
+import { maybeSendReviewRequest } from "@/lib/reviews/request";
 import { evalConditionGroup } from "./conditions";
+import { isSendGatedNodeType } from "./send-window";
+import {
+  compileGuardedSend,
+  INBOUND_INITIATED_TRIGGER_TYPES,
+} from "./guardrails";
+import { DEFAULT_AI_AGENT_PROFILE } from "@/types/ai";
 import type { Contact } from "@/types/contacts";
 import type { AgencyDoc, SubAccountDoc } from "@/types";
 import type { WhatsappTemplateDoc } from "@/types/whatsapp-templates";
@@ -429,6 +436,28 @@ const execWebhook: NodeExecutor = async (ctx) => {
   }
 };
 
+/**
+ * Delegates to the real Google Review Requests feature instead of sending a
+ * canned message — reuses the sub-account's own configured review link,
+ * channel, and cooldown (Settings → Google reviews). This is what the
+ * post-closing Method Template drives instead of duplicating that feature's
+ * config/UI. A sub-account with no review link configured yet is simply a
+ * no-op ("not_configured") — the template doesn't nag until the operator
+ * sets one up.
+ */
+const execGoogleReviewRequest: NodeExecutor = async (ctx) => {
+  const result = await maybeSendReviewRequest({
+    subAccountId: ctx.subAccountId,
+    agencyId: ctx.agencyId,
+    contactId: ctx.contact.id,
+    trigger: "deal_completed",
+  });
+  return {
+    result: { kind: "next" },
+    log: result.sent ? "ok" : `skipped:${result.reason ?? "not_sent"}`,
+  };
+};
+
 /** Unimplemented node types pass through (no stall) until their slice lands. */
 const execPassThrough: NodeExecutor = async () => ({
   result: { kind: "next" },
@@ -445,6 +474,7 @@ const REGISTRY: Partial<Record<WorkflowNodeType, NodeExecutor>> = {
   add_tag: execAddTag,
   remove_tag: execRemoveTag,
   move_stage: execMoveStage,
+  google_review_request: execGoogleReviewRequest,
   update_field: execUpdateField,
   create_task: execCreateTask,
   notify: execNotify,
@@ -459,6 +489,33 @@ interface FireInput {
   type: WorkflowTriggerType;
   contactId: string;
   context?: Record<string, unknown>;
+}
+
+/**
+ * True when the sub-account has at least one ACTIVE workflow listening for
+ * `triggerType`. Used by call sites migrating a one-off automation onto the
+ * Method Template system to fall back to the old direct behavior for
+ * sub-accounts that predate the template (provisioned before it shipped, or
+ * where the operator removed it) — so a migration never silently drops real
+ * behavior for an existing account.
+ */
+export async function hasActiveWorkflowForTrigger(
+  subAccountId: string,
+  triggerType: WorkflowTriggerType
+): Promise<boolean> {
+  try {
+    const snap = await getAdminDb()
+      .collection("workflows")
+      .where("subAccountId", "==", subAccountId)
+      .where("status", "==", "active")
+      .where("trigger.type", "==", triggerType)
+      .limit(1)
+      .get();
+    return !snap.empty;
+  } catch (err) {
+    console.error("[workflows] hasActiveWorkflowForTrigger failed", err);
+    return false;
+  }
 }
 
 /**
@@ -553,13 +610,19 @@ async function enroll(
 async function scheduleNode(
   runRef: FirebaseFirestore.DocumentReference,
   nodeId: string,
-  delaySeconds: number
+  delaySeconds: number,
+  /** Set when rescheduling the SAME node that was just evaluated (e.g. a
+   *  quiet-hours defer) — without a nonce, the dedup id would collide with
+   *  the message that just fired and QStash would drop the reschedule. */
+  dedupNonce?: string
 ): Promise<void> {
   const res = await publishCallback({
     pathname: STEP_PATH,
     body: { runId: runRef.id, nodeId },
     delaySeconds,
-    deduplicationId: `wf_${runRef.id}_${nodeId}`,
+    deduplicationId: dedupNonce
+      ? `wf_${runRef.id}_${nodeId}_${dedupNonce}`
+      : `wf_${runRef.id}_${nodeId}`,
   });
   if (!res) {
     await runRef.update({
@@ -656,6 +719,73 @@ export async function runStep(runId: string, nodeId: string): Promise<void> {
   }
 
   const owner = await loadOwner(agency);
+
+  // Guardrail layer every contact-facing send compiles through: Fair
+  // Housing content, escalation keywords, then quiet hours (the first node
+  // of a run enrolled by an inbound-initiated trigger — the lead texted,
+  // called, or submitted a form first — is exempt from quiet hours only;
+  // every later node in the same run is outbound-initiated and still
+  // gated). See lib/workflows/guardrails.ts for the pure, unit-tested
+  // compiler this wraps.
+  if (isSendGatedNodeType(node.type)) {
+    const isInboundTriggered =
+      run.history.length === 0 &&
+      INBOUND_INITIATED_TRIGGER_TYPES.has(wf.trigger.type);
+    const [escalationKeywords] = await Promise.all([
+      loadEscalationKeywords(run.subAccountId),
+    ]);
+    const outcome = compileGuardedSend({
+      messageBody: guardedMessageBody(node),
+      sendWindow: subAccount?.sendWindow,
+      isInboundTriggered,
+      escalationKeywords,
+      lastInboundMessage: extractLastInboundMessage(run.context ?? {}),
+    });
+
+    if (!outcome.allowed) {
+      if (outcome.reason === "quiet_hours") {
+        // Deferring does NOT write a history entry — only real execution
+        // does — so the idempotency check above still allows this same
+        // node to run once the window opens.
+        await scheduleNode(runRef, nodeId, outcome.deferSeconds, `qh${Date.now()}`);
+        return;
+      }
+
+      const blockedEntry: WorkflowRunHistoryEntry = {
+        nodeId,
+        type: node.type,
+        at: Timestamp.now(),
+        result:
+          outcome.reason === "fair_housing"
+            ? `blocked:fair_housing:${outcome.matchedPhrases.join("|")}`
+            : `blocked:escalation:${outcome.matchedKeyword}`,
+      };
+      await runRef.update({
+        history: FieldValue.arrayUnion(blockedEntry),
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+
+      if (outcome.reason === "escalation") {
+        // Same posture as the AI channels: an escalation keyword means the
+        // automated sequence stops entirely and a human takes over — it
+        // does NOT continue to the next scripted step.
+        await completeEscalatedRun(runRef, wf, owner, outcome.matchedKeyword);
+        return;
+      }
+
+      // Fair Housing block: skip only this one node's send (a compliance
+      // problem with this message doesn't mean the whole sequence should
+      // halt) and continue the graph.
+      const target = node.next ?? null;
+      if (!target) {
+        await completeRun(runRef, wf.id);
+        return;
+      }
+      await scheduleNode(runRef, target, 0);
+      return;
+    }
+  }
+
   const exec = REGISTRY[node.type] ?? execPassThrough;
   const { result, log } = await exec({
     node,
@@ -739,5 +869,96 @@ async function loadOwner(
     };
   } catch {
     return { displayName: "", email: "" };
+  }
+}
+
+/* --------------------------- Guardrail helpers -------------------------- */
+
+/** Reads the sub-account's configured escalation keywords from the shared
+ *  AI Agent profile, falling back to the platform defaults when the profile
+ *  doesn't exist yet or has an empty list. Never throws — a guardrail lookup
+ *  failure must not block (or silently allow) a send; it degrades to the
+ *  safe default keyword list. */
+async function loadEscalationKeywords(subAccountId: string): Promise<string[]> {
+  try {
+    const snap = await getAdminDb()
+      .doc(`subAccounts/${subAccountId}/aiAgent/profile`)
+      .get();
+    const keywords = snap.data()?.escalationKeywords;
+    if (Array.isArray(keywords) && keywords.length > 0) {
+      return keywords.filter((k): k is string => typeof k === "string");
+    }
+  } catch {
+    // fall through to default
+  }
+  return DEFAULT_AI_AGENT_PROFILE.escalationKeywords;
+}
+
+/** Best-effort extraction of the lead's own inbound free text from the
+ *  trigger context captured at enrollment — e.g. a form's "message" field.
+ *  Returns null (not "") when there's nothing to check, so the escalation
+ *  guard stays a no-op rather than a false block on an empty string. */
+function extractLastInboundMessage(
+  context: Record<string, unknown>,
+): string | null {
+  const direct = context.message ?? context.notes;
+  if (typeof direct === "string" && direct.trim()) return direct;
+  const formData = context.formData;
+  if (formData && typeof formData === "object") {
+    for (const [key, value] of Object.entries(
+      formData as Record<string, unknown>
+    )) {
+      if (
+        typeof value === "string" &&
+        value.trim() &&
+        /message|note|comment|detail/i.test(key)
+      ) {
+        return value;
+      }
+    }
+  }
+  return null;
+}
+
+/** Raw editable text for a send-gated node. whatsapp_template carries no
+ *  editable body (Meta pre-approves the content), so it's excluded from
+ *  the Fair Housing content scan — quiet hours + escalation still apply. */
+function guardedMessageBody(node: WorkflowNode): string {
+  if (node.type === "send_email") {
+    const cfg = node.config as unknown as SendEmailConfig;
+    return `${cfg.subject ?? ""} ${cfg.body ?? ""}`;
+  }
+  if (node.type === "send_sms") {
+    return (node.config as unknown as SendSmsConfig).body ?? "";
+  }
+  return "";
+}
+
+/** Escalation guardrail tripped: stop the run (a human needs to look at
+ *  this lead before any more automated contact goes out) and email the
+ *  workflow's owner, mirroring the AI channels' "stay silent, notify a
+ *  human" posture. Best-effort — an email failure doesn't block exiting
+ *  the run. */
+async function completeEscalatedRun(
+  runRef: FirebaseFirestore.DocumentReference,
+  wf: WorkflowDoc,
+  owner: { displayName: string; email: string },
+  matchedKeyword: string
+): Promise<void> {
+  await runRef.update({
+    status: "exited",
+    currentNodeId: null,
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+  if (owner.email && emailIsConfigured()) {
+    try {
+      await sendEmail({
+        to: owner.email,
+        subject: `Workflow "${wf.name}" paused — escalation keyword "${matchedKeyword}"`,
+        text: `The workflow "${wf.name}" stopped automated sending for a lead because their message matched the escalation keyword "${matchedKeyword}". No further automated steps will run for this contact — please follow up directly.`,
+      });
+    } catch (err) {
+      console.warn("[workflows] escalation notification failed", err);
+    }
   }
 }

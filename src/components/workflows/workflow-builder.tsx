@@ -19,6 +19,7 @@ import {
   MessageSquare,
   PencilLine,
   Plus,
+  Star,
   Tag,
   Trash2,
   Webhook,
@@ -70,6 +71,8 @@ const TRIGGER_TYPES: WorkflowTriggerType[] = [
   "pipeline.stage.changed",
   "booking.created",
   "quote.accepted",
+  "contact.missed_call",
+  "deal.completed",
   "contact.birthday",
   "contact.home_anniversary",
   "contact.stale",
@@ -89,6 +92,7 @@ const ICONS: Record<WorkflowNodeType, typeof Mail> = {
   create_task: CheckSquare,
   notify: Bell,
   webhook: Webhook,
+  google_review_request: Star,
 };
 
 export interface BuilderInitial {

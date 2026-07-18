@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import { seedDefaultTemplates } from "@/lib/automations/seed-templates";
+import { seedMethodTemplates } from "@/lib/provisioning/method-templates";
 import { applySnapshot } from "@/lib/snapshots/apply";
 import { GLOBAL_TERRITORY_ID, type MemberStatus, type Role } from "@/types";
 
@@ -230,6 +231,16 @@ export async function POST(request: Request) {
     // starts with usable defaults — operator can edit, delete, or attach
     // them to automations like any other template.
     seedDefaultTemplates(db, (ref, data) => tx.set(ref, data), {
+      agencyId,
+      subAccountId,
+      createdByUid: uid,
+    });
+
+    // Seed the four Method Templates as ACTIVE workflows — same baseline
+    // every brand-new agency's Main sub-account gets (see
+    // provision-agency.ts), so a second/third sub-account under an
+    // existing agency isn't left without them.
+    seedMethodTemplates(db, (ref, data) => tx.set(ref, data), {
       agencyId,
       subAccountId,
       createdByUid: uid,

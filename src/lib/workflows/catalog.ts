@@ -14,6 +14,8 @@ export const TRIGGER_LABELS: Record<WorkflowTriggerType, string> = {
   "pipeline.stage.changed": "Deal stage changed",
   "booking.created": "Booking created",
   "quote.accepted": "Quote accepted",
+  "contact.missed_call": "Missed call",
+  "deal.completed": "Deal marked completed",
   "contact.birthday": "Contact's birthday",
   "contact.home_anniversary": "Home anniversary",
   "contact.stale": "No contact in X days",
@@ -33,6 +35,7 @@ export const NODE_LABELS: Record<WorkflowNodeType, string> = {
   create_task: "Create task",
   notify: "Internal notification",
   webhook: "Webhook",
+  google_review_request: "Request a Google review",
 };
 
 /**
@@ -63,6 +66,7 @@ export const ADDABLE_TYPES: WorkflowNodeType[] = [
   "create_task",
   "notify",
   "webhook",
+  "google_review_request",
   "if_else",
   "goal",
 ];
@@ -103,6 +107,8 @@ export function defaultConfig(type: WorkflowNodeType): Record<string, unknown> {
       return { recipient: "owner", to: "", subject: "", body: "" };
     case "webhook":
       return { url: "" };
+    case "google_review_request":
+      return {};
     default:
       return {};
   }
@@ -141,6 +147,8 @@ export function nodeSummary(step: BuilderStep): string {
       return (c.subject as string) || (c.to as string) || "Notification";
     case "webhook":
       return (c.url as string) || "No URL yet";
+    case "google_review_request":
+      return "Uses your configured Google review link (Settings)";
     case "goal":
       return "Ends the workflow here";
     default:
