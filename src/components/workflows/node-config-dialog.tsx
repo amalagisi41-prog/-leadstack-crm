@@ -346,6 +346,15 @@ export function NodeConfigDialog({
               This step ends the workflow — nothing runs after it on this path.
             </p>
           )}
+
+          {step.type === "google_review_request" && (
+            <p className="text-muted-foreground text-sm">
+              Uses your Google review link, channel, and cooldown from
+              Settings → Google reviews. Nothing to configure here — if that
+              link isn&rsquo;t set up yet, this step quietly does nothing
+              until it is.
+            </p>
+          )}
         </div>
 
         <DialogFooter>

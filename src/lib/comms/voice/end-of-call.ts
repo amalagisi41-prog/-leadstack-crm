@@ -5,6 +5,7 @@ import { getAdminDb } from "@/lib/firebase/admin";
 import { reconcileContactFromCapture } from "@/lib/comms/ai/capture";
 import { createCaptureFollowUp } from "@/lib/comms/ai/follow-up";
 import { emitWebhookEvent } from "@/lib/api/webhooks/dispatch";
+import { fireWorkflowTrigger } from "@/lib/workflows/engine";
 import { GLOBAL_TERRITORY_ID } from "@/types";
 import type { SubAccountDoc, VoiceCampaignOutcome } from "@/types";
 
@@ -155,6 +156,20 @@ export async function handleVapiEndOfCall(input: {
   // resolve one (e.g. the number on file differs slightly from caller ID).
   if (!contactId && payload.metaContactId) {
     contactId = payload.metaContactId;
+  }
+
+  // Missed-call detection (inbound only): the AI answered but the caller
+  // hung up before a real exchange happened — worth an automatic textback
+  // even though the AI itself already picked up. Fire-and-forget; a
+  // workflow problem must never affect the Vapi response.
+  if (payload.direction !== "outbound" && contactId && looksLikeMissedCall(payload)) {
+    void fireWorkflowTrigger({
+      subAccountId,
+      agencyId: subAccount.agencyId,
+      type: "contact.missed_call",
+      contactId,
+      context: { summary: payload.summary, endedReason: payload.endedReason },
+    });
   }
 
   // Only create the follow-up Task + escalation email when the caller
@@ -397,6 +412,28 @@ function sanitize(v: unknown): string | null {
   if (typeof v !== "string") return null;
   const trimmed = v.trim();
   return trimmed.length > 0 ? trimmed.slice(0, 500) : null;
+}
+
+/**
+ * True when an inbound call to the Voice AI number ended without a real
+ * exchange — caller hung up before engaging, a very short connect, or an
+ * ended-reason that reads as no-answer/voicemail. Fires the
+ * `contact.missed_call` Method Template trigger. Shares its signal logic
+ * with `deriveCampaignOutcome`'s outbound no-answer detection.
+ */
+function looksLikeMissedCall(payload: VapiEndOfCallPayload): boolean {
+  const reason = (payload.endedReason ?? "").toLowerCase();
+  if (
+    reason.includes("voicemail") ||
+    reason.includes("no-answer") ||
+    reason.includes("noanswer") ||
+    reason.includes("did-not-answer") ||
+    reason.includes("not-answer")
+  ) {
+    return true;
+  }
+  const hadConversation = payload.transcript.some((t) => t.role === "user");
+  return !hadConversation || payload.durationSec < 5;
 }
 
 /** Map the call's signals to a single campaign outcome disposition. */

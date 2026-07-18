@@ -1,3 +1,4 @@
+import { METHOD_TEMPLATES } from "@templates/index";
 import type { WorkflowDoc, WorkflowNode, WorkflowTrigger } from "@/types/workflows";
 
 /**
@@ -7,6 +8,14 @@ import type { WorkflowDoc, WorkflowNode, WorkflowTrigger } from "@/types/workflo
  * vision. Mirrors `lib/comms/whatsapp/starter-templates.ts`'s shape: pure
  * data (no `server-only`) so both the picker UI and the server-side create
  * route can import it directly.
+ *
+ * The four canonical Method Templates (missed-call textback, new-lead
+ * instant response, post-closing review request, cold-lead 90-day revival)
+ * live in `/templates` as the single source of truth — every new workspace
+ * inherits them automatically at provisioning time (see
+ * `lib/provisioning/method-templates.ts`), and they're also re-exported
+ * here so an operator can re-add one manually from this gallery if they
+ * ever removed it.
  */
 
 export interface WorkflowStarterTemplate {
@@ -144,38 +153,17 @@ export const WORKFLOW_STARTER_TEMPLATES: WorkflowStarterTemplate[] = [
         "n1",
       ),
   },
-  {
-    key: "review-request-on-won",
-    displayName: "Review Request on Won",
-    description:
-      "A deal moves to Won → a few days later, send a personal note. Skip this if Settings → Google Review Requests is already on — that one fires separately on deal completion and sends the real review link, so running both asks twice.",
-    seed: () =>
-      blankSeed(
-        {
-          type: "pipeline.stage.changed",
-          filters: { all: [] },
-          toStage: "won",
-        },
-        {
-          n1: {
-            id: "n1",
-            type: "wait",
-            config: { seconds: 3 * 86_400 },
-            next: "n2",
-          },
-          n2: {
-            id: "n2",
-            type: "send_email",
-            config: {
-              subject: "Congrats again!",
-              body: "Hi {{contact.firstName}},\n\nCongrats again on closing! It was a pleasure working with you, and I'm just a call or text away if anything comes up.\n\n{{unsubscribeLink}}",
-            },
-            next: null,
-          },
-        },
-        "n1",
-      ),
-  },
+  // The four canonical Method Templates — data lives in /templates, mapped
+  // into this gallery's shape (drops `version`, which only the provisioning
+  // seeder needs). Supersedes the old "Review Request on Won" starter,
+  // which duplicated the real Google Review Requests feature with a canned
+  // message and no real link; that one-off is gone.
+  ...METHOD_TEMPLATES.map((t) => ({
+    key: t.key,
+    displayName: t.displayName,
+    description: t.description,
+    seed: t.seed,
+  })),
 ];
 
 export function getWorkflowStarterTemplate(

@@ -3,6 +3,7 @@ import "server-only";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import { seedDefaultTemplates } from "@/lib/automations/seed-templates";
+import { seedMethodTemplates } from "@/lib/provisioning/method-templates";
 import { GLOBAL_TERRITORY_ID, type Role } from "@/types";
 
 /**
@@ -206,6 +207,15 @@ export async function provisionNewAgency(
   // the agency owner sees usable defaults the first time they open
   // Automations → Templates.
   seedDefaultTemplates(db, (ref, data) => batch.set(ref, data), {
+    agencyId,
+    subAccountId,
+    createdByUid: uid,
+  });
+
+  // Seed the four Method Templates as ACTIVE workflows — every new
+  // workspace inherits missed-call textback, new-lead instant response,
+  // post-closing review request, and cold-lead 90-day revival from day one.
+  seedMethodTemplates(db, (ref, data) => batch.set(ref, data), {
     agencyId,
     subAccountId,
     createdByUid: uid,

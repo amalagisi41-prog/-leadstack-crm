@@ -8,6 +8,7 @@ import {
   updateDealServerSide,
   type UpdateDealPatch,
 } from "@/lib/server/deals-service";
+import { fireWorkflowTrigger, hasActiveWorkflowForTrigger } from "@/lib/workflows/engine";
 import { maybeSendReviewRequest } from "@/lib/reviews/request";
 import { loadCustomFieldDefs } from "@/lib/custom-fields/load-defs";
 import { validateCustomFieldValues } from "@/lib/custom-fields/validation";
@@ -97,18 +98,40 @@ export async function PATCH(
     return NextResponse.json({ error: "Deal not found" }, { status: 404 });
   }
 
-  // Auto Google review request when a Won deal is FIRST marked completed.
-  // Fire-and-forget; the dispatcher re-checks the sub-account's review config
-  // (enabled + triggerOnDealCompleted + cooldown) before sending anything.
+  // A Won deal FIRST marked completed fires the "deal.completed" Method
+  // Template trigger (post-closing review request → GBP link) — see the
+  // post-closing-review-request template in /templates. Sub-accounts
+  // provisioned before Method Templates shipped (or where the operator
+  // removed the template) have no matching active workflow; for those we
+  // fall back to calling the review dispatcher directly, exactly like this
+  // route used to unconditionally — so this migration can never silently
+  // stop a real account's review requests. Fire-and-forget either way; a
+  // workflow/review problem must never fail the deal update itself.
   const becameCompleted = patch.completed === true && data.completed !== true;
   const effectiveStage = patch.stageId ?? (data.stageId as PipelineStageId);
   if (becameCompleted && effectiveStage === "won") {
-    void maybeSendReviewRequest({
-      subAccountId: data.subAccountId as string,
-      agencyId: data.agencyId as string,
-      contactId: (result.deal.contact_id ?? data.contactId) as string,
-      trigger: "deal_completed",
-    });
+    const subAccountId = data.subAccountId as string;
+    const agencyId = data.agencyId as string;
+    const contactId = (result.deal.contact_id ?? data.contactId) as string;
+    void hasActiveWorkflowForTrigger(subAccountId, "deal.completed").then(
+      (hasTemplate) => {
+        if (hasTemplate) {
+          void fireWorkflowTrigger({
+            subAccountId,
+            agencyId,
+            type: "deal.completed",
+            contactId,
+          });
+        } else {
+          void maybeSendReviewRequest({
+            subAccountId,
+            agencyId,
+            contactId,
+            trigger: "deal_completed",
+          });
+        }
+      },
+    );
   }
 
   return NextResponse.json({ deal: result.deal });
