@@ -15,7 +15,11 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # 22, not the package.json engines field's ">=20" — pnpm@11.6.0
+          # (pinned via packageManager) requires Node >=22.13 (uses
+          # node:sqlite internally); Node 20 crashes corepack's pnpm
+          # download with ERR_UNKNOWN_BUILTIN_MODULE.
+          node-version: 22
 
       - name: Enable corepack (pins the pnpm version from package.json)
         run: corepack enable
