@@ -23,6 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ONBOARDING_STEP_IDS } from "@/lib/onboarding/steps";
+import { computeOnboardingState } from "@/lib/onboarding/state-machine";
 
 /* ---------- types ---------- */
 
@@ -116,7 +117,12 @@ export function OnboardingWizard({
   initialCompleted,
 }: WizardProps) {
   const router = useRouter();
-  const [currentStep, setCurrentStep] = useState<WizardStep>(0);
+  // Resume at the first screen with an incomplete step id instead of always
+  // restarting at 0 — a user who navigated away mid-wizard (or completed
+  // some steps from the standalone checklist) picks up where they left off.
+  const [currentStep, setCurrentStep] = useState<WizardStep>(
+    () => (computeOnboardingState(initialCompleted).nextWizardStepIndex ?? 5) as WizardStep,
+  );
   const [completed, setCompleted] = useState<Set<string>>(
     () => new Set(initialCompleted),
   );
