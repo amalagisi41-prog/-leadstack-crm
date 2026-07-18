@@ -921,8 +921,10 @@ function extractLastInboundMessage(
 }
 
 /** Raw editable text for a send-gated node. whatsapp_template carries no
- *  editable body (Meta pre-approves the content), so it's excluded from
- *  the Fair Housing content scan — quiet hours + escalation still apply. */
+ *  editable body (Meta pre-approves the content), and google_review_request
+ *  carries none either (the message lives on the sub-account's own
+ *  googleReviewConfig, not the node) — both are excluded from the Fair
+ *  Housing content scan; quiet hours + escalation still apply to them. */
 function guardedMessageBody(node: WorkflowNode): string {
   if (node.type === "send_email") {
     const cfg = node.config as unknown as SendEmailConfig;

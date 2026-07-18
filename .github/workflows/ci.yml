@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Minimal gate: typecheck, lint, full test suite. Nothing more — no build,
+# no deploy (Vercel already handles that via its own GitHub integration).
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # 22, not the package.json engines field's ">=20" — pnpm@11.6.0
+          # (pinned via packageManager) requires Node >=22.13 (uses
+          # node:sqlite internally); Node 20 crashes corepack's pnpm
+          # download with ERR_UNKNOWN_BUILTIN_MODULE.
+          node-version: 22
+
+      - name: Enable corepack (pins the pnpm version from package.json)
+        run: corepack enable
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm exec tsc --noEmit
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Test
+        run: pnpm test

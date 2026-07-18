@@ -20,6 +20,7 @@ const SEND_GATED_NODE_TYPES: ReadonlySet<WorkflowNodeType> = new Set([
   "send_sms",
   "send_email",
   "whatsapp_template",
+  "google_review_request",
 ]);
 
 export function isSendGatedNodeType(type: WorkflowNodeType): boolean {

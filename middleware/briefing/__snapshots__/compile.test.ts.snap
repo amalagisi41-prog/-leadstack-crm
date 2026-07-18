@@ -1,0 +1,63 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`compileMorningBrief — snapshot fixtures > a busy morning with one of every signal 1`] = `
+{
+  "hotActivityCount": 5,
+  "isEmpty": false,
+  "quietLeadsCount": 2,
+  "smsText": "Morning brief: 5 hot, 2 going quiet. Top: Sam Rivera needs a human reply · Overdue: Send comps to the Whitfields · Overdue: Call back about the inspection",
+  "topActions": [
+    {
+      "kind": "escalated_chat",
+      "label": "Sam Rivera needs a human reply",
+      "path": "/contacts/c_esc_1",
+    },
+    {
+      "kind": "overdue_task",
+      "label": "Overdue: Send comps to the Whitfields",
+      "path": "/tasks",
+    },
+    {
+      "kind": "overdue_task",
+      "label": "Overdue: Call back about the inspection",
+      "path": "/tasks",
+    },
+  ],
+}
+`;
+
+exports[`compileMorningBrief — snapshot fixtures > a genuinely quiet day — isEmpty and no actions 1`] = `
+{
+  "hotActivityCount": 0,
+  "isEmpty": true,
+  "quietLeadsCount": 0,
+  "smsText": "Your morning brief: nothing urgent today. Inbox is clear.",
+  "topActions": [],
+}
+`;
+
+exports[`compileMorningBrief — snapshot fixtures > an overloaded day truncates to the top 3 highest-priority actions 1`] = `
+{
+  "hotActivityCount": 12,
+  "isEmpty": false,
+  "quietLeadsCount": 8,
+  "smsText": "Morning brief: 12 hot, 8 going quiet. Top: Escalated Visitor 0 needs a human reply · Escalated Visitor 1 needs a human reply · Escalated Visitor 2 needs a human reply",
+  "topActions": [
+    {
+      "kind": "escalated_chat",
+      "label": "Escalated Visitor 0 needs a human reply",
+      "path": "/contacts/c_esc_0",
+    },
+    {
+      "kind": "escalated_chat",
+      "label": "Escalated Visitor 1 needs a human reply",
+      "path": "/contacts/c_esc_1",
+    },
+    {
+      "kind": "escalated_chat",
+      "label": "Escalated Visitor 2 needs a human reply",
+      "path": "/contacts/c_esc_2",
+    },
+  ],
+}
+`;

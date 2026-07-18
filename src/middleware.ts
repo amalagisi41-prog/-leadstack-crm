@@ -47,6 +47,9 @@ const PUBLIC_PATHS = [
   // sends once, at ~7am local) + its per-sub-account step worker. Both
   // signature-verified inside the route.
   "/api/cron/daily-briefing",
+  // Weekly Digest email — weekly fan-out + its per-sub-account step worker.
+  // Both signature-verified inside the route.
+  "/api/cron/weekly-digest",
   "/api/landing/metrics",
   "/api/landing/recent-purchases",
   // Live-visitors heartbeat ping for the agency dashboard's world map.

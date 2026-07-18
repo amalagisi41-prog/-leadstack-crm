@@ -6,6 +6,7 @@ describe("isSendGatedNodeType", () => {
     expect(isSendGatedNodeType("send_sms")).toBe(true);
     expect(isSendGatedNodeType("send_email")).toBe(true);
     expect(isSendGatedNodeType("whatsapp_template")).toBe(true);
+    expect(isSendGatedNodeType("google_review_request")).toBe(true);
   });
 
   it("does not gate internal-only node types", () => {

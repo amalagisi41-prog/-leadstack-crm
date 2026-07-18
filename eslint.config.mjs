@@ -18,6 +18,10 @@ const eslintConfig = [
       "out/**",
       "build/**",
       "next-env.d.ts",
+      // Orphaned pre-rename scaffold directory — a single throwaway debug
+      // script, not part of the Next.js app (nothing under src/ references
+      // it) and not the app this repo builds/deploys.
+      "my-ghl-app/**",
     ],
   },
 ];

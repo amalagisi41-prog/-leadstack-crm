@@ -35,6 +35,7 @@ import { Button } from "@/components/ui/button";
 import { NewDealDialog } from "@/components/pipeline/new-deal-dialog";
 import { cn } from "@/lib/utils";
 import { isOnboardingComplete, ONBOARDING_STEPS } from "@/lib/onboarding/steps";
+import { computeOnboardingState } from "@/lib/onboarding/state-machine";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const STALLED_AFTER_MS = 7 * DAY_MS;
@@ -243,19 +244,22 @@ export default function DashboardPage() {
     events.length === 0 &&
     sessions.length === 0;
 
-  const onboardingStepSet = useMemo(
-    () => new Set(subAccount?.onboardingStepsCompleted ?? []),
+  // Single source of truth for "what's the next setup step" — shared with
+  // the onboarding wizard's resume logic and the /onboarding API's
+  // next_recommended_action, so this card can never drift out of sync with
+  // either of those.
+  const onboardingState = useMemo(
+    () => computeOnboardingState(subAccount?.onboardingStepsCompleted),
     [subAccount?.onboardingStepsCompleted],
   );
-  const completedOnboardingSteps = ONBOARDING_STEPS.filter((step) =>
-    onboardingStepSet.has(step.id),
-  );
-  const nextOnboardingStep = ONBOARDING_STEPS.find(
-    (step) => !onboardingStepSet.has(step.id),
-  );
-  const onboardingProgress = ONBOARDING_STEPS.length
+  const nextOnboardingStep = onboardingState.nextRecommendedAction
+    ? ONBOARDING_STEPS.find(
+        (step) => step.id === onboardingState.nextRecommendedAction!.id,
+      )
+    : undefined;
+  const onboardingProgress = onboardingState.totalSteps
     ? Math.round(
-        (completedOnboardingSteps.length / ONBOARDING_STEPS.length) * 100,
+        (onboardingState.completedCount / onboardingState.totalSteps) * 100,
       )
     : 0;
 

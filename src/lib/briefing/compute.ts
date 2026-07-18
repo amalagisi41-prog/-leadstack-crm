@@ -11,7 +11,7 @@ export interface BriefingTimestampLike {
   seconds?: number;
 }
 
-function toMillis(v: unknown): number | null {
+export function toMillis(v: unknown): number | null {
   if (v === null || v === undefined) return null;
   const t = v as BriefingTimestampLike;
   if (typeof t.toMillis === "function") return t.toMillis();

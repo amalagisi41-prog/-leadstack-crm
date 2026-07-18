@@ -1,5 +1,6 @@
 import { CUSTOM_BRAND } from "@/config/landing";
 import type { BriefingStats } from "./compute";
+import type { RecommendedAction } from "@middleware/briefing/types";
 
 function money(cents: number): string {
   return `$${(cents / 100).toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
@@ -72,6 +73,11 @@ export function renderDailyBriefingEmail(opts: {
   pipelineUrl: string;
   conversationsUrl: string;
   todayLabel: string;
+  /** Top 3 recommended actions from the AI Morning Brief compiler
+   *  (@middleware/briefing) — absolute-path hrefs already resolved by the
+   *  caller (this module has no sub-account base-URL context). Optional so
+   *  existing callers/snapshots without it keep working unchanged. */
+  topActions?: Array<RecommendedAction & { href: string }>;
 }): { subject: string; text: string; html: string } {
   const lines = buildLines(opts.stats, {
     tasks: opts.tasksUrl,
@@ -80,6 +86,7 @@ export function renderDailyBriefingEmail(opts: {
     pipeline: opts.pipelineUrl,
     conversations: opts.conversationsUrl,
   });
+  const topActions = opts.topActions ?? [];
 
   const headline =
     lines.length === 0
@@ -97,6 +104,13 @@ export function renderDailyBriefingEmail(opts: {
     lines.length === 0
       ? "Nothing urgent today. Inbox is clear."
       : lines.map((l) => `• ${l.value} ${l.label.toLowerCase()}`).join("\n"),
+    ...(topActions.length > 0
+      ? [
+          "",
+          "Top recommended actions:",
+          ...topActions.map((a, i) => `${i + 1}. ${a.label} — ${a.href}`),
+        ]
+      : []),
     "",
     `Open your dashboard: ${opts.dashboardUrl}`,
   ].join("\n");
@@ -125,6 +139,22 @@ export function renderDailyBriefingEmail(opts: {
         lines.length === 0
           ? `<p>Nothing urgent today — inbox is clear. 🎉</p>`
           : `<table style="width: 100%; border-collapse: collapse;">${rows}</table>`
+      }
+      ${
+        topActions.length > 0
+          ? `
+      <p style="margin: 20px 0 8px; font-size: 13px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.04em;">
+        Top recommended actions
+      </p>
+      <ol style="margin: 0; padding-left: 20px; font-size: 14px;">
+        ${topActions
+          .map(
+            (a) =>
+              `<li style="margin-bottom: 6px;"><a href="${a.href}" style="color: #1d4ed8; text-decoration: none;">${a.label}</a></li>`,
+          )
+          .join("")}
+      </ol>`
+          : ""
       }
       <p style="margin: 24px 0;">
         <a href="${opts.dashboardUrl}" style="background: #1d4ed8; color: #fff; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px;">
