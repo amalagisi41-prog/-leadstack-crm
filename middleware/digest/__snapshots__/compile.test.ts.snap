@@ -1,0 +1,27 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`compileWeeklyDigest — snapshot fixtures > a busy week with all four signals 1`] = `
+{
+  "bookingsCreated": 3,
+  "dealsWon": 1,
+  "dealsWonValue": 480000,
+  "headline": "47 replies, 3 bookings, 2 leads revived",
+  "isEmpty": false,
+  "leadsRevived": 2,
+  "repliesSent": 47,
+  "smsText": "Your AI employee this week: 47 replies, 3 bookings, 2 leads revived.",
+}
+`;
+
+exports[`compileWeeklyDigest — snapshot fixtures > a quiet week — isEmpty and the all-clear copy 1`] = `
+{
+  "bookingsCreated": 0,
+  "dealsWon": 0,
+  "dealsWonValue": 0,
+  "headline": "A quiet week — no automated activity to report.",
+  "isEmpty": true,
+  "leadsRevived": 0,
+  "repliesSent": 0,
+  "smsText": "Your AI employee's week: quiet — no automated activity to report.",
+}
+`;

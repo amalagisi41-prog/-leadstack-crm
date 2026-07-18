@@ -313,6 +313,15 @@ export interface SubAccountDoc {
    */
   lastBriefingSentDate?: string | null;
   /**
+   * ISO timestamp the Weekly Digest last sent — the dedup guard for the
+   * weekly cron (a fixed UTC time, once a week, unlike the daily briefing's
+   * per-timezone hourly sweep) so a re-run of the same week's cron tick
+   * never double-sends. Null/undefined = never sent. Reuses
+   * `dailyBriefingEnabled` as its opt-in toggle — no separate settings UI.
+   * See `lib/digest/`.
+   */
+  lastDigestSentAt?: string | null;
+  /**
    * Primary point of contact at the client this sub-account belongs to —
    * the person the agency speaks to about this workspace. All fields
    * optional. Sub-accounts used for internal teams (not external clients)

@@ -121,3 +121,25 @@ expect instead, and (if obvious) a proposed fix.
   included here.
 - **Status:** open — CI fixed; `engines.node` + CLAUDE.md text not yet
   updated.
+
+### [2026-07-18] Morning Brief / Weekly Digest SMS delivery has no recipient to send to
+
+- **Step:** Phase 1 Step 5 — `/middleware/briefing` + `/middleware/digest`
+- **What happened:** The spec asks for both summaries "delivered via the
+  existing sms/email adapters" (plural). The email leg is real — both
+  orchestrators (`lib/briefing/send.ts`, `lib/digest/send.ts`) send to every
+  active admin member's email. The SMS leg has no data model to hang off:
+  `subAccountMembers` has no stored personal mobile number for an internal
+  operator (the sub-account's `twilioConfig` phone number is the tenant's
+  outbound-to-*contacts* number, not a personal inbox), so there's nowhere
+  to send an internal-facing SMS.
+- **Expected:** Either a real per-member phone field to SMS the brief to, or
+  the spec scoped to email-only with SMS as a future add.
+- **Proposed fix:** Both pure compilers (`@middleware/briefing/compile`,
+  `@middleware/digest/compile`) already produce an SMS-ready `smsText`
+  (≤320 chars, tested) — the capability is real and unit-tested. Wiring an
+  actual send needs one new field (`subAccountMembers/{uid}.mobilePhone` or
+  similar) + a settings-UI input + a Twilio send call in both orchestrators.
+  Deliberately not added silently since it's a new PII field + UI surface.
+- **Status:** open — email delivery ships today; SMS delivery is a scoped,
+  ready-to-wire follow-up once there's a place to store the recipient number.

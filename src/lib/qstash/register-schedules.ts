@@ -75,6 +75,13 @@ const SCHEDULES: ScheduleSpec[] = [
     description:
       "Hourly sweep for the Daily Briefing email — each sub-account only actually sends once at ~7am in its own timezone (deduped via lastBriefingSentDate).",
   },
+  {
+    scheduleId: "leadstack-weekly-digest",
+    path: "/api/cron/weekly-digest",
+    cron: "0 13 * * 1",
+    description:
+      "Weekly 'Your AI employee: X replies, Y bookings, Z revived' digest email, Mondays at 13:00 UTC (deduped via lastDigestSentAt).",
+  },
 ];
 
 const MARKER_PATH = "system/scheduleRegistration";
