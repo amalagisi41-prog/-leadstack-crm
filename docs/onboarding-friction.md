@@ -98,3 +98,26 @@ expect instead, and (if obvious) a proposed fix.
   the directory entirely is a separate, larger cleanup call (its removal
   wasn't part of this ask).
 - **Status:** open (minimal fix applied; full cleanup deferred).
+
+### [2026-07-18] CLAUDE.md's "Node 20+" prerequisite doesn't match pnpm@11.6.0's real requirement
+
+- **Step:** Phase 1 Prerequisites (setup) / adding minimal CI
+- **What happened:** The new CI workflow's first-ever run failed immediately
+  — `corepack enable` + `pnpm install` under Node 20 crashed with
+  `ERR_UNKNOWN_BUILTIN_MODULE: No such built-in module: node:sqlite`.
+  `package.json`'s pinned `packageManager: "pnpm@11.6.0"` actually requires
+  Node ≥22.13 (pnpm 11's store code uses `node:sqlite`, added in Node
+  22.5) — but `package.json`'s own `engines.node` still says `">=20"`, and
+  CLAUDE.md's Phase 1 Prerequisites tells a new buyer they "need 20+".
+  Anyone following that instruction literally on Node 20 hits the same
+  crash locally that CI just hit.
+- **Expected:** The documented minimum Node version and the `engines`
+  field both match what the pinned pnpm version actually requires.
+- **Time lost:** ~5 min (one failed CI run, immediately diagnosed from logs).
+- **Proposed fix:** Bump `package.json`'s `engines.node` to `">=22.13"` and
+  CLAUDE.md's Phase 1 Prerequisites Node check to "need 22.13+". Fixed the
+  CI workflow itself (now pins Node 22) since that was the failure blocking
+  this PR; the doc + engines-field correction is a separate small edit not
+  included here.
+- **Status:** open — CI fixed; `engines.node` + CLAUDE.md text not yet
+  updated.
