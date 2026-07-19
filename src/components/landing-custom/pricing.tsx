@@ -169,8 +169,8 @@ export function Pricing() {
                       )}
                     >
                       {annual
-                        ? `Billed $${price * 12}/yr · save $${(tier.priceMonthly - tier.priceAnnual) * 12}`
-                        : "Billed monthly · cancel anytime"}
+                        ? `14-day free trial, then $${price * 12}/yr · save $${(tier.priceMonthly - tier.priceAnnual) * 12}`
+                        : "14-day free trial, then billed monthly · cancel anytime"}
                     </p>
                   )}
                 </div>

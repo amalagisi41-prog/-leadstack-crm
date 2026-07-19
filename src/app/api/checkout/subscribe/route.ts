@@ -92,6 +92,12 @@ export async function POST(request: Request) {
     payment_method_types: ["card"],
     line_items: lineItems,
     ...(discounts ? { discounts } : {}),
+    // 14-day free trial — card is collected up front but not charged until
+    // the trial ends. Matches the "Start free trial" copy on the pricing
+    // page; without this the button charged the card on day one.
+    subscription_data: {
+      trial_period_days: 14,
+    },
     success_url: `${appUrl}/welcome?session_id={CHECKOUT_SESSION_ID}&t=${claimToken}`,
     cancel_url: `${appUrl}/#pricing`,
     metadata: {
