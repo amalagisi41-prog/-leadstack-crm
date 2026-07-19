@@ -53,7 +53,7 @@ function ClosingWordmark({ compact = false }: { compact?: boolean }) {
       aria-label="AgentStack Real Estate Solutions"
     >
       <Image
-        src="/icons/icon-512.png"
+        src="/icons/logo-light-512.png"
         alt=""
         width={512}
         height={512}
