@@ -27,7 +27,7 @@ export function BrandLockupStacked({
 
   return (
     <span className="inline-flex flex-col items-center">
-      <Logo size={96} idSuffix="-hero" />
+      <Logo size={96} idSuffix="-hero" tone={tone} />
       <span className="mt-3 font-sans text-5xl font-extrabold leading-none tracking-tight sm:text-6xl">
         <span style={{ color: colors.primary }}>{primary}</span>
         {accent && <span style={{ color: colors.accent }}>{accent}</span>}
@@ -69,7 +69,11 @@ export function BrandLockup({
   return (
     <span className="flex items-center gap-2">
       {showMark && (
-        <Logo size={size === "sm" ? 22 : 28} idSuffix={`-lockup-${size}`} />
+        <Logo
+          size={size === "sm" ? 22 : 28}
+          idSuffix={`-lockup-${size}`}
+          tone={tone}
+        />
       )}
       <span className="inline-flex flex-col items-center leading-none">
         <span className={`font-sans font-extrabold ${wordClass}`}>

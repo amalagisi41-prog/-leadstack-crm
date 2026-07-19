@@ -252,7 +252,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
               className="h-6 w-auto max-w-[120px] object-contain"
             />
           ) : (
-            <LogoMark size={30} idSuffix="-sidebar" />
+            <LogoMark size={30} idSuffix="-sidebar" tone="dark" />
           )}
           <span className="truncate text-sm font-semibold text-white">
             {displayBrandName}
