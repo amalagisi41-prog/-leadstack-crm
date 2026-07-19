@@ -1,14 +1,49 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { Check, Sparkles } from "lucide-react";
+import { Check, Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { CUSTOM_BRAND, type CustomPricingTier } from "@/config/landing";
 
+/** The only tier CUSTOM_BRAND.pricing keys that map to a real, self-serve
+ *  Stripe plan (see lib/stripe/catalog.ts::PLAN_KEYS) — "starter" is the
+ *  only one offered during Solo Beta. */
+const TIER_PLAN_KEY: Record<string, string> = {
+  Solo: "starter",
+};
+
 export function Pricing() {
   const [annual, setAnnual] = useState(false);
+  const [loadingTier, setLoadingTier] = useState<string | null>(null);
+  const [checkoutError, setCheckoutError] = useState("");
+
+  async function startCheckout(tierName: string) {
+    const planKey = TIER_PLAN_KEY[tierName];
+    if (!planKey) return;
+    setCheckoutError("");
+    setLoadingTier(tierName);
+    try {
+      const res = await fetch("/api/checkout/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ planKey }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        url?: string;
+        error?: string;
+      };
+      if (!res.ok || !data.url) {
+        throw new Error(data.error ?? "Could not start checkout. Try again.");
+      }
+      window.location.href = data.url;
+    } catch (err) {
+      setCheckoutError(
+        err instanceof Error ? err.message : "Could not start checkout. Try again.",
+      );
+      setLoadingTier(null);
+    }
+  }
 
   // Solo Beta: Team/Broker/Luxury Broker stay defined in CUSTOM_BRAND.pricing
   // (so re-enabling them post-beta is a one-line revert) but aren't offered
@@ -153,7 +188,8 @@ export function Pricing() {
                   </ul>
                   <div className="mt-6">
                     <Button
-                      render={<Link href="/signup" />}
+                      onClick={() => startCheckout(tier.name)}
+                      disabled={loadingTier === tier.name}
                       variant={tier.highlighted ? "default" : "outline"}
                       className={cn(
                         "w-full",
@@ -161,8 +197,20 @@ export function Pricing() {
                           "bg-white text-[#173B7A] hover:bg-blue-50",
                       )}
                     >
-                      {tier.cta}
+                      {loadingTier === tier.name ? (
+                        <>
+                          <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                          Starting checkout…
+                        </>
+                      ) : (
+                        tier.cta
+                      )}
                     </Button>
+                    {checkoutError && loadingTier === null && (
+                      <p className="mt-2 text-center text-xs text-red-500">
+                        {checkoutError}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
