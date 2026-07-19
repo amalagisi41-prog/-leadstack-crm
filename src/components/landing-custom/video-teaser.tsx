@@ -48,36 +48,14 @@ const HERO_VIDEO_EMBED = HERO_VIDEO_ID
 
 function ClosingWordmark({ compact = false }: { compact?: boolean }) {
   return (
-    <div
-      className="flex flex-col items-center"
-      aria-label="AgentStack Real Estate Solutions"
-    >
+    <div className="flex items-center justify-center" aria-label="AgentStack">
       <Image
         src="/icons/logo-light-512.png"
-        alt=""
+        alt="AgentStack"
         width={512}
         height={512}
         className={compact ? "h-24 w-24" : "h-40 w-40 sm:h-52 sm:w-52"}
       />
-      <div
-        className={
-          compact
-            ? "mt-3 text-2xl font-extrabold"
-            : "mt-5 text-4xl font-extrabold sm:text-6xl"
-        }
-      >
-        <span className="text-[#1d3d73]">Agent</span>
-        <span className="text-[#ff706b]">Stack</span>
-      </div>
-      <div
-        className={
-          compact
-            ? "mt-1 text-[7px] font-semibold tracking-[0.24em] text-[#1d3d73]"
-            : "mt-2 text-xs font-semibold tracking-[0.3em] text-[#1d3d73] sm:text-sm"
-        }
-      >
-        REAL ESTATE SOLUTIONS
-      </div>
     </div>
   );
 }
