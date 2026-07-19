@@ -1,4 +1,4 @@
-# LeadStack CRM
+# AgentStack CRM
 
 > **Product vision:** see [PRODUCT.md](PRODUCT.md) for the AgentStack Master Product Prompt — the north-star design principles, navigation vocabulary, onboarding philosophy, and success criteria that every feature should align with.
 >
@@ -6,9 +6,9 @@
 
 ## Audience for this document
 
-This file is written for **the buyer who just generated their own repo from the LeadStack template** (`Claude-Code-Pro-Camp/leadstack-agency` → "Use this template"; see SETUP.md Phase 1) and is setting it up — usually with Claude Code's help. Their repo is a standalone copy in their own GitHub account, with no upstream link back to the template. The landing page is a white-label CRM template the buyer brands as their own (via `CUSTOM_BRAND` in `src/config/landing.ts`). The buyer's deployment becomes their product, not "LeadStack".
+This file is written for **the buyer who just generated their own repo from the AgentStack template** (`Claude-Code-Pro-Camp/agentstack-agency` → "Use this template"; see SETUP.md Phase 1) and is setting it up — usually with Claude Code's help. Their repo is a standalone copy in their own GitHub account, with no upstream link back to the template. The landing page is a white-label CRM template the buyer brands as their own (via `CUSTOM_BRAND` in `src/config/landing.ts`). The buyer's deployment becomes their product, not "AgentStack".
 
-Everywhere you see `LeadStack` referenced below, that's just the name of the repo + codebase you're working with — substitute the buyer's brand wherever it appears.
+Everywhere you see `AgentStack` referenced below, that's just the name of the repo + codebase you're working with — substitute the buyer's brand wherever it appears.
 
 ## Project Overview
 A production-ready, all-in-one CRM styled after GoHighLevel and HubSpot, scoped for small teams. Buyers self-host, brand it as their own, and sell to their clients however they like.
@@ -17,7 +17,7 @@ The codebase ships with every core surface already functional: contacts, pipelin
 
 ## Auth & Tenancy Model
 
-LeadStack is a **GHL-style multi-tenant CRM**: an agency operator owns one or more **sub-accounts**, each an isolated workspace with its own contacts, deals, pipeline, etc. Sub-accounts are URL-scoped at `/sa/[subAccountId]/...`.
+AgentStack is a **GHL-style multi-tenant CRM**: an agency operator owns one or more **sub-accounts**, each an isolated workspace with its own contacts, deals, pipeline, etc. Sub-accounts are URL-scoped at `/sa/[subAccountId]/...`.
 
 ### Hierarchy
 
@@ -103,7 +103,7 @@ Adding a new gate: add the field to `SubAccountDoc`, write the default at the tw
 - **Auth:** Firebase Authentication (email/password) + `next-firebase-auth-edge` session cookies + custom claims (`role`, `status`)
 - **Database:** Cloud Firestore (owner-scoped security rules)
 - **Payments:** Stripe Checkout + Billing Portal + Webhooks
-- **Email:** Resend (shared-sender, LeadStack owns the account; cost baked into plan price)
+- **Email:** Resend (shared-sender, AgentStack owns the account; cost baked into plan price)
 - **SMS:** Twilio (same shared-sender model)
 - **AI replies:** OpenRouter as the model gateway (one key, any model). Default to Claude Haiku 4.5 for cost/quality; per-channel override possible.
 - **Website KB scrape:** Firecrawl (`/v1/scrape`, agency-level key). Powers the optional homepage knowledge base on the AI Agent profile.
@@ -130,7 +130,7 @@ Adding a new gate: add the field to `SubAccountDoc`, write the default at the tw
 - **Reports** — date-range KPIs, pipeline funnel, won-revenue area chart, leads-by-source donut, inline SVG (no chart library)
 - **Cmd+K search** — global palette across contacts, deals, tasks, events, forms
 - **Leads map** — Mapbox-powered world map on the sub-account dashboard with clustered pins. Location captured server-side at form submit (ipapi.co + phone country-code fallback). Renders graceful empty / "not configured" states when no token or no located contacts.
-- **Email + SMS** — from a contact profile, shared LeadStack sender with user's email on `Reply-To` so replies bypass the app. Each sub-account can OPT IN to a **dedicated email sending domain** (Resend's Domains API) so outbound sends from that tenant come from their own brand (e.g. `hello@mail.acmeplumbing.com`); gated by the agency owner per sub-account, falls back cleanly to the shared sender otherwise.
+- **Email + SMS** — from a contact profile, shared AgentStack sender with user's email on `Reply-To` so replies bypass the app. Each sub-account can OPT IN to a **dedicated email sending domain** (Resend's Domains API) so outbound sends from that tenant come from their own brand (e.g. `hello@mail.acmeplumbing.com`); gated by the agency owner per sub-account, falls back cleanly to the shared sender otherwise.
 - **Booking pages** — public `/b/[saId]/[slug]` slot picker per sub-account. Recipient picks an available slot, the server transactionally re-verifies availability + reconciles a contact, then mints an Event + sends ICS-attached confirmation emails. Reschedule + cancel + reminder + paid-or-expire lifecycle steps are all queued through QStash. Lifecycle helpers fire the same activity-log + automation triggers other features use.
 - **Public API (v1)** — REST endpoints under `/api/v1/*` for contacts / deals / tasks / events / form submissions plus signed outbound webhooks. Per-sub-account API keys (`lsk_live_*` / `lsk_test_*`), idempotency-key support, response envelope versioning, per-key rate limits, and an `apiAccessEnabledByAgency` agency gate that disables a tenant's keys without rotating them. Operator surfaces include API Keys, Webhooks, and API Recipes sections in sub-account settings.
 - **AI Agents** — one persona (system prompt + business hours + escalation keywords + optional Firecrawl-scraped website KB) shared across every active channel. Five live channels: **Web Chat** (embeddable iframe widget with inline lead-capture form), **SMS** (auto-replies to inbound SMS on the sub-account's dedicated Twilio number), **WhatsApp** (auto-replies on the Twilio WhatsApp sender — beta; agency-gated), **Voice** (Vapi-powered AI answering inbound calls on the same Twilio number — qualifies the lead + books a callback), and **Outbound Voice** (the AI proactively dials contacts — single click-to-call from a contact, or a bulk campaign over a filtered audience — behind a native dialing-compliance gate; agency-gated). Captures across all channels trigger an automatic Task + escalation email. Operator consoles: Web Chat → Sessions (transcripts), Voice → Calls (call summaries + transcripts), Outbound Voice → Campaigns (per-recipient status). Email + Google Business Profile are scaffolded as hidden "coming soon" placeholders.
@@ -145,7 +145,7 @@ Adding a new gate: add the field to `SubAccountDoc`, write the default at the tw
 - **Sub-account Branding** — each sub-account can upload a `logoUrl` (stored on `SubAccountDoc.logoUrl`, updated via `PATCH /api/sub-accounts/[id]/branding`). Shown in the sidebar header and outbound email templates.
 - **Pipeline Stage Customization** — `SubAccountDoc.pipelineStages` overrides the default 6-stage array (`New → Contacted → Qualified → Proposal → Won / Lost`) with a custom ordered stage list. The pipeline board reads `pipelineStages` first, falls back to defaults. Managed from dashboard settings.
 - **Calendar ICS Feed** — per-sub-account ICS export at `/api/sub-accounts/[id]/calendar.ics` (auth-protected). Consumers can subscribe this URL in Apple Calendar / Google Calendar / Outlook for live sync. Returns all Events for the sub-account serialized as RFC 5545 VCALENDAR.
-- **Affiliate Program** — LeadStack-variant only (`LANDING_VARIANT === "leadstack"`). 40% recurring commission, 30-day cookie, last-click attribution. `affiliates/{code}` + `clicks/{clickId}` + `referrals/{referralId}` top-level collections. Affiliate dashboard at `/affiliate` (magic-link auth). See "Affiliate Program".
+- **Affiliate Program** — AgentStack-variant only (`LANDING_VARIANT === "agentstack"`). 40% recurring commission, 30-day cookie, last-click attribution. `affiliates/{code}` + `clicks/{clickId}` + `referrals/{referralId}` top-level collections. Affiliate dashboard at `/affiliate` (magic-link auth). See "Affiliate Program".
 - **Billing** — Stripe checkout + customer portal + webhooks, Free / Pro / Scale plans. Optional Founders cohort pricing via `STRIPE_FOUNDERS_PRICE_ID`.
 - **Marketing attribution** — every public form submission captures `utm_source`, `utm_medium`, `utm_campaign`, `utm_content`, `utm_term`, `fbclid`, `gclid`, document referrer, and landing-page URL from the visitor's browser, then stores them on the contact's `attribution` field. `source` falls back to `utm_source` when present. Fires Meta Pixel `Lead` event client-side on successful submit.
 - **Settings** — profile edit, theme, subscription, CSV export, sign-out
@@ -319,7 +319,7 @@ src/
     auth/                require-admin, require-tenancy guards
     health/              Liveness checks (incl. OpenRouter + Firecrawl checks under the ai-agents category)
     reviews/             Google review request helpers (build review URL from placeId, send via Resend/Twilio)
-    affiliate/           account.ts, admin-data.ts, buyers-data.ts, clicks.ts, codes.ts, dashboard-data.ts, magic-link.ts, ref-cookie.ts, referrals.ts, session.ts — LeadStack-variant only
+    affiliate/           account.ts, admin-data.ts, buyers-data.ts, clicks.ts, codes.ts, dashboard-data.ts, magic-link.ts, ref-cookie.ts, referrals.ts, session.ts — AgentStack-variant only
     paypal/              payment-link.ts — buildPaypalInvoiceUrl() pure URL builder (no API call)
     server/              Service layer: conversations-service.ts, community-service.ts, contacts-service.ts, community-classroom-service.ts, community-dm-service.ts, community-feed-service.ts, community-leaderboard-service.ts, community-purchase-service.ts, deals-service.ts, events-service.ts
     qstash/              register-schedules.ts — auto-registers named QStash schedules on cold start (production only); idempotent via 24h Firestore marker at `system/scheduleRegistration`
@@ -398,7 +398,7 @@ firebase.json            Deploys firestore.rules only
 | `communityGroups/{groupId}/courses/{courseId}/sections/{sectionId}` | community members read; admins write | Course section. `title`, `order`. |
 | `communityGroups/{groupId}/courses/{courseId}/sections/{sectionId}/lessons/{lessonId}` | community members read; admins write | Lesson. `title`, `type` (video/text), `videoUrl`, `body` (Tiptap JSON), `duration`, `order`, `published`. |
 | `communityMembers/{memberId}` | self-read; sub-account admin-read; server-only write | Magic-link member identity (separate from Firebase Auth). `email`, `name`, `avatarUrl`, `xp`, `streakDays`, `lastActiveAt`. One member can belong to multiple groups. |
-| `affiliates/{code}` | server-only | Affiliate account. `code` (short, public referral code), `uid` (Firebase Auth uid of the affiliate), `commissionPercent` (40), `paypalEmail`, `createdAt`. LeadStack-variant only. |
+| `affiliates/{code}` | server-only | Affiliate account. `code` (short, public referral code), `uid` (Firebase Auth uid of the affiliate), `commissionPercent` (40), `paypalEmail`, `createdAt`. AgentStack-variant only. |
 | `clicks/{clickId}` | server-only | Affiliate link click. `code`, `visitorIp`, `userAgent`, `referrer`, `landingPage`, `clickedAt`. Used for attribution analytics. |
 | `referrals/{referralId}` | server-only | Affiliate conversion. `code`, `sessionId`, `planId`, `commissionCents`, `status` (pending/approved/paid), `convertedAt`. |
 | `system/scheduleRegistration` | server-only | 24h marker doc written by `ensureSchedulesRegistered()`. Prevents repeated QStash schedule creation calls on every cold start. `registeredAt`, `appUrl`. If `appUrl` changes (new deployment domain), the marker is ignored and schedules re-register against the new URL. |
@@ -410,7 +410,7 @@ firebase.json            Deploys firestore.rules only
 - **Comms routes** — `/api/comms/*` require auth; `requireUid()` + `requireContactOwner()` helpers in `lib/comms/route-auth.ts` enforce ownership before any send.
 - **Public form submission** — `/api/forms/[id]/submit` uses admin SDK to bypass client-side Firestore rules; validates required fields, creates contact, optionally creates deal, writes `form_submitted` activity.
 - **Activity timeline** — merges free-text notes + typed activities, sorted by `createdAt` desc. Icon + label mapped in `activity-timeline.tsx::activityVisuals()`.
-- **Shared-sender comms** — user clicks Send email on a contact; Resend sends with `From: EMAIL_FROM` (verified LeadStack domain), `Reply-To: <user's email>`. Replies bypass LeadStack and land in the user's inbox.
+- **Shared-sender comms** — user clicks Send email on a contact; Resend sends with `From: EMAIL_FROM` (verified AgentStack domain), `Reply-To: <user's email>`. Replies bypass AgentStack and land in the user's inbox.
 - **Dedicated SMS per sub-account (opt-in)** — each sub-account can flip `twilioConfig.enabled = true` (Settings → SMS) and paste its own Twilio Account SID + Auth Token + From Number. When enabled: outbound `/api/comms/sms/send` uses that sub-account's creds; the inbound webhook routes by `To` number to that sub-account, validates against the sub-account's auth token, and writes both opt-out flips AND a chat-thread row to `contacts/{id}/messages`. The contact profile renders a Messages tab with a real-time SMS thread + composer. When disabled: existing env-var Twilio shared-sender behavior is fully preserved (no message storage, no chat thread). On save, the API auto-configures the inbound webhook URL on the operator's Twilio number via Twilio's REST API; if that fails (permissions, etc.) the settings UI surfaces the URL with a copy button for manual configuration. The inbound webhook ALSO drives the SMS AI agent when configured — see the AI Agents section below.
 - **AI Agents (one persona, every channel)** — full architecture in the "AI Agents (Web Chat + SMS) v1" section below. TL;DR: a shared profile doc holds the persona, business hours, escalation keywords, and optional Firecrawl-scraped website KB. Per-channel docs hold the enabled toggle, model override, and channel-specific overrides. Web Chat ships an iframe widget + vanilla JS loader; SMS hooks into the existing inbound webhook. Captures auto-create a Task + send an escalation email.
 - **Usage counters** — every `/send` bumps `usage/{uid}.email` / `.sms` + a `YYYY-MM` sub-bucket. No enforcement in MVP; hook for future plan-tier quotas.
@@ -424,7 +424,7 @@ firebase.json            Deploys firestore.rules only
 
 ## Automations (Workflow Recipes v1)
 
-LeadStack ships one named recipe — **Speed-to-Lead** (internal `recipeType: "instant_response"`) — that fires on form submission and sends up to three steps: SMS to lead, email to lead, and a static-recipient owner notification. v2 will add Lead Nurture, Pipeline Stage Trigger, Stale Lead Revive, and Booking Lifecycle (the last via cal.com / Calendly webhook integration).
+AgentStack ships one named recipe — **Speed-to-Lead** (internal `recipeType: "instant_response"`) — that fires on form submission and sends up to three steps: SMS to lead, email to lead, and a static-recipient owner notification. v2 will add Lead Nurture, Pipeline Stage Trigger, Stale Lead Revive, and Booking Lifecycle (the last via cal.com / Calendly webhook integration).
 
 - **Trigger** — [src/lib/automations/triggers.ts](src/lib/automations/triggers.ts) `fireTriggers()` is called from [src/app/api/forms/[id]/submit/route.ts](src/app/api/forms/[id]/submit/route.ts) after the contact is created. It queries enabled `automations` matching the trigger type + form id, creates an `automation_executions` row per match, and schedules step 0 via QStash.
 - **Scheduling** — [src/lib/automations/qstash.ts](src/lib/automations/qstash.ts) wraps `@upstash/qstash`. Each step is a separate QStash message that POSTs `/api/automations/step` after the configured delay. Inbound callbacks verify the `Upstash-Signature` header before running anything; without verification keys configured, the route returns 503.
@@ -544,7 +544,7 @@ The widget is a 4KB hand-written vanilla JS loader at [public/widget.js](public/
 ```
 
 What the loader does, in order:
-1. Reads `data-sa` from its own `<script>` tag and derives the LeadStack origin from its own `src`.
+1. Reads `data-sa` from its own `<script>` tag and derives the AgentStack origin from its own `src`.
 2. `GET /api/web-chat/config?sa=…` to fetch theme + welcome + enabled state. **This** call's Origin header IS the client's site (called from parent-page context), so this is the request the per-sub-account `allowedDomains` allowlist gates. When the origin isn't allowed, the endpoint returns 200 + `{enabled: false}` (no console error) and the loader silently no-ops.
 3. Injects a fixed-position floating bubble button using inline styles (no CSS dependencies).
 4. On click → lazy-creates an `<iframe src="/embed/chat/[saId]?p=<parentURL>">` and fades it in. The iframe stays in the DOM after close, just hidden via `display:none`, so reopens are instant and preserve state.
@@ -555,13 +555,13 @@ The iframe target is a real Next.js page at [src/app/(embed)/embed/chat/[subAcco
 
 **Cross-origin headers** are configured in [next.config.ts](next.config.ts): `Content-Security-Policy: frame-ancestors *;` on `/embed/*` so any third-party site can iframe it, and `Access-Control-Allow-Origin: *` + a 5-minute cache on `/widget.js`. Both the `/embed/*` route group and `/api/web-chat` are added to `PUBLIC_PATHS` in middleware.
 
-**Crisp-skip:** the root layout's analytics scripts (Crisp, Pixel, GTM) live in [src/components/analytics-scripts.tsx](src/components/analytics-scripts.tsx) which checks `usePathname()` and returns null on `/embed/*`. Without this skip, Crisp's own chat widget would render INSIDE the LeadStack chat iframe — visually broken.
+**Crisp-skip:** the root layout's analytics scripts (Crisp, Pixel, GTM) live in [src/components/analytics-scripts.tsx](src/components/analytics-scripts.tsx) which checks `usePathname()` and returns null on `/embed/*`. Without this skip, Crisp's own chat widget would render INSIDE the AgentStack chat iframe — visually broken.
 
 ### Web Chat API + security model
 
 Three public endpoints under `/api/web-chat`:
 - **`GET /api/web-chat/config?sa=…`** — origin-gated (this is the access control choke-point). Returns theme + welcome.
-- **`POST /api/web-chat/message`** — visitor → bot turn. **No origin check** — the iframe is always on LeadStack's domain, so the Origin header would always be our own host, making the check useless. Instead: channel-enabled check, valid sessionId (16-64 char URL-safe regex), 1-2000 char message length, per-IP cap (60/hour) + per-session cap (30 messages) via in-memory LRU in [src/lib/comms/web-chat/rate-limit.ts](src/lib/comms/web-chat/rate-limit.ts), plus the per-channel `totalTokensUsed` counter that caps disaster scenarios. A motivated attacker who scrapes a `data-sa` could call this endpoint directly, but the rate limits + token budget make it uneconomical. If abuse is ever observed, the next step is HMAC-signed tokens issued by `/config` and required by `/message`.
+- **`POST /api/web-chat/message`** — visitor → bot turn. **No origin check** — the iframe is always on AgentStack's domain, so the Origin header would always be our own host, making the check useless. Instead: channel-enabled check, valid sessionId (16-64 char URL-safe regex), 1-2000 char message length, per-IP cap (60/hour) + per-session cap (30 messages) via in-memory LRU in [src/lib/comms/web-chat/rate-limit.ts](src/lib/comms/web-chat/rate-limit.ts), plus the per-channel `totalTokensUsed` counter that caps disaster scenarios. A motivated attacker who scrapes a `data-sa` could call this endpoint directly, but the rate limits + token budget make it uneconomical. If abuse is ever observed, the next step is HMAC-signed tokens issued by `/config` and required by `/message`.
 - **`POST /api/web-chat/capture`** — the inline-form submission endpoint (see Lead capture below).
 
 All three respond with CORS headers (`Access-Control-Allow-Origin: *`) so the iframe's fetches never throw a console error.
@@ -602,7 +602,7 @@ The voice channel adds AI-answered inbound phone calls on the same dedicated Twi
 **Two `numberMode` options.** The Voice settings page exposes a radio that chooses between:
 
 - **`twilio-byoc` (default, production)** — Voice attaches to the sub-account's existing dedicated Twilio number via Vapi BYOC. One number serves SMS + Voice with one Twilio bill. The provisioning side-effect (1) creates/updates a Vapi **assistant** wired to our LLM endpoint, and (2) creates a Vapi **phone-number** resource bound to the operator's Twilio creds — Vapi auto-updates Twilio's "A CALL COMES IN" voice URL as part of the BYOC registration, no separate Twilio webhook step. SMS continues to flow through the existing `/api/webhooks/twilio/inbound` route unchanged. Disable tears down both the assistant + phone-number resources (we own both) so idle configs don't accrue Vapi spend.
-- **`vapi-managed` (testing)** — Voice attaches to a phone-number resource the operator already provisioned in their Vapi dashboard. Useful for skipping AU regulatory bundles when testing, or for operators who'd rather pay Vapi directly than chain through Twilio. The operator pastes the Vapi phone-number ID into the settings UI; the provisioning side-effect just PATCHes that resource to bind our LeadStack-managed assistant (replacing any previously-assigned assistant). Disable deletes the assistant but only **unbinds** the phone-number (sets `assistantId: null`) since the operator owns it — and preserves the pasted id on the channel doc so re-enable doesn't require re-pasting.
+- **`vapi-managed` (testing)** — Voice attaches to a phone-number resource the operator already provisioned in their Vapi dashboard. Useful for skipping AU regulatory bundles when testing, or for operators who'd rather pay Vapi directly than chain through Twilio. The operator pastes the Vapi phone-number ID into the settings UI; the provisioning side-effect just PATCHes that resource to bind our AgentStack-managed assistant (replacing any previously-assigned assistant). Disable deletes the assistant but only **unbinds** the phone-number (sets `assistantId: null`) since the operator owns it — and preserves the pasted id on the channel doc so re-enable doesn't require re-pasting.
 
 Both modes share the rest of the pipeline identically: same persona/KB resolution, same LLM webhook, same end-of-call handler, same `voiceCalls/{callId}` summary docs. Only the phone-number resource ownership differs.
 
@@ -700,7 +700,7 @@ The detail page ([src/app/(dashboard)/sa/[subAccountId]/quotes/[id]/page.tsx](sr
 
 ### Setup contract
 
-No new env vars. Reuses `RESEND_API_KEY` + `EMAIL_FROM` (email send), `AUTOMATIONS_TOKEN_SECRET` (HMAC token signing), Firebase (storage), `NEXT_PUBLIC_APP_URL` (public URL construction). The buyer who clones LeadStack and follows the existing Phase 3 onboarding gets Quotes working out of the box — fits inside the existing Resend setup step. Graceful degradation: if Resend isn't configured, the builder still works locally (create / edit / save drafts), the Send button just returns 503 with a friendly "Configure Resend to send quotes" message.
+No new env vars. Reuses `RESEND_API_KEY` + `EMAIL_FROM` (email send), `AUTOMATIONS_TOKEN_SECRET` (HMAC token signing), Firebase (storage), `NEXT_PUBLIC_APP_URL` (public URL construction). The buyer who clones AgentStack and follows the existing Phase 3 onboarding gets Quotes working out of the box — fits inside the existing Resend setup step. Graceful degradation: if Resend isn't configured, the builder still works locally (create / edit / save drafts), the Send button just returns 503 with a friendly "Configure Resend to send quotes" message.
 
 ## Products + Invoices (v1, extends Quotes)
 
@@ -816,7 +816,7 @@ Pages with `priceCents > 0` mint a `holdUntil` window on the event at book time.
 
 ## Public API v1
 
-A versioned REST surface under `/api/v1/*` for the sub-account-scoped resources (contacts, deals, tasks, events, form submissions) plus signed outbound webhooks. Built so an agency's clients can plug LeadStack into Zapier, Make, n8n, or custom integrations without operator hand-holding.
+A versioned REST surface under `/api/v1/*` for the sub-account-scoped resources (contacts, deals, tasks, events, form submissions) plus signed outbound webhooks. Built so an agency's clients can plug AgentStack into Zapier, Make, n8n, or custom integrations without operator hand-holding.
 
 ### Authentication + keys
 
@@ -874,7 +874,7 @@ Each sub-account can hold **up to `MAX_WEBSITES_PER_SUBACCOUNT` (5)** website do
 - **Rebuild vs Remove**: `DELETE /api/sub-accounts/[id]/website/[siteId]?reset=1` resets the doc to `draft` (preserves config, clears jobId/liveUrl/status) — the Rebuild button. `DELETE /api/sub-accounts/[id]/website/[siteId]` (no flag) permanently removes the doc to free a slot — the Remove button. Either way the previously-published GitHub repo stays live until manually deleted on gitpage's side — v1 doesn't tear down.
 - **Auth model**: one `GITPAGE_API_KEY` per agency; shared across all sub-accounts. Each build's `subAccountId` is sent so gitpage tags the build record. Filter all reads/writes by sub-account on our side — gitpage scopes by agency, not sub-account.
 - **Rate limit**: gitpage caps at 30 builds/hour/agency. v1 doesn't add a client-side cap; gitpage returns 429 with `resetAt` when exceeded.
-- **Heartbeat / subscription gate**: [src/lib/gitpage/heartbeat.ts](src/lib/gitpage/heartbeat.ts) `sendHeartbeat()` POSTs anonymous deployment metadata (instanceId from `system/heartbeat`, owner email, version, sub-account count, builds-last-day, platform) to `POST /api/v1/leadstack/heartbeat`. The response includes `gitpageStatus.agency: boolean` which gets cached at `system/gitpageStatus`. The website-builder UI reads that doc via `onSnapshot` and renders an "activate" banner when `agency === false`. Fired once per cold start via [instrumentation.ts](instrumentation.ts) and once daily via QStash → [/api/cron/gitpage-heartbeat](src/app/api/cron/gitpage-heartbeat/route.ts) (signature-verified). Disable with `GITPAGE_TELEMETRY=off`. To set up the daily schedule: in Upstash QStash dashboard create a schedule pointing at `${NEXT_PUBLIC_APP_URL}/api/cron/gitpage-heartbeat` with cron `0 3 * * *`.
+- **Heartbeat / subscription gate**: [src/lib/gitpage/heartbeat.ts](src/lib/gitpage/heartbeat.ts) `sendHeartbeat()` POSTs anonymous deployment metadata (instanceId from `system/heartbeat`, owner email, version, sub-account count, builds-last-day, platform) to `POST /api/v1/agentstack/heartbeat`. The response includes `gitpageStatus.agency: boolean` which gets cached at `system/gitpageStatus`. The website-builder UI reads that doc via `onSnapshot` and renders an "activate" banner when `agency === false`. Fired once per cold start via [instrumentation.ts](instrumentation.ts) and once daily via QStash → [/api/cron/gitpage-heartbeat](src/app/api/cron/gitpage-heartbeat/route.ts) (signature-verified). Disable with `GITPAGE_TELEMETRY=off`. To set up the daily schedule: in Upstash QStash dashboard create a schedule pointing at `${NEXT_PUBLIC_APP_URL}/api/cron/gitpage-heartbeat` with cron `0 3 * * *`.
 
 ## Commands
 - `pnpm dev` — dev server (Turbopack)
@@ -917,7 +917,7 @@ Every single credential is user-provided. Nothing ships embedded. Store in `.env
 | Var | Source |
 |---|---|
 | `RESEND_API_KEY` | [resend.com](https://resend.com) → API Keys |
-| `EMAIL_FROM` | A sender on a Resend-verified domain, e.g. `"LeadStack <notifications@yourdomain.com>"` |
+| `EMAIL_FROM` | A sender on a Resend-verified domain, e.g. `"AgentStack <notifications@yourdomain.com>"` |
 
 Without these two vars, `/api/comms/email/send` returns **503** and the Email button in the contact profile still renders but the send fails cleanly.
 
@@ -1030,7 +1030,7 @@ Powers the **"Get instant repo access"** button on `/thank-you`. When a buyer en
 |---|---|
 | `GITHUB_TOKEN` | [github.com/settings/tokens?type=beta](https://github.com/settings/tokens?type=beta) → Generate new token (fine-grained). Resource owner: the **org**. Organization permissions: **Members: Read and write**. Repository access can be "All" or specific — team writes don't need repo perms. |
 | `GITHUB_INVITE_ORG` | The org slug, e.g. `Claude-Code-Pro-Camp`. |
-| `GITHUB_INVITE_TEAM` | The team slug buyers should be added to, e.g. `leadstack-agency-members`. |
+| `GITHUB_INVITE_TEAM` | The team slug buyers should be added to, e.g. `agentstack-agency-members`. |
 
 **Security model** worth understanding before you deploy this:
 - `/thank-you` is a public route with no auth. `session_id` alone is in the URL bar / referrer / browser history — could leak.
@@ -1046,18 +1046,18 @@ If the org has SAML/SSO enforced, you'll need to authorise the fine-grained PAT 
 
 ## Onboarding Guide (for Claude Code)
 
-When the buyer asks you to help them set up this project, or if they seem new and haven't run the app yet, follow the procedure below. This is designed for buyers who may have never used a terminal before — they purchased LeadStack and just need it running. Start at **Phase 0** if they don't yet have their own copy of the repo open; otherwise begin at Phase 1.
+When the buyer asks you to help them set up this project, or if they seem new and haven't run the app yet, follow the procedure below. This is designed for buyers who may have never used a terminal before — they purchased AgentStack and just need it running. Start at **Phase 0** if they don't yet have their own copy of the repo open; otherwise begin at Phase 1.
 
 ### Phase 0: Make sure they're in their OWN repo (not the template)
 
-The buyer is meant to work in a **private repository they generated from the LeadStack template** (`Claude-Code-Pro-Camp/leadstack-agency`), owned by their own GitHub account — NOT a direct clone of the template itself. This keeps their `origin` pointed at their account so their changes never flow back to the shared template, and matches the one-time-license model (their copy is standalone, no upstream link).
+The buyer is meant to work in a **private repository they generated from the AgentStack template** (`Claude-Code-Pro-Camp/agentstack-agency`), owned by their own GitHub account — NOT a direct clone of the template itself. This keeps their `origin` pointed at their account so their changes never flow back to the shared template, and matches the one-time-license model (their copy is standalone, no upstream link).
 
-- **Invoked from an empty folder?** (The buyer pasted the "Set me up from the LeadStack template" bootstrap prompt from SETUP.md Phase 1.) Do this first:
+- **Invoked from an empty folder?** (The buyer pasted the "Set me up from the AgentStack template" bootstrap prompt from SETUP.md Phase 1.) Do this first:
   1. Ensure `git` + the GitHub CLI (`gh`) are installed; install whatever's missing (`winget install Git.Git GitHub.cli` on Windows, `brew install git gh` on Mac). Remind them to reopen the terminal so PATH updates.
   2. `gh auth login` — they complete the browser device-code step.
-  3. `gh repo create <their-username>/my-crm --template Claude-Code-Pro-Camp/leadstack-agency --private --clone` — generates their own private copy and clones it. (`--template`, never a fork.)
+  3. `gh repo create <their-username>/my-crm --template Claude-Code-Pro-Camp/agentstack-agency --private --clone` — generates their own private copy and clones it. (`--template`, never a fork.)
   4. Open the new folder, then continue with Phase 1.
-- **Project already open?** Confirm it's their copy, not the template: run `git remote -v` and check `origin` is `github.com/<their-username>/…`, NOT `Claude-Code-Pro-Camp/leadstack-agency`. If it points at the template, they cloned the wrong thing — have them generate their own repo (steps above) and reopen it before configuring anything.
+- **Project already open?** Confirm it's their copy, not the template: run `git remote -v` and check `origin` is `github.com/<their-username>/…`, NOT `Claude-Code-Pro-Camp/agentstack-agency`. If it points at the template, they cloned the wrong thing — have them generate their own repo (steps above) and reopen it before configuring anything.
 
 **Support channel:** the only support path is the **Crisp chat bubble** on the buyer's purchase / thank-you page — there is no support email. If they're blocked on repo access (e.g. no GitHub invite yet), point them to the chat bubble.
 
@@ -1183,7 +1183,7 @@ Copy the `whsec_...` that prints on start. Write to:
 
 Write:
 - `RESEND_API_KEY`
-- `EMAIL_FROM` — must be on a verified domain. Example: `"LeadStack <notifications@yourdomain.com>"`.
+- `EMAIL_FROM` — must be on a verified domain. Example: `"AgentStack <notifications@yourdomain.com>"`.
 
 If the user doesn't own a domain yet, they can still test with Resend's sandbox domain — `EMAIL_FROM="onboarding@resend.dev"` works for test sends but will be flagged as untrusted in production.
 
@@ -1225,8 +1225,8 @@ Schedules registered automatically (declared in [src/lib/qstash/register-schedul
 
 | scheduleId | Cron | Purpose |
 |---|---|---|
-| `leadstack-gitpage-heartbeat` | `0 3 * * *` | Daily telemetry ping + gitpage subscription status cache. |
-| `leadstack-api-cleanup` | `0 4 * * *` | Daily sweep of expired public-API logs, idempotency cache, and webhook event archive. Replaces Firestore native TTL so no console click needed. |
+| `agentstack-gitpage-heartbeat` | `0 3 * * *` | Daily telemetry ping + gitpage subscription status cache. |
+| `agentstack-api-cleanup` | `0 4 * * *` | Daily sweep of expired public-API logs, idempotency cache, and webhook event archive. Replaces Firestore native TTL so no console click needed. |
 
 Auto-registration only fires when `NODE_ENV === "production"` AND `QSTASH_TOKEN` AND `NEXT_PUBLIC_APP_URL` are set. Local dev does nothing. If `NEXT_PUBLIC_APP_URL` changes (e.g. moving from a tunnel to Vercel), the marker is invalidated and the next cold start re-registers against the new URL. You can verify schedules landed by visiting the **Schedules** tab in the Upstash QStash dashboard after your first production deploy.
 
@@ -1252,7 +1252,7 @@ Write to `.env.local`:
 gitpage rate-limits at **30 builds per hour per agency** (shared across all sub-accounts). The build route surfaces 429s as a friendly error to the operator.
 
 #### OpenRouter (AI Agents)
-LeadStack uses OpenRouter as the LLM gateway — one key reaches every model (Claude, GPT, Gemini, etc.). Skip this entire section if the buyer doesn't plan to use the AI Agents feature; the rest of the CRM works without it.
+AgentStack uses OpenRouter as the LLM gateway — one key reaches every model (Claude, GPT, Gemini, etc.). Skip this entire section if the buyer doesn't plan to use the AI Agents feature; the rest of the CRM works without it.
 
 > Go to [openrouter.ai](https://openrouter.ai), sign up, deposit at least $5 of credits (Web Chat + SMS bot replies at the Haiku default cost ~$0.005-0.02 per exchange, so $5 covers ~250-1000 conversations). Then **Keys** → **Create API Key**. Paste here.
 
@@ -1288,13 +1288,13 @@ Write to `.env.local`:
 
 Once both keys + the public URL are set, sub-account operators can go to **AI Agents → Voice** to enable the channel. Two phone number modes:
 - **My dedicated Twilio number (BYOC)** — reuses the sub-account's Twilio creds (configured under Settings → SMS). One number serves SMS + Voice with one Twilio bill. Vapi auto-updates the Twilio voice URL via BYOC registration. Production path.
-- **A number I own in Vapi** — operator pastes the UUID of a phone-number resource they've already provisioned in their Vapi dashboard. Skips AU regulatory bundles; great for testing and for buyers who'd rather pay Vapi directly. We bind a LeadStack-managed assistant to the operator's number (any previously-attached assistant on that number gets replaced).
+- **A number I own in Vapi** — operator pastes the UUID of a phone-number resource they've already provisioned in their Vapi dashboard. Skips AU regulatory bundles; great for testing and for buyers who'd rather pay Vapi directly. We bind a AgentStack-managed assistant to the operator's number (any previously-attached assistant on that number gets replaced).
 
-On save, our provisioning code creates or updates a Vapi assistant named `LeadStack sa:<id>` with `custom-llm` mode pointing at our LLM webhook. Every voice turn flows: caller → Vapi (Deepgram) → POST to our webhook → `resolveAgent()` + `buildSystemPrompt({channelId:"voice"})` + OpenRouter (Claude Haiku 4.5 by default) → SSE stream back → Vapi (ElevenLabs) → caller. On hangup Vapi runs structured-data extraction (name / email / callbackRequested / reason) and POSTs an end-of-call webhook; our handler creates Contact + Task + escalation email + `subAccounts/{id}/voiceCalls/{callId}` summary doc.
+On save, our provisioning code creates or updates a Vapi assistant named `AgentStack sa:<id>` with `custom-llm` mode pointing at our LLM webhook. Every voice turn flows: caller → Vapi (Deepgram) → POST to our webhook → `resolveAgent()` + `buildSystemPrompt({channelId:"voice"})` + OpenRouter (Claude Haiku 4.5 by default) → SSE stream back → Vapi (ElevenLabs) → caller. On hangup Vapi runs structured-data extraction (name / email / callbackRequested / reason) and POSTs an end-of-call webhook; our handler creates Contact + Task + escalation email + `subAccounts/{id}/voiceCalls/{callId}` summary doc.
 
 Cost footprint: ~$0.10–0.15/min on Vapi + per-token OpenRouter charges on our existing key. Total comfortably under $0.20/min for a typical call.
 
-**Outbound Voice uses the same Vapi setup — no extra keys.** Once Voice is provisioned, the agency owner can additionally turn on **Outbound Voice** (the AI proactively dialing contacts) for a sub-account. It's a separate agency gate (`outboundVoiceEnabledByAgency`, flipped from the agency's `/agency/sub-accounts` → Manage dialog) because it spends Vapi minutes proactively and carries dialing-compliance responsibility. After the gate is on, the sub-account operator enables it under **AI Agents → Outbound Voice** (a distinct outbound persona + first message + calling window + caps), then either clicks the call button on a contact or launches a bulk campaign over a filtered audience. Before any call is placed, LeadStack's **native compliance gate** checks the contact's `voiceOptedOut` flag, a per-call consent acknowledgment, the calling window in the contact's local timezone, and per-minute/daily/per-number caps — all enforced in-app with no third-party dependency (a pluggable scrub provider is a no-op until the buyer wires a regional DNC service). **No new env vars** — outbound reuses `VAPI_*`, `QSTASH_*` (campaign fan-out), the dedicated Twilio number, and `NEXT_PUBLIC_APP_URL`. Buyers in regulated markets should confirm their own calling-consent obligations before enabling it.
+**Outbound Voice uses the same Vapi setup — no extra keys.** Once Voice is provisioned, the agency owner can additionally turn on **Outbound Voice** (the AI proactively dialing contacts) for a sub-account. It's a separate agency gate (`outboundVoiceEnabledByAgency`, flipped from the agency's `/agency/sub-accounts` → Manage dialog) because it spends Vapi minutes proactively and carries dialing-compliance responsibility. After the gate is on, the sub-account operator enables it under **AI Agents → Outbound Voice** (a distinct outbound persona + first message + calling window + caps), then either clicks the call button on a contact or launches a bulk campaign over a filtered audience. Before any call is placed, AgentStack's **native compliance gate** checks the contact's `voiceOptedOut` flag, a per-call consent acknowledgment, the calling window in the contact's local timezone, and per-minute/daily/per-number caps — all enforced in-app with no third-party dependency (a pluggable scrub provider is a no-op until the buyer wires a regional DNC service). **No new env vars** — outbound reuses `VAPI_*`, `QSTASH_*` (campaign fan-out), the dedicated Twilio number, and `NEXT_PUBLIC_APP_URL`. Buyers in regulated markets should confirm their own calling-consent obligations before enabling it.
 
 #### Marketing tracking (Meta Pixel + GTM — optional)
 Skip if the buyer doesn't run paid ads or doesn't care about analytics yet. Both vars are `NEXT_PUBLIC_*` so they're inlined at build time — changing them needs a redeploy.
@@ -1309,7 +1309,7 @@ Write to `.env.local`:
 Both are fully optional and ship blank in `.env.example`. Once set, restart `pnpm dev` (env-var change requires a fresh boot in Next.js) — you should see the Pixel + GTM script tags in the page source.
 
 #### Live chat (Crisp — optional but recommended)
-LeadStack is wired to route every "talk to us" path through the Crisp widget instead of `mailto:` (pricing checkout-error fallback, privacy-policy contact line). Without Crisp configured, those buttons silently no-op — there's no `mailto:` fallback.
+AgentStack is wired to route every "talk to us" path through the Crisp widget instead of `mailto:` (pricing checkout-error fallback, privacy-policy contact line). Without Crisp configured, those buttons silently no-op — there's no `mailto:` fallback.
 
 > [app.crisp.chat](https://app.crisp.chat) → create a free account → Settings → Website Settings → Setup Instructions → copy the Website ID (a UUID).
 
@@ -1336,9 +1336,9 @@ cloudflared tunnel --url http://localhost:3000
 Persistent named tunnel (recommended once you're past one-off testing):
 ```bash
 cloudflared login                                # browser auth, one-time
-cloudflared tunnel create leadstack-dev          # creates a tunnel ID
-cloudflared tunnel route dns leadstack-dev leadstack-dev.YOUR-DOMAIN.com
-cloudflared tunnel --name leadstack-dev --url http://localhost:3000
+cloudflared tunnel create agentstack-dev          # creates a tunnel ID
+cloudflared tunnel route dns agentstack-dev agentstack-dev.YOUR-DOMAIN.com
+cloudflared tunnel --name agentstack-dev --url http://localhost:3000
 ```
 Re-run the last command anytime; the hostname stays the same.
 
@@ -1363,7 +1363,7 @@ Then restart `pnpm dev` so the new value is picked up. Now go back to Twilio (Ph
 1. Run `pnpm dev`.
 2. Open http://localhost:3000.
 3. Walk through verification:
-   - **Landing page** renders at `/` — confirm it shows the buyer's brand (`CUSTOM_BRAND.name` in the navbar + hero, their tagline, their pricing tiers). If you still see "LeadStack" anywhere, double-check that `CUSTOM_BRAND` was filled in at `src/config/landing.ts`.
+   - **Landing page** renders at `/` — confirm it shows the buyer's brand (`CUSTOM_BRAND.name` in the navbar + hero, their tagline, their pricing tiers). If you still see "AgentStack" anywhere, double-check that `CUSTOM_BRAND` was filled in at `src/config/landing.ts`.
    - **Theme toggle** switches light/dark.
    - **Signup** at `/signup` creates a user. Check Firebase Console → Authentication that the user appears.
    - **Dashboard** renders at `/dashboard` showing the "Getting Started" empty state.
@@ -1651,8 +1651,8 @@ One-click import from GoHighLevel using a Private Integration Token. The import 
 
 ### What's imported
 
-- **Contacts** — all standard fields (name, email, phone, address, tags, source, assignedUser). GHL custom fields are imported as LeadStack custom fields if a matching `key` exists; otherwise logged as `unmappedFields`.
-- **Deals (Opportunities)** — mapped to the matching pipeline stage. If the stage name doesn't match a LeadStack stage (or the sub-account's `pipelineStages` override), the deal is placed at "New".
+- **Contacts** — all standard fields (name, email, phone, address, tags, source, assignedUser). GHL custom fields are imported as AgentStack custom fields if a matching `key` exists; otherwise logged as `unmappedFields`.
+- **Deals (Opportunities)** — mapped to the matching pipeline stage. If the stage name doesn't match a AgentStack stage (or the sub-account's `pipelineStages` override), the deal is placed at "New".
 - **NOT imported** — conversations/messages, automation history, email templates, files/documents, website funnels. v1 scope is contacts + deals only.
 
 ### Credentials storage
@@ -1661,17 +1661,17 @@ The GHL token is stored on `SubAccountDoc.ghlImportConfig.token` (admin-write). 
 
 ## Affiliate Program
 
-**LeadStack-variant only** — this feature activates when the deployment's `LANDING_VARIANT` environment variable is set to `"leadstack"`. Buyers who white-label LeadStack will not see the affiliate surfaces.
+**AgentStack-variant only** — this feature activates when the deployment's `LANDING_VARIANT` environment variable is set to `"agentstack"`. Buyers who white-label AgentStack will not see the affiliate surfaces.
 
 ### Model
 
 - **40% recurring commission** on every Stripe invoice paid by a referred subscriber, for as long as the subscriber stays active.
-- **30-day cookie** — `lib/affiliate/ref-cookie.ts::setRefCookie()` writes a `leadstack_ref` cookie (30-day expiry) when a visitor arrives via a tracked affiliate link (`?ref=CODE`).
+- **30-day cookie** — `lib/affiliate/ref-cookie.ts::setRefCookie()` writes a `agentstack_ref` cookie (30-day expiry) when a visitor arrives via a tracked affiliate link (`?ref=CODE`).
 - **Last-click attribution** — if the same visitor arrives via two different affiliate links, the later click overwrites the cookie. At checkout, `lib/affiliate/session.ts::readRefFromSession()` reads the cookie and stamps it on the Stripe session metadata. The Stripe webhook (`/api/webhooks/stripe`) records the conversion at `referrals/{referralId}`.
 
 ### Data model
 
-- `affiliates/{code}` — affiliate account. `code` is the short public referral code (7 chars, base62). `uid` is the affiliate's Firebase Auth UID (affiliates log in to LeadStack as regular users). `commissionPercent: 40`. `paypalEmail` for payouts (manual; no automated payout in v1).
+- `affiliates/{code}` — affiliate account. `code` is the short public referral code (7 chars, base62). `uid` is the affiliate's Firebase Auth UID (affiliates log in to AgentStack as regular users). `commissionPercent: 40`. `paypalEmail` for payouts (manual; no automated payout in v1).
 - `clicks/{clickId}` — one doc per tracked link click. Used for analytics (clicks → conversions funnel).
 - `referrals/{referralId}` — one doc per Stripe subscription conversion. `status: "pending" | "approved" | "paid"`. Commission is calculated from `invoice.amount_paid` at webhook time.
 
@@ -1681,7 +1681,7 @@ Affiliates visit `/affiliate` (public-facing, magic-link auth via `lib/affiliate
 
 ### Setup contract
 
-No new env vars beyond what's already required. The affiliate surfaces are gated by `LANDING_VARIANT === "leadstack"` — if that env var is absent or a different value, no affiliate routes, UI, or collections are active. `STRIPE_FOUNDERS_PRICE_ID` is an additional optional env var for the founders cohort pricing flow at checkout (separate from the standard Pro plan price).
+No new env vars beyond what's already required. The affiliate surfaces are gated by `LANDING_VARIANT === "agentstack"` — if that env var is absent or a different value, no affiliate routes, UI, or collections are active. `STRIPE_FOUNDERS_PRICE_ID` is an additional optional env var for the founders cohort pricing flow at checkout (separate from the standard Pro plan price).
 
 ## Additional Troubleshooting
 
@@ -1695,5 +1695,5 @@ No new env vars beyond what's already required. The affiliate surfaces are gated
 - **Conversations inbox shows "No conversations yet" despite SMS threads existing** — the `conversations/{contactId}` index wasn't written because the inbound SMS arrived before the Conversations feature was deployed (old messages didn't trigger `upsertConversationForMessage`). The index only updates on NEW inbound messages. A one-time backfill script can populate historical rows if needed.
 - **Territory-filtered contacts list returns nothing for a collaborator** — their membership doc may not have a `territoryId` assigned, which causes the server to treat them as having no territory (returns empty). Check Settings → Members and assign a territory.
 - **GHL import job hangs at "queued"** — QStash isn't delivering the first step callback. Check `QSTASH_URL` region matches the signing keys, and that `/api/import/ghl/step` is in the `PUBLIC_PATH_PATTERNS` (it must be, since security is the QStash signature).
-- **GHL import succeeds but custom fields are empty** — the GHL custom field keys don't match the LeadStack custom field definitions. The import logs the unmapped fields in `importJobs/{jobId}.unmappedFields`. Create matching custom field definitions first, then re-import.
+- **GHL import succeeds but custom fields are empty** — the GHL custom field keys don't match the AgentStack custom field definitions. The import logs the unmapped fields in `importJobs/{jobId}.unmappedFields`. Create matching custom field definitions first, then re-import.
 - **`STRIPE_FOUNDERS_PRICE_ID` not recognized** — this env var is only read by the founders-cohort checkout flow in `src/lib/stripe/checkout.ts`. If you don't have a founders cohort, leave it unset — the standard `STRIPE_PRO_PRICE_ID` flow is unaffected.

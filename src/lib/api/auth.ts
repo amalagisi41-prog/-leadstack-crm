@@ -6,21 +6,14 @@ import {
   bumpApiKeyLastUsed,
   findApiKeyByPrefix,
 } from "@/lib/firestore/api-keys";
-import {
-  hashApiKey,
-  parseApiKey,
-  safeEqualHash,
-} from "@/lib/api/keys";
+import { hashApiKey, parseApiKey, safeEqualHash } from "@/lib/api/keys";
 import {
   apiError,
   apiOk,
   newRequestId,
   type ResponseMeta,
 } from "@/lib/api/responses";
-import {
-  LATEST_API_VERSION,
-  resolveVersion,
-} from "@/lib/api/versions";
+import { LATEST_API_VERSION, resolveVersion } from "@/lib/api/versions";
 import {
   fingerprintRequest,
   isValidIdempotencyKey,
@@ -85,7 +78,9 @@ export interface WithApiAuthOptions {
   idempotency?: boolean;
 }
 
-export interface ApiHandlerInput<P extends Record<string, string> = Record<string, string>> {
+export interface ApiHandlerInput<
+  P extends Record<string, string> = Record<string, string>,
+> {
   request: Request;
   params: P;
   /** Parsed JSON body, or null when body is empty / not JSON. */
@@ -116,12 +111,12 @@ function readBearerToken(request: Request): string | null {
  *     the request on the Firestore write.
  */
 export async function authenticateApiRequest(
-  request: Request,
+  request: Request
 ): Promise<ApiAuthContext | NextResponse> {
   const requestId = newRequestId();
   // Always set a temporary meta with the latest version — if the header
   // says something invalid we want the rejection response to still echo a
-  // sane LeadStack-Version header.
+  // sane AgentStack-Version header.
   const tentativeMeta: ResponseMeta = {
     requestId,
     apiVersion: LATEST_API_VERSION,
@@ -133,7 +128,7 @@ export async function authenticateApiRequest(
       tentativeMeta,
       "authentication_error",
       "missing_api_key",
-      "No API key provided. Pass it via the Authorization header as 'Bearer <key>'.",
+      "No API key provided. Pass it via the Authorization header as 'Bearer <key>'."
     );
   }
 
@@ -143,7 +138,7 @@ export async function authenticateApiRequest(
       tentativeMeta,
       "authentication_error",
       "malformed_api_key",
-      "The API key is malformed. Keys must look like 'lsk_live_<8>_<32>' or 'lsk_test_<8>_<32>'.",
+      "The API key is malformed. Keys must look like 'lsk_live_<8>_<32>' or 'lsk_test_<8>_<32>'."
     );
   }
 
@@ -156,7 +151,7 @@ export async function authenticateApiRequest(
       tentativeMeta,
       "authentication_error",
       "invalid_api_key",
-      "Invalid API key provided.",
+      "Invalid API key provided."
     );
   }
 
@@ -169,7 +164,7 @@ export async function authenticateApiRequest(
       tentativeMeta,
       "authentication_error",
       "invalid_api_key",
-      "Invalid API key provided.",
+      "Invalid API key provided."
     );
   }
 
@@ -178,7 +173,7 @@ export async function authenticateApiRequest(
       tentativeMeta,
       "authentication_error",
       "revoked_api_key",
-      "This API key has been revoked. Mint a new one from Settings → API keys.",
+      "This API key has been revoked. Mint a new one from Settings → API keys."
     );
   }
 
@@ -195,7 +190,7 @@ export async function authenticateApiRequest(
       tentativeMeta,
       "authentication_error",
       "invalid_api_key",
-      "Invalid API key provided.",
+      "Invalid API key provided."
     );
   }
   const subData = subSnap.data()!;
@@ -204,12 +199,12 @@ export async function authenticateApiRequest(
       tentativeMeta,
       "permission_error",
       "api_access_disabled",
-      "API access has been disabled for this sub-account by your agency administrator. Contact them to re-enable.",
+      "API access has been disabled for this sub-account by your agency administrator. Contact them to re-enable."
     );
   }
 
   // Resolve version. Caller pin (header) > key default > latest.
-  const headerVersion = request.headers.get("leadstack-version");
+  const headerVersion = request.headers.get("agentstack-version");
   const resolved = resolveVersion({
     headerVersion: headerVersion ?? null,
     keyDefaultVersion: candidate.defaultVersion ?? null,
@@ -219,7 +214,7 @@ export async function authenticateApiRequest(
       tentativeMeta,
       "invalid_request",
       "unsupported_version",
-      resolved.error,
+      resolved.error
     );
   }
 
@@ -247,14 +242,14 @@ export async function authenticateApiRequest(
  */
 export function requireApiScope(
   ctx: ApiAuthContext,
-  scope: ApiKeyScope,
+  scope: ApiKeyScope
 ): NextResponse | null {
   if (ctx.scopes.includes(scope)) return null;
   return apiError(
     ctx,
     "permission_error",
     "insufficient_scope",
-    `This key is missing required scope '${scope}'. Mint a new key with the right scope.`,
+    `This key is missing required scope '${scope}'. Mint a new key with the right scope.`
   );
 }
 
@@ -267,7 +262,7 @@ export function requireApiScope(
  * handler so a handler never accidentally re-consumes the stream.
  */
 async function readBody(
-  request: Request,
+  request: Request
 ): Promise<{ rawBody: string; body: unknown }> {
   // GET / HEAD never carry a body in Next's Request shape.
   if (request.method === "GET" || request.method === "HEAD") {
@@ -293,12 +288,14 @@ async function readBody(
  *     return apiOk(ctx, { contact: serializeContactForApi(c) }, { status: 201 });
  *   }, { requireScope: "admin" });
  */
-export function withApiAuth<P extends Record<string, string> = Record<string, string>>(
+export function withApiAuth<
+  P extends Record<string, string> = Record<string, string>,
+>(
   handler: (input: ApiHandlerInput<P>) => Promise<NextResponse>,
-  opts: WithApiAuthOptions = {},
+  opts: WithApiAuthOptions = {}
 ): (
   request: Request,
-  routeCtx: { params: Promise<P> },
+  routeCtx: { params: Promise<P> }
 ) => Promise<NextResponse> {
   const requireScope: ApiKeyScope = opts.requireScope ?? "admin";
 
@@ -327,7 +324,7 @@ export function withApiAuth<P extends Record<string, string> = Record<string, st
     const finalize = async (
       response: NextResponse,
       preReadBody?: unknown,
-      errorCode?: string | null,
+      errorCode?: string | null
     ): Promise<NextResponse> => {
       const bodyJson =
         preReadBody !== undefined
@@ -380,7 +377,7 @@ export function withApiAuth<P extends Record<string, string> = Record<string, st
             "X-RateLimit-Reset": String(rl.retryAfterSec),
             "X-RateLimit-Window": rl.window ?? "",
           },
-        },
+        }
       );
       return finalize(rlResp, undefined, "rate_limited");
     }
@@ -400,10 +397,10 @@ export function withApiAuth<P extends Record<string, string> = Record<string, st
             ctx,
             "invalid_request",
             "invalid_idempotency_key",
-            "Idempotency-Key must be 1-255 characters of [A-Za-z0-9_-:.].",
+            "Idempotency-Key must be 1-255 characters of [A-Za-z0-9_-:.]."
           ),
           undefined,
-          "invalid_idempotency_key",
+          "invalid_idempotency_key"
         );
       }
       fingerprint = fingerprintRequest(request.method, url.pathname, rawBody);
@@ -411,7 +408,7 @@ export function withApiAuth<P extends Record<string, string> = Record<string, st
         ctx.subAccountId,
         ctx.mode,
         ctx.keyId,
-        idempotencyKey!,
+        idempotencyKey!
       );
       if (cached) {
         if (cached.requestFingerprint !== fingerprint) {
@@ -420,15 +417,15 @@ export function withApiAuth<P extends Record<string, string> = Record<string, st
               ctx,
               "idempotency_error",
               "idempotency_collision",
-              "This Idempotency-Key was already used with a different request body. Use a new key for a new request.",
+              "This Idempotency-Key was already used with a different request body. Use a new key for a new request."
             ),
             undefined,
-            "idempotency_collision",
+            "idempotency_collision"
           );
         }
         return finalize(
           apiOk(ctx, cached.bodyJson, { status: cached.status }),
-          cached.bodyJson,
+          cached.bodyJson
         );
       }
     }
@@ -443,10 +440,10 @@ export function withApiAuth<P extends Record<string, string> = Record<string, st
           ctx,
           "internal_error",
           "internal_error",
-          "Something went wrong on our end. Quote this request_id in support.",
+          "Something went wrong on our end. Quote this request_id in support."
         ),
         undefined,
-        "internal_error",
+        "internal_error"
       );
     }
 
@@ -471,7 +468,7 @@ export function withApiAuth<P extends Record<string, string> = Record<string, st
             status: response.status,
             bodyJson: responseBodyJson,
             requestFingerprint: fingerprint,
-          },
+          }
         );
       } catch (err) {
         // Cache write failures must not break the response. Log + return

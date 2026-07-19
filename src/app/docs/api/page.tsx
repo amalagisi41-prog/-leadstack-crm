@@ -19,13 +19,13 @@ export default function ApiDocsPage() {
   return (
     <div className="mx-auto max-w-3xl px-6 py-10">
       <header className="mb-10">
-        <p className="text-xs uppercase tracking-wider text-muted-foreground">
+        <p className="text-muted-foreground text-xs tracking-wider uppercase">
           API Reference · v2026-06-15
         </p>
         <h1 className="mt-1 text-3xl font-bold tracking-tight">
           AgentStack public API
         </h1>
-        <p className="mt-3 text-sm text-muted-foreground">
+        <p className="text-muted-foreground mt-3 text-sm">
           REST + outbound webhooks for the AgentStack CRM. Sub-account-scoped
           Bearer auth, idempotent writes, signed webhooks, request log
           observability.
@@ -48,15 +48,15 @@ export default function ApiDocsPage() {
   -d '{"name":"Acme Corp","email":"hello@acme.com"}'`}</Pre>
         <p className="mt-3">
           3. Listen for events. Add a webhook in{" "}
-          <Code>Settings → Webhooks</Code>, copy the signing secret, verify
-          each delivery with HMAC-SHA256.
+          <Code>Settings → Webhooks</Code>, copy the signing secret, verify each
+          delivery with HMAC-SHA256.
         </p>
       </Section>
 
       <Section id="auth" title="Authentication">
         <p>
-          Bearer-token auth on every request. Keys are scoped to one
-          sub-account and one mode (live or test).
+          Bearer-token auth on every request. Keys are scoped to one sub-account
+          and one mode (live or test).
         </p>
         <H3>Key format</H3>
         <Pre>{`lsk_<mode>_<8-char-prefix>_<32-char-secret>
@@ -64,7 +64,8 @@ e.g. lsk_live_AB12CD34_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`}</Pre>
         <H3>Scopes</H3>
         <ul className="ml-6 list-disc space-y-1 text-sm">
           <li>
-            <Code>admin</Code> — full CRUD across every resource. Server-to-server only.
+            <Code>admin</Code> — full CRUD across every resource.
+            Server-to-server only.
           </li>
           <li>
             <Code>forms-ingest</Code> — write-only on{" "}
@@ -74,20 +75,18 @@ e.g. lsk_live_AB12CD34_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`}</Pre>
         </ul>
         <H3>Live vs test mode</H3>
         <p>
-          Live and test data are walled off entirely. A test-mode key
-          cannot read or modify live data, and vice versa. Test-mode form
-          submissions skip the Speed-to-Lead automation (no real emails or
-          SMS fire).
+          Live and test data are walled off entirely. A test-mode key cannot
+          read or modify live data, and vice versa. Test-mode form submissions
+          skip the Speed-to-Lead automation (no real emails or SMS fire).
         </p>
       </Section>
 
       <Section id="versioning" title="Versioning">
         <p>
           Versions are date-coded. Pin a request with{" "}
-          <Code>LeadStack-Version: 2026-06-15</Code>. If omitted, the
-          request resolves to the version stamped on your key at mint time
-          — so existing integrations don&apos;t break when we release a new
-          version.
+          <Code>AgentStack-Version: 2026-06-15</Code>. If omitted, the request
+          resolves to the version stamped on your key at mint time — so existing
+          integrations don&apos;t break when we release a new version.
         </p>
         <p className="mt-3">
           Current version: <Code>2026-06-15</Code>.
@@ -109,13 +108,16 @@ e.g. lsk_live_AB12CD34_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`}</Pre>
 }`}</Pre>
         <p className="mt-3">
           The <Code>request_id</Code> matches the <Code>X-Request-Id</Code>{" "}
-          response header. Quote it in support tickets — it&apos;s the index
-          we look up in the request log.
+          response header. Quote it in support tickets — it&apos;s the index we
+          look up in the request log.
         </p>
       </Section>
 
       <Section id="rate-limits" title="Rate limits">
-        <p>Per-key sliding windows, mode-namespaced (live + test separate budgets):</p>
+        <p>
+          Per-key sliding windows, mode-namespaced (live + test separate
+          budgets):
+        </p>
         <ul className="ml-6 list-disc space-y-1 text-sm">
           <li>
             <Code>admin</Code> — 60 req/min, 1,000 req/hour
@@ -126,22 +128,22 @@ e.g. lsk_live_AB12CD34_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`}</Pre>
         </ul>
         <p className="mt-3">
           Every response includes <Code>X-RateLimit-Limit</Code>,{" "}
-          <Code>X-RateLimit-Remaining</Code>, <Code>X-RateLimit-Reset</Code>.
-          A <Code>429</Code> response also sends <Code>Retry-After</Code>.
+          <Code>X-RateLimit-Remaining</Code>, <Code>X-RateLimit-Reset</Code>. A{" "}
+          <Code>429</Code> response also sends <Code>Retry-After</Code>.
         </p>
       </Section>
 
       <Section id="idempotency" title="Idempotency">
         <p>
           Send <Code>Idempotency-Key: &lt;your-key&gt;</Code> on POST / PATCH /
-          DELETE. We cache the response for 24 hours; a retry with the same
-          key returns the original response without re-executing the
-          handler. A retry with the same key but a DIFFERENT body returns{" "}
+          DELETE. We cache the response for 24 hours; a retry with the same key
+          returns the original response without re-executing the handler. A
+          retry with the same key but a DIFFERENT body returns{" "}
           <Code>409 idempotency_collision</Code>.
         </p>
         <p className="mt-3">
-          Keys are 1–255 characters of <Code>[A-Za-z0-9_-:.]</Code>. UUIDs
-          are a good default.
+          Keys are 1–255 characters of <Code>[A-Za-z0-9_-:.]</Code>. UUIDs are a
+          good default.
         </p>
       </Section>
 
@@ -175,8 +177,8 @@ e.g. lsk_live_AB12CD34_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`}</Pre>
 }`}</Pre>
         <H3>List</H3>
         <p>
-          Cursor pagination via <Code>starting_after</Code>. Default limit
-          20, max 100.
+          Cursor pagination via <Code>starting_after</Code>. Default limit 20,
+          max 100.
         </p>
         <Pre>{`GET /v1/contacts?limit=50&starting_after=contact_xxx`}</Pre>
       </Section>
@@ -190,8 +192,8 @@ e.g. lsk_live_AB12CD34_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`}</Pre>
         <p>
           Stages: <Code>new</Code>, <Code>contacted</Code>,{" "}
           <Code>qualified</Code>, <Code>proposal</Code>, <Code>won</Code>,{" "}
-          <Code>lost</Code>. Priorities: <Code>high</Code>,{" "}
-          <Code>medium</Code>, <Code>low</Code>. Filter list by{" "}
+          <Code>lost</Code>. Priorities: <Code>high</Code>, <Code>medium</Code>,{" "}
+          <Code>low</Code>. Filter list by{" "}
           <Code>?stage=...&amp;contact_id=...</Code>.
         </p>
       </Section>
@@ -205,8 +207,8 @@ e.g. lsk_live_AB12CD34_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`}</Pre>
         <p>
           Filter list by <Code>?completed=true|false</Code> and{" "}
           <Code>?contact_id=...</Code>. Setting <Code>completed: true</Code>{" "}
-          stamps <Code>completed_at</Code> and emits{" "}
-          <Code>task.completed</Code>.
+          stamps <Code>completed_at</Code> and emits <Code>task.completed</Code>
+          .
         </p>
       </Section>
 
@@ -217,8 +219,8 @@ e.g. lsk_live_AB12CD34_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`}</Pre>
         <Endpoint method="PATCH" path="/v1/events/:id" />
         <Endpoint method="DELETE" path="/v1/events/:id" />
         <p>
-          Calendar events. <Code>start_at</Code> + <Code>end_at</Code> are
-          ISO 8601. <Code>status</Code>: <Code>scheduled</Code>,{" "}
+          Calendar events. <Code>start_at</Code> + <Code>end_at</Code> are ISO
+          8601. <Code>status</Code>: <Code>scheduled</Code>,{" "}
           <Code>awaiting_payment</Code>, <Code>completed</Code>,{" "}
           <Code>cancelled</Code>, <Code>no_show</Code>.
         </p>
@@ -228,8 +230,8 @@ e.g. lsk_live_AB12CD34_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`}</Pre>
         <Endpoint method="POST" path="/v1/forms/:form_id/submissions" />
         <p>
           The single endpoint with open CORS. Use a key with{" "}
-          <Code>forms-ingest</Code> scope (write-only) for browser
-          submissions; an <Code>admin</Code> key works too.
+          <Code>forms-ingest</Code> scope (write-only) for browser submissions;
+          an <Code>admin</Code> key works too.
         </p>
         <Pre>{`POST /v1/forms/form_xxx/submissions
 {
@@ -240,11 +242,10 @@ e.g. lsk_live_AB12CD34_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`}</Pre>
   }
 }`}</Pre>
         <p>
-          The submission creates a Contact, writes a{" "}
-          <Code>form_submitted</Code> activity, fires the form&apos;s
-          configured automation, and emits the <Code>form.submitted</Code>{" "}
-          webhook. Test-mode submissions skip the automation fire so no
-          real outbound traffic happens.
+          The submission creates a Contact, writes a <Code>form_submitted</Code>{" "}
+          activity, fires the form&apos;s configured automation, and emits the{" "}
+          <Code>form.submitted</Code> webhook. Test-mode submissions skip the
+          automation fire so no real outbound traffic happens.
         </p>
       </Section>
 
@@ -267,7 +268,7 @@ e.g. lsk_live_AB12CD34_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`}</Pre>
         <p>
           Each request carries{" "}
           <Code>
-            LeadStack-Signature: t=&lt;unix_ts&gt;,v1=&lt;hmac_hex&gt;
+            AgentStack-Signature: t=&lt;unix_ts&gt;,v1=&lt;hmac_hex&gt;
           </Code>
           . Verify it before trusting the payload.
         </p>
@@ -290,13 +291,13 @@ function verify(secret, rawBody, header) {
 }`}</Pre>
         <H3>Retries + circuit breaker</H3>
         <p>
-          Non-2xx responses (or network failures) retry 3 times at 1m, 5m,
-          30m. After 10 consecutive failed deliveries, the subscription
-          auto-pauses. Resume it from <Code>Settings → Webhooks</Code>{" "}
-          after fixing the upstream.
+          Non-2xx responses (or network failures) retry 3 times at 1m, 5m, 30m.
+          After 10 consecutive failed deliveries, the subscription auto-pauses.
+          Resume it from <Code>Settings → Webhooks</Code> after fixing the
+          upstream.
         </p>
         <H3>Event types</H3>
-        <ul className="ml-6 list-disc space-y-0.5 text-sm font-mono">
+        <ul className="ml-6 list-disc space-y-0.5 font-mono text-sm">
           <li>contact.created · contact.updated · contact.deleted</li>
           <li>
             deal.created · deal.updated · deal.stage.changed · deal.won ·
@@ -313,7 +314,7 @@ function verify(secret, rawBody, header) {
         </ul>
       </Section>
 
-      <footer className="mt-16 border-t pt-6 text-xs text-muted-foreground">
+      <footer className="text-muted-foreground mt-16 border-t pt-6 text-xs">
         <p>
           Questions? Reach out from your dashboard. Bug reports + integration
           requests welcome at the support address on the{" "}
@@ -329,8 +330,8 @@ function verify(secret, rawBody, header) {
 
 function Toc() {
   return (
-    <nav className="mb-10 rounded-2xl border bg-card p-4">
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+    <nav className="bg-card mb-10 rounded-2xl border p-4">
+      <p className="text-muted-foreground mb-2 text-xs font-semibold tracking-wider uppercase">
         Contents
       </p>
       <ul className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
@@ -424,7 +425,7 @@ function H3({ children }: { children: React.ReactNode }) {
 
 function Code({ children }: { children: React.ReactNode }) {
   return (
-    <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[0.85em]">
+    <code className="bg-muted rounded px-1.5 py-0.5 font-mono text-[0.85em]">
       {children}
     </code>
   );
@@ -432,7 +433,7 @@ function Code({ children }: { children: React.ReactNode }) {
 
 function Pre({ children }: { children: React.ReactNode }) {
   return (
-    <pre className="mt-3 overflow-x-auto rounded-lg border bg-muted/40 p-3 text-xs leading-relaxed">
+    <pre className="bg-muted/40 mt-3 overflow-x-auto rounded-lg border p-3 text-xs leading-relaxed">
       <code>{children}</code>
     </pre>
   );
@@ -450,9 +451,9 @@ function Endpoint({ method, path }: { method: string; path: string }) {
             ? "bg-rose-500/10 text-rose-700 dark:text-rose-400"
             : "bg-muted text-muted-foreground";
   return (
-    <div className="mt-2 flex items-center gap-2 rounded-md border bg-background p-2 font-mono text-xs">
+    <div className="bg-background mt-2 flex items-center gap-2 rounded-md border p-2 font-mono text-xs">
       <span
-        className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${colour}`}
+        className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold tracking-wider uppercase ${colour}`}
       >
         {method}
       </span>

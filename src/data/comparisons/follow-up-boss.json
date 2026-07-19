@@ -55,49 +55,49 @@
     "rows": [
       {
         "label": "Lead source and website connection",
-        "leadstack": true,
+        "agentstack": true,
         "competitor": true
       },
       {
         "label": "Lead routing and distribution",
-        "leadstack": true,
+        "agentstack": true,
         "competitor": true
       },
       {
         "label": "Built-in AI follow-up in the product story",
-        "leadstack": true,
+        "agentstack": true,
         "competitor": true
       },
       {
         "label": "Publicly published no-contract pricing",
-        "leadstack": true,
+        "agentstack": true,
         "competitor": true
       },
       {
         "label": "Calling required on entry plan for stronger AI outcomes",
-        "leadstack": false,
+        "agentstack": false,
         "competitor": "Grow add-on"
       },
       {
         "label": "Business-method onboarding checklist",
-        "leadstack": true,
+        "agentstack": true,
         "competitor": "Setup + training"
       },
       {
         "label": "IDX positioning on public marketing pages",
-        "leadstack": true,
+        "agentstack": true,
         "competitor": true
       },
       {
         "label": "Transparent monthly plan entry point",
-        "leadstack": "$199/mo",
+        "agentstack": "$199/mo",
         "competitor": "$69/user/mo"
       }
     ]
   },
   "pricing": {
     "heading": "Pricing compared honestly",
-    "leadstack": {
+    "agentstack": {
       "headline": "Published plans starting at $199/month",
       "detail": "AgentStack publishes clear tiered pricing for Solo, Team, and Broker use cases, with AI follow-up already central to the offer and no separate CRM seat math for every new agent.",
       "notes": [
@@ -165,7 +165,7 @@
     "items": [
       {
         "label": "Pricing",
-        "leadstack": "Published on the marketing site: Solo $199/mo, Team $299/mo, Broker $399/mo.",
+        "agentstack": "Published on the marketing site: Solo $199/mo, Team $299/mo, Broker $399/mo.",
         "competitor": "Published by Follow Up Boss: Grow starts at $69/user/month on the monthly plan, Pro is $499/month including 10 users, and Platform is $1000/month including 30 users.",
         "sources": [
           {
@@ -180,7 +180,7 @@
       },
       {
         "label": "Contract terms",
-        "leadstack": "Monthly or annual pricing with self-serve public plans.",
+        "agentstack": "Monthly or annual pricing with self-serve public plans.",
         "competitor": "The Follow Up Boss pricing page explicitly says: \"Simple pricing, free trial, no contracts.\"",
         "sources": [
           {
@@ -195,7 +195,7 @@
       },
       {
         "label": "AI inclusion",
-        "leadstack": "AI follow-up is part of the core marketing promise across web chat, SMS, and the broader operating flow.",
+        "agentstack": "AI follow-up is part of the core marketing promise across web chat, SMS, and the broader operating flow.",
         "competitor": "The Follow Up Boss pricing page says AI features are included, while noting that some AI features rely on data from the paid Calling add-on on Grow.",
         "sources": [
           {
@@ -210,7 +210,7 @@
       },
       {
         "label": "Setup path",
-        "leadstack": "A public method-led launch path is shown on the marketing site: Build, Connect, Capture, Respond.",
+        "agentstack": "A public method-led launch path is shown on the marketing site: Build, Connect, Capture, Respond.",
         "competitor": "Follow Up Boss publicly advertises setup and training, help importing contacts, help connecting lead sources, guided onboarding, and personalized onboarding on higher tiers.",
         "sources": [
           {

@@ -10,8 +10,7 @@ import { CUSTOM_BRAND, LANDING_VARIANT } from "@/config/landing";
  * "AgentStack".
  */
 export default function manifest(): MetadataRoute.Manifest {
-  const name =
-    LANDING_VARIANT === "custom" ? CUSTOM_BRAND.name : "AgentStack";
+  const name = LANDING_VARIANT === "custom" ? CUSTOM_BRAND.name : "AgentStack";
 
   return {
     name: `${name} — Real Estate CRM`,
@@ -22,8 +21,8 @@ export default function manifest(): MetadataRoute.Manifest {
         : "The operating system for modern real estate professionals.",
     start_url: "/dashboard",
     display: "standalone",
-    background_color: "#FCE7F1",
-    theme_color: "#173B7A",
+    background_color: "#1D3D73",
+    theme_color: "#1D3D73",
     icons: [
       { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
       { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },

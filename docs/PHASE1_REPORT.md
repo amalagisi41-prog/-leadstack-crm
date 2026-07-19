@@ -125,7 +125,7 @@ Won. All queries are single- or double-equality Firestore filters — no new
 composite indexes needed, same reasoning already established for the
 existing time-trigger sweep.
 
-Delivery is a new weekly QStash schedule (`leadstack-weekly-digest`, Mondays
+Delivery is a new weekly QStash schedule (`agentstack-weekly-digest`, Mondays
 13:00 UTC) fanning out through `/api/cron/weekly-digest` → `/step`, deduped
 via a new `SubAccountDoc.lastDigestSentAt` field, reusing the existing
 `dailyBriefingEnabled` toggle as the opt-in — no new settings UI.

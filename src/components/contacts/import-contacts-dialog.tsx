@@ -34,7 +34,13 @@ const CONTACT_FIELDS: { value: MappableField | ""; label: string }[] = [
   { value: "tags", label: "Tags" },
 ];
 
-const VALID_SOURCES: ContactSource[] = ["website", "referral", "ads", "other", ""];
+const VALID_SOURCES: ContactSource[] = [
+  "website",
+  "referral",
+  "ads",
+  "other",
+  "",
+];
 
 interface ImportContactsDialogProps {
   open: boolean;
@@ -58,7 +64,7 @@ interface PreviewState {
 
 function prepareRows(
   rows: Record<string, string>[],
-  mapping: Record<string, MappableField | "">,
+  mapping: Record<string, MappableField | "">
 ): {
   valid: PreparedRow[];
   invalidCount: number;
@@ -118,7 +124,9 @@ export function ImportContactsDialog({
   const [fileName, setFileName] = useState("");
   const [headers, setHeaders] = useState<string[]>([]);
   const [rows, setRows] = useState<Record<string, string>[]>([]);
-  const [mapping, setMapping] = useState<Record<string, MappableField | "">>({});
+  const [mapping, setMapping] = useState<Record<string, MappableField | "">>(
+    {}
+  );
   const [previewing, setPreviewing] = useState(false);
   const [preview, setPreview] = useState<PreviewState | null>(null);
   const [importing, setImporting] = useState(false);
@@ -161,7 +169,7 @@ export function ImportContactsDialog({
 
   const mappedCount = useMemo(
     () => Object.values(mapping).filter(Boolean).length,
-    [mapping],
+    [mapping]
   );
   const hasEmailColumn = Object.values(mapping).includes("email");
   const prepared = useMemo(() => prepareRows(rows, mapping), [rows, mapping]);
@@ -226,9 +234,9 @@ export function ImportContactsDialog({
       }
       const skippedMessages = [
         ...prepared.invalidMessages,
-        ...((payload.skipped ?? [])
+        ...(payload.skipped ?? [])
           .slice(0, 5)
-          .map((row) => `Row ${row.rowNumber}: ${row.reason}`)),
+          .map((row) => `Row ${row.rowNumber}: ${row.reason}`),
       ];
       setPreview({
         readyIndexes: payload.readyIndexes ?? [],
@@ -297,7 +305,7 @@ export function ImportContactsDialog({
         toast.success(
           `Imported ${created} contact${created === 1 ? "" : "s"}${
             skipped ? ` · ${skipped} skipped` : ""
-          }`,
+          }`
         );
       } else {
         toast.error("No contacts imported — check the errors below.");
@@ -323,7 +331,7 @@ export function ImportContactsDialog({
             — we&apos;ll auto-match the columns. Need a starting point?{" "}
             <a
               href="/contacts-template.csv"
-              download="leadstack-contacts-template.csv"
+              download="agentstack-contacts-template.csv"
               className="text-primary underline-offset-4 hover:underline"
             >
               Download the template
@@ -336,15 +344,16 @@ export function ImportContactsDialog({
           {headers.length === 0 ? (
             <label
               htmlFor="csv-file"
-              className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border border-dashed bg-muted/20 p-10 text-center transition-colors hover:border-primary/40 hover:bg-primary/5"
+              className="bg-muted/20 hover:border-primary/40 hover:bg-primary/5 flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border border-dashed p-10 text-center transition-colors"
             >
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+              <div className="bg-primary/10 text-primary flex h-10 w-10 items-center justify-center rounded-lg">
                 <Upload className="h-5 w-5" />
               </div>
               <p className="text-sm font-medium">Choose a CSV file</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 First row should be headers. Email column is required.
-                Recognised columns: <code>name, email, phone, company, source, tags</code>.
+                Recognised columns:{" "}
+                <code>name, email, phone, company, source, tags</code>.
               </p>
               <input
                 ref={inputRef}
@@ -360,13 +369,14 @@ export function ImportContactsDialog({
             </label>
           ) : (
             <>
-              <div className="flex items-center justify-between rounded-lg border bg-muted/30 px-3 py-2">
+              <div className="bg-muted/30 flex items-center justify-between rounded-lg border px-3 py-2">
                 <div className="flex min-w-0 items-center gap-2">
-                  <FileSpreadsheet className="h-4 w-4 text-primary" />
+                  <FileSpreadsheet className="text-primary h-4 w-4" />
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{fileName}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {rows.length} rows · {mappedCount} of {headers.length} columns mapped
+                    <p className="text-muted-foreground text-xs">
+                      {rows.length} rows · {mappedCount} of {headers.length}{" "}
+                      columns mapped
                     </p>
                   </div>
                 </div>
@@ -376,12 +386,12 @@ export function ImportContactsDialog({
               </div>
 
               <div className="space-y-2">
-                <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <Label className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
                   Column mapping
                 </Label>
                 <div className="overflow-hidden rounded-lg border">
                   <table className="w-full text-sm">
-                    <thead className="border-b bg-muted/40 text-left text-[11px] uppercase tracking-wide text-muted-foreground">
+                    <thead className="bg-muted/40 text-muted-foreground border-b text-left text-[11px] tracking-wide uppercase">
                       <tr>
                         <th className="px-3 py-2 font-semibold">CSV column</th>
                         <th className="px-3 py-2 font-semibold">Preview</th>
@@ -392,9 +402,12 @@ export function ImportContactsDialog({
                       {headers.map((h) => (
                         <tr key={h} className="border-b last:border-b-0">
                           <td className="px-3 py-2 font-medium">{h}</td>
-                          <td className="px-3 py-2 text-xs text-muted-foreground">
-                            {rows.slice(0, 2).map((r) => r[h]).filter(Boolean).join(" · ") ||
-                              "—"}
+                          <td className="text-muted-foreground px-3 py-2 text-xs">
+                            {rows
+                              .slice(0, 2)
+                              .map((r) => r[h])
+                              .filter(Boolean)
+                              .join(" · ") || "—"}
                           </td>
                           <td className="px-3 py-2">
                             <select
@@ -405,7 +418,7 @@ export function ImportContactsDialog({
                                   [h]: e.target.value as MappableField | "",
                                 }))
                               }
-                              className="h-7 w-full rounded-md border border-input bg-transparent px-2 text-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50 text-foreground dark:bg-input/30 [&_option]:bg-background [&_option]:text-foreground"
+                              className="border-input focus-visible:border-ring focus-visible:ring-ring/50 text-foreground dark:bg-input/30 [&_option]:bg-background [&_option]:text-foreground h-7 w-full rounded-md border bg-transparent px-2 text-xs outline-none focus-visible:ring-2"
                             >
                               {CONTACT_FIELDS.map((f) => (
                                 <option key={f.value} value={f.value}>
@@ -428,15 +441,15 @@ export function ImportContactsDialog({
                 )}
               </div>
 
-              <div className="rounded-lg border bg-muted/20 p-3 text-sm">
+              <div className="bg-muted/20 rounded-lg border p-3 text-sm">
                 <p className="font-medium">Preview before import</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  We&apos;ll check for duplicate emails and phone numbers already
-                  in this workspace, plus duplicates inside this CSV, before we
-                  write anything.
+                <p className="text-muted-foreground mt-1 text-xs">
+                  We&apos;ll check for duplicate emails and phone numbers
+                  already in this workspace, plus duplicates inside this CSV,
+                  before we write anything.
                 </p>
                 {preview && (
-                  <div className="mt-3 space-y-2 rounded-lg border bg-background p-3">
+                  <div className="bg-background mt-3 space-y-2 rounded-lg border p-3">
                     <p className="flex items-center gap-2 font-medium">
                       <CheckCircle2 className="h-4 w-4 text-emerald-500" />
                       Ready: {preview.readyCount} · Duplicates:{" "}
@@ -445,14 +458,14 @@ export function ImportContactsDialog({
                     </p>
                     {(preview.existingDuplicateCount > 0 ||
                       preview.fileDuplicateCount > 0) && (
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-muted-foreground text-xs">
                         Existing workspace duplicates:{" "}
                         {preview.existingDuplicateCount} · Duplicate rows inside
                         this file: {preview.fileDuplicateCount}
                       </p>
                     )}
                     {preview.skippedMessages.length > 0 && (
-                      <ul className="ml-6 list-disc space-y-0.5 text-xs text-muted-foreground">
+                      <ul className="text-muted-foreground ml-6 list-disc space-y-0.5 text-xs">
                         {preview.skippedMessages.map((message, index) => (
                           <li key={index}>{message}</li>
                         ))}
@@ -463,13 +476,14 @@ export function ImportContactsDialog({
               </div>
 
               {result && (
-                <div className="space-y-2 rounded-lg border bg-card p-3 text-sm">
+                <div className="bg-card space-y-2 rounded-lg border p-3 text-sm">
                   <p className="flex items-center gap-2 font-medium">
                     <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                    Import finished · {result.created} created · {result.skipped} skipped
+                    Import finished · {result.created} created ·{" "}
+                    {result.skipped} skipped
                   </p>
                   {result.errors.length > 0 && (
-                    <ul className="ml-6 list-disc space-y-0.5 text-xs text-muted-foreground">
+                    <ul className="text-muted-foreground ml-6 list-disc space-y-0.5 text-xs">
                       {result.errors.map((err, i) => (
                         <li key={i}>{err}</li>
                       ))}

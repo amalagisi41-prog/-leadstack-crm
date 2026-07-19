@@ -1,5 +1,5 @@
 /**
- * Public-page competitor comparison data shape. Each /leadstack-vs-{slug}
+ * Public-page competitor comparison data shape. Each /agentstack-vs-{slug}
  * page is rendered from one of these objects so the route, components,
  * and JSON-LD schema all consume a single typed source.
  *
@@ -10,7 +10,7 @@
  * The route + sitemap pick it up automatically via generateStaticParams.
  */
 export type Comparison = {
-  /** URL slug — becomes /leadstack-vs-{slug}. Lowercase, hyphenated. */
+  /** URL slug — becomes /agentstack-vs-{slug}. Lowercase, hyphenated. */
   slug: string;
   /** Display name of the competitor (e.g. "GoHighLevel", "HubSpot"). */
   competitorName: string;
@@ -53,14 +53,14 @@ export type Comparison = {
     rows: Array<{
       label: string;
       /** true = check, false = X, string = note (e.g. "Add-on $X/mo"). */
-      leadstack: boolean | string;
+      agentstack: boolean | string;
       competitor: boolean | string;
     }>;
   };
   /** Pricing comparison block — the part GHL skips. */
   pricing: {
     heading: string;
-    leadstack: {
+    agentstack: {
       headline: string;
       detail: string;
       notes: string[];
@@ -100,7 +100,7 @@ export type Comparison = {
     intro?: string;
     items: Array<{
       label: string;
-      leadstack: string;
+      agentstack: string;
       competitor: string;
       note?: string;
       sources: Array<{

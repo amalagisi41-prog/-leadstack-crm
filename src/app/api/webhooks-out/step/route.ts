@@ -52,10 +52,7 @@ export async function POST(request: Request) {
   const signature = request.headers.get("upstash-signature");
   const rawBody = await request.text();
   if (!signature) {
-    return NextResponse.json(
-      { error: "Missing signature" },
-      { status: 401 },
-    );
+    return NextResponse.json({ error: "Missing signature" }, { status: 401 });
   }
   const valid = await verifyQStashSignature(signature, rawBody);
   if (!valid) {
@@ -72,7 +69,7 @@ export async function POST(request: Request) {
   if (!subAccountId || !eventId || !deliveryId) {
     return NextResponse.json(
       { error: "Missing subAccountId / eventId / deliveryId" },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
@@ -91,7 +88,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, skipped: "not_pending" });
   }
 
-  const subscription = await getSubscription(subAccountId, delivery.subscriptionId);
+  const subscription = await getSubscription(
+    subAccountId,
+    delivery.subscriptionId
+  );
   if (!subscription) {
     await updateDelivery(subAccountId, eventId, deliveryId, {
       status: "failed",
@@ -134,7 +134,13 @@ export async function POST(request: Request) {
   // timeouts, and non-2xx all count as failures.
   let outcome:
     | { kind: "success"; status: number; bodyExcerpt: string; headers: string }
-    | { kind: "failure"; status: number | null; message: string; bodyExcerpt: string | null; headers: string | null };
+    | {
+        kind: "failure";
+        status: number | null;
+        message: string;
+        bodyExcerpt: string | null;
+        headers: string | null;
+      };
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
@@ -144,8 +150,8 @@ export async function POST(request: Request) {
       headers: {
         "Content-Type": "application/json",
         "User-Agent": "AgentStack-Webhooks/1.0",
-        "LeadStack-Signature": signed.header,
-        "LeadStack-Version": LATEST_API_VERSION,
+        "AgentStack-Signature": signed.header,
+        "AgentStack-Version": LATEST_API_VERSION,
         "Webhook-Event-Id": event.id,
         "Webhook-Event-Type": event.type,
       },
@@ -202,7 +208,11 @@ export async function POST(request: Request) {
       responseHeaders: outcome.headers,
       attemptedAt,
     });
-    await recordSubscriptionSuccess(subAccountId, subscription.id, outcome.status);
+    await recordSubscriptionSuccess(
+      subAccountId,
+      subscription.id,
+      outcome.status
+    );
     return NextResponse.json({ ok: true, status: outcome.status });
   }
 
@@ -222,7 +232,7 @@ export async function POST(request: Request) {
       errorMessage: outcome.message,
       attemptedAt,
       nextRetryAt: new Date(
-        Date.now() + RETRY_DELAYS_SEC[delivery.attempt - 1]! * 1000,
+        Date.now() + RETRY_DELAYS_SEC[delivery.attempt - 1]! * 1000
       ),
     });
     const next = await createDelivery({
@@ -233,7 +243,7 @@ export async function POST(request: Request) {
       attempt: nextAttempt,
       url: subscription.url,
       scheduledAt: new Date(
-        Date.now() + RETRY_DELAYS_SEC[delivery.attempt - 1]! * 1000,
+        Date.now() + RETRY_DELAYS_SEC[delivery.attempt - 1]! * 1000
       ),
     });
     await scheduleDeliveryRetry({
@@ -266,7 +276,7 @@ export async function POST(request: Request) {
     {
       httpStatus: outcome.status,
       errorMessage: outcome.message,
-    },
+    }
   );
   if (tripped) {
     console.warn(
@@ -275,7 +285,7 @@ export async function POST(request: Request) {
         subAccountId,
         subscriptionId: subscription.id,
         url: subscription.url,
-      }),
+      })
     );
     // Slice 8 attaches an admin email here. For v1 the paused state is
     // surfaced in the UI; admins resume after fixing the upstream.

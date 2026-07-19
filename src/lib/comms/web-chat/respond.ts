@@ -3,10 +3,7 @@ import "server-only";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { callAi, type AiChatMessage } from "@/lib/comms/ai/openrouter";
-import {
-  incrementChannelTokens,
-  resolveAgent,
-} from "@/lib/comms/ai/agent";
+import { incrementChannelTokens, resolveAgent } from "@/lib/comms/ai/agent";
 import { buildContactContextBlock } from "@/lib/comms/ai/context";
 import { buildSystemPrompt } from "@/lib/comms/ai/prompt";
 import { retrieveRelevantChunks } from "@/lib/knowledge-base/retrieve";
@@ -14,9 +11,7 @@ import {
   matchEscalationKeyword,
   sendEscalationNotification,
 } from "@/lib/comms/ai/escalation";
-import {
-  getMarketingChatKnowledgeChunks,
-} from "@/lib/landing/marketing-chat-kb";
+import { getMarketingChatKnowledgeChunks } from "@/lib/landing/marketing-chat-kb";
 import { isMarketingWebChatSubAccount } from "@/lib/marketing-chat";
 import {
   appendMessage,
@@ -99,7 +94,7 @@ const FALLBACK_REPLY =
 function isWithinHours(
   hoursStart: number,
   hoursEnd: number,
-  timezone: string,
+  timezone: string
 ): boolean {
   const now = new Date();
   let hour: number;
@@ -124,7 +119,7 @@ function isWithinHours(
 }
 
 export async function respondToWebChat(
-  input: RespondToWebChatInput,
+  input: RespondToWebChatInput
 ): Promise<{ session: WebChatSession; outcome: WebChatOutcome }> {
   const db = getAdminDb();
 
@@ -187,7 +182,7 @@ export async function respondToWebChat(
 
   const triggered = matchEscalationKeyword(
     input.incomingMessage,
-    eff.escalationKeywords,
+    eff.escalationKeywords
   );
   if (triggered) {
     // Best-effort notify; never fail the visitor's response on email errors.
@@ -195,7 +190,7 @@ export async function respondToWebChat(
       const saSnap = await db.doc(`subAccounts/${input.subAccountId}`).get();
       const subAccount = saSnap.data() as SubAccountDoc | undefined;
       const appUrl =
-        process.env.NEXT_PUBLIC_APP_URL?.trim() || "https://leadstack.dev";
+        process.env.NEXT_PUBLIC_APP_URL?.trim() || "https://agentstackcrm.app";
       void sendEscalationNotification({
         to: eff.escalationNotifyEmail,
         businessName:
@@ -210,7 +205,7 @@ export async function respondToWebChat(
       }).catch((err) => {
         console.warn(
           `[web-chat/respond] escalation email failed sa=${input.subAccountId}`,
-          err,
+          err
         );
       });
     }
@@ -239,7 +234,7 @@ export async function respondToWebChat(
     } catch (err) {
       console.warn(
         `[web-chat/respond] contact context build failed for ${session.contactId}`,
-        err,
+        err
       );
     }
   }
@@ -250,7 +245,7 @@ export async function respondToWebChat(
     input.subAccountId,
     input.sessionId,
     eff.contextMessageCount,
-    input.incomingMessage,
+    input.incomingMessage
   );
 
   const [saSnap, retrievedChunks] = await Promise.all([
@@ -294,7 +289,7 @@ export async function respondToWebChat(
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown error";
     console.error(
-      `[web-chat/respond] LLM call failed sa=${input.subAccountId}: ${msg}`,
+      `[web-chat/respond] LLM call failed sa=${input.subAccountId}: ${msg}`
     );
     return finalize(input, session, {
       kind: "skipped",
@@ -334,7 +329,7 @@ export async function respondToWebChat(
     } catch (err) {
       console.warn(
         `[web-chat/respond] capture reconcile failed sa=${input.subAccountId}`,
-        err,
+        err
       );
     }
   }
@@ -351,7 +346,7 @@ export async function respondToWebChat(
   void incrementChannelTokens(
     input.subAccountId,
     "web-chat",
-    completion.totalTokens,
+    completion.totalTokens
   );
 
   return finalize(input, session, {
@@ -370,12 +365,14 @@ export async function respondToWebChat(
 async function finalize(
   input: RespondToWebChatInput,
   session: WebChatSession,
-  outcome: WebChatOutcome,
+  outcome: WebChatOutcome
 ): Promise<{ session: WebChatSession; outcome: WebChatOutcome }> {
   const body =
-    outcome.kind === "replied" ? outcome.replyText : outcome.kind === "escalated"
-      ? outcome.fallbackReply
-      : outcome.fallbackReply;
+    outcome.kind === "replied"
+      ? outcome.replyText
+      : outcome.kind === "escalated"
+        ? outcome.fallbackReply
+        : outcome.fallbackReply;
   const tokens = outcome.kind === "replied" ? outcome.tokens : null;
   const aiGenerated = outcome.kind === "replied";
 
@@ -393,7 +390,7 @@ async function finalize(
   if (outcome.kind === "escalated") {
     await getAdminDb()
       .doc(
-        `subAccounts/${input.subAccountId}/webChatSessions/${input.sessionId}`,
+        `subAccounts/${input.subAccountId}/webChatSessions/${input.sessionId}`
       )
       .update({
         status: "escalated",

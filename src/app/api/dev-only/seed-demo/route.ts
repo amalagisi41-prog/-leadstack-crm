@@ -10,7 +10,7 @@ import type { MemberStatus, Role } from "@/types";
  * Dev-only seed endpoint for the AgentStack public demo (#1004 sub-account).
  *
  * Triple-gated:
- *   1. LANDING_VARIANT must be "leadstack" — buyer clones (variant "custom")
+ *   1. LANDING_VARIANT must be "agentstack" — buyer clones (variant "custom")
  *      get a 404 so they don't even know this route exists.
  *   2. Caller must be the agency owner.
  *   3. Sub-account #1004 must already exist (the seeder targets it by
@@ -28,10 +28,10 @@ interface CallerClaims {
 }
 
 async function requireOwnerOrReject(
-  request: Request,
+  request: Request
 ): Promise<{ uid: string } | NextResponse> {
   // Variant gate first — pretend the route doesn't exist on buyer clones.
-  if (LANDING_VARIANT !== "leadstack") {
+  if (LANDING_VARIANT !== "agentstack") {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
@@ -39,7 +39,9 @@ async function requireOwnerOrReject(
   if (!uid) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
-  const record = await getAdminAuth().getUser(uid).catch(() => null);
+  const record = await getAdminAuth()
+    .getUser(uid)
+    .catch(() => null);
   if (!record) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
@@ -50,7 +52,7 @@ async function requireOwnerOrReject(
   if (claims.agencyRole !== "owner" || !claims.agencyId) {
     return NextResponse.json(
       { error: "Only the agency owner can run the demo seeder." },
-      { status: 403 },
+      { status: 403 }
     );
   }
   return { uid };

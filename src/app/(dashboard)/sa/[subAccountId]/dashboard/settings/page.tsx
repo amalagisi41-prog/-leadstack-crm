@@ -80,25 +80,19 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (!user || !agencyId) return;
-    const unsub = subscribeToContacts(
-      { agencyId, subAccountId },
-      setContacts,
-    );
+    const unsub = subscribeToContacts({ agencyId, subAccountId }, setContacts);
     return () => unsub();
   }, [user, agencyId, subAccountId]);
 
   useEffect(() => {
     if (!user || !agencyId) return;
-    const unsub = subscribeToDeals(
-      { agencyId, subAccountId },
-      setDeals,
-    );
+    const unsub = subscribeToDeals({ agencyId, subAccountId }, setDeals);
     return () => unsub();
   }, [user, agencyId, subAccountId]);
 
   const contactById = useMemo(
     () => new Map(contacts.map((contact) => [contact.id, contact])),
-    [contacts],
+    [contacts]
   );
 
   function handleExportWorkspace() {
@@ -163,16 +157,16 @@ export default function SettingsPage() {
     const stamp = new Date().toISOString().slice(0, 10);
     if (contactRows.length > 0) {
       const contactsCsv = serializeCsv(contactHeaders, contactRows);
-      downloadCsv(`leadstack-contacts-${stamp}.csv`, contactsCsv);
+      downloadCsv(`agentstack-contacts-${stamp}.csv`, contactsCsv);
     }
     if (dealRows.length > 0) {
       const dealsCsv = serializeCsv(dealHeaders, dealRows);
       window.setTimeout(() => {
-        downloadCsv(`leadstack-deals-${stamp}.csv`, dealsCsv);
+        downloadCsv(`agentstack-deals-${stamp}.csv`, dealsCsv);
       }, 150);
     }
     toast.success(
-      `Exported ${contactRows.length} contact${contactRows.length === 1 ? "" : "s"} and ${dealRows.length} deal${dealRows.length === 1 ? "" : "s"}.`,
+      `Exported ${contactRows.length} contact${contactRows.length === 1 ? "" : "s"} and ${dealRows.length} deal${dealRows.length === 1 ? "" : "s"}.`
     );
   }
 
@@ -186,10 +180,10 @@ export default function SettingsPage() {
         <h1 className="text-2xl font-bold tracking-tight">
           {workspaceName} · Settings
         </h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           Workspace-level configuration for{" "}
-          <strong className="text-foreground">{workspaceName}</strong>. For
-          your personal profile / password, open{" "}
+          <strong className="text-foreground">{workspaceName}</strong>. For your
+          personal profile / password, open{" "}
           <Link href="/me/settings" className="text-primary underline">
             Your account
           </Link>
@@ -220,29 +214,29 @@ export default function SettingsPage() {
               deployment. Buyer clones (LANDING_VARIANT === "custom") collect
               payment off-system and provision sub-accounts by invite, so this
               panel is hidden there. */}
-          {role === "admin" && LANDING_VARIANT === "leadstack" && (
-            <section className="rounded-2xl border bg-card p-5">
+          {role === "admin" && LANDING_VARIANT === "agentstack" && (
+            <section className="bg-card rounded-2xl border p-5">
               <div className="mb-4 flex items-center gap-2">
                 <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                   <CreditCard className="h-4 w-4" />
                 </span>
                 <div>
                   <h2 className="text-sm font-semibold">Subscription</h2>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-muted-foreground text-xs">
                     This sub-account&apos;s plan with the agency. Defaults to
                     free; upgrade unlocks higher limits + premium features.
                   </p>
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-background p-4">
+              <div className="bg-background flex flex-wrap items-center justify-between gap-3 rounded-lg border p-4">
                 <div className="flex items-center gap-3">
                   <span
                     className={`rounded-full px-2.5 py-1 text-xs font-medium ${plan.tone}`}
                   >
                     {plan.label}
                   </span>
-                  <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  <span className="bg-muted text-muted-foreground inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wider uppercase">
                     Roadmap
                   </span>
                 </div>
@@ -255,9 +249,9 @@ export default function SettingsPage() {
                   </Button>
                 </span>
               </div>
-              <p className="mt-2 text-[11px] text-muted-foreground">
-                Sub-account billing is on the roadmap — agencies will be able
-                to set tiered plans (free / pro / etc.) and clients can upgrade
+              <p className="text-muted-foreground mt-2 text-[11px]">
+                Sub-account billing is on the roadmap — agencies will be able to
+                set tiered plans (free / pro / etc.) and clients can upgrade
                 from this card. Until then every sub-account is on the free
                 plan.
               </p>
@@ -295,26 +289,26 @@ export default function SettingsPage() {
           <SubAccountAddOnsSection />
 
           {/* Data export */}
-          <section className="rounded-2xl border bg-card p-5">
+          <section className="bg-card rounded-2xl border p-5">
             <div className="mb-4 flex items-center gap-2">
               <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
                 <Download className="h-4 w-4" />
               </span>
               <div>
                 <h2 className="text-sm font-semibold">Data</h2>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground text-xs">
                   Take your data with you, any time.
                 </p>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-background p-4">
+            <div className="bg-background flex flex-wrap items-center justify-between gap-3 rounded-lg border p-4">
               <div>
                 <p className="text-sm font-medium">Export workspace data</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-muted-foreground text-xs">
                   {contacts.length} contact{contacts.length === 1 ? "" : "s"} ·{" "}
-                  {deals.length} deal{deals.length === 1 ? "" : "s"} ·
-                  downloads both CSV files in one click
+                  {deals.length} deal{deals.length === 1 ? "" : "s"} · downloads
+                  both CSV files in one click
                 </p>
               </div>
               <Button

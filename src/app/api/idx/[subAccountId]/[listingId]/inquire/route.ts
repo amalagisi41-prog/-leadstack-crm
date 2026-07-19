@@ -47,7 +47,7 @@ interface InquireBody {
 
 export async function POST(
   request: Request,
-  ctx: { params: Promise<{ subAccountId: string; listingId: string }> },
+  ctx: { params: Promise<{ subAccountId: string; listingId: string }> }
 ) {
   const { subAccountId, listingId } = await ctx.params;
 
@@ -59,14 +59,18 @@ export async function POST(
   }
 
   const name = (body.name ?? "").toString().trim().slice(0, 200);
-  const email = (body.email ?? "").toString().trim().toLowerCase().slice(0, 200);
+  const email = (body.email ?? "")
+    .toString()
+    .trim()
+    .toLowerCase()
+    .slice(0, 200);
   const phone = (body.phone ?? "").toString().trim().slice(0, 40);
   const message = (body.message ?? "").toString().trim().slice(0, 2000);
 
   if (!name || !email) {
     return jsonWithCors(
       { error: "Please enter your name and email." },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
@@ -76,16 +80,23 @@ export async function POST(
     db.doc(`subAccounts/${subAccountId}/idxListings/${listingId}`).get(),
   ]);
   if (!subSnap.exists || !listingSnap.exists) {
-    return jsonWithCors({ error: "This listing is unavailable." }, { status: 404 });
+    return jsonWithCors(
+      { error: "This listing is unavailable." },
+      { status: 404 }
+    );
   }
   const sub = subSnap.data() as SubAccountDoc;
   if (sub.idxEnabledByAgency !== true || !sub.idxConfig?.enabled) {
-    return jsonWithCors({ error: "This listing is unavailable." }, { status: 404 });
+    return jsonWithCors(
+      { error: "This listing is unavailable." },
+      { status: 404 }
+    );
   }
   const listing = listingSnap.data() as IdxListingDoc;
   const agencyId = sub.agencyId;
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim() || "https://leadstack.dev";
+  const appUrl =
+    process.env.NEXT_PUBLIC_APP_URL?.trim() || "https://agentstackcrm.app";
   const listingUrl = `${appUrl}/idx/${subAccountId}/${listingId}`;
 
   let contactId: string;
@@ -97,12 +108,16 @@ export async function POST(
       pageUrl: listingUrl,
       source: "idx-listing",
       matchStrategy: "email-first",
-      capture: { name: name || null, email: email || null, phone: phone || null },
+      capture: {
+        name: name || null,
+        email: email || null,
+        phone: phone || null,
+      },
     });
     if (!reconciled) {
       return jsonWithCors(
         { error: "Please enter your name and email." },
-        { status: 400 },
+        { status: 400 }
       );
     }
     contactId = reconciled.contactId;
@@ -110,7 +125,7 @@ export async function POST(
     console.error("[idx/inquire] contact reconcile failed", err);
     return jsonWithCors(
       { error: "We couldn't save your request. Please try again." },
-      { status: 500 },
+      { status: 500 }
     );
   }
 

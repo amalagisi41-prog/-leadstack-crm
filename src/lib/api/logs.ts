@@ -42,7 +42,7 @@ const REDACT_HEADERS = new Set([
   "set-cookie",
   "proxy-authorization",
   "x-api-key",
-  "leadstack-signature",
+  "agentstack-signature",
   "idempotency-key",
 ]);
 
@@ -95,7 +95,9 @@ function stringifyResponse(bodyJson: unknown): string {
  * Write the log entry. Caller invokes via `void` — never await on the hot
  * request path. Errors are logged and dropped; never re-thrown.
  */
-export async function captureRequestLog(input: ApiRequestLogInput): Promise<void> {
+export async function captureRequestLog(
+  input: ApiRequestLogInput
+): Promise<void> {
   try {
     await getAdminDb()
       .collection("subAccounts")
@@ -144,7 +146,7 @@ function tsToIso(ts: Timestamp | Date | null | undefined): string {
  */
 export async function listRequestLogs(
   subAccountId: string,
-  opts: { limit?: number } = {},
+  opts: { limit?: number } = {}
 ): Promise<ApiRequestLogResponse[]> {
   const limit = Math.min(Math.max(opts.limit ?? 100, 1), 200);
   const snap = await getAdminDb()

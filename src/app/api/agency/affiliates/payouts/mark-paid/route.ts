@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
  * reads the current status first and bails if it's already "paid".
  */
 export async function POST(request: Request) {
-  if (LANDING_VARIANT !== "leadstack") {
+  if (LANDING_VARIANT !== "agentstack") {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
@@ -33,10 +33,7 @@ export async function POST(request: Request) {
 
   const referralId = body.referralId?.trim();
   if (!referralId) {
-    return NextResponse.json(
-      { error: "referralId required" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "referralId required" }, { status: 400 });
   }
 
   const note = body.note?.trim().slice(0, 500) ?? null;

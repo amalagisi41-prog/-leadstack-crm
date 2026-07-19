@@ -1,9 +1,6 @@
 import "server-only";
 
-import {
-  FieldValue,
-  type Firestore,
-} from "firebase-admin/firestore";
+import { FieldValue, type Firestore } from "firebase-admin/firestore";
 
 /**
  * Demo-data seeder for the AgentStack public demo only.
@@ -18,45 +15,180 @@ import {
  * remove them later (along with their subcollections + referencing deals).
  *
  * Gated to the AgentStack demo at the API-route layer via LANDING_VARIANT
- * === "leadstack". Buyer clones never reach this code.
+ * === "agentstack". Buyer clones never reach this code.
  */
 
 const TARGET_ACCOUNT_NUMBER = 1004;
 const SEED_TAG = "seed";
 
 const FIRST_NAMES = [
-  "James", "Mary", "Robert", "Patricia", "John", "Jennifer", "Michael",
-  "Linda", "David", "Elizabeth", "William", "Barbara", "Richard", "Susan",
-  "Joseph", "Jessica", "Thomas", "Sarah", "Charles", "Karen", "Christopher",
-  "Nancy", "Daniel", "Lisa", "Matthew", "Margaret", "Anthony", "Sandra",
-  "Mark", "Ashley", "Donald", "Kimberly", "Steven", "Emily", "Paul", "Donna",
-  "Andrew", "Michelle", "Joshua", "Carol", "Kenneth", "Amanda", "Kevin",
-  "Melissa", "Brian", "Deborah", "Edward", "Stephanie", "Ronald", "Rebecca",
-  "Priya", "Aarav", "Ananya", "Arjun", "Yuki", "Hiroshi", "Wei", "Mei",
-  "Mohammed", "Fatima", "Ahmed", "Aisha", "Carlos", "Sofia", "Diego",
-  "Isabella", "Sebastien", "Camille", "Lukas", "Hannah",
+  "James",
+  "Mary",
+  "Robert",
+  "Patricia",
+  "John",
+  "Jennifer",
+  "Michael",
+  "Linda",
+  "David",
+  "Elizabeth",
+  "William",
+  "Barbara",
+  "Richard",
+  "Susan",
+  "Joseph",
+  "Jessica",
+  "Thomas",
+  "Sarah",
+  "Charles",
+  "Karen",
+  "Christopher",
+  "Nancy",
+  "Daniel",
+  "Lisa",
+  "Matthew",
+  "Margaret",
+  "Anthony",
+  "Sandra",
+  "Mark",
+  "Ashley",
+  "Donald",
+  "Kimberly",
+  "Steven",
+  "Emily",
+  "Paul",
+  "Donna",
+  "Andrew",
+  "Michelle",
+  "Joshua",
+  "Carol",
+  "Kenneth",
+  "Amanda",
+  "Kevin",
+  "Melissa",
+  "Brian",
+  "Deborah",
+  "Edward",
+  "Stephanie",
+  "Ronald",
+  "Rebecca",
+  "Priya",
+  "Aarav",
+  "Ananya",
+  "Arjun",
+  "Yuki",
+  "Hiroshi",
+  "Wei",
+  "Mei",
+  "Mohammed",
+  "Fatima",
+  "Ahmed",
+  "Aisha",
+  "Carlos",
+  "Sofia",
+  "Diego",
+  "Isabella",
+  "Sebastien",
+  "Camille",
+  "Lukas",
+  "Hannah",
 ];
 
 const LAST_NAMES = [
-  "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller",
-  "Davis", "Rodriguez", "Martinez", "Hernandez", "Lopez", "Gonzalez",
-  "Wilson", "Anderson", "Thomas", "Taylor", "Moore", "Jackson", "Martin",
-  "Lee", "Perez", "Thompson", "White", "Harris", "Sanchez", "Clark",
-  "Ramirez", "Lewis", "Robinson", "Walker", "Young", "Allen", "King",
-  "Wright", "Scott", "Torres", "Nguyen", "Hill", "Flores", "Green", "Adams",
-  "Nelson", "Baker", "Hall", "Rivera", "Campbell", "Mitchell", "Carter",
-  "Roberts", "Patel", "Kumar", "Singh", "Tanaka", "Sato", "Chen", "Wang",
-  "Al-Hassan", "Khan", "Rossi", "Bianchi", "Müller", "Schmidt", "Dubois",
-  "Petit", "Andersson", "Nilsson",
+  "Smith",
+  "Johnson",
+  "Williams",
+  "Brown",
+  "Jones",
+  "Garcia",
+  "Miller",
+  "Davis",
+  "Rodriguez",
+  "Martinez",
+  "Hernandez",
+  "Lopez",
+  "Gonzalez",
+  "Wilson",
+  "Anderson",
+  "Thomas",
+  "Taylor",
+  "Moore",
+  "Jackson",
+  "Martin",
+  "Lee",
+  "Perez",
+  "Thompson",
+  "White",
+  "Harris",
+  "Sanchez",
+  "Clark",
+  "Ramirez",
+  "Lewis",
+  "Robinson",
+  "Walker",
+  "Young",
+  "Allen",
+  "King",
+  "Wright",
+  "Scott",
+  "Torres",
+  "Nguyen",
+  "Hill",
+  "Flores",
+  "Green",
+  "Adams",
+  "Nelson",
+  "Baker",
+  "Hall",
+  "Rivera",
+  "Campbell",
+  "Mitchell",
+  "Carter",
+  "Roberts",
+  "Patel",
+  "Kumar",
+  "Singh",
+  "Tanaka",
+  "Sato",
+  "Chen",
+  "Wang",
+  "Al-Hassan",
+  "Khan",
+  "Rossi",
+  "Bianchi",
+  "Müller",
+  "Schmidt",
+  "Dubois",
+  "Petit",
+  "Andersson",
+  "Nilsson",
 ];
 
 const COMPANIES = [
-  "Acme Logistics", "Globex Capital", "Initech Systems", "Umbrella Health",
-  "Wayne Industries", "Stark Innovations", "Hooli", "Pied Piper",
-  "Cyberdyne Robotics", "Tyrell Bio", "Aperture Labs", "Soylent Foods",
-  "Massive Dynamic", "Veridian Dynamics", "Vandelay Imports", "Dunder Mifflin",
-  "Wonka Sweets", "Oscorp", "LexCorp", "Bluth Properties", "Strickland Propane",
-  "Bing Translations", "Lumon Industries", "Pendant Publishing",
+  "Acme Logistics",
+  "Globex Capital",
+  "Initech Systems",
+  "Umbrella Health",
+  "Wayne Industries",
+  "Stark Innovations",
+  "Hooli",
+  "Pied Piper",
+  "Cyberdyne Robotics",
+  "Tyrell Bio",
+  "Aperture Labs",
+  "Soylent Foods",
+  "Massive Dynamic",
+  "Veridian Dynamics",
+  "Vandelay Imports",
+  "Dunder Mifflin",
+  "Wonka Sweets",
+  "Oscorp",
+  "LexCorp",
+  "Bluth Properties",
+  "Strickland Propane",
+  "Bing Translations",
+  "Lumon Industries",
+  "Pendant Publishing",
 ];
 
 const SOURCES = ["website", "referral", "ads", "other"] as const;
@@ -71,36 +203,246 @@ interface CityEntry {
 }
 
 const WORLD_CITIES: CityEntry[] = [
-  { city: "New York", country: "United States", countryCode: "US", lat: 40.7128, lng: -74.006, phoneCode: "+1212" },
-  { city: "San Francisco", country: "United States", countryCode: "US", lat: 37.7749, lng: -122.4194, phoneCode: "+1415" },
-  { city: "Los Angeles", country: "United States", countryCode: "US", lat: 34.0522, lng: -118.2437, phoneCode: "+1213" },
-  { city: "Chicago", country: "United States", countryCode: "US", lat: 41.8781, lng: -87.6298, phoneCode: "+1312" },
-  { city: "Toronto", country: "Canada", countryCode: "CA", lat: 43.6532, lng: -79.3832, phoneCode: "+1416" },
-  { city: "Mexico City", country: "Mexico", countryCode: "MX", lat: 19.4326, lng: -99.1332, phoneCode: "+5255" },
-  { city: "Paris", country: "France", countryCode: "FR", lat: 48.8566, lng: 2.3522, phoneCode: "+331" },
-  { city: "Berlin", country: "Germany", countryCode: "DE", lat: 52.52, lng: 13.405, phoneCode: "+4930" },
-  { city: "Madrid", country: "Spain", countryCode: "ES", lat: 40.4168, lng: -3.7038, phoneCode: "+3491" },
-  { city: "Amsterdam", country: "Netherlands", countryCode: "NL", lat: 52.3676, lng: 4.9041, phoneCode: "+3120" },
-  { city: "Stockholm", country: "Sweden", countryCode: "SE", lat: 59.3293, lng: 18.0686, phoneCode: "+468" },
-  { city: "Dublin", country: "Ireland", countryCode: "IE", lat: 53.3498, lng: -6.2603, phoneCode: "+3531" },
-  { city: "Rome", country: "Italy", countryCode: "IT", lat: 41.9028, lng: 12.4964, phoneCode: "+3906" },
-  { city: "Tokyo", country: "Japan", countryCode: "JP", lat: 35.6762, lng: 139.6503, phoneCode: "+813" },
-  { city: "Singapore", country: "Singapore", countryCode: "SG", lat: 1.3521, lng: 103.8198, phoneCode: "+656" },
-  { city: "Hong Kong", country: "Hong Kong", countryCode: "HK", lat: 22.3193, lng: 114.1694, phoneCode: "+8522" },
-  { city: "Mumbai", country: "India", countryCode: "IN", lat: 19.076, lng: 72.8777, phoneCode: "+9122" },
-  { city: "Bangalore", country: "India", countryCode: "IN", lat: 12.9716, lng: 77.5946, phoneCode: "+9180" },
-  { city: "Sydney", country: "Australia", countryCode: "AU", lat: -33.8688, lng: 151.2093, phoneCode: "+612" },
-  { city: "Melbourne", country: "Australia", countryCode: "AU", lat: -37.8136, lng: 144.9631, phoneCode: "+613" },
-  { city: "Auckland", country: "New Zealand", countryCode: "NZ", lat: -36.8485, lng: 174.7633, phoneCode: "+649" },
-  { city: "Dubai", country: "United Arab Emirates", countryCode: "AE", lat: 25.2048, lng: 55.2708, phoneCode: "+9714" },
-  { city: "Tel Aviv", country: "Israel", countryCode: "IL", lat: 32.0853, lng: 34.7818, phoneCode: "+9723" },
-  { city: "Cape Town", country: "South Africa", countryCode: "ZA", lat: -33.9249, lng: 18.4241, phoneCode: "+2721" },
-  { city: "Lagos", country: "Nigeria", countryCode: "NG", lat: 6.5244, lng: 3.3792, phoneCode: "+2341" },
-  { city: "Nairobi", country: "Kenya", countryCode: "KE", lat: -1.2864, lng: 36.8172, phoneCode: "+25420" },
-  { city: "Sao Paulo", country: "Brazil", countryCode: "BR", lat: -23.5505, lng: -46.6333, phoneCode: "+5511" },
-  { city: "Buenos Aires", country: "Argentina", countryCode: "AR", lat: -34.6037, lng: -58.3816, phoneCode: "+5411" },
-  { city: "Bogota", country: "Colombia", countryCode: "CO", lat: 4.711, lng: -74.0721, phoneCode: "+571" },
-  { city: "Santiago", country: "Chile", countryCode: "CL", lat: -33.4489, lng: -70.6693, phoneCode: "+562" },
+  {
+    city: "New York",
+    country: "United States",
+    countryCode: "US",
+    lat: 40.7128,
+    lng: -74.006,
+    phoneCode: "+1212",
+  },
+  {
+    city: "San Francisco",
+    country: "United States",
+    countryCode: "US",
+    lat: 37.7749,
+    lng: -122.4194,
+    phoneCode: "+1415",
+  },
+  {
+    city: "Los Angeles",
+    country: "United States",
+    countryCode: "US",
+    lat: 34.0522,
+    lng: -118.2437,
+    phoneCode: "+1213",
+  },
+  {
+    city: "Chicago",
+    country: "United States",
+    countryCode: "US",
+    lat: 41.8781,
+    lng: -87.6298,
+    phoneCode: "+1312",
+  },
+  {
+    city: "Toronto",
+    country: "Canada",
+    countryCode: "CA",
+    lat: 43.6532,
+    lng: -79.3832,
+    phoneCode: "+1416",
+  },
+  {
+    city: "Mexico City",
+    country: "Mexico",
+    countryCode: "MX",
+    lat: 19.4326,
+    lng: -99.1332,
+    phoneCode: "+5255",
+  },
+  {
+    city: "Paris",
+    country: "France",
+    countryCode: "FR",
+    lat: 48.8566,
+    lng: 2.3522,
+    phoneCode: "+331",
+  },
+  {
+    city: "Berlin",
+    country: "Germany",
+    countryCode: "DE",
+    lat: 52.52,
+    lng: 13.405,
+    phoneCode: "+4930",
+  },
+  {
+    city: "Madrid",
+    country: "Spain",
+    countryCode: "ES",
+    lat: 40.4168,
+    lng: -3.7038,
+    phoneCode: "+3491",
+  },
+  {
+    city: "Amsterdam",
+    country: "Netherlands",
+    countryCode: "NL",
+    lat: 52.3676,
+    lng: 4.9041,
+    phoneCode: "+3120",
+  },
+  {
+    city: "Stockholm",
+    country: "Sweden",
+    countryCode: "SE",
+    lat: 59.3293,
+    lng: 18.0686,
+    phoneCode: "+468",
+  },
+  {
+    city: "Dublin",
+    country: "Ireland",
+    countryCode: "IE",
+    lat: 53.3498,
+    lng: -6.2603,
+    phoneCode: "+3531",
+  },
+  {
+    city: "Rome",
+    country: "Italy",
+    countryCode: "IT",
+    lat: 41.9028,
+    lng: 12.4964,
+    phoneCode: "+3906",
+  },
+  {
+    city: "Tokyo",
+    country: "Japan",
+    countryCode: "JP",
+    lat: 35.6762,
+    lng: 139.6503,
+    phoneCode: "+813",
+  },
+  {
+    city: "Singapore",
+    country: "Singapore",
+    countryCode: "SG",
+    lat: 1.3521,
+    lng: 103.8198,
+    phoneCode: "+656",
+  },
+  {
+    city: "Hong Kong",
+    country: "Hong Kong",
+    countryCode: "HK",
+    lat: 22.3193,
+    lng: 114.1694,
+    phoneCode: "+8522",
+  },
+  {
+    city: "Mumbai",
+    country: "India",
+    countryCode: "IN",
+    lat: 19.076,
+    lng: 72.8777,
+    phoneCode: "+9122",
+  },
+  {
+    city: "Bangalore",
+    country: "India",
+    countryCode: "IN",
+    lat: 12.9716,
+    lng: 77.5946,
+    phoneCode: "+9180",
+  },
+  {
+    city: "Sydney",
+    country: "Australia",
+    countryCode: "AU",
+    lat: -33.8688,
+    lng: 151.2093,
+    phoneCode: "+612",
+  },
+  {
+    city: "Melbourne",
+    country: "Australia",
+    countryCode: "AU",
+    lat: -37.8136,
+    lng: 144.9631,
+    phoneCode: "+613",
+  },
+  {
+    city: "Auckland",
+    country: "New Zealand",
+    countryCode: "NZ",
+    lat: -36.8485,
+    lng: 174.7633,
+    phoneCode: "+649",
+  },
+  {
+    city: "Dubai",
+    country: "United Arab Emirates",
+    countryCode: "AE",
+    lat: 25.2048,
+    lng: 55.2708,
+    phoneCode: "+9714",
+  },
+  {
+    city: "Tel Aviv",
+    country: "Israel",
+    countryCode: "IL",
+    lat: 32.0853,
+    lng: 34.7818,
+    phoneCode: "+9723",
+  },
+  {
+    city: "Cape Town",
+    country: "South Africa",
+    countryCode: "ZA",
+    lat: -33.9249,
+    lng: 18.4241,
+    phoneCode: "+2721",
+  },
+  {
+    city: "Lagos",
+    country: "Nigeria",
+    countryCode: "NG",
+    lat: 6.5244,
+    lng: 3.3792,
+    phoneCode: "+2341",
+  },
+  {
+    city: "Nairobi",
+    country: "Kenya",
+    countryCode: "KE",
+    lat: -1.2864,
+    lng: 36.8172,
+    phoneCode: "+25420",
+  },
+  {
+    city: "Sao Paulo",
+    country: "Brazil",
+    countryCode: "BR",
+    lat: -23.5505,
+    lng: -46.6333,
+    phoneCode: "+5511",
+  },
+  {
+    city: "Buenos Aires",
+    country: "Argentina",
+    countryCode: "AR",
+    lat: -34.6037,
+    lng: -58.3816,
+    phoneCode: "+5411",
+  },
+  {
+    city: "Bogota",
+    country: "Colombia",
+    countryCode: "CO",
+    lat: 4.711,
+    lng: -74.0721,
+    phoneCode: "+571",
+  },
+  {
+    city: "Santiago",
+    country: "Chile",
+    countryCode: "CL",
+    lat: -33.4489,
+    lng: -70.6693,
+    phoneCode: "+562",
+  },
 ];
 
 const LONDON_CENTER = {
@@ -113,8 +455,13 @@ const LONDON_CENTER = {
 };
 
 const EMAIL_DOMAINS = [
-  "gmail.com", "outlook.com", "yahoo.com", "hotmail.com", "icloud.com",
-  "proton.me", "fastmail.com",
+  "gmail.com",
+  "outlook.com",
+  "yahoo.com",
+  "hotmail.com",
+  "icloud.com",
+  "proton.me",
+  "fastmail.com",
 ];
 
 // Stable but pseudo-random — we don't need crypto, just variety.
@@ -198,7 +545,7 @@ function makeContact(location: "london" | CityEntry): SeededContact {
  * provisioned yet). Caller should surface a useful error.
  */
 async function resolveTargetSubAccount(
-  db: Firestore,
+  db: Firestore
 ): Promise<{ subAccountId: string; agencyId: string } | null> {
   const snap = await db
     .collection("subAccounts")
@@ -222,7 +569,7 @@ export async function seedDemo(db: Firestore): Promise<SeedResult> {
   const target = await resolveTargetSubAccount(db);
   if (!target) {
     throw new Error(
-      `Sub-account #${TARGET_ACCOUNT_NUMBER} not found. Create it first.`,
+      `Sub-account #${TARGET_ACCOUNT_NUMBER} not found. Create it first.`
     );
   }
   const { subAccountId, agencyId } = target;
@@ -256,12 +603,48 @@ export async function seedDemo(db: Firestore): Promise<SeedResult> {
     valueMax: number;
     isTerminal: boolean;
   }> = [
-    { stageId: "new", count: 18, valueMin: 500, valueMax: 5000, isTerminal: false },
-    { stageId: "contacted", count: 15, valueMin: 1000, valueMax: 8000, isTerminal: false },
-    { stageId: "qualified", count: 12, valueMin: 2000, valueMax: 15000, isTerminal: false },
-    { stageId: "proposal", count: 8, valueMin: 5000, valueMax: 25000, isTerminal: false },
-    { stageId: "won", count: 18, valueMin: 1500, valueMax: 30000, isTerminal: true },
-    { stageId: "lost", count: 10, valueMin: 1000, valueMax: 20000, isTerminal: false },
+    {
+      stageId: "new",
+      count: 18,
+      valueMin: 500,
+      valueMax: 5000,
+      isTerminal: false,
+    },
+    {
+      stageId: "contacted",
+      count: 15,
+      valueMin: 1000,
+      valueMax: 8000,
+      isTerminal: false,
+    },
+    {
+      stageId: "qualified",
+      count: 12,
+      valueMin: 2000,
+      valueMax: 15000,
+      isTerminal: false,
+    },
+    {
+      stageId: "proposal",
+      count: 8,
+      valueMin: 5000,
+      valueMax: 25000,
+      isTerminal: false,
+    },
+    {
+      stageId: "won",
+      count: 18,
+      valueMin: 1500,
+      valueMax: 30000,
+      isTerminal: true,
+    },
+    {
+      stageId: "lost",
+      count: 10,
+      valueMin: 1000,
+      valueMax: 20000,
+      isTerminal: false,
+    },
   ];
 
   const dealsToCreate: Array<{
@@ -273,14 +656,17 @@ export async function seedDemo(db: Firestore): Promise<SeedResult> {
     isTerminal: boolean;
   }> = [];
 
-  const shuffledContacts = [...contactsToCreate].sort(() => Math.random() - 0.5);
+  const shuffledContacts = [...contactsToCreate].sort(
+    () => Math.random() - 0.5
+  );
   let contactIdx = 0;
   for (const stage of stageDistribution) {
     for (let i = 0; i < stage.count; i++) {
       if (contactIdx >= shuffledContacts.length) break;
       const c = shuffledContacts[contactIdx++];
       const value =
-        stage.valueMin + Math.floor(Math.random() * (stage.valueMax - stage.valueMin));
+        stage.valueMin +
+        Math.floor(Math.random() * (stage.valueMax - stage.valueMin));
       dealsToCreate.push({
         ref: db.collection("deals").doc(),
         contactRef: c.ref,
@@ -437,7 +823,7 @@ export async function unseedDemo(db: Firestore): Promise<UnseedResult> {
   const target = await resolveTargetSubAccount(db);
   if (!target) {
     throw new Error(
-      `Sub-account #${TARGET_ACCOUNT_NUMBER} not found. Nothing to unseed.`,
+      `Sub-account #${TARGET_ACCOUNT_NUMBER} not found. Nothing to unseed.`
     );
   }
   const { subAccountId } = target;

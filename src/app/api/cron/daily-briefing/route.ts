@@ -8,7 +8,7 @@ import {
 } from "@/lib/automations/qstash";
 
 /**
- * Fired hourly by the "leadstack-daily-briefing" QStash schedule (see
+ * Fired hourly by the "agentstack-daily-briefing" QStash schedule (see
  * lib/qstash/register-schedules.ts). Fans out one staggered callback per
  * sub-account that has opted into the Daily Briefing to
  * /api/cron/daily-briefing/step, mirroring the workflow-time-triggers

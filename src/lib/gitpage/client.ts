@@ -13,7 +13,7 @@ import { isNicheKey, NICHE_FORCED_PAGES } from "@/lib/website/niches";
  * for local mocking.
  *
  * v1 contract is frozen — additions ship into v1, breaking changes land at
- * /api/v2/. See LEADSTACK_INTEGRATION.md for the full spec.
+ * /api/v2/. See AGENTSTACK_INTEGRATION.md for the full spec.
  *
  * If env vars aren't set, both functions throw — callers translate that to
  * a 503 to the client (mirrors the existing pattern in
@@ -23,16 +23,14 @@ import { isNicheKey, NICHE_FORCED_PAGES } from "@/lib/website/niches";
 const DEFAULT_BASE_URL = "https://www.gitpage.site";
 
 function getBaseUrl(): string {
-  return (
-    process.env.GITPAGE_API_URL?.replace(/\/$/, "") ?? DEFAULT_BASE_URL
-  );
+  return process.env.GITPAGE_API_URL?.replace(/\/$/, "") ?? DEFAULT_BASE_URL;
 }
 
 function getApiKey(): string {
   const key = process.env.GITPAGE_API_KEY;
   if (!key) {
     throw new Error(
-      "GITPAGE_API_KEY is not set. Add it to .env.local + Vercel env vars.",
+      "GITPAGE_API_KEY is not set. Add it to .env.local + Vercel env vars."
     );
   }
   return key;
@@ -62,7 +60,7 @@ export interface SubmitBuildResult {
 }
 
 export async function submitBuild(
-  input: SubmitBuildInput,
+  input: SubmitBuildInput
 ): Promise<SubmitBuildResult> {
   const url = `${getBaseUrl()}/api/v1/generate-site`;
   const payload = configToGitpagePayload(input);
@@ -108,7 +106,7 @@ export async function submitBuild(
     throw new GitpageError(
       "gitpage returned 2xx but no formResponseId/pollUrl",
       res.status,
-      body,
+      body
     );
   }
 
@@ -157,7 +155,7 @@ export interface PollBuildResult {
 }
 
 export async function pollBuild(
-  formResponseId: string,
+  formResponseId: string
 ): Promise<PollBuildResult> {
   const url = `${getBaseUrl()}/api/v1/page-status?formResponseId=${encodeURIComponent(formResponseId)}`;
   const res = await fetch(url, {
@@ -187,8 +185,7 @@ export async function pollBuild(
   const pagesUrl = typeof body.pagesUrl === "string" ? body.pagesUrl : null;
   const repoUrl = typeof body.repoUrl === "string" ? body.repoUrl : null;
   const error = typeof body.error === "string" ? body.error : null;
-  const updatedAt =
-    typeof body.updatedAt === "string" ? body.updatedAt : null;
+  const updatedAt = typeof body.updatedAt === "string" ? body.updatedAt : null;
   const partialErrors = Array.isArray(body.partialErrors)
     ? body.partialErrors.filter((v): v is string => typeof v === "string")
     : null;
@@ -214,7 +211,8 @@ export async function pollBuild(
     pagesUrl,
     repoUrl,
     error,
-    partialErrors: partialErrors && partialErrors.length > 0 ? partialErrors : null,
+    partialErrors:
+      partialErrors && partialErrors.length > 0 ? partialErrors : null,
     isTerminal,
     updatedAt,
   };

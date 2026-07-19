@@ -20,7 +20,7 @@ import { getAdminDb } from "@/lib/firebase/admin";
  *   - /api/cron/gitpage-heartbeat — daily scheduled callback
  */
 
-const HEARTBEAT_URL_PATH = "/api/v1/leadstack/heartbeat";
+const HEARTBEAT_URL_PATH = "/api/v1/agentstack/heartbeat";
 const APP_VERSION = "0.1.0";
 const HEARTBEAT_TIMEOUT_MS = 5000;
 
@@ -47,7 +47,8 @@ interface HeartbeatStats {
 
 function getBaseUrl(): string {
   return (
-    process.env.GITPAGE_API_URL?.replace(/\/$/, "") ?? "https://www.gitpage.site"
+    process.env.GITPAGE_API_URL?.replace(/\/$/, "") ??
+    "https://www.gitpage.site"
   );
 }
 
@@ -62,7 +63,7 @@ function detectPlatform(): string {
 /**
  * Resolve a stable instanceId persisted in Firestore at `system/heartbeat`.
  * Generated once on first heartbeat and reused thereafter so gitpage's
- * `leadstack_instances` collection treats this deployment as one row.
+ * `agentstack_instances` collection treats this deployment as one row.
  */
 async function getOrCreateInstanceId(): Promise<{
   id: string;
@@ -71,14 +72,16 @@ async function getOrCreateInstanceId(): Promise<{
   const db = getAdminDb();
   const ref = db.doc("system/heartbeat");
   const snap = await ref.get();
-  const existing = snap.exists ? (snap.data()?.instanceId as string | undefined) : undefined;
+  const existing = snap.exists
+    ? (snap.data()?.instanceId as string | undefined)
+    : undefined;
   if (existing) {
     return { id: existing, firstBoot: false };
   }
   const id = randomUUID();
   await ref.set(
     { instanceId: id, createdAt: FieldValue.serverTimestamp() },
-    { merge: true },
+    { merge: true }
   );
   return { id, firstBoot: true };
 }
@@ -112,7 +115,7 @@ async function resolveOwnerEmail(): Promise<string | null> {
  * (typically the cron route writes it to `system/gitpageStatus`).
  */
 export async function sendHeartbeat(
-  stats: HeartbeatStats = {},
+  stats: HeartbeatStats = {}
 ): Promise<HeartbeatResponse | null> {
   if (process.env.GITPAGE_TELEMETRY === "off") return null;
 
@@ -232,7 +235,7 @@ export async function markGitpageBuildSucceeded(): Promise<void> {
         lastError: null,
         lastBuildAcceptedAt: FieldValue.serverTimestamp(),
       },
-      { merge: true },
+      { merge: true }
     );
   } catch (err) {
     console.warn("[gitpage/heartbeat] markGitpageBuildSucceeded failed", err);

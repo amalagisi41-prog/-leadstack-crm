@@ -372,7 +372,7 @@ export function sampleVslConfig(): WebsiteConfig {
 // ---------------------------------------------------------------------------
 // Niche sample prefills — one per (niche × build type) combination, six total.
 // Mirror the example payloads in §2.5–2.7 and §3.4–3.6 of
-// LEADSTACK_NICHE_TEMPLATES.md. Niche-locked page sets force services + contact
+// AGENTSTACK_NICHE_TEMPLATES.md. Niche-locked page sets force services + contact
 // + privacy + terms all true; business_details are required since contact is
 // forced on. Design fields are still set on niche samples but gitpage's niche
 // directive overrides them — they're left in place so the form renders cleanly
@@ -478,8 +478,7 @@ export function sampleRealEstateLocalConfig(): WebsiteConfig {
     color_scheme: "Standard",
     hero_statement:
       "Upper East Side real estate, with the discretion and track record your move deserves.",
-    features:
-      "Buyer Representation, Seller Representation, Off-Market Access",
+    features: "Buyer Representation, Seller Representation, Off-Market Access",
     benefits: "Top 1% Producer, $1.2B career sales, 99% sale-to-list",
     contact_details: "serena@stonere.example",
     cta_link: "https://stonere.example/connect",
@@ -612,7 +611,8 @@ export function sampleGymFitnessVslConfig(): WebsiteConfig {
     build_type: "vsl",
     niche: "gym_fitness",
     language: "English",
-    heading: "How NYC Professionals Train Like Athletes Without Quitting Their Day Jobs.",
+    heading:
+      "How NYC Professionals Train Like Athletes Without Quitting Their Day Jobs.",
     color_scheme: "Dark Mode",
     hero_statement:
       "Coach-led sessions, smart programming, and a community that walks in sharper every week.",

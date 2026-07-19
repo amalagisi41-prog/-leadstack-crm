@@ -41,7 +41,7 @@ interface CreateBody {
 
 export async function GET(
   request: Request,
-  ctx: { params: Promise<{ id: string }> },
+  ctx: { params: Promise<{ id: string }> }
 ) {
   const { id: subAccountId } = await ctx.params;
   const access = await requireSubAccountAdmin(request, subAccountId);
@@ -62,7 +62,7 @@ export async function GET(
 
 export async function POST(
   request: Request,
-  ctx: { params: Promise<{ id: string }> },
+  ctx: { params: Promise<{ id: string }> }
 ) {
   const { id: subAccountId } = await ctx.params;
   const access = await requireSubAccountAdmin(request, subAccountId);
@@ -79,20 +79,20 @@ export async function POST(
   if (!name) {
     return NextResponse.json(
       { error: "Key name is required." },
-      { status: 400 },
+      { status: 400 }
     );
   }
   if (name.length > MAX_NAME) {
     return NextResponse.json(
       { error: `Key name must be ${MAX_NAME} characters or fewer.` },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
   if (!body.mode || !VALID_MODES.includes(body.mode)) {
     return NextResponse.json(
       { error: "Mode must be 'live' or 'test'." },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
@@ -106,7 +106,7 @@ export async function POST(
         {
           error: `Unknown scope '${s}'. Allowed: ${VALID_SCOPES.join(", ")}.`,
         },
-        { status: 400 },
+        { status: 400 }
       );
     }
   }
@@ -120,7 +120,7 @@ export async function POST(
         error:
           "Cannot combine 'admin' and 'forms-ingest' on one key. Mint two keys instead.",
       },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
@@ -131,7 +131,7 @@ export async function POST(
   if (!subSnap.exists) {
     return NextResponse.json(
       { error: "Sub-account not found" },
-      { status: 404 },
+      { status: 404 }
     );
   }
   const subData = subSnap.data()!;
@@ -139,7 +139,7 @@ export async function POST(
   if (!agencyId) {
     return NextResponse.json(
       { error: "Sub-account is missing agencyId" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 
@@ -153,7 +153,7 @@ export async function POST(
         error:
           "API access is disabled for this sub-account. Your agency administrator can enable it from Manage in the agency sub-accounts list.",
       },
-      { status: 403 },
+      { status: 403 }
     );
   }
 
@@ -167,7 +167,7 @@ export async function POST(
     hashedSecret: hashApiKey(minted.rawKey),
     scopes,
     // Pin the key to the version live at mint time. The auth middleware
-    // reads this when no `LeadStack-Version` request header is set, so
+    // reads this when no `AgentStack-Version` request header is set, so
     // future breaking API changes don't silently change behaviour for
     // already-issued keys.
     defaultVersion: LATEST_API_VERSION,

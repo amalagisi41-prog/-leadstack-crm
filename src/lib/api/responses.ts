@@ -9,7 +9,7 @@ import { LATEST_API_VERSION } from "./versions";
  *   - `X-Request-Id`        — opaque per-request id surfaced in errors and
  *                             stored on `apiRequestLogs` (slice 3). Operators
  *                             quote this in support tickets to find the row.
- *   - `LeadStack-Version`   — resolved API version actually used. Echoes the
+ *   - `AgentStack-Version`   — resolved API version actually used. Echoes the
  *                             caller's pin OR the key default OR latest.
  *
  * Error body shape (always):
@@ -61,14 +61,14 @@ export interface ResponseMeta {
 function metaHeaders(meta: ResponseMeta): Record<string, string> {
   return {
     "X-Request-Id": meta.requestId,
-    "LeadStack-Version": meta.apiVersion,
+    "AgentStack-Version": meta.apiVersion,
   };
 }
 
 export function apiOk<T>(
   meta: ResponseMeta,
   body: T,
-  init?: { status?: number; headers?: Record<string, string> },
+  init?: { status?: number; headers?: Record<string, string> }
 ): NextResponse {
   return NextResponse.json(body, {
     status: init?.status ?? 200,
@@ -85,7 +85,7 @@ export function apiError(
     docUrl?: string;
     status?: number;
     extraHeaders?: Record<string, string>;
-  } = {},
+  } = {}
 ): NextResponse {
   // Meta may be null when the request fails before auth resolves (e.g. the
   // version header is bad). Synthesise a request id + use latest version so

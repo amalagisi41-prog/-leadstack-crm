@@ -97,7 +97,7 @@ export interface GhlCustomFieldMapEntry {
   ghlId: string;
   ghlName: string;
   /** Target AgentStack custom-field key, or null to SKIP this field. */
-  leadstackKey: string | null;
+  agentstackKey: string | null;
 }
 
 export interface GhlImportMapping {
@@ -135,15 +135,15 @@ function contactName(c: GhlContact): string {
   );
 }
 
-/** Map GHL customFields[] → { leadstackKey: value }, skipping unmapped fields. */
+/** Map GHL customFields[] → { agentstackKey: value }, skipping unmapped fields. */
 function mapCustomFields(
   fields: GhlCustomFieldValue[] | undefined,
-  map: Record<string, GhlCustomFieldMapEntry>,
+  map: Record<string, GhlCustomFieldMapEntry>
 ): Record<string, unknown> {
   const out: Record<string, unknown> = {};
   for (const f of fields ?? []) {
     const entry = map[f.id];
-    if (entry?.leadstackKey) out[entry.leadstackKey] = f.value;
+    if (entry?.agentstackKey) out[entry.agentstackKey] = f.value;
   }
   return out;
 }
@@ -162,7 +162,7 @@ export interface ContactChunkRecord {
 
 export function ghlContactToChunk(
   c: GhlContact,
-  mapping: GhlImportMapping,
+  mapping: GhlImportMapping
 ): ContactChunkRecord {
   return {
     external_id: c.id,
@@ -172,7 +172,9 @@ export function ghlContactToChunk(
     company: c.companyName?.trim() ?? "",
     address: joinAddress(c),
     source: c.source?.trim() ?? "",
-    tags: Array.isArray(c.tags) ? c.tags.filter((t) => typeof t === "string") : [],
+    tags: Array.isArray(c.tags)
+      ? c.tags.filter((t) => typeof t === "string")
+      : [],
     custom_fields: mapCustomFields(c.customFields, mapping.customFields),
   };
 }
@@ -194,7 +196,7 @@ export interface DealChunkRecord {
  */
 export function resolveOpportunityStage(
   o: GhlOpportunity,
-  mapping: GhlImportMapping,
+  mapping: GhlImportMapping
 ): PipelineStageId {
   if (o.status === "won") return "won";
   if (o.status === "lost" || o.status === "abandoned") return "lost";
@@ -206,7 +208,7 @@ export function resolveOpportunityStage(
 
 export function ghlOpportunityToChunk(
   o: GhlOpportunity,
-  mapping: GhlImportMapping,
+  mapping: GhlImportMapping
 ): DealChunkRecord {
   return {
     external_id: o.id,
@@ -266,7 +268,7 @@ export function suggestStageMap(pipelines: GhlPipeline[]): GhlStageMap {
 
 /** Map a GHL custom-field dataType → an AgentStack custom-field type. */
 export function ghlDataTypeToCustomFieldType(
-  dataType: string | undefined,
+  dataType: string | undefined
 ): CustomFieldType {
   switch ((dataType ?? "").toUpperCase()) {
     case "NUMERICAL":
@@ -305,12 +307,13 @@ export interface SuggestedCustomField {
 
 /** Propose AgentStack custom-field defs to create from GHL's custom fields. */
 export function suggestCustomFields(
-  defs: GhlCustomFieldDef[],
+  defs: GhlCustomFieldDef[]
 ): SuggestedCustomField[] {
   return defs.map((d) => ({
     ghlId: d.id,
     ghlName: d.name,
-    entity: (d.model ?? "").toLowerCase() === "opportunity" ? "deal" : "contact",
+    entity:
+      (d.model ?? "").toLowerCase() === "opportunity" ? "deal" : "contact",
     label: d.name,
     type: ghlDataTypeToCustomFieldType(d.dataType),
     options: Array.isArray(d.picklistOptions) ? d.picklistOptions : [],

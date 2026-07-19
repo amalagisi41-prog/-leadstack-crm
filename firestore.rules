@@ -558,8 +558,8 @@ service cloud.firestore {
     }
 
     // ---------- affiliate program ----------
-    // Active only on deployments where LANDING_VARIANT === "leadstack"
-    // (i.e. the leadstack.dev demo). On buyer clones (LANDING_VARIANT
+    // Active only on deployments where LANDING_VARIANT === "agentstack"
+    // (i.e. the agentstackcrm.app demo). On buyer clones (LANDING_VARIANT
     // === "custom") nothing ever writes to these collections — the rules
     // below are inert. Both collections are server-only; the affiliate
     // dashboard reads happen via Admin SDK behind a magic-link session.

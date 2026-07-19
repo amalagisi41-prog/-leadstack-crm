@@ -56,7 +56,7 @@ export type WriteChunkResult = ImportEntityTotals & {
 function mappingKey(
   system: ImportSource,
   entity: ImportEntity,
-  externalId: string,
+  externalId: string
 ): string {
   return `${system}:${entity}:${externalId}`
     .replace(/[/.#$[\]]/g, "_")
@@ -79,7 +79,7 @@ type Built =
   | { ok: false; error: string };
 
 export async function writeImportChunk(
-  input: WriteChunkInput,
+  input: WriteChunkInput
 ): Promise<WriteChunkResult> {
   const db = getAdminDb();
   const { subAccountId, agencyId, createdByUid, source, entity } = input;
@@ -89,12 +89,12 @@ export async function writeImportChunk(
   if (records.length === 0) return result;
   if (records.length > MAX_RECORDS_PER_CHUNK) {
     throw new Error(
-      `Chunk too large (${records.length} > ${MAX_RECORDS_PER_CHUNK}).`,
+      `Chunk too large (${records.length} > ${MAX_RECORDS_PER_CHUNK}).`
     );
   }
 
   const mappingsCol = db.collection(
-    `subAccounts/${subAccountId}/importMappings`,
+    `subAccounts/${subAccountId}/importMappings`
   );
 
   // ── One read pass: own-entity dedup keys + parent-contact resolution ──
@@ -147,7 +147,7 @@ export async function writeImportChunk(
       if (!contactId && contactExt) {
         contactId =
           existing.get(mappingKey(source, "contacts", contactExt))
-            ?.leadstackId ?? null;
+            ?.agentstackId ?? null;
       }
 
       const ownMap = externalId
@@ -180,7 +180,7 @@ export async function writeImportChunk(
           entity,
           system: source,
           externalId,
-          leadstackId: built.docId,
+          agentstackId: built.docId,
           parentId: built.parentId,
           createdAt: FieldValue.serverTimestamp(),
         };
@@ -202,7 +202,7 @@ export async function writeImportChunk(
         result,
         entity,
         externalId,
-        err instanceof Error ? err.message : "write failed",
+        err instanceof Error ? err.message : "write failed"
       );
     }
   }
@@ -214,7 +214,7 @@ function fail(
   result: WriteChunkResult,
   entity: ImportEntity,
   externalId: string | null,
-  error: string,
+  error: string
 ) {
   result.failed++;
   if (result.errors.length < IMPORT_ERROR_CAP) {
@@ -253,10 +253,12 @@ function buildWrite(db: FirebaseFirestore.Firestore, a: BuildArgs): Built {
   switch (a.entity) {
     case "contacts": {
       const parsed = parseContactCreate(a.raw);
-      if (!parsed.ok) return { ok: false, error: parsed.error ?? "invalid contact" };
+      if (!parsed.ok)
+        return { ok: false, error: parsed.error ?? "invalid contact" };
       const v = parsed.value!;
       const cf = validateCustomFieldValues(a.raw.custom_fields, a.defs);
-      if (!cf.ok) return { ok: false, error: cf.error ?? "invalid custom fields" };
+      if (!cf.ok)
+        return { ok: false, error: cf.error ?? "invalid custom fields" };
       const editable = {
         name: v.name,
         email: v.email,
@@ -270,7 +272,7 @@ function buildWrite(db: FirebaseFirestore.Firestore, a: BuildArgs): Built {
         customFields: cf.value,
       };
       if (isUpdate) {
-        const id = a.existing!.leadstackId;
+        const id = a.existing!.agentstackId;
         return {
           ok: true,
           ref: db.collection("contacts").doc(id),
@@ -307,13 +309,18 @@ function buildWrite(db: FirebaseFirestore.Firestore, a: BuildArgs): Built {
 
     case "deals": {
       if (!a.contactId) {
-        return { ok: false, error: "deal: contact_external_id did not resolve to a contact" };
+        return {
+          ok: false,
+          error: "deal: contact_external_id did not resolve to a contact",
+        };
       }
       const parsed = parseDealCreate({ ...a.raw, contact_id: a.contactId });
-      if (!parsed.ok) return { ok: false, error: parsed.error ?? "invalid deal" };
+      if (!parsed.ok)
+        return { ok: false, error: parsed.error ?? "invalid deal" };
       const v = parsed.value!;
       const cf = validateCustomFieldValues(a.raw.custom_fields, a.defs);
-      if (!cf.ok) return { ok: false, error: cf.error ?? "invalid custom fields" };
+      if (!cf.ok)
+        return { ok: false, error: cf.error ?? "invalid custom fields" };
       const editable = {
         title: v.title,
         value: v.value,
@@ -325,7 +332,7 @@ function buildWrite(db: FirebaseFirestore.Firestore, a: BuildArgs): Built {
         territoryId: v.territoryId ?? GLOBAL_TERRITORY_ID,
       };
       if (isUpdate) {
-        const id = a.existing!.leadstackId;
+        const id = a.existing!.agentstackId;
         return {
           ok: true,
           ref: db.collection("deals").doc(id),
@@ -356,7 +363,8 @@ function buildWrite(db: FirebaseFirestore.Firestore, a: BuildArgs): Built {
 
     case "tasks": {
       const parsed = parseTaskCreate({ ...a.raw, contact_id: a.contactId });
-      if (!parsed.ok) return { ok: false, error: parsed.error ?? "invalid task" };
+      if (!parsed.ok)
+        return { ok: false, error: parsed.error ?? "invalid task" };
       const v = parsed.value!;
       const editable = {
         title: v.title,
@@ -368,7 +376,7 @@ function buildWrite(db: FirebaseFirestore.Firestore, a: BuildArgs): Built {
         territoryId: v.territoryId ?? GLOBAL_TERRITORY_ID,
       };
       if (isUpdate) {
-        const id = a.existing!.leadstackId;
+        const id = a.existing!.agentstackId;
         return {
           ok: true,
           ref: db.collection("tasks").doc(id),
@@ -399,7 +407,8 @@ function buildWrite(db: FirebaseFirestore.Firestore, a: BuildArgs): Built {
 
     case "events": {
       const parsed = parseEventCreate({ ...a.raw, contact_id: a.contactId });
-      if (!parsed.ok) return { ok: false, error: parsed.error ?? "invalid event" };
+      if (!parsed.ok)
+        return { ok: false, error: parsed.error ?? "invalid event" };
       const v = parsed.value!;
       const editable = {
         title: v.title,
@@ -411,7 +420,7 @@ function buildWrite(db: FirebaseFirestore.Firestore, a: BuildArgs): Built {
         territoryId: v.territoryId ?? GLOBAL_TERRITORY_ID,
       };
       if (isUpdate) {
-        const id = a.existing!.leadstackId;
+        const id = a.existing!.agentstackId;
         return {
           ok: true,
           ref: db.collection("events").doc(id),
@@ -446,10 +455,13 @@ function buildWrite(db: FirebaseFirestore.Firestore, a: BuildArgs): Built {
       // A note lives under its contact — resolution is mandatory.
       const parentId = a.contactId ?? a.existing?.parentId ?? null;
       if (!parentId) {
-        return { ok: false, error: "note: contact_external_id did not resolve to a contact" };
+        return {
+          ok: false,
+          error: "note: contact_external_id did not resolve to a contact",
+        };
       }
       if (isUpdate && a.existing?.parentId) {
-        const id = a.existing.leadstackId;
+        const id = a.existing.agentstackId;
         return {
           ok: true,
           ref: db
@@ -469,7 +481,9 @@ function buildWrite(db: FirebaseFirestore.Firestore, a: BuildArgs): Built {
         .collection("notes")
         .doc();
       const provided =
-        typeof a.raw.created_at === "string" ? new Date(a.raw.created_at) : null;
+        typeof a.raw.created_at === "string"
+          ? new Date(a.raw.created_at)
+          : null;
       const createdAt =
         provided && !Number.isNaN(provided.getTime()) ? provided : ts;
       return {

@@ -9,11 +9,25 @@ import "./globals.css";
 // variant derives title + description from CUSTOM_BRAND so the buyer edits
 // one config file to brand both the page chrome and the rendered landing.
 const CUSTOM_SITE_URL = `https://${CUSTOM_BRAND.primaryDomain}`;
-const LEADSTACK_SITE_URL = "https://leadstack.dev";
+const AGENTSTACK_SITE_URL = "https://agentstackcrm.app";
 const CUSTOM_TITLE = `${CUSTOM_BRAND.name} — ${CUSTOM_BRAND.tagline}`;
-const LEADSTACK_TITLE = "LeadStack — The all-in-one CRM for teams that actually close";
-const LEADSTACK_DESCRIPTION =
+const AGENTSTACK_TITLE =
+  "AgentStack — The all-in-one CRM for teams that actually close";
+const AGENTSTACK_DESCRIPTION =
   "Capture leads, run pipelines, and book meetings from one simple workspace. Built for small teams that want to replace five tools with one.";
+const APP_ICONS: Metadata["icons"] = {
+  icon: [
+    { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+    { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+  ],
+  apple: [
+    {
+      url: "/icons/apple-touch-icon.png",
+      sizes: "180x180",
+      type: "image/png",
+    },
+  ],
+};
 
 export const metadata: Metadata =
   LANDING_VARIANT === "custom"
@@ -22,6 +36,7 @@ export const metadata: Metadata =
         alternates: { canonical: "/" },
         title: CUSTOM_TITLE,
         description: CUSTOM_BRAND.shortDescription,
+        icons: APP_ICONS,
         openGraph: {
           title: CUSTOM_TITLE,
           description: CUSTOM_BRAND.shortDescription,
@@ -36,21 +51,22 @@ export const metadata: Metadata =
         },
       }
     : {
-        metadataBase: new URL(LEADSTACK_SITE_URL),
+        metadataBase: new URL(AGENTSTACK_SITE_URL),
         alternates: { canonical: "/" },
-        title: LEADSTACK_TITLE,
-        description: LEADSTACK_DESCRIPTION,
+        title: AGENTSTACK_TITLE,
+        description: AGENTSTACK_DESCRIPTION,
+        icons: APP_ICONS,
         openGraph: {
-          title: LEADSTACK_TITLE,
-          description: LEADSTACK_DESCRIPTION,
-          url: LEADSTACK_SITE_URL,
-          siteName: "LeadStack",
+          title: AGENTSTACK_TITLE,
+          description: AGENTSTACK_DESCRIPTION,
+          url: AGENTSTACK_SITE_URL,
+          siteName: "AgentStack",
           type: "website",
         },
         twitter: {
           card: "summary_large_image",
-          title: LEADSTACK_TITLE,
-          description: LEADSTACK_DESCRIPTION,
+          title: AGENTSTACK_TITLE,
+          description: AGENTSTACK_DESCRIPTION,
         },
       };
 

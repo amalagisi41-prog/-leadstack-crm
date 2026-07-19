@@ -44,11 +44,11 @@ function Verification({ comparison }: { comparison: Comparison }) {
         {verification.heading}
       </h2>
       {verification.intro ? (
-        <p className="mb-6 max-w-3xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+        <p className="text-muted-foreground mb-6 max-w-3xl text-sm leading-relaxed sm:text-base">
           {verification.intro}
         </p>
       ) : null}
-      <div className="overflow-hidden rounded-2xl border bg-card">
+      <div className="bg-card overflow-hidden rounded-2xl border">
         <table className="w-full text-sm">
           <thead className="bg-muted/40">
             <tr>
@@ -70,9 +70,9 @@ function Verification({ comparison }: { comparison: Comparison }) {
                 className={i % 2 === 0 ? "bg-background" : "bg-muted/20"}
               >
                 <td className="px-4 py-4 align-top sm:px-6">
-                  <p className="font-medium text-foreground">{item.label}</p>
+                  <p className="text-foreground font-medium">{item.label}</p>
                   {item.note ? (
-                    <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                    <p className="text-muted-foreground mt-1 text-xs leading-relaxed">
                       {item.note}
                     </p>
                   ) : null}
@@ -83,7 +83,7 @@ function Verification({ comparison }: { comparison: Comparison }) {
                         href={source.url}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-1.5 rounded-full border bg-background px-3 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted"
+                        className="bg-background text-muted-foreground hover:bg-muted inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs transition-colors"
                       >
                         {source.label}
                         <ChevronRight className="h-3 w-3" />
@@ -91,10 +91,10 @@ function Verification({ comparison }: { comparison: Comparison }) {
                     ))}
                   </div>
                 </td>
-                <td className="px-4 py-4 align-top text-muted-foreground sm:px-6">
-                  {item.leadstack}
+                <td className="text-muted-foreground px-4 py-4 align-top sm:px-6">
+                  {item.agentstack}
                 </td>
-                <td className="px-4 py-4 align-top text-muted-foreground sm:px-6">
+                <td className="text-muted-foreground px-4 py-4 align-top sm:px-6">
                   {item.competitor}
                 </td>
               </tr>
@@ -109,27 +109,27 @@ function Verification({ comparison }: { comparison: Comparison }) {
 function Hero({ comparison }: { comparison: Comparison }) {
   return (
     <header className="mb-12 text-center sm:mb-16">
-      <p className="mb-3 inline-flex items-center gap-1.5 rounded-full border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
+      <p className="bg-card text-muted-foreground mb-3 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium">
         <Sparkles className="h-3 w-3" />
         Independent comparison
       </p>
       <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
         {comparison.hero.h1}
       </h1>
-      <p className="mx-auto mt-5 max-w-3xl text-lg leading-relaxed text-muted-foreground">
+      <p className="text-muted-foreground mx-auto mt-5 max-w-3xl text-lg leading-relaxed">
         {comparison.hero.subhead}
       </p>
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
         <Link
           href="/#pricing"
           data-cta="comparison-hero"
-          className="inline-flex h-11 items-center rounded-lg bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+          className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-11 items-center rounded-lg px-6 text-sm font-semibold transition-colors"
         >
           {comparison.hero.ctaLabel}
         </Link>
         <a
           href="#feature-table"
-          className="inline-flex h-11 items-center rounded-lg border bg-background px-6 text-sm font-medium transition-colors hover:bg-muted"
+          className="bg-background hover:bg-muted inline-flex h-11 items-center rounded-lg border px-6 text-sm font-medium transition-colors"
         >
           Jump to feature comparison
         </a>
@@ -141,13 +141,15 @@ function Hero({ comparison }: { comparison: Comparison }) {
 function PullQuote({ comparison }: { comparison: Comparison }) {
   return (
     <section className="mb-12 sm:mb-16">
-      <blockquote className="relative rounded-2xl border bg-card p-8 sm:p-10">
-        <Quote className="absolute left-6 top-6 h-6 w-6 text-muted-foreground/30" />
-        <p className="pl-10 text-lg italic leading-relaxed text-foreground sm:text-xl">
+      <blockquote className="bg-card relative rounded-2xl border p-8 sm:p-10">
+        <Quote className="text-muted-foreground/30 absolute top-6 left-6 h-6 w-6" />
+        <p className="text-foreground pl-10 text-lg leading-relaxed italic sm:text-xl">
           &ldquo;{comparison.pullQuote.text}&rdquo;
         </p>
-        <footer className="mt-5 pl-10 text-sm text-muted-foreground">
-          <strong className="text-foreground">{comparison.pullQuote.author}</strong>
+        <footer className="text-muted-foreground mt-5 pl-10 text-sm">
+          <strong className="text-foreground">
+            {comparison.pullQuote.author}
+          </strong>
           {comparison.pullQuote.role ? ` · ${comparison.pullQuote.role}` : null}
         </footer>
       </blockquote>
@@ -163,12 +165,9 @@ function PainPoints({ comparison }: { comparison: Comparison }) {
       </h2>
       <div className="grid gap-4 sm:grid-cols-3">
         {comparison.painPoints.bullets.map((bullet) => (
-          <div
-            key={bullet.title}
-            className="rounded-2xl border bg-card p-6"
-          >
+          <div key={bullet.title} className="bg-card rounded-2xl border p-6">
             <h3 className="mb-2 text-base font-semibold">{bullet.title}</h3>
-            <p className="text-sm leading-relaxed text-muted-foreground">
+            <p className="text-muted-foreground text-sm leading-relaxed">
               {bullet.body}
             </p>
           </div>
@@ -186,12 +185,9 @@ function Advantages({ comparison }: { comparison: Comparison }) {
       </h2>
       <div className="grid gap-4 sm:grid-cols-2">
         {comparison.advantages.map((advantage) => (
-          <div
-            key={advantage.title}
-            className="rounded-2xl border bg-card p-6"
-          >
+          <div key={advantage.title} className="bg-card rounded-2xl border p-6">
             <h3 className="mb-2 text-base font-semibold">{advantage.title}</h3>
-            <p className="text-sm leading-relaxed text-muted-foreground">
+            <p className="text-muted-foreground text-sm leading-relaxed">
               {advantage.body}
             </p>
           </div>
@@ -207,7 +203,7 @@ function FeatureTable({ comparison }: { comparison: Comparison }) {
       <h2 className="mb-6 text-2xl font-bold tracking-tight sm:text-3xl">
         {comparison.featureTable.heading}
       </h2>
-      <div className="overflow-hidden rounded-2xl border bg-card">
+      <div className="bg-card overflow-hidden rounded-2xl border">
         <table className="w-full text-sm">
           <thead className="bg-muted/40">
             <tr>
@@ -230,7 +226,7 @@ function FeatureTable({ comparison }: { comparison: Comparison }) {
               >
                 <td className="px-4 py-3 sm:px-6">{row.label}</td>
                 <td className="px-4 py-3 text-center sm:px-6">
-                  <FeatureCell value={row.leadstack} positive />
+                  <FeatureCell value={row.agentstack} positive />
                 </td>
                 <td className="px-4 py-3 text-center sm:px-6">
                   <FeatureCell value={row.competitor} positive={false} />
@@ -276,7 +272,7 @@ function FeatureCell({
     );
   }
   return (
-    <span className="text-xs leading-relaxed text-muted-foreground">
+    <span className="text-muted-foreground text-xs leading-relaxed">
       {value}
     </span>
   );
@@ -290,10 +286,10 @@ function PricingTable({ comparison }: { comparison: Comparison }) {
       </h2>
       <div className="grid gap-4 sm:grid-cols-2">
         <PricingCard
-          headline={comparison.pricing.leadstack.headline}
-          detail={comparison.pricing.leadstack.detail}
-          notes={comparison.pricing.leadstack.notes}
-          variant="leadstack"
+          headline={comparison.pricing.agentstack.headline}
+          detail={comparison.pricing.agentstack.detail}
+          notes={comparison.pricing.agentstack.notes}
+          variant="agentstack"
         />
         <PricingCard
           headline={comparison.pricing.competitor.headline}
@@ -302,7 +298,7 @@ function PricingTable({ comparison }: { comparison: Comparison }) {
           variant="competitor"
         />
       </div>
-      <p className="mt-5 rounded-xl border bg-muted/20 p-5 text-sm leading-relaxed text-muted-foreground">
+      <p className="bg-muted/20 text-muted-foreground mt-5 rounded-xl border p-5 text-sm leading-relaxed">
         <strong className="text-foreground">Bottom line:</strong>{" "}
         {comparison.pricing.summary}
       </p>
@@ -319,24 +315,24 @@ function PricingCard({
   headline: string;
   detail: string;
   notes: string[];
-  variant: "leadstack" | "competitor";
+  variant: "agentstack" | "competitor";
 }) {
   return (
     <div
       className={
-        variant === "leadstack"
-          ? "rounded-2xl border-2 border-emerald-500/40 bg-card p-6"
-          : "rounded-2xl border-2 border-rose-500/40 bg-card p-6"
+        variant === "agentstack"
+          ? "bg-card rounded-2xl border-2 border-emerald-500/40 p-6"
+          : "bg-card rounded-2xl border-2 border-rose-500/40 p-6"
       }
     >
       <h3 className="text-base font-semibold">{headline}</h3>
-      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+      <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
         {detail}
       </p>
-      <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
+      <ul className="text-muted-foreground mt-4 space-y-2 text-sm">
         {notes.map((note) => (
           <li key={note} className="flex gap-2">
-            <ChevronRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
+            <ChevronRight className="text-muted-foreground/60 mt-0.5 h-3.5 w-3.5 shrink-0" />
             <span>{note}</span>
           </li>
         ))}
@@ -353,10 +349,10 @@ function CompetitorWins({ comparison }: { comparison: Comparison }) {
       <h2 className="mb-3 text-2xl font-bold tracking-tight sm:text-3xl">
         {wins.heading}
       </h2>
-      <p className="mb-5 text-sm leading-relaxed text-muted-foreground">
+      <p className="text-muted-foreground mb-5 text-sm leading-relaxed">
         We won&apos;t pretend the comparison is one-sided.
       </p>
-      <div className="rounded-2xl border bg-card p-6">
+      <div className="bg-card rounded-2xl border p-6">
         <ul className="space-y-3 text-sm leading-relaxed">
           {wins.bullets.map((bullet) => (
             <li key={bullet} className="flex gap-3">
@@ -365,7 +361,7 @@ function CompetitorWins({ comparison }: { comparison: Comparison }) {
             </li>
           ))}
         </ul>
-        <p className="mt-5 border-t pt-5 text-sm leading-relaxed text-muted-foreground">
+        <p className="text-muted-foreground mt-5 border-t pt-5 text-sm leading-relaxed">
           {wins.closing}
         </p>
       </div>
@@ -379,14 +375,14 @@ function FAQ({ comparison }: { comparison: Comparison }) {
       <h2 className="mb-6 text-2xl font-bold tracking-tight sm:text-3xl">
         {comparison.faq.heading}
       </h2>
-      <div className="divide-y rounded-2xl border bg-card">
+      <div className="bg-card divide-y rounded-2xl border">
         {comparison.faq.items.map((item) => (
           <details key={item.question} className="group p-6">
             <summary className="flex cursor-pointer items-start justify-between gap-4 text-base font-medium [&::-webkit-details-marker]:hidden">
               <span>{item.question}</span>
-              <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-90" />
+              <ChevronRight className="text-muted-foreground mt-1 h-4 w-4 shrink-0 transition-transform group-open:rotate-90" />
             </summary>
-            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+            <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
               {item.answer}
             </p>
           </details>
@@ -409,7 +405,7 @@ function CrossLink({ currentSlug }: { currentSlug: string }) {
           <Link
             key={other.slug}
             href={getComparisonPath(other.slug)}
-            className="inline-flex items-center gap-1.5 rounded-full border bg-card px-4 py-2 text-sm transition-colors hover:bg-muted"
+            className="bg-card hover:bg-muted inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-sm transition-colors"
           >
             AgentStack vs {other.competitorName}
             <ChevronRight className="h-3.5 w-3.5" />
@@ -422,18 +418,18 @@ function CrossLink({ currentSlug }: { currentSlug: string }) {
 
 function FinalCta({ comparison }: { comparison: Comparison }) {
   return (
-    <section className="mb-12 rounded-2xl border bg-gradient-to-br from-primary/10 via-card to-card p-8 text-center sm:p-12">
+    <section className="from-primary/10 via-card to-card mb-12 rounded-2xl border bg-gradient-to-br p-8 text-center sm:p-12">
       <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
         {comparison.finalCta.headline}
       </h2>
-      <p className="mx-auto mt-3 max-w-2xl text-base leading-relaxed text-muted-foreground">
+      <p className="text-muted-foreground mx-auto mt-3 max-w-2xl text-base leading-relaxed">
         {comparison.finalCta.body}
       </p>
       <div className="mt-6">
         <Link
           href={comparison.finalCta.primaryCtaHref}
           data-cta="comparison-final"
-          className="inline-flex h-11 items-center rounded-lg bg-primary px-6 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+          className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-11 items-center rounded-lg px-6 text-sm font-semibold transition-colors"
         >
           {comparison.finalCta.primaryCtaLabel}
         </Link>
@@ -444,15 +440,15 @@ function FinalCta({ comparison }: { comparison: Comparison }) {
 
 function Disclaimer({ comparison }: { comparison: Comparison }) {
   return (
-    <footer className="border-t pt-6 text-xs leading-relaxed text-muted-foreground">
+    <footer className="text-muted-foreground border-t pt-6 text-xs leading-relaxed">
       <p>
         Pricing and feature claims about {comparison.competitorName} reflect
         publicly published information as of {comparison.lastVerifiedDate}.
-        Comparison provided for informational purposes; verify current
-        {" "}details on the {comparison.competitorName} website before making
-        a purchasing decision. All trademarks are property of their
-        respective owners. This is an independent comparison and AgentStack
-        is not affiliated with or endorsed by {comparison.competitorName}.
+        Comparison provided for informational purposes; verify current details
+        on the {comparison.competitorName} website before making a purchasing
+        decision. All trademarks are property of their respective owners. This
+        is an independent comparison and AgentStack is not affiliated with or
+        endorsed by {comparison.competitorName}.
       </p>
     </footer>
   );

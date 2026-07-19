@@ -1,7 +1,7 @@
 /* AgentStack Web Chat widget loader.
  *
  * Snippet:
- *   <script src="https://leadstack.dev/widget.js" data-sa="sa_xxx" async></script>
+ *   <script src="https://agentstackcrm.app/widget.js" data-sa="sa_xxx" async></script>
  *
  * What this script does, in order:
  *   1. Read data-sa from its own <script> tag.
@@ -20,8 +20,8 @@
 (function () {
   "use strict";
 
-  if (window.__leadstackWebChatLoaded) return;
-  window.__leadstackWebChatLoaded = true;
+  if (window.__agentstackWebChatLoaded) return;
+  window.__agentstackWebChatLoaded = true;
 
   // ---- Step 1+2: find our own script tag + parse config -----------
   var scriptTag =
@@ -37,7 +37,7 @@
 
   var saId = scriptTag.getAttribute("data-sa");
   if (!saId) {
-    console.warn("[leadstack-webchat] missing data-sa on widget snippet");
+    console.warn("[agentstack-webchat] missing data-sa on widget snippet");
     return;
   }
 
@@ -204,7 +204,7 @@
   function listenForIframeMessages() {
     window.addEventListener("message", function (event) {
       var data = event.data;
-      if (!data || data.source !== "leadstack-webchat") return;
+      if (!data || data.source !== "agentstack-webchat") return;
       if (data.type === "close") collapseIframe();
     });
   }

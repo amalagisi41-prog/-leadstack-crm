@@ -31,7 +31,7 @@ export const runtime = "nodejs";
  * Body: { test?: boolean }  (test defaults to true)
  */
 
-const SAMPLE_CODE = "LEADSTACK-PREVIEW1";
+const SAMPLE_CODE = "AGENTSTACK-PREVIEW1";
 // SHARED_FALLBACK_CODE + the exclusion list live in reminder-config.ts so
 // the automated 3-day reminder shares them.
 const HARDCODED_EXCLUSIONS = REMINDER_EXCLUSIONS;
@@ -43,16 +43,13 @@ export async function POST(request: Request) {
   // Agency-owner gate.
   const owner = process.env.BOOTSTRAP_ADMIN_EMAIL?.trim().toLowerCase();
   if (!owner || auth.email.trim().toLowerCase() !== owner) {
-    return NextResponse.json(
-      { error: "Owner only." },
-      { status: 403 },
-    );
+    return NextResponse.json({ error: "Owner only." }, { status: 403 });
   }
 
   if (!emailIsConfigured()) {
     return NextResponse.json(
       { error: "Email isn't configured (RESEND_API_KEY / EMAIL_FROM)." },
-      { status: 503 },
+      { status: 503 }
     );
   }
 
@@ -71,7 +68,7 @@ export async function POST(request: Request) {
     [...HARDCODED_EXCLUSIONS, ...(body.exclude ?? [])]
       .filter((e): e is string => typeof e === "string")
       .map((e) => e.trim().toLowerCase())
-      .filter(Boolean),
+      .filter(Boolean)
   );
 
   // ---- TEST: two preview emails to the owner (personalized + shared
@@ -101,7 +98,7 @@ export async function POST(request: Request) {
           ok: false,
           error: err instanceof Error ? err.message : "Send failed",
         },
-        { status: 502 },
+        { status: 502 }
       );
     }
   }

@@ -106,13 +106,13 @@ function getChannelTransport(channelId: ConfiguredChannelId): ChannelTransport {
       isOptedOut: (c) => c.smsOptedOut === true,
       send: ({ subAccountId, subAccount, to, body }) =>
         sendSmsForSubAccount({ subAccountId, subAccount, to, body }).then(
-          (r) => ({ sid: r.sid, from: r.from }),
+          (r) => ({ sid: r.sid, from: r.from })
         ),
     };
   }
   // web-chat + voice have dedicated orchestrators; they never reach here.
   throw new Error(
-    `maybeRespondWithAi does not support channel "${channelId}".`,
+    `maybeRespondWithAi does not support channel "${channelId}".`
   );
 }
 
@@ -124,7 +124,7 @@ function getChannelTransport(channelId: ConfiguredChannelId): ChannelTransport {
 function isWithinHours(
   hoursStart: number,
   hoursEnd: number,
-  timezone: string,
+  timezone: string
 ): boolean {
   const now = new Date();
   let hour: number;
@@ -153,7 +153,7 @@ async function loadRecentHistory(
   contactId: string,
   limit: number,
   excludeBody: string,
-  messagesCollection: string,
+  messagesCollection: string
 ): Promise<AiChatMessage[]> {
   const safeLimit = Math.max(1, Math.min(50, limit));
   const snap = await getAdminDb()
@@ -168,7 +168,10 @@ async function loadRecentHistory(
   for (const d of docs) {
     const data = d.data() as { direction?: string; body?: string };
     if (!data.body) continue;
-    if (data.direction === "inbound" && data.body.trim() === excludeBody.trim()) {
+    if (
+      data.direction === "inbound" &&
+      data.body.trim() === excludeBody.trim()
+    ) {
       continue;
     }
     turns.push({
@@ -259,7 +262,7 @@ async function storeOutboundReply({
           readAt: null,
           createdAt: FieldValue.serverTimestamp(),
         },
-        { merge: true },
+        { merge: true }
       );
   } catch (err) {
     console.warn("[ai/respond] outbound message write failed", err);
@@ -272,7 +275,7 @@ async function storeOutboundReply({
  * orchestrates the guards → context → LLM → send → log flow.
  */
 export async function maybeRespondWithAi(
-  input: RespondInput,
+  input: RespondInput
 ): Promise<RespondOutcome> {
   const {
     subAccountId,
@@ -328,12 +331,12 @@ export async function maybeRespondWithAi(
   // Guard: escalation keyword in the inbound text.
   const triggered = matchEscalationKeyword(
     incomingMessage,
-    eff.escalationKeywords,
+    eff.escalationKeywords
   );
   if (triggered) {
     if (eff.escalationNotifyEmail) {
       const appUrl =
-        process.env.NEXT_PUBLIC_APP_URL?.trim() || "https://leadstack.dev";
+        process.env.NEXT_PUBLIC_APP_URL?.trim() || "https://agentstackcrm.app";
       await sendEscalationNotification({
         to: eff.escalationNotifyEmail,
         businessName:
@@ -353,7 +356,11 @@ export async function maybeRespondWithAi(
       subAccountId,
       type: "ai_escalated",
       content: `AI escalated to human — keyword "${triggered}" matched in inbound message.`,
-      meta: { reason: "escalation_keyword", keyword: triggered, channel: channelId },
+      meta: {
+        reason: "escalation_keyword",
+        keyword: triggered,
+        channel: channelId,
+      },
     });
     return { kind: "escalated", keyword: triggered };
   }
@@ -394,12 +401,12 @@ export async function maybeRespondWithAi(
         contact.id,
         eff.contextMessageCount,
         incomingMessage,
-        transport.messagesCollection,
+        transport.messagesCollection
       ),
       buildContactContextBlock(contact).catch((err) => {
         console.warn(
           `[ai/respond] context block build failed for ${contact.id}`,
-          err,
+          err
         );
         return null;
       }),
@@ -423,7 +430,9 @@ export async function maybeRespondWithAi(
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown error";
-    console.error(`[ai/respond] LLM call failed for sa=${subAccountId}: ${msg}`);
+    console.error(
+      `[ai/respond] LLM call failed for sa=${subAccountId}: ${msg}`
+    );
     await logActivity({
       contactId: contact.id,
       agencyId: subAccount.agencyId,
@@ -449,7 +458,11 @@ export async function maybeRespondWithAi(
       model: completion.model,
       tokens: completion.totalTokens,
     });
-    void incrementChannelTokens(subAccountId, channelId, completion.totalTokens);
+    void incrementChannelTokens(
+      subAccountId,
+      channelId,
+      completion.totalTokens
+    );
     return {
       kind: "drafted",
       replyText: completion.text,
@@ -468,14 +481,20 @@ export async function maybeRespondWithAi(
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown error";
-    console.error(`[ai/respond] Twilio send failed for sa=${subAccountId}: ${msg}`);
+    console.error(
+      `[ai/respond] Twilio send failed for sa=${subAccountId}: ${msg}`
+    );
     await logActivity({
       contactId: contact.id,
       agencyId: subAccount.agencyId,
       subAccountId,
       type: "ai_skipped",
       content: `AI reply generated but ${transport.label} send failed: ${msg.slice(0, 200)}`,
-      meta: { reason: "llm_failed", twilioError: msg.slice(0, 500), channel: channelId },
+      meta: {
+        reason: "llm_failed",
+        twilioError: msg.slice(0, 500),
+        channel: channelId,
+      },
     });
     return { kind: "skipped", reason: "llm_failed" };
   }

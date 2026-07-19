@@ -20,7 +20,7 @@ import {
 
 const SLIDES = Array.from(
   { length: 8 },
-  (_, index) => `/agentstack-presentation/slide-${index + 1}.webp`,
+  (_, index) => `/agentstack-presentation/slide-${index + 1}.webp`
 );
 
 const SLIDE_DURATION_MS = 5000;
@@ -35,21 +35,50 @@ const lifecycle = [
   { label: "Grow", detail: "Your Business", Icon: BarChart3 },
 ];
 
-const proofPoints = ["15-minute guided setup", "AI follow-up included", "Built for real estate"];
-const HERO_VIDEO_ID = process.env.NEXT_PUBLIC_MARKETING_HERO_VIDEO_ID?.trim() || "";
+const proofPoints = [
+  "15-minute guided setup",
+  "AI follow-up included",
+  "Built for real estate",
+];
+const HERO_VIDEO_ID =
+  process.env.NEXT_PUBLIC_MARKETING_HERO_VIDEO_ID?.trim() || "";
 const HERO_VIDEO_EMBED = HERO_VIDEO_ID
   ? `https://www.youtube-nocookie.com/embed/${HERO_VIDEO_ID}?autoplay=1&rel=0&modestbranding=1`
   : null;
 
 function ClosingWordmark({ compact = false }: { compact?: boolean }) {
   return (
-    <Image
-      src="/brand/agentstack-closing-logo.png"
-      alt="AgentStack Real Estate Solutions"
-      width={872}
-      height={368}
-      className={compact ? "h-auto w-full max-w-[260px]" : "h-auto w-[80%] max-w-[780px]"}
-    />
+    <div
+      className="flex flex-col items-center"
+      aria-label="AgentStack Real Estate Solutions"
+    >
+      <Image
+        src="/icons/icon-512.png"
+        alt=""
+        width={512}
+        height={512}
+        className={compact ? "h-24 w-24" : "h-40 w-40 sm:h-52 sm:w-52"}
+      />
+      <div
+        className={
+          compact
+            ? "mt-3 text-2xl font-extrabold"
+            : "mt-5 text-4xl font-extrabold sm:text-6xl"
+        }
+      >
+        <span className="text-[#1d3d73]">Agent</span>
+        <span className="text-[#ff706b]">Stack</span>
+      </div>
+      <div
+        className={
+          compact
+            ? "mt-1 text-[7px] font-semibold tracking-[0.24em] text-[#1d3d73]"
+            : "mt-2 text-xs font-semibold tracking-[0.3em] text-[#1d3d73] sm:text-sm"
+        }
+      >
+        REAL ESTATE SOLUTIONS
+      </div>
+    </div>
   );
 }
 
@@ -87,7 +116,10 @@ export function VideoTeaser() {
   const canOpenVideo = !!HERO_VIDEO_EMBED;
 
   return (
-    <section id="video-teaser" className="scroll-mt-16 overflow-x-hidden bg-white px-4 pb-16 md:pb-20">
+    <section
+      id="video-teaser"
+      className="scroll-mt-16 overflow-x-hidden bg-white px-4 pb-16 md:pb-20"
+    >
       <div className="mx-auto w-full max-w-6xl">
         <button
           type="button"
@@ -127,9 +159,11 @@ export function VideoTeaser() {
               <div className="grid h-full grid-cols-[42%_58%] items-center gap-4 px-5 sm:px-10">
                 <div>
                   <ClosingWordmark compact />
-                  <h3 className="mt-5 text-lg font-semibold leading-tight text-[#173B7A] sm:text-3xl md:text-4xl">
+                  <h3 className="mt-5 text-lg leading-tight font-semibold text-[#173B7A] sm:text-3xl md:text-4xl">
                     The easiest way to run your{" "}
-                    <span className="text-[#F15AA7]">real estate business.</span>
+                    <span className="text-[#F15AA7]">
+                      real estate business.
+                    </span>
                   </h3>
                   <p className="mt-3 text-xs font-medium text-[#DB4F9B] sm:text-lg">
                     Work less. Close more. Live better.
@@ -137,10 +171,20 @@ export function VideoTeaser() {
                 </div>
                 <div className="grid grid-cols-5 border-l border-[#E7DCC7] pl-3 sm:pl-6">
                   {lifecycle.map(({ label, detail, Icon }) => (
-                    <div key={label} className="flex min-w-0 flex-col items-center text-center">
-                      <Icon className="h-6 w-6 text-[#DB4F9B] sm:h-10 sm:w-10" strokeWidth={1.7} />
-                      <span className="mt-3 text-[8px] font-semibold text-[#173B7A] sm:text-sm">{label}</span>
-                      <span className="text-[7px] leading-tight text-[#526078] sm:text-xs">{detail}</span>
+                    <div
+                      key={label}
+                      className="flex min-w-0 flex-col items-center text-center"
+                    >
+                      <Icon
+                        className="h-6 w-6 text-[#DB4F9B] sm:h-10 sm:w-10"
+                        strokeWidth={1.7}
+                      />
+                      <span className="mt-3 text-[8px] font-semibold text-[#173B7A] sm:text-sm">
+                        {label}
+                      </span>
+                      <span className="text-[7px] leading-tight text-[#526078] sm:text-xs">
+                        {detail}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -177,7 +221,7 @@ export function VideoTeaser() {
         </button>
 
         <div className="mx-auto mt-8 flex max-w-4xl flex-col items-center gap-6">
-          <div className="box-border w-[calc(100vw-2rem)] max-w-4xl rounded-3xl border border-[#173B7A]/20 bg-[#FFF6E8] px-4 py-3 text-center font-sans text-sm font-semibold leading-snug text-[#173B7A] sm:rounded-full sm:px-5 sm:text-base">
+          <div className="box-border w-[calc(100vw-2rem)] max-w-4xl rounded-3xl border border-[#173B7A]/20 bg-[#FFF6E8] px-4 py-3 text-center font-sans text-sm leading-snug font-semibold text-[#173B7A] sm:rounded-full sm:px-5 sm:text-base">
             The operating system for modern real estate professionals
           </div>
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs font-medium text-[#526078] sm:text-sm">

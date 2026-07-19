@@ -61,7 +61,7 @@ export interface CaptureFollowUpResult {
 }
 
 export async function createCaptureFollowUp(
-  input: CreateCaptureFollowUpInput,
+  input: CreateCaptureFollowUpInput
 ): Promise<CaptureFollowUpResult> {
   const errors: string[] = [];
 
@@ -82,7 +82,7 @@ export async function createCaptureFollowUp(
       now.getDate(),
       23,
       59,
-      59,
+      59
     );
 
     const notes = [
@@ -131,7 +131,7 @@ export async function createCaptureFollowUp(
     const msg = err instanceof Error ? err.message : "Unknown error";
     console.error(
       `[ai/follow-up] task create failed sa=${input.subAccountId} channel=${input.channelId}`,
-      err,
+      err
     );
     errors.push(`task: ${msg}`);
   }
@@ -153,7 +153,8 @@ export async function createCaptureFollowUp(
         errors.push("email: no escalation address configured");
       } else {
         const appUrl =
-          process.env.NEXT_PUBLIC_APP_URL?.trim() || "https://leadstack.dev";
+          process.env.NEXT_PUBLIC_APP_URL?.trim() ||
+          "https://agentstackcrm.app";
         const sessionUrl = input.sessionDeepLinkPath
           ? `${appUrl}${input.sessionDeepLinkPath}`
           : null;
@@ -209,7 +210,7 @@ export async function createCaptureFollowUp(
       const msg = err instanceof Error ? err.message : "Unknown error";
       console.error(
         `[ai/follow-up] email send failed sa=${input.subAccountId} channel=${input.channelId}`,
-        err,
+        err
       );
       errors.push(`email: ${msg}`);
     }
@@ -249,12 +250,14 @@ function renderCaptureEmail(input: {
           `<a href="tel:${esc(input.capturedPhone)}">${esc(input.capturedPhone)}</a>`,
         ]
       : null,
-    input.pageUrl ? ["Page", `<a href="${esc(input.pageUrl)}">${esc(input.pageUrl)}</a>`] : null,
+    input.pageUrl
+      ? ["Page", `<a href="${esc(input.pageUrl)}">${esc(input.pageUrl)}</a>`]
+      : null,
   ]
     .filter((r): r is [string, string] => r !== null)
     .map(
       ([k, v]) =>
-        `<tr><td style="padding:4px 12px 4px 0;color:#64748b;font-size:13px;">${esc(k)}</td><td style="padding:4px 0;font-size:13px;">${v}</td></tr>`,
+        `<tr><td style="padding:4px 12px 4px 0;color:#64748b;font-size:13px;">${esc(k)}</td><td style="padding:4px 0;font-size:13px;">${v}</td></tr>`
     )
     .join("");
 

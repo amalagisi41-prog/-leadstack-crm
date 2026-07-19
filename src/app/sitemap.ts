@@ -16,24 +16,59 @@ import { getHelpArticles } from "@/lib/help-center/articles";
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl =
     process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ??
-    "https://leadstack.dev";
+    "https://agentstackcrm.app";
   const now = new Date();
   const helpArticles = getHelpArticles();
 
   const sharedEntries: MetadataRoute.Sitemap = [
-    { url: `${baseUrl}/`, lastModified: now, changeFrequency: "weekly", priority: 1.0 },
-    { url: `${baseUrl}/about`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
-    { url: `${baseUrl}/help`, lastModified: now, changeFrequency: "weekly", priority: 0.5 },
+    {
+      url: `${baseUrl}/`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 1.0,
+    },
+    {
+      url: `${baseUrl}/about`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.5,
+    },
+    {
+      url: `${baseUrl}/help`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.5,
+    },
     ...helpArticles.map((article) => ({
       url: `${baseUrl}/help/${article.slug}`,
       lastModified: now,
       changeFrequency: "monthly" as const,
       priority: 0.5,
     })),
-    { url: `${baseUrl}/playbook`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
-    { url: `${baseUrl}/security`, lastModified: now, changeFrequency: "monthly", priority: 0.4 },
-    { url: `${baseUrl}/terms`, lastModified: now, changeFrequency: "yearly", priority: 0.3 },
-    { url: `${baseUrl}/privacy`, lastModified: now, changeFrequency: "yearly", priority: 0.3 },
+    {
+      url: `${baseUrl}/playbook`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
+    {
+      url: `${baseUrl}/security`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.4,
+    },
+    {
+      url: `${baseUrl}/terms`,
+      lastModified: now,
+      changeFrequency: "yearly",
+      priority: 0.3,
+    },
+    {
+      url: `${baseUrl}/privacy`,
+      lastModified: now,
+      changeFrequency: "yearly",
+      priority: 0.3,
+    },
     ...COMPARISON_SLUGS.map((slug) => ({
       url: `${baseUrl}${getComparisonPath(slug)}`,
       lastModified: now,
@@ -42,16 +77,36 @@ export default function sitemap(): MetadataRoute.Sitemap {
     })),
   ];
 
-  if (LANDING_VARIANT !== "leadstack") {
+  if (LANDING_VARIANT !== "agentstack") {
     return sharedEntries;
   }
 
-  const leadstackOnly: MetadataRoute.Sitemap = [
-    { url: `${baseUrl}/docs/api`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
-    { url: `${baseUrl}/docs/architecture`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
-    { url: `${baseUrl}/docs/updating`, lastModified: now, changeFrequency: "monthly", priority: 0.4 },
-    { url: `${baseUrl}/affiliate-program`, lastModified: now, changeFrequency: "monthly", priority: 0.5 },
+  const agentstackOnly: MetadataRoute.Sitemap = [
+    {
+      url: `${baseUrl}/docs/api`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
+    {
+      url: `${baseUrl}/docs/architecture`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.6,
+    },
+    {
+      url: `${baseUrl}/docs/updating`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.4,
+    },
+    {
+      url: `${baseUrl}/affiliate-program`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.5,
+    },
   ];
 
-  return [...sharedEntries, ...leadstackOnly];
+  return [...sharedEntries, ...agentstackOnly];
 }

@@ -6,11 +6,11 @@
  * an existing one.
  *
  * Resolution order at request time:
- *   1. `LeadStack-Version: <YYYY-MM-DD>` request header (caller pin)
+ *   1. `AgentStack-Version: <YYYY-MM-DD>` request header (caller pin)
  *   2. Key's `defaultVersion` stamped at mint time
  *   3. `LATEST_API_VERSION` (the most recent supported)
  *
- * Every response echoes the resolved version via `LeadStack-Version`.
+ * Every response echoes the resolved version via `AgentStack-Version`.
  *
  * v1 ships with a single version — `LATEST_API_VERSION === "2026-06-15"`.
  * The next breaking change will add a new constant and migrate the
@@ -38,7 +38,7 @@ export function resolveVersion(opts: {
     if (!isSupportedVersion(opts.headerVersion)) {
       return {
         error: `Unsupported API version '${opts.headerVersion}'. Supported: ${Array.from(
-          SUPPORTED_VERSIONS,
+          SUPPORTED_VERSIONS
         ).join(", ")}.`,
       };
     }

@@ -76,7 +76,7 @@ export interface ImportMappingDoc {
   entity: ImportEntity;
   system: ImportSource;
   externalId: string;
-  leadstackId: string;
+  agentstackId: string;
   parentId?: string | null;
   createdAt: Timestamp | FieldValue | null;
 }

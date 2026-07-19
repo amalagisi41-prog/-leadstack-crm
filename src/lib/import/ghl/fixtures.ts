@@ -112,9 +112,9 @@ export function sampleMapping(): GhlImportMapping {
           ghlId: s.ghlId,
           ghlName: s.ghlName,
           // Wizard would generate a key from the label; fixture uses a slug.
-          leadstackKey: s.label.toLowerCase().replace(/[^a-z0-9]+/g, "_"),
+          agentstackKey: s.label.toLowerCase().replace(/[^a-z0-9]+/g, "_"),
         },
-      ]),
+      ])
     ),
   };
 }
@@ -124,7 +124,9 @@ export function runGhlTransformChecks(): string[] {
   const fails: string[] = [];
   const eq = (label: string, got: unknown, want: unknown) => {
     if (JSON.stringify(got) !== JSON.stringify(want)) {
-      fails.push(`${label}: got ${JSON.stringify(got)}, want ${JSON.stringify(want)}`);
+      fails.push(
+        `${label}: got ${JSON.stringify(got)}, want ${JSON.stringify(want)}`
+      );
     }
   };
 

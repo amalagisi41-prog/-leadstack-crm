@@ -48,7 +48,7 @@ type LocalMessage = {
 };
 
 function sessionStorageKey(saId: string): string {
-  return `leadstack:webchat:session:${saId}`;
+  return `agentstack:webchat:session:${saId}`;
 }
 
 /** Generates a 22-char URL-safe random string. Server's session-id regex
@@ -76,7 +76,7 @@ function ensureSessionId(saId: string): string {
 function postToParent(message: Record<string, unknown>): void {
   if (typeof window === "undefined") return;
   if (window.parent === window) return;
-  window.parent.postMessage({ source: "leadstack-webchat", ...message }, "*");
+  window.parent.postMessage({ source: "agentstack-webchat", ...message }, "*");
 }
 
 export function ChatWindow(props: ChatWindowProps) {
@@ -101,9 +101,7 @@ export function ChatWindow(props: ChatWindowProps) {
     } catch {
       // No-op — parent URL is purely for server-side logging.
     }
-    setMessages([
-      { id: "welcome", role: "assistant", text: welcomeMessage },
-    ]);
+    setMessages([{ id: "welcome", role: "assistant", text: welcomeMessage }]);
   }, [subAccountId, welcomeMessage]);
 
   // Auto-scroll to bottom on every message change.
@@ -163,7 +161,8 @@ export function ChatWindow(props: ChatWindowProps) {
             id: `a-${Date.now()}`,
             role: "assistant",
             text: replyText,
-            formFields: formFields && formFields.length > 0 ? formFields : undefined,
+            formFields:
+              formFields && formFields.length > 0 ? formFields : undefined,
           },
         ]);
       } catch {
@@ -173,15 +172,14 @@ export function ChatWindow(props: ChatWindowProps) {
           {
             id: `e-${Date.now()}`,
             role: "assistant",
-            text:
-              "I had trouble reaching the server. Try again in a moment, or refresh the page.",
+            text: "I had trouble reaching the server. Try again in a moment, or refresh the page.",
           },
         ]);
       } finally {
         setSending(false);
       }
     },
-    [subAccountId, sessionId, sending, parentPageUrl],
+    [subAccountId, sessionId, sending, parentPageUrl]
   );
 
   function handleSubmit(e: FormEvent) {
@@ -194,15 +192,15 @@ export function ChatWindow(props: ChatWindowProps) {
       messageId: string,
       payload:
         | { skip: true }
-        | { skip?: false; name?: string; email?: string; phone?: string },
+        | { skip?: false; name?: string; email?: string; phone?: string }
     ) => {
       if (!sessionId) return;
       // Strip the form off the originating message immediately so the
       // visitor sees it disappear regardless of network outcome.
       setMessages((prev) =>
         prev.map((m) =>
-          m.id === messageId ? { ...m, formFields: undefined } : m,
-        ),
+          m.id === messageId ? { ...m, formFields: undefined } : m
+        )
       );
       try {
         const res = await fetch("/api/web-chat/capture", {
@@ -245,7 +243,7 @@ export function ChatWindow(props: ChatWindowProps) {
         ]);
       }
     },
-    [subAccountId, sessionId, parentPageUrl],
+    [subAccountId, sessionId, parentPageUrl]
   );
 
   function handleClose() {
@@ -270,7 +268,7 @@ export function ChatWindow(props: ChatWindowProps) {
       borderRadius: embedded ? "16px" : "0",
       boxShadow: embedded ? "0 16px 48px -12px rgba(15,23,42,0.25)" : "none",
     }),
-    [embedded],
+    [embedded]
   );
 
   return (
@@ -388,7 +386,9 @@ export function ChatWindow(props: ChatWindowProps) {
         {messages.map((m) => (
           <div key={m.id}>
             <div className={`lswc-row lswc-row-${m.role}`}>
-              <div className={`lswc-bubble lswc-bubble-${m.role}`}>{m.text}</div>
+              <div className={`lswc-bubble lswc-bubble-${m.role}`}>
+                {m.text}
+              </div>
             </div>
             {m.role === "assistant" && m.formFields && (
               <InlineCaptureForm
@@ -489,7 +489,11 @@ export function ChatWindow(props: ChatWindowProps) {
 function InlineCaptureForm(props: {
   fields: CaptureFieldId[];
   accentColor: string;
-  onSubmit: (payload: { name?: string; email?: string; phone?: string }) => void;
+  onSubmit: (payload: {
+    name?: string;
+    email?: string;
+    phone?: string;
+  }) => void;
   onSkip: () => void;
 }) {
   const { fields, accentColor, onSubmit, onSkip } = props;
@@ -528,9 +532,7 @@ function InlineCaptureForm(props: {
   // requires one of these — name alone isn't enough to follow up).
   const canSubmit =
     !submitting &&
-    (!fields.includes("email") || email.trim().length > 0
-      ? true
-      : false) &&
+    (!fields.includes("email") || email.trim().length > 0 ? true : false) &&
     (!fields.includes("phone") || phone.trim().length > 0 ? true : false) &&
     (email.trim().length > 0 || phone.trim().length > 0);
 

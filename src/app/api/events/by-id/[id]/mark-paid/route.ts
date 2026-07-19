@@ -5,11 +5,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { Resend } from "resend";
 
 import { getAdminDb } from "@/lib/firebase/admin";
-import {
-  emailIsConfigured,
-  sendEmail,
-  tenantFrom,
-} from "@/lib/comms/resend";
+import { emailIsConfigured, sendEmail, tenantFrom } from "@/lib/comms/resend";
 import { requireSubAccountMember } from "@/lib/auth/require-tenancy";
 import {
   buildEventPublicUrl,
@@ -47,7 +43,7 @@ import type { SubAccountDoc } from "@/types/tenancy";
  */
 export async function POST(
   request: Request,
-  ctx: { params: Promise<{ id: string }> },
+  ctx: { params: Promise<{ id: string }> }
 ) {
   const { id: eventId } = await ctx.params;
 
@@ -69,7 +65,7 @@ export async function POST(
         error: "Only events awaiting payment can be marked paid.",
         status: eventStatus(event),
       },
-      { status: 409 },
+      { status: 409 }
     );
   }
 
@@ -90,7 +86,7 @@ export async function POST(
     console.error("[events/mark-paid] update failed", err);
     return NextResponse.json(
       { error: "Couldn't mark as paid." },
-      { status: 500 },
+      { status: 500 }
     );
   }
 
@@ -115,12 +111,8 @@ async function runMarkPaidSideEffects(args: {
 }): Promise<void> {
   const { event, rawToken } = args;
   const db = getAdminDb();
-  const startAt = (
-    event.startAt as { toDate?: () => Date } | null
-  )?.toDate?.();
-  const endAt = (
-    event.endAt as { toDate?: () => Date } | null
-  )?.toDate?.();
+  const startAt = (event.startAt as { toDate?: () => Date } | null)?.toDate?.();
+  const endAt = (event.endAt as { toDate?: () => Date } | null)?.toDate?.();
   if (!(startAt instanceof Date) || !(endAt instanceof Date)) return;
 
   if (!event.contactId) return;
@@ -134,12 +126,14 @@ async function runMarkPaidSideEffects(args: {
       event.bookingPageSlug
         ? db
             .doc(
-              `subAccounts/${event.subAccountId}/bookingPages/${event.bookingPageSlug}`,
+              `subAccounts/${event.subAccountId}/bookingPages/${event.bookingPageSlug}`
             )
             .get()
         : Promise.resolve(null),
     ]);
-    contact = (contactSnap.exists ? contactSnap.data() : null) as Contact | null;
+    contact = (
+      contactSnap.exists ? contactSnap.data() : null
+    ) as Contact | null;
     sub = (subSnap.exists ? subSnap.data() : null) as SubAccountDoc | null;
     page = (pageSnap?.data() ?? null) as BookingPage | null;
   } catch (err) {
@@ -170,7 +164,7 @@ async function runMarkPaidSideEffects(args: {
     {
       paymentAmount: event.paymentAmount ?? undefined,
       paymentCurrency: event.paymentCurrency ?? undefined,
-    },
+    }
   );
   await fireBookingTrigger(
     {
@@ -178,7 +172,7 @@ async function runMarkPaidSideEffects(args: {
       subAccountId: event.subAccountId,
       contactId: event.contactId,
     },
-    "event_paid",
+    "event_paid"
   );
 
   if (!contact || !sub || !emailIsConfigured()) return;
@@ -193,7 +187,10 @@ async function runMarkPaidSideEffects(args: {
       name: page?.name ?? event.title ?? "Meeting",
       durationMinutes:
         page?.durationMinutes ??
-        Math.max(15, Math.round((endAt.getTime() - startAt.getTime()) / 60_000)),
+        Math.max(
+          15,
+          Math.round((endAt.getTime() - startAt.getTime()) / 60_000)
+        ),
       timezone: page?.timezone ?? "UTC",
       payment: page?.payment ?? null,
       confirmationMessage: page?.confirmationMessage ?? "",
@@ -205,7 +202,7 @@ async function runMarkPaidSideEffects(args: {
   const appHost =
     process.env.NEXT_PUBLIC_APP_URL?.replace(/^https?:\/\//, "")
       ?.replace(/\/.*$/, "")
-      ?.toLowerCase() ?? "leadstack.dev";
+      ?.toLowerCase() ?? "agentstackcrm.app";
   const ics = generateIcs({
     uid: event.id,
     domain: appHost,
@@ -246,7 +243,10 @@ async function runMarkPaidSideEffects(args: {
   } catch (err) {
     // Fall back to the standard wrapper without ICS so the visitor at
     // least gets the text confirmation.
-    console.warn("[events/mark-paid] resend-with-ics failed, retrying without", err);
+    console.warn(
+      "[events/mark-paid] resend-with-ics failed, retrying without",
+      err
+    );
     try {
       await sendEmail({
         to: contact.email,

@@ -55,49 +55,49 @@
     "rows": [
       {
         "label": "Published public pricing",
-        "leadstack": true,
+        "agentstack": true,
         "competitor": "Not publicly listed"
       },
       {
         "label": "Public contract-term language",
-        "leadstack": true,
+        "agentstack": true,
         "competitor": "Not verified"
       },
       {
         "label": "AI inclusion clearly explained on accessible pages",
-        "leadstack": true,
+        "agentstack": true,
         "competitor": "Not verified"
       },
       {
         "label": "Visible setup path before signup",
-        "leadstack": true,
+        "agentstack": true,
         "competitor": "Not verified"
       },
       {
         "label": "Method-led onboarding narrative",
-        "leadstack": true,
+        "agentstack": true,
         "competitor": "Sales-led"
       },
       {
         "label": "IDX called out directly in the buyer journey",
-        "leadstack": true,
+        "agentstack": true,
         "competitor": "Not verified"
       },
       {
         "label": "Self-serve trial messaging",
-        "leadstack": true,
+        "agentstack": true,
         "competitor": "Not verified"
       },
       {
         "label": "Transparent starting plan on the public site",
-        "leadstack": "$199/mo",
+        "agentstack": "$199/mo",
         "competitor": "Contact sales"
       }
     ]
   },
   "pricing": {
     "heading": "Pricing compared honestly",
-    "leadstack": {
+    "agentstack": {
       "headline": "Published plans starting at $199/month",
       "detail": "AgentStack publicly lists Solo, Team, and Broker pricing, plus add-ons, so buyers can self-qualify before they ever speak to anyone.",
       "notes": [
@@ -164,7 +164,7 @@
     "items": [
       {
         "label": "Pricing",
-        "leadstack": "Published publicly: Solo $199/mo, Team $299/mo, Broker $399/mo.",
+        "agentstack": "Published publicly: Solo $199/mo, Team $299/mo, Broker $399/mo.",
         "competitor": "We did not verify a live public kvCORE pricing page. The official root page presents a login experience, and the official /pricing URL returned a page-not-found response during review.",
         "sources": [
           {
@@ -183,7 +183,7 @@
       },
       {
         "label": "Contract terms",
-        "leadstack": "Public plans are presented directly on the site.",
+        "agentstack": "Public plans are presented directly on the site.",
         "competitor": "We did not verify public contract-term language from the accessible official kvCORE pages reviewed on July 16, 2026.",
         "sources": [
           {
@@ -198,7 +198,7 @@
       },
       {
         "label": "AI inclusion",
-        "leadstack": "AI follow-up is part of the core product story on the public site.",
+        "agentstack": "AI follow-up is part of the core product story on the public site.",
         "competitor": "We did not verify public AI-inclusion language from the accessible official kvCORE pages reviewed on July 16, 2026.",
         "sources": [
           {
@@ -213,7 +213,7 @@
       },
       {
         "label": "Setup path",
-        "leadstack": "The public site shows a clear method-led setup path: Build, Connect, Capture, Respond.",
+        "agentstack": "The public site shows a clear method-led setup path: Build, Connect, Capture, Respond.",
         "competitor": "We did not verify a public setup-time or setup-path promise from the accessible official kvCORE pages reviewed on July 16, 2026.",
         "sources": [
           {

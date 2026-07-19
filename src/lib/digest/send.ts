@@ -12,7 +12,7 @@ import type { WorkflowNodeType } from "@/types/workflows";
 /**
  * Weekly Digest orchestrator — "Your AI employee this week: X replies, Y
  * bookings, Z leads revived." Fired once a week by the
- * "leadstack-weekly-digest" QStash schedule (fixed UTC time, unlike the
+ * "agentstack-weekly-digest" QStash schedule (fixed UTC time, unlike the
  * Daily Briefing's per-timezone hourly sweep) via
  * /api/cron/weekly-digest -> /api/cron/weekly-digest/step, one call per
  * sub-account. Reuses `dailyBriefingEnabled` as its opt-in toggle — no

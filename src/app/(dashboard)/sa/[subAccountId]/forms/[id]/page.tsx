@@ -85,8 +85,7 @@ function buildHtmlSnippet(form: LeadForm, origin: string): string {
       if (f.type === "select") {
         const opts = (f.options ?? [])
           .map(
-            (o) =>
-              `    <option value="${escAttr(o)}">${escText(o)}</option>`,
+            (o) => `    <option value="${escAttr(o)}">${escText(o)}</option>`
           )
           .join("\n");
         return [
@@ -121,18 +120,18 @@ function buildHtmlSnippet(form: LeadForm, origin: string): string {
 
   return `<!-- AgentStack form. Style with your own CSS — every element is unstyled. -->
 <!-- Submissions create contacts and fire automations in your workspace. -->
-<form data-leadstack-form="${form.id}" novalidate>
+<form data-agentstack-form="${form.id}" novalidate>
 ${fieldsHtml}
 
   <button type="submit">Send message</button>
-  <p data-leadstack-status hidden></p>
+  <p data-agentstack-status hidden></p>
 </form>
 
 <script>
 (function () {
-  var form = document.querySelector('[data-leadstack-form="${form.id}"]');
+  var form = document.querySelector('[data-agentstack-form="${form.id}"]');
   if (!form) return;
-  var status = form.querySelector("[data-leadstack-status]");
+  var status = form.querySelector("[data-agentstack-status]");
   form.addEventListener("submit", function (e) {
     e.preventDefault();
     var values = {};
@@ -270,9 +269,7 @@ const DEFAULTS_BY_TYPE: Record<
 function newField(type: FormFieldType = "text"): FormField {
   const d = DEFAULTS_BY_TYPE[type];
   return {
-    ...(type === "sms_consent"
-      ? { consentText: defaultSmsConsentText() }
-      : {}),
+    ...(type === "sms_consent" ? { consentText: defaultSmsConsentText() } : {}),
     id: `f_${Math.random().toString(36).slice(2, 9)}`,
     type,
     label: d.label,
@@ -321,7 +318,7 @@ export default function FormBuilderPage() {
 
   function updateField(fid: string, patch: Partial<FormField>) {
     const next = form!.fields.map((f) =>
-      f.id === fid ? { ...f, ...patch } : f,
+      f.id === fid ? { ...f, ...patch } : f
     );
     save({ fields: next });
   }
@@ -379,7 +376,10 @@ export default function FormBuilderPage() {
         ? buildPublicUrl(false)
         : kind === "script"
           ? `<iframe src="${buildPublicUrl(true)}" width="100%" height="600" style="border:0;background:transparent" allowtransparency="true"></iframe>`
-          : buildHtmlSnippet(form!, typeof window !== "undefined" ? window.location.origin : "");
+          : buildHtmlSnippet(
+              form!,
+              typeof window !== "undefined" ? window.location.origin : ""
+            );
     navigator.clipboard.writeText(text);
     setCopiedTag(kind);
     toast.success(
@@ -387,7 +387,7 @@ export default function FormBuilderPage() {
         ? "Link copied"
         : kind === "script"
           ? "Embed snippet copied"
-          : "HTML snippet copied",
+          : "HTML snippet copied"
     );
     setTimeout(() => setCopiedTag(""), 2000);
   }
@@ -398,7 +398,7 @@ export default function FormBuilderPage() {
         <div>
           <Link
             href={saPath("/forms")}
-            className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-xs"
           >
             <ArrowLeft className="h-3 w-3" />
             Back to forms
@@ -419,7 +419,7 @@ export default function FormBuilderPage() {
               {form.enabled ? "Live" : "Paused"}
             </span>
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             {saving ? "Saving…" : "All changes saved"}
           </p>
         </div>
@@ -437,7 +437,9 @@ export default function FormBuilderPage() {
           </Button>
           <Button
             size="sm"
-            render={<a href={`/f/${form.id}`} target="_blank" rel="noreferrer" />}
+            render={
+              <a href={`/f/${form.id}`} target="_blank" rel="noreferrer" />
+            }
           >
             <ExternalLink className="mr-1 h-3.5 w-3.5" />
             Preview
@@ -448,11 +450,11 @@ export default function FormBuilderPage() {
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
         {/* Fields column — visually on the right at lg+, source order kept
             for sensible mobile stacking. */}
-        <section className="rounded-2xl border bg-card p-5 lg:order-2">
+        <section className="bg-card rounded-2xl border p-5 lg:order-2">
           <div className="mb-3 flex items-center justify-between">
             <div>
               <h2 className="text-sm font-semibold">Fields</h2>
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-muted-foreground text-[11px]">
                 {form.fields.length} total · drag order with the arrows
               </p>
             </div>
@@ -486,7 +488,7 @@ export default function FormBuilderPage() {
               return (
                 <div
                   key={f.id}
-                  className={`group/field overflow-hidden rounded-lg border bg-background transition-colors ${meta.tone.border}`}
+                  className={`group/field bg-background overflow-hidden rounded-lg border transition-colors ${meta.tone.border}`}
                 >
                   {/* Header row */}
                   <div className="flex items-center gap-1 px-2 py-1.5">
@@ -495,7 +497,7 @@ export default function FormBuilderPage() {
                         type="button"
                         onClick={() => moveField(f.id, -1)}
                         disabled={i === 0}
-                        className="rounded text-muted-foreground/50 transition-colors hover:bg-muted hover:text-foreground disabled:opacity-20"
+                        className="text-muted-foreground/50 hover:bg-muted hover:text-foreground rounded transition-colors disabled:opacity-20"
                         aria-label="Move up"
                       >
                         <ChevronUp className="h-3 w-3" />
@@ -504,7 +506,7 @@ export default function FormBuilderPage() {
                         type="button"
                         onClick={() => moveField(f.id, 1)}
                         disabled={i === form.fields.length - 1}
-                        className="rounded text-muted-foreground/50 transition-colors hover:bg-muted hover:text-foreground disabled:opacity-20"
+                        className="text-muted-foreground/50 hover:bg-muted hover:text-foreground rounded transition-colors disabled:opacity-20"
                         aria-label="Move down"
                       >
                         <ChevronDown className="h-3 w-3" />
@@ -524,7 +526,7 @@ export default function FormBuilderPage() {
                       placeholder="Field label"
                       className="h-7 flex-1 border-none bg-transparent px-1.5 text-sm font-medium shadow-none focus-visible:ring-0"
                     />
-                    <label className="flex shrink-0 cursor-pointer items-center gap-1.5 rounded px-1.5 py-1 text-[11px] text-muted-foreground transition-colors hover:bg-muted">
+                    <label className="text-muted-foreground hover:bg-muted flex shrink-0 cursor-pointer items-center gap-1.5 rounded px-1.5 py-1 text-[11px] transition-colors">
                       <Checkbox
                         checked={f.required}
                         onCheckedChange={(v) =>
@@ -538,7 +540,7 @@ export default function FormBuilderPage() {
                       variant="ghost"
                       onClick={() => removeField(f.id)}
                       aria-label="Remove field"
-                      className="text-muted-foreground/60 opacity-0 transition-opacity hover:text-destructive group-hover/field:opacity-100"
+                      className="text-muted-foreground/60 hover:text-destructive opacity-0 transition-opacity group-hover/field:opacity-100"
                     >
                       <Trash2 className="h-3 w-3" />
                     </Button>
@@ -547,62 +549,62 @@ export default function FormBuilderPage() {
                   {/* Compact meta strip — mapsTo + placeholder are irrelevant
                       for the consent checkbox, so it gets its own editor below. */}
                   {f.type !== "sms_consent" && (
-                  <div className="grid grid-cols-1 gap-1.5 border-t bg-muted/20 px-2 py-1.5 text-xs sm:grid-cols-[110px_180px_1fr]">
-                    <select
-                      value={f.type}
-                      onChange={(e) =>
-                        updateField(f.id, {
-                          type: e.target.value as FormFieldType,
-                        })
-                      }
-                      aria-label="Field type"
-                      className="h-7 rounded-md border border-input bg-transparent px-1.5 text-[11px] outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50 text-foreground dark:bg-input/30 [&_option]:bg-background [&_option]:text-foreground"
-                    >
-                      {FIELD_TYPES.map((t) => (
-                        <option
-                          key={t.value}
-                          value={t.value}
-                          className="bg-background text-foreground"
-                        >
-                          {t.label}
-                        </option>
-                      ))}
-                    </select>
-                    <select
-                      value={f.mapsTo ?? ""}
-                      onChange={(e) =>
-                        updateField(f.id, {
-                          mapsTo:
-                            (e.target.value || null) as FormField["mapsTo"],
-                        })
-                      }
-                      aria-label="Maps to contact"
-                      className="h-7 rounded-md border border-input bg-transparent px-1.5 text-[11px] outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50 text-foreground dark:bg-input/30 [&_option]:bg-background [&_option]:text-foreground"
-                    >
-                      {MAP_OPTIONS.map((o) => (
-                        <option
-                          key={o.label}
-                          value={o.value ?? ""}
-                          className="bg-background text-foreground"
-                        >
-                          {o.label}
-                        </option>
-                      ))}
-                    </select>
-                    <Input
-                      value={f.placeholder}
-                      onChange={(e) =>
-                        updateField(f.id, { placeholder: e.target.value })
-                      }
-                      placeholder="Placeholder (optional)"
-                      className="h-7 px-2 text-[11px]"
-                    />
-                  </div>
+                    <div className="bg-muted/20 grid grid-cols-1 gap-1.5 border-t px-2 py-1.5 text-xs sm:grid-cols-[110px_180px_1fr]">
+                      <select
+                        value={f.type}
+                        onChange={(e) =>
+                          updateField(f.id, {
+                            type: e.target.value as FormFieldType,
+                          })
+                        }
+                        aria-label="Field type"
+                        className="border-input focus-visible:border-ring focus-visible:ring-ring/50 text-foreground dark:bg-input/30 [&_option]:bg-background [&_option]:text-foreground h-7 rounded-md border bg-transparent px-1.5 text-[11px] outline-none focus-visible:ring-2"
+                      >
+                        {FIELD_TYPES.map((t) => (
+                          <option
+                            key={t.value}
+                            value={t.value}
+                            className="bg-background text-foreground"
+                          >
+                            {t.label}
+                          </option>
+                        ))}
+                      </select>
+                      <select
+                        value={f.mapsTo ?? ""}
+                        onChange={(e) =>
+                          updateField(f.id, {
+                            mapsTo: (e.target.value ||
+                              null) as FormField["mapsTo"],
+                          })
+                        }
+                        aria-label="Maps to contact"
+                        className="border-input focus-visible:border-ring focus-visible:ring-ring/50 text-foreground dark:bg-input/30 [&_option]:bg-background [&_option]:text-foreground h-7 rounded-md border bg-transparent px-1.5 text-[11px] outline-none focus-visible:ring-2"
+                      >
+                        {MAP_OPTIONS.map((o) => (
+                          <option
+                            key={o.label}
+                            value={o.value ?? ""}
+                            className="bg-background text-foreground"
+                          >
+                            {o.label}
+                          </option>
+                        ))}
+                      </select>
+                      <Input
+                        value={f.placeholder}
+                        onChange={(e) =>
+                          updateField(f.id, { placeholder: e.target.value })
+                        }
+                        placeholder="Placeholder (optional)"
+                        className="h-7 px-2 text-[11px]"
+                      />
+                    </div>
                   )}
 
                   {f.type === "sms_consent" && (
-                    <div className="space-y-1 border-t bg-muted/20 px-2 py-1.5">
-                      <Label className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+                    <div className="bg-muted/20 space-y-1 border-t px-2 py-1.5">
+                      <Label className="text-muted-foreground flex items-center gap-1 text-[10px] tracking-wide uppercase">
                         <ShieldCheck className="h-3 w-3" /> Consent text (shown
                         beside the checkbox)
                       </Label>
@@ -615,7 +617,7 @@ export default function FormBuilderPage() {
                         className="min-h-0 text-xs"
                         placeholder={defaultSmsConsentText()}
                       />
-                      <p className="text-[10px] leading-snug text-muted-foreground">
+                      <p className="text-muted-foreground text-[10px] leading-snug">
                         For A2P 10DLC compliance the text must name your
                         business and include message frequency, &ldquo;message
                         &amp; data rates may apply,&rdquo; and STOP/HELP
@@ -628,8 +630,8 @@ export default function FormBuilderPage() {
                   )}
 
                   {f.type === "select" && (
-                    <div className="space-y-1 border-t bg-muted/20 px-2 py-1.5">
-                      <Label className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+                    <div className="bg-muted/20 space-y-1 border-t px-2 py-1.5">
+                      <Label className="text-muted-foreground flex items-center gap-1 text-[10px] tracking-wide uppercase">
                         <Hash className="h-3 w-3" /> Options · one per line
                       </Label>
                       <Textarea
@@ -652,8 +654,10 @@ export default function FormBuilderPage() {
               );
             })}
             {form.fields.length === 0 && (
-              <div className="rounded-lg border border-dashed py-8 text-center text-xs text-muted-foreground">
-                No fields yet. Use <span className="font-medium">Add field</span> above to get started.
+              <div className="text-muted-foreground rounded-lg border border-dashed py-8 text-center text-xs">
+                No fields yet. Use{" "}
+                <span className="font-medium">Add field</span> above to get
+                started.
               </div>
             )}
           </div>
@@ -661,7 +665,7 @@ export default function FormBuilderPage() {
 
         {/* Settings column — visually on the left at lg+. */}
         <aside className="space-y-4 lg:order-1">
-          <section className="rounded-2xl border bg-card p-5">
+          <section className="bg-card rounded-2xl border p-5">
             <h2 className="mb-3 text-sm font-semibold">On submission</h2>
             <div className="space-y-3 text-sm">
               <div className="space-y-1.5">
@@ -670,11 +674,11 @@ export default function FormBuilderPage() {
                   value={form.settings.pipelineStageId ?? ""}
                   onChange={(e) =>
                     updateSettings({
-                      pipelineStageId:
-                        (e.target.value || null) as PipelineStageId | null,
+                      pipelineStageId: (e.target.value ||
+                        null) as PipelineStageId | null,
                     })
                   }
-                  className="flex h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 text-foreground dark:bg-input/30 [&_option]:bg-background [&_option]:text-foreground"
+                  className="border-input focus-visible:border-ring focus-visible:ring-ring/50 text-foreground dark:bg-input/30 [&_option]:bg-background [&_option]:text-foreground flex h-8 w-full rounded-lg border bg-transparent px-2.5 text-sm outline-none focus-visible:ring-3"
                 >
                   <option value="" className="bg-background text-foreground">
                     — None (contact only)
@@ -708,9 +712,7 @@ export default function FormBuilderPage() {
               <div className="flex items-center gap-2">
                 <Checkbox
                   checked={form.settings.createDeal}
-                  onCheckedChange={(v) =>
-                    updateSettings({ createDeal: !!v })
-                  }
+                  onCheckedChange={(v) => updateSettings({ createDeal: !!v })}
                 />
                 <span>Also open a deal</span>
               </div>
@@ -728,7 +730,7 @@ export default function FormBuilderPage() {
                       className="h-8 text-sm"
                       placeholder="New lead — {name}"
                     />
-                    <p className="text-[11px] text-muted-foreground">
+                    <p className="text-muted-foreground text-[11px]">
                       Use <code>{`{name}`}</code>, <code>{`{email}`}</code>,{" "}
                       <code>{`{company}`}</code> as placeholders.
                     </p>
@@ -754,7 +756,7 @@ export default function FormBuilderPage() {
                         onChange={(e) =>
                           updateSettings({ dealCurrency: e.target.value })
                         }
-                        className="flex h-8 w-24 rounded-lg border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 text-foreground dark:bg-input/30 [&_option]:bg-background [&_option]:text-foreground"
+                        className="border-input focus-visible:border-ring focus-visible:ring-ring/50 text-foreground dark:bg-input/30 [&_option]:bg-background [&_option]:text-foreground flex h-8 w-24 rounded-lg border bg-transparent px-2 text-sm outline-none focus-visible:ring-3"
                       >
                         {["USD", "AUD", "EUR", "GBP", "CAD"].map((c) => (
                           <option
@@ -773,7 +775,7 @@ export default function FormBuilderPage() {
             </div>
           </section>
 
-          <section className="rounded-2xl border bg-card p-5">
+          <section className="bg-card rounded-2xl border p-5">
             <h2 className="mb-3 text-sm font-semibold">After submit</h2>
             <div className="space-y-3 text-sm">
               <div className="space-y-1.5">
@@ -809,7 +811,7 @@ export default function FormBuilderPage() {
 
           <section className="rounded-2xl border bg-gradient-to-br from-indigo-500/5 via-violet-500/5 to-pink-500/5 p-5">
             <h2 className="mb-1 text-sm font-semibold">Share</h2>
-            <p className="mb-3 text-[11px] text-muted-foreground">
+            <p className="text-muted-foreground mb-3 text-[11px]">
               Three ways to collect submissions. All flow to the same contact +
               automation pipeline.
             </p>
@@ -842,7 +844,7 @@ export default function FormBuilderPage() {
                 {copiedTag === "html" ? "HTML copied" : "Copy HTML snippet"}
               </Button>
             </div>
-            <p className="mt-3 text-[11px] leading-relaxed text-muted-foreground">
+            <p className="text-muted-foreground mt-3 text-[11px] leading-relaxed">
               <strong className="text-foreground">HTML snippet</strong> = an
               unstyled form + tiny script your developer drops into any site.
               Style it with your own CSS; submissions still create contacts and
@@ -858,10 +860,10 @@ export default function FormBuilderPage() {
 function BuilderSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="h-10 w-64 animate-pulse rounded bg-muted" />
+      <div className="bg-muted h-10 w-64 animate-pulse rounded" />
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-        <div className="h-96 animate-pulse rounded-2xl border bg-muted/30" />
-        <div className="h-96 animate-pulse rounded-2xl border bg-muted/30" />
+        <div className="bg-muted/30 h-96 animate-pulse rounded-2xl border" />
+        <div className="bg-muted/30 h-96 animate-pulse rounded-2xl border" />
       </div>
     </div>
   );
@@ -872,7 +874,7 @@ function NotFound() {
   return (
     <div className="rounded-xl border border-dashed p-12 text-center">
       <h2 className="text-lg font-semibold">Form not found</h2>
-      <p className="mt-1 text-sm text-muted-foreground">
+      <p className="text-muted-foreground mt-1 text-sm">
         It may have been deleted.
       </p>
       <Button render={<Link href={saPath("/forms")} />} className="mt-6">
@@ -902,9 +904,9 @@ function EmbedAppearanceSection({
   previewUrl: string;
 }) {
   return (
-    <section className="rounded-2xl border bg-card p-5">
+    <section className="bg-card rounded-2xl border p-5">
       <h2 className="mb-1 text-sm font-semibold">Embed appearance</h2>
-      <p className="mb-3 text-[11px] text-muted-foreground">
+      <p className="text-muted-foreground mb-3 text-[11px]">
         How the form looks when embedded as an iframe. The standalone link
         ignores these — they only kick in for the iframe snippet below.
       </p>
@@ -936,7 +938,7 @@ function EmbedAppearanceSection({
               type="color"
               value={appearance.accent}
               onChange={(e) => onChange({ accent: e.target.value })}
-              className="h-8 w-10 cursor-pointer rounded border border-input bg-transparent"
+              className="border-input h-8 w-10 cursor-pointer rounded border bg-transparent"
               aria-label="Pick accent colour"
             />
             <Input
@@ -986,8 +988,8 @@ function EmbedAppearanceSection({
           </span>
         </label>
 
-        <div className="rounded-lg border border-dashed bg-muted/30 p-3">
-          <p className="text-[11px] text-muted-foreground">Preview</p>
+        <div className="bg-muted/30 rounded-lg border border-dashed p-3">
+          <p className="text-muted-foreground text-[11px]">Preview</p>
           <iframe
             key={`${appearance.theme}-${appearance.accent}-${appearance.hideChrome}`}
             src={previewUrl}

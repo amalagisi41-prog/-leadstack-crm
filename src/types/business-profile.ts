@@ -25,14 +25,27 @@ export type BrandVoice =
   | "casual"
   | "formal";
 
-export const BRAND_VOICES: { id: BrandVoice; label: string; blurb: string }[] = [
-  { id: "professional", label: "Professional", blurb: "Polished, trustworthy, clear." },
-  { id: "friendly", label: "Friendly", blurb: "Warm, approachable, conversational." },
-  { id: "luxury", label: "Luxury", blurb: "Refined, exclusive, high-touch." },
-  { id: "investor", label: "Investor", blurb: "Direct, numbers-first, efficient." },
-  { id: "casual", label: "Casual", blurb: "Relaxed and down-to-earth." },
-  { id: "formal", label: "Formal", blurb: "Buttoned-up and precise." },
-];
+export const BRAND_VOICES: { id: BrandVoice; label: string; blurb: string }[] =
+  [
+    {
+      id: "professional",
+      label: "Professional",
+      blurb: "Polished, trustworthy, clear.",
+    },
+    {
+      id: "friendly",
+      label: "Friendly",
+      blurb: "Warm, approachable, conversational.",
+    },
+    { id: "luxury", label: "Luxury", blurb: "Refined, exclusive, high-touch." },
+    {
+      id: "investor",
+      label: "Investor",
+      blurb: "Direct, numbers-first, efficient.",
+    },
+    { id: "casual", label: "Casual", blurb: "Relaxed and down-to-earth." },
+    { id: "formal", label: "Formal", blurb: "Buttoned-up and precise." },
+  ];
 
 /** Services an agent offers — drives which funnels/workflows we recommend. */
 export type ServiceSpecialty =
@@ -152,7 +165,7 @@ export interface BusinessProfileDoc extends BusinessProfileContent {
 }
 
 export const DEFAULT_AGENTSTACK_LOGO_SHEET_URL =
-  "https://agentstackcrm.app/brand/agentstack-logo-sheet.jpg";
+  "https://agentstackcrm.app/icons/icon-512.png";
 
 export const EMPTY_BUSINESS_PROFILE: BusinessProfileContent = {
   agentName: "",

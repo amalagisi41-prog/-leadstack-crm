@@ -16,8 +16,8 @@ export default function AgencySettingsPage() {
 
   if (!loading && agencyRole !== "owner") {
     return (
-      <div className="mx-auto max-w-3xl rounded-2xl border bg-card p-8 text-center">
-        <p className="text-sm text-muted-foreground">
+      <div className="bg-card mx-auto max-w-3xl rounded-2xl border p-8 text-center">
+        <p className="text-muted-foreground text-sm">
           Only the agency owner can manage agency-level settings.
         </p>
         <Button
@@ -36,7 +36,7 @@ export default function AgencySettingsPage() {
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           Agency-level configuration. These settings apply across every
           sub-account and the public landing page.
         </p>
@@ -64,7 +64,7 @@ export default function AgencySettingsPage() {
       {/* Demo seed/unseed panel — AgentStack-branded deployment only.
           Buyer clones (LANDING_VARIANT === "custom") don't see this, and
           the underlying API route 404s for them too. */}
-      {LANDING_VARIANT === "leadstack" && <SeedDemoSection />}
+      {LANDING_VARIANT === "agentstack" && <SeedDemoSection />}
     </div>
   );
 }

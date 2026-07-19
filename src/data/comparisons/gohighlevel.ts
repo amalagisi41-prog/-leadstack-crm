@@ -73,71 +73,72 @@ export const gohighlevelComparison: Comparison = {
   ],
 
   featureTable: {
-    heading: "How AgentStack's base license compares to GoHighLevel's base plan",
+    heading:
+      "How AgentStack's base license compares to GoHighLevel's base plan",
     rows: [
       {
         label: "Unlimited sub-accounts",
-        leadstack: true,
+        agentstack: true,
         competitor: false,
       },
       {
         label: "All-in-one CRM: contacts, pipeline, quotes, booking, calendar",
-        leadstack: true,
+        agentstack: true,
         competitor: true,
       },
       {
         label: "AI Web Chat widget + SMS auto-reply + Voice agent",
-        leadstack: true,
+        agentstack: true,
         competitor: false,
       },
       {
         label: "Google review requests (SMS + WhatsApp, auto + on-demand)",
-        leadstack: true,
+        agentstack: true,
         competitor: true,
       },
       {
         label: "Premium support",
-        leadstack: true,
+        agentstack: true,
         competitor: false,
       },
       {
         label: "Public API + webhooks included (idempotency, versioning)",
-        leadstack: true,
+        agentstack: true,
         competitor: false,
       },
       {
         label: "Full source code access — modify any feature",
-        leadstack: true,
+        agentstack: true,
         competitor: false,
       },
       {
         label: "Self-host on your own cloud account",
-        leadstack: true,
+        agentstack: true,
         competitor: false,
       },
       {
         label: "Recurring monthly platform fee",
-        leadstack: "$0",
+        agentstack: "$0",
         competitor: "$297/month",
       },
       {
         label: "Client data on your infrastructure",
-        leadstack: true,
+        agentstack: true,
         competitor: false,
       },
       {
         label: "Per-sub-account dedicated email sending domain",
-        leadstack: true,
+        agentstack: true,
         competitor: true,
       },
       {
         label: "Funnel / landing page builder",
-        leadstack: true,
+        agentstack: true,
         competitor: true,
       },
       {
         label: "Social post scheduling (Facebook + Instagram)",
-        leadstack: true,
+        agentstack: true,
         competitor: true,
       },
     ],
@@ -145,7 +146,7 @@ export const gohighlevelComparison: Comparison = {
 
   pricing: {
     heading: "Pricing compared honestly",
-    leadstack: {
+    agentstack: {
       headline: "One-time license + your real vendor costs",
       detail:
         "Pay for AgentStack once. The features GoHighLevel sells as paid add-ons — AI Employee, premium support — and capabilities it gates behind higher tiers — the full public API + webhooks — are all included with the license. For most agencies, monthly running costs come in under the price of a cup of coffee — the free tiers across the underlying providers are generous.",

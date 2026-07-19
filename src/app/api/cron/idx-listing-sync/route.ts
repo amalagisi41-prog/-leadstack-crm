@@ -8,7 +8,7 @@ import {
 } from "@/lib/automations/qstash";
 
 /**
- * Fired every 6 hours by the "leadstack-idx-listing-sync" QStash schedule
+ * Fired every 6 hours by the "agentstack-idx-listing-sync" QStash schedule
  * (see lib/qstash/register-schedules.ts). Fans out one staggered callback
  * per IDX-connected sub-account to /api/idx/sync/step, mirroring the
  * broadcasts email send fan-out. Staggering avoids bursting every
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     .get();
 
   const targets = snap.docs.filter(
-    (d) => (d.data().idxConfig as { enabled?: boolean } | undefined)?.enabled,
+    (d) => (d.data().idxConfig as { enabled?: boolean } | undefined)?.enabled
   );
 
   const runTag = Math.floor(Date.now() / 1000);

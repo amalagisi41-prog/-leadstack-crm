@@ -11,9 +11,9 @@ const VALID_STATUSES: AffiliateStatus[] = ["active", "paused", "banned"];
 
 export async function POST(
   request: Request,
-  ctx: { params: Promise<{ id: string }> },
+  ctx: { params: Promise<{ id: string }> }
 ) {
-  if (LANDING_VARIANT !== "leadstack") {
+  if (LANDING_VARIANT !== "agentstack") {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
@@ -36,13 +36,10 @@ export async function POST(
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
 
-  await getAdminDb()
-    .collection("affiliates")
-    .doc(id)
-    .update({
-      status: nextStatus,
-      updatedAt: FieldValue.serverTimestamp(),
-    });
+  await getAdminDb().collection("affiliates").doc(id).update({
+    status: nextStatus,
+    updatedAt: FieldValue.serverTimestamp(),
+  });
 
   return NextResponse.json({ ok: true, status: nextStatus });
 }

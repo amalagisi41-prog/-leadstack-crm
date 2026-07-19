@@ -43,7 +43,7 @@ export function useGitpageStatus() {
         setDoc(snap.exists() ? (snap.data() as GitpageStatusDoc) : null);
         setHydrated(true);
       },
-      () => setHydrated(true),
+      () => setHydrated(true)
     );
     return () => unsub();
   }, []);
@@ -70,4 +70,4 @@ export function useGitpageStatus() {
 
 /** UTM-tagged subscription URL. Constant — exported for reuse in banners. */
 export const GITPAGE_SUBSCRIBE_URL =
-  "https://www.gitpage.site/?showPricing=true&utm_source=leadstack&utm_medium=in_app";
+  "https://www.gitpage.site/?showPricing=true&utm_source=agentstack&utm_medium=in_app";

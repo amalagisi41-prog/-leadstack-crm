@@ -10,7 +10,7 @@ interface EnsureAccountInput {
 // Stub — the real affiliate-account logic is AgentStack-marketing-specific.
 // All three exports are typed no-ops so `webhooks.ts` still type-checks;
 // the affiliate branch of the webhook is gated on
-// LANDING_VARIANT === "leadstack", which the buyer never sets, so these
+// LANDING_VARIANT === "agentstack", which the buyer never sets, so these
 // are never called at runtime.
 
 const STUB_AFFILIATE: Affiliate = {
@@ -28,19 +28,19 @@ const STUB_AFFILIATE: Affiliate = {
 };
 
 export async function ensureAffiliateAccount(
-  _input: EnsureAccountInput,
+  _input: EnsureAccountInput
 ): Promise<Affiliate> {
   return STUB_AFFILIATE;
 }
 
 export async function findAffiliateByCode(
-  _code: string,
+  _code: string
 ): Promise<Affiliate | null> {
   return null;
 }
 
 export async function findAffiliateByEmail(
-  _email: string,
+  _email: string
 ): Promise<Affiliate | null> {
   return null;
 }

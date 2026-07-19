@@ -5,11 +5,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { Resend } from "resend";
 
 import { getAdminDb } from "@/lib/firebase/admin";
-import {
-  emailIsConfigured,
-  sendEmail,
-  tenantFrom,
-} from "@/lib/comms/resend";
+import { emailIsConfigured, sendEmail, tenantFrom } from "@/lib/comms/resend";
 import {
   computeAvailability,
   isSlotAvailable,
@@ -57,7 +53,7 @@ interface RescheduleBody {
 
 export async function POST(
   request: Request,
-  ctx: { params: Promise<{ token: string }> },
+  ctx: { params: Promise<{ token: string }> }
 ) {
   const { token } = await ctx.params;
 
@@ -83,13 +79,13 @@ export async function POST(
   ) {
     return NextResponse.json(
       { error: "Pick a valid new time." },
-      { status: 400 },
+      { status: 400 }
     );
   }
   if (newStart.getTime() <= Date.now()) {
     return NextResponse.json(
       { error: "Choose a time in the future." },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
@@ -119,7 +115,7 @@ export async function POST(
         throw new BadState(
           status === "cancelled"
             ? "This booking was cancelled. Please re-book."
-            : "This meeting can't be rescheduled.",
+            : "This meeting can't be rescheduled."
         );
       }
       if (!event.bookingPageSlug) {
@@ -129,12 +125,12 @@ export async function POST(
       // Load the booking page inside the txn so its config is the same
       // one used to verify availability.
       const pageRef = db.doc(
-        `subAccounts/${event.subAccountId}/bookingPages/${event.bookingPageSlug}`,
+        `subAccounts/${event.subAccountId}/bookingPages/${event.bookingPageSlug}`
       );
       const pageSnap = await txn.get(pageRef);
       if (!pageSnap.exists) {
         throw new BadState(
-          "The booking page is no longer available. Please cancel and re-book later.",
+          "The booking page is no longer available. Please cancel and re-book later."
         );
       }
       const page = pageSnap.data() as BookingPage;
@@ -149,7 +145,7 @@ export async function POST(
           .collection("events")
           .where("subAccountId", "==", event.subAccountId)
           .where("startAt", ">=", queryFrom)
-          .where("startAt", "<=", queryTo),
+          .where("startAt", "<=", queryTo)
       );
       const busy: BusyEvent[] = [];
       for (const d of busySnap.docs) {
@@ -175,7 +171,7 @@ export async function POST(
       }
 
       const { token: newRawToken, hash: newHash } = issueEventToken(
-        eventRef.id,
+        eventRef.id
       );
       txn.update(eventRef, {
         startAt: newStart,
@@ -202,16 +198,15 @@ export async function POST(
     if (err instanceof SlotConflict) {
       return NextResponse.json(
         {
-          error:
-            "That time was just taken. Refresh and pick another option.",
+          error: "That time was just taken. Refresh and pick another option.",
         },
-        { status: 409 },
+        { status: 409 }
       );
     }
     console.error("[events/reschedule] txn failed", err);
     return NextResponse.json(
       { error: "Couldn't reschedule. Try again." },
-      { status: 500 },
+      { status: 500 }
     );
   }
 
@@ -282,7 +277,7 @@ async function runRescheduleSideEffects(args: {
         contactId: event.contactId,
         bookingPageSlug: event.bookingPageSlug ?? null,
       },
-      "booking_rescheduled",
+      "booking_rescheduled"
     );
     await fireBookingTrigger(
       {
@@ -290,7 +285,7 @@ async function runRescheduleSideEffects(args: {
         subAccountId: event.subAccountId,
         contactId: event.contactId,
       },
-      "event_rescheduled",
+      "event_rescheduled"
     );
   }
 
@@ -315,7 +310,10 @@ async function runRescheduleSideEffects(args: {
         name: page?.name ?? event.title ?? "Meeting",
         durationMinutes:
           page?.durationMinutes ??
-          Math.max(15, Math.round((endAt.getTime() - startAt.getTime()) / 60_000)),
+          Math.max(
+            15,
+            Math.round((endAt.getTime() - startAt.getTime()) / 60_000)
+          ),
         timezone: page?.timezone ?? "UTC",
         payment: page?.payment ?? null,
         confirmationMessage: page?.confirmationMessage ?? "",
@@ -328,7 +326,7 @@ async function runRescheduleSideEffects(args: {
     const appHost =
       process.env.NEXT_PUBLIC_APP_URL?.replace(/^https?:\/\//, "")
         ?.replace(/\/.*$/, "")
-        ?.toLowerCase() ?? "leadstack.dev";
+        ?.toLowerCase() ?? "agentstackcrm.app";
     const ics = generateIcs({
       uid: event.id,
       domain: appHost,

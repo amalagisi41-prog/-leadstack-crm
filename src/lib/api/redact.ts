@@ -21,8 +21,9 @@ import "server-only";
  * function already in place and bails.
  */
 
-const SECRET_RE = /lsk_(live|test)_([0-9A-HJKMNP-TV-Z]{8})_[0-9A-HJKMNP-TV-Z]{32}/g;
-const REDACTED_TAG = "__leadstack_redacted_console__";
+const SECRET_RE =
+  /lsk_(live|test)_([0-9A-HJKMNP-TV-Z]{8})_[0-9A-HJKMNP-TV-Z]{32}/g;
+const REDACTED_TAG = "__agentstack_redacted_console__";
 
 function redactString(input: unknown): unknown {
   if (typeof input !== "string") return input;

@@ -8,7 +8,7 @@ import { Navbar } from "@/components/landing/navbar";
 import { Footer } from "@/components/landing/footer";
 
 /**
- * Shared route shell for every /leadstack-vs-{slug} static page.
+ * Shared route shell for every /agentstack-vs-{slug} static page.
  *
  * Why static routes instead of a dynamic [slug] segment: Next.js 15
  * Turbopack production builds (which this repo uses, per package.json)
@@ -26,12 +26,12 @@ import { Footer } from "@/components/landing/footer";
  */
 export function buildComparisonMetadata(slug: string): Metadata {
   const comparison = getComparison(slug);
-  if (!comparison || LANDING_VARIANT !== "leadstack") {
+  if (!comparison || LANDING_VARIANT !== "agentstack") {
     return { title: "Not found" };
   }
   const baseUrl =
     process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ??
-    "https://leadstack.dev";
+    "https://agentstackcrm.app";
   const canonical = `${baseUrl}${getComparisonPath(comparison.slug)}`;
   return {
     title: comparison.metaTitle,
@@ -54,13 +54,13 @@ export function buildComparisonMetadata(slug: string): Metadata {
 }
 
 export function ComparisonRoute({ slug }: { slug: string }) {
-  if (LANDING_VARIANT !== "leadstack") notFound();
+  if (LANDING_VARIANT !== "agentstack") notFound();
   const comparison = getComparison(slug);
   if (!comparison) notFound();
 
   const baseUrl =
     process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ??
-    "https://leadstack.dev";
+    "https://agentstackcrm.app";
 
   return (
     <div className="flex min-h-screen flex-col">

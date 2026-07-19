@@ -5,7 +5,7 @@ import {
 } from "@/components/compare/render-comparison-route";
 
 /**
- * /leadstack-vs-gohighlevel — public SEO comparison page.
+ * /agentstack-vs-gohighlevel — public SEO comparison page.
  *
  * Pure server component. All body copy is rendered on the server and
  * lands in the initial HTML response (verified post-build with curl).

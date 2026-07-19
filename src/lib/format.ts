@@ -3,7 +3,7 @@ import type { Timestamp, FieldValue } from "firebase/firestore";
 /**
  * Replace local-part + domain-name with bullets, keep the @ and TLD so
  * the field still reads as "an email" during demos / screenshares.
- *   admin@leadstack.com  ->  a••••@l•••••••.com
+ *   admin@agentstack.com  ->  a••••@l•••••••.com
  *
  * Pure presentation — caller decides when to swap to the real value
  * (typically via a Show/Hide toggle).
@@ -32,7 +32,9 @@ function isTimestamp(v: unknown): v is Timestamp {
   );
 }
 
-export function toDate(value: Timestamp | FieldValue | Date | null | undefined): Date | null {
+export function toDate(
+  value: Timestamp | FieldValue | Date | null | undefined
+): Date | null {
   if (!value) return null;
   if (value instanceof Date) return value;
   if (isTimestamp(value)) return value.toDate();
@@ -40,7 +42,7 @@ export function toDate(value: Timestamp | FieldValue | Date | null | undefined):
 }
 
 export function formatContactDate(
-  value: Timestamp | FieldValue | Date | null | undefined,
+  value: Timestamp | FieldValue | Date | null | undefined
 ): string {
   const d = toDate(value);
   if (!d) return "—";
@@ -52,7 +54,7 @@ export function formatContactDate(
 }
 
 export function formatRelativeTime(
-  value: Timestamp | FieldValue | Date | null | undefined,
+  value: Timestamp | FieldValue | Date | null | undefined
 ): string {
   const d = toDate(value);
   if (!d) return "just now";
@@ -75,7 +77,7 @@ export function formatRelativeTime(
 }
 
 export function daysSince(
-  value: Timestamp | FieldValue | Date | null | undefined,
+  value: Timestamp | FieldValue | Date | null | undefined
 ): number {
   const d = toDate(value);
   if (!d) return 0;
@@ -86,7 +88,7 @@ export function daysSince(
 export function formatCurrency(
   value: number,
   currency = "USD",
-  opts?: { compact?: boolean },
+  opts?: { compact?: boolean }
 ): string {
   try {
     return new Intl.NumberFormat("en-US", {

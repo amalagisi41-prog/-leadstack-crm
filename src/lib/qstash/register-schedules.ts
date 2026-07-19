@@ -42,41 +42,41 @@ interface ScheduleSpec {
 
 const SCHEDULES: ScheduleSpec[] = [
   {
-    scheduleId: "leadstack-gitpage-heartbeat",
+    scheduleId: "agentstack-gitpage-heartbeat",
     path: "/api/cron/gitpage-heartbeat",
     cron: "0 3 * * *",
     description: "Daily gitpage telemetry + subscription status cache.",
   },
   {
-    scheduleId: "leadstack-api-cleanup",
+    scheduleId: "agentstack-api-cleanup",
     path: "/api/cron/api-cleanup",
     cron: "0 4 * * *",
     description:
       "Daily sweep of expired apiRequestLogs / apiIdempotency / webhookEvents.",
   },
   {
-    scheduleId: "leadstack-idx-listing-sync",
+    scheduleId: "agentstack-idx-listing-sync",
     path: "/api/cron/idx-listing-sync",
     cron: "0 */6 * * *",
     description:
       "Every 6 hours, fan out to sync each IDX-connected sub-account's MLS listings.",
   },
   {
-    scheduleId: "leadstack-workflow-time-triggers",
+    scheduleId: "agentstack-workflow-time-triggers",
     path: "/api/cron/workflow-time-triggers",
     cron: "0 9 * * *",
     description:
       "Daily sweep for the contact.birthday / contact.home_anniversary / contact.stale Smart Workflows triggers.",
   },
   {
-    scheduleId: "leadstack-daily-briefing",
+    scheduleId: "agentstack-daily-briefing",
     path: "/api/cron/daily-briefing",
     cron: "0 * * * *",
     description:
       "Hourly sweep for the Daily Briefing email — each sub-account only actually sends once at ~7am in its own timezone (deduped via lastBriefingSentDate).",
   },
   {
-    scheduleId: "leadstack-weekly-digest",
+    scheduleId: "agentstack-weekly-digest",
     path: "/api/cron/weekly-digest",
     cron: "0 13 * * 1",
     description:
@@ -147,7 +147,7 @@ export async function ensureSchedulesRegistered(): Promise<void> {
     } catch (err) {
       const message = err instanceof Error ? err.message : "unknown";
       console.warn(
-        `[schedules] failed to register ${s.scheduleId}: ${message}`,
+        `[schedules] failed to register ${s.scheduleId}: ${message}`
       );
       results.push({ id: s.scheduleId, ok: false, error: message });
     }
@@ -165,7 +165,7 @@ export async function ensureSchedulesRegistered(): Promise<void> {
         scheduleIds: SCHEDULES.map((s) => s.scheduleId),
         lastResults: results,
       },
-      { merge: true },
+      { merge: true }
     );
   } catch (err) {
     console.warn("[schedules] marker write failed", err);

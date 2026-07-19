@@ -78,17 +78,10 @@ export default function ContactsPage() {
       (list) => {
         setContacts(list);
         setLoading(false);
-      },
+      }
     );
     return () => unsub();
-  }, [
-    user,
-    agencyId,
-    subAccountId,
-    authLoading,
-    filterReady,
-    territoryFilter,
-  ]);
+  }, [user, agencyId, subAccountId, authLoading, filterReady, territoryFilter]);
 
   useEffect(() => {
     if (!scopingOn || !subAccountId) {
@@ -96,7 +89,7 @@ export default function ContactsPage() {
       return;
     }
     const unsub = subscribeToTerritories(subAccountId, (list) =>
-      setTerritories(list),
+      setTerritories(list)
     );
     return () => unsub();
   }, [scopingOn, subAccountId]);
@@ -106,7 +99,16 @@ export default function ContactsPage() {
       toast.error("No contacts to export.");
       return;
     }
-    const headers = ["name", "email", "phone", "company", "source", "tags", "pipelineStage", "createdAt"];
+    const headers = [
+      "name",
+      "email",
+      "phone",
+      "company",
+      "source",
+      "tags",
+      "pipelineStage",
+      "createdAt",
+    ];
     const rows = contacts.map((c) => ({
       name: c.name,
       email: c.email,
@@ -119,7 +121,7 @@ export default function ContactsPage() {
     }));
     const csv = serializeCsv(headers, rows);
     const stamp = new Date().toISOString().slice(0, 10);
-    downloadCsv(`leadstack-contacts-${stamp}.csv`, csv);
+    downloadCsv(`agentstack-contacts-${stamp}.csv`, csv);
     toast.success(`Exported ${rows.length} contacts`);
   }
 
@@ -131,7 +133,7 @@ export default function ContactsPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">People</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Everyone in your pipeline, in one place.
           </p>
         </div>
@@ -154,10 +156,7 @@ export default function ContactsPage() {
               Bulk AI call
             </Button>
           )}
-          <Button
-            variant="outline"
-            onClick={() => setImportOpen(true)}
-          >
+          <Button variant="outline" onClick={() => setImportOpen(true)}>
             <Upload className="mr-1 h-4 w-4" />
             Import CSV
           </Button>
@@ -174,7 +173,7 @@ export default function ContactsPage() {
       </div>
 
       <div className="relative max-w-sm">
-        <Search className="pointer-events-none absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2" />
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -214,16 +213,16 @@ export default function ContactsPage() {
 
 function TableSkeleton() {
   return (
-    <div className="overflow-hidden rounded-xl border bg-card">
-      <div className="border-b bg-muted/40 px-4 py-3">
-        <div className="h-3 w-24 animate-pulse rounded bg-muted" />
+    <div className="bg-card overflow-hidden rounded-xl border">
+      <div className="bg-muted/40 border-b px-4 py-3">
+        <div className="bg-muted h-3 w-24 animate-pulse rounded" />
       </div>
       <div className="divide-y">
         {Array.from({ length: 6 }).map((_, i) => (
           <div key={i} className="flex items-center gap-4 px-4 py-4">
-            <div className="h-4 w-40 animate-pulse rounded bg-muted" />
-            <div className="h-4 w-48 animate-pulse rounded bg-muted" />
-            <div className="ml-auto h-5 w-16 animate-pulse rounded-full bg-muted" />
+            <div className="bg-muted h-4 w-40 animate-pulse rounded" />
+            <div className="bg-muted h-4 w-48 animate-pulse rounded" />
+            <div className="bg-muted ml-auto h-5 w-16 animate-pulse rounded-full" />
           </div>
         ))}
       </div>
@@ -233,12 +232,12 @@ function TableSkeleton() {
 
 function EmptyState({ onImport }: { onImport: () => void }) {
   return (
-    <div className="rounded-xl border border-dashed bg-card/50 p-12 text-center">
-      <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-        <Users className="h-6 w-6 text-primary" />
+    <div className="bg-card/50 rounded-xl border border-dashed p-12 text-center">
+      <div className="bg-primary/10 mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full">
+        <Users className="text-primary h-6 w-6" />
       </div>
       <h3 className="text-base font-semibold">No contacts yet</h3>
-      <p className="mt-1 text-sm text-muted-foreground">
+      <p className="text-muted-foreground mt-1 text-sm">
         Add your first lead or import a CSV from your old CRM.
       </p>
       <div className="mt-6 flex justify-center gap-2">

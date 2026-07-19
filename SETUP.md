@@ -27,9 +27,9 @@ The repo ships with `LANDING_VARIANT = "custom"` so the homepage renders a white
 
 *Create your GitHub account, install VS Code + Claude Code, generate your own copy of the codebase, and open it — ready for setup.*
 
-By the end of this phase you'll have your **own private repository**, generated from the LeadStack template, cloned to your machine, and open in VS Code with Claude Code ready to finish the setup.
+By the end of this phase you'll have your **own private repository**, generated from the AgentStack template, cloned to your machine, and open in VS Code with Claude Code ready to finish the setup.
 
-> **This is a copy, not a fork.** You create a brand-new, standalone repository in *your own* GitHub account from the LeadStack template. It starts fresh — a point-in-time snapshot of the template with its own first commit — and has no link back to us, so it's truly yours to build on. (The precise term is *"creating a repository from a template"*. It's different from a *fork*, which stays connected to the original repo so you can contribute changes back — that's not what you want here.)
+> **This is a copy, not a fork.** You create a brand-new, standalone repository in *your own* GitHub account from the AgentStack template. It starts fresh — a point-in-time snapshot of the template with its own first commit — and has no link back to us, so it's truly yours to build on. (The precise term is *"creating a repository from a template"*. It's different from a *fork*, which stays connected to the original repo so you can contribute changes back — that's not what you want here.)
 
 <details>
 <summary><strong>The precise version, if you're curious</strong></summary>
@@ -47,7 +47,7 @@ The history isn't *squashed* (that would mean combining commits that exist) — 
 
 ### Step 1 — Create your GitHub account & get template access
 
-GitHub is where your code lives. You need a free account to receive your copy of LeadStack.
+GitHub is where your code lives. You need a free account to receive your copy of AgentStack.
 
 **1. Create a free GitHub account** — sign up at [github.com](https://github.com)
 
@@ -78,17 +78,17 @@ You need two things. Once they're installed, Claude Code does the rest — inclu
 
 This is the easiest path: Claude Code creates your repository from the template, downloads it, and opens it for you — no terminal commands to memorise.
 
-1. In VS Code: **File → Open Folder** → make a new empty folder (e.g. `LeadStack`) and open it.
+1. In VS Code: **File → Open Folder** → make a new empty folder (e.g. `AgentStack`) and open it.
 2. Open the **Claude Code** panel and paste the prompt below, replacing `<YOUR-GITHUB-USERNAME>` with your username:
 
 ```
-Set me up from the LeadStack template.
+Set me up from the AgentStack template.
 My GitHub username is <YOUR-GITHUB-USERNAME>.
 
 1. Make sure git and the GitHub CLI (gh) are installed — install whatever's missing.
 2. Sign me into GitHub with gh auth login — I'll complete the browser step.
 3. Create a NEW PRIVATE repository in my account, generated FROM THE TEMPLATE
-   Claude-Code-Pro-Camp/leadstack-agency (use --template, do NOT fork).
+   Claude-Code-Pro-Camp/agentstack-agency (use --template, do NOT fork).
    Name it my-crm.
 4. Clone my new repo into this folder and open it.
 5. Then start the project setup ("help me set up this project").
@@ -97,7 +97,7 @@ My GitHub username is <YOUR-GITHUB-USERNAME>.
 3. Claude will:
    - Install Git + the GitHub CLI if they're missing
    - Run `gh auth login` — it shows a one-time code and opens your browser; paste the code to authorise
-   - Generate **your own** private repo from the template (`gh repo create <you>/my-crm --template Claude-Code-Pro-Camp/leadstack-agency --private --clone`)
+   - Generate **your own** private repo from the template (`gh repo create <you>/my-crm --template Claude-Code-Pro-Camp/agentstack-agency --private --clone`)
    - Open your new repo and roll straight into the Phase 2 setup below
 
 When it's done, your repo's `origin` points at **your** GitHub account — everything you change and push goes to your repository, never back to the template.
@@ -146,7 +146,7 @@ Just follow along — when Claude asks you to paste something, paste it right in
 
 ### Brand the landing page (do this first)
 
-The repo ships with `LANDING_VARIANT = "custom"` in `src/config/landing.ts`, which means the homepage at `/` renders a generic white-label CRM landing. Your end-customers will see **your** brand here, not LeadStack's — but only after you fill in `CUSTOM_BRAND`.
+The repo ships with `LANDING_VARIANT = "custom"` in `src/config/landing.ts`, which means the homepage at `/` renders a generic white-label CRM landing. Your end-customers will see **your** brand here, not AgentStack's — but only after you fill in `CUSTOM_BRAND`.
 
 Open [src/config/landing.ts](src/config/landing.ts) and edit `CUSTOM_BRAND`:
 
@@ -189,7 +189,7 @@ Claude Code will prompt you for values from Firebase. Here's what you'll do in y
 
 1. Go to [https://console.firebase.google.com](https://console.firebase.google.com)
 2. Sign in with a Google account
-3. Click **"Create a project"** — name it whatever you like (e.g., `leadstack-app`)
+3. Click **"Create a project"** — name it whatever you like (e.g., `agentstack-app`)
 4. You can disable Google Analytics (not needed)
 5. Click **"Create project"** and wait for it to finish
 
@@ -199,7 +199,7 @@ Where to find it: Firebase Console > Project Settings (gear icon) > Your apps > 
 
 If you haven't registered a web app yet:
 1. Click the web icon (`</>`)
-2. Enter a nickname (e.g., `leadstack-web`)
+2. Enter a nickname (e.g., `agentstack-web`)
 3. Skip Firebase Hosting setup
 4. Click **Register app**
 
@@ -261,12 +261,12 @@ These are quick toggles in the Firebase Console:
 
 **Firestore:**
 1. Click **Firestore Database** in the sidebar > **Create database**
-2. Select **Start in production mode** — LeadStack ships with strict owner-scoped rules we deploy in the next step, so you don't need test mode
+2. Select **Start in production mode** — AgentStack ships with strict owner-scoped rules we deploy in the next step, so you don't need test mode
 3. Pick the closest server location > **Enable**
 
 ### Deploy Firestore Security Rules
 
-LeadStack's `firestore.rules` enforces that every user can only read/write their own data. Claude Code will deploy these rules for you after you've connected Firebase:
+AgentStack's `firestore.rules` enforces that every user can only read/write their own data. Claude Code will deploy these rules for you after you've connected Firebase:
 
 ```bash
 firebase login
@@ -334,7 +334,7 @@ If you only have one tier for now, you can point both vars at the same Price ID 
 
 ### Resend (Email)
 
-LeadStack uses [Resend](https://resend.com) as its email sender. This is the "shared-sender" model — you own the Resend account, your LeadStack users send email from your verified domain, and their email address lands on the `Reply-To:` header so replies bypass LeadStack and go straight to them.
+AgentStack uses [Resend](https://resend.com) as its email sender. This is the "shared-sender" model — you own the Resend account, your AgentStack users send email from your verified domain, and their email address lands on the `Reply-To:` header so replies bypass AgentStack and go straight to them.
 
 1. Go to [https://resend.com](https://resend.com) and create an account
 2. Go to **Domains → Add Domain** and add your sending domain. You'll get a set of DNS records (SPF, DKIM, DMARC) to add at your DNS provider. Verification usually takes a few minutes.
@@ -343,7 +343,7 @@ LeadStack uses [Resend](https://resend.com) as its email sender. This is the "sh
 | Value | Env variable |
 |-------|-------------|
 | API key | `RESEND_API_KEY` |
-| Verified sender | `EMAIL_FROM` — e.g. `"LeadStack <notifications@yourdomain.com>"` |
+| Verified sender | `EMAIL_FROM` — e.g. `"AgentStack <notifications@yourdomain.com>"` |
 
 **Don't own a domain yet?** You can test with Resend's sandbox: `EMAIL_FROM="onboarding@resend.dev"`. Sandbox sends work for testing but get flagged as untrusted in production.
 
@@ -351,7 +351,7 @@ LeadStack uses [Resend](https://resend.com) as its email sender. This is the "sh
 
 ### Twilio (SMS)
 
-LeadStack uses [Twilio](https://www.twilio.com) for SMS. Same shared-sender model — you own the Twilio account, your users send from your purchased number.
+AgentStack uses [Twilio](https://www.twilio.com) for SMS. Same shared-sender model — you own the Twilio account, your users send from your purchased number.
 
 1. Go to [https://console.twilio.com](https://console.twilio.com) and sign up (free trial includes a phone number + credits)
 2. From the dashboard, copy your **Account SID** and **Auth Token**
@@ -410,7 +410,7 @@ Both are pure script-tag installs that fire only when the env var is set. Form s
 
 ### Live chat (Crisp — optional but recommended)
 
-LeadStack is wired so every "talk to us" button in the marketing pages (pricing error fallback, sold-out fallback CTA, thank-you page support link, privacy-policy contact line) opens the Crisp chat widget rather than firing a `mailto:`. Without Crisp configured, those buttons silently no-op — there's no `mailto:` fallback by design.
+AgentStack is wired so every "talk to us" button in the marketing pages (pricing error fallback, sold-out fallback CTA, thank-you page support link, privacy-policy contact line) opens the Crisp chat widget rather than firing a `mailto:`. Without Crisp configured, those buttons silently no-op — there's no `mailto:` fallback by design.
 
 1. Sign up at [app.crisp.chat](https://app.crisp.chat) (free tier is fine to start)
 2. Settings → Website Settings → Setup Instructions → copy the Website ID (UUID format)
@@ -488,9 +488,9 @@ cloudflared tunnel --url http://localhost:3000
 
 # Named tunnel (stable hostname, reusable):
 cloudflared login
-cloudflared tunnel create leadstack-dev
-cloudflared tunnel route dns leadstack-dev leadstack-dev.YOUR-DOMAIN.com
-cloudflared tunnel --name leadstack-dev --url http://localhost:3000
+cloudflared tunnel create agentstack-dev
+cloudflared tunnel route dns agentstack-dev agentstack-dev.YOUR-DOMAIN.com
+cloudflared tunnel --name agentstack-dev --url http://localhost:3000
 ```
 
 Install: `winget install --id Cloudflare.cloudflared` (Windows) / `brew install cloudflared` (Mac).
@@ -523,7 +523,7 @@ Claude Code will start the dev server for you by running `pnpm dev`. Open [http:
 
 ### Verification Checklist
 
-1. **Landing page** — confirm `/` shows **your brand** (the name, tagline, and pricing from `CUSTOM_BRAND`). If you still see "LeadStack" anywhere, double-check `LANDING_VARIANT === "custom"` in `src/config/landing.ts` and that you filled in `CUSTOM_BRAND`
+1. **Landing page** — confirm `/` shows **your brand** (the name, tagline, and pricing from `CUSTOM_BRAND`). If you still see "AgentStack" anywhere, double-check `LANDING_VARIANT === "custom"` in `src/config/landing.ts` and that you filled in `CUSTOM_BRAND`
 2. **Theme toggle** — sun/moon icon in the navbar switches light/dark
 3. **Legal pages** — Terms + Privacy links in the footer load `/terms` and `/privacy`
 4. **Sign up as agency owner** — go to `/signup` and use the email you put in `BOOTSTRAP_ADMIN_EMAIL`. You should land on the agency get-started flow and see your agency + a default "Main" sub-account created automatically
@@ -568,7 +568,7 @@ When you're ready to go live:
    - Tracking (optional): `NEXT_PUBLIC_META_PIXEL_ID`, `NEXT_PUBLIC_GTM_ID`
    - Chat (optional): `NEXT_PUBLIC_CRISP_WEBSITE_ID`
    - Leads map (optional): `NEXT_PUBLIC_MAPBOX_TOKEN`
-   - Founders urgency (LeadStack-variant only, optional): `NEXT_PUBLIC_FOUNDERS_MANUAL_SOLD`
+   - Founders urgency (AgentStack-variant only, optional): `NEXT_PUBLIC_FOUNDERS_MANUAL_SOLD`
 4. For `FIREBASE_ADMIN_PRIVATE_KEY` on Vercel, paste the full key including the `-----BEGIN/END PRIVATE KEY-----` markers. Vercel handles the newlines automatically
 5. Change `NEXT_PUBLIC_APP_URL` to your Vercel domain (e.g., `https://my-app.vercel.app`) — QStash and gitpage callbacks read this to build their callback URLs
 6. Click **Deploy**
@@ -600,13 +600,13 @@ If everything works locally and on Vercel, you're done! Your CRM is fully set up
 
 ## Keeping your CRM up to date
 
-*Optional — pull in the latest LeadStack code whenever the template gets new features or fixes.*
+*Optional — pull in the latest AgentStack code whenever the template gets new features or fixes.*
 
 > **This is entirely optional — most of the time you won't need it.** Your CRM is already complete and running. Only pull a template update when there's a specific new feature in a release that you actually want in your build.
 >
 > And remember: **you own the code.** If it's a *small* feature, asking Claude Code (or Codex) to build it directly in your repo is often the faster path — and you get *exactly* what you want, shaped to your business, instead of inheriting the template's version of it. Pulling from the template makes the most sense for larger features, or a batch of fixes you'd rather not rebuild yourself. **Your build, your features, your call.**
 
-From time to time the LeadStack template is updated. Because your CRM is a **standalone copy** — you generated it from the template, so there's no live link back — updates are never automatic and never forced. You pull them in when *you* choose, and only the parts you want.
+From time to time the AgentStack template is updated. Because your CRM is a **standalone copy** — you generated it from the template, so there's no live link back — updates are never automatic and never forced. You pull them in when *you* choose, and only the parts you want.
 
 A few things that make this safe:
 
@@ -614,17 +614,17 @@ A few things that make this safe:
 - **Your secrets are untouched.** `.env.local` and `.firebaserc` are gitignored, so no update can overwrite your API keys or Firebase project config.
 - **Your branding stays yours.** The main file you've customised is `src/config/landing.ts` (`CUSTOM_BRAND`). The whole point of an update is to bring in new code *without* clobbering that.
 
-> **How the template ships (worth knowing):** your repo began as its own snapshot of the template (its own root commit — see ["The precise version" in Phase 1](#phase-1-tools--repo-access)), and each new LeadStack release is published as a fresh snapshot too. So the two have **unrelated histories**, there's no version number or changelog, and a plain `git merge` **won't work** (`fatal: refusing to merge unrelated histories`). The reliable way to update is to **compare** your code against the latest template and **bring across the changes you want**. That's exactly the kind of judgement call Claude Code is good at — so that's the recommended path.
+> **How the template ships (worth knowing):** your repo began as its own snapshot of the template (its own root commit — see ["The precise version" in Phase 1](#phase-1-tools--repo-access)), and each new AgentStack release is published as a fresh snapshot too. So the two have **unrelated histories**, there's no version number or changelog, and a plain `git merge` **won't work** (`fatal: refusing to merge unrelated histories`). The reliable way to update is to **compare** your code against the latest template and **bring across the changes you want**. That's exactly the kind of judgement call Claude Code is good at — so that's the recommended path.
 
 ### The easy way — let Claude Code do it
 
 Open your project in VS Code, open the Claude Code panel, and paste:
 
 ```
-Update my CRM to the latest LeadStack template.
+Update my CRM to the latest AgentStack template.
 
 1. Add the template as a remote if it isn't already, then fetch it:
-   https://github.com/Claude-Code-Pro-Camp/leadstack-agency.git
+   https://github.com/Claude-Code-Pro-Camp/agentstack-agency.git
 2. Do this on a NEW branch so I can review before merging.
 3. Compare my code against the latest template and bring in new
    features and fixes — but KEEP my branding in src/config/landing.ts
@@ -646,7 +646,7 @@ Work on a branch, and **don't `git merge`** — the histories are unrelated, so 
 git push origin main
 
 # 1. Add the template as a remote (one time only)
-git remote add upstream https://github.com/Claude-Code-Pro-Camp/leadstack-agency.git
+git remote add upstream https://github.com/Claude-Code-Pro-Camp/agentstack-agency.git
 
 # 2. Fetch the latest template snapshot
 git fetch upstream
@@ -759,7 +759,7 @@ If anything looks off after an update, your `main` branch and your pushed histor
 
 | Problem | Solution |
 |---------|----------|
-| Landing page still shows "LeadStack" branding | Confirm `LANDING_VARIANT === "custom"` in `src/config/landing.ts`, then fill in `CUSTOM_BRAND` and reload |
+| Landing page still shows "AgentStack" branding | Confirm `LANDING_VARIANT === "custom"` in `src/config/landing.ts`, then fill in `CUSTOM_BRAND` and reload |
 | Pricing tier shows "$0" or placeholder | `CUSTOM_BRAND.pricing.{starter,pro,scale}` still has the placeholder values — edit `src/config/landing.ts` |
 | Footer shows the wrong domain | Update `CUSTOM_BRAND.primaryDomain` (no `https://`, no trailing slash) |
 

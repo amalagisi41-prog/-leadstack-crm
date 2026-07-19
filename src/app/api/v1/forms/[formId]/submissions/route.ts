@@ -39,7 +39,8 @@ import type { FormField } from "@/types/forms";
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, Idempotency-Key, LeadStack-Version",
+  "Access-Control-Allow-Headers":
+    "Content-Type, Authorization, Idempotency-Key, AgentStack-Version",
   "Access-Control-Max-Age": "86400",
 };
 
@@ -58,14 +59,19 @@ function applyCors(res: NextResponse): NextResponse {
 
 function mapValuesToContact(
   fields: FormField[],
-  values: Record<string, string>,
+  values: Record<string, string>
 ): { name: string; email: string; phone: string; company: string } {
   const out = { name: "", email: "", phone: "", company: "" };
   for (const f of fields) {
     if (!f.mapsTo) continue;
     const v = (values[f.id] ?? "").toString().trim();
     if (!v) continue;
-    if (f.mapsTo === "name" || f.mapsTo === "email" || f.mapsTo === "phone" || f.mapsTo === "company") {
+    if (
+      f.mapsTo === "name" ||
+      f.mapsTo === "email" ||
+      f.mapsTo === "phone" ||
+      f.mapsTo === "company"
+    ) {
       out[f.mapsTo] = v;
     }
   }
@@ -78,20 +84,21 @@ export const POST = withApiAuth<{ formId: string }>(
     const formSnap = await db.doc(`forms/${params.formId}`).get();
     if (!formSnap.exists) {
       return applyCors(
-        apiError(ctx, "not_found", "form_not_found", "Form not found."),
+        apiError(ctx, "not_found", "form_not_found", "Form not found.")
       );
     }
     const form = formSnap.data()!;
     if (form.subAccountId !== ctx.subAccountId) {
       return applyCors(
-        apiError(ctx, "not_found", "form_not_found", "Form not found."),
+        apiError(ctx, "not_found", "form_not_found", "Form not found.")
       );
     }
 
     const submitBody = (body ?? {}) as SubmitBody;
-    const values = submitBody.values && typeof submitBody.values === "object"
-      ? submitBody.values
-      : {};
+    const values =
+      submitBody.values && typeof submitBody.values === "object"
+        ? submitBody.values
+        : {};
 
     const fields = (form.fields ?? []) as FormField[];
     const mapped = mapValuesToContact(fields, values);
@@ -102,8 +109,8 @@ export const POST = withApiAuth<{ formId: string }>(
           ctx,
           "invalid_request",
           "no_identifying_field",
-          "Submission must include at least one of name / email / phone.",
-        ),
+          "Submission must include at least one of name / email / phone."
+        )
       );
     }
 
@@ -168,7 +175,7 @@ export const POST = withApiAuth<{ formId: string }>(
     const contactWire = serializeContactForApi(
       created.id,
       created.data()!,
-      ctx.mode,
+      ctx.mode
     );
 
     void emitWebhookEvent({
@@ -199,9 +206,9 @@ export const POST = withApiAuth<{ formId: string }>(
             values,
           },
         },
-        { status: 201 },
-      ),
+        { status: 201 }
+      )
     );
   },
-  { requireScope: "forms-ingest" },
+  { requireScope: "forms-ingest" }
 );

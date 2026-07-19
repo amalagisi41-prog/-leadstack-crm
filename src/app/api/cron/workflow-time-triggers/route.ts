@@ -8,7 +8,7 @@ import {
 } from "@/lib/automations/qstash";
 
 /**
- * Fired daily by the "leadstack-workflow-time-triggers" QStash schedule (see
+ * Fired daily by the "agentstack-workflow-time-triggers" QStash schedule (see
  * lib/qstash/register-schedules.ts). Fans out one staggered callback per
  * sub-account that has at least one active time-based-trigger workflow to
  * /api/cron/workflow-time-triggers/step, mirroring the

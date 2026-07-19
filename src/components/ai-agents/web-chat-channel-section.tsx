@@ -80,13 +80,13 @@ export function WebChatChannelSection() {
         setContextCount(channelData.config.contextMessageCount);
         setModelOverride(channelData.config.modelOverride ?? "");
         setOverrideKeywords(
-          channelData.config.escalationKeywordsOverride !== null,
+          channelData.config.escalationKeywordsOverride !== null
         );
         setKeywordsText(
-          (channelData.config.escalationKeywordsOverride ?? []).join(", "),
+          (channelData.config.escalationKeywordsOverride ?? []).join(", ")
         );
         setOverrideEmail(
-          channelData.config.escalationNotifyEmailOverride !== null,
+          channelData.config.escalationNotifyEmailOverride !== null
         );
         setNotifyEmail(channelData.config.escalationNotifyEmailOverride ?? "");
 
@@ -115,7 +115,9 @@ export function WebChatChannelSection() {
 
   const snippet = useMemo(() => {
     const origin =
-      typeof window !== "undefined" ? window.location.origin : "https://leadstack.dev";
+      typeof window !== "undefined"
+        ? window.location.origin
+        : "https://agentstackcrm.app";
     return `<script src="${origin}/widget.js" data-sa="${subAccountId}" async></script>`;
   }, [subAccountId]);
 
@@ -171,7 +173,7 @@ export function WebChatChannelSection() {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
-        },
+        }
       );
       const data = (await res.json()) as {
         ok?: boolean;
@@ -193,8 +195,8 @@ export function WebChatChannelSection() {
 
   if (!isAdmin) {
     return (
-      <section className="rounded-2xl border bg-card p-6">
-        <p className="text-sm text-muted-foreground">
+      <section className="bg-card rounded-2xl border p-6">
+        <p className="text-muted-foreground text-sm">
           Admin access required to configure Web Chat.
         </p>
       </section>
@@ -202,7 +204,7 @@ export function WebChatChannelSection() {
   }
 
   return (
-    <section className="rounded-2xl border bg-card p-6">
+    <section className="bg-card rounded-2xl border p-6">
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-3">
           <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400">
@@ -210,7 +212,7 @@ export function WebChatChannelSection() {
           </span>
           <div>
             <h2 className="text-base font-semibold">Web Chat channel</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="text-muted-foreground mt-1 text-sm">
               Embed a chat widget on this client&rsquo;s website. The agent
               answers using the shared persona + KB from the{" "}
               <Link
@@ -225,7 +227,7 @@ export function WebChatChannelSection() {
         </div>
         <Link
           href={`/sa/${subAccountId}/ai-agents/web-chat/sessions`}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent"
+          className="border-input bg-background hover:bg-accent inline-flex shrink-0 items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors"
         >
           <Inbox className="h-3.5 w-3.5" />
           Sessions
@@ -239,8 +241,8 @@ export function WebChatChannelSection() {
           is actually saved server-side. */}
       {loaded && !personaConfigured && (
         <div className="mt-5 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-sm text-amber-800 dark:text-amber-400">
-          <strong>Set the agent persona first.</strong> The Web Chat toggle
-          will be rejected until you save a persona prompt on the{" "}
+          <strong>Set the agent persona first.</strong> The Web Chat toggle will
+          be rejected until you save a persona prompt on the{" "}
           <Link
             href={`/sa/${subAccountId}/ai-agents`}
             className="underline-offset-2 hover:underline"
@@ -252,7 +254,7 @@ export function WebChatChannelSection() {
       )}
 
       {!loaded ? (
-        <p className="mt-6 text-sm text-muted-foreground">Loading…</p>
+        <p className="text-muted-foreground mt-6 text-sm">Loading…</p>
       ) : (
         <form className="mt-6 space-y-5" onSubmit={handleSave}>
           <div className="flex items-start gap-3 rounded-lg border p-4">
@@ -265,10 +267,10 @@ export function WebChatChannelSection() {
               <Label htmlFor="wc-enabled" className="text-sm font-medium">
                 Enable Web Chat
               </Label>
-              <p className="mt-1 text-[12px] text-muted-foreground">
-                When on, the snippet below will render the chat widget on
-                any page where it&rsquo;s pasted (as long as the page&rsquo;s
-                domain is in the allowlist below).
+              <p className="text-muted-foreground mt-1 text-[12px]">
+                When on, the snippet below will render the chat widget on any
+                page where it&rsquo;s pasted (as long as the page&rsquo;s domain
+                is in the allowlist below).
               </p>
             </div>
           </div>
@@ -283,7 +285,7 @@ export function WebChatChannelSection() {
               maxLength={400}
               placeholder="Hi! How can I help?"
             />
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-muted-foreground text-[11px]">
               First message shown when the visitor opens the widget.
             </p>
           </div>
@@ -297,7 +299,7 @@ export function WebChatChannelSection() {
                   type="color"
                   value={accentColor}
                   onChange={(e) => setAccentColor(e.target.value)}
-                  className="h-9 w-12 cursor-pointer rounded-lg border border-input bg-transparent"
+                  className="border-input h-9 w-12 cursor-pointer rounded-lg border bg-transparent"
                   aria-label="Pick accent color"
                 />
                 <Input
@@ -316,7 +318,7 @@ export function WebChatChannelSection() {
                 onChange={(e) =>
                   setPosition(e.target.value === "left" ? "left" : "right")
                 }
-                className="flex h-9 w-full rounded-lg border border-input bg-background px-2.5 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 [&_option]:bg-background [&_option]:text-foreground"
+                className="border-input bg-background text-foreground focus-visible:border-ring focus-visible:ring-ring/50 [&_option]:bg-background [&_option]:text-foreground flex h-9 w-full rounded-lg border px-2.5 text-sm outline-none focus-visible:ring-3"
               >
                 <option value="right">Bottom-right</option>
                 <option value="left">Bottom-left</option>
@@ -334,7 +336,7 @@ export function WebChatChannelSection() {
               placeholder={"client-site.com\nwww.client-site.com"}
               className="font-mono text-xs"
             />
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-muted-foreground text-[11px]">
               One hostname per line, no protocol. Only these origins can load
               the widget. Leave empty during testing to allow{" "}
               <code>localhost</code> + your AgentStack domain.
@@ -354,7 +356,9 @@ export function WebChatChannelSection() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="wc-model">Model (advanced — blank for default)</Label>
+              <Label htmlFor="wc-model">
+                Model (advanced — blank for default)
+              </Label>
               <Input
                 id="wc-model"
                 value={modelOverride}
@@ -377,7 +381,7 @@ export function WebChatChannelSection() {
                   Override default escalation keywords for Web Chat
                 </Label>
                 {!overrideKeywords && (
-                  <p className="mt-1 text-[11px] text-muted-foreground">
+                  <p className="text-muted-foreground mt-1 text-[11px]">
                     Using profile defaults:{" "}
                     <code className="text-foreground">
                       {(profile?.escalationKeywords ?? []).join(", ") ||
@@ -408,7 +412,7 @@ export function WebChatChannelSection() {
                   Override escalation notification email for Web Chat
                 </Label>
                 {!overrideEmail && (
-                  <p className="mt-1 text-[11px] text-muted-foreground">
+                  <p className="text-muted-foreground mt-1 text-[11px]">
                     Using profile default:{" "}
                     <code className="text-foreground">
                       {profile?.escalationNotifyEmail || "(none set)"}
@@ -428,9 +432,9 @@ export function WebChatChannelSection() {
           </div>
 
           <div className="flex items-center justify-between pt-2">
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               Lifetime tokens used on Web Chat:{" "}
-              <span className="font-medium text-foreground">
+              <span className="text-foreground font-medium">
                 {config?.totalTokensUsed ?? 0}
               </span>
             </p>
@@ -449,16 +453,16 @@ export function WebChatChannelSection() {
       )}
 
       {loaded && (
-        <div className="mt-6 space-y-3 rounded-xl border bg-muted/20 p-4">
+        <div className="bg-muted/20 mt-6 space-y-3 rounded-xl border p-4">
           <div>
             <h3 className="text-sm font-medium">Embed snippet</h3>
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="text-muted-foreground mt-1 text-xs">
               Paste this once into the client&rsquo;s site, just before{" "}
-              <code>&lt;/body&gt;</code>. Works on any framework — static
-              HTML, WordPress, Shopify, Webflow, GitLab Pages, anything.
+              <code>&lt;/body&gt;</code>. Works on any framework — static HTML,
+              WordPress, Shopify, Webflow, GitLab Pages, anything.
             </p>
           </div>
-          <pre className="overflow-x-auto rounded-lg border bg-background p-3 text-xs">
+          <pre className="bg-background overflow-x-auto rounded-lg border p-3 text-xs">
             {snippet}
           </pre>
           <div className="flex flex-wrap gap-2">
@@ -481,7 +485,7 @@ export function WebChatChannelSection() {
               href={previewUrl}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent"
+              className="border-input bg-background hover:bg-accent inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors"
             >
               <ExternalLink className="h-3.5 w-3.5" />
               Preview widget
@@ -489,8 +493,8 @@ export function WebChatChannelSection() {
           </div>
           {!enabled && (
             <p className="text-[11px] text-amber-600 dark:text-amber-500">
-              Enable + save before installing — the snippet will silently
-              do nothing until the channel is on.
+              Enable + save before installing — the snippet will silently do
+              nothing until the channel is on.
             </p>
           )}
         </div>

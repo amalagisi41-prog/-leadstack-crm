@@ -2,12 +2,7 @@
 
 import Link from "next/link";
 import { Suspense, useEffect, useRef, useState } from "react";
-import {
-  collection,
-  onSnapshot,
-  query,
-  where,
-} from "firebase/firestore";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
 import {
   Building2,
   Plus,
@@ -47,7 +42,14 @@ function ErrorBanner() {
 }
 
 function AgencyHomeContent() {
-  const { user, loading, agencyId, agencyRole, memberships, membershipsLoaded } = useAuth();
+  const {
+    user,
+    loading,
+    agencyId,
+    agencyRole,
+    memberships,
+    membershipsLoaded,
+  } = useAuth();
   const router = useRouter();
   const [filter, setFilter] = useState("");
   const [repairingSession, setRepairingSession] = useState(false);
@@ -56,7 +58,7 @@ function AgencyHomeContent() {
   const isOwner = agencyRole === "owner";
 
   const visible = memberships.filter((m) =>
-    m.name.toLowerCase().includes(filter.trim().toLowerCase()),
+    m.name.toLowerCase().includes(filter.trim().toLowerCase())
   );
 
   // Full sub-account docs (owner only) — needed so the Manage dialog has the
@@ -72,12 +74,12 @@ function AgencyHomeContent() {
     }
     const q = query(
       collection(getFirebaseDb(), "subAccounts"),
-      where("agencyId", "==", agencyId),
+      where("agencyId", "==", agencyId)
     );
     const unsub = onSnapshot(
       q,
       (snap) => setSubs(snap.docs.map((d) => d.data() as SubAccountDoc)),
-      (err) => console.error("[agency] sub-account listen failed", err),
+      (err) => console.error("[agency] sub-account listen failed", err)
     );
     return () => unsub();
   }, [isOwner, agencyId]);
@@ -119,7 +121,14 @@ function AgencyHomeContent() {
   ]);
 
   useEffect(() => {
-    if (loading || !user || !membershipsLoaded || agencyId || attemptedRepair.current) return;
+    if (
+      loading ||
+      !user ||
+      !membershipsLoaded ||
+      agencyId ||
+      attemptedRepair.current
+    )
+      return;
     if (agencyRole !== "owner" && memberships.length > 0) return;
     attemptedRepair.current = true;
     setRepairingSession(true);
@@ -130,7 +139,8 @@ function AgencyHomeContent() {
       credentials: "include",
     })
       .then(async (response) => {
-        if (!response.ok) throw new Error("Could not restore workspace access.");
+        if (!response.ok)
+          throw new Error("Could not restore workspace access.");
         await user.getIdToken(true);
         window.location.reload();
       })
@@ -143,16 +153,16 @@ function AgencyHomeContent() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="h-8 w-48 animate-pulse rounded bg-muted" />
-        <div className="h-32 animate-pulse rounded-2xl bg-muted/50" />
+        <div className="bg-muted h-8 w-48 animate-pulse rounded" />
+        <div className="bg-muted/50 h-32 animate-pulse rounded-2xl" />
       </div>
     );
   }
 
   if (!user) {
     return (
-      <div className="rounded-2xl border bg-card p-8 text-center">
-        <p className="text-sm text-muted-foreground">
+      <div className="bg-card rounded-2xl border p-8 text-center">
+        <p className="text-muted-foreground text-sm">
           Sign in to view your agency.
         </p>
       </div>
@@ -161,19 +171,22 @@ function AgencyHomeContent() {
 
   if (!agencyId) {
     return (
-      <div className="rounded-2xl border bg-card p-8 text-center">
+      <div className="bg-card rounded-2xl border p-8 text-center">
         <p className="text-sm font-medium">
           {repairingSession
             ? "Finishing your workspace setup…"
             : "Your sign-in worked, but workspace access is incomplete."}
         </p>
-        <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+        <p className="text-muted-foreground mx-auto mt-2 max-w-md text-sm">
           {repairFailed
             ? "Sign out and sign in again to refresh your AgentStack workspace."
             : "We’re securely refreshing your agency access. This page will reload automatically."}
         </p>
         {repairFailed && (
-          <Button className="mt-4" onClick={() => window.location.assign("/login")}>
+          <Button
+            className="mt-4"
+            onClick={() => window.location.assign("/login")}
+          >
             Return to sign in
           </Button>
         )}
@@ -186,12 +199,12 @@ function AgencyHomeContent() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Agency</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Switch into a sub-account or stand up a new one.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          {isOwner && LANDING_VARIANT === "leadstack" && (
+          {isOwner && LANDING_VARIANT === "agentstack" && (
             <>
               <Button
                 variant="outline"
@@ -229,7 +242,7 @@ function AgencyHomeContent() {
         </TabsList>
 
         <TabsContent value="sub-accounts" className="mt-4">
-          <section className="rounded-2xl border bg-card p-5">
+          <section className="bg-card rounded-2xl border p-5">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
@@ -237,7 +250,7 @@ function AgencyHomeContent() {
                 </span>
                 <div>
                   <h2 className="text-sm font-semibold">Your sub-accounts</h2>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-muted-foreground text-xs">
                     {memberships.length} total
                   </p>
                 </div>
@@ -253,7 +266,7 @@ function AgencyHomeContent() {
             </div>
 
             {memberships.length === 0 ? (
-              <div className="rounded-lg border border-dashed bg-background p-6 text-center text-sm text-muted-foreground">
+              <div className="bg-background text-muted-foreground rounded-lg border border-dashed p-6 text-center text-sm">
                 You don&apos;t have access to any sub-accounts yet.
                 {isOwner && (
                   <>
@@ -274,7 +287,7 @@ function AgencyHomeContent() {
                   <li key={m.subAccountId} className="relative">
                     <Link
                       href={`/sa/${m.subAccountId}/dashboard`}
-                      className="group flex h-full flex-col justify-between gap-3 rounded-xl border bg-background p-4 transition-colors hover:border-primary/40 hover:bg-muted/30"
+                      className="group bg-background hover:border-primary/40 hover:bg-muted/30 flex h-full flex-col justify-between gap-3 rounded-xl border p-4 transition-colors"
                     >
                       <div>
                         <div className="flex items-baseline gap-2 pr-16">
@@ -282,16 +295,16 @@ function AgencyHomeContent() {
                             {m.name || "Untitled"}
                           </p>
                           {m.accountNumber !== undefined && (
-                            <span className="font-mono text-[10px] text-muted-foreground">
+                            <span className="text-muted-foreground font-mono text-[10px]">
                               #{m.accountNumber}
                             </span>
                           )}
                         </div>
-                        <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                        <p className="text-muted-foreground text-[11px] tracking-wide uppercase">
                           {m.role}
                         </p>
                       </div>
-                      <span className="flex items-center gap-1 text-xs text-muted-foreground group-hover:text-foreground">
+                      <span className="text-muted-foreground group-hover:text-foreground flex items-center gap-1 text-xs">
                         Open <ArrowRight className="h-3 w-3" />
                       </span>
                     </Link>
@@ -299,7 +312,7 @@ function AgencyHomeContent() {
                       <button
                         type="button"
                         onClick={() => setManagingId(m.subAccountId)}
-                        className="absolute right-3 top-3 z-10 rounded-full border bg-background px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        className="bg-background text-muted-foreground hover:bg-muted hover:text-foreground absolute top-3 right-3 z-10 rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition-colors"
                       >
                         Manage
                       </button>
@@ -328,7 +341,6 @@ function AgencyHomeContent() {
     </div>
   );
 }
-
 
 export default function AgencyHomePage() {
   return (

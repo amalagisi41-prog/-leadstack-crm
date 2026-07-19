@@ -75,7 +75,7 @@ export function SubAccountWebhooksSection() {
     setLoading(true);
     try {
       const res = await fetch(
-        `/api/sub-accounts/${subAccountId}/webhook-subscriptions`,
+        `/api/sub-accounts/${subAccountId}/webhook-subscriptions`
       );
       const data = (await res.json().catch(() => ({}))) as {
         subscriptions?: WebhookSubscriptionResponse[];
@@ -99,30 +99,30 @@ export function SubAccountWebhooksSection() {
 
   if (!gateOpen) {
     return (
-      <section className="rounded-2xl border bg-card p-6">
+      <section className="bg-card rounded-2xl border p-6">
         <header className="mb-4 flex items-start gap-3">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-600 dark:text-cyan-400">
             <Webhook className="h-4 w-4" />
           </span>
           <div className="min-w-0 flex-1">
             <h2 className="text-base font-semibold">Webhooks</h2>
-            <p className="mt-0.5 text-sm text-muted-foreground">
-              POST events to your own endpoints — Slack, Make.com, n8n, or
-              a custom server.
+            <p className="text-muted-foreground mt-0.5 text-sm">
+              POST events to your own endpoints — Slack, Make.com, n8n, or a
+              custom server.
             </p>
           </div>
         </header>
-        <div className="flex items-start gap-3 rounded-lg border border-dashed bg-muted/30 p-4 text-sm">
-          <Lock className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+        <div className="bg-muted/30 flex items-start gap-3 rounded-lg border border-dashed p-4 text-sm">
+          <Lock className="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" />
           <div className="text-muted-foreground">
-            <p className="font-medium text-foreground">
+            <p className="text-foreground font-medium">
               Webhooks are disabled for this sub-account.
             </p>
             <p className="mt-1">
-              Webhooks live behind the same agency gate as API keys
-              (Manage → Public API access). Existing subscriptions are
-              preserved and resume firing the moment your agency
-              administrator re-enables access.
+              Webhooks live behind the same agency gate as API keys (Manage →
+              Public API access). Existing subscriptions are preserved and
+              resume firing the moment your agency administrator re-enables
+              access.
             </p>
           </div>
         </div>
@@ -154,7 +154,7 @@ export function SubAccountWebhooksSection() {
             events: Array.from(form.events),
             description: form.description.trim() || null,
           }),
-        },
+        }
       );
       const data = (await res.json().catch(() => ({}))) as {
         subscription?: WebhookSubscriptionResponse;
@@ -191,7 +191,7 @@ export function SubAccountWebhooksSection() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: "{}",
-        },
+        }
       );
       const data = (await res.json().catch(() => ({}))) as {
         ok?: boolean;
@@ -202,9 +202,7 @@ export function SubAccountWebhooksSection() {
       if (!res.ok || !data.ok) {
         throw new Error(data.error ?? "Failed to send test event.");
       }
-      toast.success(
-        data.message ?? `Test event '${data.type}' dispatched.`,
-      );
+      toast.success(data.message ?? `Test event '${data.type}' dispatched.`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to send test.");
     } finally {
@@ -222,7 +220,7 @@ export function SubAccountWebhooksSection() {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ status: next }),
-        },
+        }
       );
       const data = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) throw new Error(data.error ?? "Failed to update.");
@@ -238,7 +236,7 @@ export function SubAccountWebhooksSection() {
   async function handleDelete(sub: WebhookSubscriptionResponse) {
     if (
       !confirm(
-        `Delete webhook for ${sub.url}? In-flight deliveries will be cancelled. This cannot be undone.`,
+        `Delete webhook for ${sub.url}? In-flight deliveries will be cancelled. This cannot be undone.`
       )
     ) {
       return;
@@ -247,7 +245,7 @@ export function SubAccountWebhooksSection() {
     try {
       const res = await fetch(
         `/api/sub-accounts/${subAccountId}/webhook-subscriptions/${sub.id}`,
-        { method: "DELETE" },
+        { method: "DELETE" }
       );
       const data = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) throw new Error(data.error ?? "Failed to delete.");
@@ -291,17 +289,17 @@ export function SubAccountWebhooksSection() {
   const activeCategory = activeCategoryOf(form.events);
 
   return (
-    <section className="rounded-2xl border bg-card p-6">
+    <section className="bg-card rounded-2xl border p-6">
       <header className="mb-4 flex items-start gap-3">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-600 dark:text-cyan-400">
           <Webhook className="h-4 w-4" />
         </span>
         <div className="min-w-0 flex-1">
           <h2 className="text-base font-semibold">Webhooks</h2>
-          <p className="mt-0.5 text-sm text-muted-foreground">
+          <p className="text-muted-foreground mt-0.5 text-sm">
             POST events to your own endpoints — Slack, Make.com, n8n, or a
-            custom server. Each delivery is signed with HMAC-SHA256 so you
-            can verify it came from us.
+            custom server. Each delivery is signed with HMAC-SHA256 so you can
+            verify it came from us.
           </p>
         </div>
       </header>
@@ -317,7 +315,7 @@ export function SubAccountWebhooksSection() {
       {view.kind === "create" && (
         <form
           onSubmit={handleCreate}
-          className="mb-4 space-y-4 rounded-lg border bg-background p-4"
+          className="bg-background mb-4 space-y-4 rounded-lg border p-4"
         >
           <div className="space-y-1.5">
             <Label htmlFor="webhook-url">Destination URL</Label>
@@ -326,13 +324,13 @@ export function SubAccountWebhooksSection() {
               type="url"
               value={form.url}
               onChange={(e) => setForm((s) => ({ ...s, url: e.target.value }))}
-              placeholder="https://example.com/webhooks/leadstack"
+              placeholder="https://example.com/webhooks/agentstack"
               autoComplete="off"
               autoFocus
             />
-            <p className="text-[11px] text-muted-foreground">
-              Must be reachable over the public internet. We POST JSON with
-              an HMAC signature.
+            <p className="text-muted-foreground text-[11px]">
+              Must be reachable over the public internet. We POST JSON with an
+              HMAC signature.
             </p>
           </div>
 
@@ -364,7 +362,7 @@ export function SubAccountWebhooksSection() {
                   }`}
                 >
                   <p className="text-sm font-medium capitalize">{m}</p>
-                  <p className="mt-0.5 text-[11px] text-muted-foreground">
+                  <p className="text-muted-foreground mt-0.5 text-[11px]">
                     {m === "live"
                       ? "Receives events from production API traffic."
                       : "Receives events only from test-mode API requests."}
@@ -376,7 +374,7 @@ export function SubAccountWebhooksSection() {
 
           <div className="space-y-2">
             <Label>Events ({form.events.size} selected)</Label>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-muted-foreground text-[11px]">
               A webhook subscribes to one category. Pick events from a single
               category below — the rest lock until you clear your selection.
             </p>
@@ -389,10 +387,10 @@ export function SubAccountWebhooksSection() {
                     key={group.label}
                     className={locked ? "opacity-40" : undefined}
                   >
-                    <p className="mb-1 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                    <p className="text-muted-foreground mb-1 flex items-center gap-1.5 text-[11px] font-medium tracking-wider uppercase">
                       {group.label}
                       {activeCategory === group.label && (
-                        <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[9px] font-semibold tracking-normal text-primary">
+                        <span className="bg-primary/10 text-primary rounded-full px-1.5 py-0.5 text-[9px] font-semibold tracking-normal">
                           selected
                         </span>
                       )}
@@ -411,9 +409,9 @@ export function SubAccountWebhooksSection() {
                                 ? "A webhook can only target one category. Clear your selection to switch categories."
                                 : undefined
                             }
-                            className={`rounded-full border px-2.5 py-1 text-[11px] font-mono transition-colors ${
+                            className={`rounded-full border px-2.5 py-1 font-mono text-[11px] transition-colors ${
                               locked
-                                ? "cursor-not-allowed border-dashed border-input bg-muted/30 text-muted-foreground/50"
+                                ? "border-input bg-muted/30 text-muted-foreground/50 cursor-not-allowed border-dashed"
                                 : active
                                   ? "border-primary bg-primary/10 text-primary"
                                   : "border-input bg-background text-muted-foreground hover:bg-muted/50"
@@ -428,7 +426,7 @@ export function SubAccountWebhooksSection() {
                 );
               })}
             </div>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-muted-foreground text-[11px]">
               The full registry is in `/docs/api`. Adding more events later
               requires editing the subscription.
             </p>
@@ -448,9 +446,7 @@ export function SubAccountWebhooksSection() {
               type="submit"
               size="sm"
               disabled={
-                submitting ||
-                !form.url.trim() ||
-                form.events.size === 0
+                submitting || !form.url.trim() || form.events.size === 0
               }
             >
               {submitting ? (
@@ -467,10 +463,10 @@ export function SubAccountWebhooksSection() {
       )}
 
       <div className="mb-3 flex items-center justify-between gap-2">
-        <label className="flex items-center gap-2 text-xs text-muted-foreground">
+        <label className="text-muted-foreground flex items-center gap-2 text-xs">
           <input
             type="checkbox"
-            className="h-3.5 w-3.5 rounded border-input"
+            className="border-input h-3.5 w-3.5 rounded"
             checked={showTest}
             onChange={(e) => setShowTest(e.target.checked)}
           />
@@ -490,14 +486,14 @@ export function SubAccountWebhooksSection() {
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center rounded-lg border bg-background p-6 text-sm text-muted-foreground">
+        <div className="bg-background text-muted-foreground flex items-center justify-center rounded-lg border p-6 text-sm">
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           Loading webhooks…
         </div>
       ) : visible.length === 0 ? (
-        <div className="rounded-lg border border-dashed bg-background p-6 text-center">
+        <div className="bg-background rounded-lg border border-dashed p-6 text-center">
           <p className="text-sm font-medium">No webhooks yet</p>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="text-muted-foreground mt-1 text-xs">
             Send events to Slack, Make.com, or your own server when things
             happen in this sub-account.
           </p>
@@ -517,11 +513,11 @@ export function SubAccountWebhooksSection() {
         </ul>
       )}
 
-      <p className="mt-4 text-[11px] leading-relaxed text-muted-foreground">
-        Subscriber URLs receive a <code>LeadStack-Signature</code> header
-        with each POST. Verify it server-side before trusting the payload.
-        Failed deliveries retry 3 times (1m / 5m / 30m); after 10 consecutive
-        failures the webhook auto-pauses.
+      <p className="text-muted-foreground mt-4 text-[11px] leading-relaxed">
+        Subscriber URLs receive a <code>AgentStack-Signature</code> header with
+        each POST. Verify it server-side before trusting the payload. Failed
+        deliveries retry 3 times (1m / 5m / 30m); after 10 consecutive failures
+        the webhook auto-pauses.
       </p>
     </section>
   );
@@ -544,19 +540,19 @@ function SubRow({
   const isPaused = sub.status === "paused";
   return (
     <li
-      className={`rounded-lg border bg-background p-3 ${
+      className={`bg-background rounded-lg border p-3 ${
         isPaused ? "border-amber-500/40" : ""
       }`}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="truncate font-mono text-xs text-foreground">
+            <p className="text-foreground truncate font-mono text-xs">
               {sub.url}
             </p>
             <ModeBadge mode={sub.mode} />
             {isPaused && (
-              <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">
+              <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-amber-700 uppercase dark:text-amber-400">
                 {sub.pausedReason === "circuit_breaker"
                   ? "Auto-paused"
                   : "Paused"}
@@ -564,14 +560,14 @@ function SubRow({
             )}
           </div>
           {sub.description && (
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="text-muted-foreground mt-1 text-xs">
               {sub.description}
             </p>
           )}
           {/* Event-type pills — exactly what triggers this webhook. */}
           <div className="mt-1.5 flex flex-wrap items-center gap-1">
             {sub.events.length === 0 ? (
-              <span className="rounded-full border border-input bg-muted/40 px-2 py-0.5 font-mono text-[10px] text-muted-foreground">
+              <span className="border-input bg-muted/40 text-muted-foreground rounded-full border px-2 py-0.5 font-mono text-[10px]">
                 all events
               </span>
             ) : (
@@ -585,7 +581,7 @@ function SubRow({
               ))
             )}
           </div>
-          <p className="mt-1 text-[11px] text-muted-foreground">
+          <p className="text-muted-foreground mt-1 text-[11px]">
             {lastDelivery
               ? `last delivery ${lastDelivery.toLocaleString()} (HTTP ${
                   sub.lastDeliveryStatus ?? "—"
@@ -659,13 +655,13 @@ function SubRow({
 function ModeBadge({ mode }: { mode: "live" | "test" }) {
   if (mode === "live") {
     return (
-      <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+      <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-emerald-700 uppercase dark:text-emerald-400">
         Live
       </span>
     );
   }
   return (
-    <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-400">
+    <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-amber-700 uppercase dark:text-amber-400">
       Test
     </span>
   );
@@ -689,12 +685,12 @@ function RevealPanel({
             Copy your signing secret now — you won&apos;t see it again
           </p>
           <p className="mt-0.5 text-xs text-amber-800/80 dark:text-amber-200/70">
-            Verify the <code>LeadStack-Signature</code> header on each
-            delivery using this secret. Store it in your secret manager.
+            Verify the <code>AgentStack-Signature</code> header on each delivery
+            using this secret. Store it in your secret manager.
           </p>
         </div>
       </div>
-      <div className="mt-3 flex items-center gap-2 rounded-md border bg-background p-2 font-mono text-xs">
+      <div className="bg-background mt-3 flex items-center gap-2 rounded-md border p-2 font-mono text-xs">
         <code className="min-w-0 flex-1 break-all">{sub.signingSecret}</code>
         <Button
           type="button"
@@ -708,7 +704,7 @@ function RevealPanel({
         </Button>
       </div>
       <div className="mt-3 flex items-center justify-between gap-2">
-        <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+        <p className="text-muted-foreground flex items-center gap-1.5 text-[11px]">
           <ShieldAlert className="h-3 w-3" />
           Verification instructions: see /docs/api → Webhooks.
         </p>

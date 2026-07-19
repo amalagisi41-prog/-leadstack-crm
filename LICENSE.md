@@ -2,7 +2,7 @@
 
 <https://polyformproject.org/licenses/perimeter/1.0.0>
 
-Copyright (c) 2026 LeadStack.Dev
+Copyright (c) 2026 AgentStack.Dev
 
 ## Acceptance
 

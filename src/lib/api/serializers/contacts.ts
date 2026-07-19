@@ -6,7 +6,7 @@ import type { CustomFieldValue } from "@/types/custom-fields";
 
 /**
  * Public-API wire shape for Contact. Frozen contract — every change here
- * is a breaking API change that must ship as a new `LeadStack-Version`.
+ * is a breaking API change that must ship as a new `AgentStack-Version`.
  *
  * Conventions (Stripe-style):
  *   - snake_case field names (vs internal camelCase)
@@ -85,7 +85,7 @@ function emptyToNull(s: string | null | undefined): string | null {
 
 /** Custom-field value map for the wire — null when empty/absent. */
 export function customFieldsForApi(
-  v: unknown,
+  v: unknown
 ): Record<string, CustomFieldValue> | null {
   if (!v || typeof v !== "object" || Array.isArray(v)) return null;
   return Object.keys(v as object).length > 0
@@ -94,7 +94,7 @@ export function customFieldsForApi(
 }
 
 function serializeAttribution(
-  a: ContactAttribution | null | undefined,
+  a: ContactAttribution | null | undefined
 ): ContactAttributionApiObject | null {
   if (!a) return null;
   // Treat "all fields null" as no attribution at all — cleaner wire shape.
@@ -129,7 +129,7 @@ function serializeAttribution(
 export function serializeContactForApi(
   id: string,
   data: FirebaseFirestore.DocumentData,
-  mode: "live" | "test",
+  mode: "live" | "test"
 ): ContactApiObject {
   return {
     id,
@@ -148,7 +148,7 @@ export function serializeContactForApi(
     sms_opted_out: !!data.smsOptedOut,
     custom_fields: customFieldsForApi(data.customFields),
     attribution: serializeAttribution(
-      data.attribution as ContactAttribution | null,
+      data.attribution as ContactAttribution | null
     ),
     location:
       data.country || data.city || data.lat != null
@@ -222,7 +222,9 @@ function asTags(v: unknown): string[] | null {
  * `{ ok: false, error }`. The error string is human-readable and goes
  * straight into the 400 response.
  */
-export function parseContactCreate(raw: unknown): ParseResult<ContactCreateInput> {
+export function parseContactCreate(
+  raw: unknown
+): ParseResult<ContactCreateInput> {
   if (!raw || typeof raw !== "object") {
     return { ok: false, error: "Body must be a JSON object." };
   }
@@ -294,7 +296,7 @@ export function parseContactCreate(raw: unknown): ParseResult<ContactCreateInput
  * partial update payload.
  */
 export function parseContactPatch(
-  raw: unknown,
+  raw: unknown
 ): ParseResult<Partial<ContactCreateInput>> {
   if (!raw || typeof raw !== "object") {
     return { ok: false, error: "Body must be a JSON object." };

@@ -3,7 +3,7 @@
  *
  * Subscribers register a URL + an event-type allowlist. Whenever a write
  * inside the sub-account emits a matching event, every subscription gets
- * its own delivery attempt, signed Stripe-style with `LeadStack-Signature`.
+ * its own delivery attempt, signed Stripe-style with `AgentStack-Signature`.
  *
  * Three Firestore collections:
  *   - `subAccounts/{id}/webhookSubscriptions/{subId}`
@@ -90,7 +90,7 @@ export interface WebhookSubscriptionDoc {
   /** Event-type allowlist. Empty array means "every event" — discouraged but legal. */
   events: WebhookEventType[];
   /**
-   * Raw signing secret used in `LeadStack-Signature` HMAC computation.
+   * Raw signing secret used in `AgentStack-Signature` HMAC computation.
    * Returned to the subscriber ONCE at creation; stored raw here so the
    * dispatcher can sign. Server-only collection — Firestore rules deny
    * client access entirely.

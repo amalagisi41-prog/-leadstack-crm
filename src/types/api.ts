@@ -59,7 +59,7 @@ export interface ApiKeyDoc {
   scopes: ApiKeyScope[];
   /**
    * API version this key was minted against. Used as the fallback when a
-   * request omits the `LeadStack-Version` header. Pins the key to the
+   * request omits the `AgentStack-Version` header. Pins the key to the
    * version snapshot it was issued against so we can roll new versions
    * without breaking old integrations. Optional for backwards-compat —
    * keys minted before versioning shipped fall back to latest.

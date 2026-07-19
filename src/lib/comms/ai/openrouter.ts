@@ -74,7 +74,7 @@ export async function callAi({
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
     throw new Error(
-      "OPENROUTER_API_KEY is not set — AI replies require it. Get a key at openrouter.ai.",
+      "OPENROUTER_API_KEY is not set — AI replies require it. Get a key at openrouter.ai."
     );
   }
 
@@ -86,7 +86,8 @@ export async function callAi({
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
       // OpenRouter optional but recommended — helps them attribute usage.
-      "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL ?? "https://leadstack.dev",
+      "HTTP-Referer":
+        process.env.NEXT_PUBLIC_APP_URL ?? "https://agentstackcrm.app",
       "X-Title": "AgentStack AI Replies",
     },
     body: JSON.stringify({
@@ -100,7 +101,7 @@ export async function callAi({
   if (!res.ok) {
     const body = await res.text().catch(() => "");
     throw new Error(
-      `OpenRouter ${res.status}: ${body.slice(0, 300) || res.statusText}`,
+      `OpenRouter ${res.status}: ${body.slice(0, 300) || res.statusText}`
     );
   }
 

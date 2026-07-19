@@ -17,14 +17,14 @@
  *     CUSTOM_BRAND.pricing block below for how to re-enable real
  *     self-serve resale.
  *
- *   - "leadstack" â€" the AgentStack-branded marketing landing that sells
- *     AgentStack itself (used on the leadstack.dev demo site). Only flip
+ *   - "agentstack" â€" the AgentStack-branded marketing landing that sells
+ *     AgentStack itself (used on the agentstackcrm.app demo site). Only flip
  *     back to this if you're running the public AgentStack demo.
  *
  * Flip LANDING_VARIANT below to swap which one renders at "/".
  */
 
-export type LandingVariant = "leadstack" | "custom";
+export type LandingVariant = "agentstack" | "custom";
 
 export const LANDING_VARIANT: LandingVariant = "custom";
 export const AGENTSTACK_METHOD_NAME = "The AgentStack Method™";
@@ -103,7 +103,7 @@ export interface ResolvedBrand {
 
 /**
  * Brand fields used by the "custom" landing variant. Ignored entirely when
- * LANDING_VARIANT is "leadstack". Edit these to brand the white-label
+ * LANDING_VARIANT is "agentstack". Edit these to brand the white-label
  * landing for your own business â€" the values below are placeholder
  * defaults so the page renders cleanly out of the box.
  */
@@ -141,7 +141,7 @@ export const CUSTOM_BRAND: CustomBrand = {
    *   3. Wire the pricing card buttons to createCheckoutSession with
    *      the relevant STRIPE_PRO_PRICE_ID etc., instead of /signup.
    *   4. Un-gate the Subscription panel in the sub-account settings
-   *      page (currently gated on LANDING_VARIANT === "leadstack").
+   *      page (currently gated on LANDING_VARIANT === "agentstack").
    *   5. Add a Stripe-driven public signup flow that provisions a
    *      fresh agency + sub-account + owner membership on
    *      checkout.completed â€" today's /api/auth/signup is invite-only
@@ -222,13 +222,13 @@ export const CUSTOM_BRAND: CustomBrand = {
 };
 
 export function isMarketingPlanKey(
-  value: string | null | undefined,
+  value: string | null | undefined
 ): value is MarketingPlanKey {
   return !!value && MARKETING_PLAN_KEYS.includes(value as MarketingPlanKey);
 }
 
 export function isSelfServePlanKey(
-  value: string | null | undefined,
+  value: string | null | undefined
 ): value is SelfServePlanKey {
   return !!value && SELF_SERVE_PLAN_KEYS.includes(value as SelfServePlanKey);
 }

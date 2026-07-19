@@ -196,12 +196,12 @@ const PUBLIC_PATH_PATTERNS: RegExp[] = [
   // would block them. The HMAC token in `?t=` is the credential.
   /^\/api\/sub-accounts\/[^/]+\/calendar\.ics$/,
   // Public competitor comparison pages (SEO landing pages, e.g.
-  // /leadstack-vs-gohighlevel). Slug is path-suffixed with a hyphen
+  // /agentstack-vs-gohighlevel). Slug is path-suffixed with a hyphen
   // rather than a slash so the PUBLIC_PATHS prefix-match logic can't
   // see it — regex is the only option here. Read-only public content;
   // no auth required. Each competitor has its own static route under
-  // src/app/leadstack-vs-{slug}/page.tsx; this regex catches them all.
-  /^\/leadstack-vs-[a-z0-9-]+$/,
+  // src/app/agentstack-vs-{slug}/page.tsx; this regex catches them all.
+  /^\/agentstack-vs-[a-z0-9-]+$/,
   // Public comparison routes under /compare/{slug}. Static, read-only
   // marketing content with no auth requirement.
   /^\/compare\/[a-z0-9-]+$/,
@@ -210,7 +210,7 @@ const PUBLIC_PATH_PATTERNS: RegExp[] = [
 function isPublicPath(pathname: string): boolean {
   if (
     PUBLIC_PATHS.some(
-      (path) => pathname === path || pathname.startsWith(`${path}/`),
+      (path) => pathname === path || pathname.startsWith(`${path}/`)
     )
   ) {
     return true;
@@ -248,7 +248,7 @@ export default function middleware(request: NextRequest) {
       clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL ?? "",
       privateKey: (process.env.FIREBASE_ADMIN_PRIVATE_KEY ?? "").replace(
         /\\n/g,
-        "\n",
+        "\n"
       ),
     },
     handleValidToken: async ({ decodedToken }, headers) => {

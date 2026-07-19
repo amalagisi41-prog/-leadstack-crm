@@ -77,7 +77,8 @@ export function GhlImportWizard() {
   useEffect(() => {
     if (!jobId) return;
     return onSnapshot(doc(getFirebaseDb(), "importJobs", jobId), (snap) => {
-      if (snap.exists()) setJob({ id: snap.id, ...(snap.data() as Omit<ImportJob, "id">) });
+      if (snap.exists())
+        setJob({ id: snap.id, ...(snap.data() as Omit<ImportJob, "id">) });
     });
   }, [jobId]);
 
@@ -101,10 +102,16 @@ export function GhlImportWizard() {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token: token.trim(), locationId: locationId.trim() }),
-        },
+          body: JSON.stringify({
+            token: token.trim(),
+            locationId: locationId.trim(),
+          }),
+        }
       );
-      const data = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+      };
       if (!res.ok || !data.ok) {
         toast.error(data.error ?? "Couldn't connect to GoHighLevel.");
         return;
@@ -118,7 +125,9 @@ export function GhlImportWizard() {
   }
 
   async function loadPreview() {
-    const res = await fetch(`/api/sub-accounts/${subAccountId}/import/ghl/preview`);
+    const res = await fetch(
+      `/api/sub-accounts/${subAccountId}/import/ghl/preview`
+    );
     const data = (await res.json().catch(() => ({}))) as PreviewData & {
       ok?: boolean;
       error?: string;
@@ -138,7 +147,7 @@ export function GhlImportWizard() {
         type: s.type,
         entity: s.entity,
         options: s.options,
-      })),
+      }))
     );
     setStep("map");
   }
@@ -150,19 +159,22 @@ export function GhlImportWizard() {
       // collecting the generated keys for the mapping.
       const customFields: Record<
         string,
-        { ghlId: string; ghlName: string; leadstackKey: string }
+        { ghlId: string; ghlName: string; agentstackKey: string }
       > = {};
       for (const c of cfChoices.filter((c) => c.include)) {
-        const res = await fetch(`/api/sub-accounts/${subAccountId}/custom-fields`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            entity: c.entity,
-            label: c.label,
-            type: c.type,
-            options: c.options,
-          }),
-        });
+        const res = await fetch(
+          `/api/sub-accounts/${subAccountId}/custom-fields`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              entity: c.entity,
+              label: c.label,
+              type: c.type,
+              options: c.options,
+            }),
+          }
+        );
         const data = (await res.json().catch(() => ({}))) as {
           ok?: boolean;
           key?: string;
@@ -171,19 +183,22 @@ export function GhlImportWizard() {
           customFields[c.ghlId] = {
             ghlId: c.ghlId,
             ghlName: c.ghlName,
-            leadstackKey: data.key,
+            agentstackKey: data.key,
           };
         }
       }
 
-      const res = await fetch(`/api/sub-accounts/${subAccountId}/import/ghl/start`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mapping: { stageMap, defaultStage, defaultCurrency, customFields },
-          entities: ["contacts", "opportunities", "notes"],
-        }),
-      });
+      const res = await fetch(
+        `/api/sub-accounts/${subAccountId}/import/ghl/start`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mapping: { stageMap, defaultStage, defaultCurrency, customFields },
+            entities: ["contacts", "opportunities", "notes"],
+          }),
+        }
+      );
       const data = (await res.json().catch(() => ({}))) as {
         ok?: boolean;
         jobId?: string;
@@ -207,34 +222,43 @@ export function GhlImportWizard() {
   if (step === "connect") {
     return (
       <>
-      <Card
-        title="Connect GoHighLevel"
-        desc="Paste a Private Integration Token from your GHL sub-account (Settings → Private Integrations), plus its location id."
-        headerAction={
-          <Button variant="ghost" size="sm" onClick={() => setShowHelp(true)}>
-            <HelpCircle className="mr-1 h-3.5 w-3.5" />
-            How it works
-          </Button>
-        }
-      >
-        <div className="space-y-3">
-          <Field label="Private Integration Token">
-            <Input value={token} onChange={(e) => setToken(e.target.value)} placeholder="pit-..." />
-          </Field>
-          <Field label="Location id">
-            <Input value={locationId} onChange={(e) => setLocationId(e.target.value)} placeholder="e.g. abc123…" />
-          </Field>
-          <p className="flex items-start gap-1.5 text-[11px] text-muted-foreground">
-            <Lock className="mt-0.5 h-3 w-3 shrink-0" />
-            Your token is stored securely and only used to read your data during the import.
-          </p>
-          <Button onClick={connect} disabled={busy}>
-            {busy ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : null}
-            Connect &amp; preview
-          </Button>
-        </div>
-      </Card>
-      <GhlImportHelpDialog open={showHelp} onOpenChange={setShowHelp} />
+        <Card
+          title="Connect GoHighLevel"
+          desc="Paste a Private Integration Token from your GHL sub-account (Settings → Private Integrations), plus its location id."
+          headerAction={
+            <Button variant="ghost" size="sm" onClick={() => setShowHelp(true)}>
+              <HelpCircle className="mr-1 h-3.5 w-3.5" />
+              How it works
+            </Button>
+          }
+        >
+          <div className="space-y-3">
+            <Field label="Private Integration Token">
+              <Input
+                value={token}
+                onChange={(e) => setToken(e.target.value)}
+                placeholder="pit-..."
+              />
+            </Field>
+            <Field label="Location id">
+              <Input
+                value={locationId}
+                onChange={(e) => setLocationId(e.target.value)}
+                placeholder="e.g. abc123…"
+              />
+            </Field>
+            <p className="text-muted-foreground flex items-start gap-1.5 text-[11px]">
+              <Lock className="mt-0.5 h-3 w-3 shrink-0" />
+              Your token is stored securely and only used to read your data
+              during the import.
+            </p>
+            <Button onClick={connect} disabled={busy}>
+              {busy ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : null}
+              Connect &amp; preview
+            </Button>
+          </div>
+        </Card>
+        <GhlImportHelpDialog open={showHelp} onOpenChange={setShowHelp} />
       </>
     );
   }
@@ -248,7 +272,7 @@ export function GhlImportWizard() {
         <div className="space-y-6">
           {/* Stage mapping */}
           <section className="space-y-2">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <h3 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
               Pipeline stages → your stages
             </h3>
             {(preview.pipelines ?? []).map((p) => (
@@ -258,16 +282,21 @@ export function GhlImportWizard() {
                   {p.stages.map((s) => (
                     <div key={s.id} className="flex items-center gap-2 text-sm">
                       <span className="min-w-0 flex-1 truncate">{s.name}</span>
-                      <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+                      <ArrowRight className="text-muted-foreground h-3.5 w-3.5" />
                       <select
                         value={stageMap[s.id] ?? "new"}
                         onChange={(e) =>
-                          setStageMap((m) => ({ ...m, [s.id]: e.target.value as PipelineStageId }))
+                          setStageMap((m) => ({
+                            ...m,
+                            [s.id]: e.target.value as PipelineStageId,
+                          }))
                         }
-                        className="h-8 rounded-md border bg-background px-2 text-sm"
+                        className="bg-background h-8 rounded-md border px-2 text-sm"
                       >
                         {stages.map((cs) => (
-                          <option key={cs.id} value={cs.id}>{cs.label}</option>
+                          <option key={cs.id} value={cs.id}>
+                            {cs.label}
+                          </option>
                         ))}
                       </select>
                     </div>
@@ -279,17 +308,23 @@ export function GhlImportWizard() {
               <Label className="text-xs">Default for unmapped:</Label>
               <select
                 value={defaultStage}
-                onChange={(e) => setDefaultStage(e.target.value as PipelineStageId)}
-                className="h-8 rounded-md border bg-background px-2 text-sm"
+                onChange={(e) =>
+                  setDefaultStage(e.target.value as PipelineStageId)
+                }
+                className="bg-background h-8 rounded-md border px-2 text-sm"
               >
                 {stages.map((cs) => (
-                  <option key={cs.id} value={cs.id}>{cs.label}</option>
+                  <option key={cs.id} value={cs.id}>
+                    {cs.label}
+                  </option>
                 ))}
               </select>
               <Label className="text-xs">Currency:</Label>
               <Input
                 value={defaultCurrency}
-                onChange={(e) => setDefaultCurrency(e.target.value.toUpperCase().slice(0, 3))}
+                onChange={(e) =>
+                  setDefaultCurrency(e.target.value.toUpperCase().slice(0, 3))
+                }
                 className="h-8 w-20"
               />
             </div>
@@ -297,22 +332,30 @@ export function GhlImportWizard() {
 
           {/* Custom fields */}
           <section className="space-y-2">
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              Custom fields ({cfChoices.filter((c) => c.include).length} to import)
+            <h3 className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+              Custom fields ({cfChoices.filter((c) => c.include).length} to
+              import)
             </h3>
             {cfChoices.length === 0 ? (
-              <p className="text-xs text-muted-foreground">No custom fields found.</p>
+              <p className="text-muted-foreground text-xs">
+                No custom fields found.
+              </p>
             ) : (
               <ul className="space-y-1.5">
                 {cfChoices.map((c, i) => (
-                  <li key={c.ghlId} className="flex items-center gap-2 rounded-lg border p-2 text-sm">
+                  <li
+                    key={c.ghlId}
+                    className="flex items-center gap-2 rounded-lg border p-2 text-sm"
+                  >
                     <input
                       type="checkbox"
                       className="h-4 w-4"
                       checked={c.include}
                       onChange={(e) =>
                         setCfChoices((prev) =>
-                          prev.map((x, j) => (j === i ? { ...x, include: e.target.checked } : x)),
+                          prev.map((x, j) =>
+                            j === i ? { ...x, include: e.target.checked } : x
+                          )
                         )
                       }
                     />
@@ -320,12 +363,14 @@ export function GhlImportWizard() {
                       value={c.label}
                       onChange={(e) =>
                         setCfChoices((prev) =>
-                          prev.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)),
+                          prev.map((x, j) =>
+                            j === i ? { ...x, label: e.target.value } : x
+                          )
                         )
                       }
                       className="h-8 flex-1"
                     />
-                    <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] capitalize text-muted-foreground">
+                    <span className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 text-[10px] capitalize">
                       {c.entity} · {c.type}
                     </span>
                   </li>
@@ -339,7 +384,11 @@ export function GhlImportWizard() {
               {busy ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : null}
               Start import
             </Button>
-            <Button variant="outline" onClick={() => setStep("connect")} disabled={busy}>
+            <Button
+              variant="outline"
+              onClick={() => setStep("connect")}
+              disabled={busy}
+            >
               Back
             </Button>
           </div>
@@ -353,7 +402,11 @@ export function GhlImportWizard() {
   return (
     <Card
       title={done ? "Import finished" : "Importing…"}
-      desc={done ? "Here's the summary of what came across." : "Running in the background — you can leave this page; it keeps going."}
+      desc={
+        done
+          ? "Here's the summary of what came across."
+          : "Running in the background — you can leave this page; it keeps going."
+      }
     >
       <div className="space-y-4">
         <div className="flex items-center gap-2 text-sm">
@@ -371,9 +424,12 @@ export function GhlImportWizard() {
           {(["contacts", "deals", "notes"] as const).map((e) => {
             const t = job?.totals?.[e];
             return (
-              <div key={e} className="flex items-center justify-between rounded-lg border p-2.5 text-sm">
+              <div
+                key={e}
+                className="flex items-center justify-between rounded-lg border p-2.5 text-sm"
+              >
                 <span className="capitalize">{e}</span>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-muted-foreground text-xs">
                   {t
                     ? `${t.created} created · ${t.updated} updated${t.failed ? ` · ${t.failed} failed` : ""}`
                     : "—"}
@@ -385,17 +441,27 @@ export function GhlImportWizard() {
 
         {done && (job?.errors?.length ?? 0) > 0 && (
           <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-700 dark:text-amber-400">
-            <p className="font-medium">{job?.errors.length} record(s) skipped:</p>
+            <p className="font-medium">
+              {job?.errors.length} record(s) skipped:
+            </p>
             <ul className="mt-1 max-h-32 space-y-0.5 overflow-y-auto">
               {job?.errors.slice(0, 20).map((er, i) => (
-                <li key={i}>{er.entity} {er.externalId ?? ""}: {er.error}</li>
+                <li key={i}>
+                  {er.entity} {er.externalId ?? ""}: {er.error}
+                </li>
               ))}
             </ul>
           </div>
         )}
 
         {done && (
-          <Button onClick={() => { setStep("connect"); setJobId(null); setJob(null); }}>
+          <Button
+            onClick={() => {
+              setStep("connect");
+              setJobId(null);
+              setJob(null);
+            }}
+          >
             Done
           </Button>
         )}
@@ -416,21 +482,27 @@ function Card({
   headerAction?: React.ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border bg-card p-5">
+    <div className="bg-card rounded-2xl border p-5">
       <div className="flex items-center gap-2">
         <h2 className="text-base font-semibold">{title}</h2>
-        <span className="rounded-full bg-fuchsia-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-fuchsia-600 dark:text-fuchsia-400">
+        <span className="rounded-full bg-fuchsia-500/10 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-fuchsia-600 uppercase dark:text-fuchsia-400">
           Beta
         </span>
         {headerAction ? <div className="ml-auto">{headerAction}</div> : null}
       </div>
-      <p className="mt-0.5 mb-4 text-sm text-muted-foreground">{desc}</p>
+      <p className="text-muted-foreground mt-0.5 mb-4 text-sm">{desc}</p>
       {children}
     </div>
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="space-y-1.5">
       <Label>{label}</Label>

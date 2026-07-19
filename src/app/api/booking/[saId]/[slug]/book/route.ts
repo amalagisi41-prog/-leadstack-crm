@@ -4,11 +4,7 @@ import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 
 import { getAdminDb } from "@/lib/firebase/admin";
-import {
-  emailIsConfigured,
-  sendEmail,
-  tenantFrom,
-} from "@/lib/comms/resend";
+import { emailIsConfigured, sendEmail, tenantFrom } from "@/lib/comms/resend";
 import { Resend } from "resend";
 import { buildPaypalAmountUrl } from "@/lib/paypal/payment-link";
 import {
@@ -80,7 +76,7 @@ const subHits = new Map<string, number[]>();
 function pushAndCheck(
   bucket: Map<string, number[]>,
   key: string,
-  cap: number,
+  cap: number
 ): boolean {
   const now = Date.now();
   const cutoff = now - WINDOW_MS;
@@ -121,20 +117,20 @@ interface BookBody {
 
 export async function POST(
   request: Request,
-  ctx: { params: Promise<{ saId: string; slug: string }> },
+  ctx: { params: Promise<{ saId: string; slug: string }> }
 ) {
   const { saId, slug } = await ctx.params;
   const ip = getClientIp(request);
   if (pushAndCheck(ipHits, ip, IP_HOURLY_CAP)) {
     return NextResponse.json(
       { error: "Too many booking attempts. Try again later." },
-      { status: 429 },
+      { status: 429 }
     );
   }
   if (pushAndCheck(subHits, saId, SUB_HOURLY_CAP)) {
     return NextResponse.json(
       { error: "Booking page is busy. Try again later." },
-      { status: 429 },
+      { status: 429 }
     );
   }
 
@@ -151,26 +147,23 @@ export async function POST(
   if (!name || name.length > 120) {
     return NextResponse.json(
       { error: "Name is required (max 120 chars)." },
-      { status: 400 },
+      { status: 400 }
     );
   }
   if (!EMAIL_RE.test(email) || email.length > 200) {
     return NextResponse.json(
       { error: "A valid email is required." },
-      { status: 400 },
+      { status: 400 }
     );
   }
   if (!phone || phone.length > 40) {
-    return NextResponse.json(
-      { error: "Phone is required." },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "Phone is required." }, { status: 400 });
   }
   const slot = body.slot;
   if (!slot?.startAt || !slot?.endAt) {
     return NextResponse.json(
       { error: "Pick a time before booking." },
-      { status: 400 },
+      { status: 400 }
     );
   }
   const slotStart = new Date(slot.startAt);
@@ -182,7 +175,7 @@ export async function POST(
   ) {
     return NextResponse.json(
       { error: "Selected slot is invalid." },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
@@ -206,20 +199,20 @@ export async function POST(
     if (f.required && !value) {
       return NextResponse.json(
         { error: `Please answer: ${f.label}` },
-        { status: 400 },
+        { status: 400 }
       );
     }
     if (value.length > 2000) {
       return NextResponse.json(
         { error: `Answer too long for "${f.label}"` },
-        { status: 400 },
+        { status: 400 }
       );
     }
     if (f.type === "select" && value) {
       if (!(f.options ?? []).includes(value)) {
         return NextResponse.json(
           { error: `Invalid option for "${f.label}"` },
-          { status: 400 },
+          { status: 400 }
         );
       }
     }
@@ -259,7 +252,7 @@ export async function POST(
     ? await loadHostUpcomingCounts(
         saId,
         hosts.map((h) => h.uid),
-        now,
+        now
       )
     : new Map<string, number>();
 
@@ -282,7 +275,7 @@ export async function POST(
         eventsRef
           .where("subAccountId", "==", saId)
           .where("startAt", ">=", queryFrom)
-          .where("startAt", "<=", queryTo),
+          .where("startAt", "<=", queryTo)
       );
       // Parse occupying events in the window, tagged by assigned host.
       //  - `occupying`     — every busy event (single mode treats all as conflicts)
@@ -377,7 +370,7 @@ export async function POST(
           currency: page.payment.currency,
         });
         paymentHoldExpiresAt = new Date(
-          now.getTime() + page.payment.holdHours * 60 * 60_000,
+          now.getTime() + page.payment.holdHours * 60 * 60_000
         );
       }
 
@@ -446,13 +439,13 @@ export async function POST(
           error:
             "That slot was just taken. Refresh the page and pick another time.",
         },
-        { status: 409 },
+        { status: 409 }
       );
     }
     console.error("[booking/book] transaction failed", err);
     return NextResponse.json(
       { error: "Couldn't reserve the slot. Try again." },
-      { status: 500 },
+      { status: 500 }
     );
   }
 
@@ -461,7 +454,7 @@ export async function POST(
   const appHost =
     process.env.NEXT_PUBLIC_APP_URL?.replace(/^https?:\/\//, "")
       ?.replace(/\/.*$/, "")
-      ?.toLowerCase() ?? "leadstack.dev";
+      ?.toLowerCase() ?? "agentstackcrm.app";
 
   // Confirmation / payment-pending email.
   if (emailIsConfigured()) {
@@ -562,7 +555,7 @@ export async function POST(
       contactId: created.contactId,
       bookingPageSlug: page.slug,
     },
-    "booking_page_booked",
+    "booking_page_booked"
   );
   await fireBookingTrigger(
     {
@@ -570,7 +563,7 @@ export async function POST(
       subAccountId: saId,
       contactId: created.contactId,
     },
-    "event_booked",
+    "event_booked"
   );
   void emitBookingWebhook({
     eventId: created.eventDocRef.id,

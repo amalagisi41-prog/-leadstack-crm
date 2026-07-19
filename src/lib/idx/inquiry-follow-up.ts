@@ -44,18 +44,29 @@ export interface IdxInquiryFollowUpResult {
 }
 
 export async function createIdxInquiryFollowUp(
-  input: CreateIdxInquiryFollowUpInput,
+  input: CreateIdxInquiryFollowUpInput
 ): Promise<IdxInquiryFollowUpResult> {
   const errors: string[] = [];
   const listingLabel = input.listing.address || `Listing ${input.listing.id}`;
-  const identity = input.inquirerName || input.inquirerEmail || input.inquirerPhone || "A visitor";
+  const identity =
+    input.inquirerName ||
+    input.inquirerEmail ||
+    input.inquirerPhone ||
+    "A visitor";
 
   // ----- 1. Create the Task -----
   let taskId: string | null = null;
   try {
     const db = getAdminDb();
     const now = new Date();
-    const dueAt = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+    const dueAt = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      23,
+      59,
+      59
+    );
 
     const notes = [
       `Requested a showing/info for: ${listingLabel}`,
@@ -71,7 +82,8 @@ export async function createIdxInquiryFollowUp(
     try {
       const cSnap = await db.collection("contacts").doc(input.contactId).get();
       territoryId =
-        (cSnap.data()?.territoryId as string | null | undefined) ?? GLOBAL_TERRITORY_ID;
+        (cSnap.data()?.territoryId as string | null | undefined) ??
+        GLOBAL_TERRITORY_ID;
     } catch {
       territoryId = GLOBAL_TERRITORY_ID;
     }
@@ -97,7 +109,7 @@ export async function createIdxInquiryFollowUp(
     const msg = err instanceof Error ? err.message : "Unknown error";
     console.error(
       `[idx/inquiry-follow-up] task create failed sa=${input.subAccountId}`,
-      err,
+      err
     );
     errors.push(`task: ${msg}`);
   }
@@ -119,7 +131,8 @@ export async function createIdxInquiryFollowUp(
         errors.push("email: no escalation address configured");
       } else {
         const appUrl =
-          process.env.NEXT_PUBLIC_APP_URL?.trim() || "https://leadstack.dev";
+          process.env.NEXT_PUBLIC_APP_URL?.trim() ||
+          "https://agentstackcrm.app";
         const contactUrl = `${appUrl}/sa/${input.subAccountId}/contacts/${input.contactId}`;
         const priceLabel = input.listing.price
           ? ` ($${input.listing.price.toLocaleString()})`
@@ -153,7 +166,7 @@ export async function createIdxInquiryFollowUp(
       const msg = err instanceof Error ? err.message : "Unknown error";
       console.error(
         `[idx/inquiry-follow-up] email send failed sa=${input.subAccountId}`,
-        err,
+        err
       );
       errors.push(`email: ${msg}`);
     }

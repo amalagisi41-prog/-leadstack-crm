@@ -1,8 +1,4 @@
-import type {
-  ColorScheme,
-  Niche,
-  WebsiteConfig,
-} from "@/types/website";
+import type { ColorScheme, Niche, WebsiteConfig } from "@/types/website";
 import {
   sampleGymFitnessLocalConfig,
   sampleGymFitnessVslConfig,
@@ -20,7 +16,7 @@ import {
  *
  * The label and description are operator-facing copy. The default
  * colorScheme reflects gitpage's "natural surface" recommendation per
- * §4.1 of LEADSTACK_NICHE_TEMPLATES.md — always allow override.
+ * §4.1 of AGENTSTACK_NICHE_TEMPLATES.md — always allow override.
  *
  * Forced page set is the same for every niche (per §2.2): index, services,
  * contact, privacy, terms. Blog is not allowed.
@@ -82,7 +78,10 @@ export const NICHE_FORCED_PAGES = [
 ] as const;
 
 /** Page values gitpage explicitly rejects on niche builds. */
-export const NICHE_FORBIDDEN_PAGES = ["blog.html", "blog-listing.html"] as const;
+export const NICHE_FORBIDDEN_PAGES = [
+  "blog.html",
+  "blog-listing.html",
+] as const;
 
 export function isNicheKey(value: unknown): value is Niche {
   return (
@@ -97,7 +96,7 @@ export function isNicheKey(value: unknown): value is Niche {
  */
 export function nicheSample(
   niche: Niche,
-  buildType: "local" | "vsl",
+  buildType: "local" | "vsl"
 ): () => WebsiteConfig {
   switch (niche) {
     case "home_services":

@@ -24,7 +24,7 @@ const MAX_QUIET_LEAD_CANDIDATES = 10;
 /**
  * Daily Briefing orchestrator. Fanned out hourly by
  * /api/cron/daily-briefing (itself scheduled by the
- * "leadstack-daily-briefing" QStash cron) — one call per opted-in
+ * "agentstack-daily-briefing" QStash cron) — one call per opted-in
  * sub-account. Only actually sends once each sub-account's local clock
  * hits TARGET_HOUR, deduped by `lastBriefingSentDate` so the hourly sweep
  * can safely re-check every sub-account every hour without double-sending.

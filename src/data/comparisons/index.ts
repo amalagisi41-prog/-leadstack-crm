@@ -4,7 +4,7 @@ import followUpBossData from "./follow-up-boss.json";
 import kvcoreData from "./kvcore.json";
 
 /**
- * Manifest of every competitor comparison published at /leadstack-vs-{slug}.
+ * Manifest of every competitor comparison published at /agentstack-vs-{slug}.
  *
  * The dynamic route reads this map to build generateStaticParams (so every
  * page is prerendered at build time + the HTML is fully crawlable from the

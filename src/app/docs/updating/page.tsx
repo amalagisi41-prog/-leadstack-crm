@@ -15,9 +15,9 @@ import { LogoMark } from "@/components/brand/logo-mark";
  */
 
 export const metadata = {
-  title: "Keeping your app up to date — LeadStack",
+  title: "Keeping your app up to date — AgentStack",
   description:
-    "How to pull the latest official LeadStack build into your own customised version of the app — without losing your changes.",
+    "How to pull the latest official AgentStack build into your own customised version of the app — without losing your changes.",
 };
 
 export default function UpdatingDocsPage() {
@@ -27,7 +27,7 @@ export default function UpdatingDocsPage() {
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <Link href="/" className="flex items-center gap-2 text-lg font-bold">
             <LogoMark size={20} idSuffix="-docs" />
-            LeadStack
+            AgentStack
           </Link>
           <Button render={<Link href="/" />} variant="outline" size="sm">
             Back to home
@@ -36,14 +36,14 @@ export default function UpdatingDocsPage() {
       </header>
 
       <main className="container mx-auto max-w-3xl flex-1 px-4 py-12">
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <p className="text-muted-foreground text-xs font-semibold tracking-wider uppercase">
           Docs · Maintenance
         </p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
           Keeping your app up to date with the org build
         </h1>
-        <p className="mt-3 text-base text-muted-foreground">
-          How to pull the latest official LeadStack build into your own
+        <p className="text-muted-foreground mt-3 text-base">
+          How to pull the latest official AgentStack build into your own
           customised version of the app — without losing the changes you&apos;ve
           made.
         </p>
@@ -52,19 +52,21 @@ export default function UpdatingDocsPage() {
           <p>There are three things in play:</p>
           <div className="my-5 overflow-hidden rounded-xl border">
             <table className="w-full text-sm">
-              <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
+              <thead className="bg-muted/40 text-muted-foreground text-xs tracking-wide uppercase">
                 <tr>
                   <th className="px-4 py-2 text-left font-medium">Name</th>
-                  <th className="px-4 py-2 text-left font-medium">What it is</th>
+                  <th className="px-4 py-2 text-left font-medium">
+                    What it is
+                  </th>
                   <th className="px-4 py-2 text-left font-medium">Git term</th>
                 </tr>
               </thead>
               <tbody>
                 <tr className="border-t">
                   <td className="px-4 py-3 font-semibold">Org repo</td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    The official LeadStack build. A read-only{" "}
-                    <em>snapshot</em> you don&apos;t push to.
+                  <td className="text-muted-foreground px-4 py-3">
+                    The official AgentStack build. A read-only <em>snapshot</em>{" "}
+                    you don&apos;t push to.
                   </td>
                   <td className="px-4 py-3">
                     <InlineCode>upstream</InlineCode>
@@ -72,7 +74,7 @@ export default function UpdatingDocsPage() {
                 </tr>
                 <tr className="border-t">
                   <td className="px-4 py-3 font-semibold">Your fork</td>
-                  <td className="px-4 py-3 text-muted-foreground">
+                  <td className="text-muted-foreground px-4 py-3">
                     Your personal copy on GitHub, where your work lives.
                   </td>
                   <td className="px-4 py-3">
@@ -83,7 +85,7 @@ export default function UpdatingDocsPage() {
                   <td className="px-4 py-3 font-semibold">
                     Your customisations
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground">
+                  <td className="text-muted-foreground px-4 py-3">
                     The edits you make on your <InlineCode>main</InlineCode>{" "}
                     branch.
                   </td>
@@ -94,17 +96,18 @@ export default function UpdatingDocsPage() {
           </div>
 
           <Callout>
-            The org repo is published as a <strong>single snapshot commit</strong>{" "}
-            that gets replaced each release. It has no shared history with your
-            fork, so you <strong>cannot</strong> just <InlineCode>git pull</InlineCode>{" "}
-            from it. The steps below give git the shared reference point it needs
-            to merge cleanly.
+            The org repo is published as a{" "}
+            <strong>single snapshot commit</strong> that gets replaced each
+            release. It has no shared history with your fork, so you{" "}
+            <strong>cannot</strong> just <InlineCode>git pull</InlineCode> from
+            it. The steps below give git the shared reference point it needs to
+            merge cleanly.
           </Callout>
         </Section>
 
         <Section title="One-time setup (do this once per machine)" id="setup">
           <CodeBlock>{`# 1. Add the org repo as a second remote called "upstream"
-git remote add upstream https://github.com/Claude-Code-Pro-Camp/leadstack-agency.git
+git remote add upstream https://github.com/Claude-Code-Pro-Camp/agentstack-agency.git
 
 # 2. Fetch its current snapshot
 git fetch upstream
@@ -122,7 +125,8 @@ git branch vendor upstream/main`}</CodeBlock>
               <InlineCode>upstream</InlineCode> → the org repo (read-only)
             </li>
             <li>
-              a <InlineCode>vendor</InlineCode> branch tracking the org snapshots
+              a <InlineCode>vendor</InlineCode> branch tracking the org
+              snapshots
             </li>
           </ul>
         </Section>
@@ -146,13 +150,17 @@ git merge vendor
 
 # 4. Refresh dependencies in case they changed
 pnpm install`}</CodeBlock>
-          <p>That&apos;s it. Your customisations and the new org code are now combined.</p>
+          <p>
+            That&apos;s it. Your customisations and the new org code are now
+            combined.
+          </p>
         </Section>
 
         <Section title="If you see merge conflicts" id="conflicts">
           <p>
-            A conflict only happens where <strong>you and the org edited the same lines</strong>.
-            Git marks them like this:
+            A conflict only happens where{" "}
+            <strong>you and the org edited the same lines</strong>. Git marks
+            them like this:
           </p>
           <CodeBlock>{`<<<<<<< HEAD
 your version
@@ -164,8 +172,8 @@ org version
             <li>
               Open each conflicted file and edit it to the version you want
               (delete the <InlineCode>{"<<<<<<<"}</InlineCode>,{" "}
-              <InlineCode>=======</InlineCode>, <InlineCode>{">>>>>>>"}</InlineCode>{" "}
-              markers).
+              <InlineCode>=======</InlineCode>,{" "}
+              <InlineCode>{">>>>>>>"}</InlineCode> markers).
             </li>
             <li>Then finish the merge:</li>
           </ol>
@@ -211,9 +219,11 @@ git commit`}</CodeBlock>
         <Section title="Quick reference" id="quick-reference">
           <div className="my-5 overflow-hidden rounded-xl border">
             <table className="w-full text-sm">
-              <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
+              <thead className="bg-muted/40 text-muted-foreground text-xs tracking-wide uppercase">
                 <tr>
-                  <th className="px-4 py-2 text-left font-medium">I want to…</th>
+                  <th className="px-4 py-2 text-left font-medium">
+                    I want to…
+                  </th>
                   <th className="px-4 py-2 text-left font-medium">Command</th>
                 </tr>
               </thead>
@@ -240,7 +250,7 @@ git commit`}</CodeBlock>
                 </tr>
                 <tr className="border-t">
                   <td className="px-4 py-3">Get the latest org build</td>
-                  <td className="px-4 py-3 text-muted-foreground">
+                  <td className="text-muted-foreground px-4 py-3">
                     the 4 steps above
                   </td>
                 </tr>
@@ -270,9 +280,12 @@ git commit`}</CodeBlock>
           </FaqItem>
         </Section>
 
-        <footer className="mt-12 border-t pt-6 text-sm text-muted-foreground">
+        <footer className="text-muted-foreground mt-12 border-t pt-6 text-sm">
           Need a hand?{" "}
-          <Link href="/" className="text-foreground underline hover:no-underline">
+          <Link
+            href="/"
+            className="text-foreground underline hover:no-underline"
+          >
             Get in touch
           </Link>{" "}
           — we&apos;re happy to walk you through it.
@@ -296,7 +309,7 @@ function Section({
       <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">
         {title}
       </h2>
-      <div className="mt-3 space-y-3 text-sm leading-relaxed text-foreground/90">
+      <div className="text-foreground/90 mt-3 space-y-3 text-sm leading-relaxed">
         {children}
       </div>
     </section>
@@ -305,15 +318,15 @@ function Section({
 
 function CodeBlock({ children }: { children: React.ReactNode }) {
   return (
-    <pre className="my-4 overflow-x-auto rounded-lg border bg-muted/40 p-4 text-[12.5px] leading-relaxed">
-      <code className="font-mono text-foreground">{children}</code>
+    <pre className="bg-muted/40 my-4 overflow-x-auto rounded-lg border p-4 text-[12.5px] leading-relaxed">
+      <code className="text-foreground font-mono">{children}</code>
     </pre>
   );
 }
 
 function InlineCode({ children }: { children: React.ReactNode }) {
   return (
-    <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[0.85em]">
+    <code className="bg-muted rounded px-1.5 py-0.5 font-mono text-[0.85em]">
       {children}
     </code>
   );
@@ -330,8 +343,8 @@ function Callout({ children }: { children: React.ReactNode }) {
 
 function Tip({ children }: { children: React.ReactNode }) {
   return (
-    <div className="my-3 rounded-lg border-l-2 border-primary/40 bg-muted/30 py-2 pl-3 text-sm text-muted-foreground">
-      <span className="font-semibold text-foreground">Tip: </span>
+    <div className="border-primary/40 bg-muted/30 text-muted-foreground my-3 rounded-lg border-l-2 py-2 pl-3 text-sm">
+      <span className="text-foreground font-semibold">Tip: </span>
       {children}
     </div>
   );
@@ -347,7 +360,7 @@ function FaqItem({
   return (
     <div className="my-4">
       <p className="font-semibold">{question}</p>
-      <p className="mt-1 text-muted-foreground">{children}</p>
+      <p className="text-muted-foreground mt-1">{children}</p>
     </div>
   );
 }

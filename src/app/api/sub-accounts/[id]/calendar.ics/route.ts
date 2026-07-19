@@ -6,10 +6,7 @@ import {
   verifyCalendarFeedToken,
   verifyHostCalendarFeedToken,
 } from "@/lib/booking/calendar-feed-token";
-import {
-  generateIcsFeed,
-  type FeedEventInput,
-} from "@/lib/booking/ics-feed";
+import { generateIcsFeed, type FeedEventInput } from "@/lib/booking/ics-feed";
 import { eventStatus } from "@/types/events";
 import type { CalendarEvent } from "@/types/events";
 import type { SubAccountMemberDoc } from "@/types/tenancy";
@@ -37,7 +34,7 @@ const FEED_LOOKBACK_DAYS = 30;
 const FEED_EVENT_CAP = 500;
 
 function statusForIcs(
-  s: ReturnType<typeof eventStatus>,
+  s: ReturnType<typeof eventStatus>
 ): FeedEventInput["status"] {
   if (s === "cancelled") return "CANCELLED";
   if (s === "awaiting_payment") return "TENTATIVE";
@@ -54,7 +51,7 @@ function tsToDate(v: unknown): Date | null {
 
 export async function GET(
   request: Request,
-  ctx: { params: Promise<{ id: string }> },
+  ctx: { params: Promise<{ id: string }> }
 ) {
   const { id: subAccountId } = await ctx.params;
   const url = new URL(request.url);
@@ -106,9 +103,7 @@ export async function GET(
   }
 
   const lookback = new Date(Date.now() - FEED_LOOKBACK_DAYS * 24 * 60 * 60_000);
-  let q = db
-    .collection("events")
-    .where("subAccountId", "==", subAccountId);
+  let q = db.collection("events").where("subAccountId", "==", subAccountId);
   if (hostMode && host) {
     // Per-host feed: only this member's assigned bookings. Uses the
     // events(subAccountId, assignedToUid, startAt) composite index.
@@ -126,7 +121,7 @@ export async function GET(
     // greppable log and a soft 503 so the poller just retries later.
     console.error(
       `[calendar.ics] events query failed sa=${subAccountId} host=${host ?? "-"}`,
-      err,
+      err
     );
     return new Response("Calendar temporarily unavailable", { status: 503 });
   }
@@ -161,10 +156,10 @@ export async function GET(
     });
   }
 
-  const domain = process.env.NEXT_PUBLIC_APP_URL
-    ?.replace(/^https?:\/\//, "")
-    ?.replace(/\/.*$/, "")
-    ?.toLowerCase() ?? "leadstack.dev";
+  const domain =
+    process.env.NEXT_PUBLIC_APP_URL?.replace(/^https?:\/\//, "")
+      ?.replace(/\/.*$/, "")
+      ?.toLowerCase() ?? "agentstackcrm.app";
 
   const ics = generateIcsFeed({
     domain,

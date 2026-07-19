@@ -32,7 +32,7 @@ const GHL_PREMIUM_SUPPORT_MONTHLY = 500;
 // the homepage; the comparison page is generic evaluation traffic and uses
 // the published list price so the savings claim doesn't depend on the
 // founders cohort still being open.
-const LEADSTACK_PRICE = 1782;
+const AGENTSTACK_PRICE = 1782;
 
 const SUB_ACCOUNTS_MIN = 1;
 const SUB_ACCOUNTS_MAX = 20;
@@ -61,16 +61,13 @@ export function ComparisonCalculator() {
   const monthlyGhl = GHL_BASE_MONTHLY + aiMonthlyCost + supportMonthlyCost;
   const yearlyGhl = monthlyGhl * 12;
 
-  const yearlyLeadstack = LEADSTACK_PRICE;
-  const year1Savings = yearlyGhl - yearlyLeadstack;
+  const yearlyAgentStack = AGENTSTACK_PRICE;
+  const year1Savings = yearlyGhl - yearlyAgentStack;
   // Year 2 + Year 3 savings = the full GHL yearly bill (AgentStack is $0
   // recurring from here), so savings get bigger every year after Year 1.
   const ongoingYearSavings = yearlyGhl;
   const threeYearSavings = year1Savings + ongoingYearSavings * 2;
-  const paybackMonths = Math.max(
-    1,
-    Math.ceil(LEADSTACK_PRICE / monthlyGhl),
-  );
+  const paybackMonths = Math.max(1, Math.ceil(AGENTSTACK_PRICE / monthlyGhl));
 
   return (
     <section className="mb-12 sm:mb-16">
@@ -78,15 +75,15 @@ export function ComparisonCalculator() {
         <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
           Build your scenario — what does your agency actually need?
         </h2>
-        <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+        <p className="text-muted-foreground mx-auto mt-3 max-w-2xl text-sm leading-relaxed">
           Plug in your sub-account count, how many of those clients you&apos;d
-          enable AI on, and whether you&apos;d pay for Premium Support.
-          Savings recalculate live, anchored on GoHighLevel&apos;s published
-          list prices.
+          enable AI on, and whether you&apos;d pay for Premium Support. Savings
+          recalculate live, anchored on GoHighLevel&apos;s published list
+          prices.
         </p>
       </header>
 
-      <div className="mx-auto max-w-3xl rounded-2xl border bg-card p-5 sm:p-7">
+      <div className="bg-card mx-auto max-w-3xl rounded-2xl border p-5 sm:p-7">
         {/* Slider: sub-accounts */}
         <SliderRow
           label="Sub-accounts (clients you serve)"
@@ -148,11 +145,7 @@ export function ComparisonCalculator() {
               label="Premium Support"
               value={`$${supportMonthlyCost.toLocaleString()}/mo`}
               muted={!premiumSupport}
-              hint={
-                premiumSupport
-                  ? "Account-level add-on"
-                  : "Not included"
-              }
+              hint={premiumSupport ? "Account-level add-on" : "Not included"}
             />
             <Divider />
             <Line
@@ -181,10 +174,10 @@ export function ComparisonCalculator() {
           </CostCard>
 
           {/* AgentStack — same 8 content rows + 1 title row = 9 children */}
-          <CostCard variant="leadstack" title="AgentStack">
+          <CostCard variant="agentstack" title="AgentStack">
             <Line
               label="License (one-time)"
-              value={`$${LEADSTACK_PRICE.toLocaleString()}`}
+              value={`$${AGENTSTACK_PRICE.toLocaleString()}`}
             />
             <Line
               label="Per-client AI add-on"
@@ -200,7 +193,7 @@ export function ComparisonCalculator() {
             <Line label="Monthly" value="$0/mo" strong />
             <Line
               label="Year 1 total"
-              value={`$${yearlyLeadstack.toLocaleString()}`}
+              value={`$${yearlyAgentStack.toLocaleString()}`}
               big
               gradient
             />
@@ -215,7 +208,7 @@ export function ComparisonCalculator() {
 
         {/* Savings callout */}
         <div className="mt-6 rounded-xl border border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 via-teal-500/10 to-emerald-500/5 p-4 text-center">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-700 dark:text-emerald-400">
+          <p className="text-[10px] font-semibold tracking-[0.18em] text-emerald-700 uppercase dark:text-emerald-400">
             You save
           </p>
 
@@ -230,19 +223,19 @@ export function ComparisonCalculator() {
             />
           </div>
 
-          <p className="mt-3 text-xs text-muted-foreground">
+          <p className="text-muted-foreground mt-3 text-xs">
             Pays for itself in{" "}
-            <span className="font-semibold text-foreground">
+            <span className="text-foreground font-semibold">
               {paybackMonths} {paybackMonths === 1 ? "month" : "months"}
-            </span>
-            {" "}— in typical agency use (10+ clients on AI, Premium Support
+            </span>{" "}
+            — in typical agency use (10+ clients on AI, Premium Support
             included), payback is 1 month or less. Every month after that is
             straight to your bottom line.
           </p>
         </div>
       </div>
 
-      <p className="mt-4 text-center text-[11px] text-muted-foreground">
+      <p className="text-muted-foreground mt-4 text-center text-[11px]">
         Pricing accurate as of June 2026 — provided as a guide.
       </p>
     </section>
@@ -279,12 +272,12 @@ function SliderRow({
         <label className="text-sm font-medium">{label}</label>
         <div className="flex items-baseline gap-2">
           {hint && (
-            <span className="text-[11px] text-muted-foreground">{hint}</span>
+            <span className="text-muted-foreground text-[11px]">{hint}</span>
           )}
           <span
             className={cn(
               "font-mono text-xl font-bold tabular-nums",
-              valueClass,
+              valueClass
             )}
           >
             {value}
@@ -301,7 +294,7 @@ function SliderRow({
         className={cn("mt-2 w-full cursor-pointer", accentClass)}
         aria-label={label}
       />
-      <div className="mt-1 flex justify-between font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+      <div className="text-muted-foreground mt-1 flex justify-between font-mono text-[10px] tracking-wider uppercase">
         <span>{min}</span>
         <span>{max}</span>
       </div>
@@ -323,14 +316,14 @@ function ToggleRow({
   onChange: (next: boolean) => void;
 }) {
   return (
-    <label className="flex cursor-pointer items-start justify-between gap-4 rounded-xl border bg-background/40 p-3 transition-colors hover:bg-muted/40">
+    <label className="bg-background/40 hover:bg-muted/40 flex cursor-pointer items-start justify-between gap-4 rounded-xl border p-3 transition-colors">
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium">{label}</p>
-        <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
+        <p className="text-muted-foreground mt-0.5 text-xs">{description}</p>
       </div>
       <div className="flex items-baseline gap-2">
         {hint && (
-          <span className="text-[11px] text-muted-foreground">{hint}</span>
+          <span className="text-muted-foreground text-[11px]">{hint}</span>
         )}
         <input
           type="checkbox"
@@ -349,7 +342,7 @@ function CostCard({
   title,
   children,
 }: {
-  variant: "ghl" | "leadstack";
+  variant: "ghl" | "agentstack";
   title: string;
   children: React.ReactNode;
 }) {
@@ -366,15 +359,15 @@ function CostCard({
         "sm:row-span-9 sm:grid-rows-subgrid",
         variant === "ghl"
           ? "border-rose-500/25 bg-rose-500/5"
-          : "border-primary/25 bg-primary/5",
+          : "border-primary/25 bg-primary/5"
       )}
     >
       <p
         className={cn(
-          "pb-1 text-[10px] font-semibold uppercase tracking-[0.18em]",
+          "pb-1 text-[10px] font-semibold tracking-[0.18em] uppercase",
           variant === "ghl"
             ? "text-rose-700 dark:text-rose-400"
-            : "text-primary",
+            : "text-primary"
         )}
       >
         {title}
@@ -410,25 +403,23 @@ function Line({
           className={cn(
             "truncate text-xs",
             strong || big
-              ? "font-semibold text-foreground"
+              ? "text-foreground font-semibold"
               : "text-muted-foreground",
-            muted && "opacity-50",
+            muted && "opacity-50"
           )}
         >
           {label}
         </p>
-        {hint && (
-          <p className="text-[10px] text-muted-foreground">{hint}</p>
-        )}
+        {hint && <p className="text-muted-foreground text-[10px]">{hint}</p>}
       </div>
       <span
         className={cn(
-          "whitespace-nowrap font-mono tabular-nums",
+          "font-mono whitespace-nowrap tabular-nums",
           big ? "text-base font-bold sm:text-lg" : "text-xs font-semibold",
           tone === "bleed" && "text-rose-600 dark:text-rose-400",
           gradient &&
             "bg-gradient-to-r from-indigo-500 via-violet-500 to-pink-500 bg-clip-text text-transparent",
-          muted && "opacity-50",
+          muted && "opacity-50"
         )}
       >
         {value}
@@ -438,7 +429,7 @@ function Line({
 }
 
 function Divider() {
-  return <div className="self-center border-t border-border/60" />;
+  return <div className="border-border/60 self-center border-t" />;
 }
 
 function SavingsYearCell({
@@ -458,13 +449,13 @@ function SavingsYearCell({
         "rounded-lg border px-1.5 py-1.5",
         emphasize
           ? "border-emerald-500/50 bg-emerald-500/15"
-          : "border-emerald-500/20 bg-background/40",
+          : "bg-background/40 border-emerald-500/20"
       )}
     >
-      <p className="text-[9px] font-semibold uppercase tracking-wider text-emerald-700/80 dark:text-emerald-400/80 sm:text-[10px]">
+      <p className="text-[9px] font-semibold tracking-wider text-emerald-700/80 uppercase sm:text-[10px] dark:text-emerald-400/80">
         {label}
       </p>
-      <p className="mt-0.5 whitespace-nowrap font-mono text-xs font-bold tabular-nums text-emerald-700 dark:text-emerald-400 sm:text-sm">
+      <p className="mt-0.5 font-mono text-xs font-bold whitespace-nowrap text-emerald-700 tabular-nums sm:text-sm dark:text-emerald-400">
         ${amount.toLocaleString()}
       </p>
     </div>

@@ -178,7 +178,7 @@ const COUNTRIES: Record<string, { name: string; lat: number; lng: number }> = {
  * or the country isn't in our centroid table.
  */
 export function locationFromPhone(
-  phone: string | null | undefined,
+  phone: string | null | undefined
 ): ContactLocation {
   if (!phone) return EMPTY_LOCATION;
   try {
@@ -216,7 +216,7 @@ export function locationFromPhone(
  * locationFromPhone() when this returns no usable signal.
  */
 export async function locationFromIp(
-  ip: string | null | undefined,
+  ip: string | null | undefined
 ): Promise<ContactLocation> {
   if (!ip) return EMPTY_LOCATION;
   if (
@@ -229,10 +229,13 @@ export async function locationFromIp(
     return EMPTY_LOCATION;
   }
   try {
-    const res = await fetch(`https://ipapi.co/${encodeURIComponent(ip)}/json/`, {
-      signal: AbortSignal.timeout(3000),
-      headers: { "User-Agent": "leadstack-form-submit" },
-    });
+    const res = await fetch(
+      `https://ipapi.co/${encodeURIComponent(ip)}/json/`,
+      {
+        signal: AbortSignal.timeout(3000),
+        headers: { "User-Agent": "agentstack-form-submit" },
+      }
+    );
     if (!res.ok) return EMPTY_LOCATION;
     const data = (await res.json()) as {
       error?: boolean;
@@ -262,7 +265,7 @@ export async function locationFromIp(
  */
 export function mergeLocation(
   primary: ContactLocation,
-  fallback: ContactLocation,
+  fallback: ContactLocation
 ): ContactLocation {
   return {
     countryCode: primary.countryCode ?? fallback.countryCode,

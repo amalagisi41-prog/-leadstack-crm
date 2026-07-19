@@ -3,21 +3,21 @@ import { resolveCustomBrand } from "@/lib/landing/resolve-brand";
 import { resolveHeroVariant } from "@/lib/hero-variant-server";
 
 import { AnnouncementBar } from "@/components/landing/announcement-bar";
-import { Navbar as LeadStackNavbar } from "@/components/landing/navbar";
-import { Hero as LeadStackHero } from "@/components/landing/hero";
+import { Navbar as AgentStackNavbar } from "@/components/landing/navbar";
+import { Hero as AgentStackHero } from "@/components/landing/hero";
 import { IntegrationsCarousel } from "@/components/landing/integrations-carousel";
 import { HowItWorks } from "@/components/landing/how-it-works";
 import { WorkspaceTour } from "@/components/landing/workspace-tour";
-import { Features as LeadStackFeatures } from "@/components/landing/features";
+import { Features as AgentStackFeatures } from "@/components/landing/features";
 import { MidPageCta } from "@/components/landing/mid-page-cta";
 import { Comparison } from "@/components/landing/comparison";
 // import { Support } from "@/components/landing/support"; // hidden for now
 import { MakeItYours } from "@/components/landing/make-it-yours";
 import { TestimonialsCarousel } from "@/components/landing/testimonials-carousel";
-import { Pricing as LeadStackPricing } from "@/components/landing/pricing";
-import { FAQ as LeadStackFAQ } from "@/components/landing/faq";
-import { CTA as LeadStackCTA } from "@/components/landing/cta";
-import { Footer as LeadStackFooter } from "@/components/landing/footer";
+import { Pricing as AgentStackPricing } from "@/components/landing/pricing";
+import { FAQ as AgentStackFAQ } from "@/components/landing/faq";
+import { CTA as AgentStackCTA } from "@/components/landing/cta";
+import { Footer as AgentStackFooter } from "@/components/landing/footer";
 import { ExitIntentModal } from "@/components/landing/exit-intent-modal";
 import { UpdatesModal } from "@/components/landing/updates-modal";
 import { SalesPopup } from "@/components/landing/sales-popup";
@@ -46,8 +46,8 @@ import { Footer as CustomFooter } from "@/components/landing-custom/footer";
  *   Brand fields are resolved server-side from the agency doc (Agency →
  *   Settings → Branding), falling back to CUSTOM_BRAND for anything the
  *   owner hasn't set yet. THIS IS THE DEFAULT.
- * - "leadstack" — the LeadStack-branded marketing landing used on the
- *   leadstack.dev demo site. Flip back to this only for the public demo.
+ * - "agentstack" — the AgentStack-branded marketing landing used on the
+ *   agentstackcrm.app demo site. Flip back to this only for the public demo.
  *
  * Flip LANDING_VARIANT to swap. Code-level defaults for the custom
  * variant live in src/config/landing.ts (CUSTOM_BRAND).
@@ -83,23 +83,23 @@ export default async function HomePage() {
   return (
     <div className="flex min-h-screen flex-col">
       <AnnouncementBar />
-      <LeadStackNavbar />
+      <AgentStackNavbar />
       <main className="flex-1">
-        <LeadStackHero variant={heroVariant} />
+        <AgentStackHero variant={heroVariant} />
         <HowItWorks />
         <WorkspaceTour />
-        <LeadStackFeatures />
+        <AgentStackFeatures />
         <MidPageCta />
         <Comparison />
         {/* <Support /> — hidden for now; uncomment to restore */}
         <MakeItYours />
         <TestimonialsCarousel />
-        <LeadStackPricing />
+        <AgentStackPricing />
         <IntegrationsCarousel />
-        <LeadStackFAQ />
-        <LeadStackCTA />
+        <AgentStackFAQ />
+        <AgentStackCTA />
       </main>
-      <LeadStackFooter variant={heroVariant} />
+      <AgentStackFooter variant={heroVariant} />
       <ExitIntentModal />
       <UpdatesModal />
       <SalesPopup />

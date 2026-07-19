@@ -31,7 +31,7 @@ export class VapiError extends Error {
 
 export function vapiIsConfigured(): boolean {
   return Boolean(
-    process.env.VAPI_API_KEY?.trim() && process.env.VAPI_WEBHOOK_SECRET?.trim(),
+    process.env.VAPI_API_KEY?.trim() && process.env.VAPI_WEBHOOK_SECRET?.trim()
   );
 }
 
@@ -57,16 +57,13 @@ function getAppUrl(): string {
     throw new VapiError(
       "NEXT_PUBLIC_APP_URL is not set — Vapi must reach our LLM endpoint",
       500,
-      "",
+      ""
     );
   }
   return url.replace(/\/$/, "");
 }
 
-async function vapiFetch<T>(
-  path: string,
-  init: RequestInit,
-): Promise<T> {
+async function vapiFetch<T>(path: string, init: RequestInit): Promise<T> {
   const res = await fetch(`${VAPI_BASE_URL}${path}`, {
     ...init,
     headers: {
@@ -80,7 +77,7 @@ async function vapiFetch<T>(
     throw new VapiError(
       `Vapi ${init.method ?? "GET"} ${path} -> ${res.status}`,
       res.status,
-      text.slice(0, 2000),
+      text.slice(0, 2000)
     );
   }
   if (!text) return {} as T;
@@ -90,7 +87,7 @@ async function vapiFetch<T>(
     throw new VapiError(
       `Vapi returned non-JSON for ${path}`,
       res.status,
-      text.slice(0, 2000),
+      text.slice(0, 2000)
     );
   }
 }
@@ -139,10 +136,7 @@ interface VapiAssistantBody {
       enabled: boolean;
       schema: {
         type: "object";
-        properties: Record<
-          string,
-          { type: string; description: string }
-        >;
+        properties: Record<string, { type: string; description: string }>;
       };
       messages: Array<{ role: "system" | "user"; content: string }>;
     };
@@ -292,7 +286,7 @@ function buildAssistantBody(input: {
     },
     metadata: {
       subAccountId: input.subAccountId,
-      source: "leadstack",
+      source: "agentstack",
     },
   };
 }
@@ -324,7 +318,7 @@ export async function ensureVapiAssistant(input: {
         {
           method: "PATCH",
           body: JSON.stringify(body),
-        },
+        }
       );
       return { assistantId: input.existingAssistantId };
     } catch (err) {
@@ -333,7 +327,7 @@ export async function ensureVapiAssistant(input: {
       // to create a fresh one.
       if (err instanceof VapiError && err.status === 404) {
         console.warn(
-          `[vapi] stored assistantId ${input.existingAssistantId} not found, re-creating`,
+          `[vapi] stored assistantId ${input.existingAssistantId} not found, re-creating`
         );
       } else {
         throw err;
@@ -374,7 +368,7 @@ export async function ensureVapiPhoneNumber(input: {
     } catch (err) {
       if (err instanceof VapiError && err.status === 404) {
         console.warn(
-          `[vapi] stored phoneNumberId ${input.existingPhoneNumberId} not found, re-registering`,
+          `[vapi] stored phoneNumberId ${input.existingPhoneNumberId} not found, re-registering`
         );
       } else {
         throw err;
@@ -443,7 +437,7 @@ export async function createOutboundCall(input: {
     input.maxDurationSeconds > 0
   ) {
     assistantOverrides.maxDurationSeconds = Math.floor(
-      input.maxDurationSeconds,
+      input.maxDurationSeconds
     );
   }
 
@@ -484,7 +478,7 @@ export async function endCallViaControl(controlUrl: string): Promise<void> {
     throw new VapiError(
       `Vapi control end-call -> ${res.status}`,
       res.status,
-      body.slice(0, 500),
+      body.slice(0, 500)
     );
   }
 }
@@ -520,7 +514,7 @@ export async function bindVapiAssistantToPhoneNumber(input: {
  * the Vapi dashboard, or rotated the resource.
  */
 export async function unbindVapiPhoneNumber(
-  phoneNumberId: string | null,
+  phoneNumberId: string | null
 ): Promise<void> {
   if (!phoneNumberId) return;
   try {
@@ -537,7 +531,7 @@ export async function unbindVapiPhoneNumber(
  *  already deleted the resource manually, and a failed delete here
  *  doesn't justify blocking the channel disable. */
 export async function deleteVapiAssistant(
-  assistantId: string | null,
+  assistantId: string | null
 ): Promise<void> {
   if (!assistantId) return;
   try {
@@ -548,7 +542,7 @@ export async function deleteVapiAssistant(
 }
 
 export async function deleteVapiPhoneNumber(
-  phoneNumberId: string | null,
+  phoneNumberId: string | null
 ): Promise<void> {
   if (!phoneNumberId) return;
   try {

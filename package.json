@@ -1,5 +1,5 @@
 {
-  "name": "leadstack-crm-boilerplate",
+  "name": "agentstack-crm-boilerplate",
   "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@11.6.0",

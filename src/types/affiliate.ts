@@ -1,7 +1,7 @@
 import type { Timestamp, FieldValue } from "firebase/firestore";
 
 /**
- * Affiliate program is gated on LANDING_VARIANT === "leadstack" everywhere.
+ * Affiliate program is gated on LANDING_VARIANT === "agentstack" everywhere.
  * Buyer clones ship with LANDING_VARIANT = "custom" so every affiliate
  * touchpoint (auto-enrollment in the webhook, ?ref capture, /affiliate/*
  * pages, /api/affiliate/* routes) silently no-ops or 404s.

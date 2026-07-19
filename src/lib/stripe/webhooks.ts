@@ -19,7 +19,7 @@ import { isHeroVariantId } from "@/lib/hero-variants";
 import type { SubscriptionStatus } from "@/types";
 
 export async function handleCheckoutCompleted(
-  session: Stripe.Checkout.Session,
+  session: Stripe.Checkout.Session
 ) {
   // Founders cohort: anonymous one-time purchase. No uid in metadata
   // (buyer hasn't signed up yet — we email them within 24h to onboard).
@@ -45,12 +45,15 @@ export async function handleCheckoutCompleted(
     return;
   }
 
-  await getAdminDb().collection("users").doc(uid).update({
-    stripeCustomerId: session.customer as string,
-    subscriptionStatus: "active" as SubscriptionStatus,
-    subscriptionPriceId: session.metadata?.priceId ?? null,
-    updatedAt: new Date(),
-  });
+  await getAdminDb()
+    .collection("users")
+    .doc(uid)
+    .update({
+      stripeCustomerId: session.customer as string,
+      subscriptionStatus: "active" as SubscriptionStatus,
+      subscriptionPriceId: session.metadata?.priceId ?? null,
+      updatedAt: new Date(),
+    });
 }
 
 async function handleFoundersCheckout(session: Stripe.Checkout.Session) {
@@ -58,14 +61,13 @@ async function handleFoundersCheckout(session: Stripe.Checkout.Session) {
   const email = session.customer_details?.email ?? session.customer_email;
   if (!email) {
     console.error(
-      `[founders] Session ${sessionId} completed without a buyer email — cannot send welcome`,
+      `[founders] Session ${sessionId} completed without a buyer email — cannot send welcome`
     );
     return;
   }
 
   const waveRaw = session.metadata?.wave;
-  const wave: 1 | 2 | 3 =
-    waveRaw === "2" ? 2 : waveRaw === "3" ? 3 : 1;
+  const wave: 1 | 2 | 3 = waveRaw === "2" ? 2 : waveRaw === "3" ? 3 : 1;
   const amountPaidCents =
     typeof session.amount_total === "number" ? session.amount_total : null;
   const refCode = session.metadata?.ref ?? null;
@@ -182,7 +184,7 @@ async function handleFoundersCheckout(session: Stripe.Checkout.Session) {
     const code = (err as { code?: number })?.code;
     if (code === 6) {
       console.log(
-        `[founders] Skipping duplicate webhook for session ${sessionId}`,
+        `[founders] Skipping duplicate webhook for session ${sessionId}`
       );
       return;
     }
@@ -199,11 +201,11 @@ async function handleFoundersCheckout(session: Stripe.Checkout.Session) {
   // Variant gate: the liveVisitors collection only exists on the
   // AgentStack-branded demo. Buyer clones (LANDING_VARIANT === "custom")
   // skip this entirely — no doc writes, no map collateral. Founders
-  // checkout itself is leadstack-only, so this is defensive belt+braces.
+  // checkout itself is agentstack-only, so this is defensive belt+braces.
   try {
     const liveSid = session.metadata?.liveVisitorSid;
     if (
-      LANDING_VARIANT === "leadstack" &&
+      LANDING_VARIANT === "agentstack" &&
       liveSid &&
       /^[A-Za-z0-9_-]{8,64}$/.test(liveSid)
     ) {
@@ -218,13 +220,13 @@ async function handleFoundersCheckout(session: Stripe.Checkout.Session) {
             expiresAt: now + 30_000,
             lastSeenAt: now,
           },
-          { merge: true },
+          { merge: true }
         );
     }
   } catch (err) {
     console.warn(
       "[founders] liveVisitors purchased-stamp failed (non-fatal)",
-      err,
+      err
     );
   }
 
@@ -232,10 +234,10 @@ async function handleFoundersCheckout(session: Stripe.Checkout.Session) {
   // purchase counters on the same `appConfig/landingMetrics` doc the
   // pageView + ctaClick counters live on. Best-effort: a metric write
   // failure must not fail the welcome email / affiliate flow downstream.
-  // Only runs on the leadstack variant (the test only exists there).
+  // Only runs on the agentstack variant (the test only exists there).
   // Always increments the aggregate `purchases` counter; the per-variant
   // bump only fires when we have a verified heroVariant.
-  if (LANDING_VARIANT === "leadstack") {
+  if (LANDING_VARIANT === "agentstack") {
     try {
       const updates: Record<string, FieldValue | Date> = {
         purchases: FieldValue.increment(1),
@@ -248,10 +250,7 @@ async function handleFoundersCheckout(session: Stripe.Checkout.Session) {
         .doc("appConfig/landingMetrics")
         .set(updates, { merge: true });
     } catch (err) {
-      console.error(
-        "[founders] landingMetrics purchase increment failed",
-        err,
-      );
+      console.error("[founders] landingMetrics purchase increment failed", err);
     }
   }
 
@@ -262,12 +261,12 @@ async function handleFoundersCheckout(session: Stripe.Checkout.Session) {
   let buyerAffiliateCode: string | null = null;
   let referralOutcome: string | null = null;
   // Gitpage Agency code mint — same gate as affiliate. Buyer clones get
-  // no Gitpage bonus (the offer is LeadStack-specific). Mint is best-
+  // no Gitpage bonus (the offer is AgentStack-specific). Mint is best-
   // effort: a failure logs + stores the error string but doesn't break
   // the rest of the welcome flow.
   let gitpageAgencyCode: string | null = null;
   let gitpageAgencyCodeError: string | null = null;
-  if (LANDING_VARIANT === "leadstack") {
+  if (LANDING_VARIANT === "agentstack") {
     try {
       const buyerAffiliate = await ensureAffiliateAccount({
         email,
@@ -289,7 +288,9 @@ async function handleFoundersCheckout(session: Stripe.Checkout.Session) {
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
-      console.error(`[founders] Affiliate flow failed for ${sessionId}: ${message}`);
+      console.error(
+        `[founders] Affiliate flow failed for ${sessionId}: ${message}`
+      );
       // Non-fatal — we still send the welcome email + record the purchase.
     }
 
@@ -304,7 +305,7 @@ async function handleFoundersCheckout(session: Stripe.Checkout.Session) {
       gitpageAgencyCodeError =
         err instanceof Error ? err.message : "Unknown error";
       console.error(
-        `[founders] Gitpage agency-code mint failed for ${sessionId}: ${gitpageAgencyCodeError}`,
+        `[founders] Gitpage agency-code mint failed for ${sessionId}: ${gitpageAgencyCodeError}`
       );
     }
   }
@@ -329,9 +330,7 @@ async function handleFoundersCheckout(session: Stripe.Checkout.Session) {
   });
 
   await purchaseRef.update({
-    welcomeEmailSentAt: messageId
-      ? FieldValue.serverTimestamp()
-      : null,
+    welcomeEmailSentAt: messageId ? FieldValue.serverTimestamp() : null,
     welcomeEmailMessageId: messageId,
     buyerAffiliateCode,
     referralCredited: referralOutcome,
@@ -343,11 +342,11 @@ async function handleFoundersCheckout(session: Stripe.Checkout.Session) {
   });
 
   // Schedule the 3-day-after-purchase Gitpage bonus reminder (QStash).
-  // Fires for every leadstack-variant buyer — those with a personal code
+  // Fires for every agentstack-variant buyer — those with a personal code
   // get it, those without get the shared LSAGENCY fallback. Best-effort:
   // a scheduling failure must not break the purchase flow. The step route
   // is idempotent (skips if already reminded / excluded / no email).
-  if (LANDING_VARIANT === "leadstack" && qstashIsConfigured()) {
+  if (LANDING_VARIANT === "agentstack" && qstashIsConfigured()) {
     try {
       await publishCallback({
         pathname: "/api/gitpage-reminder/step",
@@ -358,7 +357,7 @@ async function handleFoundersCheckout(session: Stripe.Checkout.Session) {
     } catch (err) {
       console.error(
         `[founders] failed to schedule 3-day reminder for ${sessionId}`,
-        err,
+        err
       );
     }
   }
@@ -381,7 +380,7 @@ async function handleNewAgencyCheckout(session: Stripe.Checkout.Session) {
   const email = session.customer_details?.email ?? session.customer_email;
   if (!email) {
     console.error(
-      `[new-agency] Session ${sessionId} completed without a buyer email — cannot send claim link`,
+      `[new-agency] Session ${sessionId} completed without a buyer email — cannot send claim link`
     );
     return;
   }
@@ -394,7 +393,7 @@ async function handleNewAgencyCheckout(session: Stripe.Checkout.Session) {
       : null;
   if (!claimTokenHash) {
     console.error(
-      `[new-agency] Session ${sessionId} completed without a claimToken — cannot be claimed`,
+      `[new-agency] Session ${sessionId} completed without a claimToken — cannot be claimed`
     );
     return;
   }
@@ -442,7 +441,7 @@ async function handleNewAgencyCheckout(session: Stripe.Checkout.Session) {
     const code = (err as { code?: number })?.code;
     if (code === 6) {
       console.log(
-        `[new-agency] Skipping duplicate webhook for session ${sessionId}`,
+        `[new-agency] Skipping duplicate webhook for session ${sessionId}`
       );
       return;
     }
@@ -479,12 +478,20 @@ async function handleNewAgencyCheckout(session: Stripe.Checkout.Session) {
  */
 async function syncSubscriptionStatus(
   customerId: string,
-  status: SubscriptionStatus,
+  status: SubscriptionStatus
 ) {
   const db = getAdminDb();
   const [agencySnapshot, usersSnapshot] = await Promise.all([
-    db.collection("agencies").where("stripeCustomerId", "==", customerId).limit(1).get(),
-    db.collection("users").where("stripeCustomerId", "==", customerId).limit(1).get(),
+    db
+      .collection("agencies")
+      .where("stripeCustomerId", "==", customerId)
+      .limit(1)
+      .get(),
+    db
+      .collection("users")
+      .where("stripeCustomerId", "==", customerId)
+      .limit(1)
+      .get(),
   ]);
 
   if (agencySnapshot.empty && usersSnapshot.empty) {
@@ -494,25 +501,31 @@ async function syncSubscriptionStatus(
 
   await Promise.all([
     ...agencySnapshot.docs.map((d) =>
-      d.ref.update({ subscriptionStatus: status, updatedAt: FieldValue.serverTimestamp() }),
+      d.ref.update({
+        subscriptionStatus: status,
+        updatedAt: FieldValue.serverTimestamp(),
+      })
     ),
     ...usersSnapshot.docs.map((d) =>
-      d.ref.update({ subscriptionStatus: status, updatedAt: new Date() }),
+      d.ref.update({ subscriptionStatus: status, updatedAt: new Date() })
     ),
   ]);
 }
 
 export async function handleSubscriptionUpdated(
-  subscription: Stripe.Subscription,
+  subscription: Stripe.Subscription
 ) {
   await syncSubscriptionStatus(
     subscription.customer as string,
-    subscription.status as SubscriptionStatus,
+    subscription.status as SubscriptionStatus
   );
 }
 
 export async function handleSubscriptionDeleted(
-  subscription: Stripe.Subscription,
+  subscription: Stripe.Subscription
 ) {
-  await syncSubscriptionStatus(subscription.customer as string, "inactive" as SubscriptionStatus);
+  await syncSubscriptionStatus(
+    subscription.customer as string,
+    "inactive" as SubscriptionStatus
+  );
 }

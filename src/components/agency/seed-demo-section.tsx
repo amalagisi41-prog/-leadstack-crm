@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 
 /**
  * AgentStack-demo-only panel. Renders inside Agency -> Settings ONLY when
- * LANDING_VARIANT === "leadstack" (the parent page gates the mount).
+ * LANDING_VARIANT === "agentstack" (the parent page gates the mount).
  * Buyer clones never see this UI, AND the API route returns 404 for them
  * too, so the surface is double-gated.
  *
@@ -22,7 +22,7 @@ export function SeedDemoSection() {
     if (busy) return;
     if (
       !confirm(
-        "Seed sub-account #1004 with 300 contacts (200 around London, 100 worldwide), ~80 deals across pipeline stages, and matching activities? Existing data on #1004 is left alone — this only ADDS records tagged 'seed'.",
+        "Seed sub-account #1004 with 300 contacts (200 around London, 100 worldwide), ~80 deals across pipeline stages, and matching activities? Existing data on #1004 is left alone — this only ADDS records tagged 'seed'."
       )
     ) {
       return;
@@ -38,7 +38,7 @@ export function SeedDemoSection() {
       };
       if (!res.ok) throw new Error(payload.error ?? "Seed failed.");
       toast.success(
-        `Seeded ${payload.contactsCreated} contacts, ${payload.dealsCreated} deals, ${payload.activitiesCreated} activities.`,
+        `Seeded ${payload.contactsCreated} contacts, ${payload.dealsCreated} deals, ${payload.activitiesCreated} activities.`
       );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Seed failed.");
@@ -51,7 +51,7 @@ export function SeedDemoSection() {
     if (busy) return;
     if (
       !confirm(
-        "Remove EVERY contact in sub-account #1004 tagged 'seed' (plus their deals, notes, and activities). Untagged contacts created by hand or via real form submits are left alone. This cannot be undone.",
+        "Remove EVERY contact in sub-account #1004 tagged 'seed' (plus their deals, notes, and activities). Untagged contacts created by hand or via real form submits are left alone. This cannot be undone."
       )
     ) {
       return;
@@ -66,7 +66,7 @@ export function SeedDemoSection() {
       };
       if (!res.ok) throw new Error(payload.error ?? "Unseed failed.");
       toast.success(
-        `Removed ${payload.contactsRemoved} contacts and ${payload.dealsRemoved} deals.`,
+        `Removed ${payload.contactsRemoved} contacts and ${payload.dealsRemoved} deals.`
       );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Unseed failed.");
@@ -83,7 +83,7 @@ export function SeedDemoSection() {
         </span>
         <div>
           <h2 className="text-sm font-semibold">Demo seed (AgentStack-only)</h2>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             Populate sub-account #1004 with realistic demo data, or clean it up
             afterwards. This panel only appears on the AgentStack-branded
             deployment; buyer clones never see it.
@@ -91,14 +91,14 @@ export function SeedDemoSection() {
         </div>
       </div>
 
-      <div className="space-y-3 rounded-lg border bg-background p-4">
+      <div className="bg-background space-y-3 rounded-lg border p-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium">Seed #1004</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               300 contacts (200 London, 100 worldwide), ~80 deals across all
               pipeline stages, plus activities and notes. Tagged{" "}
-              <code className="rounded bg-muted px-1 py-0.5 text-[10px]">
+              <code className="bg-muted rounded px-1 py-0.5 text-[10px]">
                 seed
               </code>{" "}
               for cleanup.
@@ -128,13 +128,13 @@ export function SeedDemoSection() {
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium">Remove seed data</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 Deletes every contact tagged{" "}
-                <code className="rounded bg-muted px-1 py-0.5 text-[10px]">
+                <code className="bg-muted rounded px-1 py-0.5 text-[10px]">
                   seed
                 </code>{" "}
-                in #1004, along with their deals, notes, and activities.
-                Real (untagged) contacts are untouched.
+                in #1004, along with their deals, notes, and activities. Real
+                (untagged) contacts are untouched.
               </p>
             </div>
             <Button

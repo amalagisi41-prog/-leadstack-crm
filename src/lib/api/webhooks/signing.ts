@@ -6,7 +6,7 @@ import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
  * Stripe-style webhook signature scheme.
  *
  * Wire format:
- *   LeadStack-Signature: t=<unix_ts>,v1=<hmac_hex>
+ *   AgentStack-Signature: t=<unix_ts>,v1=<hmac_hex>
  *
  * The HMAC is computed over `${timestamp}.${rawBody}` using the
  * subscription's signing secret. Subscribers verify by:
@@ -42,7 +42,7 @@ export interface SignedPayload {
 export function signWebhookPayload(
   secret: string,
   rawBody: string,
-  now: Date = new Date(),
+  now: Date = new Date()
 ): SignedPayload {
   const timestamp = Math.floor(now.getTime() / 1000);
   const signedString = `${timestamp}.${rawBody}`;
@@ -76,7 +76,8 @@ export function verifyWebhookSignature(opts: {
       hmacStr = part.slice(SIGNING_VERSION.length + 1);
     }
   }
-  if (!timestampStr || !hmacStr) return { ok: false, reason: "malformed_header" };
+  if (!timestampStr || !hmacStr)
+    return { ok: false, reason: "malformed_header" };
   const timestamp = Number(timestampStr);
   if (!Number.isFinite(timestamp)) {
     return { ok: false, reason: "malformed_timestamp" };
@@ -93,7 +94,7 @@ export function verifyWebhookSignature(opts: {
   }
   const eq = timingSafeEqual(
     Buffer.from(expectedHmac, "utf8"),
-    Buffer.from(hmacStr, "utf8"),
+    Buffer.from(hmacStr, "utf8")
   );
   return eq ? { ok: true } : { ok: false, reason: "signature_mismatch" };
 }
