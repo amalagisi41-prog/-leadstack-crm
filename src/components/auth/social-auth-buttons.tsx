@@ -31,6 +31,10 @@ export function SocialAuthButtons({
         kind === "google"
           ? await signInWithGoogle()
           : await signInWithApple();
+      if (/^https?:\/\//.test(result.redirectTo)) {
+        window.location.assign(result.redirectTo);
+        return;
+      }
       router.push(result.redirectTo);
       router.refresh();
     } catch (error) {

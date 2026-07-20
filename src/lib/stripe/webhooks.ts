@@ -38,6 +38,11 @@ export async function handleCheckoutCompleted(
     return;
   }
 
+  if (session.metadata?.mode === "existing_agency") {
+    await handleExistingAgencyCheckout(session);
+    return;
+  }
+
   // Legacy subscription flow — requires uid stamped at checkout creation.
   const uid = session.metadata?.uid;
   if (!uid) {
@@ -54,6 +59,35 @@ export async function handleCheckoutCompleted(
       subscriptionPriceId: session.metadata?.priceId ?? null,
       updatedAt: new Date(),
     });
+}
+
+async function handleExistingAgencyCheckout(
+  session: Stripe.Checkout.Session,
+) {
+  const uid = session.metadata?.uid;
+  const agencyId = session.metadata?.agencyId;
+  if (!uid || !agencyId) {
+    throw new Error(
+      `Existing-agency checkout ${session.id} is missing uid or agencyId.`,
+    );
+  }
+
+  const customerId = session.customer as string | null;
+  const subscriptionId = session.subscription as string | null;
+  const priceId = session.metadata?.priceId ?? null;
+  const updates = {
+    stripeCustomerId: customerId,
+    subscriptionId,
+    subscriptionStatus: "active" as SubscriptionStatus,
+    subscriptionPriceId: priceId,
+    updatedAt: FieldValue.serverTimestamp(),
+  };
+
+  const db = getAdminDb();
+  const batch = db.batch();
+  batch.set(db.doc(`users/${uid}`), updates, { merge: true });
+  batch.set(db.doc(`agencies/${agencyId}`), updates, { merge: true });
+  await batch.commit();
 }
 
 async function handleFoundersCheckout(session: Stripe.Checkout.Session) {

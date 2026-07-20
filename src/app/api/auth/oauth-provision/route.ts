@@ -1,9 +1,52 @@
 import "server-only";
 
 import { NextResponse } from "next/server";
-import { getAdminAuth } from "@/lib/firebase/admin";
+import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import { provisionNewAgency } from "@/lib/auth/provision-agency";
 import { resolveAgencyAccess } from "@/lib/auth/resolve-agency-access";
+import { getStripeServer } from "@/lib/stripe/server";
+import { planPriceId } from "@/lib/stripe/catalog";
+
+async function createOwnerCheckout({
+  uid,
+  email,
+  agencyId,
+}: {
+  uid: string;
+  email: string;
+  agencyId: string;
+}) {
+  const priceId = planPriceId("starter");
+  if (!priceId) {
+    throw new Error("The Solo plan isn't configured on this deployment yet.");
+  }
+
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "");
+  if (!appUrl) {
+    throw new Error("NEXT_PUBLIC_APP_URL is not configured.");
+  }
+
+  const session = await getStripeServer().checkout.sessions.create({
+    mode: "subscription",
+    payment_method_types: ["card"],
+    customer_email: email,
+    line_items: [{ price: priceId, quantity: 1 }],
+    success_url: `${appUrl}/agency/get-started?checkout=success`,
+    cancel_url: `${appUrl}/signup?checkout=cancelled`,
+    metadata: {
+      mode: "existing_agency",
+      uid,
+      agencyId,
+      planKey: "starter",
+      priceId,
+    },
+  });
+
+  if (!session.url) {
+    throw new Error("Could not start checkout. Try again.");
+  }
+  return session.url;
+}
 
 export async function POST(request: Request) {
   const authorization = request.headers.get("authorization") ?? "";
@@ -36,6 +79,27 @@ export async function POST(request: Request) {
       agencyId: resolved.agencyId,
       agencyRole: resolved.agencyRole,
     });
+
+    if (resolved.agencyRole === "owner" && resolved.agencyId) {
+      const agencyId = resolved.agencyId;
+      const agencySnap = await getAdminDb()
+        .doc(`agencies/${agencyId}`)
+        .get();
+      const subscriptionStatus = agencySnap.data()?.subscriptionStatus;
+      if (subscriptionStatus !== "active" && subscriptionStatus !== "trialing") {
+        return NextResponse.json({
+          redirectTo: await createOwnerCheckout({
+            uid,
+            email,
+            agencyId,
+          }),
+          existing: true,
+          agencyId: resolved.agencyId,
+          recoveredAgencyId: resolved.repairedPrimaryAgencyId,
+        });
+      }
+    }
+
     return NextResponse.json({
       redirectTo: resolved.agencyRole === "owner" ? "/agency" : "/dashboard",
       existing: true,
@@ -48,8 +112,9 @@ export async function POST(request: Request) {
   const displayName =
     userRecord.displayName?.trim() || email.split("@")[0] || "AgentStack user";
 
+  let provisioned: { agencyId: string; subAccountId: string };
   try {
-    const { agencyId, subAccountId } = await provisionNewAgency({
+    provisioned = await provisionNewAgency({
       uid,
       email,
       displayName,
@@ -60,14 +125,31 @@ export async function POST(request: Request) {
       // brand-new-account paths.
       requiresEmailVerification: true,
     });
+  } catch (error) {
+    await auth.deleteUser(uid).catch(() => undefined);
+    return NextResponse.json(
+      {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Could not create your beta workspace.",
+      },
+      { status: 500 },
+    );
+  }
+
+  try {
     return NextResponse.json({
-      redirectTo: "/agency/get-started",
-      agencyId,
-      subAccountId,
+      redirectTo: await createOwnerCheckout({
+        uid,
+        email,
+        agencyId: provisioned.agencyId,
+      }),
+      agencyId: provisioned.agencyId,
+      subAccountId: provisioned.subAccountId,
       existing: false,
     });
   } catch (error) {
-    await auth.deleteUser(uid).catch(() => undefined);
     return NextResponse.json(
       {
         error:
