@@ -87,16 +87,28 @@ export async function POST(request: Request) {
         .get();
       const subscriptionStatus = agencySnap.data()?.subscriptionStatus;
       if (subscriptionStatus !== "active" && subscriptionStatus !== "trialing") {
-        return NextResponse.json({
-          redirectTo: await createOwnerCheckout({
-            uid,
-            email,
+        try {
+          return NextResponse.json({
+            redirectTo: await createOwnerCheckout({
+              uid,
+              email,
+              agencyId,
+            }),
+            existing: true,
             agencyId,
-          }),
-          existing: true,
-          agencyId: resolved.agencyId,
-          recoveredAgencyId: resolved.repairedPrimaryAgencyId,
-        });
+            recoveredAgencyId: resolved.repairedPrimaryAgencyId,
+          });
+        } catch (error) {
+          return NextResponse.json(
+            {
+              error:
+                error instanceof Error
+                  ? error.message
+                  : "Could not start checkout. Try again.",
+            },
+            { status: 503 },
+          );
+        }
       }
     }
 
