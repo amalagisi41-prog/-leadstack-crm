@@ -24,6 +24,11 @@ const links = [
 export function Navbar({ brand }: { brand: ResolvedBrand }) {
   const { user, loading } = useAuth();
   const [open, setOpen] = useState(false);
+  const publicBrand: ResolvedBrand = {
+    ...brand,
+    name: "AgentStack",
+    logoUrl: null,
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-[#173B7A]/10 bg-[#FFF6E8]/95 text-[#173B7A] backdrop-blur">
@@ -32,16 +37,7 @@ export function Navbar({ brand }: { brand: ResolvedBrand }) {
           href="/"
           className="shrink-0"
         >
-          {brand.logoUrl && brand.name.toLowerCase() !== "agentstack" ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={brand.logoUrl}
-              alt={`${brand.name} logo`}
-              className="h-8 w-auto max-w-[160px] object-contain"
-            />
-          ) : (
-            <BrandLockup brand={brand} showMark size="sm" subline="" />
-          )}
+          <BrandLockup brand={publicBrand} showMark size="sm" subline="" />
         </Link>
 
         <nav className="hidden flex-1 items-center justify-center gap-6 md:flex">
