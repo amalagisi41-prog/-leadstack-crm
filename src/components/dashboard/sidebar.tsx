@@ -35,6 +35,8 @@ import {
   Filter,
   BookOpen,
   Plug,
+  Link2,
+  UploadCloud,
 } from "lucide-react";
 import { getFirebaseDb } from "@/lib/firebase/client";
 import { signOutUser } from "@/lib/firebase/auth";
@@ -137,6 +139,7 @@ const SUB_ACCOUNT_NAV_SECTIONS: NavSection[] = [
       },
       { href: "/products", label: "Products", icon: Package, enabled: true },
       { href: "/website", label: "Website", icon: Globe, enabled: true },
+      { href: "/domain", label: "Domain", icon: Link2, enabled: true },
       { href: "/website-studio", label: "AI Website Studio", icon: LayoutTemplate, enabled: true },
       {
         href: "/community",
@@ -147,6 +150,12 @@ const SUB_ACCOUNT_NAV_SECTIONS: NavSection[] = [
       { href: "/templates", label: "Templates", icon: FileText, enabled: true },
       { href: "/reports", label: "Analytics", icon: BarChart3, enabled: true },
       { href: "/logs", label: "Logs", icon: ScrollText, enabled: true },
+      {
+        href: "/import",
+        label: "Import Contacts",
+        icon: UploadCloud,
+        enabled: true,
+      },
       {
         href: "/dashboard/settings",
         label: "Settings",
