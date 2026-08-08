@@ -4,49 +4,6 @@ import { NextResponse } from "next/server";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import { provisionNewAgency } from "@/lib/auth/provision-agency";
 import { resolveAgencyAccess } from "@/lib/auth/resolve-agency-access";
-import { getStripeServer } from "@/lib/stripe/server";
-import { planPriceId } from "@/lib/stripe/catalog";
-
-async function createOwnerCheckout({
-  uid,
-  email,
-  agencyId,
-}: {
-  uid: string;
-  email: string;
-  agencyId: string;
-}) {
-  const priceId = planPriceId("starter");
-  if (!priceId) {
-    throw new Error("The Solo plan isn't configured on this deployment yet.");
-  }
-
-  const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "");
-  if (!appUrl) {
-    throw new Error("NEXT_PUBLIC_APP_URL is not configured.");
-  }
-
-  const session = await getStripeServer().checkout.sessions.create({
-    mode: "subscription",
-    payment_method_types: ["card"],
-    customer_email: email,
-    line_items: [{ price: priceId, quantity: 1 }],
-    success_url: `${appUrl}/agency/get-started?checkout=success`,
-    cancel_url: `${appUrl}/signup?checkout=cancelled`,
-    metadata: {
-      mode: "existing_agency",
-      uid,
-      agencyId,
-      planKey: "starter",
-      priceId,
-    },
-  });
-
-  if (!session.url) {
-    throw new Error("Could not start checkout. Try again.");
-  }
-  return session.url;
-}
 
 export async function POST(request: Request) {
   const authorization = request.headers.get("authorization") ?? "";
@@ -54,13 +11,19 @@ export async function POST(request: Request) {
     ? authorization.slice(7)
     : "";
   if (!idToken) {
-    return NextResponse.json({ error: "Missing identity token." }, { status: 401 });
+    return NextResponse.json(
+      { error: "Missing identity token." },
+      { status: 401 }
+    );
   }
 
   const auth = getAdminAuth();
   const decoded = await auth.verifyIdToken(idToken).catch(() => null);
   if (!decoded?.uid || !decoded.email) {
-    return NextResponse.json({ error: "Invalid social sign-in." }, { status: 401 });
+    return NextResponse.json(
+      { error: "Invalid social sign-in." },
+      { status: 401 }
+    );
   }
 
   const uid = decoded.uid;
@@ -82,33 +45,21 @@ export async function POST(request: Request) {
 
     if (resolved.agencyRole === "owner" && resolved.agencyId) {
       const agencyId = resolved.agencyId;
-      const agencySnap = await getAdminDb()
-        .doc(`agencies/${agencyId}`)
-        .get();
+      const agencySnap = await getAdminDb().doc(`agencies/${agencyId}`).get();
       const subscriptionStatus = agencySnap.data()?.subscriptionStatus;
-      if (subscriptionStatus !== "active" && subscriptionStatus !== "trialing") {
-        try {
-          return NextResponse.json({
-            redirectTo: await createOwnerCheckout({
-              uid,
-              email,
-              agencyId,
-            }),
-            existing: true,
-            agencyId,
-            recoveredAgencyId: resolved.repairedPrimaryAgencyId,
-          });
-        } catch (error) {
-          return NextResponse.json(
-            {
-              error:
-                error instanceof Error
-                  ? error.message
-                  : "Could not start checkout. Try again.",
-            },
-            { status: 503 },
-          );
-        }
+      if (
+        subscriptionStatus !== "active" &&
+        subscriptionStatus !== "trialing"
+      ) {
+        return NextResponse.json({
+          // Workspace setup must not depend on Stripe deployment variables.
+          // Billing activation is a separate guided step and can safely show
+          // its own "not configured" state without blocking authentication.
+          redirectTo: "/agency/get-started?billing=required",
+          existing: true,
+          agencyId,
+          recoveredAgencyId: resolved.repairedPrimaryAgencyId,
+        });
       }
     }
 
@@ -146,30 +97,14 @@ export async function POST(request: Request) {
             ? error.message
             : "Could not create your beta workspace.",
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 
-  try {
-    return NextResponse.json({
-      redirectTo: await createOwnerCheckout({
-        uid,
-        email,
-        agencyId: provisioned.agencyId,
-      }),
-      agencyId: provisioned.agencyId,
-      subAccountId: provisioned.subAccountId,
-      existing: false,
-    });
-  } catch (error) {
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Could not create your beta workspace.",
-      },
-      { status: 500 },
-    );
-  }
+  return NextResponse.json({
+    redirectTo: "/agency/get-started?billing=required",
+    agencyId: provisioned.agencyId,
+    subAccountId: provisioned.subAccountId,
+    existing: false,
+  });
 }
