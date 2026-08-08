@@ -9,6 +9,11 @@ const PUBLIC_PATHS = [
   "/terms",
   "/privacy",
   "/about",
+  "/security",
+  "/help",
+  "/beta",
+  "/integrations",
+  "/status",
   "/playbook",
   "/thank-you",
   // Public docs (e.g. /docs/updating — the "keeping your app up to date"
@@ -264,7 +269,8 @@ export default function middleware(request: NextRequest) {
       // anyone out. API routes and public paths are exempt so marketing
       // pages, auth endpoints, and the verify page itself never loop.
       const pathname = request.nextUrl.pathname;
-      const requiresVerification = decodedToken.requiresEmailVerification === true;
+      const requiresVerification =
+        decodedToken.requiresEmailVerification === true;
       const isVerified = decodedToken.email_verified === true;
       if (
         requiresVerification &&

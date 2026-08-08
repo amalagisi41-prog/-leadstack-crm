@@ -1,7 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { ExternalLink, Loader2, Rocket, LayoutTemplate, Lock } from "lucide-react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
+import {
+  ExternalLink,
+  Loader2,
+  Rocket,
+  LayoutTemplate,
+  Lock,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useSubAccount } from "@/context/sub-account-context";
 import { useAgency } from "@/hooks/use-agency";
@@ -15,6 +27,7 @@ import {
   AGENT_SITE_TEMPLATE_LIST,
   getTemplate,
 } from "@/lib/website-studio/templates";
+import { ARTISAN_HOME_NETWORK_PRESET } from "@/lib/website-studio/presets";
 import {
   emptyAgentSiteContent,
   type AgentSiteContent,
@@ -25,14 +38,20 @@ import {
 const DESIGN_WIDTH = 1080;
 
 export function WebsiteStudioApp() {
-  const { subAccountId, subAccount, loading: subAccountLoading } = useSubAccount();
+  const {
+    subAccountId,
+    subAccount,
+    loading: subAccountLoading,
+  } = useSubAccount();
   const agency = useAgency();
   const gateOpen = subAccount?.websiteStudioEnabledByAgency === true;
   const brandName = agency.name === "AgentStack" ? "your CRM" : agency.name;
 
   const [loading, setLoading] = useState(true);
   const [site, setSite] = useState<AgentSiteDoc | null>(null);
-  const [content, setContent] = useState<AgentSiteContent>(emptyAgentSiteContent());
+  const [content, setContent] = useState<AgentSiteContent>(
+    emptyAgentSiteContent()
+  );
   const [selecting, setSelecting] = useState<AgentSiteTemplateId | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [mode, setMode] = useState<"designer" | "edit">("designer");
@@ -96,7 +115,7 @@ export function WebsiteStudioApp() {
       if (!res.ok) throw new Error(data.error ?? "Could not save.");
       return data.site!;
     },
-    [subAccountId],
+    [subAccountId]
   );
 
   async function pickTemplate(id: AgentSiteTemplateId) {
@@ -107,6 +126,30 @@ export function WebsiteStudioApp() {
       setContent(s.content);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not start.");
+    } finally {
+      setSelecting(null);
+    }
+  }
+
+  async function importArtisanPreset() {
+    const preset = ARTISAN_HOME_NETWORK_PRESET;
+    setSelecting(preset.templateId);
+    try {
+      const s = await patch({
+        templateId: preset.templateId,
+        slug: preset.slug,
+        content: preset.content,
+      });
+      setSite(s);
+      setContent(s.content);
+      setMode("edit");
+      toast.success("Artisan Home Network was loaded into a private draft.");
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Could not import the reference site."
+      );
     } finally {
       setSelecting(null);
     }
@@ -149,15 +192,17 @@ export function WebsiteStudioApp() {
 
   if (subAccount && !gateOpen) {
     return (
-      <div className="mx-auto max-w-lg rounded-2xl border bg-card p-8 text-center">
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-muted text-muted-foreground">
+      <div className="bg-card mx-auto max-w-lg rounded-2xl border p-8 text-center">
+        <div className="bg-muted text-muted-foreground mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl">
           <Lock className="h-5 w-5" />
         </div>
-        <h1 className="text-lg font-semibold">AI Website Studio is a premium add-on</h1>
-        <p className="mx-auto mt-2 max-w-sm text-sm text-muted-foreground">
+        <h1 className="text-lg font-semibold">
+          AI Website Studio is a premium add-on
+        </h1>
+        <p className="text-muted-foreground mx-auto mt-2 max-w-sm text-sm">
           Build a stunning agent website from premium templates with an AI
-          Designer — plus guided setup for A2P, chat widgets, SEO, and more.
-          Ask your agency to enable it for your account.
+          Designer — plus guided setup for A2P, chat widgets, SEO, and more. Ask
+          your agency to enable it for your account.
         </p>
       </div>
     );
@@ -193,8 +238,9 @@ export function WebsiteStudioApp() {
     return (
       <div className="space-y-4">
         {tabRow}
-        <div className="flex h-64 items-center justify-center text-muted-foreground">
-          <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading AI Website Studio…
+        <div className="text-muted-foreground flex h-64 items-center justify-center">
+          <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading AI Website
+          Studio…
         </div>
       </div>
     );
@@ -204,7 +250,11 @@ export function WebsiteStudioApp() {
     return (
       <div className="space-y-4">
         {tabRow}
-        <TemplateGallery onSelect={pickTemplate} selecting={selecting} />
+        <TemplateGallery
+          onSelect={pickTemplate}
+          onImportReference={importArtisanPreset}
+          selecting={selecting}
+        />
       </div>
     );
   }
@@ -218,8 +268,10 @@ export function WebsiteStudioApp() {
       {/* Toolbar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">AI Website Studio</h1>
-          <p className="text-xs text-muted-foreground">
+          <h1 className="text-xl font-bold tracking-tight">
+            AI Website Studio
+          </h1>
+          <p className="text-muted-foreground text-xs">
             {site.status === "published" ? "Published" : "Draft"} · Template:{" "}
             {template.name}
           </p>
@@ -227,7 +279,7 @@ export function WebsiteStudioApp() {
         <div className="flex items-center gap-2">
           {/* Template switcher */}
           <div className="flex items-center gap-1 rounded-lg border p-1">
-            <LayoutTemplate className="ml-1 h-3.5 w-3.5 text-muted-foreground" />
+            <LayoutTemplate className="text-muted-foreground ml-1 h-3.5 w-3.5" />
             {AGENT_SITE_TEMPLATE_LIST.map((t) => (
               <button
                 key={t.id}
@@ -243,13 +295,21 @@ export function WebsiteStudioApp() {
             ))}
           </div>
           {site.status === "published" && (
-            <Button variant="outline" size="sm" render={<a href={liveUrl} target="_blank" rel="noreferrer" />}>
+            <Button
+              variant="outline"
+              size="sm"
+              render={<a href={liveUrl} target="_blank" rel="noreferrer" />}
+            >
               <ExternalLink className="mr-1 h-3.5 w-3.5" /> View live
             </Button>
           )}
           <Button size="sm" onClick={publish} disabled={publishing}>
             <Rocket className="mr-1 h-3.5 w-3.5" />
-            {publishing ? "Publishing…" : site.status === "published" ? "Re-publish" : "Publish"}
+            {publishing
+              ? "Publishing…"
+              : site.status === "published"
+                ? "Re-publish"
+                : "Publish"}
           </Button>
         </div>
       </div>
@@ -261,7 +321,9 @@ export function WebsiteStudioApp() {
             <button
               onClick={() => setMode("designer")}
               className={`flex-1 rounded px-3 py-1.5 text-xs font-medium transition-colors ${
-                mode === "designer" ? "bg-[#1a2f50] text-white" : "text-muted-foreground hover:text-foreground"
+                mode === "designer"
+                  ? "bg-[#1a2f50] text-white"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               AI Designer
@@ -269,7 +331,9 @@ export function WebsiteStudioApp() {
             <button
               onClick={() => setMode("edit")}
               className={`flex-1 rounded px-3 py-1.5 text-xs font-medium transition-colors ${
-                mode === "edit" ? "bg-[#1a2f50] text-white" : "text-muted-foreground hover:text-foreground"
+                mode === "edit"
+                  ? "bg-[#1a2f50] text-white"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               Edit content
@@ -296,13 +360,16 @@ export function WebsiteStudioApp() {
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-2xl border bg-muted/30">
-          <div className="flex items-center justify-between border-b bg-card px-4 py-2">
-            <span className="text-xs font-medium text-muted-foreground">
+        <div className="bg-muted/30 overflow-hidden rounded-2xl border">
+          <div className="bg-card flex items-center justify-between border-b px-4 py-2">
+            <span className="text-muted-foreground text-xs font-medium">
               Live preview · updates as you answer
             </span>
           </div>
-          <div ref={previewWrapRef} className="h-[calc(72vh-41px)] overflow-y-auto">
+          <div
+            ref={previewWrapRef}
+            className="h-[calc(72vh-41px)] overflow-y-auto"
+          >
             {/* Scale the 1080px design down to the panel width. */}
             <div
               style={{

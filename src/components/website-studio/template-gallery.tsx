@@ -1,5 +1,6 @@
 "use client";
 
+import { ArrowRight, FileInput } from "lucide-react";
 import { AGENT_SITE_TEMPLATE_LIST } from "@/lib/website-studio/templates";
 import type { AgentSiteTemplateId } from "@/types/agent-site";
 
@@ -9,20 +10,50 @@ import type { AgentSiteTemplateId } from "@/types/agent-site";
  */
 export function TemplateGallery({
   onSelect,
+  onImportReference,
   selecting,
 }: {
   onSelect: (id: AgentSiteTemplateId) => void;
+  onImportReference: () => void;
   selecting: AgentSiteTemplateId | null;
 }) {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">Choose your design</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h1 className="text-2xl font-bold tracking-tight">
+          Choose your design
+        </h1>
+        <p className="text-muted-foreground mt-1 text-sm">
           Pick a premium template to start. Our AI Designer will then walk you
-          through building your site step by step — you can switch templates
-          any time without losing your content.
+          through building your site step by step — you can switch templates any
+          time without losing your content.
         </p>
+      </div>
+
+      <div className="mb-6 flex flex-col justify-between gap-4 rounded-2xl border border-[#173B7A]/15 bg-[#FFF8EF] p-5 sm:flex-row sm:items-center">
+        <div className="flex gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#173B7A] text-white">
+            <FileInput className="h-5 w-5" />
+          </span>
+          <div>
+            <p className="font-semibold text-[#173B7A]">
+              Starter migration ready: Artisan Home Network
+            </p>
+            <p className="mt-1 text-sm text-[#526078]">
+              Load the network positioning, service categories, service-area
+              placeholder, and call to action into a private Coastal draft.
+              Contact details and media stay unassigned until approved.
+            </p>
+          </div>
+        </div>
+        <button
+          disabled={!!selecting}
+          onClick={onImportReference}
+          className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-[#173B7A] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+        >
+          {selecting ? "Importing…" : "Import reference"}
+          <ArrowRight className="h-4 w-4" />
+        </button>
       </div>
 
       <div className="grid gap-5 md:grid-cols-3">
@@ -34,7 +65,7 @@ export function TemplateGallery({
               key={t.id}
               disabled={!!selecting}
               onClick={() => onSelect(t.id)}
-              className="group overflow-hidden rounded-2xl border bg-card text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md disabled:opacity-60"
+              className="group bg-card overflow-hidden rounded-2xl border text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md disabled:opacity-60"
             >
               {/* Palette preview */}
               <div
@@ -50,7 +81,11 @@ export function TemplateGallery({
                 <div>
                   <div
                     className="mb-2 inline-block rounded px-2 py-0.5 text-[11px] font-semibold"
-                    style={{ background: p.accent, color: p.accentText, borderRadius: t.radius }}
+                    style={{
+                      background: p.accent,
+                      color: p.accentText,
+                      borderRadius: t.radius,
+                    }}
                   >
                     Get in touch
                   </div>
@@ -69,11 +104,13 @@ export function TemplateGallery({
               <div className="p-4">
                 <div className="flex items-center justify-between">
                   <span className="font-semibold">{t.name}</span>
-                  <span className="text-xs text-muted-foreground capitalize">
+                  <span className="text-muted-foreground text-xs capitalize">
                     {t.heroVariant} hero
                   </span>
                 </div>
-                <p className="mt-1 text-sm text-muted-foreground">{t.tagline}</p>
+                <p className="text-muted-foreground mt-1 text-sm">
+                  {t.tagline}
+                </p>
                 <p className="mt-2 text-xs font-medium text-blue-600">
                   {t.bestFor}
                 </p>

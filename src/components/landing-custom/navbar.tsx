@@ -33,10 +33,7 @@ export function Navbar({ brand }: { brand: ResolvedBrand }) {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-[#173B7A]/10 bg-[#FFF6E8]/95 text-[#173B7A] backdrop-blur">
       <div className="container mx-auto flex h-16 items-center gap-4 px-4">
-        <Link
-          href="/"
-          className="shrink-0"
-        >
+        <Link href="/" className="shrink-0">
           <BrandLockup brand={publicBrand} showMark size="sm" subline="" />
         </Link>
 
@@ -73,7 +70,7 @@ export function Navbar({ brand }: { brand: ResolvedBrand }) {
                     size="sm"
                     className="bg-[#1a2f50] text-white hover:bg-[#243d66]"
                   >
-                    Start Free
+                    Join Beta
                   </Button>
                 </>
               )}
@@ -136,7 +133,7 @@ export function Navbar({ brand }: { brand: ResolvedBrand }) {
                         size="sm"
                         onClick={() => setOpen(false)}
                       >
-                        Start Free
+                        Join Beta
                       </Button>
                     </>
                   )}

@@ -8,10 +8,10 @@ import { signInWithEmail } from "@/lib/firebase/auth";
 import { SocialAuthButtons } from "@/components/auth/social-auth-buttons";
 
 const perks = [
-  "No credit card required to start",
-  "Full AI follow-up from day one",
-  "Import existing contacts in minutes",
-  "Cancel anytime, no questions asked",
+  "Guided Build → Connect → Capture → Respond → Nurture → Close setup",
+  "One lead-to-appointment workflow configured first",
+  "Private Preview features labeled before activation",
+  "Subscription managed through your secure billing portal",
 ];
 
 export function SignupCta() {
@@ -54,7 +54,9 @@ export function SignupCta() {
       router.push(payload.redirectTo ?? "/dashboard");
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create account.");
+      setError(
+        err instanceof Error ? err.message : "Failed to create account."
+      );
     } finally {
       setLoading(false);
     }
@@ -67,24 +69,24 @@ export function SignupCta() {
     >
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(219,79,155,0.08)_0%,transparent_65%)]" />
 
-      <div className="container relative mx-auto px-4">
+      <div className="relative container mx-auto px-4">
         <div className="mx-auto max-w-4xl">
           <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
             {/* Left: copy */}
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#173B7A]">
-                Get started free
+              <p className="text-sm font-semibold tracking-[0.28em] text-[#173B7A] uppercase">
+                Solo Founding Beta
               </p>
               <h2 className="mt-4 text-3xl font-semibold tracking-tight text-[#173B7A] sm:text-5xl">
                 Build your business once.{" "}
-                <span className="font-sans font-normal italic text-[#DB4F9B]">
+                <span className="font-sans font-normal text-[#DB4F9B] italic">
                   Let AgentStack handle the rest.
                 </span>
               </h2>
               <p className="mt-4 max-w-xl text-base leading-7 text-[#526078] sm:text-lg">
-                Set up in 15 minutes. AgentStack handles lead capture, instant
-                response, follow-up, and scheduling — so you can focus on
-                closing.
+                Create your workspace, complete the guided six-step setup, and
+                validate one working lead-to-appointment flow before expanding
+                into preview features.
               </p>
               <ul className="mt-6 space-y-3">
                 {perks.map((perk) => (
@@ -102,10 +104,10 @@ export function SignupCta() {
             {/* Right: signup form */}
             <div className="rounded-[1.75rem] border border-[#E7DCC7] bg-white p-6 shadow-[0_20px_60px_rgba(23,59,122,0.08)]">
               <h3 className="text-lg font-semibold text-[#173B7A]">
-                Create your free account
+                Create your beta workspace
               </h3>
               <p className="mt-0.5 text-xs text-[#7B8AA1]">
-                No credit card · cancel anytime
+                Account setup first · subscription activation follows
               </p>
 
               <div className="mt-5">
@@ -127,7 +129,7 @@ export function SignupCta() {
                     placeholder="Jane Smith"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="w-full rounded-xl border border-[#E7DCC7] bg-white px-3 py-2.5 text-sm text-[#173B7A] placeholder:text-[#7B8AA1]/60 focus:border-[#4F91FF]/60 focus:outline-none focus:ring-1 focus:ring-[#4F91FF]/30"
+                    className="w-full rounded-xl border border-[#E7DCC7] bg-white px-3 py-2.5 text-sm text-[#173B7A] placeholder:text-[#7B8AA1]/60 focus:border-[#4F91FF]/60 focus:ring-1 focus:ring-[#4F91FF]/30 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -140,7 +142,7 @@ export function SignupCta() {
                     placeholder="you@example.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full rounded-xl border border-[#E7DCC7] bg-white px-3 py-2.5 text-sm text-[#173B7A] placeholder:text-[#7B8AA1]/60 focus:border-[#4F91FF]/60 focus:outline-none focus:ring-1 focus:ring-[#4F91FF]/30"
+                    className="w-full rounded-xl border border-[#E7DCC7] bg-white px-3 py-2.5 text-sm text-[#173B7A] placeholder:text-[#7B8AA1]/60 focus:border-[#4F91FF]/60 focus:ring-1 focus:ring-[#4F91FF]/30 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -154,13 +156,11 @@ export function SignupCta() {
                     placeholder="At least 8 characters"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full rounded-xl border border-[#E7DCC7] bg-white px-3 py-2.5 text-sm text-[#173B7A] placeholder:text-[#7B8AA1]/60 focus:border-[#4F91FF]/60 focus:outline-none focus:ring-1 focus:ring-[#4F91FF]/30"
+                    className="w-full rounded-xl border border-[#E7DCC7] bg-white px-3 py-2.5 text-sm text-[#173B7A] placeholder:text-[#7B8AA1]/60 focus:border-[#4F91FF]/60 focus:ring-1 focus:ring-[#4F91FF]/30 focus:outline-none"
                   />
                 </div>
 
-                {error && (
-                  <p className="text-xs text-red-500">{error}</p>
-                )}
+                {error && <p className="text-xs text-red-500">{error}</p>}
 
                 <button
                   type="submit"
@@ -171,7 +171,7 @@ export function SignupCta() {
                     "Creating account…"
                   ) : (
                     <>
-                      Start free — no card needed
+                      Create beta workspace
                       <ArrowRight className="h-4 w-4" />
                     </>
                   )}

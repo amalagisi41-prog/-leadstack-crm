@@ -60,6 +60,30 @@ export function Footer({ brand }: { brand: ResolvedBrand }) {
                   Help Center
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/beta"
+                  className="transition-colors hover:text-[#173B7A]"
+                >
+                  Beta availability
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/integrations"
+                  className="transition-colors hover:text-[#173B7A]"
+                >
+                  Integrations
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/status"
+                  className="transition-colors hover:text-[#173B7A]"
+                >
+                  Status
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -125,7 +149,8 @@ export function Footer({ brand }: { brand: ResolvedBrand }) {
         </div>
 
         <div className="mt-8 border-t border-[#EFE4D3] pt-8 text-center text-sm text-[#7B8AA1]">
-          &copy; {new Date().getFullYear()} {brand.name} &middot; The easiest way to run a modern real estate business.
+          &copy; {new Date().getFullYear()} {brand.name} &middot; The easiest
+          way to run a modern real estate business.
         </div>
       </div>
     </footer>

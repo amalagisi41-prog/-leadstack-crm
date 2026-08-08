@@ -151,10 +151,11 @@ export const CUSTOM_BRAND: CustomBrand = {
    */
   pricing: {
     starter: {
-      name: "Solo",
+      name: "Solo Founding Beta",
       priceMonthly: 199,
       priceAnnual: 159,
-      blurb: "For individual agents serious about never missing a lead.",
+      blurb:
+        "For individual agents helping shape the guided AgentStack operating system.",
       features: [
         "Up to 5,000 contacts",
         "Deals + tasks + calendar",
@@ -164,7 +165,7 @@ export const CUSTOM_BRAND: CustomBrand = {
         "Mobile-friendly dashboard",
         "Email & chat support",
       ],
-      cta: "Start free trial",
+      cta: "Join the founding beta",
       highlighted: false,
     },
     pro: {
