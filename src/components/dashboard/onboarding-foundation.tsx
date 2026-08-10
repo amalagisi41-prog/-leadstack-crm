@@ -51,25 +51,38 @@ export function OnboardingFoundation({
   const [profileImported, setProfileImported] = useState(false);
 
   async function importProfile() {
-    if (!sourceUrl.trim()) {
+    const urls = sourceUrl.match(/https?:\/\/[^\s]+/gi) ?? [];
+    if (urls.length === 0) {
       toast.error("Add your public website or business profile link first.");
+      return;
+    }
+    if (urls.length > 5) {
+      toast.error("Import up to five public profile links at a time.");
       return;
     }
     setImporting(true);
     try {
-      const response = await fetch(
-        `/api/sub-accounts/${subAccountId}/business-profile/import`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url: sourceUrl, platform }),
-        }
-      );
-      const data = (await response.json()) as { error?: string };
-      if (!response.ok)
-        throw new Error(data.error ?? "Could not read that link.");
+      let imported = 0;
+      let lastError = "";
+      for (const url of urls) {
+        const response = await fetch(
+          `/api/sub-accounts/${subAccountId}/business-profile/import`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url, platform }),
+          }
+        );
+        const data = (await response.json()) as { error?: string };
+        if (response.ok) imported += 1;
+        else lastError = data.error ?? "Could not read that link.";
+      }
+      if (imported === 0)
+        throw new Error(lastError || "Could not read those links.");
       setProfileImported(true);
-      toast.success("Business details imported as a draft for you to review.");
+      toast.success(
+        `${imported} ${imported === 1 ? "page" : "pages"} imported with Claude as a draft for you to review.`
+      );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Import failed.");
     } finally {
@@ -198,7 +211,7 @@ export function OnboardingFoundation({
               type="url"
               value={sourceUrl}
               onChange={(event) => setSourceUrl(event.target.value)}
-              placeholder="Your website, Zillow, Realtor.com, or business profile link"
+              placeholder="Paste one or more website or public profile links"
               className="bg-background rounded-lg border px-3 py-2 text-sm"
             />
             <Button type="button" onClick={importProfile} disabled={importing}>

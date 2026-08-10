@@ -200,31 +200,53 @@ export function BusinessProfileForm() {
   }
 
   async function importPublicProfile() {
-    if (!importUrl.trim()) {
+    const urls = importUrl.match(/https?:\/\/[^\s]+/gi) ?? [];
+    if (urls.length === 0) {
       toast.error("Add your website or public business profile link first.");
+      return;
+    }
+    if (urls.length > 5) {
+      toast.error("Import up to five public profile links at a time.");
       return;
     }
     setImporting(true);
     try {
-      const res = await fetch(
-        `/api/sub-accounts/${subAccountId}/business-profile/import`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url: importUrl, platform: "website" }),
+      let imported = 0;
+      const failures: string[] = [];
+      for (const url of urls) {
+        const res = await fetch(
+          `/api/sub-accounts/${subAccountId}/business-profile/import`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url, platform: "website" }),
+          }
+        );
+        const data = (await res.json()) as {
+          profile?: BusinessProfileContent;
+          completeness?: number;
+          error?: string;
+        };
+        if (!res.ok || !data.profile) {
+          failures.push(data.error ?? `Could not import ${url}.`);
+          continue;
         }
-      );
-      const data = (await res.json()) as {
-        profile?: BusinessProfileContent;
-        completeness?: number;
-        error?: string;
-      };
-      if (!res.ok || !data.profile) {
-        throw new Error(data.error ?? "Could not import that page.");
+        imported += 1;
+        setContent({ ...EMPTY_BUSINESS_PROFILE, ...data.profile });
+        setCompleteness(data.completeness ?? 0);
       }
-      setContent({ ...EMPTY_BUSINESS_PROFILE, ...data.profile });
-      setCompleteness(data.completeness ?? 0);
-      toast.success("Details imported. Review them, then save to approve.");
+      if (imported === 0) {
+        throw new Error(failures[0] ?? "Could not import those pages.");
+      }
+      if (failures.length > 0) {
+        toast.warning(
+          `${imported} ${imported === 1 ? "page" : "pages"} imported; ${failures.length} could not be read. Review the draft, then save.`
+        );
+      } else {
+        toast.success(
+          `${imported} ${imported === 1 ? "page" : "pages"} imported with Claude. Review the details, then save to approve.`
+        );
+      }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Import failed.");
     } finally {
@@ -324,7 +346,7 @@ export function BusinessProfileForm() {
                 type="url"
                 value={importUrl}
                 onChange={(event) => setImportUrl(event.target.value)}
-                placeholder="https://your-current-website.com"
+                placeholder="Paste one or more public website or profile links"
                 className={`${input} flex-1`}
               />
               <Button
