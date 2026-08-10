@@ -110,39 +110,45 @@ export async function POST(request: Request) {
       ? [{ coupon: bundleCouponId }]
       : undefined;
 
-  const stripe = getStripeServer();
-  const session = await stripe.checkout.sessions.create({
-    mode: "subscription",
-    payment_method_types: ["card"],
-    line_items: lineItems,
-    ...(discounts ? { discounts } : {}),
-    subscription_data: {
-      trial_period_days: 30,
-    },
-    billing_address_collection: "required",
-    consent_collection: { terms_of_service: "required" },
-    custom_text: {
-      submit: {
-        message:
-          "Your card is securely stored by Stripe for your subscription and any add-ons you approve. One month is free; billing begins after the trial.",
+  try {
+    const stripe = getStripeServer();
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      payment_method_types: ["card"],
+      line_items: lineItems,
+      ...(discounts ? { discounts } : {}),
+      subscription_data: {
+        trial_period_days: 30,
       },
-    },
-    success_url: `${appUrl}/welcome?session_id={CHECKOUT_SESSION_ID}&t=${claimToken}`,
-    cancel_url: `${appUrl}/#pricing`,
-    metadata: {
-      mode: "new_agency",
-      claimToken,
-      planKey,
-      billingInterval,
-      addOnKeys: JSON.stringify(addOnKeys),
-    },
-  });
+      billing_address_collection: "required",
+      consent_collection: { terms_of_service: "required" },
+      custom_text: {
+        submit: {
+          message:
+            "Your card is securely stored by Stripe for your subscription and any add-ons you approve. One month is free; billing begins after the trial.",
+        },
+      },
+      success_url: `${appUrl}/welcome?session_id={CHECKOUT_SESSION_ID}&t=${claimToken}`,
+      cancel_url: `${appUrl}/#pricing`,
+      metadata: {
+        mode: "new_agency",
+        claimToken,
+        planKey,
+        billingInterval,
+        addOnKeys: JSON.stringify(addOnKeys),
+      },
+    });
 
-  if (!session.url) {
+    if (!session.url) throw new Error("Stripe returned no checkout URL.");
+    return NextResponse.json({ url: session.url });
+  } catch (error) {
+    console.error("[checkout/subscribe] Stripe session creation failed", error);
     return NextResponse.json(
-      { error: "Could not start checkout. Try again." },
-      { status: 502 }
+      {
+        error:
+          "Secure checkout is temporarily unavailable. Billing configuration needs attention.",
+      },
+      { status: 503 }
     );
   }
-  return NextResponse.json({ url: session.url });
 }
