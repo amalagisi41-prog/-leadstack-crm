@@ -75,7 +75,7 @@ const BOOL_KEYS: (keyof BusinessProfileContent)[] = [
 
 function coerce(
   current: BusinessProfileContent,
-  patch: Record<string, unknown>,
+  patch: Record<string, unknown>
 ): BusinessProfileContent {
   const next: BusinessProfileContent = { ...current };
 
@@ -87,15 +87,19 @@ function coerce(
     }
   }
   for (const key of BOOL_KEYS) {
-    if (typeof patch[key] === "boolean") (next[key] as boolean) = patch[key] as boolean;
+    if (typeof patch[key] === "boolean")
+      (next[key] as boolean) = patch[key] as boolean;
   }
-  if (typeof patch.brandVoice === "string" && VALID_VOICES.has(patch.brandVoice as BrandVoice)) {
+  if (
+    typeof patch.brandVoice === "string" &&
+    VALID_VOICES.has(patch.brandVoice as BrandVoice)
+  ) {
     next.brandVoice = patch.brandVoice as BrandVoice;
   }
   if (Array.isArray(patch.services)) {
     next.services = (patch.services as unknown[]).filter(
       (s): s is ServiceSpecialty =>
-        typeof s === "string" && VALID_SERVICES.has(s as ServiceSpecialty),
+        typeof s === "string" && VALID_SERVICES.has(s as ServiceSpecialty)
     );
   }
   if (Array.isArray(patch.faqs)) {
@@ -112,8 +116,14 @@ function coerce(
     next.objections = (patch.objections as unknown[])
       .filter((o): o is BusinessObjection => !!o && typeof o === "object")
       .map((o) => ({
-        objection: String((o as BusinessObjection).objection ?? "").slice(0, 300),
-        response: String((o as BusinessObjection).response ?? "").slice(0, 1500),
+        objection: String((o as BusinessObjection).objection ?? "").slice(
+          0,
+          300
+        ),
+        response: String((o as BusinessObjection).response ?? "").slice(
+          0,
+          1500
+        ),
       }))
       .filter((o) => o.objection.trim() || o.response.trim())
       .slice(0, 30);
@@ -133,7 +143,7 @@ function coerce(
 
 export async function GET(
   request: Request,
-  ctx: { params: Promise<{ id: string }> },
+  ctx: { params: Promise<{ id: string }> }
 ) {
   const { id } = await ctx.params;
   const access = await requireSubAccountAdmin(request, id);
@@ -150,7 +160,9 @@ export async function GET(
       exists: false,
     });
   }
-  const data = snap.data() as BusinessProfileContent & { completeness?: number };
+  const data = snap.data() as BusinessProfileContent & {
+    completeness?: number;
+  };
   return NextResponse.json({
     profile: data,
     completeness: data.completeness ?? businessProfileCompleteness(data),
@@ -160,7 +172,7 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  ctx: { params: Promise<{ id: string }> },
+  ctx: { params: Promise<{ id: string }> }
 ) {
   const { id } = await ctx.params;
   const access = await requireSubAccountAdmin(request, id);
@@ -194,10 +206,11 @@ export async function PATCH(
       agencyId,
       updatedByUid: uid,
       completeness,
+      importReviewed: true,
       ...(snap.exists ? {} : { createdAt: FieldValue.serverTimestamp() }),
       updatedAt: FieldValue.serverTimestamp(),
     },
-    { merge: true },
+    { merge: true }
   );
 
   return NextResponse.json({ ok: true, profile: next, completeness });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSubAccount } from "@/context/sub-account-context";
 import {
@@ -8,6 +8,8 @@ import {
   type OnboardingWizardStepKey,
 } from "@/components/dashboard/onboarding-wizard";
 import { SOLO_FOUNDING_BETA_ENTITLEMENT_PATCH } from "@/lib/entitlements/founding-beta";
+import { OnboardingFoundation } from "@/components/dashboard/onboarding-foundation";
+import { Loader2 } from "lucide-react";
 
 /**
  * Mandatory first-run wizard. The sub-account dashboard redirects here at
@@ -19,6 +21,9 @@ import { SOLO_FOUNDING_BETA_ENTITLEMENT_PATCH } from "@/lib/entitlements/foundin
 export default function GetStartedPage() {
   const searchParams = useSearchParams();
   const { subAccountId, subAccount, saPath } = useSubAccount();
+  const [foundationComplete, setFoundationComplete] = useState<boolean | null>(
+    null
+  );
   const requestedStep = searchParams.get("step");
   const initialStep =
     requestedStep &&
@@ -48,6 +53,41 @@ export default function GetStartedPage() {
       body: JSON.stringify(SOLO_FOUNDING_BETA_ENTITLEMENT_PATCH),
     }).catch(() => undefined);
   }, [subAccount, subAccountId]);
+
+  useEffect(() => {
+    let active = true;
+    void fetch(`/api/sub-accounts/${subAccountId}/onboarding-foundation`)
+      .then(async (response) => {
+        const data = (await response.json()) as {
+          foundation?: { completed?: boolean };
+        };
+        if (active) setFoundationComplete(data.foundation?.completed === true);
+      })
+      .catch(() => {
+        if (active) setFoundationComplete(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [subAccountId]);
+
+  if (foundationComplete === null) {
+    return (
+      <div className="text-muted-foreground flex h-64 items-center justify-center">
+        <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Preparing your setup…
+      </div>
+    );
+  }
+
+  if (!foundationComplete) {
+    return (
+      <OnboardingFoundation
+        subAccountId={subAccountId}
+        saPath={saPath}
+        onComplete={() => setFoundationComplete(true)}
+      />
+    );
+  }
 
   return (
     <OnboardingWizard

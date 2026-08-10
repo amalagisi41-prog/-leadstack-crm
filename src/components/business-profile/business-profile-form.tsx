@@ -7,6 +7,7 @@ import {
   ArrowRight,
   Check,
   Eye,
+  Globe2,
   Loader2,
   Plus,
   Shield,
@@ -56,12 +57,12 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-xs font-medium text-muted-foreground">
+      <span className="text-muted-foreground mb-1 block text-xs font-medium">
         {label}
       </span>
       {children}
       {hint ? (
-        <span className="mt-1 block text-[11px] text-muted-foreground">
+        <span className="text-muted-foreground mt-1 block text-[11px]">
           {hint}
         </span>
       ) : null}
@@ -79,9 +80,9 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border bg-card p-5">
+    <section className="bg-card rounded-2xl border p-5">
       <h2 className="text-sm font-semibold">{title}</h2>
-      <p className="mb-4 mt-0.5 text-xs text-muted-foreground">{desc}</p>
+      <p className="text-muted-foreground mt-0.5 mb-4 text-xs">{desc}</p>
       <div className="space-y-4">{children}</div>
     </section>
   );
@@ -93,20 +94,22 @@ export function BusinessProfileForm() {
   const searchParams = useSearchParams();
   const fromWizard = searchParams.get("from") === "wizard";
   const [content, setContent] = useState<BusinessProfileContent>(
-    EMPTY_BUSINESS_PROFILE,
+    EMPTY_BUSINESS_PROFILE
   );
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [completeness, setCompleteness] = useState(0);
   const [generating, setGenerating] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [importUrl, setImportUrl] = useState("");
+  const [importing, setImporting] = useState(false);
 
   useEffect(() => {
     let active = true;
     (async () => {
       try {
         const res = await fetch(
-          `/api/sub-accounts/${subAccountId}/business-profile`,
+          `/api/sub-accounts/${subAccountId}/business-profile`
         );
         const data = (await res.json()) as {
           profile: BusinessProfileContent;
@@ -114,6 +117,7 @@ export function BusinessProfileForm() {
         };
         if (!active) return;
         setContent({ ...EMPTY_BUSINESS_PROFILE, ...data.profile });
+        setImportUrl(data.profile.website ?? "");
         setCompleteness(data.completeness);
       } finally {
         if (active) setLoading(false);
@@ -126,7 +130,7 @@ export function BusinessProfileForm() {
 
   function set<K extends keyof BusinessProfileContent>(
     key: K,
-    value: BusinessProfileContent[K],
+    value: BusinessProfileContent[K]
   ) {
     setContent((c) => ({ ...c, [key]: value }));
   }
@@ -148,7 +152,11 @@ export function BusinessProfileForm() {
     });
   }
 
-  function setObjection(i: number, field: "objection" | "response", value: string) {
+  function setObjection(
+    i: number,
+    field: "objection" | "response",
+    value: string
+  ) {
     setContent((c) => {
       const objections = [...c.objections];
       objections[i] = { ...objections[i], [field]: value };
@@ -173,7 +181,7 @@ export function BusinessProfileForm() {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(content),
-        },
+        }
       );
       const data = (await res.json()) as {
         completeness?: number;
@@ -191,6 +199,39 @@ export function BusinessProfileForm() {
     }
   }
 
+  async function importPublicProfile() {
+    if (!importUrl.trim()) {
+      toast.error("Add your website or public business profile link first.");
+      return;
+    }
+    setImporting(true);
+    try {
+      const res = await fetch(
+        `/api/sub-accounts/${subAccountId}/business-profile/import`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: importUrl, platform: "website" }),
+        }
+      );
+      const data = (await res.json()) as {
+        profile?: BusinessProfileContent;
+        completeness?: number;
+        error?: string;
+      };
+      if (!res.ok || !data.profile) {
+        throw new Error(data.error ?? "Could not import that page.");
+      }
+      setContent({ ...EMPTY_BUSINESS_PROFILE, ...data.profile });
+      setCompleteness(data.completeness ?? 0);
+      toast.success("Details imported. Review them, then save to approve.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Import failed.");
+    } finally {
+      setImporting(false);
+    }
+  }
+
   async function generatePersona() {
     setGenerating(true);
     try {
@@ -203,12 +244,12 @@ export function BusinessProfileForm() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ apply: true }),
-        },
+        }
       );
       const data = (await res.json()) as { error?: string };
       if (!res.ok) throw new Error(data.error ?? "Couldn't generate.");
       toast.success(
-        "AI persona generated and applied. Your assistants are ready.",
+        "AI persona generated and applied. Your assistants are ready."
       );
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't generate.");
@@ -219,7 +260,7 @@ export function BusinessProfileForm() {
 
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center text-muted-foreground">
+      <div className="text-muted-foreground flex h-64 items-center justify-center">
         <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading your profile…
       </div>
     );
@@ -265,11 +306,51 @@ export function BusinessProfileForm() {
         </div>
       </div>
 
+      <section className="rounded-2xl border border-blue-200 bg-blue-50/60 p-5 dark:border-blue-900 dark:bg-blue-950/20">
+        <div className="flex items-start gap-3">
+          <Globe2 className="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
+          <div className="min-w-0 flex-1">
+            <h2 className="text-sm font-semibold">
+              Save time with AI-assisted setup
+            </h2>
+            <p className="text-muted-foreground mt-1 text-xs">
+              Paste your website, brokerage page, Zillow, Realtor.com, or
+              Homes.com profile. AgentStack will prefill only details it can
+              verify. Nothing is published, and you approve the draft before it
+              becomes your trusted profile.
+            </p>
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+              <input
+                type="url"
+                value={importUrl}
+                onChange={(event) => setImportUrl(event.target.value)}
+                placeholder="https://your-current-website.com"
+                className={`${input} flex-1`}
+              />
+              <Button
+                type="button"
+                onClick={importPublicProfile}
+                disabled={importing}
+              >
+                {importing ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Sparkles className="mr-2 h-4 w-4" />
+                )}
+                Use AI to prefill
+              </Button>
+            </div>
+            <p className="text-muted-foreground mt-2 text-[11px]">
+              License, brokerage, contact, and service-area details are never
+              guessed. Complete any missing fields below for a consistent,
+              search-ready profile.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* 1. Agent profile */}
-      <Section
-        title="1. About you"
-        desc="Who you are and how leads reach you."
-      >
+      <Section title="1. About you" desc="Who you are and how leads reach you.">
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Your name">
             <input
@@ -467,7 +548,7 @@ export function BusinessProfileForm() {
                   {on ? <Check className="h-3.5 w-3.5 text-[#1b3d7a]" /> : null}
                   {v.label}
                 </span>
-                <span className="mt-0.5 block text-[11px] text-muted-foreground">
+                <span className="text-muted-foreground mt-0.5 block text-[11px]">
                   {v.blurb}
                 </span>
               </button>
@@ -693,14 +774,14 @@ export function BusinessProfileForm() {
           {content.objections.map((o, i) => (
             <div key={i} className="rounded-xl border p-3">
               <div className="mb-2 flex items-center justify-between">
-                <span className="text-xs font-medium text-muted-foreground">
+                <span className="text-muted-foreground text-xs font-medium">
                   Objection {i + 1}
                 </span>
                 <button
                   onClick={() =>
                     set(
                       "objections",
-                      content.objections.filter((_, idx) => idx !== i),
+                      content.objections.filter((_, idx) => idx !== i)
                     )
                   }
                   className="text-muted-foreground hover:text-red-500"
@@ -749,14 +830,14 @@ export function BusinessProfileForm() {
           {content.documents.map((d, i) => (
             <div key={i} className="rounded-xl border p-3">
               <div className="mb-2 flex items-center justify-between">
-                <span className="text-xs font-medium text-muted-foreground">
+                <span className="text-muted-foreground text-xs font-medium">
                   Document {i + 1}
                 </span>
                 <button
                   onClick={() =>
                     set(
                       "documents",
-                      content.documents.filter((_, idx) => idx !== i),
+                      content.documents.filter((_, idx) => idx !== i)
                     )
                   }
                   className="text-muted-foreground hover:text-red-500"
@@ -817,14 +898,14 @@ export function BusinessProfileForm() {
           {content.faqs.map((f, i) => (
             <div key={i} className="rounded-xl border p-3">
               <div className="mb-2 flex items-center justify-between">
-                <span className="text-xs font-medium text-muted-foreground">
+                <span className="text-muted-foreground text-xs font-medium">
                   FAQ {i + 1}
                 </span>
                 <button
                   onClick={() =>
                     set(
                       "faqs",
-                      content.faqs.filter((_, idx) => idx !== i),
+                      content.faqs.filter((_, idx) => idx !== i)
                     )
                   }
                   className="text-muted-foreground hover:text-red-500"
@@ -890,9 +971,9 @@ export function BusinessProfileForm() {
       </Section>
 
       {/* Sticky save bar */}
-      <div className="fixed inset-x-0 bottom-0 z-10 border-t bg-background/95 px-4 py-3 backdrop-blur lg:left-64">
+      <div className="bg-background/95 fixed inset-x-0 bottom-0 z-10 border-t px-4 py-3 backdrop-blur lg:left-64">
         <div className="mx-auto flex max-w-4xl items-center justify-between gap-3">
-          <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
             <Shield className="h-3.5 w-3.5" />
             Saved to your private workspace. Used only by your AI tools.
           </p>
@@ -930,20 +1011,19 @@ export function BusinessProfileForm() {
           <DialogHeader>
             <DialogTitle>What AgentStack knows about your business</DialogTitle>
             <DialogDescription>
-              The exact text every AI assistant reads before replying —
-              updates live as you edit the Blueprint below. Nothing here is
-              ever spoken verbatim; it&rsquo;s reference material the AI
-              draws on.
+              The exact text every AI assistant reads before replying — updates
+              live as you edit the Blueprint below. Nothing here is ever spoken
+              verbatim; it&rsquo;s reference material the AI draws on.
             </DialogDescription>
           </DialogHeader>
           {(() => {
             const compiled = compileBusinessProfilePrompt(content);
             return compiled ? (
-              <pre className="whitespace-pre-wrap rounded-lg border bg-muted/30 p-4 font-mono text-xs leading-relaxed">
+              <pre className="bg-muted/30 rounded-lg border p-4 font-mono text-xs leading-relaxed whitespace-pre-wrap">
                 {compiled}
               </pre>
             ) : (
-              <p className="rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+              <p className="text-muted-foreground rounded-lg border border-dashed p-6 text-center text-sm">
                 Nothing to show yet — fill in a few fields below (like your
                 name, brokerage, or service areas) and they&rsquo;ll appear
                 here.
@@ -986,7 +1066,7 @@ function ToggleRow({
       </span>
       <span>
         <span className="block text-sm font-medium">{label}</span>
-        <span className="block text-xs text-muted-foreground">{hint}</span>
+        <span className="text-muted-foreground block text-xs">{hint}</span>
       </span>
     </button>
   );
