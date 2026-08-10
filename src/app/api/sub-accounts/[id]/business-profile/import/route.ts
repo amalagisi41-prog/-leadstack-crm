@@ -120,8 +120,9 @@ async function readPublicPage(startUrl: string): Promise<string> {
       current = next;
       continue;
     }
-    if (!response.ok)
-      throw new Error(`That website returned ${response.status}.`);
+    if (!response.ok) {
+      return readWithPublicFallback(startUrl, response.status);
+    }
     const contentType = response.headers.get("content-type") ?? "";
     if (
       !contentType.includes("text/html") &&
@@ -136,6 +137,33 @@ async function readPublicPage(startUrl: string): Promise<string> {
     return text;
   }
   throw new Error("That website redirected too many times.");
+}
+
+async function readWithPublicFallback(
+  publicUrl: string,
+  originalStatus: number
+): Promise<string> {
+  const response = await fetch(`https://r.jina.ai/http://${publicUrl}`, {
+    headers: {
+      Accept: "text/plain",
+      "User-Agent": "AgentStackProfileImport/1.0",
+    },
+    signal: AbortSignal.timeout(30_000),
+  });
+  if (!response.ok) {
+    throw new Error(`That website returned ${originalStatus}.`);
+  }
+  const text = (await response.text()).slice(0, 250_000);
+  const blocked =
+    /title:\s*access denied/i.test(text) ||
+    /target url returned error 403/i.test(text) ||
+    /you don.?t have permission to access/i.test(text);
+  if (blocked || text.trim().length < 500) {
+    throw new Error(
+      "That provider blocks automated profile reading. Try your brokerage website or another public profile."
+    );
+  }
+  return text.slice(0, 18_000);
 }
 
 function parseObject(text: string): Record<string, unknown> {

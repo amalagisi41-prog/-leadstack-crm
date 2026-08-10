@@ -51,7 +51,9 @@ export function OnboardingFoundation({
   const [profileImported, setProfileImported] = useState(false);
 
   async function importProfile() {
-    const urls = sourceUrl.match(/https?:\/\/[^\s]+/gi) ?? [];
+    const urls = (sourceUrl.match(/https?:\/\/[^\s]+/gi) ?? []).map((url) =>
+      url.replace(/[),.;]+$/g, "")
+    );
     if (urls.length === 0) {
       toast.error("Add your public website or business profile link first.");
       return;

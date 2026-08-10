@@ -200,7 +200,9 @@ export function BusinessProfileForm() {
   }
 
   async function importPublicProfile() {
-    const urls = importUrl.match(/https?:\/\/[^\s]+/gi) ?? [];
+    const urls = (importUrl.match(/https?:\/\/[^\s]+/gi) ?? []).map((url) =>
+      url.replace(/[),.;]+$/g, "")
+    );
     if (urls.length === 0) {
       toast.error("Add your website or public business profile link first.");
       return;
