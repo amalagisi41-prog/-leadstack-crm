@@ -27,10 +27,17 @@ export { ADD_ON_KEYS, ADD_ON_GATE_FIELD };
 export type PlanKey = SelfServePlanKey;
 export const PLAN_KEYS: readonly PlanKey[] = SELF_SERVE_PLAN_KEYS;
 
-export function planPriceId(key: PlanKey): string | null {
+export function planPriceId(
+  key: PlanKey,
+  interval: "month" | "year" = "month"
+): string | null {
   switch (key) {
     case "starter":
-      return process.env.STRIPE_STARTER_PRICE_ID ?? null;
+      return interval === "year"
+        ? (process.env.STRIPE_SOLO_ANNUAL_PRICE_ID ?? null)
+        : (process.env.STRIPE_SOLO_PRICE_ID ??
+            process.env.STRIPE_STARTER_PRICE_ID ??
+            null);
     case "pro":
       return process.env.STRIPE_PRO_PRICE_ID ?? null;
   }
@@ -38,7 +45,11 @@ export function planPriceId(key: PlanKey): string | null {
 
 export function planKeyForPriceId(priceId: string): PlanKey | null {
   for (const key of PLAN_KEYS) {
-    if (planPriceId(key) === priceId) return key;
+    if (
+      planPriceId(key, "month") === priceId ||
+      planPriceId(key, "year") === priceId
+    )
+      return key;
   }
   return null;
 }

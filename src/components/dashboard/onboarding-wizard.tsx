@@ -58,15 +58,15 @@ const WIZARD_STEP_INDEX: Record<OnboardingWizardStepKey, WizardStep> = {
 const WIZARD_STEPS = [
   {
     id: "build" as const,
-    label: "Business Profile",
+    label: "Business + Domain",
     icon: Building2,
-    tagline: "Your business profile",
+    tagline: "Name and digital home",
   },
   {
     id: "connect" as const,
-    label: "Import Contacts",
+    label: "Google Business Profile",
     icon: Link2,
-    tagline: "Bring everything together",
+    tagline: "Get found on Google",
   },
   {
     id: "capture" as const,
@@ -100,19 +100,22 @@ const FUNNEL_RECOMMENDATIONS = [
   {
     id: "buyer_lead_form",
     title: "Buyer Lead Form",
-    description: "Capture buyer inquiries 24/7. AI follows up within 60 seconds.",
+    description:
+      "Capture buyer inquiries 24/7. AI follows up within 60 seconds.",
     badge: "Most popular",
   },
   {
     id: "seller_valuation",
     title: "Home Valuation Request",
-    description: "Sellers request a free home value estimate. AI qualifies them immediately.",
+    description:
+      "Sellers request a free home value estimate. AI qualifies them immediately.",
     badge: "High intent",
   },
   {
     id: "open_house",
     title: "Open House Sign-in",
-    description: "Digital sign-in sheet. AI texts attendees within minutes of leaving.",
+    description:
+      "Digital sign-in sheet. AI texts attendees within minutes of leaving.",
     badge: "",
   },
 ];
@@ -136,15 +139,14 @@ export function OnboardingWizard({
   initialStep,
 }: WizardProps) {
   const router = useRouter();
-  const [currentStep, setCurrentStep] = useState<WizardStep>(
-    () =>
-      initialStep
-        ? WIZARD_STEP_INDEX[initialStep]
-        : ((computeOnboardingState(initialCompleted).nextWizardStepIndex ??
-            5) as WizardStep),
+  const [currentStep, setCurrentStep] = useState<WizardStep>(() =>
+    initialStep
+      ? WIZARD_STEP_INDEX[initialStep]
+      : ((computeOnboardingState(initialCompleted).nextWizardStepIndex ??
+          5) as WizardStep)
   );
   const [completed, setCompleted] = useState<Set<string>>(
-    () => new Set(initialCompleted),
+    () => new Set(initialCompleted)
   );
   const [chosenFunnel, setChosenFunnel] = useState<string | null>(null);
 
@@ -162,7 +164,7 @@ export function OnboardingWizard({
         return next;
       });
     },
-    [subAccountId],
+    [subAccountId]
   );
 
   const advance = useCallback(
@@ -170,7 +172,7 @@ export function OnboardingWizard({
       if (idsToMark.length) markDone(idsToMark);
       setCurrentStep((s) => Math.min(s + 1, 5) as WizardStep);
     },
-    [markDone],
+    [markDone]
   );
 
   const finish = useCallback(() => {
@@ -180,9 +182,9 @@ export function OnboardingWizard({
   }, [markDone, router, saPath]);
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] flex-col bg-gradient-to-b from-[#fff8ee] to-background">
+    <div className="to-background flex min-h-[calc(100vh-4rem)] flex-col bg-gradient-to-b from-[#fff8ee]">
       {/* ── top progress bar ── */}
-      <div className="h-1 w-full bg-muted">
+      <div className="bg-muted h-1 w-full">
         <div
           className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-500"
           style={{ width: `${((currentStep + 1) / 6) * 100}%` }}
@@ -192,99 +194,120 @@ export function OnboardingWizard({
       <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-5 p-4 md:p-8">
         <div className="flex flex-col justify-between gap-3 rounded-2xl border bg-white/80 px-5 py-4 shadow-sm backdrop-blur sm:flex-row sm:items-center">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#DB4F9B]">Your 15-minute business launch</p>
-            <h1 className="mt-1 text-xl font-semibold tracking-tight text-[#173B7A]">We&apos;ll build the system. You approve what goes live.</h1>
+            <p className="text-xs font-semibold tracking-[0.22em] text-[#DB4F9B] uppercase">
+              Your 15-minute business launch
+            </p>
+            <h1 className="mt-1 text-xl font-semibold tracking-tight text-[#173B7A]">
+              We&apos;ll build the system. You approve what goes live.
+            </h1>
           </div>
-          <div className="rounded-full bg-[#173B7A]/5 px-3 py-1.5 text-xs font-medium text-[#173B7A]">Step {currentStep + 1} of 6</div>
+          <div className="rounded-full bg-[#173B7A]/5 px-3 py-1.5 text-xs font-medium text-[#173B7A]">
+            Step {currentStep + 1} of 6
+          </div>
         </div>
 
         <div className="flex flex-1 gap-0 md:gap-8">
-        {/* ── left sidebar — The AgentStack Method™ ── */}
-        <aside className="hidden md:flex flex-col gap-1 w-52 shrink-0 pt-2">
-          <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            {AGENTSTACK_METHOD_NAME}
-          </p>
-          {WIZARD_STEPS.map((step, idx) => {
-            const isActive = idx === currentStep;
-            const isDone = idx < currentStep;
-            return (
-              <div
-                key={step.id}
-                className={cn(
-                  "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors",
-                  isActive && "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 font-medium",
-                  isDone && "text-muted-foreground",
-                  !isActive && !isDone && "text-muted-foreground/50",
-                )}
-              >
-                {isDone ? (
-                  <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
-                ) : (
-                  <div
-                    className={cn(
-                      "flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-bold",
-                      isActive
-                        ? "bg-blue-600 text-white"
-                        : "border border-muted-foreground/30 text-muted-foreground/40",
-                    )}
-                  >
-                    {idx + 1}
-                  </div>
-                )}
-                <span className="leading-tight">{step.label}</span>
-              </div>
-            );
-          })}
-        </aside>
+          {/* ── left sidebar — The AgentStack Method™ ── */}
+          <aside className="hidden w-52 shrink-0 flex-col gap-1 pt-2 md:flex">
+            <p className="text-muted-foreground mb-3 text-[11px] font-semibold tracking-wider uppercase">
+              {AGENTSTACK_METHOD_NAME}
+            </p>
+            {WIZARD_STEPS.map((step, idx) => {
+              const isActive = idx === currentStep;
+              const isDone = idx < currentStep;
+              return (
+                <div
+                  key={step.id}
+                  className={cn(
+                    "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors",
+                    isActive &&
+                      "bg-blue-50 font-medium text-blue-700 dark:bg-blue-950/40 dark:text-blue-300",
+                    isDone && "text-muted-foreground",
+                    !isActive && !isDone && "text-muted-foreground/50"
+                  )}
+                >
+                  {isDone ? (
+                    <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+                  ) : (
+                    <div
+                      className={cn(
+                        "flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-bold",
+                        isActive
+                          ? "bg-blue-600 text-white"
+                          : "border-muted-foreground/30 text-muted-foreground/40 border"
+                      )}
+                    >
+                      {idx + 1}
+                    </div>
+                  )}
+                  <span className="leading-tight">{step.label}</span>
+                </div>
+              );
+            })}
+          </aside>
 
-        {/* ── main content ── */}
-        <main className="min-w-0 flex-1 rounded-2xl border bg-background/90 p-5 shadow-sm md:p-7">
-          {currentStep === 0 && (
-            <StepBuild saPath={saPath} onNext={() => advance(["business_profile"])} />
-          )}
-          {currentStep === 1 && (
-            <StepConnect saPath={saPath} onNext={() => advance(["contacts", "sms"])} onSkip={() => advance(["contacts", "sms"])} />
-          )}
-          {currentStep === 2 && (
-            <StepCapture
-              chosenFunnel={chosenFunnel}
-              onChoose={setChosenFunnel}
-              saPath={saPath}
-              onNext={() => advance(["form"])}
-              onSkip={() => advance(["form"])}
-            />
-          )}
-          {currentStep === 3 && (
-            <StepRespond saPath={saPath} onNext={() => advance(["automation", "ai"])} onSkip={() => advance(["automation", "ai"])} />
-          )}
-          {currentStep === 4 && (
-            <StepNurture saPath={saPath} onNext={() => advance(["pipeline"])} />
-          )}
-          {currentStep === 5 && (
-            <StepClose
-              completed={completed}
-              saPath={saPath}
-              onFinish={finish}
-            />
-          )}
-
-          {/* ── mobile step indicator ── */}
-          <div className="mt-6 flex items-center justify-center gap-1.5 md:hidden">
-            {WIZARD_STEPS.map((_, idx) => (
-              <div
-                key={idx}
-                className={cn(
-                  "h-1.5 rounded-full transition-all",
-                  idx === currentStep
-                    ? "w-6 bg-blue-500"
-                    : idx < currentStep
-                      ? "w-3 bg-emerald-400"
-                      : "w-3 bg-muted",
-                )}
+          {/* ── main content ── */}
+          <main className="bg-background/90 min-w-0 flex-1 rounded-2xl border p-5 shadow-sm md:p-7">
+            {currentStep === 0 && (
+              <StepBuild
+                saPath={saPath}
+                onNext={() => advance(["business_profile"])}
               />
-            ))}
-          </div>
-        </main>
+            )}
+            {currentStep === 1 && (
+              <StepConnect
+                saPath={saPath}
+                onNext={() => advance(["contacts", "sms"])}
+                onSkip={() => advance(["contacts", "sms"])}
+              />
+            )}
+            {currentStep === 2 && (
+              <StepCapture
+                chosenFunnel={chosenFunnel}
+                onChoose={setChosenFunnel}
+                saPath={saPath}
+                onNext={() => advance(["form"])}
+                onSkip={() => advance(["form"])}
+              />
+            )}
+            {currentStep === 3 && (
+              <StepRespond
+                saPath={saPath}
+                onNext={() => advance(["automation", "ai"])}
+                onSkip={() => advance(["automation", "ai"])}
+              />
+            )}
+            {currentStep === 4 && (
+              <StepNurture
+                saPath={saPath}
+                onNext={() => advance(["pipeline"])}
+              />
+            )}
+            {currentStep === 5 && (
+              <StepClose
+                completed={completed}
+                saPath={saPath}
+                onFinish={finish}
+              />
+            )}
+
+            {/* ── mobile step indicator ── */}
+            <div className="mt-6 flex items-center justify-center gap-1.5 md:hidden">
+              {WIZARD_STEPS.map((_, idx) => (
+                <div
+                  key={idx}
+                  className={cn(
+                    "h-1.5 rounded-full transition-all",
+                    idx === currentStep
+                      ? "w-6 bg-blue-500"
+                      : idx < currentStep
+                        ? "w-3 bg-emerald-400"
+                        : "bg-muted w-3"
+                  )}
+                />
+              ))}
+            </div>
+          </main>
         </div>
       </div>
     </div>
@@ -306,10 +329,10 @@ function StepBuild({
     <StepShell
       icon={<Building2 className="h-6 w-6 text-blue-600" />}
       eyebrow="Step 1: Build · 5 min"
-      title="Build your business profile"
-      subtitle="This is the foundation of everything. You tell AgentStack about your business once — name, brokerage, services, brand voice, compliance rules, and FAQs. Every AI agent, email, SMS template, and automation pulls from this profile automatically. Set it once, and everything else just works."
+      title="Name your business and establish your domain"
+      subtitle="Start with the name customers will see and the domain they will visit. AgentStack keeps these two decisions at the front of setup, then uses them consistently across your profile, website, email, and marketing."
     >
-      <div className="grid gap-3 sm:grid-cols-3 my-6">
+      <div className="my-6 grid gap-3 sm:grid-cols-3">
         {[
           {
             icon: <Bot className="h-4 w-4 text-blue-500" />,
@@ -327,34 +350,43 @@ function StepBuild({
             desc: "Every email and SMS is pre-personalized with your info before you even send it.",
           },
         ].map((c) => (
-          <div key={c.title} className="rounded-xl border border-border bg-card p-4">
-            <div className="mb-2 flex h-7 w-7 items-center justify-center rounded-lg bg-muted">
+          <div
+            key={c.title}
+            className="border-border bg-card rounded-xl border p-4"
+          >
+            <div className="bg-muted mb-2 flex h-7 w-7 items-center justify-center rounded-lg">
               {c.icon}
             </div>
             <p className="text-sm font-medium">{c.title}</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">{c.desc}</p>
+            <p className="text-muted-foreground mt-0.5 text-xs">{c.desc}</p>
           </div>
         ))}
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <Button render={<Link href={saPath("/business-profile?from=wizard")} />}>
-          Set Up Business Profile
+        <Button
+          render={<Link href={saPath("/business-profile?from=wizard")} />}
+        >
+          Set Business Name
           <ArrowRight className="ml-1.5 h-4 w-4" />
+        </Button>
+        <Button variant="outline" render={<Link href={saPath("/domain")} />}>
+          Set Up Domain
         </Button>
         <button
           onClick={onNext}
-          className="text-sm text-muted-foreground underline-offset-4 hover:underline"
+          className="text-muted-foreground text-sm underline-offset-4 hover:underline"
         >
           I&apos;ll do this later
         </button>
       </div>
 
       <TeachingNote>
-        Think of your Business Profile as your single source of truth
-        that feeds every feature in AgentStack. You don&apos;t have to fill everything in right now.
-        Even your name, brokerage, and service areas make a big difference. You can always come back
-        to add FAQs, brand voice, and compliance rules later.
+        Think of your Business Profile as your single source of truth that feeds
+        every feature in AgentStack. You don&apos;t have to fill everything in
+        right now. Even your name, brokerage, and service areas make a big
+        difference. You can always come back to add FAQs, brand voice, and
+        compliance rules later.
       </TeachingNote>
     </StepShell>
   );
@@ -376,24 +408,24 @@ function StepConnect({
   return (
     <StepShell
       icon={<Link2 className="h-6 w-6 text-violet-600" />}
-      eyebrow="Step 2: Connect · 5 min"
-      title="Bring everything together"
-      subtitle="Import your existing contacts and connect your phone number. These two connections unlock AI-powered SMS follow-up, automated responses, and a full communication history for every lead."
+      eyebrow="Step 2: Google Profile · 5 min"
+      title="Build and optimize your Google Business Profile"
+      subtitle="AgentStack uses your approved business name, domain, services, and market areas to prepare a consistent Google-ready profile. AI assists with indexing-friendly descriptions while you approve every factual claim."
     >
-      <div className="grid gap-3 sm:grid-cols-2 my-6">
+      <div className="my-6 grid gap-3 sm:grid-cols-2">
         <ConnectOptionCard
           icon={<Upload className="h-5 w-5 text-violet-500" />}
-          title="Import contacts"
-          description="Upload a CSV from your old CRM. AgentStack maps columns automatically and handles duplicate detection."
-          href={saPath("/contacts?import=1")}
-          cta="Upload CSV"
+          title="Google profile assistant"
+          description="Review your business identity and generate an indexing-friendly profile without keyword stuffing or invented claims."
+          href={saPath("/ai-agents/google-business")}
+          cta="Build Google Profile"
         />
         <ConnectOptionCard
           icon={<Users className="h-5 w-5 text-blue-500" />}
-          title="Add manually"
-          description="Got a handful of leads? Add them one by one from the Contacts page to get started."
-          href={saPath("/contacts")}
-          cta="Go to Contacts"
+          title="Connect your domain"
+          description="Confirm the domain Google and customers should treat as your official website."
+          href={saPath("/domain")}
+          cta="Review Domain"
         />
         <ConnectOptionCard
           icon={<Phone className="h-5 w-5 text-emerald-500" />}
@@ -418,16 +450,17 @@ function StepConnect({
         </Button>
         <button
           onClick={onSkip}
-          className="text-sm text-muted-foreground underline-offset-4 hover:underline"
+          className="text-muted-foreground text-sm underline-offset-4 hover:underline"
         >
           Skip — I&apos;ll connect later
         </button>
       </div>
 
       <TeachingNote>
-        Already using GoHighLevel, Follow Up Boss, kvCORE, or another CRM? Export your contacts
-        as a CSV and upload here. The importer handles duplicate detection automatically. Connecting
-        your phone number is what powers AI SMS responses — your agent can start answering leads the
+        Already using GoHighLevel, Follow Up Boss, kvCORE, or another CRM?
+        Export your contacts as a CSV and upload here. The importer handles
+        duplicate detection automatically. Connecting your phone number is what
+        powers AI SMS responses — your agent can start answering leads the
         moment you flip the switch.
       </TeachingNote>
     </StepShell>
@@ -448,15 +481,20 @@ function ConnectOptionCard({
   cta: string;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-card p-5 flex flex-col gap-3">
-      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
+    <div className="border-border bg-card flex flex-col gap-3 rounded-xl border p-5">
+      <div className="bg-muted flex h-9 w-9 items-center justify-center rounded-lg">
         {icon}
       </div>
       <div>
-        <p className="font-medium text-sm">{title}</p>
-        <p className="mt-1 text-xs text-muted-foreground">{description}</p>
+        <p className="text-sm font-medium">{title}</p>
+        <p className="text-muted-foreground mt-1 text-xs">{description}</p>
       </div>
-      <Button size="sm" variant="outline" render={<Link href={href} />} className="mt-auto w-fit">
+      <Button
+        size="sm"
+        variant="outline"
+        render={<Link href={href} />}
+        className="mt-auto w-fit"
+      >
         {cta}
         <ChevronRight className="ml-1 h-3.5 w-3.5" />
       </Button>
@@ -488,7 +526,7 @@ function StepCapture({
       title="Create your Lead Capture Systems"
       subtitle="These are the places where leads enter your business — forms on your website, landing pages, booking pages. Pick a ready-made system below. Every submission auto-creates a contact and drops them into your pipeline."
     >
-      <div className="flex flex-col gap-3 my-6">
+      <div className="my-6 flex flex-col gap-3">
         {FUNNEL_RECOMMENDATIONS.map((funnel) => (
           <button
             key={funnel.id}
@@ -496,8 +534,8 @@ function StepCapture({
             className={cn(
               "flex items-start gap-4 rounded-xl border p-4 text-left transition-all",
               chosenFunnel === funnel.id
-                ? "border-blue-500 bg-blue-50 dark:bg-blue-950/30 dark:border-blue-700"
-                : "border-border bg-card hover:border-muted-foreground/30",
+                ? "border-blue-500 bg-blue-50 dark:border-blue-700 dark:bg-blue-950/30"
+                : "border-border bg-card hover:border-muted-foreground/30"
             )}
           >
             <div
@@ -505,23 +543,23 @@ function StepCapture({
                 "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
                 chosenFunnel === funnel.id
                   ? "border-blue-500 bg-blue-500"
-                  : "border-muted-foreground/30",
+                  : "border-muted-foreground/30"
               )}
             >
               {chosenFunnel === funnel.id && (
                 <div className="h-2 w-2 rounded-full bg-white" />
               )}
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-medium text-sm">{funnel.title}</span>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm font-medium">{funnel.title}</span>
                 {funnel.badge && (
                   <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
                     {funnel.badge}
                   </span>
                 )}
               </div>
-              <p className="mt-0.5 text-xs text-muted-foreground">
+              <p className="text-muted-foreground mt-0.5 text-xs">
                 {funnel.description}
               </p>
             </div>
@@ -540,17 +578,17 @@ function StepCapture({
         </Button>
         <button
           onClick={onSkip}
-          className="text-sm text-muted-foreground underline-offset-4 hover:underline"
+          className="text-muted-foreground text-sm underline-offset-4 hover:underline"
         >
           Skip — I&apos;ll set this up later
         </button>
       </div>
 
       <TeachingNote>
-        Every lead capture system is built on two things: a Form (the page where leads give you
-        their info) and an instant AI response (the follow-up that fires within 60 seconds).
-        AgentStack pre-configures both — you just review and activate. The whole thing takes
-        about 3 minutes.
+        Every lead capture system is built on two things: a Form (the page where
+        leads give you their info) and an instant AI response (the follow-up
+        that fires within 60 seconds). AgentStack pre-configures both — you just
+        review and activate. The whole thing takes about 3 minutes.
       </TeachingNote>
     </StepShell>
   );
@@ -576,66 +614,79 @@ function StepRespond({
       title="Enable instant AI response"
       subtitle="This is where AgentStack earns its keep. You don't build automations — you enable them. Your AI agent is already pre-configured with your Business Profile. It responds to every lead within 60 seconds across SMS, web chat, and more."
     >
-      <div className="grid gap-3 sm:grid-cols-2 my-6">
+      <div className="my-6 grid gap-3 sm:grid-cols-2">
         {[
           {
             icon: <Zap className="h-5 w-5 text-amber-500" />,
             title: "Speed-to-Lead",
-            description: "Every new form submission gets an SMS and email within 60 seconds — automatically. The first agent to respond wins 78% of the time.",
+            description:
+              "Every new form submission gets an SMS and email within 60 seconds — automatically. The first agent to respond wins 78% of the time.",
             badge: "Activate in 1 click",
             badgeColor: "emerald",
           },
           {
             icon: <Bot className="h-5 w-5 text-indigo-500" />,
             title: "AI Receptionist",
-            description: "Your AI agent handles inbound texts and web chat 24/7. It reads your Business Profile, qualifies leads, and books callbacks.",
+            description:
+              "Your AI agent handles inbound texts and web chat 24/7. It reads your Business Profile, qualifies leads, and books callbacks.",
             badge: "Pre-configured",
             badgeColor: "blue",
           },
         ].map((card) => (
-          <div key={card.title} className="rounded-xl border border-border bg-card p-5">
-            <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
+          <div
+            key={card.title}
+            className="border-border bg-card rounded-xl border p-5"
+          >
+            <div className="bg-muted mb-3 flex h-9 w-9 items-center justify-center rounded-lg">
               {card.icon}
             </div>
-            <div className="flex items-start justify-between gap-2 mb-2">
+            <div className="mb-2 flex items-start justify-between gap-2">
               <p className="text-sm font-medium">{card.title}</p>
               <span
                 className={cn(
                   "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium",
                   card.badgeColor === "emerald"
                     ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
-                    : "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
+                    : "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300"
                 )}
               >
                 {card.badge}
               </span>
             </div>
-            <p className="text-xs text-muted-foreground">{card.description}</p>
+            <p className="text-muted-foreground text-xs">{card.description}</p>
           </div>
         ))}
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <Button render={<Link href={saPath("/automations")} />} onClick={onNext}>
+        <Button
+          render={<Link href={saPath("/automations")} />}
+          onClick={onNext}
+        >
           Enable Speed-to-Lead
           <ArrowRight className="ml-1.5 h-4 w-4" />
         </Button>
-        <Button variant="outline" render={<Link href={saPath("/ai-agents")} />} onClick={onNext}>
+        <Button
+          variant="outline"
+          render={<Link href={saPath("/ai-agents")} />}
+          onClick={onNext}
+        >
           Review AI Agent
         </Button>
         <button
           onClick={onSkip}
-          className="text-sm text-muted-foreground underline-offset-4 hover:underline"
+          className="text-muted-foreground text-sm underline-offset-4 hover:underline"
         >
           Skip for now
         </button>
       </div>
 
       <TeachingNote>
-        Speed-to-Lead is already wired to your lead capture forms. Just enable it and every new
-        inquiry fires an SMS + email automatically. Your AI agent reads your Business Profile so it
-        already knows your name, brokerage, service areas, and brand voice — review the persona,
-        flip the toggle, and go live. No configuration required.
+        Speed-to-Lead is already wired to your lead capture forms. Just enable
+        it and every new inquiry fires an SMS + email automatically. Your AI
+        agent reads your Business Profile so it already knows your name,
+        brokerage, service areas, and brand voice — review the persona, flip the
+        toggle, and go live. No configuration required.
       </TeachingNote>
     </StepShell>
   );
@@ -659,25 +710,27 @@ function StepNurture({
       title="Your follow-up runs itself"
       subtitle="Every lead that enters your system gets automatic follow-up until they reply. Your pipeline tracks every opportunity from first contact to closing. Nothing falls through the cracks."
     >
-      <div className="grid gap-3 sm:grid-cols-2 my-6">
-        <div className="rounded-xl border border-border bg-card p-5">
-          <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
+      <div className="my-6 grid gap-3 sm:grid-cols-2">
+        <div className="border-border bg-card rounded-xl border p-5">
+          <div className="bg-muted mb-3 flex h-9 w-9 items-center justify-center rounded-lg">
             <TrendingUp className="h-5 w-5 text-emerald-500" />
           </div>
           <p className="text-sm font-medium">Your Pipeline</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Pre-set for real estate: New Lead &rarr; Contacted &rarr; Showing Scheduled &rarr;
-            Offer Made &rarr; Closed. Drag deals as they progress. Customize stages anytime.
+          <p className="text-muted-foreground mt-1 text-xs">
+            Pre-set for real estate: New Lead &rarr; Contacted &rarr; Showing
+            Scheduled &rarr; Offer Made &rarr; Closed. Drag deals as they
+            progress. Customize stages anytime.
           </p>
         </div>
-        <div className="rounded-xl border border-border bg-card p-5">
-          <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
+        <div className="border-border bg-card rounded-xl border p-5">
+          <div className="bg-muted mb-3 flex h-9 w-9 items-center justify-center rounded-lg">
             <Sparkles className="h-5 w-5 text-violet-500" />
           </div>
           <p className="text-sm font-medium">Automatic Follow-up</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Your AI agent continues the conversation. Leads get follow-up messages until they
-            reply, book a showing, or opt out. Everything is pre-written and pre-scheduled.
+          <p className="text-muted-foreground mt-1 text-xs">
+            Your AI agent continues the conversation. Leads get follow-up
+            messages until they reply, book a showing, or opt out. Everything is
+            pre-written and pre-scheduled.
           </p>
         </div>
       </div>
@@ -689,16 +742,17 @@ function StepNurture({
         </Button>
         <button
           onClick={onNext}
-          className="text-sm text-muted-foreground underline-offset-4 hover:underline"
+          className="text-muted-foreground text-sm underline-offset-4 hover:underline"
         >
           Looks good — continue
         </button>
       </div>
 
       <TeachingNote>
-        Most agents lose deals not because they lack leads, but because follow-up stops. AgentStack
-        handles the nurture automatically — your AI texts, your pipeline tracks, and your dashboard
-        shows you exactly who needs attention today. You just show up and close.
+        Most agents lose deals not because they lack leads, but because
+        follow-up stops. AgentStack handles the nurture automatically — your AI
+        texts, your pipeline tracks, and your dashboard shows you exactly who
+        needs attention today. You just show up and close.
       </TeachingNote>
     </StepShell>
   );
@@ -717,7 +771,9 @@ function StepClose({
   saPath: (p: string) => string;
   onFinish: () => void;
 }) {
-  const doneCount = ONBOARDING_STEP_IDS.filter((id) => completed.has(id)).length;
+  const doneCount = ONBOARDING_STEP_IDS.filter((id) =>
+    completed.has(id)
+  ).length;
   const totalCount = ONBOARDING_STEP_IDS.length;
 
   return (
@@ -727,14 +783,14 @@ function StepClose({
       title="Your system is ready"
       subtitle={`Build. Connect. Capture. Respond. Nurture. Close. That's ${AGENTSTACK_METHOD_NAME} — and you just set it up. Your AI receptionist is standing by, your pipeline is live, and every new lead gets instant follow-up.`}
     >
-      <div className="my-6 rounded-xl border border-emerald-200 bg-emerald-50/60 dark:border-emerald-800/40 dark:bg-emerald-950/20 p-5">
-        <div className="flex items-center gap-2 mb-3">
+      <div className="my-6 rounded-xl border border-emerald-200 bg-emerald-50/60 p-5 dark:border-emerald-800/40 dark:bg-emerald-950/20">
+        <div className="mb-3 flex items-center gap-2">
           <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-          <p className="font-medium text-sm text-emerald-700 dark:text-emerald-400">
+          <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
             {doneCount} of {totalCount} setup steps complete
           </p>
         </div>
-        <div className="h-1.5 w-full rounded-full bg-emerald-100 dark:bg-emerald-900/40 overflow-hidden">
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-emerald-100 dark:bg-emerald-900/40">
           <div
             className="h-full rounded-full bg-emerald-500 transition-all"
             style={{ width: `${(doneCount / totalCount) * 100}%` }}
@@ -742,12 +798,13 @@ function StepClose({
         </div>
         {doneCount < totalCount && (
           <p className="mt-2 text-xs text-emerald-600 dark:text-emerald-500">
-            You can finish the remaining steps any time from your workspace checklist.
+            You can finish the remaining steps any time from your workspace
+            checklist.
           </p>
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-2 mb-6">
+      <div className="mb-6 grid grid-cols-2 gap-2">
         {[
           { label: "View Contacts", href: saPath("/contacts") },
           { label: "Open Pipeline", href: saPath("/pipeline") },
@@ -757,10 +814,10 @@ function StepClose({
           <Link
             key={link.href}
             href={link.href}
-            className="flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3 text-sm font-medium hover:bg-muted/50 transition-colors"
+            className="border-border bg-card hover:bg-muted/50 flex items-center justify-between rounded-lg border px-4 py-3 text-sm font-medium transition-colors"
           >
             {link.label}
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            <ChevronRight className="text-muted-foreground h-4 w-4" />
           </Link>
         ))}
       </div>
@@ -793,14 +850,14 @@ function StepShell({
   return (
     <div className="max-w-2xl">
       <div className="mb-6">
-        <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-muted">
+        <div className="bg-muted mb-4 flex h-12 w-12 items-center justify-center rounded-2xl">
           {icon}
         </div>
-        <p className="mb-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        <p className="text-muted-foreground mb-1.5 text-xs font-medium tracking-wider uppercase">
           {eyebrow}
         </p>
         <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-        <p className="mt-2 text-muted-foreground leading-relaxed">{subtitle}</p>
+        <p className="text-muted-foreground mt-2 leading-relaxed">{subtitle}</p>
       </div>
       {children}
     </div>
@@ -809,9 +866,11 @@ function StepShell({
 
 function TeachingNote({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mt-6 flex gap-3 rounded-xl border border-border bg-muted/30 px-4 py-3">
-      <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-      <p className="text-xs text-muted-foreground leading-relaxed">{children}</p>
+    <div className="border-border bg-muted/30 mt-6 flex gap-3 rounded-xl border px-4 py-3">
+      <Sparkles className="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" />
+      <p className="text-muted-foreground text-xs leading-relaxed">
+        {children}
+      </p>
     </div>
   );
 }

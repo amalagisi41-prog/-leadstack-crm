@@ -2,6 +2,7 @@ import "server-only";
 
 import { NextResponse } from "next/server";
 import crypto from "node:crypto";
+import type Stripe from "stripe";
 import { getStripeServer } from "@/lib/stripe/server";
 import {
   ADD_ON_KEYS,
@@ -34,6 +35,7 @@ import {
 interface Body {
   planKey?: string;
   addOnKeys?: string[];
+  billingInterval?: "month" | "year";
 }
 
 export async function POST(request: Request) {
@@ -48,28 +50,50 @@ export async function POST(request: Request) {
   if (!planKey || !PLAN_KEYS.includes(planKey as PlanKey)) {
     return NextResponse.json(
       { error: "A valid plan is required." },
-      { status: 400 },
+      { status: 400 }
     );
   }
-  const priceId = planPriceId(planKey as PlanKey);
-  if (!priceId) {
+  const billingInterval = body.billingInterval === "year" ? "year" : "month";
+  const priceId = planPriceId(planKey as PlanKey, billingInterval);
+  if (planKey !== "starter" && !priceId) {
     return NextResponse.json(
-      { error: `The "${planKey}" plan isn't configured on this deployment yet.` },
-      { status: 503 },
+      {
+        error: `The "${planKey}" plan isn't configured on this deployment yet.`,
+      },
+      { status: 503 }
     );
   }
 
   const addOnKeys = Array.isArray(body.addOnKeys)
     ? body.addOnKeys.filter((k): k is AddOnKey =>
-        ADD_ON_KEYS.includes(k as AddOnKey),
+        ADD_ON_KEYS.includes(k as AddOnKey)
       )
     : [];
   const addOnPriceIds = addOnKeys
     .map((key) => addOnPriceId(key))
     .filter((id): id is string => !!id);
 
+  const soloAmount = billingInterval === "year" ? 118_800 : 14_900;
+  const planLineItem: Stripe.Checkout.SessionCreateParams.LineItem =
+    planKey === "starter"
+      ? {
+          price_data: {
+            currency: "usd",
+            unit_amount: soloAmount,
+            recurring: { interval: billingInterval },
+            product_data: {
+              name: "AgentStack Solo",
+              description:
+                billingInterval === "year"
+                  ? "Single-user annual plan ($99/month, billed yearly)"
+                  : "Single-user monthly plan",
+            },
+          },
+          quantity: 1,
+        }
+      : { price: priceId!, quantity: 1 };
   const lineItems = [
-    { price: priceId, quantity: 1 },
+    planLineItem,
     ...addOnPriceIds.map((id) => ({ price: id, quantity: 1 })),
   ];
 
@@ -92,11 +116,16 @@ export async function POST(request: Request) {
     payment_method_types: ["card"],
     line_items: lineItems,
     ...(discounts ? { discounts } : {}),
-    // 14-day free trial — card is collected up front but not charged until
-    // the trial ends. Matches the "Start free trial" copy on the pricing
-    // page; without this the button charged the card on day one.
     subscription_data: {
-      trial_period_days: 14,
+      trial_period_days: 30,
+    },
+    billing_address_collection: "required",
+    consent_collection: { terms_of_service: "required" },
+    custom_text: {
+      submit: {
+        message:
+          "Your card is securely stored by Stripe for your subscription and any add-ons you approve. One month is free; billing begins after the trial.",
+      },
     },
     success_url: `${appUrl}/welcome?session_id={CHECKOUT_SESSION_ID}&t=${claimToken}`,
     cancel_url: `${appUrl}/#pricing`,
@@ -104,6 +133,7 @@ export async function POST(request: Request) {
       mode: "new_agency",
       claimToken,
       planKey,
+      billingInterval,
       addOnKeys: JSON.stringify(addOnKeys),
     },
   });
@@ -111,7 +141,7 @@ export async function POST(request: Request) {
   if (!session.url) {
     return NextResponse.json(
       { error: "Could not start checkout. Try again." },
-      { status: 502 },
+      { status: 502 }
     );
   }
   return NextResponse.json({ url: session.url });

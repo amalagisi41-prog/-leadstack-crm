@@ -8,6 +8,9 @@ import { CUSTOM_BRAND } from "@/config/landing";
 export function Pricing() {
   const [loading, setLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState("");
+  const [billingInterval, setBillingInterval] = useState<"month" | "year">(
+    "month"
+  );
   const offer = CUSTOM_BRAND.pricing.starter;
 
   async function startCheckout() {
@@ -17,7 +20,7 @@ export function Pricing() {
       const res = await fetch("/api/checkout/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planKey: "starter" }),
+        body: JSON.stringify({ planKey: "starter", billingInterval }),
       });
       const data = (await res.json().catch(() => ({}))) as {
         url?: string;
@@ -68,18 +71,40 @@ export function Pricing() {
               </div>
               <div className="text-right">
                 <span className="text-4xl font-bold">
-                  ${offer.priceMonthly}
+                  $
+                  {billingInterval === "year"
+                    ? offer.priceAnnual
+                    : offer.priceMonthly}
                 </span>
                 <span className="text-blue-100/70">/mo</span>
               </div>
             </div>
             <p className="mt-3 text-sm leading-6 text-blue-100/75">
-              14-day guided trial, then billed monthly. Cancel from your billing
-              portal.
+              One month free, then{" "}
+              {billingInterval === "year"
+                ? "$1,188 billed yearly ($99/month)"
+                : "$149 billed monthly"}
+              . Cancel from your billing portal.
             </p>
           </div>
 
           <div className="p-7">
+            <div className="mb-6 grid grid-cols-2 rounded-xl bg-[#173B7A]/5 p-1">
+              <button
+                type="button"
+                onClick={() => setBillingInterval("month")}
+                className={`rounded-lg px-3 py-2 text-sm font-medium ${billingInterval === "month" ? "bg-white text-[#173B7A] shadow-sm" : "text-[#526078]"}`}
+              >
+                Monthly · $149
+              </button>
+              <button
+                type="button"
+                onClick={() => setBillingInterval("year")}
+                className={`rounded-lg px-3 py-2 text-sm font-medium ${billingInterval === "year" ? "bg-white text-[#173B7A] shadow-sm" : "text-[#526078]"}`}
+              >
+                Annual · $99/mo
+              </button>
+            </div>
             <ul className="grid gap-3 sm:grid-cols-2">
               {offer.features.map((feature) => (
                 <li
@@ -113,8 +138,8 @@ export function Pricing() {
               </p>
             )}
             <p className="mt-4 text-center text-xs leading-5 text-[#7B8AA1]">
-              Stripe checkout · customer billing portal · no add-on bundle
-              required
+              Card securely stored by Stripe · invoice and terms shown before
+              confirmation · add-ons charged only with approval
             </p>
           </div>
         </div>
