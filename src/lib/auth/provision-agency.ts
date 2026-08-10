@@ -6,6 +6,7 @@ import { seedDefaultTemplates } from "@/lib/automations/seed-templates";
 import { seedMethodTemplates } from "@/lib/provisioning/method-templates";
 import { defaultNotificationPreferences } from "@/lib/notifications/preferences";
 import { queueOnboardingLifecycleSequence } from "@/lib/onboarding/lifecycle-email";
+import { SOLO_FOUNDING_BETA_FEATURE_GATES } from "@/lib/entitlements/founding-beta";
 import { GLOBAL_TERRITORY_ID, type Role } from "@/types";
 
 /**
@@ -56,9 +57,10 @@ export interface ProvisionNewAgencyResult {
 }
 
 export async function provisionNewAgency(
-  input: ProvisionNewAgencyInput,
+  input: ProvisionNewAgencyInput
 ): Promise<ProvisionNewAgencyResult> {
-  const { uid, email, displayName, bootstrap, requiresEmailVerification } = input;
+  const { uid, email, displayName, bootstrap, requiresEmailVerification } =
+    input;
   const db = getAdminDb();
   const auth = getAdminAuth();
 
@@ -102,7 +104,7 @@ export async function provisionNewAgency(
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     },
-    { merge: true },
+    { merge: true }
   );
 
   batch.set(agencyRef, {
@@ -146,7 +148,7 @@ export async function provisionNewAgency(
     whatsappEnabledByAgency: false,
     metaInboxEnabledByAgency: false,
     websiteEnabledByAgency: false,
-    websiteStudioEnabledByAgency: false,
+    ...SOLO_FOUNDING_BETA_FEATURE_GATES,
     communityEnabledByAgency: false,
     idxEnabledByAgency: false,
     metaConfig: null,
@@ -232,7 +234,7 @@ export async function provisionNewAgency(
     console.error(
       "[provision-agency] onboarding lifecycle queue failed",
       subAccountId,
-      err,
+      err
     );
   }
 
