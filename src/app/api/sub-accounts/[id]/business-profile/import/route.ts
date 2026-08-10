@@ -53,12 +53,89 @@ function safeUrl(value: unknown): string | null {
     : `https://${value.trim()}`;
   try {
     const url = new URL(candidate);
-    return url.protocol === "http:" || url.protocol === "https:"
-      ? url.toString()
-      : null;
+    if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+    if (url.username || url.password || isPrivateHost(url.hostname))
+      return null;
+    return url.toString();
   } catch {
     return null;
   }
+}
+
+function isPrivateHost(hostname: string): boolean {
+  const host = hostname.toLowerCase().replace(/^\[|\]$/g, "");
+  return (
+    host === "localhost" ||
+    host.endsWith(".localhost") ||
+    host === "0.0.0.0" ||
+    host === "::1" ||
+    host.startsWith("10.") ||
+    host.startsWith("127.") ||
+    host.startsWith("169.254.") ||
+    host.startsWith("192.168.") ||
+    /^172\.(1[6-9]|2\d|3[01])\./.test(host) ||
+    host.startsWith("fc") ||
+    host.startsWith("fd") ||
+    host.startsWith("fe80:")
+  );
+}
+
+function readableText(html: string): string {
+  return html
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, " ")
+    .replace(/<svg\b[^>]*>[\s\S]*?<\/svg>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+async function readPublicPage(startUrl: string): Promise<string> {
+  if (firecrawlIsConfigured()) {
+    return (await scrapeUrl(startUrl)).markdown.slice(0, 18000);
+  }
+
+  let current = startUrl;
+  for (let redirects = 0; redirects <= 3; redirects += 1) {
+    const response = await fetch(current, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (compatible; AgentStackProfileImport/1.0; +https://agentstackcrm.app)",
+        Accept: "text/html,text/plain;q=0.9",
+      },
+      redirect: "manual",
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (response.status >= 300 && response.status < 400) {
+      const location = response.headers.get("location");
+      const next = location
+        ? safeUrl(new URL(location, current).toString())
+        : null;
+      if (!next)
+        throw new Error("That website redirected to an unsafe address.");
+      current = next;
+      continue;
+    }
+    if (!response.ok)
+      throw new Error(`That website returned ${response.status}.`);
+    const contentType = response.headers.get("content-type") ?? "";
+    if (
+      !contentType.includes("text/html") &&
+      !contentType.includes("text/plain")
+    ) {
+      throw new Error("That link is not a readable public web page.");
+    }
+    const body = (await response.text()).slice(0, 250_000);
+    const text = readableText(body).slice(0, 18000);
+    if (!text)
+      throw new Error("No readable business details were found on that page.");
+    return text;
+  }
+  throw new Error("That website redirected too many times.");
 }
 
 function parseObject(text: string): Record<string, unknown> {
@@ -76,12 +153,9 @@ export async function POST(
   const { id } = await ctx.params;
   const access = await requireSubAccountAdmin(request, id);
   if (access instanceof NextResponse) return access;
-  if (!firecrawlIsConfigured() || !aiIsConfigured()) {
+  if (!aiIsConfigured()) {
     return NextResponse.json(
-      {
-        error:
-          "AI website import needs FIRECRAWL_API_KEY and OPENROUTER_API_KEY configured.",
-      },
+      { error: "AI website import is not configured yet." },
       { status: 503 }
     );
   }
@@ -98,7 +172,7 @@ export async function POST(
 
   let markdown: string;
   try {
-    markdown = (await scrapeUrl(url)).markdown.slice(0, 18000);
+    markdown = await readPublicPage(url);
   } catch (error) {
     const message =
       error instanceof FirecrawlError
