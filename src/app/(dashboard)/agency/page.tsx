@@ -65,7 +65,7 @@ function AgencyHomeContent() {
   const isOwner = agencyRole === "owner";
 
   const visible = memberships.filter((m) =>
-    m.name.toLowerCase().includes(filter.trim().toLowerCase())
+    (m.name ?? "").toLowerCase().includes(filter.trim().toLowerCase())
   );
 
   // Full sub-account docs (owner only) — needed so the Manage dialog has the
