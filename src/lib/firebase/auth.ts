@@ -37,6 +37,7 @@ export async function signUpWithEmail(email: string, password: string) {
 export interface SocialAuthResult {
   redirectTo: string;
   existing: boolean;
+  requiresBilling: boolean;
 }
 
 async function signInWithSocialProvider(
@@ -52,6 +53,7 @@ async function signInWithSocialProvider(
     error?: string;
     redirectTo?: string;
     existing?: boolean;
+    requiresBilling?: boolean;
   };
   if (!response.ok) {
     throw new Error(payload.error ?? "Could not finish social sign-in.");
@@ -64,6 +66,7 @@ async function signInWithSocialProvider(
   return {
     redirectTo: payload.redirectTo ?? "/dashboard",
     existing: payload.existing ?? false,
+    requiresBilling: payload.requiresBilling ?? false,
   };
 }
 

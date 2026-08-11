@@ -47,15 +47,21 @@ export async function POST(request: Request) {
       const agencyId = resolved.agencyId;
       const agencySnap = await getAdminDb().doc(`agencies/${agencyId}`).get();
       const subscriptionStatus = agencySnap.data()?.subscriptionStatus;
+      const requiresBilling =
+        subscriptionStatus !== "active" && subscriptionStatus !== "trialing";
+      await auth.setCustomUserClaims(uid, {
+        role: legacyRole,
+        status: resolved.status,
+        agencyId: resolved.agencyId,
+        agencyRole: resolved.agencyRole,
+        billingRequired: requiresBilling,
+      });
       if (
-        subscriptionStatus !== "active" &&
-        subscriptionStatus !== "trialing"
+        requiresBilling
       ) {
         return NextResponse.json({
-          // Workspace setup must not depend on Stripe deployment variables.
-          // Billing activation is a separate guided step and can safely show
-          // its own "not configured" state without blocking authentication.
-          redirectTo: "/agency/get-started?billing=required",
+          redirectTo: "/subscribe",
+          requiresBilling: true,
           existing: true,
           agencyId,
           recoveredAgencyId: resolved.repairedPrimaryAgencyId,
@@ -65,6 +71,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       redirectTo: resolved.agencyRole === "owner" ? "/agency" : "/dashboard",
+      requiresBilling: false,
       existing: true,
       agencyId: resolved.agencyId,
       recoveredAgencyId: resolved.repairedPrimaryAgencyId,
@@ -102,7 +109,8 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({
-    redirectTo: "/agency/get-started?billing=required",
+    redirectTo: "/subscribe",
+    requiresBilling: true,
     agencyId: provisioned.agencyId,
     subAccountId: provisioned.subAccountId,
     existing: false,

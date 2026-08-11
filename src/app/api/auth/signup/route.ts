@@ -175,7 +175,8 @@ export async function POST(request: Request) {
         agencyRole: "owner",
         subAccountId,
         planKey,
-        redirectTo: "/agency/get-started",
+        requiresBilling: true,
+        redirectTo: "/subscribe",
       });
     }
 
@@ -259,6 +260,7 @@ export async function POST(request: Request) {
       agencyId,
       subAccountId,
       planKey,
+      requiresBilling: false,
       redirectTo: `/sa/${subAccountId}/dashboard`,
     });
   } catch (err) {

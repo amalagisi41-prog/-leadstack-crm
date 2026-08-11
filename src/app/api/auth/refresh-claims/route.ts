@@ -3,6 +3,7 @@ import "server-only";
 import { NextResponse } from "next/server";
 import { getAdminAuth } from "@/lib/firebase/admin";
 import { resolveAgencyAccess } from "@/lib/auth/resolve-agency-access";
+import { getAdminDb } from "@/lib/firebase/admin";
 
 /**
  * Re-emit the caller's custom claims from their current Firestore state.
@@ -35,12 +36,21 @@ export async function POST(request: Request) {
   const userRole = resolved.agencyRole === "owner" ? "admin" : "collaborator";
   const legacyRole =
     userRole ?? "collaborator";
+  const agencySnap = await getAdminDb()
+    .doc(`agencies/${resolved.agencyId}`)
+    .get();
+  const subscriptionStatus = agencySnap.data()?.subscriptionStatus;
+  const billingRequired =
+    resolved.agencyRole === "owner" &&
+    subscriptionStatus !== "active" &&
+    subscriptionStatus !== "trialing";
 
   await auth.setCustomUserClaims(uid, {
     role: legacyRole,
     status: resolved.status,
     agencyId: resolved.agencyId,
     agencyRole: resolved.agencyRole,
+    billingRequired,
   });
 
   return NextResponse.json({
@@ -51,6 +61,7 @@ export async function POST(request: Request) {
       status: resolved.status,
       agencyId: resolved.agencyId,
       agencyRole: resolved.agencyRole,
+      billingRequired,
     },
   });
 }

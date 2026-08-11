@@ -78,6 +78,7 @@ export async function provisionNewAgency(
     // Agency-model claims.
     agencyId,
     agencyRole: "owner",
+    billingRequired: true,
     ...(requiresEmailVerification ? { requiresEmailVerification: true } : {}),
   });
 

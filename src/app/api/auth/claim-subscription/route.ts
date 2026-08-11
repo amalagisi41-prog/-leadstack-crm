@@ -189,6 +189,11 @@ export async function POST(request: Request) {
       subscriptionPriceId: purchase.planPriceId ?? null,
       updatedAt: FieldValue.serverTimestamp(),
     });
+    const record = await auth.getUser(uid);
+    await auth.setCustomUserClaims(uid, {
+      ...(record.customClaims ?? {}),
+      billingRequired: false,
+    });
 
     const addOnGates = Array.isArray(purchase.addOnGates) ? purchase.addOnGates : [];
     if (addOnGates.length > 0) {

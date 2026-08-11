@@ -6,6 +6,7 @@ const PUBLIC_PATHS = [
   "/",
   "/login",
   "/signup",
+  "/subscribe",
   "/terms",
   "/privacy",
   "/about",
@@ -272,6 +273,18 @@ export default function middleware(request: NextRequest) {
       const requiresVerification =
         decodedToken.requiresEmailVerification === true;
       const isVerified = decodedToken.email_verified === true;
+      const billingRequired = decodedToken.billingRequired === true;
+      if (
+        billingRequired &&
+        pathname !== "/subscribe" &&
+        !pathname.startsWith("/subscribe/") &&
+        !pathname.startsWith("/api/") &&
+        !isPublicPath(pathname)
+      ) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/subscribe";
+        return NextResponse.redirect(url);
+      }
       if (
         requiresVerification &&
         !isVerified &&

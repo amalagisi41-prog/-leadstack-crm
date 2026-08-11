@@ -8,6 +8,7 @@ import {
   signInWithGoogle,
   type SocialAuthResult,
 } from "@/lib/firebase/auth";
+import { getFirebaseAuth } from "@/lib/firebase/client";
 
 export function SocialAuthButtons({
   mode,
@@ -31,6 +32,29 @@ export function SocialAuthButtons({
         kind === "google"
           ? await signInWithGoogle()
           : await signInWithApple();
+      if (mode === "signup" && result.requiresBilling) {
+        const idToken = await getFirebaseAuth().currentUser?.getIdToken();
+        const checkout = await fetch("/api/checkout/subscribe", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}),
+          },
+          body: JSON.stringify({
+            planKey: "starter",
+            billingInterval: "month",
+          }),
+        });
+        const payload = (await checkout.json().catch(() => ({}))) as {
+          url?: string;
+          error?: string;
+        };
+        if (!checkout.ok || !payload.url) {
+          throw new Error(payload.error ?? "Could not start secure checkout.");
+        }
+        window.location.assign(payload.url);
+        return;
+      }
       if (/^https?:\/\//.test(result.redirectTo)) {
         window.location.assign(result.redirectTo);
         return;

@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import crypto from "node:crypto";
 import type Stripe from "stripe";
 import { getStripeServer } from "@/lib/stripe/server";
+import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import {
   ADD_ON_KEYS,
   PLAN_KEYS,
@@ -117,6 +118,36 @@ export async function POST(request: Request) {
 
   const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "");
   const claimToken = crypto.randomBytes(32).toString("hex");
+  const authorization = request.headers.get("authorization") ?? "";
+  const idToken = authorization.startsWith("Bearer ")
+    ? authorization.slice(7)
+    : "";
+  const decoded = idToken
+    ? await getAdminAuth().verifyIdToken(idToken).catch(() => null)
+    : null;
+  const authenticatedUid = decoded?.uid ?? null;
+  let existingAgency:
+    | { uid: string; agencyId: string; email: string }
+    | null = null;
+  if (authenticatedUid) {
+    const record = await getAdminAuth()
+      .getUser(authenticatedUid)
+      .catch(() => null);
+    const agencyId = record?.customClaims?.agencyId;
+    const agencyRole = record?.customClaims?.agencyRole;
+    if (
+      record &&
+      typeof agencyId === "string" &&
+      agencyRole === "owner" &&
+      (await getAdminDb().doc(`agencies/${agencyId}`).get()).exists
+    ) {
+      existingAgency = {
+        uid: record.uid,
+        agencyId,
+        email: record.email ?? "",
+      };
+    }
+  }
   const firstRenewal = new Date();
   firstRenewal.setUTCMonth(
     firstRenewal.getUTCMonth() + (billingInterval === "year" ? 13 : 2)
@@ -138,6 +169,9 @@ export async function POST(request: Request) {
       mode: "subscription",
       payment_method_types: ["card"],
       line_items: lineItems,
+      ...(existingAgency?.email
+        ? { customer_email: existingAgency.email }
+        : {}),
       ...(discounts ? { discounts } : {}),
       subscription_data: {
         // The separate one-time line above charges the first term now. The
@@ -157,13 +191,23 @@ export async function POST(request: Request) {
               : "Your card is charged $149 today and securely stored by Stripe. Your plan includes one bonus month; automatic monthly renewal begins in 2 months unless you cancel. By subscribing, you agree to the AgentStack Terms at agentstackcrm.app/terms.",
         },
       },
-      success_url: `${appUrl}/welcome?session_id={CHECKOUT_SESSION_ID}&t=${claimToken}`,
-      cancel_url: `${appUrl}/#pricing`,
+      success_url: existingAgency
+        ? `${appUrl}/subscribe/success?session_id={CHECKOUT_SESSION_ID}`
+        : `${appUrl}/welcome?session_id={CHECKOUT_SESSION_ID}&t=${claimToken}`,
+      cancel_url: existingAgency
+        ? `${appUrl}/subscribe?canceled=1`
+        : `${appUrl}/#pricing`,
       metadata: {
-        mode: "new_agency",
+        mode: existingAgency ? "existing_agency" : "new_agency",
         claimToken,
         planKey,
         billingInterval,
+        ...(existingAgency
+          ? {
+              uid: existingAgency.uid,
+              agencyId: existingAgency.agencyId,
+            }
+          : {}),
         addOnKeys: JSON.stringify(addOnKeys),
       },
     });

@@ -2,6 +2,7 @@ import type Stripe from "stripe";
 import { createHash } from "node:crypto";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
+import { getAdminAuth } from "@/lib/firebase/admin";
 import { getStripeServer } from "@/lib/stripe/server";
 import { sendFoundersWelcomeEmail } from "@/lib/stripe/welcome-email";
 import { gateFieldForPriceId } from "@/lib/stripe/catalog";
@@ -88,6 +89,11 @@ async function handleExistingAgencyCheckout(
   batch.set(db.doc(`users/${uid}`), updates, { merge: true });
   batch.set(db.doc(`agencies/${agencyId}`), updates, { merge: true });
   await batch.commit();
+  const record = await getAdminAuth().getUser(uid);
+  await getAdminAuth().setCustomUserClaims(uid, {
+    ...(record.customClaims ?? {}),
+    billingRequired: false,
+  });
 }
 
 async function handleFoundersCheckout(session: Stripe.Checkout.Session) {

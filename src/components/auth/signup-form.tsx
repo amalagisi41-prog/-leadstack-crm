@@ -80,6 +80,7 @@ export function SignupForm({
       const payload = (await res.json().catch(() => ({}))) as {
         error?: string;
         redirectTo?: string;
+        requiresBilling?: boolean;
       };
       if (!res.ok) {
         // 409 = email already has a Firebase Auth user. Common case:
@@ -105,6 +106,32 @@ export function SignupForm({
       void sendWelcomeEmail(email, email.split("@")[0]).catch((err) =>
         console.warn("sendWelcomeEmail failed", err),
       );
+
+      if (payload.requiresBilling) {
+        const idToken = await credential.user.getIdToken();
+        const checkout = await fetch("/api/checkout/subscribe", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${idToken}`,
+          },
+          body: JSON.stringify({
+            planKey: planKey ?? "starter",
+            billingInterval: "month",
+          }),
+        });
+        const checkoutPayload = (await checkout.json().catch(() => ({}))) as {
+          url?: string;
+          error?: string;
+        };
+        if (!checkout.ok || !checkoutPayload.url) {
+          throw new Error(
+            checkoutPayload.error ?? "Could not start secure checkout.",
+          );
+        }
+        window.location.assign(checkoutPayload.url);
+        return;
+      }
 
       router.push(payload.redirectTo ?? "/dashboard");
       router.refresh();
