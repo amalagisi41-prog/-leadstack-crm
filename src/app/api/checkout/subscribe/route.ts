@@ -125,6 +125,12 @@ export async function POST(request: Request) {
   const decoded = idToken
     ? await getAdminAuth().verifyIdToken(idToken).catch(() => null)
     : null;
+  if (idToken && !decoded) {
+    return NextResponse.json(
+      { error: "Your login expired. Sign in again before checkout." },
+      { status: 401 },
+    );
+  }
   const authenticatedUid = decoded?.uid ?? null;
   let existingAgency:
     | { uid: string; agencyId: string; email: string }
