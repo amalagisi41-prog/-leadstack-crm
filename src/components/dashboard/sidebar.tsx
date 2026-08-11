@@ -379,6 +379,12 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                   {section.label}
                 </p>
                 {section.items.map((item) => {
+                  if (
+                    !agency.multiAccountModeEnabled &&
+                    (item.href === "/quotes" || item.href === "/products")
+                  ) {
+                    return null;
+                  }
                   const fullHref = `${subRoot ?? `/sa/${linkSubId}`}${item.href}`;
                   const isActive =
                     pathname === fullHref ||

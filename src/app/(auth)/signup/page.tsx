@@ -29,7 +29,7 @@ export default async function SignupPage({
             </h1>
           </Link>
           <p className="text-muted-foreground mx-auto max-w-md font-sans text-sm">
-            Join the Solo Founding Beta and follow one guided six-step setup:
+            Start your AgentStack plan and follow one guided six-step setup:
             Build, Connect, Capture, Respond, Nurture, and Close.
           </p>
         </div>

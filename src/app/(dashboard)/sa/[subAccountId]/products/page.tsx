@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { Archive, Loader2, Package, Pencil, Plus, RotateCcw } from "lucide-react";
+import {
+  Archive,
+  Loader2,
+  Package,
+  Pencil,
+  Plus,
+  RotateCcw,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -19,6 +26,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useSubAccount } from "@/context/sub-account-context";
 import { subscribeToProducts } from "@/lib/firestore/products";
 import type { Product } from "@/types/products";
+import { BrokerFeatureOnly } from "@/components/dashboard/broker-feature-only";
 
 /**
  * Sub-account product catalog. Operator creates reusable products here;
@@ -29,6 +37,14 @@ import type { Product } from "@/types/products";
  */
 
 export default function ProductsPage() {
+  return (
+    <BrokerFeatureOnly>
+      <ProductsContent />
+    </BrokerFeatureOnly>
+  );
+}
+
+function ProductsContent() {
   const { user, loading: authLoading } = useAuth();
   const { subAccountId, agencyId } = useSubAccount();
 
@@ -39,20 +55,17 @@ export default function ProductsPage() {
 
   useEffect(() => {
     if (authLoading || !user || !agencyId) return;
-    const unsub = subscribeToProducts(
-      { agencyId, subAccountId },
-      setProducts,
-    );
+    const unsub = subscribeToProducts({ agencyId, subAccountId }, setProducts);
     return () => unsub();
   }, [user, agencyId, subAccountId, authLoading]);
 
   const visible = useMemo(
     () => products.filter((p) => showArchived || p.active),
-    [products, showArchived],
+    [products, showArchived]
   );
   const archivedCount = useMemo(
     () => products.filter((p) => !p.active).length,
-    [products],
+    [products]
   );
 
   return (
@@ -60,7 +73,7 @@ export default function ProductsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Products</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="text-muted-foreground mt-1 text-sm">
             Reusable line items for quotes and invoices. Snapshotted into each
             document at the moment of add — editing a product never changes
             historical quotes or invoices.
@@ -74,7 +87,7 @@ export default function ProductsPage() {
 
       {archivedCount > 0 && (
         <div className="flex items-center gap-2 text-xs">
-          <label className="flex items-center gap-2 text-muted-foreground">
+          <label className="text-muted-foreground flex items-center gap-2">
             <input
               type="checkbox"
               checked={showArchived}
@@ -89,9 +102,9 @@ export default function ProductsPage() {
       {visible.length === 0 ? (
         <EmptyState onCreate={() => setCreating(true)} />
       ) : (
-        <div className="overflow-x-auto rounded-2xl border bg-card">
+        <div className="bg-card overflow-x-auto rounded-2xl border">
           <table className="w-full text-sm">
-            <thead className="border-b bg-muted/30 text-left text-xs uppercase tracking-wider text-muted-foreground">
+            <thead className="bg-muted/30 text-muted-foreground border-b text-left text-xs tracking-wider uppercase">
               <tr>
                 <th className="px-4 py-2.5 font-medium">Name</th>
                 <th className="px-4 py-2.5 font-medium">Description</th>
@@ -129,10 +142,10 @@ export default function ProductsPage() {
 
 function EmptyState({ onCreate }: { onCreate: () => void }) {
   return (
-    <div className="rounded-2xl border bg-card p-12 text-center">
-      <Package className="mx-auto h-10 w-10 text-muted-foreground" />
+    <div className="bg-card rounded-2xl border p-12 text-center">
+      <Package className="text-muted-foreground mx-auto h-10 w-10" />
       <h2 className="mt-4 text-base font-semibold">No products yet</h2>
-      <p className="mt-1 text-sm text-muted-foreground">
+      <p className="text-muted-foreground mt-1 text-sm">
         Add your first product to start building quotes and invoices.
       </p>
       <Button onClick={onCreate} className="mt-4">
@@ -165,7 +178,7 @@ function ProductRow({
               method: "PATCH",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ active: true }),
-            },
+            }
       );
       const data = (await res.json().catch(() => ({}))) as {
         ok?: boolean;
@@ -183,12 +196,14 @@ function ProductRow({
   return (
     <tr className="border-b last:border-0">
       <td className="px-4 py-3 font-medium">{product.name}</td>
-      <td className="max-w-md truncate px-4 py-3 text-muted-foreground">
+      <td className="text-muted-foreground max-w-md truncate px-4 py-3">
         {product.description || (
-          <span className="italic text-muted-foreground/60">No description</span>
+          <span className="text-muted-foreground/60 italic">
+            No description
+          </span>
         )}
       </td>
-      <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums">
+      <td className="px-4 py-3 text-right whitespace-nowrap tabular-nums">
         {formatPrice(product.unitPriceCents, product.currency)}
       </td>
       <td className="px-4 py-3">
@@ -197,7 +212,7 @@ function ProductRow({
             Active
           </span>
         ) : (
-          <span className="inline-flex rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+          <span className="bg-muted text-muted-foreground inline-flex rounded-full px-2 py-0.5 text-xs font-medium">
             Archived
           </span>
         )}
@@ -291,7 +306,7 @@ function ProductDialog({
           method: editing ? "PATCH" : "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
-        },
+        }
       );
       const data = (await res.json().catch(() => ({}))) as {
         ok?: boolean;
@@ -365,7 +380,12 @@ function ProductDialog({
             </div>
           </div>
           <div className="flex items-center justify-end gap-2 pt-2">
-            <Button type="button" variant="ghost" onClick={onClose} disabled={saving}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={onClose}
+              disabled={saving}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={saving}>

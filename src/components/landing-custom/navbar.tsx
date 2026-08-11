@@ -70,7 +70,7 @@ export function Navbar({ brand }: { brand: ResolvedBrand }) {
                     size="sm"
                     className="bg-[#1a2f50] text-white hover:bg-[#243d66]"
                   >
-                    Join Beta
+                    Join AgentStack
                   </Button>
                 </>
               )}
@@ -133,7 +133,7 @@ export function Navbar({ brand }: { brand: ResolvedBrand }) {
                         size="sm"
                         onClick={() => setOpen(false)}
                       >
-                        Join Beta
+                        Join AgentStack
                       </Button>
                     </>
                   )}
