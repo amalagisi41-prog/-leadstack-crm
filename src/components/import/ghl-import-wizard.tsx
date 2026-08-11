@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { doc, onSnapshot } from "firebase/firestore";
 import { toast } from "sonner";
 import {
@@ -8,7 +9,8 @@ import {
   CheckCircle2,
   HelpCircle,
   Loader2,
-  Lock,
+  LogIn,
+  ShieldCheck,
   XCircle,
 } from "lucide-react";
 import { getFirebaseDb } from "@/lib/firebase/client";
@@ -56,12 +58,11 @@ interface CfChoice {
 
 export function GhlImportWizard() {
   const { subAccountId, isAdmin } = useSubAccount();
+  const searchParams = useSearchParams();
   const stages = usePipelineStages();
 
   const [step, setStep] = useState<Step>("connect");
   const [showHelp, setShowHelp] = useState(false);
-  const [token, setToken] = useState("");
-  const [locationId, setLocationId] = useState("");
   const [busy, setBusy] = useState(false);
 
   const [preview, setPreview] = useState<PreviewData | null>(null);
@@ -82,6 +83,12 @@ export function GhlImportWizard() {
     });
   }, [jobId]);
 
+  useEffect(() => {
+    if (searchParams.get("website") === "queued") void loadPreview();
+    // Run once on arrival from the permission step.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   if (!isAdmin) {
     return (
       <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-5 text-sm text-amber-700 dark:text-amber-400">
@@ -90,35 +97,12 @@ export function GhlImportWizard() {
     );
   }
 
-  async function connect() {
-    if (!token.trim() || !locationId.trim()) {
-      toast.error("Paste your Private Integration Token and location id.");
-      return;
-    }
+  async function useConnectedAccount() {
     setBusy(true);
     try {
-      const res = await fetch(
-        `/api/sub-accounts/${subAccountId}/import/ghl/connect`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            token: token.trim(),
-            locationId: locationId.trim(),
-          }),
-        }
-      );
-      const data = (await res.json().catch(() => ({}))) as {
-        ok?: boolean;
-        error?: string;
-      };
-      if (!res.ok || !data.ok) {
-        toast.error(data.error ?? "Couldn't connect to GoHighLevel.");
-        return;
-      }
       await loadPreview();
     } catch {
-      toast.error("Couldn't connect. Please try again.");
+      toast.error("No active GoHighLevel connection was found. Log in to connect.");
     } finally {
       setBusy(false);
     }
@@ -224,7 +208,7 @@ export function GhlImportWizard() {
       <>
         <Card
           title="Connect GoHighLevel"
-          desc="Paste a Private Integration Token from your GHL sub-account (Settings → Private Integrations), plus its location id."
+          desc="Sign in to HighLevel, choose the business location, and approve read-only migration access. AgentStack never asks for your GHL password."
           headerAction={
             <Button variant="ghost" size="sm" onClick={() => setShowHelp(true)}>
               <HelpCircle className="mr-1 h-3.5 w-3.5" />
@@ -232,30 +216,32 @@ export function GhlImportWizard() {
             </Button>
           }
         >
-          <div className="space-y-3">
-            <Field label="Private Integration Token">
-              <Input
-                value={token}
-                onChange={(e) => setToken(e.target.value)}
-                placeholder="pit-..."
-              />
-            </Field>
-            <Field label="Location id">
-              <Input
-                value={locationId}
-                onChange={(e) => setLocationId(e.target.value)}
-                placeholder="e.g. abc123…"
-              />
-            </Field>
-            <p className="text-muted-foreground flex items-start gap-1.5 text-[11px]">
-              <Lock className="mt-0.5 h-3 w-3 shrink-0" />
-              Your token is stored securely and only used to read your data
-              during the import.
-            </p>
-            <Button onClick={connect} disabled={busy}>
-              {busy ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : null}
-              Connect &amp; preview
-            </Button>
+          <div className="space-y-4">
+            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+              <p className="flex items-center gap-2 text-sm font-semibold text-[#173B7A]">
+                <ShieldCheck className="h-4 w-4" /> Secure account connection
+              </p>
+              <p className="mt-2 text-xs leading-5 text-[#526078]">
+                HighLevel handles login. You select the location and see the
+                requested permissions before approving. Import remains read-only;
+                nothing is deleted or published automatically.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                onClick={() =>
+                  window.location.assign(
+                    `/api/sub-accounts/${subAccountId}/import/ghl/oauth/start`,
+                  )
+                }
+              >
+                <LogIn className="mr-2 h-4 w-4" /> Log in to GoHighLevel
+              </Button>
+              <Button variant="outline" onClick={useConnectedAccount} disabled={busy}>
+                {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Already connected? Continue
+              </Button>
+            </div>
           </div>
         </Card>
         <GhlImportHelpDialog open={showHelp} onOpenChange={setShowHelp} />
@@ -491,21 +477,6 @@ function Card({
         {headerAction ? <div className="ml-auto">{headerAction}</div> : null}
       </div>
       <p className="text-muted-foreground mt-0.5 mb-4 text-sm">{desc}</p>
-      {children}
-    </div>
-  );
-}
-
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="space-y-1.5">
-      <Label>{label}</Label>
       {children}
     </div>
   );
