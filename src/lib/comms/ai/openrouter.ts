@@ -63,6 +63,7 @@ export async function callAi({
   messages,
   maxTokens = 400,
   temperature = 0.5,
+  responseFormat,
 }: {
   model?: string;
   messages: AiChatMessage[];
@@ -70,6 +71,8 @@ export async function callAi({
    *  segments. SMS replies should be short anyway. */
   maxTokens?: number;
   temperature?: number;
+  /** Ask compatible models to return a machine-readable JSON object. */
+  responseFormat?: { type: "json_object" };
 }): Promise<AiCompletionResult> {
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
@@ -95,6 +98,7 @@ export async function callAi({
       messages,
       max_tokens: maxTokens,
       temperature,
+      ...(responseFormat ? { response_format: responseFormat } : {}),
     }),
   });
 

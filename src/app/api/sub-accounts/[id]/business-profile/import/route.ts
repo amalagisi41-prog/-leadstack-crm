@@ -210,6 +210,12 @@ export async function POST(
   }
 
   const completion = await callAi({
+    // A complete Business Blueprint is substantially larger than an SMS
+    // reply. JSON mode plus a dedicated output budget prevents the model's
+    // object from being truncated before its closing brace.
+    maxTokens: 1_800,
+    temperature: 0,
+    responseFormat: { type: "json_object" },
     messages: [
       {
         role: "system",
