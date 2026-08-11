@@ -1,10 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { usePathname } from "next/navigation";
-import { Bot, Send, Sparkles, X } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { Bot, Check, Loader2, Send, ShieldCheck, Sparkles, X } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
+import type { ZackAction } from "@/lib/assistant/actions";
 
 /**
  * "Ask Zack" — the operator's AI assistant, available on every
@@ -57,15 +58,20 @@ const STUDIO_SUGGESTIONS = [
 interface Msg {
   role: "user" | "assistant";
   content: string;
+  action?: ZackAction | null;
 }
 
 export function AskAssistantPanel() {
   const pathname = usePathname();
+  const router = useRouter();
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState(false);
+  const [actionState, setActionState] = useState<
+    Record<number, "running" | "done" | "error">
+  >({});
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -116,12 +122,17 @@ export function AskAssistantPanel() {
             currentPath: `${pathname}${window.location.search}`,
           }),
         });
-        const data = (await res.json()) as { answer?: string; error?: string };
+        const data = (await res.json()) as {
+          answer?: string;
+          error?: string;
+          action?: ZackAction | null;
+        };
         setMessages((m) => [
           ...m,
           {
             role: "assistant",
             content: res.ok && data.answer ? data.answer : (data.error ?? "Something went wrong — try again."),
+            action: res.ok ? data.action : null,
           },
         ]);
       } catch {
@@ -139,6 +150,62 @@ export function AskAssistantPanel() {
   useEffect(() => {
     askRef.current = (q: string) => void ask(q);
   }, [ask]);
+
+  async function approveAction(action: ZackAction, messageIndex: number) {
+    if (!subAccountId && action.type !== "navigate") {
+      setActionState((state) => ({ ...state, [messageIndex]: "error" }));
+      return;
+    }
+    setActionState((state) => ({ ...state, [messageIndex]: "running" }));
+    try {
+      if (action.type === "navigate") {
+        router.push(action.path);
+        setOpen(false);
+      } else {
+        let endpoint = "";
+        let method = "POST";
+        let body: Record<string, unknown> = {};
+        if (action.type === "set_daily_briefing") {
+          endpoint = `/api/sub-accounts/${subAccountId}/daily-briefing`;
+          body = { enabled: action.enabled };
+        } else if (action.type === "set_ai_channel") {
+          endpoint = `/api/sub-accounts/${subAccountId}/ai-agent/channels/${action.channel}`;
+          method = "PATCH";
+          body = { enabled: action.enabled };
+        } else {
+          endpoint = `/api/agency/sub-accounts/${subAccountId}/feature-gates`;
+          method = "PATCH";
+          body = { [action.feature]: action.enabled };
+        }
+        const response = await fetch(endpoint, {
+          method,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        const data = (await response.json().catch(() => ({}))) as {
+          error?: string;
+        };
+        if (!response.ok) throw new Error(data.error ?? "The change could not be applied.");
+      }
+      setActionState((state) => ({ ...state, [messageIndex]: "done" }));
+      setMessages((items) => [
+        ...items,
+        { role: "assistant", content: `${action.label} is complete.` },
+      ]);
+    } catch (error) {
+      setActionState((state) => ({ ...state, [messageIndex]: "error" }));
+      setMessages((items) => [
+        ...items,
+        {
+          role: "assistant",
+          content:
+            error instanceof Error
+              ? `I couldn't make that change: ${error.message}`
+              : "I couldn't make that change. Please try again.",
+        },
+      ]);
+    }
+  }
 
   if (!open) return null;
 
@@ -185,7 +252,23 @@ export function AskAssistantPanel() {
 
           {messages.map((m, i) =>
             m.role === "assistant" ? (
-              <AssistantBubble key={i}>{m.content}</AssistantBubble>
+              <div key={i} className="space-y-2">
+                <AssistantBubble>{m.content}</AssistantBubble>
+                {m.action ? (
+                  <PermissionCard
+                    action={m.action}
+                    state={actionState[i]}
+                    onApprove={() => void approveAction(m.action!, i)}
+                    onDecline={() =>
+                      setMessages((items) =>
+                        items.map((item, index) =>
+                          index === i ? { ...item, action: null } : item,
+                        ),
+                      )
+                    }
+                  />
+                ) : null}
+              </div>
             ) : (
               <div key={i} className="flex justify-end">
                 <div className="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-br-sm bg-foreground px-3.5 py-2.5 text-sm text-background">
@@ -254,6 +337,60 @@ export function AskAssistantPanel() {
         </form>
       </aside>
     </>
+  );
+}
+
+function PermissionCard({
+  action,
+  state,
+  onApprove,
+  onDecline,
+}: {
+  action: ZackAction;
+  state?: "running" | "done" | "error";
+  onApprove: () => void;
+  onDecline: () => void;
+}) {
+  return (
+    <div className="ml-9 rounded-xl border border-blue-200 bg-blue-50 p-3 text-[#173B7A] dark:border-blue-800 dark:bg-blue-950/30 dark:text-blue-100">
+      <div className="flex items-start gap-2">
+        <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
+        <div>
+          <p className="text-sm font-semibold">Your permission is required</p>
+          <p className="mt-1 text-xs leading-5">{action.description}</p>
+        </div>
+      </div>
+      <div className="mt-3 flex gap-2">
+        <button
+          type="button"
+          onClick={onApprove}
+          disabled={state === "running" || state === "done"}
+          className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-[#173B7A] px-3 text-xs font-semibold text-white disabled:opacity-60"
+        >
+          {state === "running" ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : state === "done" ? (
+            <Check className="h-3.5 w-3.5" />
+          ) : null}
+          {state === "done" ? "Completed" : action.label}
+        </button>
+        {state !== "done" ? (
+          <button
+            type="button"
+            onClick={onDecline}
+            disabled={state === "running"}
+            className="min-h-9 rounded-lg border bg-white px-3 text-xs font-medium text-slate-700 disabled:opacity-60 dark:bg-slate-900 dark:text-slate-200"
+          >
+            Not now
+          </button>
+        ) : null}
+      </div>
+      {state === "error" ? (
+        <p className="mt-2 text-xs text-red-600 dark:text-red-400">
+          The change was not applied. Zack added the reason below.
+        </p>
+      ) : null}
+    </div>
   );
 }
 

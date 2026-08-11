@@ -5,6 +5,7 @@ import { getAdminDb } from "@/lib/firebase/admin";
 import { requireSubAccountMember } from "@/lib/auth/require-tenancy";
 import { aiIsConfigured, callAi, type AiChatMessage } from "@/lib/comms/ai/openrouter";
 import { ZACK_PRODUCT_KB } from "@/lib/assistant/zack-kb";
+import { sanitizeZackAction } from "@/lib/assistant/actions";
 import type { BusinessProfileContent } from "@/types/business-profile";
 
 /**
@@ -22,7 +23,7 @@ import type { BusinessProfileContent } from "@/types/business-profile";
  * caller's membership is verified before the Business Profile is read.
  *
  * Body: { question, history?, subAccountId?, mode?: "crm"|"studio", firstName?, currentPath? }
- * Returns: { answer }  (503 when OpenRouter isn't configured)
+ * Returns: { answer, action? }  (503 when OpenRouter isn't configured)
  */
 
 const MAX_QUESTION_LEN = 2000;
@@ -137,6 +138,19 @@ ${ZACK_PRODUCT_KB}
 
 You can also draft emails and SMS follow-ups, plan next steps for a client, prep them for appointments and listing presentations, and summarize what to focus on. Be concise, concrete, and action-first. Use short paragraphs or tight numbered steps. When drafting a message, output ready-to-send text. Never invent client data or product capabilities. If essential information is missing, ask one short clarifying question.${studioRails}${context}
 
+You may PROPOSE one controlled action only when the operator clearly asks you to open a page or change a setting. A proposal never executes automatically; AgentStack will show a permission card and the operator must confirm it. Supported actions:
+- navigate: an AgentStack path beginning with /sa/${subAccountId ?? "WORKSPACE_ID"}/ or /me/settings
+- set_daily_briefing: enabled boolean
+- set_ai_channel: channel is sms, email, web-chat, voice, or whatsapp; enabled boolean
+- set_feature_gate: feature is broadcastsEnabled, outboundVoiceEnabled, whatsappEnabled, metaInboxEnabled, websiteEnabled, websiteStudioEnabled, socialPlannerEnabled, communityEnabled, idxEnabled, apiAccessEnabled, or emailDomainEnabled; enabled boolean. Agency-owner permission is required and the server will enforce it.
+
+Never propose actions for billing, purchases, deletion, publishing, sending communications, credentials, member access, or data imports. Explain those steps instead.
+
+Return ONLY a JSON object in this exact shape:
+{"answer":"Your concise response","action":null}
+or
+{"answer":"Explain the proposed change and that confirmation is required.","action":{"type":"one supported type","label":"Short button label","description":"Exact effect of confirming", "other_required_field":"value"}}
+
 Today's date: ${new Date().toISOString().slice(0, 10)}.`;
 
   const messages: AiChatMessage[] = [
@@ -146,8 +160,26 @@ Today's date: ${new Date().toISOString().slice(0, 10)}.`;
   ];
 
   try {
-    const result = await callAi({ messages, maxTokens: 900 });
-    return NextResponse.json({ answer: result.text });
+    const result = await callAi({
+      messages,
+      maxTokens: 900,
+      temperature: 0.25,
+      responseFormat: { type: "json_object" },
+    });
+    let parsed: { answer?: unknown; action?: unknown };
+    try {
+      parsed = JSON.parse(result.text) as { answer?: unknown; action?: unknown };
+    } catch {
+      return NextResponse.json({ answer: result.text, action: null });
+    }
+    const answer =
+      typeof parsed.answer === "string" && parsed.answer.trim()
+        ? parsed.answer.trim().slice(0, 8000)
+        : "I couldn't prepare that response. Please try asking another way.";
+    return NextResponse.json({
+      answer,
+      action: sanitizeZackAction(parsed.action),
+    });
   } catch (err) {
     console.error("[assistant] LLM call failed", err);
     return NextResponse.json(
