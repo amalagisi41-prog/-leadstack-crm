@@ -13,7 +13,7 @@ type MetaChannel = "messenger" | "instagram";
 type Body = { contactId?: string; body?: string; channel?: string };
 
 /**
- * Send a manual reply on the BETA Facebook Messenger / Instagram DM channels.
+ * Send a manual reply on the preview Facebook Messenger / Instagram DM channels.
  *
  * Guards mirror the WhatsApp send route, adapted for Meta:
  *   1. Agency gate `metaInboxEnabledByAgency` must be on (403).

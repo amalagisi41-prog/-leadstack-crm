@@ -49,9 +49,9 @@ export interface AiChannel {
    *  directly. Use this to park channels that aren't a near-term priority
    *  without deleting the work. */
   hidden?: boolean;
-  /** When true, the nav tab + status card show a small "beta" marker to
+  /** When true, the nav tab + status card show a small preview marker to
    *  signal the channel is shipped but not a public/GA release yet. */
-  beta?: boolean;
+  preview?: boolean;
   /** URL slug under /sa/{id}/ai-agents/. Empty string for the Overview. */
   slug: string;
 }
@@ -94,7 +94,7 @@ export const AI_CHANNELS: AiChannel[] = [
     icon: MessagesSquare,
     group: "inbound",
     comingSoon: false,
-    beta: true,
+    preview: true,
     slug: "whatsapp",
   },
   {

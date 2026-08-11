@@ -22,7 +22,7 @@ import type { ResendConfig } from "@/types";
  *     `/api/v1/*` request and blocks new key / webhook mints, but
  *     PRESERVES existing keys + subscriptions so re-enabling resumes
  *     them instantly (no painful re-rotation of Zapier integrations).
- *   - `metaInboxEnabled` — BETA master switch for the Facebook Messenger +
+ *   - `metaInboxEnabled` — preview master switch for the Facebook Messenger +
  *     Instagram DM inbox channels. Pure toggle today (no consumer slices
  *     yet) so the feature stays inert + invisible while off.
  *   - `idxEnabled` — IDX Listings (realtor MLS search powered by the
@@ -213,7 +213,7 @@ export async function PATCH(
   }
 
   if (wantsMetaInbox) {
-    // No tear-down — the beta Facebook Messenger + Instagram DM inbox channels
+    // No tear-down — the preview Facebook Messenger + Instagram DM inbox channels
     // aren't provisioned yet (consumer slices land later). This is purely the
     // master switch: while off, nothing about the feature surfaces or runs.
     // Re-enabling once the channels ship will light them up instantly.

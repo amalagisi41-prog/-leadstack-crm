@@ -31,7 +31,7 @@ export function SignupForm({
   const router = useRouter();
   const searchParams = useSearchParams();
   // Pre-fill email when arriving from an invite link (/signup?email=…).
-  // Invited users join that workspace; everyone else starts a new beta
+  // Invited users join that workspace; everyone else starts a new Solo
   // workspace.
   const initialEmail = searchParams?.get("email") ?? "";
   const planFromUrl = searchParams?.get("plan");
@@ -65,7 +65,7 @@ export function SignupForm({
     try {
       // The server creates the Firebase Auth user, tenancy documents, and
       // claims. Invited emails join their assigned workspace; all other
-      // registrants receive a new isolated beta workspace.
+      // registrants receive a new isolated Solo workspace.
       const res = await fetch("/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

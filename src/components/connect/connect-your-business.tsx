@@ -98,7 +98,7 @@ function ConnectionCard({ data }: { data: ConnectionCardData }) {
 
 /**
  * "Connect Your Business" — the single user-facing integrations screen for
- * Solo Beta. A flat, searchable card grid (icon + connected-account detail
+ * AgentStack Solo. A flat, searchable card grid (icon + connected-account detail
  * + one action) — every card is read-only status + a deep link to the real
  * configuration surface in Settings or the relevant feature page, mirroring
  * the Social Planner Connections tab's established pattern rather than

@@ -63,7 +63,7 @@ export interface AgencyDoc {
    */
   onboardingVideos?: import("../lib/onboarding/steps").OnboardingVideos | null;
   /**
-   * Solo Beta simplification gate. `undefined`/`false` (the default for
+   * Solo simplification gate. `undefined`/`false` (the default for
    * every new agency, including the one created at first signup) means the
    * agency is treated as a single-operator workspace: the Agency home,
    * sub-account switcher, and agency-level nav are hidden, and the owner is
@@ -165,7 +165,7 @@ export interface SubAccountDoc {
    */
   whatsappEnabledByAgency?: boolean;
   /**
-   * Agency-controlled gate for the BETA Facebook Messenger + Instagram DM
+   * Agency-controlled gate for the preview Facebook Messenger + Instagram DM
    * unified-inbox channels (both ride one Meta connection, so they flip
    * together). Only the agency owner can flip this (PATCH
    * /api/agency/sub-accounts/[id]/feature-gates). When `false` (or undefined
@@ -174,7 +174,7 @@ export interface SubAccountDoc {
    * channel badge surfaces anywhere. This gate is the master switch for a
    * feature that can't be fully self-tested without a connected Meta account,
    * so it ships off and an agency lights it up only for a sub-account that has
-   * the Meta setup and volunteers to beta-test. No tear-down on disable —
+   * the Meta setup and opts into preview access. No tear-down on disable —
    * nothing is provisioned until the consumer slices land. Read `=== true` so
    * legacy docs stay locked. See the "Facebook + Instagram inbox" plan.
    */
@@ -262,7 +262,7 @@ export interface SubAccountDoc {
   communityHiddenWhenDisabled?: boolean;
   idxHiddenWhenDisabled?: boolean;
   /**
-   * BETA Facebook Messenger + Instagram DM connection. Null/undefined until the
+   * Preview Facebook Messenger + Instagram DM connection. Null/undefined until the
    * sub-account admin connects a Page (only possible when
    * `metaInboxEnabledByAgency` is on). See {@link MetaConfig}.
    */
@@ -557,7 +557,7 @@ export interface TwilioConfig {
 }
 
 /**
- * BETA Meta (Facebook Messenger + Instagram DM) connection for one sub-account.
+ * Preview Meta (Facebook Messenger + Instagram DM) connection for one sub-account.
  * Null/undefined = not connected. Populated by the OAuth callback
  * (/api/sub-accounts/[id]/meta/callback) after the sub-account admin connects a
  * Facebook Page; both Messenger and IG DM ride this single connection. Gated by

@@ -75,7 +75,7 @@ export function SignupCta() {
             {/* Left: copy */}
             <div>
               <p className="text-sm font-semibold tracking-[0.28em] text-[#173B7A] uppercase">
-                Solo Founding Beta
+                AgentStack Solo
               </p>
               <h2 className="mt-4 text-3xl font-semibold tracking-tight text-[#173B7A] sm:text-5xl">
                 Build your business once.{" "}
@@ -104,7 +104,7 @@ export function SignupCta() {
             {/* Right: signup form */}
             <div className="rounded-[1.75rem] border border-[#E7DCC7] bg-white p-6 shadow-[0_20px_60px_rgba(23,59,122,0.08)]">
               <h3 className="text-lg font-semibold text-[#173B7A]">
-                Create your beta workspace
+                Create your workspace
               </h3>
               <p className="mt-0.5 text-xs text-[#7B8AA1]">
                 Account setup first · subscription activation follows
@@ -171,7 +171,7 @@ export function SignupCta() {
                     "Creating account…"
                   ) : (
                     <>
-                      Create beta workspace
+                      Create workspace
                       <ArrowRight className="h-4 w-4" />
                     </>
                   )}

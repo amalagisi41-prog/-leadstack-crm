@@ -3,7 +3,7 @@ import "server-only";
 import crypto from "node:crypto";
 
 /**
- * Meta (Facebook Messenger + Instagram DM) integration wrapper — the BETA
+ * Meta (Facebook Messenger + Instagram DM) integration wrapper — the preview
  * unified-inbox channels. Everything here is INERT unless the deployment has a
  * Meta app configured (`META_APP_ID` + `META_APP_SECRET`) AND the sub-account's
  * agency gate (`metaInboxEnabledByAgency`) is on. Mirrors the shape of
@@ -21,7 +21,7 @@ const GRAPH = `https://graph.facebook.com/${GRAPH_VERSION}`;
  * OAuth scopes requested when an admin connects a Page. `pages_messaging` +
  * `instagram_manage_messages` are App-Review-gated by Meta — until the app
  * passes review these are only grantable to the app's own admins/testers, which
- * is exactly the beta-tester model.
+ * is exactly the preview-access model.
  */
 /** Base + inbox (Messenger / IG DM) scopes — always requested. */
 const BASE_SCOPES = [

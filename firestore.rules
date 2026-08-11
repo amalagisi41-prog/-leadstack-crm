@@ -677,7 +677,7 @@ service cloud.firestore {
         ) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readAt']);
         allow create, delete: if false;
       }
-      // BETA Facebook Messenger + Instagram DM chat thread — same model as the
+      // Preview Facebook Messenger + Instagram DM chat thread — same model as the
       // SMS / WhatsApp threads above. Populated server-side by the Meta inbound
       // webhook + the /api/comms/meta/send route. Reads are member-scoped;
       // creates + deletes are server-only; the only client mutation is `readAt`.

@@ -102,7 +102,7 @@ export async function POST(request: Request) {
         error:
           error instanceof Error
             ? error.message
-            : "Could not create your beta workspace.",
+            : "Could not create your workspace.",
       },
       { status: 500 }
     );

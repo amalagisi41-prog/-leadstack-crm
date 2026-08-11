@@ -16,7 +16,7 @@ import type { SubAccountDoc } from "@/types";
 export const dynamic = "force-dynamic";
 
 /**
- * BETA Meta inbound webhook — Facebook Messenger + Instagram DM.
+ * Preview Meta inbound webhook — Facebook Messenger + Instagram DM.
  *
  *   GET  /api/webhooks/meta   → verification handshake (Meta echoes hub.challenge)
  *   POST /api/webhooks/meta   → message events from the Meta cloud

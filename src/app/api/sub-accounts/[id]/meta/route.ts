@@ -8,7 +8,7 @@ import { unsubscribePageFromWebhook } from "@/lib/comms/meta";
 import type { SubAccountDoc } from "@/types";
 
 /**
- * Disconnect the BETA Facebook/Instagram inbox for a sub-account.
+ * Disconnect the preview Facebook/Instagram inbox for a sub-account.
  *
  *   DELETE /api/sub-accounts/[id]/meta
  *

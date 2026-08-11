@@ -4,12 +4,12 @@ import {
   PUBLIC_CAPABILITIES,
 } from "@/lib/public-site/capability-status";
 
-export default function BetaPage() {
+export default function AvailabilityPage() {
   return (
     <PublicInfoShell
-      eyebrow="Solo Founding Beta"
+      eyebrow="Feature availability"
       title="A working core, with the roadmap clearly labeled."
-      intro="The founding beta is focused on one measurable outcome: capture a lead, respond with an approved workflow, nurture the relationship, and book an appointment. Availability labels describe what a new subscriber can use today."
+      intro="AgentStack Solo is focused on one measurable outcome: capture a lead, respond with an approved workflow, nurture the relationship, and book an appointment. Availability labels describe what a new subscriber can use today."
     >
       <div className="grid gap-4 md:grid-cols-2">
         {PUBLIC_CAPABILITIES.map((item) => (

@@ -41,7 +41,7 @@ export function PublicInfoShell({
           <Link href="/security">Security</Link>
           <Link href="/integrations">Integrations</Link>
           <Link href="/status">Status</Link>
-          <Link href="/beta">Beta</Link>
+          <Link href="/availability">Availability</Link>
         </footer>
       </div>
     </main>

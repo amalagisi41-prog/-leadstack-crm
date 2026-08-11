@@ -45,17 +45,17 @@ export function Pricing() {
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-3xl text-center">
           <p className="mb-2 text-sm font-semibold tracking-[0.28em] text-[#173B7A] uppercase">
-            One beta offer
+            One simple offer
           </p>
           <h2 className="text-3xl font-semibold tracking-tight text-[#173B7A] sm:text-5xl">
-            Solo Founding Beta.{" "}
+            AgentStack Solo.{" "}
             <span className="font-sans font-normal text-[#DB4F9B] italic">
               One clear path.
             </span>
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-[#526078] sm:text-lg">
             Guided six-step setup, one workspace, and the core
-            lead-to-appointment workflow. Features outside the beta scope are
+            lead-to-appointment workflow. Features outside the Solo plan are
             labeled before you subscribe.
           </p>
         </div>

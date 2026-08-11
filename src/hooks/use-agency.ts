@@ -19,7 +19,7 @@ interface AgencySummary {
   /** Per-step onboarding walkthrough video URLs. Empty until set in Agency → Settings. */
   onboardingVideos: OnboardingVideos;
   /**
-   * Solo Beta gate. False (the default) means this agency is a
+   * Solo plan gate. False (the default) means this agency is a
    * single-operator workspace — Agency home, the sub-account switcher, and
    * agency-level nav should stay hidden. True once a 2nd sub-account has
    * been created. See `AgencyDoc.multiAccountModeEnabled`.

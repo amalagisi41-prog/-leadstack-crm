@@ -6,7 +6,7 @@ import { seedDefaultTemplates } from "@/lib/automations/seed-templates";
 import { seedMethodTemplates } from "@/lib/provisioning/method-templates";
 import { defaultNotificationPreferences } from "@/lib/notifications/preferences";
 import { queueOnboardingLifecycleSequence } from "@/lib/onboarding/lifecycle-email";
-import { SOLO_FOUNDING_BETA_FEATURE_GATES } from "@/lib/entitlements/founding-beta";
+import { SOLO_FEATURE_GATES } from "@/lib/entitlements/solo";
 import { GLOBAL_TERRITORY_ID, type Role } from "@/types";
 
 /**
@@ -149,7 +149,7 @@ export async function provisionNewAgency(
     whatsappEnabledByAgency: false,
     metaInboxEnabledByAgency: false,
     websiteEnabledByAgency: false,
-    ...SOLO_FOUNDING_BETA_FEATURE_GATES,
+    ...SOLO_FEATURE_GATES,
     communityEnabledByAgency: false,
     idxEnabledByAgency: false,
     metaConfig: null,

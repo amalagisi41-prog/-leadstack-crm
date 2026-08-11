@@ -7,7 +7,7 @@ import {
   OnboardingWizard,
   type OnboardingWizardStepKey,
 } from "@/components/dashboard/onboarding-wizard";
-import { SOLO_FOUNDING_BETA_ENTITLEMENT_PATCH } from "@/lib/entitlements/founding-beta";
+import { SOLO_ENTITLEMENT_PATCH } from "@/lib/entitlements/solo";
 import { OnboardingFoundation } from "@/components/dashboard/onboarding-foundation";
 import { Loader2 } from "lucide-react";
 
@@ -33,7 +33,7 @@ export default function GetStartedPage() {
       ? (requestedStep as OnboardingWizardStepKey)
       : null;
 
-  // Idempotent migration for workspaces created before the founding-beta
+  // Idempotent migration for workspaces created before the Solo entitlement
   // entitlement baseline shipped. The endpoint is agency-owner-only; invited
   // members receive a harmless 403 and keep their agency-managed gates.
   useEffect(() => {
@@ -50,7 +50,7 @@ export default function GetStartedPage() {
     void fetch(`/api/agency/sub-accounts/${subAccountId}/feature-gates`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(SOLO_FOUNDING_BETA_ENTITLEMENT_PATCH),
+      body: JSON.stringify(SOLO_ENTITLEMENT_PATCH),
     }).catch(() => undefined);
   }, [subAccount, subAccountId]);
 

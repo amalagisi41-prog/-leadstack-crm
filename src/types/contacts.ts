@@ -12,7 +12,7 @@ import type { Timestamp, FieldValue } from "firebase/firestore";
  *                     selectable in the manual-create UI as a catch-all.
  *   - "referral" / "ads" / "other"  Manual-entry options.
  *   - "facebook" / "instagram"  Auto-set when a contact is created from a
- *                     BETA Facebook Messenger / Instagram DM inbound. Not
+ *                     Preview Facebook Messenger / Instagram DM inbound. Not
  *                     manual-create options — the Meta webhook stamps them.
  *   - ""              Unknown — no badge rendered.
  */
@@ -156,7 +156,7 @@ export interface Contact {
   lastContactedAt?: Timestamp | FieldValue | null;
   /**
    * Page-scoped Meta user id (PSID / IGSID) for a contact who has messaged this
-   * sub-account via the BETA Facebook Messenger / Instagram DM inbox. Server-
+   * sub-account via the preview Facebook Messenger / Instagram DM inbox. Server-
    * managed (stamped by /api/webhooks/meta on first inbound) and used to
    * reconcile subsequent Meta messages to the same contact — Meta DMs carry no
    * phone/email. Undefined for every non-Meta contact.
@@ -210,7 +210,7 @@ export type ActivityType =
   | "email_sent"
   | "sms_sent"
   | "whatsapp_sent"
-  // Operator replied on the BETA Facebook Messenger / Instagram DM inbox.
+  // Operator replied on the preview Facebook Messenger / Instagram DM inbox.
   // Written by /api/comms/meta/send.
   | "messenger_sent"
   | "instagram_sent"

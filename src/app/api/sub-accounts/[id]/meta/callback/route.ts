@@ -16,7 +16,7 @@ import { deriveMetaCapabilities } from "@/lib/comms/meta-capabilities";
 import type { SubAccountDoc } from "@/types";
 
 /**
- * OAuth callback for the BETA Facebook/Instagram connect flow.
+ * OAuth callback for the preview Facebook/Instagram connect flow.
  *
  *   GET /api/sub-accounts/[id]/meta/callback?code=…&state=…
  *

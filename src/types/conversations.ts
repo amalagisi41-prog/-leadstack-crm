@@ -15,7 +15,7 @@ import type { Timestamp, FieldValue } from "firebase/firestore";
  * the detail page can read the contact's message subcollections directly.
  *
  * Only created when a real message row is written — i.e. dedicated-Twilio SMS,
- * a configured WhatsApp sender, or (beta) a connected Meta inbox. Shared-sender
+ * a configured WhatsApp sender, or a preview Meta inbox. Shared-sender
  * SMS (no message rows) produces no conversation, consistent with the
  * per-contact threads. Message subcollections by channel:
  *   sms → contacts/{id}/messages, whatsapp → contacts/{id}/whatsappMessages,
@@ -23,7 +23,7 @@ import type { Timestamp, FieldValue } from "firebase/firestore";
  */
 
 /**
- * `messenger` + `instagram` are the BETA Meta channels — gated by the agency
+ * `messenger` + `instagram` are preview Meta channels — gated by the agency
  * `metaInboxEnabledByAgency` flag, so they only ever appear once that's on.
  */
 export type ConversationChannel = "sms" | "whatsapp" | "messenger" | "instagram";

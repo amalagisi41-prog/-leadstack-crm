@@ -472,7 +472,7 @@ function Card({
       <div className="flex items-center gap-2">
         <h2 className="text-base font-semibold">{title}</h2>
         <span className="rounded-full bg-fuchsia-500/10 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-fuchsia-600 uppercase dark:text-fuchsia-400">
-          Beta
+          Preview
         </span>
         {headerAction ? <div className="ml-auto">{headerAction}</div> : null}
       </div>

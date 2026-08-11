@@ -38,7 +38,7 @@ import type { SubAccountDoc } from "@/types";
  *   - Dedicated email sending domain (Resend slot per sub-account)
  *   - Public API access (REST + webhooks for /api/v1/*)
  *   - Broadcasts / Outbound AI calling / WhatsApp
- *   - Facebook + Instagram inbox (beta) — master switch, off by default
+ *   - Facebook + Instagram inbox preview — master switch, off by default
  *   - IDX Listings — realtor MLS search powered by the sub-account's own
  *     IDX Broker account
  *
@@ -313,8 +313,8 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
       if (metaInboxDirty) {
         parts.push(
           metaInboxEnabled
-            ? "Facebook + Instagram inbox (beta) enabled."
-            : "Facebook + Instagram inbox (beta) disabled. The channels go silent and hidden.",
+            ? "Facebook + Instagram inbox preview enabled."
+            : "Facebook + Instagram inbox preview disabled. The channels go silent and hidden.",
         );
       }
       if (websiteDirty) {
@@ -496,11 +496,11 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
             onChange={setMetaInboxEnabled}
             disabled={saving || (metaUnconfigured && !initialMetaInbox)}
             icon={<MessagesSquare className="h-3.5 w-3.5 text-pink-600 dark:text-pink-400" />}
-            title="Facebook + Instagram inbox (beta)"
+            title="Facebook + Instagram inbox (preview)"
           >
             When enabled, this sub-account can connect a Facebook Page +
             Instagram business account so Messenger and IG DMs land in the
-            unified inbox alongside SMS/WhatsApp. <strong>Beta</strong> — both
+            unified inbox alongside SMS/WhatsApp. <strong>Preview</strong> — both
             channels ride one Meta connection and stay completely hidden until
             you switch this on; off is the default for every sub-account.
             Disabling silences and hides the channels; nothing is torn down, so
@@ -519,7 +519,7 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
             onChange={setSocialPlannerEnabled}
             disabled={saving || (metaUnconfigured && !initialSocial)}
             icon={<Share2 className="h-3.5 w-3.5 text-fuchsia-600 dark:text-fuchsia-400" />}
-            title="Social Planner (beta)"
+            title="Social Planner (preview)"
             hideOption={{
               hidden: socialHidden,
               onHiddenChange: setSocialHidden,
@@ -528,7 +528,7 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
           >
             When enabled, this sub-account can connect a Facebook Page +
             Instagram business account and schedule posts that auto-publish at
-            the chosen time. <strong>Beta</strong> — posting reuses the same
+            the chosen time. <strong>Preview</strong> — posting reuses the same
             Meta connection as the inbox plus extra publish permissions
             (requires Meta App Review). Disabling locks the Social Planner
             sidebar entry and 403s the connect/publish routes; scheduled posts

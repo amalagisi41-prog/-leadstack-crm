@@ -31,7 +31,7 @@ import { AiDemo } from "@/components/landing-custom/ai-demo";
 import { Territory } from "@/components/landing-custom/territory";
 import { IdxShowcase } from "@/components/landing-custom/idx-showcase";
 import { Features as CustomFeatures } from "@/components/landing-custom/features";
-import { BetaOutcomes } from "@/components/landing-custom/beta-outcomes";
+import { SoloOutcomes } from "@/components/landing-custom/solo-outcomes";
 import { Pricing as CustomPricing } from "@/components/landing-custom/pricing";
 import { FAQ as CustomFAQ } from "@/components/landing-custom/faq";
 import { SignupCta } from "@/components/landing-custom/signup-cta";
@@ -66,7 +66,7 @@ export default async function HomePage() {
           <Territory />
           <IdxShowcase />
           <CustomFeatures />
-          <BetaOutcomes />
+          <SoloOutcomes />
           <CustomPricing />
           <CustomFAQ brand={brand} />
           <SignupCta />

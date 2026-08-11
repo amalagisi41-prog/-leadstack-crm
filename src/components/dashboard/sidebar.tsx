@@ -287,7 +287,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
     };
   }, [linkSubId, pathname]);
 
-  // Solo Beta: outside multi-account mode, the brand line reads as the
+  // Solo mode: outside multi-account mode, the brand line reads as the
   // workspace/sub-account name rather than the agency's — a single-operator
   // agency and its one workspace are the same thing to the user.
   const linkedMembership =
@@ -328,7 +328,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           if ((e.target as HTMLElement).closest("a")) onNavigate?.();
         }}
       >
-        {/* Agency-level links — Solo Beta hides these until the agency has
+        {/* Agency-level links — Solo mode hides these until the agency has
             graduated to multi-account mode (see AgencyDoc.multiAccountModeEnabled) */}
         {agencyRole === "owner" && agency.multiAccountModeEnabled && (
           <div className="mb-4">

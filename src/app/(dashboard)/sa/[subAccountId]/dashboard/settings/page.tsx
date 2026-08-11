@@ -343,7 +343,7 @@ export default function SettingsPage() {
           {/* A2P registration — guided 10DLC setup + manual carrier status tracking. */}
           <SubAccountA2pSection />
 
-          {/* Facebook + Instagram inbox (beta) — self-gates: renders only when
+          {/* Facebook + Instagram inbox preview — self-gates: renders only when
               the agency flipped metaInboxEnabledByAgency on for this sub-account. */}
           <SubAccountMetaSection />
 

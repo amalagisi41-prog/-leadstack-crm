@@ -66,9 +66,9 @@ export function ChannelNav() {
                 )}
               />
               {channel.label}
-              {channel.beta && (
+              {channel.preview && (
                 <span className="rounded-sm bg-violet-500/10 px-1 py-0.5 text-[9px] font-semibold uppercase leading-none tracking-wide text-violet-600 dark:text-violet-400">
-                  beta
+                  preview
                 </span>
               )}
             </Link>

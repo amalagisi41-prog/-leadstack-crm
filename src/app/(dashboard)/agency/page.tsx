@@ -104,7 +104,7 @@ function AgencyHomeContent() {
     router.replace(`/sa/${firstMembership.subAccountId}/dashboard`);
   }, [agencyRole, loading, memberships, membershipsLoaded, router, user]);
 
-  // Solo Beta: an owner whose agency hasn't graduated to multi-account mode
+  // Solo mode: an owner whose agency hasn't graduated to multi-account mode
   // (the default — see AgencyDoc.multiAccountModeEnabled) has no use for the
   // Agency home even if they land here directly. Send them straight into
   // their one workspace. An owner with zero sub-accounts yet stays here to

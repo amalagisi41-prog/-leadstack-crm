@@ -12,7 +12,7 @@ const PUBLIC_PATHS = [
   "/about",
   "/security",
   "/help",
-  "/beta",
+  "/availability",
   "/integrations",
   "/status",
   "/playbook",
@@ -68,7 +68,7 @@ const PUBLIC_PATHS = [
   "/api/landing/heartbeat",
   "/api/webhooks/twilio",
   "/api/webhooks/stripe",
-  // Meta (Facebook Messenger + Instagram DM) webhook — BETA. Public from the
+  // Meta (Facebook Messenger + Instagram DM) webhook — preview. Public from the
   // Meta cloud: GET is the verify-token handshake, POST carries message events.
   // Security: X-Hub-Signature-256 (HMAC of the raw body with the app secret)
   // verified inside the route; per-sub-account routing by Page / IG id.
@@ -263,7 +263,7 @@ export default function middleware(request: NextRequest) {
       headers.set("x-user-uid", decodedToken.uid);
       headers.set("x-user-email", decodedToken.email ?? "");
 
-      // Solo Beta routing: "New unverified user → Verify email once". Only
+      // Solo routing: "New unverified user → Verify email once". Only
       // accounts created after this shipped carry requiresEmailVerification
       // (see lib/auth/provision-agency.ts) — every pre-existing account
       // never gets stamped with it, so this can't retroactively lock

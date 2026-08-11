@@ -294,7 +294,7 @@ function Header() {
         <Share2 className="h-5 w-5" />
         Social Planner
         <span className="rounded-full bg-fuchsia-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-fuchsia-600 dark:text-fuchsia-400">
-          Beta
+          Preview
         </span>
       </h1>
       <p className="mt-1 text-sm text-muted-foreground">

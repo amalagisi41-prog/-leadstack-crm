@@ -913,7 +913,7 @@ async function checkVapi(): Promise<IntegrationHealth> {
 // ---------------------------------------------------------------------------
 // Meta — ONE Facebook/Instagram app powering BOTH the Messenger + IG DM inbox
 // AND the Social Planner (they share one connection / one set of env vars).
-// Optional + beta. Per-sub-account agency gates (metaInboxEnabledByAgency,
+// Optional + preview. Per-sub-account agency gates (metaInboxEnabledByAgency,
 // socialPlannerEnabledByAgency) + OAuth connect are separate. Without the app
 // creds both surfaces stay inert and invisible. There is deliberately no
 // second "Meta Social" check — it would test the identical META_APP_ID/SECRET.

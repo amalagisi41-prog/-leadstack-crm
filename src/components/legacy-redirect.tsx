@@ -35,13 +35,13 @@ export function LegacyRedirect({
     if (!target) {
       // No sub-accounts at all (including a broken bootstrap): /agency is
       // the only place that can create one or show the no-access state,
-      // regardless of Solo Beta — there's nowhere else to send them.
+      // regardless of Solo mode — there's nowhere else to send them.
       router.replace("/agency");
       return;
     }
     // Agency owners with no current sub-account context historically land
     // on /agency's picker when they hit the bare /dashboard URL. In Solo
-    // Beta (the default — see AgencyDoc.multiAccountModeEnabled) that
+    // Solo mode (the default — see AgencyDoc.multiAccountModeEnabled) that
     // picker is redundant for a single-sub-account agency, so skip it and
     // go straight into the one workspace. Wait for the agency doc to
     // hydrate first so we don't flash /agency then bounce again.

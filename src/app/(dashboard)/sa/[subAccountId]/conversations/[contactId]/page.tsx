@@ -96,7 +96,7 @@ export default function ConversationDetailPage() {
   ) {
     availableChannels.push("whatsapp");
   }
-  // BETA Meta channels — offered only when the agency gate is on, a Page is
+  // Preview Meta channels — offered only when the agency gate is on, a Page is
   // connected, this contact has a Meta identity, and they've actually used the
   // channel (so we never expose a reply path the recipient can't receive).
   if (

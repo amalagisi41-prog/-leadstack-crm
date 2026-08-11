@@ -18,7 +18,7 @@ A two-tier multi-tenant CRM:
 | Surface | What it does |
 |---|---|
 | **Landing page (white-label)** | Branded with your details — edit `CUSTOM_BRAND` in `src/config/landing.ts`. |
-| **Auth** | Email/password signup + login + session cookies. Invited users join their assigned workspace; all other registrations create an isolated agency and starter sub-account for open beta onboarding. |
+| **Auth** | Email/password signup + login + session cookies. Invited users join their assigned workspace; all other registrations create an isolated agency and starter sub-account for guided onboarding. |
 | **Agency dashboard** | Sub-account picker + create new sub-account flow. |
 | **Sub-account dashboard** | Live KPIs, pipeline snapshot, recent activity, quick actions. |
 | **Contacts** | List + search, CRUD, notes + activity timeline, CSV import/export, bulk-email action. |
@@ -34,7 +34,7 @@ A two-tier multi-tenant CRM:
 | **Broadcasts** | Bulk email to a filtered audience (all / tag / pipeline stage). Reuses automations infra; live per-recipient status. Hard cap 25k recipients. |
 | **AI Agents — one persona, every channel** | A single AI agent (persona + business hours + escalation rules + optional website knowledge base) answers across multiple channels per sub-account. Captures auto-create a follow-up Task + escalation email. Powered by OpenRouter (any model, Claude Haiku 4.5 by default). |
 | **AI Agents — Web Chat** | Embeddable own-brand chat widget (one-line `<script>` snippet → floating bubble + iframe). Inline lead-capture form, live operator console with transcripts. |
-| **AI Agents — SMS & WhatsApp** | AI auto-replies to inbound SMS and (beta) WhatsApp on the sub-account's dedicated Twilio number/sender. Real-time chat thread on the contact profile; WhatsApp template manager for messaging outside the 24h window. |
+| **AI Agents — SMS & WhatsApp** | AI auto-replies to inbound SMS and preview WhatsApp on the sub-account's dedicated Twilio number/sender. Real-time chat thread on the contact profile; WhatsApp template manager for messaging outside the 24h window. |
 | **AI Agents — Voice (inbound)** | AI answers inbound phone calls on the same Twilio number (via Vapi), qualifies the lead, books a callback. Call summaries + transcripts in an operator console. |
 | **AI Agents — Outbound Voice** | The AI proactively dials contacts — single click-to-call from a contact, or a bulk campaign over a filtered audience. Native dialing-compliance gate (opt-out, consent, calling window, rate caps) before any call is placed. |
 | **Quotes** | GHL-style estimates — line-itemed quote, branded email, public accept/decline page. Year-prefixed numbering, multi-currency, auto-creates a Won deal on accept. PDF download. |

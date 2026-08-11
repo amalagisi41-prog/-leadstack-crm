@@ -151,7 +151,7 @@ export const CUSTOM_BRAND: CustomBrand = {
    */
   pricing: {
     starter: {
-      name: "Solo Founding Beta",
+      name: "AgentStack Solo",
       priceMonthly: 149,
       priceAnnual: 99,
       blurb:

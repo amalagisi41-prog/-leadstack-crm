@@ -36,7 +36,7 @@ type MetaMessageDoc = MessageDoc & { channel?: ConversationChannel };
 
 /**
  * The merged conversation timeline. Subscribes to the contact's SMS
- * (`messages`), WhatsApp (`whatsappMessages`), and BETA Meta (`metaMessages`,
+ * (`messages`), WhatsApp (`whatsappMessages`), and preview Meta (`metaMessages`,
  * Messenger + Instagram) subcollections, tags each row with its channel, and
  * renders one time-ordered stream. No data is moved — this is a read-time merge
  * over the existing per-contact threads.

@@ -62,10 +62,10 @@ export function Footer({ brand }: { brand: ResolvedBrand }) {
               </li>
               <li>
                 <Link
-                  href="/beta"
+                  href="/availability"
                   className="transition-colors hover:text-[#173B7A]"
                 >
-                  Beta availability
+                  Feature availability
                 </Link>
               </li>
               <li>

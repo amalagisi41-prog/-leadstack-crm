@@ -1,0 +1,20 @@
+{
+  "brand": "AgentStack",
+  "version": "2026-08-11",
+  "masters": {
+    "lightBackground": "/brand/agentstack-mark-on-light.png",
+    "appTile": "/brand/agentstack-app-tile.png"
+  },
+  "recommended": {
+    "goHighLevelMarketplace": "/brand/exports/marketplace/agentstack-marketplace-800.png",
+    "appStore": "/brand/exports/app/agentstack-app-icon-1024.png",
+    "socialProfile": "/brand/exports/social/agentstack-profile-1080.png",
+    "lightInterface": "/brand/exports/ui/agentstack-mark-on-light-512.png",
+    "darkOrColoredInterface": "/brand/exports/ui/agentstack-tile-transparent-edge-512.png"
+  },
+  "rules": {
+    "lightBackground": "Use the navy and coral mark-on-light artwork.",
+    "creamChevrons": "Cream chevrons may appear only inside the approved blue tile and never directly on white or light backgrounds.",
+    "aspectRatio": "Always preserve the original 1:1 aspect ratio."
+  }
+}

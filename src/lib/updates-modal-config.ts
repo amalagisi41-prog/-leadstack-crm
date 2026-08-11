@@ -15,7 +15,7 @@ export interface UpdateItem {
   title: string;
   /** Optional one-line detail under the title. */
   description: string;
-  /** Optional pill, e.g. "Beta" / "New". Empty hides the pill. */
+  /** Optional pill, e.g. "Preview" / "New". Empty hides the pill. */
   badge: string;
 }
 
@@ -66,7 +66,7 @@ export const UPDATES_MODAL_DEFAULTS: UpdatesModalConfig = {
     {
       title: "Social Media Planner",
       description: "Schedule and auto-publish posts to Facebook & Instagram.",
-      badge: "Beta",
+      badge: "Preview",
     },
   ],
 };

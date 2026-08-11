@@ -155,7 +155,7 @@ export async function POST(request: Request) {
     // The counter doc is only missing when this is the agency's very
     // first-ever sub-account (e.g. repairing a broken bootstrap that
     // produced zero sub-accounts) — that case must NOT graduate the
-    // agency out of Solo Beta. Every other call is a genuine 2nd+
+    // agency out of Solo mode. Every other call is a genuine 2nd+
     // sub-account, which is exactly the "Team/Brokerage intentionally
     // introduced" moment the product spec calls for.
     const isFirstEverSubAccount = !counterSnap.exists;

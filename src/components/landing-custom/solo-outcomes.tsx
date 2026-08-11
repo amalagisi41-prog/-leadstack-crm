@@ -22,17 +22,17 @@ const outcomes = [
     icon: CalendarCheck2,
     title: "A booked appointment",
     description:
-      "Use a lead form, follow-up sequence, and booking page together—the core outcome the Solo Founding Beta is designed to validate.",
+      "Use a lead form, follow-up sequence, and booking page together—the core outcome AgentStack Solo is designed to deliver.",
   },
 ];
 
-export function BetaOutcomes() {
+export function SoloOutcomes() {
   return (
     <section className="bg-[#FFF8EF] py-24 md:py-28">
       <div className="container mx-auto px-4">
         <div className="mx-auto max-w-3xl text-center">
           <p className="mb-2 text-sm font-semibold tracking-[0.28em] text-[#173B7A] uppercase">
-            Founding beta outcomes
+            AgentStack Solo outcomes
           </p>
           <h2 className="text-3xl font-semibold tracking-tight text-[#173B7A] sm:text-5xl">
             Prove one workflow.{" "}
@@ -41,9 +41,8 @@ export function BetaOutcomes() {
             </span>
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-[#526078] sm:text-lg">
-            We are not publishing placeholder customer claims. Beta members work
-            with us to configure and measure a real lead-to-appointment workflow
-            in their own business.
+            We focus on measurable outcomes. Members configure and measure a
+            real lead-to-appointment workflow in their own business.
           </p>
         </div>
 
@@ -72,7 +71,7 @@ export function BetaOutcomes() {
         </div>
 
         <a
-          href="/beta"
+          href="/availability"
           className="mx-auto mt-8 flex w-fit items-center gap-2 text-sm font-semibold text-[#173B7A] hover:text-[#DB4F9B]"
         >
           See what is Live, in Private Preview, and Coming Soon{" "}

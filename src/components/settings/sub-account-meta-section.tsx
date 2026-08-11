@@ -16,7 +16,7 @@ import { metaCanInbox, metaCanPublish } from "@/lib/comms/meta-capabilities";
 import { Button } from "@/components/ui/button";
 
 /**
- * Sub-account Facebook Messenger + Instagram DM settings panel (BETA).
+ * Sub-account Facebook Messenger + Instagram DM settings panel (preview).
  *
  * Gate-driven: renders NOTHING unless the caller is a sub-account admin AND the
  * agency has flipped `metaInboxEnabledByAgency` on. That's the contract — the
@@ -153,7 +153,7 @@ export function SubAccountMetaSection() {
           <div className="flex items-center gap-2">
             <h2 className="text-base font-semibold">Facebook &amp; Instagram</h2>
             <span className="rounded-full bg-pink-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-pink-600 dark:text-pink-400">
-              Beta
+              Preview
             </span>
           </div>
           <p className="mt-0.5 text-sm text-muted-foreground">
@@ -251,7 +251,7 @@ export function SubAccountMetaSection() {
         <p className="font-medium text-foreground">Meta app setup (one-time)</p>
         <p className="mt-1">
           The agency registers these in the Meta app (Webhooks + Facebook Login
-          → Valid OAuth redirect URIs). Beta access also requires Meta App
+          → Valid OAuth redirect URIs). Access also requires Meta App
           Review for messaging permissions.
         </p>
         <div className="mt-2 space-y-2">
@@ -297,7 +297,7 @@ export function SubAccountMetaSection() {
         <p className="mt-2 flex items-start gap-1.5">
           <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
           <span>
-            Beta — Meta App Review is required for messaging permissions
+            Preview — Meta App Review is required for messaging permissions
             (inbox){socialOn && " and posting permissions (Social Planner)"}.
             Until approved, only app admins/testers can connect.
           </span>

@@ -58,7 +58,7 @@ export async function POST(request: Request) {
 
   // Phase 1 — choose the tenancy path in a transaction. Invited users join
   // the workspace named by their invite. Every other registrant receives an
-  // isolated agency + starter sub-account so public beta registration stays
+  // isolated agency + starter sub-account so public registration stays
   // open without weakening tenant boundaries.
   let decision: Decision;
   try {

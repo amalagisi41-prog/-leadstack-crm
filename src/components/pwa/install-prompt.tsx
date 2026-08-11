@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Download, MonitorDown, Share, Smartphone, X } from "lucide-react";
+import Image from "next/image";
+import { Share, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CUSTOM_BRAND, LANDING_VARIANT } from "@/config/landing";
 
@@ -91,15 +92,14 @@ export function InstallPrompt() {
 
   return (
     <div className="mx-4 mt-4 flex items-start gap-3 rounded-2xl border border-[#AFC7EA] bg-[#EDF5FF] p-4 text-sm shadow-sm">
-      <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#173B7A] text-white">
-        {platform === "ios" ? (
-          <Smartphone className="h-5 w-5" />
-        ) : platform === "safari-desktop" ? (
-          <MonitorDown className="h-5 w-5" />
-        ) : (
-          <Download className="h-5 w-5" />
-        )}
-      </span>
+      <Image
+        src="/brand/exports/ui/agentstack-tile-transparent-edge-128.png"
+        alt="AgentStack"
+        width={40}
+        height={40}
+        className="mt-0.5 h-10 w-10 shrink-0 rounded-xl object-contain"
+        priority
+      />
       <div className="flex-1">
         <p className="font-semibold text-[#173B7A]">
           Get the {brandName} app on this device
