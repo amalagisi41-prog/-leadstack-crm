@@ -25,7 +25,7 @@ export function SubscriptionSuccess() {
       if (response?.ok && (status === "active" || status === "trialing")) {
         const user = getFirebaseAuth().currentUser;
         if (user) await refreshSessionCookie(user);
-        window.location.assign("/dashboard");
+        window.location.assign("/dashboard?welcome=1");
         return;
       }
       if (attempts < 12) {

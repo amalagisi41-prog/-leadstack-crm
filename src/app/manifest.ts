@@ -13,7 +13,7 @@ export default function manifest(): MetadataRoute.Manifest {
   const name = LANDING_VARIANT === "custom" ? CUSTOM_BRAND.name : "AgentStack";
 
   return {
-    name: `${name} — Real Estate CRM`,
+    name: `${name} — Real Estate Operating System`,
     short_name: name,
     description:
       LANDING_VARIANT === "custom"
