@@ -1,16 +1,47 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getFirebaseAuth } from "@/lib/firebase/client";
+import { refreshSessionCookie } from "@/lib/firebase/auth";
 
 export function RequiredSubscription() {
   const searchParams = useSearchParams();
   const [interval, setInterval] = useState<"month" | "year">("month");
   const [loading, setLoading] = useState(false);
+  const [recovering, setRecovering] = useState(true);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    let canceled = false;
+    async function recoverPaidCheckout() {
+      try {
+        const response = await fetch("/api/checkout/recover", {
+          method: "POST",
+          credentials: "include",
+        });
+        const data = (await response.json().catch(() => ({}))) as {
+          recovered?: boolean;
+        };
+        if (canceled) return;
+        if (response.ok && data.recovered) {
+          const user = getFirebaseAuth().currentUser;
+          if (user) await refreshSessionCookie(user);
+          window.location.assign("/dashboard?payment=recovered");
+          return;
+        }
+      } catch {
+        // A recovery outage must not permanently block legitimate checkout.
+      }
+      if (!canceled) setRecovering(false);
+    }
+    void recoverPaidCheckout();
+    return () => {
+      canceled = true;
+    };
+  }, []);
 
   async function continueToCheckout() {
     setLoading(true);
@@ -56,8 +87,9 @@ export function RequiredSubscription() {
         Activate AgentStack Solo
       </h1>
       <p className="mt-3 text-sm leading-6 text-[#526078]">
-        Your login is ready. Choose billing and complete Stripe checkout to
-        activate your workspace and begin setup.
+        {recovering
+          ? "Checking Stripe for your completed payment before showing enrollment options…"
+          : "Your login is ready. Choose billing and complete Stripe checkout to activate your workspace and begin setup."}
       </p>
       {searchParams.get("canceled") === "1" && (
         <p className="mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
@@ -89,12 +121,12 @@ export function RequiredSubscription() {
       <Button
         className="mt-6 w-full bg-[#173B7A] text-white hover:bg-[#244c8e]"
         onClick={continueToCheckout}
-        disabled={loading}
+        disabled={loading || recovering}
       >
-        {loading ? (
+        {loading || recovering ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Opening secure checkout…
+            {recovering ? "Checking payment…" : "Opening secure checkout…"}
           </>
         ) : (
           "Continue to Stripe"
