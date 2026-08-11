@@ -25,6 +25,10 @@ const platforms: { value: BusinessSourcePlatform; label: string }[] = [
   { value: "godaddy", label: "GoDaddy" },
   { value: "wix", label: "Wix" },
   { value: "squarespace", label: "Squarespace" },
+  { value: "vercel", label: "Vercel" },
+  { value: "nextjs", label: "Next.js website" },
+  { value: "make", label: "Make automation" },
+  { value: "vibe", label: "Vibe.co website builder" },
   { value: "zillow", label: "Zillow" },
   { value: "realtor", label: "Realtor.com" },
   { value: "homes", label: "Homes.com" },
@@ -253,9 +257,9 @@ export function OnboardingFoundation({
           <div>
             <h2 className="font-semibold">Your domain and website</h2>
             <p className="text-muted-foreground mt-1 text-sm">
-              Keep a domain at GoDaddy, Bluehost, or another provider—AgentStack
-              can connect it. If you need one, we will guide you without
-              technical jargon.
+              Keep a domain or website at GoDaddy, Bluehost, Vercel, or another
+              provider—AgentStack can connect it. If you need one, we will
+              guide you without technical jargon.
             </p>
           </div>
         </div>

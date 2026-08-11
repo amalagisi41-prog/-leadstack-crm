@@ -8,6 +8,11 @@ const integrations = [
   ],
   ["Firebase", "Live", "Authentication, workspace data, and tenant isolation."],
   [
+    "Vercel + Next.js",
+    "Live",
+    "AgentStack application hosting and managed website delivery infrastructure.",
+  ],
+  [
     "Resend",
     "Private Preview",
     "Email delivery after sender-domain configuration.",
@@ -36,6 +41,16 @@ const integrations = [
     "Meta",
     "Private Preview",
     "Facebook and Instagram publishing and inbox connections.",
+  ],
+  [
+    "Make",
+    "Private Preview",
+    "Workflow connections through AgentStack API keys and outbound webhooks.",
+  ],
+  [
+    "Vibe.co",
+    "Coming Soon",
+    "Guided website-builder migration and publishing connection.",
   ],
   [
     "Google Business Profile",
