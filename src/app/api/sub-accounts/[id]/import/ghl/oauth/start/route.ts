@@ -22,7 +22,7 @@ export async function GET(request: Request, ctx: { params: Promise<{ id: string 
     fallback.searchParams.set("ghl", "not_configured");
     return NextResponse.redirect(fallback);
   }
-  const redirectUri = `${appBase(request)}/api/integrations/ghl/callback`;
+  const redirectUri = `${appBase(request)}/api/integrations/business-transfer/callback`;
   const state = signGhlState(id, access.uid, crypto.randomBytes(16).toString("hex"));
   return NextResponse.redirect(buildGhlAuthorizeUrl(redirectUri, state));
 }

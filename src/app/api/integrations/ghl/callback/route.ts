@@ -30,7 +30,7 @@ export async function GET(request: Request) {
   if (!code || url.searchParams.get("error")) return finish("cancelled");
   if (!ghlOAuthConfigured()) return finish("not_configured");
   try {
-    const redirectUri = `${appBase(request)}/api/integrations/ghl/callback`;
+    const redirectUri = `${appBase(request)}/api/integrations/business-transfer/callback`;
     const token = await exchangeGhlCode(code, redirectUri);
     await validateGhlAccess(token.accessToken, token.locationId!);
     await getAdminDb().doc(`subAccounts/${id}`).update({
