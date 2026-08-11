@@ -149,13 +149,12 @@ export async function POST(request: Request) {
             : undefined,
       },
       billing_address_collection: "required",
-      consent_collection: { terms_of_service: "required" },
       custom_text: {
         submit: {
           message:
             billingInterval === "year"
-              ? "Your card is charged $1,188 today and securely stored by Stripe. Your plan includes one bonus month; automatic annual renewal begins in 13 months unless you cancel."
-              : "Your card is charged $149 today and securely stored by Stripe. Your plan includes one bonus month; automatic monthly renewal begins in 2 months unless you cancel.",
+              ? "Your card is charged $1,188 today and securely stored by Stripe. Your plan includes one bonus month; automatic annual renewal begins in 13 months unless you cancel. By subscribing, you agree to the AgentStack Terms at agentstackcrm.app/terms."
+              : "Your card is charged $149 today and securely stored by Stripe. Your plan includes one bonus month; automatic monthly renewal begins in 2 months unless you cancel. By subscribing, you agree to the AgentStack Terms at agentstackcrm.app/terms.",
         },
       },
       success_url: `${appUrl}/welcome?session_id={CHECKOUT_SESSION_ID}&t=${claimToken}`,
