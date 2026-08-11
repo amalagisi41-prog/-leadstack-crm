@@ -37,6 +37,7 @@ import {
   Plug,
   Link2,
   UploadCloud,
+  HeartPulse,
 } from "lucide-react";
 import { getFirebaseDb } from "@/lib/firebase/client";
 import { signOutUser } from "@/lib/firebase/auth";
@@ -58,7 +59,7 @@ interface NavItem {
   label: string;
   icon: typeof Home;
   enabled: boolean;
-  badgeKey?: "dueToday" | "unreadConversations";
+  badgeKey?: "dueToday" | "unreadConversations" | "siteHealth";
 }
 
 interface NavSection {
@@ -68,8 +69,29 @@ interface NavSection {
 
 const SUB_ACCOUNT_NAV_SECTIONS: NavSection[] = [
   {
-    label: "Today",
-    items: [{ href: "/dashboard", label: "Today", icon: Home, enabled: true }],
+    label: "Your Day",
+    items: [
+      { href: "/dashboard", label: "Today", icon: Home, enabled: true },
+      {
+        href: "/tasks",
+        label: "Tasks",
+        icon: CheckSquare,
+        enabled: true,
+        badgeKey: "dueToday",
+      },
+    ],
+  },
+  {
+    label: "Site Health",
+    items: [
+      {
+        href: "/site-health",
+        label: "Site Health",
+        icon: HeartPulse,
+        enabled: true,
+        badgeKey: "siteHealth",
+      },
+    ],
   },
   {
     label: "Clients",
@@ -95,13 +117,6 @@ const SUB_ACCOUNT_NAV_SECTIONS: NavSection[] = [
         icon: CalendarClock,
         enabled: true,
       },
-      {
-        href: "/tasks",
-        label: "Tasks",
-        icon: CheckSquare,
-        enabled: true,
-        badgeKey: "dueToday",
-      },
     ],
   },
   {
@@ -114,7 +129,12 @@ const SUB_ACCOUNT_NAV_SECTIONS: NavSection[] = [
         icon: Workflow,
         enabled: true,
       },
-      { href: "/funnels", label: "Marketing Pages", icon: Filter, enabled: true },
+      {
+        href: "/funnels",
+        label: "Marketing Pages",
+        icon: Filter,
+        enabled: true,
+      },
       { href: "/broadcasts", label: "Broadcasts", icon: Send, enabled: true },
       { href: "/social", label: "Social Planner", icon: Share2, enabled: true },
       { href: "/idx", label: "IDX Listings", icon: Building, enabled: true },
@@ -140,7 +160,12 @@ const SUB_ACCOUNT_NAV_SECTIONS: NavSection[] = [
       { href: "/products", label: "Products", icon: Package, enabled: true },
       { href: "/website", label: "Website", icon: Globe, enabled: true },
       { href: "/domain", label: "Domain", icon: Link2, enabled: true },
-      { href: "/website-studio", label: "AI Website Studio", icon: LayoutTemplate, enabled: true },
+      {
+        href: "/website-studio",
+        label: "AI Website Studio",
+        icon: LayoutTemplate,
+        enabled: true,
+      },
       {
         href: "/community",
         label: "Community",
@@ -187,7 +212,9 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
   const [broadcastsGate, setBroadcastsGate] = useState<boolean | null>(null);
   const [websiteGate, setWebsiteGate] = useState<boolean | null>(null);
-  const [websiteStudioGate, setWebsiteStudioGate] = useState<boolean | null>(null);
+  const [websiteStudioGate, setWebsiteStudioGate] = useState<boolean | null>(
+    null
+  );
   const [socialGate, setSocialGate] = useState<boolean | null>(null);
   const [communityGate, setCommunityGate] = useState<boolean | null>(null);
   const [idxGate, setIdxGate] = useState<boolean | null>(null);
@@ -196,6 +223,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const [socialHidden, setSocialHidden] = useState(false);
   const [communityHidden, setCommunityHidden] = useState(false);
   const [idxHidden, setIdxHidden] = useState(false);
+  const [siteHealthScore, setSiteHealthScore] = useState<number | null>(null);
 
   useEffect(() => {
     const linkSubIdLocal = activeSubId ?? memberships[0]?.subAccountId ?? null;
@@ -231,7 +259,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         setSocialGate(null);
         setCommunityGate(null);
         setIdxGate(null);
-      },
+      }
     );
   }, [activeSubId, memberships]);
 
@@ -239,10 +267,31 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const linkSubId = activeSubId ?? fallbackSub;
   const showSubNav = !!linkSubId;
 
+  useEffect(() => {
+    if (!linkSubId) {
+      setSiteHealthScore(null);
+      return;
+    }
+    let active = true;
+    void fetch(`/api/sub-accounts/${linkSubId}/site-health`)
+      .then(async (response) => {
+        if (!response.ok) return;
+        const data = (await response.json()) as { score?: number };
+        if (active && typeof data.score === "number") {
+          setSiteHealthScore(data.score);
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [linkSubId, pathname]);
+
   // Solo Beta: outside multi-account mode, the brand line reads as the
   // workspace/sub-account name rather than the agency's — a single-operator
   // agency and its one workspace are the same thing to the user.
-  const linkedMembership = memberships.find((m) => m.subAccountId === linkSubId) ?? null;
+  const linkedMembership =
+    memberships.find((m) => m.subAccountId === linkSubId) ?? null;
   const displayBrandName =
     !agency.multiAccountModeEnabled && linkedMembership?.name
       ? linkedMembership.name
@@ -283,7 +332,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             graduated to multi-account mode (see AgencyDoc.multiAccountModeEnabled) */}
         {agencyRole === "owner" && agency.multiAccountModeEnabled && (
           <div className="mb-4">
-            <p className="mb-1.5 px-2 text-[10px] font-semibold uppercase tracking-wider text-white/30">
+            <p className="mb-1.5 px-2 text-[10px] font-semibold tracking-wider text-white/30 uppercase">
               Agency
             </p>
             <SidebarLink
@@ -326,7 +375,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             </div>
             {SUB_ACCOUNT_NAV_SECTIONS.map((section) => (
               <div key={section.label} className="mb-4">
-                <p className="mb-1.5 px-2 text-[10px] font-semibold uppercase tracking-wider text-white/30">
+                <p className="mb-1.5 px-2 text-[10px] font-semibold tracking-wider text-white/30 uppercase">
                   {section.label}
                 </p>
                 {section.items.map((item) => {
@@ -359,9 +408,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                     (item.href === "/community" &&
                       communityGate === false &&
                       communityHidden) ||
-                    (item.href === "/idx" &&
-                      idxGate === false &&
-                      idxHidden);
+                    (item.href === "/idx" && idxGate === false && idxHidden);
 
                   if (gateHidden) return null;
 
@@ -380,7 +427,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                           <item.icon className="h-4 w-4" />
                           {item.label}
                         </span>
-                        <span className="flex items-center gap-1 rounded-full border border-white/10 px-1.5 text-[10px] uppercase tracking-wide">
+                        <span className="flex items-center gap-1 rounded-full border border-white/10 px-1.5 text-[10px] tracking-wide uppercase">
                           {gateLocked && <Lock className="h-2.5 w-2.5" />}
                           {gateLocked ? "Locked" : "Soon"}
                         </span>
@@ -394,7 +441,10 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                       : item.badgeKey === "unreadConversations" &&
                           unreadConversations > 0
                         ? unreadConversations
-                        : null;
+                        : item.badgeKey === "siteHealth" &&
+                            siteHealthScore !== null
+                          ? `${siteHealthScore}%`
+                          : null;
 
                   return (
                     <SidebarLink
@@ -444,7 +494,7 @@ function SidebarLink({
   label: string;
   icon: typeof Home;
   active: boolean;
-  badge?: number | null;
+  badge?: number | string | null;
 }) {
   return (
     <Link
@@ -453,7 +503,7 @@ function SidebarLink({
         "flex min-h-11 items-center justify-between gap-2.5 rounded-md px-2 py-1.5 text-sm font-medium transition-colors",
         active
           ? "bg-blue-600/20 text-blue-400"
-          : "text-white/50 hover:bg-white/5 hover:text-white/80",
+          : "text-white/50 hover:bg-white/5 hover:text-white/80"
       )}
     >
       <span className="flex items-center gap-2.5">
@@ -464,9 +514,7 @@ function SidebarLink({
         <span
           className={cn(
             "rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums",
-            active
-              ? "bg-blue-500 text-white"
-              : "bg-amber-500/20 text-amber-400",
+            active ? "bg-blue-500 text-white" : "bg-amber-500/20 text-amber-400"
           )}
         >
           {badge}

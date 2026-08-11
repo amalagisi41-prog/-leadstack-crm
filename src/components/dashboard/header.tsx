@@ -51,6 +51,7 @@ const TITLES: Array<[RegExp, string]> = [
   [/^\/sa\/[^/]+\/pipeline/, "Client Journeys"],
   [/^\/sa\/[^/]+\/calendar/, "Calendar"],
   [/^\/sa\/[^/]+\/tasks/, "Tasks"],
+  [/^\/sa\/[^/]+\/site-health/, "Site Health"],
   [/^\/sa\/[^/]+\/forms\/[^/]+/, "Form builder"],
   [/^\/sa\/[^/]+\/forms/, "Lead Capture"],
   [/^\/sa\/[^/]+\/website-studio/, "AI Website Studio"],
@@ -67,7 +68,10 @@ const TITLES: Array<[RegExp, string]> = [
   [/^\/sa\/[^/]+\/ai-agents\/voice/, "AI Assistants · Voice"],
   [/^\/sa\/[^/]+\/ai-agents\/email/, "AI Assistants · Email"],
   [/^\/sa\/[^/]+\/ai-agents\/web-chat/, "AI Assistants · Web Chat"],
-  [/^\/sa\/[^/]+\/ai-agents\/google-business/, "AI Assistants · Google Business"],
+  [
+    /^\/sa\/[^/]+\/ai-agents\/google-business/,
+    "AI Assistants · Google Business",
+  ],
   [/^\/sa\/[^/]+\/ai-agents/, "AI Assistants"],
   [/^\/sa\/[^/]+\/reports/, "Analytics"],
   [/^\/sa\/[^/]+\/logs/, "Logs"],
@@ -103,7 +107,7 @@ export function Header({ onMenuClick, onOpenSearch }: HeaderProps) {
   const [authReady, setAuthReady] = useState(false);
   useEffect(() => setAuthReady(true), []);
   const activeMembership = memberships.find(
-    (m) => m.subAccountId === activeSubId,
+    (m) => m.subAccountId === activeSubId
   );
   // Avatar dropdown links:
   //   - "Your account" → /me/settings (user-level: profile, password,
@@ -147,10 +151,10 @@ export function Header({ onMenuClick, onOpenSearch }: HeaderProps) {
         .map((n) => n[0])
         .join("")
         .toUpperCase()
-    : user?.email?.[0]?.toUpperCase() ?? "U";
+    : (user?.email?.[0]?.toUpperCase() ?? "U");
 
   return (
-    <header className="pt-safe flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
+    <header className="pt-safe bg-background flex h-16 items-center gap-4 border-b px-4 md:px-6">
       <Button
         variant="ghost"
         size="icon"
@@ -189,7 +193,7 @@ export function Header({ onMenuClick, onOpenSearch }: HeaderProps) {
             <ChevronDown className="h-3 w-3" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-64">
-            <div className="px-2 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+            <div className="text-muted-foreground px-2 py-1.5 text-[10px] tracking-wider uppercase">
               Sub-accounts
             </div>
             {memberships.map((m) => (
@@ -200,16 +204,14 @@ export function Header({ onMenuClick, onOpenSearch }: HeaderProps) {
               >
                 <span className="flex min-w-0 items-baseline gap-2">
                   {m.accountNumber !== undefined && (
-                    <span className="font-mono text-[10px] text-muted-foreground">
+                    <span className="text-muted-foreground font-mono text-[10px]">
                       #{m.accountNumber}
                     </span>
                   )}
-                  <span className="truncate">
-                    {m.name || m.subAccountId}
-                  </span>
+                  <span className="truncate">{m.name || m.subAccountId}</span>
                 </span>
                 {m.subAccountId === activeSubId && (
-                  <Check className="h-3.5 w-3.5 shrink-0 text-primary" />
+                  <Check className="text-primary h-3.5 w-3.5 shrink-0" />
                 )}
               </DropdownMenuItem>
             ))}
@@ -229,12 +231,12 @@ export function Header({ onMenuClick, onOpenSearch }: HeaderProps) {
         type="button"
         onClick={onOpenSearch}
         className={cn(
-          "ml-2 hidden h-9 flex-1 max-w-md items-center gap-2 rounded-lg border bg-muted/40 px-3 text-sm text-muted-foreground transition-colors hover:bg-muted sm:flex",
+          "bg-muted/40 text-muted-foreground hover:bg-muted ml-2 hidden h-9 max-w-md flex-1 items-center gap-2 rounded-lg border px-3 text-sm transition-colors sm:flex"
         )}
       >
         <Search className="h-4 w-4 shrink-0" />
         <span className="flex-1 text-left">Search everything…</span>
-        <kbd className="rounded border bg-background px-1.5 py-0.5 text-[10px] font-medium">
+        <kbd className="bg-background rounded border px-1.5 py-0.5 text-[10px] font-medium">
           {isMac ? "⌘" : "Ctrl"} K
         </kbd>
       </button>
@@ -275,7 +277,7 @@ export function Header({ onMenuClick, onOpenSearch }: HeaderProps) {
                 {user?.displayName ?? "User"}
               </p>
               <div className="mt-0.5 flex items-center gap-1.5">
-                <p className="min-w-0 flex-1 truncate font-mono text-xs text-muted-foreground">
+                <p className="text-muted-foreground min-w-0 flex-1 truncate font-mono text-xs">
                   {emailShown ? user?.email : maskEmail(user?.email)}
                 </p>
                 {user?.email && (
@@ -286,7 +288,7 @@ export function Header({ onMenuClick, onOpenSearch }: HeaderProps) {
                       e.stopPropagation();
                       setEmailShown((v) => !v);
                     }}
-                    className="shrink-0 rounded px-1 text-[10px] font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+                    className="text-muted-foreground hover:bg-muted hover:text-foreground shrink-0 rounded px-1 text-[10px] font-medium"
                   >
                     {emailShown ? "Hide" : "Show"}
                   </button>
