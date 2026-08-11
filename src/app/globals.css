@@ -68,26 +68,30 @@
 }
 
 :root {
-  --font-dm-sans: "DM Sans", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-geist-mono: "Geist Mono", "SFMono-Regular", ui-monospace, "Cascadia Mono", "Segoe UI Mono", "Roboto Mono", monospace;
-  --background: oklch(0.97 0.025 78);
+  --font-dm-sans:
+    "DM Sans", "Inter", system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  --font-geist-mono:
+    "Geist Mono", "SFMono-Regular", ui-monospace, "Cascadia Mono",
+    "Segoe UI Mono", "Roboto Mono", monospace;
+  --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
-  --card: oklch(0.99 0.012 75);
+  --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(0.99 0.012 75);
+  --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  /* Muted navy — complements cream background */
+  /* Muted navy on a clean white application canvas. */
   --primary: oklch(0.38 0.12 248);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.94 0.015 78);
+  --secondary: oklch(0.97 0.008 250);
   --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.94 0.015 78);
-  --muted-foreground: oklch(0.50 0.018 75);
+  --muted: oklch(0.97 0.008 250);
+  --muted-foreground: oklch(0.48 0.025 250);
   --accent: oklch(0.91 0.025 248);
   --accent-foreground: oklch(0.38 0.12 248);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.88 0.025 78);
-  --input: oklch(0.88 0.025 78);
+  --border: oklch(0.9 0.012 250);
+  --input: oklch(0.9 0.012 250);
   --ring: oklch(0.38 0.12 248);
   --chart-1: oklch(0.546 0.245 262.881);
   --chart-2: oklch(0.623 0.214 259.815);
@@ -95,14 +99,14 @@
   --chart-4: oklch(0.82 0.12 260);
   --chart-5: oklch(0.91 0.07 260);
   --radius: 0.625rem;
-  /* Sidebar — dark panel */
-  --sidebar: oklch(0.12 0.012 265);
-  --sidebar-foreground: oklch(0.82 0 0);
-  --sidebar-primary: oklch(0.623 0.214 259.815);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.18 0.012 265);
-  --sidebar-accent-foreground: oklch(0.95 0 0);
-  --sidebar-border: oklch(0.22 0.012 265);
+  /* Sidebar — muted denim blue with a high-contrast sky rollover. */
+  --sidebar: #4f6f9f;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #9cc8ff;
+  --sidebar-primary-foreground: #102a4c;
+  --sidebar-accent: #6ea8fe;
+  --sidebar-accent-foreground: #102a4c;
+  --sidebar-border: rgb(255 255 255 / 18%);
   --sidebar-ring: oklch(0.546 0.245 262.881);
 }
 
@@ -145,7 +149,7 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background font-sans text-foreground;
+    @apply bg-background text-foreground font-sans;
   }
   button,
   input,

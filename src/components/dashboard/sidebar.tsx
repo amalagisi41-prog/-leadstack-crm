@@ -298,9 +298,9 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       : agency.name;
 
   return (
-    <div className="pl-safe flex h-full flex-col bg-[#0f1117] text-slate-300">
+    <div className="pl-safe flex h-full flex-col bg-[#4F6F9F] text-white">
       {/* Logo / brand */}
-      <div className="flex h-16 items-center border-b border-white/10 px-5">
+      <div className="flex h-16 items-center border-b border-white/20 px-5">
         <Link href="/" className="flex items-center gap-2.5">
           {agency.logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -332,7 +332,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             graduated to multi-account mode (see AgencyDoc.multiAccountModeEnabled) */}
         {agencyRole === "owner" && agency.multiAccountModeEnabled && (
           <div className="mb-4">
-            <p className="mb-1.5 px-2 text-[10px] font-semibold tracking-wider text-white/30 uppercase">
+            <p className="mb-1.5 px-2 text-[10px] font-semibold tracking-wider text-white/70 uppercase">
               Agency
             </p>
             <SidebarLink
@@ -367,7 +367,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             <div className="mb-4">
               <button
                 onClick={() => openAskAssistant()}
-                className="flex min-h-11 w-full items-center gap-2.5 rounded-md bg-white/5 px-2 py-2 text-sm font-medium text-rose-300/90 transition-colors hover:bg-white/10 hover:text-rose-200"
+                className="flex min-h-11 w-full items-center gap-2.5 rounded-md bg-white/15 px-2 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#6EA8FE] hover:text-[#102A4C]"
               >
                 <Sparkles className="h-4 w-4 shrink-0" />
                 Ask AI
@@ -375,7 +375,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             </div>
             {SUB_ACCOUNT_NAV_SECTIONS.map((section) => (
               <div key={section.label} className="mb-4">
-                <p className="mb-1.5 px-2 text-[10px] font-semibold tracking-wider text-white/30 uppercase">
+                <p className="mb-1.5 px-2 text-[10px] font-semibold tracking-wider text-white/70 uppercase">
                   {section.label}
                 </p>
                 {section.items.map((item) => {
@@ -422,7 +422,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                     return (
                       <div
                         key={item.href}
-                        className="flex min-h-11 cursor-not-allowed items-center justify-between gap-2.5 rounded-md px-2 py-1.5 text-sm text-white/20"
+                        className="flex min-h-11 cursor-not-allowed items-center justify-between gap-2.5 rounded-md px-2 py-1.5 text-sm text-white/45"
                         title={
                           gateLocked
                             ? "Disabled by your agency administrator"
@@ -469,16 +469,16 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         )}
 
         {!showSubNav && !loading && membershipsLoaded && (
-          <p className="rounded-md border border-white/10 px-3 py-3 text-xs text-white/40">
+          <p className="rounded-md border border-white/20 px-3 py-3 text-xs text-white/70">
             Pick a workspace from the switcher above to see its data.
           </p>
         )}
       </nav>
 
       {/* User footer */}
-      <div className="pb-safe border-t border-white/10 p-3">
+      <div className="pb-safe border-t border-white/20 p-3">
         <button
-          className="flex min-h-11 w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-sm text-white/50 transition-colors hover:bg-white/5 hover:text-white/80"
+          className="flex min-h-11 w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-sm text-white/85 transition-colors hover:bg-[#6EA8FE] hover:text-[#102A4C]"
           onClick={() => signOutUser()}
         >
           <LogOut className="h-4 w-4" />
@@ -508,8 +508,8 @@ function SidebarLink({
       className={cn(
         "flex min-h-11 items-center justify-between gap-2.5 rounded-md px-2 py-1.5 text-sm font-medium transition-colors",
         active
-          ? "bg-blue-600/20 text-blue-400"
-          : "text-white/50 hover:bg-white/5 hover:text-white/80"
+          ? "bg-[#9CC8FF] text-[#102A4C] shadow-sm"
+          : "text-white/85 hover:bg-[#6EA8FE] hover:text-[#102A4C]"
       )}
     >
       <span className="flex items-center gap-2.5">
@@ -520,7 +520,7 @@ function SidebarLink({
         <span
           className={cn(
             "rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums",
-            active ? "bg-blue-500 text-white" : "bg-amber-500/20 text-amber-400"
+            active ? "bg-[#173B7A] text-white" : "bg-white/20 text-white"
           )}
         >
           {badge}
@@ -533,7 +533,7 @@ function SidebarLink({
 export function Sidebar({ open, onOpenChange }: SidebarProps) {
   return (
     <>
-      <aside className="hidden w-60 shrink-0 bg-[#0f1117] md:block">
+      <aside className="hidden w-60 shrink-0 bg-[#4F6F9F] md:block">
         <SidebarContent />
       </aside>
 
