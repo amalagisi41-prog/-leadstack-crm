@@ -113,6 +113,7 @@ export function AskAssistantPanel() {
             subAccountId,
             mode: isStudio ? "studio" : "crm",
             firstName,
+            currentPath: `${pathname}${window.location.search}`,
           }),
         });
         const data = (await res.json()) as { answer?: string; error?: string };
@@ -132,7 +133,7 @@ export function AskAssistantPanel() {
         setThinking(false);
       }
     },
-    [messages, thinking, subAccountId, isStudio, firstName],
+    [messages, thinking, subAccountId, isStudio, firstName, pathname],
   );
 
   useEffect(() => {

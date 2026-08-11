@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { requireSubAccountMember } from "@/lib/auth/require-tenancy";
 import { aiIsConfigured, callAi, type AiChatMessage } from "@/lib/comms/ai/openrouter";
+import { ZACK_PRODUCT_KB } from "@/lib/assistant/zack-kb";
 import type { BusinessProfileContent } from "@/types/business-profile";
 
 /**
@@ -20,7 +21,7 @@ import type { BusinessProfileContent } from "@/types/business-profile";
  * Auth: middleware attaches x-user-uid. When a subAccountId is provided the
  * caller's membership is verified before the Business Profile is read.
  *
- * Body: { question, history?, subAccountId?, mode?: "crm"|"studio", firstName? }
+ * Body: { question, history?, subAccountId?, mode?: "crm"|"studio", firstName?, currentPath? }
  * Returns: { answer }  (503 when OpenRouter isn't configured)
  */
 
@@ -97,6 +98,10 @@ export async function POST(request: Request) {
     typeof body.firstName === "string" && body.firstName.trim()
       ? body.firstName.trim().slice(0, 60)
       : "";
+  const currentPath =
+    typeof body.currentPath === "string" && body.currentPath.startsWith("/")
+      ? body.currentPath.trim().slice(0, 300)
+      : "/dashboard";
 
   // Optional tenancy context — verify membership before reading the profile.
   let context = "";
@@ -120,9 +125,17 @@ export async function POST(request: Request) {
       ? `\n\nYou are currently in the operator's marketing Studio. In addition to CRM help, act as their marketing and design assistant: write listing descriptions, social captions, ad copy, email campaigns, and landing-page copy in their brand voice; advise on page layout, imagery, color, and typography choices; and suggest which lead-capture systems or funnels fit their goal. When writing copy, produce ready-to-paste text.`
       : "";
 
-  const systemPrompt = `Your name is Zack. You are the operator's personal AgentStack assistant${firstName ? `, speaking with ${firstName}` : ""}. You help the AGENT run their real-estate business — you are not talking to their leads.
+  const systemPrompt = `Your name is Zack. You are the operator's personal AgentStack product guide and working assistant${firstName ? `, speaking with ${firstName}` : ""}. You help the AGENT use AgentStack to run their real-estate business — you are not talking to their leads.
 
-You can: draft emails and SMS follow-ups, plan next steps for a client, prep them for appointments and listing presentations, summarize what to focus on, and answer real-estate business questions. Be concise, concrete, and action-first: lead with the answer or the draft, not preamble. Use short paragraphs or tight numbered steps. When drafting a message, output the ready-to-send text. Never invent client data you weren't given — if you need details, ask one short clarifying question.${studioRails}${context}
+PRODUCT HELP IS YOUR FIRST PRIORITY. For questions about setup, migration, navigation, or how to do something, ground the answer in the product guide and the operator's current screen. Give the exact AgentStack action before background information. Do not replace a supported AgentStack workflow with generic advice.
+
+Current screen: ${currentPath}
+
+--- AGENTSTACK PRODUCT GUIDE ---
+${ZACK_PRODUCT_KB}
+--- END PRODUCT GUIDE ---
+
+You can also draft emails and SMS follow-ups, plan next steps for a client, prep them for appointments and listing presentations, and summarize what to focus on. Be concise, concrete, and action-first. Use short paragraphs or tight numbered steps. When drafting a message, output ready-to-send text. Never invent client data or product capabilities. If essential information is missing, ask one short clarifying question.${studioRails}${context}
 
 Today's date: ${new Date().toISOString().slice(0, 10)}.`;
 
