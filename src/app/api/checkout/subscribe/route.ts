@@ -92,13 +92,35 @@ export async function POST(request: Request) {
           quantity: 1,
         }
       : { price: priceId!, quantity: 1 };
+  const upfrontSoloLineItem: Stripe.Checkout.SessionCreateParams.LineItem | null =
+    planKey === "starter"
+      ? {
+          price_data: {
+            currency: "usd",
+            unit_amount: soloAmount,
+            product_data: {
+              name: "AgentStack Solo — initial plan payment",
+              description:
+                billingInterval === "year"
+                  ? "First annual payment today; includes one additional month before renewal"
+                  : "First monthly payment today; includes one additional month before renewal",
+            },
+          },
+          quantity: 1,
+        }
+      : null;
   const lineItems = [
     planLineItem,
+    ...(upfrontSoloLineItem ? [upfrontSoloLineItem] : []),
     ...addOnPriceIds.map((id) => ({ price: id, quantity: 1 })),
   ];
 
   const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "");
   const claimToken = crypto.randomBytes(32).toString("hex");
+  const firstRenewal = new Date();
+  firstRenewal.setUTCMonth(
+    firstRenewal.getUTCMonth() + (billingInterval === "year" ? 13 : 2)
+  );
 
   // The landing page's Add-ons section promises "stack 3+, save 15%" — only
   // literally true when this coupon is configured. Applied automatically,
@@ -118,14 +140,22 @@ export async function POST(request: Request) {
       line_items: lineItems,
       ...(discounts ? { discounts } : {}),
       subscription_data: {
-        trial_period_days: 30,
+        // The separate one-time line above charges the first term now. The
+        // recurring item begins after the paid term plus the bonus month:
+        // two calendar months for monthly, thirteen for annual.
+        trial_end:
+          planKey === "starter"
+            ? Math.floor(firstRenewal.getTime() / 1000)
+            : undefined,
       },
       billing_address_collection: "required",
       consent_collection: { terms_of_service: "required" },
       custom_text: {
         submit: {
           message:
-            "Your card is securely stored by Stripe for your subscription and any add-ons you approve. One month is free; billing begins after the trial.",
+            billingInterval === "year"
+              ? "Your card is charged $1,188 today and securely stored by Stripe. Your plan includes one bonus month; automatic annual renewal begins in 13 months unless you cancel."
+              : "Your card is charged $149 today and securely stored by Stripe. Your plan includes one bonus month; automatic monthly renewal begins in 2 months unless you cancel.",
         },
       },
       success_url: `${appUrl}/welcome?session_id={CHECKOUT_SESSION_ID}&t=${claimToken}`,

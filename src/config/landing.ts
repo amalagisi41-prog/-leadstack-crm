@@ -165,7 +165,7 @@ export const CUSTOM_BRAND: CustomBrand = {
         "Mobile-friendly dashboard",
         "Email & chat support",
       ],
-      cta: "Start with one month free",
+      cta: "Start your plan",
       highlighted: false,
     },
     pro: {

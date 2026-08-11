@@ -10,21 +10,24 @@ export default function TermsPage() {
     <div className="mx-auto max-w-3xl px-4 py-16">
       <Link
         href="/"
-        className="text-sm text-muted-foreground hover:text-primary"
+        className="text-muted-foreground hover:text-primary text-sm"
       >
         &larr; Back to home
       </Link>
 
       <article className="prose dark:prose-invert mt-8 max-w-none">
         <h1>Terms of Service</h1>
-        <p className="text-sm text-muted-foreground">Last updated: July 3, 2026</p>
+        <p className="text-muted-foreground text-sm">
+          Last updated: July 3, 2026
+        </p>
 
-        <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-4 text-sm not-prose">
-          <strong>Template — review before use.</strong> This is a starting-point
-          Terms of Service for a SaaS product and is <em>not legal advice</em>.
-          Have a qualified attorney review and adapt it (company name,
-          jurisdiction, refund policy, data practices) before you rely on it.
-          Replace <code>[Company Legal Name]</code> and <code>[Jurisdiction]</code>
+        <div className="not-prose rounded-lg border border-amber-500/40 bg-amber-500/10 p-4 text-sm">
+          <strong>Template — review before use.</strong> This is a
+          starting-point Terms of Service for a SaaS product and is{" "}
+          <em>not legal advice</em>. Have a qualified attorney review and adapt
+          it (company name, jurisdiction, refund policy, data practices) before
+          you rely on it. Replace <code>[Company Legal Name]</code> and{" "}
+          <code>[Jurisdiction]</code>
           throughout.
         </div>
 
@@ -58,9 +61,11 @@ export default function TermsPage() {
           You may cancel at any time from your account settings; cancellation
           takes effect at the end of the current billing period, and you retain
           access until then. Except where required by law, fees already charged
-          are non-refundable and partial periods are not prorated. Any free
-          trial converts to a paid subscription at the end of the trial unless
-          you cancel first.
+          are non-refundable and partial periods are not prorated. When an offer
+          includes one bonus month after an upfront payment, the first automatic
+          renewal occurs after the paid term plus that bonus month. Your saved
+          payment method is charged automatically unless you cancel before the
+          renewal date shown at checkout.
         </p>
 
         <h2>4. Payment Disputes</h2>
@@ -114,9 +119,8 @@ export default function TermsPage() {
           You retain ownership of the customer data and content you submit to
           the Service. You grant us the limited right to process it to provide
           and improve the Service. Our handling of personal data is described in
-          our{" "}
-          <Link href="/privacy">Privacy Policy</Link>. You are responsible for
-          complying with data-protection laws applicable to you and your
+          our <Link href="/privacy">Privacy Policy</Link>. You are responsible
+          for complying with data-protection laws applicable to you and your
           customers.
         </p>
 

@@ -80,11 +80,11 @@ export function Pricing() {
               </div>
             </div>
             <p className="mt-3 text-sm leading-6 text-blue-100/75">
-              One month free, then{" "}
+              Charged today. Includes one bonus month; renews{" "}
               {billingInterval === "year"
-                ? "$1,188 billed yearly ($99/month)"
-                : "$149 billed monthly"}
-              . Cancel from your billing portal.
+                ? "at $1,188 yearly after 13 months"
+                : "at $149 monthly after 2 months"}
+              . Cancel before renewal from your billing portal.
             </p>
           </div>
 
@@ -138,8 +138,9 @@ export function Pricing() {
               </p>
             )}
             <p className="mt-4 text-center text-xs leading-5 text-[#7B8AA1]">
-              Card securely stored by Stripe · invoice and terms shown before
-              confirmation · add-ons charged only with approval
+              Payment collected today · card securely stored by Stripe ·
+              automatic renewal unless canceled · add-ons charged only with
+              approval
             </p>
           </div>
         </div>
