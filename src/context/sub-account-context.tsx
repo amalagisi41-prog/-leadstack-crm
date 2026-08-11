@@ -116,6 +116,23 @@ export function SubAccountProvider({
     router,
   ]);
 
+  // A bookmarked workspace can outlive the underlying sub-account (for
+  // example after an account reset). Recover at the agency home, where an
+  // owner with no workspaces can create a fresh one, instead of allowing
+  // child pages to call APIs with a deleted ID.
+  useEffect(() => {
+    if (authLoading || subLoading || !membershipsLoaded || !user) return;
+    if (subAccount) return;
+    router.replace("/agency?error=workspace-not-found");
+  }, [
+    authLoading,
+    subLoading,
+    membershipsLoaded,
+    user,
+    subAccount,
+    router,
+  ]);
+
   const value: SubAccountContextValue = {
     subAccountId,
     subAccount,

@@ -27,14 +27,21 @@ import { useRouter } from "next/navigation";
 function ErrorBanner() {
   const searchParams = useSearchParams();
   const error = searchParams.get("error");
-  if (error !== "no-access") return null;
+  if (error !== "no-access" && error !== "workspace-not-found") return null;
+  const workspaceMissing = error === "workspace-not-found";
   return (
     <div className="flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4 text-sm">
       <AlertCircle className="mt-0.5 h-4 w-4 text-amber-600 dark:text-amber-400" />
       <div>
-        <p className="font-medium">No access to that sub-account</p>
+        <p className="font-medium">
+          {workspaceMissing
+            ? "That previous workspace was removed"
+            : "No access to that sub-account"}
+        </p>
         <p className="text-muted-foreground">
-          Pick one below or ask the agency owner for an invite.
+          {workspaceMissing
+            ? "Create your fresh AgentStack workspace below to begin setup."
+            : "Pick one below or ask the agency owner for an invite."}
         </p>
       </div>
     </div>

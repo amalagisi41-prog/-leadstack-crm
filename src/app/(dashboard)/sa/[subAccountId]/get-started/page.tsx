@@ -20,7 +20,7 @@ import { Loader2 } from "lucide-react";
  */
 export default function GetStartedPage() {
   const searchParams = useSearchParams();
-  const { subAccountId, subAccount, saPath } = useSubAccount();
+  const { subAccountId, subAccount, saPath, loading } = useSubAccount();
   const [foundationComplete, setFoundationComplete] = useState<boolean | null>(
     null
   );
@@ -55,6 +55,7 @@ export default function GetStartedPage() {
   }, [subAccount, subAccountId]);
 
   useEffect(() => {
+    if (loading || !subAccount) return;
     let active = true;
     void fetch(`/api/sub-accounts/${subAccountId}/onboarding-foundation`)
       .then(async (response) => {
@@ -69,9 +70,9 @@ export default function GetStartedPage() {
     return () => {
       active = false;
     };
-  }, [subAccountId]);
+  }, [loading, subAccount, subAccountId]);
 
-  if (foundationComplete === null) {
+  if (loading || !subAccount || foundationComplete === null) {
     return (
       <div className="text-muted-foreground flex h-64 items-center justify-center">
         <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Preparing your setup…
