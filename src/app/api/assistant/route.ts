@@ -9,7 +9,7 @@ import type { BusinessProfileContent } from "@/types/business-profile";
 /**
  * POST /api/assistant
  *
- * The in-app "Ask AgentStack" assistant available from the header + sidebar
+ * The in-app "Ask Zack" assistant available from the header + sidebar
  * on every dashboard page. Unlike /api/onboarding/help (setup Q&A grounded
  * in a fixed KB), this is the operator's working assistant: it knows their
  * Business Profile and helps with day-to-day work — drafting emails,
@@ -69,7 +69,7 @@ export async function POST(request: Request) {
 
   if (!aiIsConfigured()) {
     return NextResponse.json(
-      { error: "The AI assistant isn't available yet — OpenRouter isn't configured on this deployment." },
+      { error: "Zack isn't available yet — OpenRouter isn't configured on this deployment." },
       { status: 503 },
     );
   }
@@ -120,7 +120,7 @@ export async function POST(request: Request) {
       ? `\n\nYou are currently in the operator's marketing Studio. In addition to CRM help, act as their marketing and design assistant: write listing descriptions, social captions, ad copy, email campaigns, and landing-page copy in their brand voice; advise on page layout, imagery, color, and typography choices; and suggest which lead-capture systems or funnels fit their goal. When writing copy, produce ready-to-paste text.`
       : "";
 
-  const systemPrompt = `You are the operator's personal AI assistant inside their real-estate CRM${firstName ? `, speaking with ${firstName}` : ""}. You help the AGENT run their business — you are not talking to their leads.
+  const systemPrompt = `Your name is Zack. You are the operator's personal AgentStack assistant${firstName ? `, speaking with ${firstName}` : ""}. You help the AGENT run their real-estate business — you are not talking to their leads.
 
 You can: draft emails and SMS follow-ups, plan next steps for a client, prep them for appointments and listing presentations, summarize what to focus on, and answer real-estate business questions. Be concise, concrete, and action-first: lead with the answer or the draft, not preamble. Use short paragraphs or tight numbered steps. When drafting a message, output the ready-to-send text. Never invent client data you weren't given — if you need details, ask one short clarifying question.${studioRails}${context}
 

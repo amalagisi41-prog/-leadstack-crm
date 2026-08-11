@@ -4,11 +4,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Bot, Send, Sparkles, X } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { CUSTOM_BRAND } from "@/config/landing";
 import { cn } from "@/lib/utils";
 
 /**
- * "Ask AgentStack" — the operator's AI assistant, available on every
+ * "Ask Zack" — the operator's AI assistant, available on every
  * dashboard page as a right-hand slide-over. Opened from the header pill or
  * the sidebar entry via a window event so no prop-drilling is needed.
  *
@@ -18,6 +17,7 @@ import { cn } from "@/lib/utils";
  */
 
 const OPEN_EVENT = "agentstack:ask-assistant";
+const ASSISTANT_NAME = "Zack";
 
 interface OpenAskAssistantOptions {
   /**
@@ -151,7 +151,7 @@ export function AskAssistantPanel() {
       <aside
         className="fixed inset-y-0 right-0 z-50 flex w-full max-w-[400px] flex-col border-l bg-card shadow-2xl"
         role="dialog"
-        aria-label={`Ask ${CUSTOM_BRAND.name}`}
+        aria-label={`Ask ${ASSISTANT_NAME}`}
       >
         {/* header */}
         <div className="flex shrink-0 items-center justify-between gap-3 bg-primary px-4 py-3.5 text-primary-foreground">
@@ -160,7 +160,7 @@ export function AskAssistantPanel() {
               <Bot className="h-5 w-5 text-white" />
             </span>
             <div>
-              <p className="font-semibold leading-tight">{CUSTOM_BRAND.name} AI</p>
+              <p className="font-semibold leading-tight">{ASSISTANT_NAME}</p>
               <p className="text-xs text-primary-foreground/60">Ask me anything</p>
             </div>
           </div>
@@ -176,7 +176,7 @@ export function AskAssistantPanel() {
         {/* thread */}
         <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto p-4">
           <AssistantBubble>
-            Hi{firstName ? ` ${firstName}` : ""}! I&apos;m your {CUSTOM_BRAND.name} AI.
+            Hi{firstName ? ` ${firstName}` : ""}! I&apos;m Zack, your AgentStack assistant.
             {isStudio
               ? " I'm also your marketing and design assistant here in the Studio — ask me for listing copy, captions, campaign ideas, or design advice."
               : " I know your business and your goals. Ask me anything — I can write emails, prep you for appointments, or tell you what to do next."}
@@ -232,7 +232,7 @@ export function AskAssistantPanel() {
             ref={inputRef}
             rows={1}
             value={input}
-            placeholder={`Ask ${CUSTOM_BRAND.name} AI…`}
+            placeholder={`Ask ${ASSISTANT_NAME}…`}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
@@ -289,7 +289,7 @@ export function AskAssistantButton({ className }: { className?: string }) {
       )}
     >
       <Sparkles className="h-3.5 w-3.5 text-rose-500" />
-      <span className="hidden sm:inline">Ask {CUSTOM_BRAND.name}</span>
+      <span className="hidden sm:inline">Ask {ASSISTANT_NAME}</span>
     </button>
   );
 }

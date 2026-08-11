@@ -72,7 +72,7 @@ export function AiDemo() {
                 </div>
                 <div>
                   <p className="text-xs font-semibold text-[#173B7A]">AgentStack</p>
-                  <p className="text-[10px] text-[#7B8AA1]">Powered by AgentStack AI · Online</p>
+                  <p className="text-[10px] text-[#7B8AA1]">Zack by AgentStack · Online</p>
                 </div>
                 <div className="ml-auto flex items-center gap-1">
                   <span className="h-2 w-2 animate-pulse rounded-full bg-[#28C840]" />

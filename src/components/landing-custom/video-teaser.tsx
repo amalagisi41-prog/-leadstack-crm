@@ -17,6 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { LogoMark } from "@/components/brand/logo-mark";
 
 const SLIDES = Array.from(
   { length: 8 },
@@ -48,13 +49,24 @@ const HERO_VIDEO_EMBED = HERO_VIDEO_ID
 
 function ClosingWordmark({ compact = false }: { compact?: boolean }) {
   return (
-    <div className="flex items-center justify-center" aria-label="AgentStack">
+    <div
+      className={`flex items-center justify-center ${
+        compact ? "justify-start" : "mx-auto"
+      }`}
+      aria-label="AgentStack"
+    >
       <Image
-        src="/icons/logo-light-512.png"
+        src="/brand/exports/ui/agentstack-mark-on-light-1024.png"
         alt="AgentStack"
-        width={512}
-        height={512}
-        className={compact ? "h-24 w-24" : "h-40 w-40 sm:h-52 sm:w-52"}
+        width={1024}
+        height={1024}
+        unoptimized
+        sizes={compact ? "(max-width: 640px) 72px, 104px" : "(max-width: 640px) 176px, 248px"}
+        className={
+          compact
+            ? "h-[4.5rem] w-[4.5rem] object-contain sm:h-24 sm:w-24 lg:h-28 lg:w-28"
+            : "h-56 w-56 object-contain sm:h-72 sm:w-72 lg:h-80 lg:w-80"
+        }
       />
     </div>
   );
@@ -133,21 +145,31 @@ export function VideoTeaser() {
               />
             ))}
 
+            {activeSlide < closingStart && (
+              <div className="pointer-events-none absolute top-3 right-3 z-20 drop-shadow-[0_5px_12px_rgba(23,59,122,0.22)] sm:top-4 sm:right-4">
+                <LogoMark
+                  tone="dark"
+                  size={44}
+                  className="h-8 w-8 object-contain sm:h-10 sm:w-10"
+                />
+              </div>
+            )}
+
             <FadeFrame active={activeSlide === closingStart}>
-              <div className="grid h-full grid-cols-[42%_58%] items-center gap-4 px-5 sm:px-10">
-                <div>
+              <div className="grid h-full grid-cols-[44%_56%] items-center gap-3 px-5 sm:gap-6 sm:px-10 lg:px-14">
+                <div className="flex min-w-0 flex-col justify-center">
                   <ClosingWordmark compact />
-                  <h3 className="mt-5 text-lg leading-tight font-semibold text-[#173B7A] sm:text-3xl md:text-4xl">
+                  <h3 className="mt-2 max-w-md text-base leading-[1.05] font-semibold tracking-[-0.03em] text-[#173B7A] sm:mt-3 sm:text-2xl md:text-3xl lg:text-4xl">
                     The easiest way to run your{" "}
                     <span className="text-[#F15AA7]">
                       real estate business.
                     </span>
                   </h3>
-                  <p className="mt-3 text-xs font-medium text-[#DB4F9B] sm:text-lg">
+                  <p className="mt-2 text-[10px] font-medium tracking-wide text-[#DB4F9B] sm:mt-3 sm:text-sm lg:text-base">
                     Work less. Close more. Live better.
                   </p>
                 </div>
-                <div className="grid grid-cols-5 border-l border-[#E7DCC7] pl-3 sm:pl-6">
+                <div className="grid grid-cols-5 border-l border-[#E7DCC7] pl-3 sm:pl-6 lg:pl-8">
                   {lifecycle.map(({ label, detail, Icon }) => (
                     <div
                       key={label}
@@ -171,7 +193,12 @@ export function VideoTeaser() {
 
             <FadeFrame active={activeSlide === closingStart + 1}>
               <div className="flex h-full items-center justify-center px-6">
-                <ClosingWordmark />
+                <div className="flex flex-col items-center">
+                  <ClosingWordmark />
+                  <p className="-mt-7 text-[10px] font-semibold tracking-[0.22em] text-[#173B7A] uppercase sm:-mt-9 sm:text-sm">
+                    Real estate solutions
+                  </p>
+                </div>
               </div>
             </FadeFrame>
 

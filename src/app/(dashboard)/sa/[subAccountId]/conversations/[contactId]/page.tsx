@@ -187,7 +187,7 @@ export default function ConversationDetailPage() {
               variant="outline"
               size="sm"
               onClick={handleSummarize}
-              title="Ask AgentStack to summarize this conversation"
+              title="Ask Zack to summarize this conversation"
             >
               <Sparkles className="mr-1 h-3.5 w-3.5 text-rose-500" />
               <span className="hidden sm:inline">Summarize</span>

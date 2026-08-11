@@ -370,7 +370,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                 className="flex min-h-11 w-full items-center gap-2.5 rounded-md bg-white/15 px-2 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#6EA8FE] hover:text-[#102A4C]"
               >
                 <Sparkles className="h-4 w-4 shrink-0" />
-                Ask AI
+                Ask Zack
               </button>
             </div>
             {SUB_ACCOUNT_NAV_SECTIONS.map((section) => (

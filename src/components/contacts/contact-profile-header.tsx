@@ -279,7 +279,7 @@ export function ContactProfileHeader({ contact }: { contact: Contact }) {
               variant="outline"
               size="sm"
               onClick={handleSuggestNextAction}
-              title="Ask AgentStack what to do next with this contact"
+              title="Ask Zack what to do next with this contact"
             >
               <Sparkles className="mr-1 h-3.5 w-3.5 text-rose-500" />
               Suggest next action
