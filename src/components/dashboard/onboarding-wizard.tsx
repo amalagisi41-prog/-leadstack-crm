@@ -19,6 +19,8 @@ import {
   FileText,
   Sparkles,
   ChevronRight,
+  Loader2,
+  HeartPulse,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -149,6 +151,7 @@ export function OnboardingWizard({
     () => new Set(initialCompleted)
   );
   const [chosenFunnel, setChosenFunnel] = useState<string | null>(null);
+  const [finishing, setFinishing] = useState(false);
 
   useEffect(() => {
     if (!initialStep) return;
@@ -175,11 +178,15 @@ export function OnboardingWizard({
     [markDone]
   );
 
-  const finish = useCallback(() => {
+  const finish = useCallback(async () => {
+    if (finishing) return;
+    setFinishing(true);
     const all = [...ONBOARDING_STEP_IDS];
-    markDone(all);
-    router.replace(saPath("/dashboard"));
-  }, [markDone, router, saPath]);
+    setCompleted(new Set(all));
+    await persistSteps(subAccountId, all);
+    router.replace(saPath("/dashboard?welcome=1"));
+    router.refresh();
+  }, [finishing, router, saPath, subAccountId]);
 
   return (
     <div className="to-background flex min-h-[calc(100vh-4rem)] flex-col bg-gradient-to-b from-[#fff8ee]">
@@ -286,8 +293,8 @@ export function OnboardingWizard({
             {currentStep === 5 && (
               <StepClose
                 completed={completed}
-                saPath={saPath}
                 onFinish={finish}
+                finishing={finishing}
               />
             )}
 
@@ -381,7 +388,8 @@ function StepBuild({
 
       <TeachingNote>
         AgentStack never asks for provider passwords. Sign in with the domain,
-        host, or CRM directly; then return to approve the connection or transfer.
+        host, or CRM directly; then return to approve the connection or
+        transfer.
       </TeachingNote>
     </StepShell>
   );
@@ -759,12 +767,12 @@ function StepNurture({
 
 function StepClose({
   completed,
-  saPath,
   onFinish,
+  finishing,
 }: {
   completed: Set<string>;
-  saPath: (p: string) => string;
-  onFinish: () => void;
+  onFinish: () => Promise<void>;
+  finishing: boolean;
 }) {
   const doneCount = ONBOARDING_STEP_IDS.filter((id) =>
     completed.has(id)
@@ -774,9 +782,9 @@ function StepClose({
   return (
     <StepShell
       icon={<Star className="h-6 w-6 text-amber-500" />}
-      eyebrow="Step 6: Close"
-      title="Your system is ready"
-      subtitle={`Build. Connect. Capture. Respond. Nurture. Close. That's ${AGENTSTACK_METHOD_NAME} — and you just set it up. Your AI receptionist is standing by, your pipeline is live, and every new lead gets instant follow-up.`}
+      eyebrow="Step 6: Start your first working day"
+      title="Setup is finished. Here is what happens next."
+      subtitle={`${AGENTSTACK_METHOD_NAME} is now configured. Enter Today to see one recommended action, confirm your website foundation, and test the lead-to-appointment workflow before inviting real leads.`}
     >
       <div className="my-6 rounded-xl border border-emerald-200 bg-emerald-50/60 p-5 dark:border-emerald-800/40 dark:bg-emerald-950/20">
         <div className="mb-3 flex items-center gap-2">
@@ -799,28 +807,39 @@ function StepClose({
         )}
       </div>
 
-      <div className="mb-6 grid grid-cols-2 gap-2">
-        {[
-          { label: "View Contacts", href: saPath("/contacts") },
-          { label: "Open Pipeline", href: saPath("/pipeline") },
-          { label: "AI Agents", href: saPath("/ai-agents") },
-          { label: "Forms", href: saPath("/forms") },
-        ].map((link) => (
-          <Link
-            key={link.href}
-            href={link.href}
-            className="border-border bg-card hover:bg-muted/50 flex items-center justify-between rounded-lg border px-4 py-3 text-sm font-medium transition-colors"
-          >
-            {link.label}
-            <ChevronRight className="text-muted-foreground h-4 w-4" />
-          </Link>
-        ))}
+      <div className="mb-6 rounded-2xl border bg-[#f7faff] p-5">
+        <p className="text-xs font-semibold tracking-widest text-[#DB4F9B] uppercase">
+          Your first 10 minutes
+        </p>
+        <div className="mt-4 space-y-3">
+          {[
+            "Review the single next action on Today",
+            "Confirm Site Health shows the domain and hosting status",
+            "Send one test lead through your form and verify the follow-up",
+          ].map((item, index) => (
+            <div key={item} className="flex items-start gap-3 text-sm">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#173B7A] text-xs font-semibold text-white">
+                {index + 1}
+              </span>
+              <span className="pt-0.5">{item}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
-      <Button size="lg" onClick={onFinish}>
-        Open Workspace
-        <ArrowRight className="ml-1.5 h-4 w-4" />
+      <Button size="lg" onClick={() => void onFinish()} disabled={finishing}>
+        {finishing ? (
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        ) : (
+          <HeartPulse className="mr-2 h-4 w-4" />
+        )}
+        {finishing ? "Opening Today…" : "Go to Today — show my next action"}
+        {!finishing ? <ArrowRight className="ml-1.5 h-4 w-4" /> : null}
       </Button>
+      <p className="text-muted-foreground mt-3 text-xs">
+        Setup will close automatically. You can return to any setting from the
+        sidebar.
+      </p>
     </StepShell>
   );
 }

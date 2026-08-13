@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import {
   AlertCircle,
   ArrowRight,
@@ -46,12 +47,13 @@ const STALLED_AFTER_MS = 7 * DAY_MS;
 export default function DashboardPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { subAccount, subAccountId, agencyId, saPath } = useSubAccount();
   const { ready: filterReady, filter: territoryFilter } =
     useEffectiveTerritoryFilter();
 
   const onboardingDone = isOnboardingComplete(
-    subAccount?.onboardingStepsCompleted,
+    subAccount?.onboardingStepsCompleted
   );
 
   useEffect(() => {
@@ -138,16 +140,14 @@ export default function DashboardPage() {
   const nowMs = now.getTime();
 
   const displayName =
-    user?.displayName?.trim() ||
-    user?.email?.split("@")[0] ||
-    "there";
+    user?.displayName?.trim() || user?.email?.split("@")[0] || "there";
 
   const workspaceName = subAccount?.name?.trim() || "your workspace";
 
   const todayStart = new Date(
     now.getFullYear(),
     now.getMonth(),
-    now.getDate(),
+    now.getDate()
   ).getTime();
   const todayEnd = todayStart + DAY_MS;
   const tomorrowEnd = todayEnd + DAY_MS;
@@ -160,8 +160,9 @@ export default function DashboardPage() {
 
   const stages = usePipelineStages();
   const openDeals = useMemo(
-    () => deals.filter((deal) => deal.stageId !== "won" && deal.stageId !== "lost"),
-    [deals],
+    () =>
+      deals.filter((deal) => deal.stageId !== "won" && deal.stageId !== "lost"),
+    [deals]
   );
 
   const todayEvents = useMemo(
@@ -172,7 +173,7 @@ export default function DashboardPage() {
           return time >= todayStart && time < todayEnd;
         })
         .slice(0, 4),
-    [events, todayStart, todayEnd],
+    [events, todayStart, todayEnd]
   );
 
   const tomorrowEvents = useMemo(
@@ -181,7 +182,7 @@ export default function DashboardPage() {
         const time = toDate(event.startAt)?.getTime() ?? 0;
         return time >= todayEnd && time < tomorrowEnd;
       }),
-    [events, todayEnd, tomorrowEnd],
+    [events, todayEnd, tomorrowEnd]
   );
 
   // Each person's daily priorities reflect their own assigned tasks, not
@@ -191,45 +192,47 @@ export default function DashboardPage() {
     () =>
       tasks.filter((task) => {
         if (task.completed) return false;
-        if ((task.assignedToUid ?? task.createdByUid) !== user?.uid) return false;
+        if ((task.assignedToUid ?? task.createdByUid) !== user?.uid)
+          return false;
         const due = toDate(task.dueAt)?.getTime();
         return due != null && due < todayEnd;
       }),
-    [tasks, todayEnd, user],
+    [tasks, todayEnd, user]
   );
 
   const dueTodayTasks = useMemo(
     () =>
       tasks.filter((task) => {
         if (task.completed) return false;
-        if ((task.assignedToUid ?? task.createdByUid) !== user?.uid) return false;
+        if ((task.assignedToUid ?? task.createdByUid) !== user?.uid)
+          return false;
         const due = toDate(task.dueAt)?.getTime();
         return due != null && due >= todayStart && due < todayEnd;
       }),
-    [tasks, todayStart, todayEnd, user],
+    [tasks, todayStart, todayEnd, user]
   );
 
   const warmDeals = useMemo(
     () =>
       openDeals.filter((deal) =>
-        new Set(["contacted", "qualified"]).has(deal.stageId),
+        new Set(["contacted", "qualified"]).has(deal.stageId)
       ),
-    [openDeals],
+    [openDeals]
   );
 
   const stalledDeals = useMemo(
     () =>
       openDeals.filter((deal) => {
         if (deal.stageId === "new") return false;
-      const changed = toDate(deal.stageChangedAt)?.getTime() ?? 0;
+        const changed = toDate(deal.stageChangedAt)?.getTime() ?? 0;
         return changed > 0 && nowMs - changed >= STALLED_AFTER_MS;
-    }),
-    [openDeals, nowMs],
+      }),
+    [openDeals, nowMs]
   );
 
   const escalatedSessions = useMemo(
     () => sessions.filter((session) => session.status === "escalated"),
-    [sessions],
+    [sessions]
   );
 
   const newLeads = useMemo(() => {
@@ -250,19 +253,19 @@ export default function DashboardPage() {
   const completedOnboardingSteps = ONBOARDING_METHOD_STEPS.filter((step) =>
     isOnboardingMethodStepComplete(
       step,
-      subAccount?.onboardingStepsCompleted ?? [],
-    ),
+      subAccount?.onboardingStepsCompleted ?? []
+    )
   );
   const nextOnboardingStep = ONBOARDING_METHOD_STEPS.find(
     (step) =>
       !isOnboardingMethodStepComplete(
         step,
-        subAccount?.onboardingStepsCompleted ?? [],
-      ),
+        subAccount?.onboardingStepsCompleted ?? []
+      )
   );
   const onboardingProgress = ONBOARDING_METHOD_STEPS.length
     ? Math.round(
-        (completedOnboardingSteps.length / ONBOARDING_METHOD_STEPS.length) * 100,
+        (completedOnboardingSteps.length / ONBOARDING_METHOD_STEPS.length) * 100
       )
     : 0;
 
@@ -306,11 +309,13 @@ export default function DashboardPage() {
     }
 
     const freshLead = newLeads.find(
-      (contact) => !deals.some((deal) => deal.contactId === contact.id),
+      (contact) => !deals.some((deal) => deal.contactId === contact.id)
     );
     if (freshLead) {
       const createdAt = toDate(freshLead.createdAt);
-      const source = freshLead.source ? freshLead.source.replace(/-/g, " ") : "new inquiry";
+      const source = freshLead.source
+        ? freshLead.source.replace(/-/g, " ")
+        : "new inquiry";
       return {
         title: `${freshLead.name || freshLead.email || "New lead"} is waiting`,
         description: `A ${source} just landed and has no deal yet. The first reply keeps the momentum with you.`,
@@ -321,7 +326,8 @@ export default function DashboardPage() {
         accentClass:
           "border-emerald-200 bg-emerald-50/60 dark:border-emerald-800/40 dark:bg-emerald-950/20",
         icon: <Users className="h-4 w-4 text-emerald-600" />,
-        contactLabel: freshLead.name || freshLead.email || freshLead.phone || "Lead",
+        contactLabel:
+          freshLead.name || freshLead.email || freshLead.phone || "Lead",
         primary: {
           label: "Complete",
           href: saPath(`/contacts/${freshLead.id}`),
@@ -339,7 +345,9 @@ export default function DashboardPage() {
 
     const overdue = overdueTasks[0];
     if (overdue) {
-      const contact = overdue.contactId ? contactById.get(overdue.contactId) : null;
+      const contact = overdue.contactId
+        ? contactById.get(overdue.contactId)
+        : null;
       const dueAt = toDate(overdue.dueAt);
       return {
         title: overdue.title,
@@ -390,7 +398,9 @@ export default function DashboardPage() {
         },
         secondary: {
           label: "Message",
-          href: contact ? saPath(`/contacts/${contact.id}`) : saPath("/pipeline"),
+          href: contact
+            ? saPath(`/contacts/${contact.id}`)
+            : saPath("/pipeline"),
         },
         tertiary: {
           label: "Schedule",
@@ -531,7 +541,7 @@ export default function DashboardPage() {
 
   if (subAccount && !onboardingDone) {
     return (
-      <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
+      <div className="text-muted-foreground flex h-64 items-center justify-center text-sm">
         Taking you to setup&hellip;
       </div>
     );
@@ -539,15 +549,35 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      {searchParams.get("welcome") === "1" ? (
+        <div className="flex flex-col gap-4 rounded-2xl border border-blue-200 bg-gradient-to-r from-blue-50 to-pink-50 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold tracking-widest text-[#DB4F9B] uppercase">
+              Setup complete
+            </p>
+            <h2 className="mt-1 text-lg font-semibold text-[#173B7A]">
+              Welcome to your first working day.
+            </h2>
+            <p className="text-muted-foreground mt-1 text-sm">
+              Start with the recommended action below. Zack can guide you
+              through it without leaving this page.
+            </p>
+          </div>
+          <Button render={<Link href={saPath("/site-health")} />}>
+            Check my site foundation
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        </div>
+      ) : null}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-1">
-          <p className="text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">
+          <p className="text-muted-foreground text-xs font-medium tracking-[0.24em] uppercase">
             {today}
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">
             {greeting}, {displayName}
           </h1>
-          <p className="max-w-2xl text-sm text-muted-foreground">
+          <p className="text-muted-foreground max-w-2xl text-sm">
             {workspaceName === "your workspace"
               ? "Your workspace is ready for today’s work."
               : `${workspaceName} is ready for the next move. Keep the day focused on leads, follow-up, and appointments.`}
@@ -555,7 +585,11 @@ export default function DashboardPage() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <NewDealDialog contacts={contacts} />
-          <Button size="sm" variant="outline" render={<Link href={saPath("/contacts")} />}>
+          <Button
+            size="sm"
+            variant="outline"
+            render={<Link href={saPath("/contacts")} />}
+          >
             <Plus className="mr-1.5 h-3.5 w-3.5" />
             Add Lead
           </Button>
@@ -629,31 +663,37 @@ function LoadingState() {
   return (
     <div className="grid gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.6fr)]">
       <div className="space-y-4">
-        <div className="rounded-2xl border bg-card p-5">
-          <div className="h-4 w-32 animate-pulse rounded bg-muted" />
-          <div className="mt-3 h-6 w-64 animate-pulse rounded bg-muted" />
-          <div className="mt-3 h-4 w-full max-w-xl animate-pulse rounded bg-muted" />
+        <div className="bg-card rounded-2xl border p-5">
+          <div className="bg-muted h-4 w-32 animate-pulse rounded" />
+          <div className="bg-muted mt-3 h-6 w-64 animate-pulse rounded" />
+          <div className="bg-muted mt-3 h-4 w-full max-w-xl animate-pulse rounded" />
           <div className="mt-6 grid gap-2 sm:grid-cols-3">
-            <div className="h-10 animate-pulse rounded-xl bg-muted" />
-            <div className="h-10 animate-pulse rounded-xl bg-muted" />
-            <div className="h-10 animate-pulse rounded-xl bg-muted" />
+            <div className="bg-muted h-10 animate-pulse rounded-xl" />
+            <div className="bg-muted h-10 animate-pulse rounded-xl" />
+            <div className="bg-muted h-10 animate-pulse rounded-xl" />
           </div>
         </div>
-        <div className="rounded-2xl border bg-card p-5">
-          <div className="h-4 w-40 animate-pulse rounded bg-muted" />
+        <div className="bg-card rounded-2xl border p-5">
+          <div className="bg-muted h-4 w-40 animate-pulse rounded" />
           <div className="mt-4 space-y-2">
             {Array.from({ length: 6 }).map((_, idx) => (
-              <div key={idx} className="h-16 animate-pulse rounded-xl bg-muted/70" />
+              <div
+                key={idx}
+                className="bg-muted/70 h-16 animate-pulse rounded-xl"
+              />
             ))}
           </div>
         </div>
       </div>
       <div className="space-y-4">
-        <div className="rounded-2xl border bg-card p-5">
-          <div className="h-4 w-32 animate-pulse rounded bg-muted" />
+        <div className="bg-card rounded-2xl border p-5">
+          <div className="bg-muted h-4 w-32 animate-pulse rounded" />
           <div className="mt-4 space-y-2">
             {Array.from({ length: 3 }).map((_, idx) => (
-              <div key={idx} className="h-14 animate-pulse rounded-xl bg-muted/70" />
+              <div
+                key={idx}
+                className="bg-muted/70 h-14 animate-pulse rounded-xl"
+              />
             ))}
           </div>
         </div>
@@ -662,36 +702,36 @@ function LoadingState() {
   );
 }
 
-function NextBestActionCard({
-  action,
-}: {
-  action: NextBestAction;
-}) {
+function NextBestActionCard({ action }: { action: NextBestAction }) {
   return (
     <section className={cn("rounded-2xl border p-5", action.accentClass)}>
       <div className="mb-4 flex items-center gap-2">
-        <Sparkles className="h-4 w-4 text-muted-foreground" />
-        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+        <Sparkles className="text-muted-foreground h-4 w-4" />
+        <p className="text-muted-foreground text-[11px] font-semibold tracking-[0.24em] uppercase">
           Next best action
         </p>
       </div>
       <div className="grid gap-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-xl font-semibold tracking-tight">{action.title}</h2>
+            <h2 className="text-xl font-semibold tracking-tight">
+              {action.title}
+            </h2>
             {action.icon}
           </div>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+          <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-relaxed">
             {action.description}
           </p>
           <div className="mt-4 flex flex-wrap gap-2 text-xs">
-            <span className="rounded-full border bg-background/70 px-3 py-1 font-medium text-foreground">
-              {action.contactLabel ? `Contact: ${action.contactLabel}` : "No contact assigned"}
+            <span className="bg-background/70 text-foreground rounded-full border px-3 py-1 font-medium">
+              {action.contactLabel
+                ? `Contact: ${action.contactLabel}`
+                : "No contact assigned"}
             </span>
-            <span className="rounded-full border bg-background/70 px-3 py-1 font-medium text-foreground">
+            <span className="bg-background/70 text-foreground rounded-full border px-3 py-1 font-medium">
               {action.waitingLabel}
             </span>
-            <span className="rounded-full border bg-background/70 px-3 py-1 font-medium text-foreground">
+            <span className="bg-background/70 text-foreground rounded-full border px-3 py-1 font-medium">
               Recommend: {action.recommendedAction}
             </span>
           </div>
@@ -702,10 +742,18 @@ function NextBestActionCard({
             {action.primary.label}
             <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
           </Button>
-          <Button size="sm" variant="outline" render={<Link href={action.secondary.href} />}>
+          <Button
+            size="sm"
+            variant="outline"
+            render={<Link href={action.secondary.href} />}
+          >
             {action.secondary.label}
           </Button>
-          <Button size="sm" variant="ghost" render={<Link href={action.tertiary.href} />}>
+          <Button
+            size="sm"
+            variant="ghost"
+            render={<Link href={action.tertiary.href} />}
+          >
             {action.tertiary.label}
           </Button>
         </div>
@@ -714,16 +762,12 @@ function NextBestActionCard({
   );
 }
 
-function TodayPrioritiesCard({
-  priorities,
-}: {
-  priorities: TodayPriority[];
-}) {
+function TodayPrioritiesCard({ priorities }: { priorities: TodayPriority[] }) {
   return (
-    <section className="rounded-2xl border bg-card p-5">
+    <section className="bg-card rounded-2xl border p-5">
       <div className="mb-4">
         <h2 className="text-sm font-semibold">Today&apos;s priorities</h2>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-muted-foreground text-xs">
           The six signals that tell you what to do next
         </p>
       </div>
@@ -732,26 +776,28 @@ function TodayPrioritiesCard({
           <li key={priority.id}>
             <Link
               href={priority.href}
-              className="group flex items-center gap-3 rounded-xl border bg-muted/20 px-4 py-3 transition-all hover:border-primary/20 hover:bg-muted/40"
+              className="group bg-muted/20 hover:border-primary/20 hover:bg-muted/40 flex items-center gap-3 rounded-xl border px-4 py-3 transition-all"
             >
               <span
                 className={cn(
                   "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
-                  priority.iconBg,
+                  priority.iconBg
                 )}
               >
                 {priority.icon}
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <p className="truncate text-sm font-medium">{priority.label}</p>
+                  <p className="truncate text-sm font-medium">
+                    {priority.label}
+                  </p>
                   {priority.count === 0 && (
-                    <span className="rounded-full bg-background px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    <span className="bg-background text-muted-foreground rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase">
                       All caught up
                     </span>
                   )}
                 </div>
-                <p className="truncate text-xs text-muted-foreground">
+                <p className="text-muted-foreground truncate text-xs">
                   {priority.description}
                 </p>
               </div>
@@ -759,7 +805,7 @@ function TodayPrioritiesCard({
                 <p className="text-lg font-semibold tabular-nums">
                   {priority.count}
                 </p>
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-muted-foreground text-[11px]">
                   {priority.count > 0 ? "Needs attention" : "Quiet"}
                 </p>
               </div>
@@ -783,11 +829,11 @@ function ScheduleCard({
   saPath: (path: string) => string;
 }) {
   return (
-    <section className="rounded-2xl border bg-card p-5">
+    <section className="bg-card rounded-2xl border p-5">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
           <h2 className="text-sm font-semibold">Today&apos;s schedule</h2>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-muted-foreground text-xs">
             {todayEvents.length === 0
               ? "Nothing booked right now"
               : `${todayEvents.length} appointment${todayEvents.length !== 1 ? "s" : ""}`}
@@ -804,10 +850,10 @@ function ScheduleCard({
       </div>
 
       {todayEvents.length === 0 ? (
-        <div className="rounded-xl border border-dashed bg-muted/10 p-5 text-center">
-          <CalendarIcon className="mx-auto h-8 w-8 text-muted-foreground/40" />
+        <div className="bg-muted/10 rounded-xl border border-dashed p-5 text-center">
+          <CalendarIcon className="text-muted-foreground/40 mx-auto h-8 w-8" />
           <p className="mt-2 text-sm font-medium">No appointments today</p>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="text-muted-foreground mt-1 text-xs">
             {tomorrowCount > 0
               ? `${tomorrowCount} appointment${tomorrowCount !== 1 ? "s" : ""} tomorrow.`
               : "Add a showing or connect your calendar to start booking here."}
@@ -833,14 +879,16 @@ function ScheduleCard({
               ? contactById.get(event.contactId)
               : null;
             return (
-              <li key={event.id} className="rounded-xl border bg-muted/20 p-3">
+              <li key={event.id} className="bg-muted/20 rounded-xl border p-3">
                 <div className="flex items-start gap-3">
                   <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-600 dark:bg-violet-900/40">
                     <CalendarIcon className="h-4 w-4" />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{event.title}</p>
-                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <p className="truncate text-sm font-medium">
+                      {event.title}
+                    </p>
+                    <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-2 text-xs">
                       {time && (
                         <span className="flex items-center gap-1">
                           <Clock className="h-3 w-3" />
@@ -880,11 +928,11 @@ function SetupProgressCard({
   if (!nextStep) return null;
 
   return (
-    <section className="rounded-2xl border bg-card p-5">
+    <section className="bg-card rounded-2xl border p-5">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="max-w-2xl space-y-3">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+            <p className="text-muted-foreground text-[11px] font-semibold tracking-[0.24em] uppercase">
               The AgentStack Method
             </p>
             <h2 className="mt-1 text-lg font-semibold tracking-tight">
@@ -893,32 +941,37 @@ function SetupProgressCard({
           </div>
           <div>
             <p className="text-sm font-medium">{nextStep.title}</p>
-            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+            <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
               {nextStep.description}
             </p>
           </div>
-          <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-            <span className="rounded-full border bg-muted/20 px-3 py-1 font-medium">
+          <div className="text-muted-foreground flex flex-wrap gap-2 text-xs">
+            <span className="bg-muted/20 rounded-full border px-3 py-1 font-medium">
               About {nextStep.videoMinutes} min
             </span>
-            <span className="rounded-full border bg-muted/20 px-3 py-1 font-medium">
+            <span className="bg-muted/20 rounded-full border px-3 py-1 font-medium">
               Progress saves as you go
             </span>
           </div>
         </div>
 
-        <div className="w-full max-w-xs rounded-xl border bg-muted/10 p-4">
+        <div className="bg-muted/10 w-full max-w-xs rounded-xl border p-4">
           <div className="mb-2 flex items-center justify-between text-xs">
-            <span className="font-medium text-foreground">Onboarding progress</span>
+            <span className="text-foreground font-medium">
+              Onboarding progress
+            </span>
             <span className="text-muted-foreground">{progress}%</span>
           </div>
-          <div className="h-2 rounded-full bg-muted">
+          <div className="bg-muted h-2 rounded-full">
             <div
               className="h-2 rounded-full bg-blue-600"
               style={{ width: `${progress}%` }}
             />
           </div>
-          <Button className="mt-4 w-full" render={<Link href={saPath(nextStep.href)} />}>
+          <Button
+            className="mt-4 w-full"
+            render={<Link href={saPath(nextStep.href)} />}
+          >
             Continue with {nextStep.title}
             <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
           </Button>
@@ -928,13 +981,9 @@ function SetupProgressCard({
   );
 }
 
-function EmptyWorkspaceState({
-  saPath,
-}: {
-  saPath: (path: string) => string;
-}) {
+function EmptyWorkspaceState({ saPath }: { saPath: (path: string) => string }) {
   return (
-    <section className="rounded-2xl border bg-card p-8">
+    <section className="bg-card rounded-2xl border p-8">
       <div className="mx-auto flex max-w-2xl flex-col items-center text-center">
         <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-pink-500 text-white shadow-sm">
           <Users className="h-6 w-6" />
@@ -942,7 +991,7 @@ function EmptyWorkspaceState({
         <h2 className="mt-4 text-xl font-semibold tracking-tight">
           No leads yet
         </h2>
-        <p className="mt-2 max-w-lg text-sm text-muted-foreground">
+        <p className="text-muted-foreground mt-2 max-w-lg text-sm">
           Bring in your first contacts or activate a lead capture flow so the
           Today page can start surfacing real next actions for your business.
         </p>
@@ -951,17 +1000,11 @@ function EmptyWorkspaceState({
             <Users className="mr-1.5 h-4 w-4" />
             Import contacts
           </Button>
-          <Button
-            variant="outline"
-            render={<Link href={saPath("/forms")} />}
-          >
+          <Button variant="outline" render={<Link href={saPath("/forms")} />}>
             <Sparkles className="mr-1.5 h-4 w-4" />
             Activate Lead Capture
           </Button>
-          <Button
-            variant="ghost"
-            render={<Link href={saPath("/calendar")} />}
-          >
+          <Button variant="ghost" render={<Link href={saPath("/calendar")} />}>
             <CalendarIcon className="mr-1.5 h-4 w-4" />
             Connect calendar
           </Button>
