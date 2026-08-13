@@ -2,19 +2,27 @@ import "server-only";
 
 import crypto from "node:crypto";
 
-const AUTHORIZE_URL = "https://marketplace.gohighlevel.com/oauth/chooselocation";
+const AUTHORIZE_URL =
+  "https://marketplace.gohighlevel.com/oauth/chooselocation";
 const TOKEN_URL = "https://services.leadconnectorhq.com/oauth/token";
 
 function secret() {
-  return process.env.AUTOMATIONS_TOKEN_SECRET ?? process.env.COOKIE_SECRET_CURRENT ?? "";
+  return (
+    process.env.AUTOMATIONS_TOKEN_SECRET ??
+    process.env.COOKIE_SECRET_CURRENT ??
+    ""
+  );
 }
 
 export function ghlOAuthConfigured() {
-  return Boolean(process.env.GHL_CLIENT_ID && process.env.GHL_CLIENT_SECRET && secret());
+  return Boolean(
+    process.env.GHL_CLIENT_ID && process.env.GHL_CLIENT_SECRET && secret()
+  );
 }
 
 export function signGhlState(subAccountId: string, uid: string, nonce: string) {
-  const payload = `${subAccountId}.${uid}.${nonce}`;
+  const issuedAt = Date.now();
+  const payload = `${subAccountId}.${uid}.${nonce}.${issuedAt}`;
   const signature = crypto
     .createHmac("sha256", secret())
     .update(`ghl-oauth:${payload}`)
@@ -26,16 +34,24 @@ export function verifyGhlState(state: string) {
   try {
     const decoded = Buffer.from(state, "base64url").toString("utf8");
     const parts = decoded.split(".");
-    if (parts.length !== 4) return null;
-    const [subAccountId, uid, nonce, signature] = parts;
+    if (parts.length !== 5) return null;
+    const [subAccountId, uid, nonce, issuedAtRaw, signature] = parts;
+    const issuedAt = Number(issuedAtRaw);
+    if (
+      !Number.isFinite(issuedAt) ||
+      issuedAt > Date.now() + 60_000 ||
+      Date.now() - issuedAt > 15 * 60 * 1000
+    )
+      return null;
     const expected = crypto
       .createHmac("sha256", secret())
-      .update(`ghl-oauth:${subAccountId}.${uid}.${nonce}`)
+      .update(`ghl-oauth:${subAccountId}.${uid}.${nonce}.${issuedAtRaw}`)
       .digest("hex");
     if (
       signature.length !== expected.length ||
       !crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected))
-    ) return null;
+    )
+      return null;
     return { subAccountId, uid };
   } catch {
     return null;
@@ -82,7 +98,8 @@ export async function exchangeGhlCode(code: string, redirectUri: string) {
       redirectUri,
     }),
   });
-  if (!response.ok) throw new Error(`HighLevel token exchange failed (${response.status})`);
+  if (!response.ok)
+    throw new Error(`HighLevel token exchange failed (${response.status})`);
   const raw = (await response.json()) as Record<string, unknown>;
   const token: GhlOAuthToken = {
     accessToken: String(raw.accessToken ?? raw.access_token ?? ""),

@@ -33,9 +33,10 @@ export default function ImportPage() {
       </header>
       <div className="grid gap-2 sm:grid-cols-3">
         {[
-          "Connect your GHL location",
-          "Review fields and pipeline",
-          "Import and verify",
+          "Approve your GHL location",
+          "Review records found",
+          "Start the data import",
+          "Plan website + domain cutover",
         ].map((label, index) => (
           <div
             key={label}
@@ -47,6 +48,34 @@ export default function ImportPage() {
             {label}
           </div>
         ))}
+      </div>
+      <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-xs leading-5 text-[#173B7A]">
+        <p className="font-semibold">
+          Logging into GHL does not start a scrape or import.
+        </p>
+        <p className="mt-1">
+          HighLevel will ask you to log in again inside its authorization
+          window, choose your location, and approve read-only access. AgentStack
+          reads a preview after approval. Nothing is copied until you review the
+          mapping and select Start import.
+        </p>
+      </div>
+      <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs leading-5 text-amber-900">
+        <p className="font-semibold">
+          Domain or hosting purchased through GHL?
+        </p>
+        <p className="mt-1">
+          Keep it connected while AgentStack inventories and rebuilds the site.
+          After you approve the replacement, use Domain to guide the final DNS
+          change. Email and the current website remain untouched until that
+          cutover.
+        </p>
+        <Link
+          href={saPath("/domain")}
+          className="mt-2 inline-flex font-semibold underline underline-offset-2"
+        >
+          Open domain guidance
+        </Link>
       </div>
       <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-xs leading-5 text-emerald-900">
         <p className="flex items-center gap-2 font-semibold">

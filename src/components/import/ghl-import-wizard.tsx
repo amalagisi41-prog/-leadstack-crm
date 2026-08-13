@@ -75,6 +75,46 @@ export function GhlImportWizard() {
   const [jobId, setJobId] = useState<string | null>(null);
   const [job, setJob] = useState<ImportJob | null>(null);
 
+  // OAuth can finish in the system browser while AgentStack remains open as
+  // an installed app. Detect the completed connection here so returning users
+  // continue automatically instead of seeing a stale login screen.
+  useEffect(() => {
+    if (step !== "connect") return;
+    let stopped = false;
+    let loading = false;
+    const check = async () => {
+      if (loading || stopped) return;
+      loading = true;
+      try {
+        const res = await fetch(
+          `/api/sub-accounts/${subAccountId}/import/ghl/status`,
+          { cache: "no-store" }
+        );
+        const data = (await res.json().catch(() => ({}))) as {
+          connected?: boolean;
+        };
+        if (!stopped && res.ok && data.connected) {
+          stopped = true;
+          toast.success("HighLevel approved. Preparing your review.");
+          await loadPreview();
+        }
+      } finally {
+        loading = false;
+      }
+    };
+    void check();
+    const timer = window.setInterval(check, 3000);
+    const onFocus = () => void check();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      stopped = true;
+      window.clearInterval(timer);
+      window.removeEventListener("focus", onFocus);
+    };
+    // loadPreview intentionally reads the current workspace from this render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, subAccountId]);
+
   // Live job progress.
   useEffect(() => {
     if (!jobId) return;
@@ -230,6 +270,21 @@ export function GhlImportWizard() {
           }
         >
           <div className="space-y-4">
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs leading-5 text-amber-900">
+              <p className="font-semibold">
+                Status: waiting for HighLevel approval
+              </p>
+              <p className="mt-1">
+                If you are already logged into GHL in another Chrome window,
+                HighLevel may still require Login here because this
+                authorization window has a separate session. After login, select
+                the correct location and approve access.
+              </p>
+              <p className="mt-2 font-medium">
+                After approval, return to AgentStack. This page will detect the
+                connection and open your review automatically.
+              </p>
+            </div>
             <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
               <p className="flex items-center gap-2 text-sm font-semibold text-[#173B7A]">
                 <ShieldCheck className="h-4 w-4" /> Secure account connection
@@ -248,7 +303,7 @@ export function GhlImportWizard() {
                   )
                 }
               >
-                <LogIn className="mr-2 h-4 w-4" /> Log in to GoHighLevel
+                <LogIn className="mr-2 h-4 w-4" /> Continue in HighLevel
               </Button>
               <Button
                 variant="outline"
@@ -467,9 +522,10 @@ export function GhlImportWizard() {
                   Your GHL records are now in AgentStack.
                 </p>
                 <p>
-                  Review People and Client Journeys next. Website pages and GHL
-                  workflows require a separate rebuild because HighLevel does
-                  not expose their editable designs through this connection.
+                  Review People and imported opportunities next. Website pages
+                  and GHL workflows require a separate rebuild because HighLevel
+                  does not expose their editable designs through this
+                  connection.
                 </p>
               </div>
             ) : null}
@@ -481,7 +537,7 @@ export function GhlImportWizard() {
                 variant="outline"
                 render={<Link href={saPath("/pipeline")} />}
               >
-                Review client journeys
+                Review imported opportunities
               </Button>
               <Button
                 variant="outline"
