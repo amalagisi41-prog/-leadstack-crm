@@ -64,6 +64,19 @@ function profileContext(p: Partial<BusinessProfileContent>): string {
   return `\n\n--- OPERATOR'S BUSINESS PROFILE ---\n${lines.join("\n")}\n--- END BUSINESS PROFILE ---`;
 }
 
+function foundationContext(value: unknown): string {
+  if (!value || typeof value !== "object") return "";
+  const f = value as Record<string, unknown>;
+  const lines = [
+    ["Setup path", f.mode],
+    ["Source platform", f.sourcePlatform],
+    ["Source website", f.sourceUrl],
+    ["Domain starting point", f.domainStartingPoint],
+    ["Hosting starting point", f.hostingStartingPoint],
+  ].filter((item): item is [string, string] => typeof item[1] === "string" && Boolean(item[1]));
+  return lines.length ? `\n\n--- DIGITAL FOUNDATION ---\n${lines.map(([label, value]) => `${label}: ${value}`).join("\n")}\n--- END DIGITAL FOUNDATION ---` : "";
+}
+
 export async function POST(request: Request) {
   if (!request.headers.get("x-user-uid")) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
@@ -113,12 +126,14 @@ export async function POST(request: Request) {
   if (subAccountId) {
     const access = await requireSubAccountMember(request, subAccountId);
     if (access instanceof NextResponse) return access;
-    const snap = await getAdminDb()
-      .doc(`subAccounts/${subAccountId}/businessProfile/main`)
-      .get();
+    const [snap, workspaceSnap] = await Promise.all([
+      getAdminDb().doc(`subAccounts/${subAccountId}/businessProfile/main`).get(),
+      getAdminDb().doc(`subAccounts/${subAccountId}`).get(),
+    ]);
     if (snap.exists) {
       context = profileContext(snap.data() as Partial<BusinessProfileContent>);
     }
+    context += foundationContext(workspaceSnap.data()?.onboardingFoundation);
   }
 
   const studioRails =

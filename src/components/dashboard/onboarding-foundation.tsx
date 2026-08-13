@@ -12,17 +12,25 @@ import {
   Sparkles,
   ExternalLink,
   ArrowUpRight,
+  CreditCard,
+  Eye,
+  Server,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import type {
   BusinessSourcePlatform,
   DomainStartingPoint,
+  HostingStartingPoint,
   OnboardingFoundationMode,
 } from "@/types/onboarding-foundation";
 
 const platforms: { value: BusinessSourcePlatform; label: string }[] = [
   { value: "gohighlevel", label: "GoHighLevel (GHL)" },
+  { value: "followupboss", label: "Follow Up Boss" },
+  { value: "kvcore", label: "kvCORE" },
+  { value: "lofty", label: "Lofty" },
+  { value: "chime", label: "Chime" },
   { value: "wordpress", label: "WordPress" },
   { value: "bluehost", label: "Bluehost" },
   { value: "godaddy", label: "GoDaddy" },
@@ -63,6 +71,8 @@ export function OnboardingFoundation({
   const [sourceUrl, setSourceUrl] = useState("");
   const [domainPoint, setDomainPoint] =
     useState<DomainStartingPoint>("not_sure");
+  const [hostingPoint, setHostingPoint] =
+    useState<HostingStartingPoint>("agentstack_managed");
   const [importing, setImporting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [profileImported, setProfileImported] = useState(false);
@@ -149,6 +159,7 @@ export function OnboardingFoundation({
             sourcePlatform: mode === "transfer" ? platform : null,
             sourceUrl: mode === "transfer" ? sourceUrl : "",
             domainStartingPoint: domainPoint,
+            hostingStartingPoint: hostingPoint,
             profileImported,
           }),
         }
@@ -166,39 +177,71 @@ export function OnboardingFoundation({
     }
   }
 
+  const buildSteps = [
+    { label: "Domain", done: domainPoint !== "not_sure" },
+    { label: "Hosting", done: Boolean(hostingPoint) },
+    { label: "Business source", done: mode !== "transfer" || platform === "gohighlevel" ? ghlStatus === "connected" || mode !== "transfer" : Boolean(sourceUrl) },
+    { label: "Blueprint", done: profileImported || mode !== "transfer" },
+  ];
+  const buildPercent = Math.round((buildSteps.filter((step) => step.done).length / buildSteps.length) * 100);
+  const previewUrl = /^https?:\/\//i.test(sourceUrl.trim())
+    ? sourceUrl.trim().split(/[\s,]+/)[0]
+    : "";
+
   return (
     <div className="mx-auto max-w-5xl space-y-6 pb-16">
       <div className="rounded-2xl border bg-gradient-to-br from-[#1b3d7a] to-[#16305f] p-7 text-white shadow-sm">
         <p className="text-xs font-semibold tracking-[0.18em] text-pink-300 uppercase">
-          Before Step 1
+          Build as you go
         </p>
         <h1 className="mt-2 text-2xl font-bold">
-          Start with what you already have.
+          Start with your digital foundation.
         </h1>
         <p className="mt-2 max-w-2xl text-sm text-blue-100/90">
-          AgentStack can bring over your public business details or help
-          establish your domain and website. You do not need to understand
-          hosting, DNS, or marketing software to get started.
+          Choose your domain and hosting first. AgentStack then builds visibly
+          alongside you while Zack carries each approved answer into your
+          Business Blueprint. No DNS or marketing-software experience needed.
         </p>
       </div>
+
+      <section className="rounded-2xl border bg-card p-5">
+        <div className="flex items-center justify-between gap-4">
+          <div><p className="font-semibold">Your build is in progress</p><p className="text-sm text-muted-foreground">Complete one small decision at a time. You can work in AgentStack while the site is prepared.</p></div>
+          <span className="rounded-full bg-blue-100 px-3 py-1 text-sm font-semibold text-blue-800">{buildPercent}%</span>
+        </div>
+        <div className="mt-4 grid gap-2 sm:grid-cols-4">
+          {buildSteps.map((step, index) => <div key={step.label} className={`rounded-xl border p-3 text-sm ${step.done ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "bg-muted/20 text-muted-foreground"}`}><span className="mr-2 font-semibold">{index + 1}</span>{step.label}{step.done ? <CheckCircle2 className="ml-2 inline h-4 w-4" /> : null}</div>)}
+        </div>
+      </section>
+
+      <section className="rounded-2xl border bg-card p-6">
+        <div className="flex items-start gap-3"><Globe2 className="mt-0.5 h-5 w-5 text-blue-600" /><div><p className="text-xs font-semibold uppercase tracking-widest text-pink-500">Foundation · Step 1</p><h2 className="mt-1 font-semibold">Choose your domain starting point</h2><p className="mt-1 text-sm text-muted-foreground">Buy a domain, connect one you own, or let Zack guide the choice. Nothing changes until you approve it.</p></div></div>
+        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+          {([['have_domain','I already own a domain'],['need_domain','Buy a new domain'],['not_sure','Help me choose']] as const).map(([value,label]) => <button key={value} type="button" onClick={() => { setDomainPoint(value); if (value === 'have_domain') setHostingPoint('transfer_existing'); }} className={`rounded-xl border px-4 py-3 text-left text-sm ${domainPoint === value ? 'border-blue-500 bg-blue-50 font-medium' : 'bg-background'}`}>{label}</button>)}
+        </div>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {domainPoint === 'need_domain' ? <Button render={<a href="https://www.namecheap.com/domains/" target="_blank" rel="noreferrer" />}><ArrowUpRight className="mr-2 h-4 w-4" />Search and buy a domain</Button> : null}
+          <Button variant="outline" render={<a href={saPath('/domain')} />}><ExternalLink className="mr-2 h-4 w-4" />Open domain setup</Button>
+        </div>
+      </section>
 
       <div className="grid gap-3 md:grid-cols-3">
         {(
           [
             [
               "transfer",
-              "Bring my business",
-              "I already have a website, CRM, or public profile.",
+              "Connect my existing business",
+              "Bring over my website, CRM, contacts, and approved brand details.",
             ],
             [
               "foundation",
-              "Build my foundation",
-              "Help me choose a domain and launch a website.",
+              "Build a new business",
+              "Watch AgentStack and Zack prepare the site and digital foundation.",
             ],
             [
               "fresh",
-              "Start fresh",
-              "I will enter my details and decide on a website later.",
+              "Build the basics first",
+              "Start working now and complete connections as the business grows.",
             ],
           ] as const
         ).map(([value, title, description]) => (
@@ -365,39 +408,39 @@ export function OnboardingFoundation({
 
       <section className="bg-card rounded-2xl border p-6">
         <div className="flex items-start gap-3">
-          <Globe2 className="mt-0.5 h-5 w-5 text-blue-600" />
+          <Server className="mt-0.5 h-5 w-5 text-blue-600" />
           <div>
-            <h2 className="font-semibold">Your domain and website</h2>
+            <p className="text-xs font-semibold uppercase tracking-widest text-pink-500">Foundation · Step 2</p>
+            <h2 className="mt-1 font-semibold">Choose how AgentStack hosts the build</h2>
             <p className="text-muted-foreground mt-1 text-sm">
-              Keep a domain or website at GoDaddy, Bluehost, Vercel, or another
-              provider—AgentStack can connect it. If you need one, we will
-              guide you without technical jargon.
+              Use managed hosting for the simplest setup, transfer an existing
+              site, or keep your current host while AgentStack connects it.
             </p>
           </div>
         </div>
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
           {(
             [
-              ["have_domain", "I already own a domain"],
-              ["need_domain", "I need a new domain"],
-              ["not_sure", "I’m not sure"],
+              ["agentstack_managed", "Managed by AgentStack"],
+              ["transfer_existing", "Transfer my hosting"],
+              ["keep_existing", "Keep my current host"],
             ] as const
           ).map(([value, label]) => (
             <button
               key={value}
               type="button"
-              onClick={() => setDomainPoint(value)}
-              className={`rounded-xl border px-4 py-3 text-left text-sm ${domainPoint === value ? "border-blue-500 bg-blue-50 font-medium dark:bg-blue-950/30" : "bg-background"}`}
+              onClick={() => setHostingPoint(value)}
+              className={`rounded-xl border px-4 py-3 text-left text-sm ${hostingPoint === value ? "border-blue-500 bg-blue-50 font-medium dark:bg-blue-950/30" : "bg-background"}`}
             >
               {label}
             </button>
           ))}
         </div>
         <div className="mt-4 rounded-xl border bg-muted/20 p-4">
-          <p className="text-sm font-semibold">Go directly to the next step</p>
-          <p className="mt-1 text-xs text-muted-foreground">These links open the provider at the closest available account, purchase, or transfer page. Return here after completing that step—AgentStack never asks for your provider password.</p>
+          <p className="text-sm font-semibold">Open the exact provider step</p>
+          <p className="mt-1 text-xs text-muted-foreground">Sign in with the provider directly. AgentStack never asks for or stores a provider password.</p>
           <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {FOUNDATION_LINKS.filter((link) => domainPoint === "need_domain" ? link.label === "Buy a domain" : true).map((link) => <a key={link.label} href={link.href} target="_blank" rel="noreferrer" className="flex items-center justify-between rounded-lg border bg-background p-3 text-sm transition hover:border-blue-400">
+            {FOUNDATION_LINKS.filter((link) => hostingPoint !== "agentstack_managed" || link.label === "Open Vercel").map((link) => <a key={link.label} href={link.href} target="_blank" rel="noreferrer" className="flex items-center justify-between rounded-lg border bg-background p-3 text-sm transition hover:border-blue-400">
               <span><span className="block font-medium">{link.label}</span><span className="block text-[11px] text-muted-foreground">{link.detail}</span></span><ArrowUpRight className="h-4 w-4 text-muted-foreground" />
             </a>)}
           </div>
@@ -407,10 +450,23 @@ export function OnboardingFoundation({
           </div>
         </div>
         <p className="text-muted-foreground mt-4 text-xs">
-          Nothing will be transferred or published without your approval.
-          Website Studio includes managed hosting when your new site is ready to
-          go live.
+          Nothing is transferred or published without approval. Managed hosting
+          is prepared while you continue using AgentStack.
         </p>
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
+        <div className="overflow-hidden rounded-2xl border bg-card">
+          <div className="flex items-center justify-between border-b p-4"><div><p className="flex items-center gap-2 font-semibold"><Eye className="h-4 w-4 text-blue-600" />Live build viewer</p><p className="mt-1 text-xs text-muted-foreground">See the existing site or open the new build without leaving your setup.</p></div><Button size="sm" variant="outline" render={<a href={saPath('/website-studio')} />}>Open Studio</Button></div>
+          {previewUrl ? <iframe title="Existing website preview" src={previewUrl} className="h-72 w-full bg-white" sandbox="allow-scripts allow-same-origin" /> : <div className="flex h-72 flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-pink-50 p-8 text-center"><Sparkles className="h-8 w-8 text-pink-500" /><p className="mt-3 font-semibold">Your site preview will appear here</p><p className="mt-1 max-w-sm text-sm text-muted-foreground">Connect an existing website above, or open AI Website Studio to build with Claude and the Vibe.co workflow.</p><div className="mt-4 flex gap-2"><Button size="sm" render={<a href={saPath('/website-studio')} />}>Build with AI</Button><Button size="sm" variant="outline" render={<a href="https://vibe.co" target="_blank" rel="noreferrer" />}>Connect Vibe.co</Button></div></div>}
+        </div>
+        <div className="rounded-2xl border bg-card p-5">
+          <CreditCard className="h-5 w-5 text-blue-600" />
+          <h2 className="mt-3 font-semibold">Secure payment readiness</h2>
+          <p className="mt-2 text-sm text-muted-foreground">Your subscription card is stored securely by Stripe—not AgentStack—so approved domain, hosting, and future add-on purchases can move faster.</p>
+          <Button className="mt-4 w-full" variant="outline" render={<a href={saPath('/dashboard/settings')} />}>Review billing settings</Button>
+          <p className="mt-3 text-xs text-muted-foreground">No add-on is charged without a clear price and your approval.</p>
+        </div>
       </section>
 
       <div className="flex justify-end">
@@ -420,7 +476,7 @@ export function OnboardingFoundation({
           disabled={saving || importing}
         >
           {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-          Continue to the six-step setup <ArrowRight className="ml-2 h-4 w-4" />
+          Save foundation and keep building <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </div>
     </div>

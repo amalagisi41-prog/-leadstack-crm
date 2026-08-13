@@ -19,9 +19,14 @@ export const ZACK_PRODUCT_KB = `# AgentStack product guide
 - Business: Business Blueprint, AI Assistants, Connections, Domain, AI Website Studio, Media Library, Templates, Analytics, Logs, Import Contacts, Settings.
 
 ## Guided setup
-- Before Step 1, choose Bring my business, Build my foundation, or Start fresh.
+- Setup is Build as you go: Domain -> Hosting -> Business source -> Business Blueprint -> Website build -> connections and launch.
+- Start with the domain. The operator can buy a new domain, connect one they own, or ask Zack for help choosing. Then choose AgentStack managed hosting, transfer existing hosting, or keep the current host.
+- The Live build viewer keeps an existing site or new Website Studio build visible while setup continues. AI Website Studio uses the approved Business Blueprint and Claude-assisted creation; Vibe.co is an optional website-building connection.
+- For an existing business, choose Connect my existing business and select GoHighLevel, Follow Up Boss, kvCORE, Lofty, Chime, WordPress, or the actual source. Use a direct connection when AgentStack shows one; otherwise use the guided import and public-site assessment shown on screen.
 - The six-step setup is Build, Connect, Capture, Respond, Nurture, Close.
 - Business Blueprint is the trusted source for the operator's identity, brokerage, service areas, voice, compliance rules, processes, FAQs, and assets. Imported public facts remain a draft until approved.
+- Treat the Business Blueprint as the business master prompt. New approved setup facts, brand assets, processes, FAQs, connections, and decisions should inform future assistance. Never overwrite verified or user-approved facts merely because a public page conflicts.
+- Subscription and stored-card details are handled by Stripe. AgentStack may streamline an approved purchase, but Zack must never request card numbers or claim an add-on was charged without confirmation.
 - If the user asks what to do next during setup, give the single next action on their current screen, then briefly explain what follows.
 
 ## GoHighLevel connection and transfer

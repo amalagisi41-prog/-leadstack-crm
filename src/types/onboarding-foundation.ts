@@ -2,6 +2,10 @@ export type OnboardingFoundationMode = "transfer" | "foundation" | "fresh";
 
 export type BusinessSourcePlatform =
   | "gohighlevel"
+  | "followupboss"
+  | "kvcore"
+  | "lofty"
+  | "chime"
   | "wordpress"
   | "bluehost"
   | "godaddy"
@@ -17,6 +21,10 @@ export type BusinessSourcePlatform =
   | "other";
 
 export type DomainStartingPoint = "have_domain" | "need_domain" | "not_sure";
+export type HostingStartingPoint =
+  | "agentstack_managed"
+  | "transfer_existing"
+  | "keep_existing";
 
 export interface OnboardingFoundation {
   completed: boolean;
@@ -24,6 +32,7 @@ export interface OnboardingFoundation {
   sourcePlatform: BusinessSourcePlatform | null;
   sourceUrl: string;
   domainStartingPoint: DomainStartingPoint | null;
+  hostingStartingPoint: HostingStartingPoint | null;
   profileImported: boolean;
   updatedAt?: unknown;
 }
@@ -34,5 +43,6 @@ export const EMPTY_ONBOARDING_FOUNDATION: OnboardingFoundation = {
   sourcePlatform: null,
   sourceUrl: "",
   domainStartingPoint: null,
+  hostingStartingPoint: null,
   profileImported: false,
 };

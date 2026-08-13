@@ -8,6 +8,7 @@ import {
   EMPTY_ONBOARDING_FOUNDATION,
   type BusinessSourcePlatform,
   type DomainStartingPoint,
+  type HostingStartingPoint,
   type OnboardingFoundationMode,
 } from "@/types/onboarding-foundation";
 
@@ -18,6 +19,10 @@ const MODES = new Set<OnboardingFoundationMode>([
 ]);
 const PLATFORMS = new Set<BusinessSourcePlatform>([
   "gohighlevel",
+  "followupboss",
+  "kvcore",
+  "lofty",
+  "chime",
   "wordpress",
   "bluehost",
   "godaddy",
@@ -36,6 +41,11 @@ const DOMAIN_POINTS = new Set<DomainStartingPoint>([
   "have_domain",
   "need_domain",
   "not_sure",
+]);
+const HOSTING_POINTS = new Set<HostingStartingPoint>([
+  "agentstack_managed",
+  "transfer_existing",
+  "keep_existing",
 ]);
 
 export async function GET(
@@ -94,6 +104,11 @@ export async function PATCH(
     typeof body.sourceUrl === "string"
       ? body.sourceUrl.trim().slice(0, 500)
       : "";
+  const hostingStartingPoint =
+    typeof body.hostingStartingPoint === "string" &&
+    HOSTING_POINTS.has(body.hostingStartingPoint as HostingStartingPoint)
+      ? (body.hostingStartingPoint as HostingStartingPoint)
+      : null;
 
   const foundation = {
     completed: true,
@@ -101,6 +116,7 @@ export async function PATCH(
     sourcePlatform,
     sourceUrl,
     domainStartingPoint,
+    hostingStartingPoint,
     profileImported: body.profileImported === true,
     updatedAt: FieldValue.serverTimestamp(),
   };
