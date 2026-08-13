@@ -2,13 +2,20 @@
 
 import { useState } from "react";
 import {
+  ArrowRight,
+  CheckCircle2,
+  Code2,
+  Eye,
   Globe,
   Check,
   Copy,
   ExternalLink,
   Loader2,
+  Rocket,
   Search,
+  Server,
   ShieldCheck,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSubAccount } from "@/context/sub-account-context";
@@ -123,7 +130,7 @@ function CopyRow({ label, value }: { label: string; value: string }) {
 }
 
 export function DomainConnect() {
-  const { subAccountId, subAccount } = useSubAccount();
+  const { subAccountId, subAccount, saPath } = useSubAccount();
   const [tab, setTab] = useState<"existing" | "unknown" | "new">("existing");
   const [domain, setDomain] = useState(subAccount?.customDomain ?? "");
   const [saving, setSaving] = useState(false);
@@ -154,15 +161,73 @@ export function DomainConnect() {
   }
 
   return (
-    <div className="bg-card rounded-2xl border p-6">
+    <div className="space-y-5">
+      <section className="overflow-hidden rounded-2xl border bg-white shadow-sm">
+        <div className="bg-gradient-to-r from-[#173b7a] to-[#315f9d] p-6 text-white">
+          <p className="text-xs font-semibold tracking-[0.18em] text-pink-200 uppercase">
+            Website replacement concierge
+          </p>
+          <h1 className="mt-2 text-2xl font-bold">
+            AgentStack recreates the site. You review and approve it.
+          </h1>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-blue-100">
+            You do not need to redesign pages or write code. We use your live
+            website, Business Blueprint, approved media, and real-estate goals
+            to prepare an exact private replacement while the current site
+            stays online.
+          </p>
+        </div>
+
+        <div className="grid gap-px bg-slate-200 sm:grid-cols-5">
+          {[
+            [Search, "1", "Find current setup", "Identify domain, DNS, host, and site source."],
+            [Code2, "2", "Copy design + code", "Recreate structure, content, forms, and mobile layout."],
+            [Sparkles, "3", "Improve privately", "Apply the Blueprint, compliance, SEO, and AI features."],
+            [Eye, "4", "Review replacement", "Compare the private build with the current live site."],
+            [Rocket, "5", "Approve cutover", "Change only the required DNS record after approval."],
+          ].map(([Icon, number, title, detail]) => (
+            <div key={String(number)} className="bg-white p-4">
+              <div className="flex items-center gap-2">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-50 text-xs font-bold text-[#173b7a]">
+                  {String(number)}
+                </span>
+                <Icon className="h-4 w-4 text-pink-500" />
+              </div>
+              <p className="mt-3 text-sm font-semibold">{String(title)}</p>
+              <p className="text-muted-foreground mt-1 text-[11px] leading-4">
+                {String(detail)}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950">
+        <div className="flex items-start gap-3">
+          <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" />
+          <div>
+            <p className="font-semibold">Your existing website remains live.</p>
+            <p className="mt-1 text-xs leading-5">
+              AgentStack will not move the registrar, cancel hosting, change
+              nameservers, or publish the replacement automatically. Email and
+              the current site stay untouched until you approve the new build
+              and its final cutover checklist.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <div className="bg-card rounded-2xl border p-6">
       <div className="flex items-center gap-3">
         <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white">
           <Globe className="h-5 w-5" />
         </span>
         <div>
-          <h2 className="font-semibold tracking-tight">Connect your domain</h2>
+          <h2 className="font-semibold tracking-tight">
+            Step 1 — identify and secure the website address
+          </h2>
           <p className="text-muted-foreground text-xs">
-            Put your website on your own web address — the final setup step.
+            Tell us what you know. Zack guides anything you do not know.
           </p>
         </div>
       </div>
@@ -210,15 +275,39 @@ export function DomainConnect() {
             </div>
             {saved && (
               <p className="flex items-center gap-1 text-[11px] text-emerald-600">
-                <Check className="h-3 w-3" /> Saved — now add the DNS records
-                below at your registrar.
+                <Check className="h-3 w-3" /> Saved — do not change DNS yet.
+                Build and approve the replacement first.
               </p>
             )}
           </div>
 
-          <div>
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+            <p className="flex items-center gap-2 text-sm font-semibold text-amber-950">
+              <Server className="h-4 w-4" /> Current provider discovery
+            </p>
+            <p className="mt-1 text-xs leading-5 text-amber-900">
+              A domain registrar, DNS provider, and website host can be three
+              different companies. Finding the registrar does not require a
+              transfer. AgentStack normally leaves registration and
+              nameservers in place and changes only the final website record.
+            </p>
+            <a
+              href={`https://lookup.icann.org/en/lookup?name=${encodeURIComponent(domain.trim().replace(/^https?:\/\//i, "").replace(/\/.*$/, ""))}`}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-blue-700"
+            >
+              Look up registrar and nameservers <ExternalLink className="h-3 w-3" />
+            </a>
+          </div>
+
+          <details className="rounded-xl border p-4">
+            <summary className="cursor-pointer text-sm font-semibold">
+              Final DNS records — use only after replacement approval
+            </summary>
+            <div className="mt-3">
             <p className="mb-2 text-xs font-medium">
-              Add these records in your registrar&apos;s DNS settings:
+              At cutover, AgentStack will confirm which of these records apply:
             </p>
             <div className="space-y-2">
               {DNS_RECORDS.map((r) => (
@@ -240,7 +329,8 @@ export function DomainConnect() {
               agency adds the domain in the hosting dashboard to issue the SSL
               certificate.
             </p>
-          </div>
+            </div>
+          </details>
           <div>
             <p className="mb-2 text-xs font-medium">
               Open the account where your domain or website currently lives:
@@ -366,6 +456,44 @@ export function DomainConnect() {
           </p>
         </div>
       )}
+      </div>
+
+      {saved ? (
+        <section className="bg-card rounded-2xl border p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold tracking-[0.16em] text-pink-500 uppercase">
+                Step 2 — replacement build
+              </p>
+              <h2 className="mt-1 text-lg font-semibold">
+                Let AgentStack reproduce the site design and code
+              </h2>
+              <p className="text-muted-foreground mt-1 max-w-2xl text-sm">
+                Open a private build using the current site as the visual and
+                content reference. AgentStack prepares the page structure,
+                responsive code, forms, approved branding, and Blueprint copy.
+                You receive a working preview—not a blank design canvas.
+              </p>
+            </div>
+            <Button render={<a href={saPath("/website-studio?mode=replacement")} />}>
+              Start private replacement
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+            {[
+              "Current site remains the public source of truth",
+              "Private desktop and mobile comparison before launch",
+              "One approval checklist for DNS, forms, analytics, and email",
+            ].map((item) => (
+              <div key={item} className="flex gap-2 rounded-xl bg-slate-50 p-3 text-xs leading-5">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                {item}
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
     </div>
   );
 }

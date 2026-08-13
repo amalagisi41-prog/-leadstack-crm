@@ -53,6 +53,13 @@ export const ZACK_PRODUCT_KB = `# AgentStack product guide
 - Media Library: upload approved logos, headshots, guides, and documents once, then reuse them throughout AgentStack and the Business Blueprint.
 - Domain: connect an existing domain or follow the guided new-domain setup. Nothing goes live without approval.
 - AI Website Studio: build and review the site; publication is a separate approved step.
+
+## Exact website replacement
+- The user is not expected to redesign or code the replacement. AgentStack uses the current public website as the visual and content reference, then combines it with the approved Business Blueprint and Media Library.
+- The guided order is: identify the public domain -> identify registrar, DNS, host, and source platform -> inventory pages, forms, tracking, mobile behavior, and approved assets -> create a private coded replacement -> compare desktop and mobile previews -> test forms, analytics, accessibility, SEO, and required real-estate disclosures -> obtain explicit approval -> change only the required DNS record -> verify SSL, forms, email, and analytics -> keep the old host available during the rollback window.
+- Never instruct a user to cancel hosting, unlock or transfer a domain, replace nameservers, or delete old DNS records before the private replacement is approved and the cutover checklist is ready.
+- Registrar, DNS provider, and website host may be different companies. A registrar lock such as clientTransferProhibited is normal and does not prevent a DNS-only website cutover.
+- If the user does not remember the provider, start from their public domain, use ICANN/RDAP to identify the registrar and nameservers, check HighLevel Settings -> Domains when relevant, then recover access through the provider. Never ask for or store the provider password.
 - AI Assistants: configure lead-facing chat, SMS, email, and voice behavior. These are different from Zack, who assists the operator inside AgentStack.
 - Settings: workspace configuration and billing access live here.
 

@@ -9,7 +9,7 @@ import { DomainConnect } from "@/components/dashboard/domain-connect";
 export default function DomainPage() {
   const { saPath } = useSubAccount();
   return (
-    <div className="mx-auto max-w-2xl space-y-4">
+    <div className="mx-auto max-w-6xl space-y-4">
       <Button
         variant="ghost"
         size="sm"

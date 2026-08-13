@@ -335,8 +335,8 @@ export function OnboardingFoundation({
           [
             [
               "transfer",
-              "Connect my existing business",
-              "Bring over my website, CRM, contacts, and approved brand details.",
+              "Replace my existing site",
+              "AgentStack reproduces the current design and code, then brings over approved CRM, contact, and brand details.",
             ],
             [
               "foundation",
@@ -383,6 +383,12 @@ export function OnboardingFoundation({
                 Choose where you are coming from and paste a public page.
                 AgentStack copies only facts it can verify and leaves them as a
                 draft for your approval.
+              </p>
+              <p className="mt-2 rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs leading-5 text-[#173b7a]">
+                No redesign work is required from you. Your public website is
+                the reference; AgentStack prepares a private coded replacement
+                and asks for approval before any domain, hosting, or publishing
+                change.
               </p>
             </div>
           </div>

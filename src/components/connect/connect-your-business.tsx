@@ -169,9 +169,11 @@ export function ConnectYourBusiness() {
         title: "Domain & managed hosting",
         detail: subAccount.customDomain ?? undefined,
         blurb:
-          "Buy a domain, connect one you own, or follow the exact transfer and hosting steps.",
+          "Have AgentStack reproduce your existing site design and code, review it privately, then follow the exact domain and hosting cutover steps.",
         status: subAccount.customDomain ? "connected" : "not_connected",
-        actionLabel: subAccount.customDomain ? "Manage" : "Set up",
+        actionLabel: subAccount.customDomain
+          ? "Continue replacement"
+          : "Start replacement",
         actionHref: domainHref,
       },
       {
