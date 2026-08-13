@@ -16,23 +16,52 @@ export function MediaLibrary({ compact = false, onSelect }: { compact?: boolean;
   const [uploading, setUploading] = useState(false);
 
   const load = useCallback(async () => {
-    const res = await fetch(`/api/sub-accounts/${subAccountId}/media`);
-    const data = await res.json() as { assets?: MediaAsset[] };
-    setAssets(data.assets ?? []); setLoading(false);
+    try {
+      const res = await fetch(`/api/sub-accounts/${subAccountId}/media`);
+      if (!res.ok) {
+        throw new Error(`Failed to load media library: ${res.status}`);
+      }
+      const data = await res.json() as { assets?: MediaAsset[] };
+      setAssets(data.assets ?? []);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to load media library");
+      setAssets([]);
+    } finally {
+      setLoading(false);
+    }
   }, [subAccountId]);
   useEffect(() => { void load(); }, [load]);
 
   async function upload(file: File) {
     setUploading(true);
     try {
-      const body = new FormData(); body.append("file", file);
+      const body = new FormData();
+      body.append("file", file);
       const res = await fetch(`/api/sub-accounts/${subAccountId}/media`, { method: "POST", body });
+
+      if (!res.ok) {
+        let errorMsg = "Upload failed.";
+        try {
+          const data = await res.json() as { error?: string };
+          errorMsg = data.error ?? errorMsg;
+        } catch {
+          errorMsg = `Upload failed with status ${res.status}`;
+        }
+        throw new Error(errorMsg);
+      }
+
       const data = await res.json() as { asset?: MediaAsset; error?: string };
-      if (!res.ok || !data.asset) throw new Error(data.error ?? "Upload failed.");
-      setAssets((current) => [data.asset!, ...current]); onSelect?.(data.asset);
+      if (!data.asset) throw new Error(data.error ?? "Upload failed.");
+
+      setAssets((current) => [data.asset!, ...current]);
+      onSelect?.(data.asset);
       toast.success(`${file.name} added to your media library.`);
-    } catch (error) { toast.error(error instanceof Error ? error.message : "Upload failed."); }
-    finally { setUploading(false); if (inputRef.current) inputRef.current.value = ""; }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Upload failed.");
+    } finally {
+      setUploading(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
   }
 
   return <div className="space-y-4">
