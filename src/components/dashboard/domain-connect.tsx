@@ -179,6 +179,9 @@ export function DomainConnect() {
   );
   const [providerKey, setProviderKey] = useState<ProviderKey | null>(null);
   const [providerConfirmed, setProviderConfirmed] = useState(false);
+  const [providerOutcome, setProviderOutcome] = useState<
+    "found" | "empty" | null
+  >(null);
 
   const selectedProvider = PROVIDER_PORTALS.find(
     (provider) => provider.key === providerKey
@@ -419,6 +422,7 @@ export function DomainConnect() {
                     onClick={() => {
                       setProviderKey(provider.key);
                       setProviderConfirmed(false);
+                      setProviderOutcome(null);
                     }}
                     className={`bg-background flex items-center justify-between rounded-lg border p-3 text-left text-sm transition-colors hover:border-blue-300 ${providerKey === provider.key ? "border-blue-500 bg-blue-50 ring-2 ring-blue-500/15" : ""}`}
                   >
@@ -476,23 +480,40 @@ export function DomainConnect() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setProviderConfirmed(true)}
+                    onClick={() => {
+                      setProviderOutcome("found");
+                      setProviderConfirmed(true);
+                    }}
                   >
                     <CheckCircle2 className="mr-2 h-4 w-4" />I found{" "}
                     {domain || "my domain"}
                   </Button>
+                  {selectedProvider.key === "cloudflare" ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setProviderOutcome("empty");
+                        setProviderConfirmed(true);
+                      }}
+                    >
+                      My Domains list is empty
+                    </Button>
+                  ) : null}
                 </div>
                 {providerConfirmed ? (
                   <div className="mt-4 flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950">
                     <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
                     <div>
                       <p className="font-semibold">
-                        Provider found. Discovery is complete.
+                        {providerOutcome === "empty"
+                          ? "Cloudflare registration found; website zone not found."
+                          : "Provider found. Discovery is complete."}
                       </p>
                       <p className="mt-1 text-xs leading-5">
-                        Leave that account unchanged. Continue below so
-                        AgentStack can build the private replacement before any
-                        cutover instructions appear.
+                        {providerOutcome === "empty"
+                          ? "That is not a blocker. ICANN confirms Cloudflare is the registrar and nameserver provider, while this account shows no active website zone. AgentStack can copy the public site now. Before launch, Zack will help locate the correct Cloudflare account or add the domain safely—without transferring the registration or interrupting the live site."
+                          : "Leave that account unchanged. Continue below so AgentStack can build the private replacement before any cutover instructions appear."}
                       </p>
                     </div>
                   </div>
