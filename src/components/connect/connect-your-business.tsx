@@ -27,7 +27,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-type ConnectionStatus = "connected" | "needs_attention" | "not_connected" | "coming_soon";
+type ConnectionStatus =
+  | "connected"
+  | "needs_attention"
+  | "not_connected"
+  | "coming_soon";
 
 interface ConnectionCardData {
   key: string;
@@ -50,11 +54,11 @@ function ConnectionCard({ data }: { data: ConnectionCardData }) {
   const disabled = data.status === "coming_soon";
 
   return (
-    <div className="flex h-full flex-col rounded-2xl border bg-card p-5">
+    <div className="bg-card flex h-full flex-col rounded-2xl border p-5">
       <span
         className={cn(
           "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
-          data.iconTone,
+          data.iconTone
         )}
       >
         <data.icon className="h-5 w-5" />
@@ -66,7 +70,7 @@ function ConnectionCard({ data }: { data: ConnectionCardData }) {
           <p
             className={cn(
               "mt-0.5 truncate text-xs font-medium",
-              data.detailTone ?? "text-emerald-600 dark:text-emerald-400",
+              data.detailTone ?? "text-emerald-600 dark:text-emerald-400"
             )}
           >
             {data.detail}
@@ -74,7 +78,7 @@ function ConnectionCard({ data }: { data: ConnectionCardData }) {
         )}
       </div>
 
-      <p className="mt-2 flex-1 text-xs leading-relaxed text-muted-foreground">
+      <p className="text-muted-foreground mt-2 flex-1 text-xs leading-relaxed">
         {data.blurb}
       </p>
 
@@ -89,7 +93,9 @@ function ConnectionCard({ data }: { data: ConnectionCardData }) {
             size="sm"
             variant="outline"
             className="w-full"
-            render={data.actionHref ? <Link href={data.actionHref} /> : undefined}
+            render={
+              data.actionHref ? <Link href={data.actionHref} /> : undefined
+            }
           >
             {data.actionLabel}
           </Button>
@@ -118,8 +124,11 @@ export function ConnectYourBusiness() {
     if (!subAccount) return;
     return onSnapshot(
       doc(getFirebaseDb(), `subAccounts/${subAccount.id}/aiAgent/web-chat`),
-      (snap) => setWebChatEnabled(snap.exists() ? snap.data()?.enabled === true : false),
-      () => setWebChatEnabled(null),
+      (snap) =>
+        setWebChatEnabled(
+          snap.exists() ? snap.data()?.enabled === true : false
+        ),
+      () => setWebChatEnabled(null)
     );
   }, [subAccount]);
 
@@ -143,10 +152,12 @@ export function ConnectYourBusiness() {
       subAccount.resendConfig.status !== "verified";
 
     const metaConnected = metaCanInbox(subAccount.metaConfig ?? null);
-    const metaNeedsAttention = !!subAccount.metaConfig?.connected && !metaConnected;
+    const metaNeedsAttention =
+      !!subAccount.metaConfig?.connected && !metaConnected;
 
     const idxConfigured =
-      subAccount.idxEnabledByAgency === true && subAccount.idxConfig?.enabled === true;
+      subAccount.idxEnabledByAgency === true &&
+      subAccount.idxConfig?.enabled === true;
     const idxNeedsAttention =
       subAccount.idxEnabledByAgency === true && !subAccount.idxConfig?.enabled;
 
@@ -157,7 +168,8 @@ export function ConnectYourBusiness() {
         iconTone: "bg-cyan-500/10 text-cyan-700 dark:text-cyan-400",
         title: "Domain & managed hosting",
         detail: subAccount.customDomain ?? undefined,
-        blurb: "Buy a domain, connect one you own, or follow the exact transfer and hosting steps.",
+        blurb:
+          "Buy a domain, connect one you own, or follow the exact transfer and hosting steps.",
         status: subAccount.customDomain ? "connected" : "not_connected",
         actionLabel: subAccount.customDomain ? "Manage" : "Set up",
         actionHref: domainHref,
@@ -167,19 +179,29 @@ export function ConnectYourBusiness() {
         icon: Workflow,
         iconTone: "bg-sky-500/10 text-sky-700 dark:text-sky-400",
         title: "GoHighLevel",
-        detail: subAccount.ghlImportConfig?.locationId ? "Connected" : undefined,
-        blurb: "Authorize read-only access, choose a location, and prepare a reviewed business and website transfer plan.",
-        status: subAccount.ghlImportConfig?.locationId ? "connected" : "not_connected",
-        actionLabel: subAccount.ghlImportConfig?.locationId ? "Manage transfer" : "Connect",
-        actionHref: saPath("/get-started"),
+        detail: subAccount.ghlImportConfig?.locationId
+          ? "Connected"
+          : undefined,
+        blurb:
+          "Authorize read-only access, choose a location, and prepare a reviewed business and website transfer plan.",
+        status: subAccount.ghlImportConfig?.locationId
+          ? "connected"
+          : "not_connected",
+        actionLabel: subAccount.ghlImportConfig?.locationId
+          ? "Manage transfer"
+          : "Connect",
+        actionHref: saPath("/import?source=ghl"),
       },
       {
         key: "api-automation",
         icon: Code2,
         iconTone: "bg-slate-500/10 text-slate-700 dark:text-slate-300",
         title: "Zapier, Make & API",
-        blurb: "Connect supported automation tools through secure API keys and outbound webhooks.",
-        status: subAccount.apiAccessEnabledByAgency ? "connected" : "not_connected",
+        blurb:
+          "Connect supported automation tools through secure API keys and outbound webhooks.",
+        status: subAccount.apiAccessEnabledByAgency
+          ? "connected"
+          : "not_connected",
         actionLabel: subAccount.apiAccessEnabledByAgency ? "Manage" : "Set up",
         actionHref: settingsHref,
       },
@@ -191,12 +213,13 @@ export function ConnectYourBusiness() {
         detail: emailDomainNeedsAttention
           ? "Verification pending"
           : emailDomainVerified
-            ? subAccount.resendConfig?.emailFrom ?? "Connected"
+            ? (subAccount.resendConfig?.emailFrom ?? "Connected")
             : undefined,
         detailTone: emailDomainNeedsAttention
           ? "text-amber-600 dark:text-amber-400"
           : undefined,
-        blurb: "Send from your own address so replies land in your inbox, not ours.",
+        blurb:
+          "Send from your own address so replies land in your inbox, not ours.",
         status: emailDomainNeedsAttention
           ? "needs_attention"
           : emailDomainVerified
@@ -211,7 +234,7 @@ export function ConnectYourBusiness() {
         iconTone: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
         title: "Text messaging",
         detail: smsConnected
-          ? subAccount.twilioConfig?.fromNumber ?? "Connected"
+          ? (subAccount.twilioConfig?.fromNumber ?? "Connected")
           : undefined,
         blurb: "Your own number for two-way SMS with leads and clients.",
         status: smsConnected ? "connected" : "not_connected",
@@ -296,7 +319,8 @@ export function ConnectYourBusiness() {
         iconTone: "bg-pink-500/10 text-pink-600 dark:text-pink-400",
         title: "Website forms",
         detail: "Live",
-        blurb: "A hosted form or iframe embed that creates a contact on submit.",
+        blurb:
+          "A hosted form or iframe embed that creates a contact on submit.",
         status: "connected",
         actionLabel: "Manage",
         actionHref: formsHref,
@@ -306,8 +330,14 @@ export function ConnectYourBusiness() {
         icon: Building,
         iconTone: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
         title: "IDX Broker",
-        detail: idxNeedsAttention ? "Add your access key" : idxConfigured ? "Connected" : undefined,
-        detailTone: idxNeedsAttention ? "text-amber-600 dark:text-amber-400" : undefined,
+        detail: idxNeedsAttention
+          ? "Add your access key"
+          : idxConfigured
+            ? "Connected"
+            : undefined,
+        detailTone: idxNeedsAttention
+          ? "text-amber-600 dark:text-amber-400"
+          : undefined,
         blurb: "Show live MLS listings on your site and capture buyer leads.",
         status: idxNeedsAttention
           ? "needs_attention"
@@ -334,12 +364,12 @@ export function ConnectYourBusiness() {
     if (!q) return cards;
     return cards.filter(
       (c) =>
-        c.title.toLowerCase().includes(q) || c.blurb.toLowerCase().includes(q),
+        c.title.toLowerCase().includes(q) || c.blurb.toLowerCase().includes(q)
     );
   }, [cards, search]);
 
   if (!subAccount) {
-    return <div className="h-64 animate-pulse rounded-2xl bg-muted/30" />;
+    return <div className="bg-muted/30 h-64 animate-pulse rounded-2xl" />;
   }
 
   return (
@@ -347,13 +377,13 @@ export function ConnectYourBusiness() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Connections</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="text-muted-foreground mt-1 text-sm">
             One place to connect the apps, channels, domains, imports, and
             plug-ins that power your AgentStack workspace.
           </p>
         </div>
         <div className="relative w-full sm:w-64">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -364,7 +394,7 @@ export function ConnectYourBusiness() {
       </div>
 
       {filtered.length === 0 ? (
-        <p className="rounded-2xl border border-dashed p-8 text-center text-sm text-muted-foreground">
+        <p className="text-muted-foreground rounded-2xl border border-dashed p-8 text-center text-sm">
           No integrations match &ldquo;{search}&rdquo;.
         </p>
       ) : (
@@ -375,10 +405,10 @@ export function ConnectYourBusiness() {
         </div>
       )}
 
-      <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+      <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
         <MessagesSquare className="h-3.5 w-3.5" />
-        Once connected, replies show up together in Conversations regardless
-        of which channel a lead used.
+        Once connected, replies show up together in Conversations regardless of
+        which channel a lead used.
       </p>
     </div>
   );

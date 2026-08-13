@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { doc, onSnapshot } from "firebase/firestore";
 import { toast } from "sonner";
 import {
@@ -57,7 +58,7 @@ interface CfChoice {
 }
 
 export function GhlImportWizard() {
-  const { subAccountId, isAdmin } = useSubAccount();
+  const { subAccountId, isAdmin, saPath } = useSubAccount();
   const searchParams = useSearchParams();
   const stages = usePipelineStages();
 
@@ -84,7 +85,17 @@ export function GhlImportWizard() {
   }, [jobId]);
 
   useEffect(() => {
-    if (searchParams.get("website") === "queued") void loadPreview();
+    const status = searchParams.get("ghl");
+    if (status === "connected" || searchParams.get("website") === "queued") {
+      toast.success("GoHighLevel connected. Review what AgentStack found.");
+      void loadPreview();
+    } else if (status === "cancelled") {
+      toast.info("GoHighLevel connection was canceled. No data was changed.");
+    } else if (status === "error") {
+      toast.error("GoHighLevel could not be connected. Try logging in again.");
+    } else if (status === "not_configured") {
+      toast.error("The GoHighLevel connection needs administrator attention.");
+    }
     // Run once on arrival from the permission step.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -102,7 +113,9 @@ export function GhlImportWizard() {
     try {
       await loadPreview();
     } catch {
-      toast.error("No active GoHighLevel connection was found. Log in to connect.");
+      toast.error(
+        "No active GoHighLevel connection was found. Log in to connect."
+      );
     } finally {
       setBusy(false);
     }
@@ -223,22 +236,28 @@ export function GhlImportWizard() {
               </p>
               <p className="mt-2 text-xs leading-5 text-[#526078]">
                 HighLevel handles login. You select the location and see the
-                requested permissions before approving. Import remains read-only;
-                nothing is deleted or published automatically.
+                requested permissions before approving. Import remains
+                read-only; nothing is deleted or published automatically.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
               <Button
                 onClick={() =>
                   window.location.assign(
-                    `/api/sub-accounts/${subAccountId}/import/ghl/oauth/start`,
+                    `/api/sub-accounts/${subAccountId}/import/ghl/oauth/start`
                   )
                 }
               >
                 <LogIn className="mr-2 h-4 w-4" /> Log in to GoHighLevel
               </Button>
-              <Button variant="outline" onClick={useConnectedAccount} disabled={busy}>
-                {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              <Button
+                variant="outline"
+                onClick={useConnectedAccount}
+                disabled={busy}
+              >
+                {busy ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : null}
                 Already connected? Continue
               </Button>
             </div>
@@ -441,15 +460,47 @@ export function GhlImportWizard() {
         )}
 
         {done && (
-          <Button
-            onClick={() => {
-              setStep("connect");
-              setJobId(null);
-              setJob(null);
-            }}
-          >
-            Done
-          </Button>
+          <div className="space-y-3">
+            {job?.status === "completed" ? (
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-xs leading-5 text-emerald-900">
+                <p className="font-semibold">
+                  Your GHL records are now in AgentStack.
+                </p>
+                <p>
+                  Review People and Client Journeys next. Website pages and GHL
+                  workflows require a separate rebuild because HighLevel does
+                  not expose their editable designs through this connection.
+                </p>
+              </div>
+            ) : null}
+            <div className="flex flex-wrap gap-2">
+              <Button render={<Link href={saPath("/contacts")} />}>
+                Review people
+              </Button>
+              <Button
+                variant="outline"
+                render={<Link href={saPath("/pipeline")} />}
+              >
+                Review client journeys
+              </Button>
+              <Button
+                variant="outline"
+                render={<Link href={saPath("/website-studio")} />}
+              >
+                Plan website rebuild
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setStep("connect");
+                  setJobId(null);
+                  setJob(null);
+                }}
+              >
+                Run again
+              </Button>
+            </div>
+          </div>
         )}
       </div>
     </Card>
@@ -471,9 +522,6 @@ function Card({
     <div className="bg-card rounded-2xl border p-5">
       <div className="flex items-center gap-2">
         <h2 className="text-base font-semibold">{title}</h2>
-        <span className="rounded-full bg-fuchsia-500/10 px-2 py-0.5 text-[10px] font-semibold tracking-wider text-fuchsia-600 uppercase dark:text-fuchsia-400">
-          Preview
-        </span>
         {headerAction ? <div className="ml-auto">{headerAction}</div> : null}
       </div>
       <p className="text-muted-foreground mt-0.5 mb-4 text-sm">{desc}</p>

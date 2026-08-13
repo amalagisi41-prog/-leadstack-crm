@@ -10,19 +10,28 @@ import {
 } from "@/lib/import/ghl/oauth";
 
 function appBase(request: Request) {
-  return (process.env.NEXT_PUBLIC_APP_URL ?? new URL(request.url).origin).replace(/\/$/, "");
+  return (
+    process.env.NEXT_PUBLIC_APP_URL ?? new URL(request.url).origin
+  ).replace(/\/$/, "");
 }
 
-export async function GET(request: Request, ctx: { params: Promise<{ id: string }> }) {
+export async function GET(
+  request: Request,
+  ctx: { params: Promise<{ id: string }> }
+) {
   const { id } = await ctx.params;
   const access = await requireSubAccountAdmin(request, id);
   if (access instanceof NextResponse) return access;
-  const fallback = new URL(`/sa/${id}/get-started`, appBase(request));
+  const fallback = new URL(`/sa/${id}/import?source=ghl`, appBase(request));
   if (!ghlOAuthConfigured()) {
     fallback.searchParams.set("ghl", "not_configured");
     return NextResponse.redirect(fallback);
   }
   const redirectUri = `${appBase(request)}/api/integrations/business-transfer/callback`;
-  const state = signGhlState(id, access.uid, crypto.randomBytes(16).toString("hex"));
+  const state = signGhlState(
+    id,
+    access.uid,
+    crypto.randomBytes(16).toString("hex")
+  );
   return NextResponse.redirect(buildGhlAuthorizeUrl(redirectUri, state));
 }
