@@ -285,6 +285,18 @@ export function GhlImportWizard() {
                 connection and open your review automatically.
               </p>
             </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs leading-5 text-slate-700">
+              <p className="font-semibold text-slate-900">
+                Seeing “noAppVersionIdFound” in HighLevel?
+              </p>
+              <p className="mt-1">
+                HighLevel cannot find an installable version of the AgentStack
+                Marketplace app. This is an app availability issue—not your
+                password or location. A platform administrator must activate a
+                private version for testing or wait for the public version to be
+                approved. No GHL data has been copied.
+              </p>
+            </div>
             <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
               <p className="flex items-center gap-2 text-sm font-semibold text-[#173B7A]">
                 <ShieldCheck className="h-4 w-4" /> Secure account connection
@@ -313,7 +325,7 @@ export function GhlImportWizard() {
                 {busy ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : null}
-                Already connected? Continue
+                Check connection again
               </Button>
             </div>
           </div>

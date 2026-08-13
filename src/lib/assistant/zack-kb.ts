@@ -40,6 +40,7 @@ export const ZACK_PRODUCT_KB = `# AgentStack product guide
 - Re-running the data import updates records matched by their GHL id rather than intentionally creating duplicates.
 - GHL workflows, funnels/pages, calendars, forms, saved templates, files/media, and message history are not directly imported by the current data importer. AgentStack uses the assessment/transfer plan to identify what must be rebuilt natively.
 - If connection fails, advise the operator to retry Log in to GoHighLevel and confirm they chose the correct location and approved the requested access. Do not suggest CSV export until the connected import path has actually failed or the operator explicitly chooses a manual fallback.
+- If HighLevel displays "noAppVersionIdFound" or “No integration found,” explain that the Marketplace app has no installable version for that account. It is not a bad password. The platform administrator must activate a private testing version or wait for public Marketplace approval; no import has started.
 
 ## Other setup paths
 - Public profile prefill: in Business Blueprint, paste a public website, brokerage, Zillow, Realtor.com, or Homes.com page. AgentStack fills only verifiable details; the operator reviews and saves the draft.
