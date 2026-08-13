@@ -58,15 +58,15 @@ const WIZARD_STEP_INDEX: Record<OnboardingWizardStepKey, WizardStep> = {
 const WIZARD_STEPS = [
   {
     id: "build" as const,
-    label: "Business + Domain",
+    label: "Domain + Hosting",
     icon: Building2,
-    tagline: "Name and digital home",
+    tagline: "Establish the digital home",
   },
   {
     id: "connect" as const,
-    label: "Google Business Profile",
+    label: "Business Blueprint",
     icon: Link2,
-    tagline: "Get found on Google",
+    tagline: "Approve essential business facts",
   },
   {
     id: "capture" as const,
@@ -329,8 +329,8 @@ function StepBuild({
     <StepShell
       icon={<Building2 className="h-6 w-6 text-blue-600" />}
       eyebrow="Step 1: Build · 5 min"
-      title="Name your business and establish your domain"
-      subtitle="Start with the name customers will see and the domain they will visit. AgentStack keeps these two decisions at the front of setup, then uses them consistently across your profile, website, email, and marketing."
+      title="Confirm your domain and hosting foundation"
+      subtitle="Your domain and hosting must be established before anything is published. You can still build, preview, and work throughout AgentStack while the connection or transfer is prepared."
     >
       <div className="my-6 grid gap-3 sm:grid-cols-3">
         {[
@@ -364,29 +364,24 @@ function StepBuild({
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
-        <Button
-          render={<Link href={saPath("/business-profile?from=wizard")} />}
-        >
-          Set Business Name
+        <Button render={<Link href={saPath("/domain")} />}>
+          Set Up Domain &amp; Hosting
           <ArrowRight className="ml-1.5 h-4 w-4" />
         </Button>
-        <Button variant="outline" render={<Link href={saPath("/domain")} />}>
-          Set Up Domain
+        <Button variant="outline" render={<Link href={saPath("/connect")} />}>
+          Connect Existing Provider
         </Button>
         <button
           onClick={onNext}
           className="text-muted-foreground text-sm underline-offset-4 hover:underline"
         >
-          I&apos;ll do this later
+          Foundation saved — continue
         </button>
       </div>
 
       <TeachingNote>
-        Think of your Business Profile as your single source of truth that feeds
-        every feature in AgentStack. You don&apos;t have to fill everything in
-        right now. Even your name, brokerage, and service areas make a big
-        difference. You can always come back to add FAQs, brand voice, and
-        compliance rules later.
+        AgentStack never asks for provider passwords. Sign in with the domain,
+        host, or CRM directly; then return to approve the connection or transfer.
       </TeachingNote>
     </StepShell>
   );
@@ -408,24 +403,24 @@ function StepConnect({
   return (
     <StepShell
       icon={<Link2 className="h-6 w-6 text-violet-600" />}
-      eyebrow="Step 2: Google Profile · 5 min"
-      title="Build and optimize your Google Business Profile"
-      subtitle="AgentStack uses your approved business name, domain, services, and market areas to prepare a consistent Google-ready profile. AI assists with indexing-friendly descriptions while you approve every factual claim."
+      eyebrow="Step 2: Blueprint · 3 min"
+      title="Approve the essential facts Zack needs"
+      subtitle="Name, brokerage, contact method, service area, services, client promise, website, and compliance are enough for 100%. Everything else is optional enrichment you can add as you go."
     >
       <div className="my-6 grid gap-3 sm:grid-cols-2">
         <ConnectOptionCard
           icon={<Upload className="h-5 w-5 text-violet-500" />}
-          title="Google profile assistant"
-          description="Review your business identity and generate an indexing-friendly profile without keyword stuffing or invented claims."
-          href={saPath("/ai-agents/google-business")}
-          cta="Build Google Profile"
+          title="Essential Business Blueprint"
+          description="Review only the facts AgentStack needs to personalize the workspace safely."
+          href={saPath("/business-profile?from=wizard")}
+          cta="Review Essentials"
         />
         <ConnectOptionCard
           icon={<Users className="h-5 w-5 text-blue-500" />}
-          title="Connect your domain"
-          description="Confirm the domain Google and customers should treat as your official website."
-          href={saPath("/domain")}
-          cta="Review Domain"
+          title="Google profile assistant"
+          description="Use approved Blueprint facts to prepare an indexing-friendly Google profile."
+          href={saPath("/ai-agents/google-business")}
+          cta="Build Google Profile"
         />
         <ConnectOptionCard
           icon={<Phone className="h-5 w-5 text-emerald-500" />}

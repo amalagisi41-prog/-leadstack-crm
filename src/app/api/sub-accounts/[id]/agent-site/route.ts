@@ -136,6 +136,14 @@ export async function PATCH(
     update.content = { ...current, ...body.content };
   }
   if (body.status === "published") {
+    const workspaceSnap = await db.doc(`subAccounts/${subAccountId}`).get();
+    const foundation = workspaceSnap.data()?.onboardingFoundation as { domainStartingPoint?: string | null; hostingStartingPoint?: string | null } | undefined;
+    if (!foundation?.domainStartingPoint || foundation.domainStartingPoint === "not_sure" || !foundation.hostingStartingPoint) {
+      return NextResponse.json(
+        { error: "Finish domain and hosting setup before publishing." },
+        { status: 409 },
+      );
+    }
     update.status = "published";
     update.publishedAt = FieldValue.serverTimestamp();
   } else if (body.status === "draft") {

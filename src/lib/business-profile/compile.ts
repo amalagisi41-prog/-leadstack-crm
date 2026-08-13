@@ -193,20 +193,19 @@ ${groups.join("\n\n")}
  * complete" indicator.
  */
 export function businessProfileCompleteness(p: BusinessProfileContent): number {
+  // Optional enrichment improves the master prompt over time, but does not
+  // block a user from reaching a launch-ready profile.
+  const hasBusinessFacts = Boolean(p.agentName.trim() || p.brokerage.trim() || p.phone.trim() || p.email.trim() || p.serviceAreas.trim() || p.services.length || p.clientPromise.trim() || p.website.trim());
+  if (!hasBusinessFacts) return 0;
   const checks: boolean[] = [
     !!p.agentName.trim(),
     !!p.brokerage.trim(),
-    !!p.licenseStates.trim(),
     !!(p.phone.trim() || p.email.trim()),
     !!p.serviceAreas.trim(),
     p.services.length > 0,
-    !!p.businessHours.trim(),
-    !!p.qualificationRules.trim(),
-    !!p.bio.trim(),
-    p.faqs.some((f) => f.q.trim() && f.a.trim()),
-    !!p.buyerProcess.trim() || !!p.sellerProcess.trim(),
-    p.objections.some((o) => o.objection.trim() && o.response.trim()),
     !!p.clientPromise.trim(),
+    !!p.website.trim(),
+    p.fairHousing && p.noLegalTaxAdvice,
   ];
   const done = checks.filter(Boolean).length;
   return Math.round((done / checks.length) * 100);

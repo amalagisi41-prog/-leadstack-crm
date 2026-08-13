@@ -134,17 +134,11 @@ describe("businessProfileCompleteness", () => {
     const full = make({
       agentName: "Jane",
       brokerage: "KW",
-      licenseStates: "NJ",
       email: "j@x.com",
       serviceAreas: "Maplewood",
       services: ["buyers"],
-      businessHours: "9-5",
-      qualificationRules: "budget + timeline",
-      bio: "11 years",
-      faqs: [{ q: "Q", a: "A" }],
-      buyerProcess: "We start with a quick call.",
-      objections: [{ objection: "Q", response: "A" }],
       clientPromise: "Same-day response, always.",
+      website: "https://example.com",
     });
     expect(businessProfileCompleteness(full)).toBe(100);
   });

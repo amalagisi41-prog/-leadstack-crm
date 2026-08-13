@@ -57,6 +57,7 @@ export function WebsiteStudioApp() {
   const [mode, setMode] = useState<"designer" | "edit">("designer");
   const [savingDraft, setSavingDraft] = useState(false);
   const [view, setView] = useState<"builder" | "setup">("builder");
+  const [foundationReady, setFoundationReady] = useState(false);
 
   // Scaled live-preview sizing.
   const previewWrapRef = useRef<HTMLDivElement>(null);
@@ -84,9 +85,14 @@ export function WebsiteStudioApp() {
     let active = true;
     (async () => {
       try {
-        const res = await fetch(`/api/sub-accounts/${subAccountId}/agent-site`);
+        const [res, foundationRes] = await Promise.all([
+          fetch(`/api/sub-accounts/${subAccountId}/agent-site`),
+          fetch(`/api/sub-accounts/${subAccountId}/onboarding-foundation`),
+        ]);
         const data = (await res.json()) as { site: AgentSiteDoc | null };
+        const foundationData = (await foundationRes.json().catch(() => ({}))) as { foundation?: { domainStartingPoint?: string | null; hostingStartingPoint?: string | null } };
         if (!active) return;
+        setFoundationReady(Boolean(foundationData.foundation?.domainStartingPoint && foundationData.foundation?.domainStartingPoint !== "not_sure" && foundationData.foundation?.hostingStartingPoint));
         setSite(data.site);
         if (data.site) setContent(data.site.content);
       } catch {
@@ -178,6 +184,10 @@ export function WebsiteStudioApp() {
   }
 
   async function publish() {
+    if (!foundationReady) {
+      toast.error("Finish domain and hosting setup before publishing.");
+      return;
+    }
     setPublishing(true);
     try {
       const s = await patch({ status: "published" });
@@ -266,6 +276,7 @@ export function WebsiteStudioApp() {
     <div className="space-y-4">
       {tabRow}
       {/* Toolbar */}
+      {!foundationReady ? <div className="flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-sm font-semibold text-amber-900">Preview is ready. Publishing comes after the foundation.</p><p className="mt-1 text-xs text-amber-800">Choose the domain and hosting path first so visitors never receive an unfinished or disconnected site.</p></div><Button size="sm" variant="outline" render={<a href={`/sa/${subAccountId}/get-started`} />}>Finish domain &amp; hosting</Button></div> : null}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold tracking-tight">
@@ -303,13 +314,13 @@ export function WebsiteStudioApp() {
               <ExternalLink className="mr-1 h-3.5 w-3.5" /> View live
             </Button>
           )}
-          <Button size="sm" onClick={publish} disabled={publishing}>
+          <Button size="sm" onClick={publish} disabled={publishing || !foundationReady}>
             <Rocket className="mr-1 h-3.5 w-3.5" />
             {publishing
               ? "Publishing…"
               : site.status === "published"
                 ? "Re-publish"
-                : "Publish"}
+                : foundationReady ? "Publish" : "Foundation required"}
           </Button>
         </div>
       </div>

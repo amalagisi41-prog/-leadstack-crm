@@ -341,13 +341,12 @@ export function BusinessProfileForm() {
         </div>
         <p className="mt-2 max-w-2xl text-sm text-blue-100/90">
           Tell us about your business once. This is your AgentStack Knowledge
-          Base — every AI assistant, follow-up, text, email, and landing page
-          works from it automatically. The more you fill in, the smarter every
-          tool gets.
+          Base. Reach 100% with the launch essentials; add optional details
+          later only when they are useful to your business.
         </p>
         <div className="mt-4">
           <div className="flex items-center justify-between text-xs text-blue-100/80">
-            <span>Profile completeness</span>
+            <span>Launch-ready essentials</span>
             <span>{completeness}%</span>
           </div>
           <div className="mt-1 h-2 overflow-hidden rounded-full bg-white/20">
