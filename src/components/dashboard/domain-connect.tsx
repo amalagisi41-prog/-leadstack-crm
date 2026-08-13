@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowRight,
   CheckCircle2,
@@ -182,6 +182,16 @@ export function DomainConnect() {
   const [providerOutcome, setProviderOutcome] = useState<
     "found" | "empty" | null
   >(null);
+  const [replacementApproved, setReplacementApproved] = useState(false);
+
+  useEffect(() => {
+    fetch(`/api/sub-accounts/${subAccountId}/website-transfer`)
+      .then((response) => response.json())
+      .then((data: { transfer?: { status?: string } | null }) =>
+        setReplacementApproved(data.transfer?.status === "approved")
+      )
+      .catch(() => setReplacementApproved(false));
+  }, [subAccountId]);
 
   const selectedProvider = PROVIDER_PORTALS.find(
     (provider) => provider.key === providerKey
@@ -376,9 +386,21 @@ export function DomainConnect() {
               </a>
             </div>
 
-            <details className="rounded-xl border p-4">
+            <details
+              className="rounded-xl border p-4"
+              onClick={(event) => {
+                if (!replacementApproved) {
+                  event.preventDefault();
+                  toast.error(
+                    "Review and approve the private replacement before opening DNS steps."
+                  );
+                }
+              }}
+            >
               <summary className="cursor-pointer text-sm font-semibold">
-                Final DNS records — use only after replacement approval
+                {replacementApproved
+                  ? "Final DNS records — replacement approved"
+                  : "Final DNS records — locked until replacement approval"}
               </summary>
               <div className="mt-3">
                 <p className="mb-2 text-xs font-medium">

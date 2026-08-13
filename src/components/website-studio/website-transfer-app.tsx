@@ -1,0 +1,354 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import {
+  CheckCircle2,
+  CircleAlert,
+  Eye,
+  Loader2,
+  RefreshCw,
+  ShieldCheck,
+  XCircle,
+} from "lucide-react";
+import { toast } from "sonner";
+import { useSubAccount } from "@/context/sub-account-context";
+import { Button } from "@/components/ui/button";
+import type {
+  TransferItemStatus,
+  WebsiteTransferDoc,
+} from "@/types/website-transfer";
+
+const STAGES = [
+  "Address",
+  "Read-only scan",
+  "Inventory",
+  "Transfer report",
+  "Private preview",
+  "Compare",
+  "Approve",
+  "DNS cutover",
+];
+const STATUS_LABEL: Record<TransferItemStatus, string> = {
+  copied: "Copied",
+  needs_approval: "Needs approval",
+  cannot_access: "Cannot access",
+};
+const STATUS_STYLE: Record<TransferItemStatus, string> = {
+  copied: "bg-emerald-50 text-emerald-700",
+  needs_approval: "bg-amber-50 text-amber-800",
+  cannot_access: "bg-red-50 text-red-700",
+};
+
+export function WebsiteTransferApp() {
+  const { subAccountId, saPath } = useSubAccount();
+  const [sourceUrl, setSourceUrl] = useState("");
+  const [transfer, setTransfer] = useState<WebsiteTransferDoc | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [scanning, setScanning] = useState(false);
+  const [approving, setApproving] = useState(false);
+
+  useEffect(() => {
+    fetch(`/api/sub-accounts/${subAccountId}/website-transfer`)
+      .then(async (res) => {
+        const data = (await res.json().catch(() => ({}))) as {
+          transfer?: WebsiteTransferDoc | null;
+        };
+        if (data.transfer) {
+          setTransfer(data.transfer);
+          setSourceUrl(data.transfer.sourceUrl);
+        }
+      })
+      .finally(() => setLoading(false));
+  }, [subAccountId]);
+
+  async function scan() {
+    setScanning(true);
+    try {
+      const res = await fetch(
+        `/api/sub-accounts/${subAccountId}/website-transfer`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sourceUrl }),
+        }
+      );
+      const data = (await res.json().catch(() => ({}))) as {
+        transfer?: WebsiteTransferDoc;
+        error?: string;
+      };
+      if (!res.ok || !data.transfer)
+        throw new Error(data.error ?? "The scan could not finish.");
+      setTransfer(data.transfer);
+      toast.success("Read-only scan complete. Your private report is ready.");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "The scan could not finish."
+      );
+    } finally {
+      setScanning(false);
+    }
+  }
+
+  async function approve() {
+    setApproving(true);
+    try {
+      const res = await fetch(
+        `/api/sub-accounts/${subAccountId}/website-transfer`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "approve" }),
+        }
+      );
+      const data = (await res.json().catch(() => ({}))) as {
+        transfer?: WebsiteTransferDoc;
+        error?: string;
+      };
+      if (!res.ok || !data.transfer)
+        throw new Error(data.error ?? "Approval could not be saved.");
+      setTransfer(data.transfer);
+      toast.success(
+        "Replacement approved. Exact DNS cutover guidance is now unlocked."
+      );
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Approval could not be saved."
+      );
+    } finally {
+      setApproving(false);
+    }
+  }
+
+  if (loading)
+    return (
+      <div className="text-muted-foreground flex h-52 items-center justify-center">
+        <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading transfer
+        workspace…
+      </div>
+    );
+  const counts = transfer?.pages.reduce(
+    (result, page) => ({ ...result, [page.status]: result[page.status] + 1 }),
+    { copied: 0, needs_approval: 0, cannot_access: 0 } as Record<
+      TransferItemStatus,
+      number
+    >
+  );
+
+  return (
+    <div className="mx-auto max-w-6xl space-y-5">
+      <div className="rounded-2xl bg-[#1d3f76] p-6 text-white">
+        <p className="text-xs font-bold tracking-[.18em] text-pink-300">
+          EXACT WEBSITE REPLACEMENT
+        </p>
+        <h1 className="mt-2 text-2xl font-bold">
+          Zack copies the current site before anything changes.
+        </h1>
+        <p className="mt-2 max-w-3xl text-sm text-blue-100">
+          Enter the live address. AgentStack reads only public pages,
+          inventories the site, creates a private safe preview, and records your
+          approval. Your live site, domain, email, and DNS remain untouched.
+        </p>
+      </div>
+      <div className="grid gap-2 sm:grid-cols-4 lg:grid-cols-8">
+        {STAGES.map((label, index) => (
+          <div
+            key={label}
+            className={`rounded-xl border p-2 text-center text-[11px] font-semibold ${index + 1 <= (transfer?.stage ?? 1) ? "border-blue-200 bg-blue-50 text-blue-800" : "text-muted-foreground"}`}
+          >
+            <span className="block text-xs">{index + 1}</span>
+            {label}
+          </div>
+        ))}
+      </div>
+      <section className="rounded-2xl border p-5">
+        <h2 className="font-semibold">1. Enter the live website</h2>
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+          <input
+            className="h-10 flex-1 rounded-lg border px-3 text-sm"
+            value={sourceUrl}
+            onChange={(event) => setSourceUrl(event.target.value)}
+            placeholder="https://yourwebsite.com"
+          />
+          <Button onClick={scan} disabled={scanning || !sourceUrl.trim()}>
+            {scanning ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Zack is
+                scanning…
+              </>
+            ) : (
+              <>
+                <RefreshCw className="mr-2 h-4 w-4" /> Run read-only scan
+              </>
+            )}
+          </Button>
+        </div>
+        <p className="text-muted-foreground mt-2 text-xs">
+          No passwords are requested. Forms and scripts are disabled inside the
+          private preview.
+        </p>
+      </section>
+      {transfer ? (
+        <>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {(
+              [
+                "copied",
+                "needs_approval",
+                "cannot_access",
+              ] as TransferItemStatus[]
+            ).map((status) => (
+              <div key={status} className="rounded-2xl border p-4">
+                <div className="flex items-center gap-2">
+                  {status === "copied" ? (
+                    <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                  ) : status === "needs_approval" ? (
+                    <CircleAlert className="h-5 w-5 text-amber-600" />
+                  ) : (
+                    <XCircle className="h-5 w-5 text-red-600" />
+                  )}
+                  <span className="font-semibold">{STATUS_LABEL[status]}</span>
+                </div>
+                <p className="mt-2 text-2xl font-bold">
+                  {counts?.[status] ?? 0}
+                </p>
+              </div>
+            ))}
+          </div>
+          <section className="rounded-2xl border p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="font-semibold">Visual transfer report</h2>
+                <p className="text-muted-foreground text-sm">
+                  Every accessible page is recorded below.
+                </p>
+              </div>
+              {transfer.privatePreviewPath ? (
+                <Button
+                  variant="outline"
+                  render={<Link href={transfer.privatePreviewPath} />}
+                >
+                  <Eye className="mr-2 h-4 w-4" /> Open private preview
+                </Button>
+              ) : null}
+            </div>
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead className="text-muted-foreground border-b">
+                  <tr>
+                    <th className="py-2">Page</th>
+                    <th>Status</th>
+                    <th>Images</th>
+                    <th>Forms</th>
+                    <th>Scripts</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {transfer.pages.map((page) => (
+                    <tr key={page.url} className="border-b last:border-0">
+                      <td className="max-w-md py-3">
+                        <p className="truncate font-medium">{page.title}</p>
+                        <p className="text-muted-foreground truncate text-xs">
+                          {page.path}
+                        </p>
+                      </td>
+                      <td>
+                        <span
+                          className={`rounded-full px-2 py-1 text-xs font-semibold ${STATUS_STYLE[page.status]}`}
+                        >
+                          {STATUS_LABEL[page.status]}
+                        </span>
+                      </td>
+                      <td>{page.imageCount}</td>
+                      <td>{page.formCount}</td>
+                      <td>{page.scriptCount}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+          <section className="grid gap-4 rounded-2xl border p-5 sm:grid-cols-2 lg:grid-cols-4">
+            <Inventory label="Pages" value={String(transfer.inventory.pages)} />
+            <Inventory
+              label="CMS"
+              value={transfer.inventory.cms ?? "Needs approval"}
+            />
+            <Inventory
+              label="Host / edge"
+              value={transfer.inventory.hosting ?? "Needs approval"}
+            />
+            <Inventory label="Forms" value={String(transfer.inventory.forms)} />
+            <Inventory
+              label="Images"
+              value={String(transfer.inventory.images.length)}
+            />
+            <Inventory
+              label="Fonts"
+              value={String(transfer.inventory.fonts.length)}
+            />
+            <Inventory
+              label="Tracking tools"
+              value={String(transfer.inventory.tracking.length)}
+            />
+            <Inventory
+              label="Redirects"
+              value={String(transfer.inventory.redirects.length)}
+            />
+          </section>
+          <section className="rounded-2xl border p-5">
+            <div className="flex items-start gap-3">
+              <ShieldCheck className="mt-0.5 h-5 w-5 text-blue-700" />
+              <div className="flex-1">
+                <h2 className="font-semibold">Approval gate</h2>
+                <p className="text-muted-foreground mt-1 text-sm">
+                  Compare the private snapshot page-by-page. Approval is saved
+                  with a timestamp. DNS instructions stay locked until this step
+                  is complete.
+                </p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {transfer.status !== "approved" ? (
+                    <Button onClick={approve} disabled={approving}>
+                      {approving
+                        ? "Saving approval…"
+                        : "Approve private replacement"}
+                    </Button>
+                  ) : (
+                    <Button
+                      render={<Link href={saPath("/domain?stage=cutover")} />}
+                    >
+                      Open exact DNS cutover steps
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    render={
+                      <a
+                        href={transfer.sourceUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                      />
+                    }
+                  >
+                    Open original site
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </section>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
+function Inventory({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+        {label}
+      </p>
+      <p className="mt-1 font-semibold">{value}</p>
+    </div>
+  );
+}
