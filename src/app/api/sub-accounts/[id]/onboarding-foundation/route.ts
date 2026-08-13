@@ -109,6 +109,14 @@ export async function PATCH(
     HOSTING_POINTS.has(body.hostingStartingPoint as HostingStartingPoint)
       ? (body.hostingStartingPoint as HostingStartingPoint)
       : null;
+  const domainName =
+    typeof body.domainName === "string"
+      ? body.domainName
+          .trim()
+          .replace(/^https?:\/\//i, "")
+          .replace(/\/.*$/, "")
+          .slice(0, 253)
+      : "";
 
   const foundation = {
     completed: true,
@@ -117,17 +125,18 @@ export async function PATCH(
     sourceUrl,
     domainStartingPoint,
     hostingStartingPoint,
+    domainName,
+    domainSetupConfirmed: body.domainSetupConfirmed === true,
+    hostingSetupConfirmed: body.hostingSetupConfirmed === true,
     profileImported: body.profileImported === true,
     updatedAt: FieldValue.serverTimestamp(),
   };
-  await getAdminDb()
-    .doc(`subAccounts/${id}`)
-    .set(
-      {
-        onboardingFoundation: foundation,
-        updatedAt: FieldValue.serverTimestamp(),
-      },
-      { merge: true }
-    );
+  await getAdminDb().doc(`subAccounts/${id}`).set(
+    {
+      onboardingFoundation: foundation,
+      updatedAt: FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
   return NextResponse.json({ ok: true, foundation });
 }

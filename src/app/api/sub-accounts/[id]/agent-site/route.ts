@@ -97,12 +97,16 @@ export async function PATCH(
     | {
         domainStartingPoint?: string | null;
         hostingStartingPoint?: string | null;
+        domainSetupConfirmed?: boolean;
+        hostingSetupConfirmed?: boolean;
       }
     | undefined;
   if (
     !foundation?.domainStartingPoint ||
     foundation.domainStartingPoint === "not_sure" ||
-    !foundation.hostingStartingPoint
+    !foundation.hostingStartingPoint ||
+    foundation.domainSetupConfirmed === false ||
+    foundation.hostingSetupConfirmed === false
   ) {
     return NextResponse.json(
       {

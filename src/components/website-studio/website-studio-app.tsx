@@ -97,13 +97,17 @@ export function WebsiteStudioApp() {
           foundation?: {
             domainStartingPoint?: string | null;
             hostingStartingPoint?: string | null;
+            domainSetupConfirmed?: boolean;
+            hostingSetupConfirmed?: boolean;
           };
         };
         if (!active) return;
         const ready = Boolean(
           foundationData.foundation?.domainStartingPoint &&
           foundationData.foundation.domainStartingPoint !== "not_sure" &&
-          foundationData.foundation?.hostingStartingPoint
+          foundationData.foundation?.hostingStartingPoint &&
+          foundationData.foundation.domainSetupConfirmed !== false &&
+          foundationData.foundation.hostingSetupConfirmed !== false
         );
         setFoundationReady(ready);
         setFoundationLoaded(true);

@@ -33,6 +33,9 @@ export interface OnboardingFoundation {
   sourceUrl: string;
   domainStartingPoint: DomainStartingPoint | null;
   hostingStartingPoint: HostingStartingPoint | null;
+  domainName?: string;
+  domainSetupConfirmed?: boolean;
+  hostingSetupConfirmed?: boolean;
   profileImported: boolean;
   updatedAt?: unknown;
 }
@@ -44,5 +47,8 @@ export const EMPTY_ONBOARDING_FOUNDATION: OnboardingFoundation = {
   sourceUrl: "",
   domainStartingPoint: null,
   hostingStartingPoint: null,
+  domainName: "",
+  domainSetupConfirmed: false,
+  hostingSetupConfirmed: false,
   profileImported: false,
 };

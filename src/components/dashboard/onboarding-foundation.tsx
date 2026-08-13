@@ -47,11 +47,31 @@ const platforms: { value: BusinessSourcePlatform; label: string }[] = [
 ];
 
 const FOUNDATION_LINKS = [
-  { label: "Buy a domain", detail: "Search a short .com name", href: "https://www.namecheap.com/domains/" },
-  { label: "Open GoDaddy", detail: "Manage or transfer a GoDaddy domain", href: "https://dcc.godaddy.com/domains" },
-  { label: "Open Bluehost", detail: "Manage WordPress and hosting", href: "https://my.bluehost.com/hosting/app" },
-  { label: "Open WordPress", detail: "Export your existing website", href: "https://wordpress.com/me/purchases" },
-  { label: "Open Vercel", detail: "Manage modern website hosting", href: "https://vercel.com/dashboard" },
+  {
+    label: "Buy a domain",
+    detail: "Search a short .com name",
+    href: "https://www.namecheap.com/domains/",
+  },
+  {
+    label: "Open GoDaddy",
+    detail: "Manage or transfer a GoDaddy domain",
+    href: "https://dcc.godaddy.com/domains",
+  },
+  {
+    label: "Open Bluehost",
+    detail: "Manage WordPress and hosting",
+    href: "https://my.bluehost.com/hosting/app",
+  },
+  {
+    label: "Open WordPress",
+    detail: "Export your existing website",
+    href: "https://wordpress.com/me/purchases",
+  },
+  {
+    label: "Open Vercel",
+    detail: "Manage modern website hosting",
+    href: "https://vercel.com/dashboard",
+  },
 ];
 
 export function OnboardingFoundation({
@@ -92,14 +112,21 @@ export function OnboardingFoundation({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ consent: true }),
-        },
+        }
       );
-      const data = (await response.json().catch(() => ({}))) as { error?: string };
-      if (!response.ok) throw new Error(data.error ?? "Could not start transfer.");
-      toast.success("Website transfer assessment started. Nothing will be published without approval.");
+      const data = (await response.json().catch(() => ({}))) as {
+        error?: string;
+      };
+      if (!response.ok)
+        throw new Error(data.error ?? "Could not start transfer.");
+      toast.success(
+        "Website transfer assessment started. Nothing will be published without approval."
+      );
       window.location.assign(saPath("/import?source=ghl&website=queued"));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not start transfer.");
+      toast.error(
+        error instanceof Error ? error.message : "Could not start transfer."
+      );
       setStartingTransfer(false);
     }
   }
@@ -160,6 +187,8 @@ export function OnboardingFoundation({
             sourceUrl: mode === "transfer" ? sourceUrl : "",
             domainStartingPoint: domainPoint,
             hostingStartingPoint: hostingPoint,
+            domainSetupConfirmed: false,
+            hostingSetupConfirmed: false,
             profileImported,
           }),
         }
@@ -180,10 +209,18 @@ export function OnboardingFoundation({
   const buildSteps = [
     { label: "Domain", done: domainPoint !== "not_sure" },
     { label: "Hosting", done: Boolean(hostingPoint) },
-    { label: "Business source", done: mode !== "transfer" || platform === "gohighlevel" ? ghlStatus === "connected" || mode !== "transfer" : Boolean(sourceUrl) },
+    {
+      label: "Business source",
+      done:
+        mode !== "transfer" || platform === "gohighlevel"
+          ? ghlStatus === "connected" || mode !== "transfer"
+          : Boolean(sourceUrl),
+    },
     { label: "Blueprint", done: profileImported || mode !== "transfer" },
   ];
-  const buildPercent = Math.round((buildSteps.filter((step) => step.done).length / buildSteps.length) * 100);
+  const buildPercent = Math.round(
+    (buildSteps.filter((step) => step.done).length / buildSteps.length) * 100
+  );
   const previewUrl = /^https?:\/\//i.test(sourceUrl.trim())
     ? sourceUrl.trim().split(/[\s,]+/)[0]
     : "";
@@ -204,24 +241,92 @@ export function OnboardingFoundation({
         </p>
       </div>
 
-      <section className="rounded-2xl border bg-card p-5">
+      <section className="bg-card rounded-2xl border p-5">
         <div className="flex items-center justify-between gap-4">
-          <div><p className="font-semibold">Your build is in progress</p><p className="text-sm text-muted-foreground">Complete one small decision at a time. You can work in AgentStack while the site is prepared.</p></div>
-          <span className="rounded-full bg-blue-100 px-3 py-1 text-sm font-semibold text-blue-800">{buildPercent}%</span>
+          <div>
+            <p className="font-semibold">Your build is in progress</p>
+            <p className="text-muted-foreground text-sm">
+              Complete one small decision at a time. You can work in AgentStack
+              while the site is prepared.
+            </p>
+          </div>
+          <span className="rounded-full bg-blue-100 px-3 py-1 text-sm font-semibold text-blue-800">
+            {buildPercent}%
+          </span>
         </div>
         <div className="mt-4 grid gap-2 sm:grid-cols-4">
-          {buildSteps.map((step, index) => <div key={step.label} className={`rounded-xl border p-3 text-sm ${step.done ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "bg-muted/20 text-muted-foreground"}`}><span className="mr-2 font-semibold">{index + 1}</span>{step.label}{step.done ? <CheckCircle2 className="ml-2 inline h-4 w-4" /> : null}</div>)}
+          {buildSteps.map((step, index) => (
+            <div
+              key={step.label}
+              className={`rounded-xl border p-3 text-sm ${step.done ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "bg-muted/20 text-muted-foreground"}`}
+            >
+              <span className="mr-2 font-semibold">{index + 1}</span>
+              {step.label}
+              {step.done ? (
+                <CheckCircle2 className="ml-2 inline h-4 w-4" />
+              ) : null}
+            </div>
+          ))}
         </div>
       </section>
 
-      <section className="rounded-2xl border bg-card p-6">
-        <div className="flex items-start gap-3"><Globe2 className="mt-0.5 h-5 w-5 text-blue-600" /><div><p className="text-xs font-semibold uppercase tracking-widest text-pink-500">Foundation · Step 1</p><h2 className="mt-1 font-semibold">Choose your domain starting point</h2><p className="mt-1 text-sm text-muted-foreground">Buy a domain, connect one you own, or let Zack guide the choice. Nothing changes until you approve it.</p></div></div>
+      <section className="bg-card rounded-2xl border p-6">
+        <div className="flex items-start gap-3">
+          <Globe2 className="mt-0.5 h-5 w-5 text-blue-600" />
+          <div>
+            <p className="text-xs font-semibold tracking-widest text-pink-500 uppercase">
+              Foundation · Step 1
+            </p>
+            <h2 className="mt-1 font-semibold">
+              Choose your domain starting point
+            </h2>
+            <p className="text-muted-foreground mt-1 text-sm">
+              Buy a domain, connect one you own, or let Zack guide the choice.
+              Nothing changes until you approve it.
+            </p>
+          </div>
+        </div>
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
-          {([['have_domain','I already own a domain'],['need_domain','Buy a new domain'],['not_sure','Help me choose']] as const).map(([value,label]) => <button key={value} type="button" onClick={() => { setDomainPoint(value); if (value === 'have_domain') setHostingPoint('transfer_existing'); }} className={`rounded-xl border px-4 py-3 text-left text-sm ${domainPoint === value ? 'border-blue-500 bg-blue-50 font-medium' : 'bg-background'}`}>{label}</button>)}
+          {(
+            [
+              ["have_domain", "I already own a domain"],
+              ["need_domain", "Buy a new domain"],
+              ["not_sure", "Help me choose"],
+            ] as const
+          ).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => {
+                setDomainPoint(value);
+                if (value === "have_domain")
+                  setHostingPoint("transfer_existing");
+              }}
+              className={`rounded-xl border px-4 py-3 text-left text-sm ${domainPoint === value ? "border-blue-500 bg-blue-50 font-medium" : "bg-background"}`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
-          {domainPoint === 'need_domain' ? <Button render={<a href="https://www.namecheap.com/domains/" target="_blank" rel="noreferrer" />}><ArrowUpRight className="mr-2 h-4 w-4" />Search and buy a domain</Button> : null}
-          <Button variant="outline" render={<a href={saPath('/domain')} />}><ExternalLink className="mr-2 h-4 w-4" />Open domain setup</Button>
+          {domainPoint === "need_domain" ? (
+            <Button
+              render={
+                <a
+                  href="https://www.namecheap.com/domains/"
+                  target="_blank"
+                  rel="noreferrer"
+                />
+              }
+            >
+              <ArrowUpRight className="mr-2 h-4 w-4" />
+              Search and buy a domain
+            </Button>
+          ) : null}
+          <Button variant="outline" render={<a href={saPath("/domain")} />}>
+            <ExternalLink className="mr-2 h-4 w-4" />
+            Open domain setup
+          </Button>
         </div>
       </section>
 
@@ -296,15 +401,18 @@ export function OnboardingFoundation({
                 </option>
               ))}
             </select>
-            <div className="rounded-xl border bg-background p-4">
+            <div className="bg-background rounded-xl border p-4">
               {platform === "gohighlevel" ? (
                 <div className="space-y-4">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="font-semibold">Connect your GoHighLevel account</p>
+                      <p className="font-semibold">
+                        Connect your GoHighLevel account
+                      </p>
                       <p className="text-muted-foreground mt-1 text-xs leading-5">
-                        Sign in on HighLevel and choose the location you want to move.
-                        AgentStack never asks for or stores your GHL password.
+                        Sign in on HighLevel and choose the location you want to
+                        move. AgentStack never asks for or stores your GHL
+                        password.
                       </p>
                     </div>
                     {ghlStatus === "connected" ? (
@@ -320,7 +428,9 @@ export function OnboardingFoundation({
                         <input
                           type="checkbox"
                           checked={transferConsent}
-                          onChange={(event) => setTransferConsent(event.target.checked)}
+                          onChange={(event) =>
+                            setTransferConsent(event.target.checked)
+                          }
                           className="mt-1 h-4 w-4"
                         />
                         <span>
@@ -328,10 +438,11 @@ export function OnboardingFoundation({
                             Allow a read-only migration assessment
                           </strong>
                           <span className="mt-1 block text-xs leading-5 text-[#526078]">
-                            AgentStack may read the selected GHL location, website
-                            structure, contacts, pipelines, fields, and approved assets
-                            to prepare a transfer plan. Nothing is changed in GHL or
-                            published in AgentStack without a separate approval.
+                            AgentStack may read the selected GHL location,
+                            website structure, contacts, pipelines, fields, and
+                            approved assets to prepare a transfer plan. Nothing
+                            is changed in GHL or published in AgentStack without
+                            a separate approval.
                           </span>
                         </span>
                       </label>
@@ -340,7 +451,11 @@ export function OnboardingFoundation({
                         onClick={startGhlWebsiteTransfer}
                         disabled={!transferConsent || startingTransfer}
                       >
-                        {startingTransfer ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+                        {startingTransfer ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <RefreshCw className="mr-2 h-4 w-4" />
+                        )}
                         Start website transfer
                       </Button>
                     </>
@@ -349,7 +464,7 @@ export function OnboardingFoundation({
                       type="button"
                       onClick={() =>
                         window.location.assign(
-                          `/api/sub-accounts/${subAccountId}/import/ghl/oauth/start`,
+                          `/api/sub-accounts/${subAccountId}/import/ghl/oauth/start`
                         )
                       }
                     >
@@ -381,8 +496,16 @@ export function OnboardingFoundation({
                     placeholder="Paste one or more website or public profile links"
                     className="bg-background rounded-lg border px-3 py-2 text-sm"
                   />
-                  <Button type="button" onClick={importProfile} disabled={importing}>
-                    {importing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+                  <Button
+                    type="button"
+                    onClick={importProfile}
+                    disabled={importing}
+                  >
+                    {importing ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="mr-2 h-4 w-4" />
+                    )}
                     {profileImported ? "Import again" : "Import details"}
                   </Button>
                 </div>
@@ -396,11 +519,20 @@ export function OnboardingFoundation({
             </p>
           ) : null}
           {platform === "gohighlevel" ? (
-            <div className="bg-muted/40 mt-4 rounded-xl border p-4 text-xs leading-5 text-muted-foreground">
-              Connection order: <strong className="text-foreground">log in</strong>
-              {" → "}<strong className="text-foreground">choose a GHL location</strong>
-              {" → "}<strong className="text-foreground">approve read-only access</strong>
-              {" → "}<strong className="text-foreground">review the transfer plan</strong>.
+            <div className="bg-muted/40 text-muted-foreground mt-4 rounded-xl border p-4 text-xs leading-5">
+              Connection order:{" "}
+              <strong className="text-foreground">log in</strong>
+              {" → "}
+              <strong className="text-foreground">choose a GHL location</strong>
+              {" → "}
+              <strong className="text-foreground">
+                approve read-only access
+              </strong>
+              {" → "}
+              <strong className="text-foreground">
+                review the transfer plan
+              </strong>
+              .
             </div>
           ) : null}
         </section>
@@ -410,8 +542,12 @@ export function OnboardingFoundation({
         <div className="flex items-start gap-3">
           <Server className="mt-0.5 h-5 w-5 text-blue-600" />
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-pink-500">Foundation · Step 2</p>
-            <h2 className="mt-1 font-semibold">Choose how AgentStack hosts the build</h2>
+            <p className="text-xs font-semibold tracking-widest text-pink-500 uppercase">
+              Foundation · Step 2
+            </p>
+            <h2 className="mt-1 font-semibold">
+              Choose how AgentStack hosts the build
+            </h2>
             <p className="text-muted-foreground mt-1 text-sm">
               Use managed hosting for the simplest setup, transfer an existing
               site, or keep your current host while AgentStack connects it.
@@ -436,17 +572,51 @@ export function OnboardingFoundation({
             </button>
           ))}
         </div>
-        <div className="mt-4 rounded-xl border bg-muted/20 p-4">
+        <div className="bg-muted/20 mt-4 rounded-xl border p-4">
           <p className="text-sm font-semibold">Open the exact provider step</p>
-          <p className="mt-1 text-xs text-muted-foreground">Sign in with the provider directly. AgentStack never asks for or stores a provider password.</p>
+          <p className="text-muted-foreground mt-1 text-xs">
+            Sign in with the provider directly. AgentStack never asks for or
+            stores a provider password.
+          </p>
           <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {FOUNDATION_LINKS.filter((link) => hostingPoint !== "agentstack_managed" || link.label === "Open Vercel").map((link) => <a key={link.label} href={link.href} target="_blank" rel="noreferrer" className="flex items-center justify-between rounded-lg border bg-background p-3 text-sm transition hover:border-blue-400">
-              <span><span className="block font-medium">{link.label}</span><span className="block text-[11px] text-muted-foreground">{link.detail}</span></span><ArrowUpRight className="h-4 w-4 text-muted-foreground" />
-            </a>)}
+            {FOUNDATION_LINKS.filter(
+              (link) =>
+                hostingPoint !== "agentstack_managed" ||
+                link.label === "Open Vercel"
+            ).map((link) => (
+              <a
+                key={link.label}
+                href={link.href}
+                target="_blank"
+                rel="noreferrer"
+                className="bg-background flex items-center justify-between rounded-lg border p-3 text-sm transition hover:border-blue-400"
+              >
+                <span>
+                  <span className="block font-medium">{link.label}</span>
+                  <span className="text-muted-foreground block text-[11px]">
+                    {link.detail}
+                  </span>
+                </span>
+                <ArrowUpRight className="text-muted-foreground h-4 w-4" />
+              </a>
+            ))}
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
-            <Button type="button" variant="outline" render={<a href={saPath("/domain")} />}><ExternalLink className="mr-2 h-4 w-4" />Open AgentStack domain setup</Button>
-            <Button type="button" variant="outline" render={<a href={saPath("/website-studio")} />}>Open managed Website Studio</Button>
+            <Button
+              type="button"
+              variant="outline"
+              render={<a href={saPath("/domain")} />}
+            >
+              <ExternalLink className="mr-2 h-4 w-4" />
+              Open AgentStack domain setup
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              render={<a href={saPath("/website-studio")} />}
+            >
+              Open managed Website Studio
+            </Button>
           </div>
         </div>
         <p className="text-muted-foreground mt-4 text-xs">
@@ -456,16 +626,85 @@ export function OnboardingFoundation({
       </section>
 
       <section className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
-        <div className="overflow-hidden rounded-2xl border bg-card">
-          <div className="flex items-center justify-between border-b p-4"><div><p className="flex items-center gap-2 font-semibold"><Eye className="h-4 w-4 text-blue-600" />Live build viewer</p><p className="mt-1 text-xs text-muted-foreground">See the existing site or open the new build without leaving your setup.</p></div><Button size="sm" variant="outline" render={<a href={saPath('/website-studio')} />}>Open Studio</Button></div>
-          {previewUrl ? <iframe title="Existing website preview" src={previewUrl} className="h-72 w-full bg-white" sandbox="allow-scripts allow-same-origin" /> : <div className="flex h-72 flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-pink-50 p-8 text-center"><Sparkles className="h-8 w-8 text-pink-500" /><p className="mt-3 font-semibold">Your site preview will appear here</p><p className="mt-1 max-w-sm text-sm text-muted-foreground">Connect an existing website above, or open AI Website Studio to build with Claude and the Vibe.co workflow.</p><div className="mt-4 flex gap-2"><Button size="sm" render={<a href={saPath('/website-studio')} />}>Build with AI</Button><Button size="sm" variant="outline" render={<a href="https://vibe.co" target="_blank" rel="noreferrer" />}>Connect Vibe.co</Button></div></div>}
+        <div className="bg-card overflow-hidden rounded-2xl border">
+          <div className="flex items-center justify-between border-b p-4">
+            <div>
+              <p className="flex items-center gap-2 font-semibold">
+                <Eye className="h-4 w-4 text-blue-600" />
+                Live build viewer
+              </p>
+              <p className="text-muted-foreground mt-1 text-xs">
+                See the existing site or open the new build without leaving your
+                setup.
+              </p>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              render={<a href={saPath("/website-studio")} />}
+            >
+              Open Studio
+            </Button>
+          </div>
+          {previewUrl ? (
+            <iframe
+              title="Existing website preview"
+              src={previewUrl}
+              className="h-72 w-full bg-white"
+              sandbox="allow-scripts allow-same-origin"
+            />
+          ) : (
+            <div className="flex h-72 flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-pink-50 p-8 text-center">
+              <Sparkles className="h-8 w-8 text-pink-500" />
+              <p className="mt-3 font-semibold">
+                Your site preview will appear here
+              </p>
+              <p className="text-muted-foreground mt-1 max-w-sm text-sm">
+                Connect an existing website above, or open AI Website Studio to
+                build with Claude and the Vibe.co workflow.
+              </p>
+              <div className="mt-4 flex gap-2">
+                <Button
+                  size="sm"
+                  render={<a href={saPath("/website-studio")} />}
+                >
+                  Build with AI
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  render={
+                    <a
+                      href="https://vibe.co"
+                      target="_blank"
+                      rel="noreferrer"
+                    />
+                  }
+                >
+                  Connect Vibe.co
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
-        <div className="rounded-2xl border bg-card p-5">
+        <div className="bg-card rounded-2xl border p-5">
           <CreditCard className="h-5 w-5 text-blue-600" />
           <h2 className="mt-3 font-semibold">Secure payment readiness</h2>
-          <p className="mt-2 text-sm text-muted-foreground">Your subscription card is stored securely by Stripe—not AgentStack—so approved domain, hosting, and future add-on purchases can move faster.</p>
-          <Button className="mt-4 w-full" variant="outline" render={<a href={saPath('/dashboard/settings')} />}>Review billing settings</Button>
-          <p className="mt-3 text-xs text-muted-foreground">No add-on is charged without a clear price and your approval.</p>
+          <p className="text-muted-foreground mt-2 text-sm">
+            Your subscription card is stored securely by Stripe—not
+            AgentStack—so approved domain, hosting, and future add-on purchases
+            can move faster.
+          </p>
+          <Button
+            className="mt-4 w-full"
+            variant="outline"
+            render={<a href={saPath("/dashboard/settings")} />}
+          >
+            Review billing settings
+          </Button>
+          <p className="text-muted-foreground mt-3 text-xs">
+            No add-on is charged without a clear price and your approval.
+          </p>
         </div>
       </section>
 
@@ -476,7 +715,8 @@ export function OnboardingFoundation({
           disabled={saving || importing}
         >
           {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-          Save foundation and keep building <ArrowRight className="ml-2 h-4 w-4" />
+          Save foundation and keep building{" "}
+          <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </div>
     </div>
