@@ -76,7 +76,8 @@ const TITLES: Array<[RegExp, string]> = [
   [/^\/sa\/[^/]+\/reports/, "Analytics"],
   [/^\/sa\/[^/]+\/logs/, "Logs"],
   [/^\/sa\/[^/]+\/idx/, "IDX Listings"],
-  [/^\/sa\/[^/]+\/connect/, "Connect Your Business"],
+  [/^\/sa\/[^/]+\/connect/, "Connections"],
+  [/^\/sa\/[^/]+\/media/, "Media Library"],
 ];
 
 function titleFor(pathname: string): string {

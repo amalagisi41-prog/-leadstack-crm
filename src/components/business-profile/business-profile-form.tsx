@@ -13,6 +13,7 @@ import {
   Shield,
   Sparkles,
   Trash2,
+  Upload,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSubAccount } from "@/context/sub-account-context";
@@ -25,6 +26,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { compileBusinessProfilePrompt } from "@/lib/business-profile/compile";
+import { MediaLibrary, type MediaAsset } from "@/components/media/media-library";
 import {
   BRAND_VOICES,
   EMPTY_BUSINESS_PROFILE,
@@ -50,15 +52,22 @@ function Field({
   label,
   hint,
   children,
+  aiField,
+  onAssist,
+  assisting,
 }: {
   label: string;
   hint?: string;
   children: React.ReactNode;
+  aiField?: keyof BusinessProfileContent;
+  onAssist?: (field: keyof BusinessProfileContent, label: string) => void;
+  assisting?: boolean;
 }) {
   return (
     <label className="block">
-      <span className="text-muted-foreground mb-1 block text-xs font-medium">
-        {label}
+      <span className="mb-1 flex items-center justify-between gap-2">
+        <span className="text-muted-foreground text-xs font-medium">{label}</span>
+        {aiField && onAssist ? <button type="button" disabled={assisting} onClick={(event) => { event.preventDefault(); onAssist(aiField, label); }} className="flex items-center gap-1 text-[11px] font-medium text-pink-600 hover:text-pink-700 disabled:opacity-50">{assisting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}AI assist</button> : null}
       </span>
       {children}
       {hint ? (
@@ -103,6 +112,8 @@ export function BusinessProfileForm() {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [importUrl, setImportUrl] = useState("");
   const [importing, setImporting] = useState(false);
+  const [assistingField, setAssistingField] = useState<keyof BusinessProfileContent | null>(null);
+  const [mediaOpen, setMediaOpen] = useState<"logoUrl" | "headshotUrl" | "buyerGuideUrl" | "sellerGuideUrl" | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -133,6 +144,24 @@ export function BusinessProfileForm() {
     value: BusinessProfileContent[K]
   ) {
     setContent((c) => ({ ...c, [key]: value }));
+  }
+
+  async function assistField(field: keyof BusinessProfileContent, label: string) {
+    setAssistingField(field);
+    try {
+      const res = await fetch(`/api/sub-accounts/${subAccountId}/business-profile/assist`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ field, label, currentValue: content[field] }) });
+      const data = await res.json() as { value?: string; error?: string };
+      if (!res.ok || typeof data.value !== "string") throw new Error(data.error ?? "AI assist failed.");
+      set(field, data.value as BusinessProfileContent[typeof field]);
+      toast.success(`${label} drafted from your Business Blueprint. Review before saving.`);
+    } catch (error) { toast.error(error instanceof Error ? error.message : "AI assist failed."); }
+    finally { setAssistingField(null); }
+  }
+
+  const ai = (field: keyof BusinessProfileContent) => ({ aiField: field, onAssist: assistField, assisting: assistingField === field });
+
+  function chooseMedia(field: "logoUrl" | "headshotUrl" | "buyerGuideUrl" | "sellerGuideUrl", asset: MediaAsset) {
+    set(field, asset.url); setMediaOpen(null); toast.success(`${asset.name} selected.`);
   }
 
   function toggleService(id: (typeof SERVICE_SPECIALTIES)[number]["id"]) {
@@ -376,7 +405,7 @@ export function BusinessProfileForm() {
       {/* 1. Agent profile */}
       <Section title="1. About you" desc="Who you are and how leads reach you.">
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Your name">
+          <Field label="Your name" {...ai("agentName")}>
             <input
               className={input}
               value={content.agentName}
@@ -384,7 +413,15 @@ export function BusinessProfileForm() {
               placeholder="Jane Agent"
             />
           </Field>
-          <Field label="Brokerage">
+          <Field label="Professional title" {...ai("title")}>
+            <input
+              className={input}
+              value={content.title}
+              onChange={(e) => set("title", e.target.value)}
+              placeholder="Realtor®, Broker Associate"
+            />
+          </Field>
+          <Field label="Brokerage" {...ai("brokerage")}>
             <input
               className={input}
               value={content.brokerage}
@@ -392,7 +429,7 @@ export function BusinessProfileForm() {
               placeholder="Keller Williams Metro"
             />
           </Field>
-          <Field label="Licensed in (states)">
+          <Field label="Licensed in (states)" {...ai("licenseStates")}>
             <input
               className={input}
               value={content.licenseStates}
@@ -400,7 +437,7 @@ export function BusinessProfileForm() {
               placeholder="NJ, NY"
             />
           </Field>
-          <Field label="License number">
+          <Field label="License number" {...ai("licenseNumber")}>
             <input
               className={input}
               value={content.licenseNumber}
@@ -408,7 +445,7 @@ export function BusinessProfileForm() {
               placeholder="1234567"
             />
           </Field>
-          <Field label="Phone">
+          <Field label="Phone" {...ai("phone")}>
             <input
               className={input}
               value={content.phone}
@@ -416,7 +453,7 @@ export function BusinessProfileForm() {
               placeholder="(555) 123-4567"
             />
           </Field>
-          <Field label="Email">
+          <Field label="Email" {...ai("email")}>
             <input
               className={input}
               value={content.email}
@@ -424,7 +461,7 @@ export function BusinessProfileForm() {
               placeholder="jane@brokerage.com"
             />
           </Field>
-          <Field label="Website">
+          <Field label="Website" {...ai("website")}>
             <input
               className={input}
               value={content.website}
@@ -432,7 +469,7 @@ export function BusinessProfileForm() {
               placeholder="https://janesells.com"
             />
           </Field>
-          <Field label="Languages spoken">
+          <Field label="Languages spoken" {...ai("languages")}>
             <input
               className={input}
               value={content.languages}
@@ -451,6 +488,7 @@ export function BusinessProfileForm() {
         <Field
           label="Client experience"
           hint="The emotional experience every AI interaction should create."
+          {...ai("clientExperience")}
         >
           <textarea
             rows={2}
@@ -463,6 +501,7 @@ export function BusinessProfileForm() {
         <Field
           label="Ideal client profile"
           hint="Who this business serves — gives every AI response, website, and marketing asset a clear audience."
+          {...ai("idealClientProfile")}
         >
           <textarea
             rows={2}
@@ -475,6 +514,7 @@ export function BusinessProfileForm() {
         <Field
           label="Client promise"
           hint="One sentence. The commitment that stays consistent across every touchpoint."
+          {...ai("clientPromise")}
         >
           <input
             className={input}
@@ -493,6 +533,7 @@ export function BusinessProfileForm() {
         <Field
           label="Service areas (towns / neighborhoods)"
           hint="List the places you serve, separated by commas."
+          {...ai("serviceAreas")}
         >
           <textarea
             rows={2}
@@ -503,7 +544,7 @@ export function BusinessProfileForm() {
           />
         </Field>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Typical price ranges">
+          <Field label="Typical price ranges" {...ai("priceRanges")}>
             <input
               className={input}
               value={content.priceRanges}
@@ -511,7 +552,7 @@ export function BusinessProfileForm() {
               placeholder="$400k–$1.2M"
             />
           </Field>
-          <Field label="Specialties / niche">
+          <Field label="Specialties / niche" {...ai("specialties")}>
             <input
               className={input}
               value={content.specialties}
@@ -587,7 +628,7 @@ export function BusinessProfileForm() {
         desc="Your availability and how you want leads handled."
       >
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Business hours">
+          <Field label="Business hours" {...ai("businessHours")}>
             <input
               className={input}
               value={content.businessHours}
@@ -595,7 +636,7 @@ export function BusinessProfileForm() {
               placeholder="Mon–Fri 9–6, Sat by appointment"
             />
           </Field>
-          <Field label="Lead response preference">
+          <Field label="Lead response preference" {...ai("responsePreference")}>
             <input
               className={input}
               value={content.responsePreference}
@@ -607,6 +648,7 @@ export function BusinessProfileForm() {
         <Field
           label="Hand off to a human when…"
           hint="When should the AI stop and get you involved?"
+          {...ai("handoffRules")}
         >
           <textarea
             rows={2}
@@ -616,7 +658,7 @@ export function BusinessProfileForm() {
             placeholder="The lead is ready to make an offer, or asks for legal/contract details."
           />
         </Field>
-        <Field label="Alert me (escalate) when…">
+        <Field label="Alert me (escalate) when…" {...ai("escalationRules")}>
           <textarea
             rows={2}
             className={input}
@@ -632,7 +674,7 @@ export function BusinessProfileForm() {
         title="7. Qualifying leads"
         desc="What the AI should find out to tell a serious lead from a tire-kicker."
       >
-        <Field label="Qualification questions / criteria">
+        <Field label="Qualification questions / criteria" {...ai("qualificationRules")}>
           <textarea
             rows={3}
             className={input}
@@ -661,7 +703,7 @@ export function BusinessProfileForm() {
           onChange={(v) => set("noLegalTaxAdvice", v)}
         />
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Brokerage disclosure (if required)">
+          <Field label="Brokerage disclosure (if required)" {...ai("brokerageDisclosure")}>
             <input
               className={input}
               value={content.brokerageDisclosure}
@@ -669,7 +711,7 @@ export function BusinessProfileForm() {
               placeholder="Jane Agent, Keller Williams — Lic# 1234567"
             />
           </Field>
-          <Field label="Opt-out language">
+          <Field label="Opt-out language" {...ai("optOutLanguage")}>
             <input
               className={input}
               value={content.optOutLanguage}
@@ -685,7 +727,7 @@ export function BusinessProfileForm() {
         title="9. Your assets"
         desc="Bio, links, and vendors the AI can reference and share."
       >
-        <Field label="Short bio">
+        <Field label="Short bio" {...ai("bio")}>
           <textarea
             rows={3}
             className={input}
@@ -693,6 +735,15 @@ export function BusinessProfileForm() {
             onChange={(e) => set("bio", e.target.value)}
             placeholder="11 years serving Essex County. Top 1% in Maplewood. Known for…"
           />
+        </Field>
+        <Field label="Professional headshot">
+          <input
+            className={input}
+            value={content.headshotUrl}
+            onChange={(e) => set("headshotUrl", e.target.value)}
+            placeholder="https://…/headshot.jpg"
+          />
+          <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => setMediaOpen("headshotUrl")}><Upload className="mr-1.5 h-3.5 w-3.5" />Upload or choose from Media Library</Button>
         </Field>
         <Field
           label="Brand logo sheet"
@@ -704,6 +755,7 @@ export function BusinessProfileForm() {
             onChange={(e) => set("logoUrl", e.target.value)}
             placeholder="https://…/logo-sheet.jpg"
           />
+          <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => setMediaOpen("logoUrl")}><Upload className="mr-1.5 h-3.5 w-3.5" />Upload or choose from Media Library</Button>
         </Field>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Buyer guide link">
@@ -713,6 +765,7 @@ export function BusinessProfileForm() {
               onChange={(e) => set("buyerGuideUrl", e.target.value)}
               placeholder="https://…/buyer-guide.pdf"
             />
+            <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => setMediaOpen("buyerGuideUrl")}><Upload className="mr-1.5 h-3.5 w-3.5" />Upload or choose</Button>
           </Field>
           <Field label="Seller guide link">
             <input
@@ -721,11 +774,13 @@ export function BusinessProfileForm() {
               onChange={(e) => set("sellerGuideUrl", e.target.value)}
               placeholder="https://…/seller-guide.pdf"
             />
+            <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => setMediaOpen("sellerGuideUrl")}><Upload className="mr-1.5 h-3.5 w-3.5" />Upload or choose</Button>
           </Field>
         </div>
         <Field
           label="Preferred vendors"
           hint="Lenders, attorneys, inspectors, photographers the AI can recommend."
+          {...ai("vendors")}
         >
           <textarea
             rows={2}
@@ -735,7 +790,7 @@ export function BusinessProfileForm() {
             placeholder="Lender: Sam at Rate Inc. · Inspector: Ace Home Inspections"
           />
         </Field>
-        <Field label="Testimonials">
+        <Field label="Testimonials" {...ai("testimonials")}>
           <textarea
             rows={2}
             className={input}
@@ -754,6 +809,7 @@ export function BusinessProfileForm() {
         <Field
           label="Buyer process"
           hint="Walk through what a buyer lead can expect, step by step."
+          {...ai("buyerProcess")}
         >
           <textarea
             rows={3}
@@ -766,6 +822,7 @@ export function BusinessProfileForm() {
         <Field
           label="Seller process"
           hint="Walk through what a seller lead can expect, step by step."
+          {...ai("sellerProcess")}
         >
           <textarea
             rows={3}
@@ -778,6 +835,7 @@ export function BusinessProfileForm() {
         <Field
           label="Listing description style"
           hint="How should AI-written listing descriptions sound?"
+          {...ai("listingCopyStyle")}
         >
           <textarea
             rows={2}
@@ -902,7 +960,7 @@ export function BusinessProfileForm() {
         title="13. Your scripts"
         desc="For your own reference — not sent to leads. Cold-call openers, listing presentation talk tracks, anything in your own voice."
       >
-        <Field label="Scripts">
+        <Field label="Scripts" {...ai("scripts")}>
           <textarea
             rows={4}
             className={input}
@@ -1054,6 +1112,12 @@ export function BusinessProfileForm() {
               </p>
             );
           })()}
+        </DialogContent>
+      </Dialog>
+      <Dialog open={mediaOpen !== null} onOpenChange={(open) => { if (!open) setMediaOpen(null); }}>
+        <DialogContent className="max-h-[85vh] max-w-3xl overflow-y-auto">
+          <DialogHeader><DialogTitle>Choose from your Media Library</DialogTitle><DialogDescription>Upload a new approved asset or select one you already use. The selected file will be linked to this Blueprint field.</DialogDescription></DialogHeader>
+          <MediaLibrary compact onSelect={(asset) => { if (mediaOpen) chooseMedia(mediaOpen, asset); }} />
         </DialogContent>
       </Dialog>
     </div>

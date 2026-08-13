@@ -26,6 +26,14 @@ const REGISTRARS = [
   { name: "Squarespace Domains", url: "https://domains.squarespace.com/", note: "Formerly Google Domains" },
 ];
 
+const PROVIDER_PORTALS = [
+  { name: "GoDaddy Domains", url: "https://dcc.godaddy.com/domains", note: "Open DNS and transfer settings" },
+  { name: "Bluehost Portal", url: "https://my.bluehost.com/hosting/app", note: "Open hosting and WordPress tools" },
+  { name: "WordPress.com", url: "https://wordpress.com/me/purchases", note: "Open domains, hosting, and exports" },
+  { name: "Cloudflare", url: "https://dash.cloudflare.com/", note: "Open DNS management" },
+  { name: "Vercel", url: "https://vercel.com/dashboard", note: "Open managed deployment hosting" },
+];
+
 function CopyRow({ label, value }: { label: string; value: string }) {
   const [copied, setCopied] = useState(false);
   return (
@@ -143,6 +151,12 @@ export function DomainConnect() {
               they propagate, your site will resolve at your domain. Your agency
               adds the domain in the hosting dashboard to issue the SSL certificate.
             </p>
+          </div>
+          <div>
+            <p className="mb-2 text-xs font-medium">Open the account where your domain or website currently lives:</p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {PROVIDER_PORTALS.map((provider) => <a key={provider.name} href={provider.url} target="_blank" rel="noreferrer" className="flex items-center justify-between rounded-lg border bg-background p-3 text-sm transition-colors hover:border-blue-300"><div><div className="font-medium">{provider.name}</div><div className="text-[11px] text-muted-foreground">{provider.note}</div></div><ExternalLink className="h-3.5 w-3.5 text-muted-foreground" /></a>)}
+            </div>
           </div>
         </div>
       ) : (

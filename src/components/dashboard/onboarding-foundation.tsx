@@ -10,6 +10,8 @@ import {
   RefreshCw,
   ShieldCheck,
   Sparkles,
+  ExternalLink,
+  ArrowUpRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -34,6 +36,14 @@ const platforms: { value: BusinessSourcePlatform; label: string }[] = [
   { value: "realtor", label: "Realtor.com" },
   { value: "homes", label: "Homes.com" },
   { value: "other", label: "Another platform" },
+];
+
+const FOUNDATION_LINKS = [
+  { label: "Buy a domain", detail: "Search a short .com name", href: "https://www.namecheap.com/domains/" },
+  { label: "Open GoDaddy", detail: "Manage or transfer a GoDaddy domain", href: "https://dcc.godaddy.com/domains" },
+  { label: "Open Bluehost", detail: "Manage WordPress and hosting", href: "https://my.bluehost.com/hosting/app" },
+  { label: "Open WordPress", detail: "Export your existing website", href: "https://wordpress.com/me/purchases" },
+  { label: "Open Vercel", detail: "Manage modern website hosting", href: "https://vercel.com/dashboard" },
 ];
 
 export function OnboardingFoundation({
@@ -382,6 +392,19 @@ export function OnboardingFoundation({
               {label}
             </button>
           ))}
+        </div>
+        <div className="mt-4 rounded-xl border bg-muted/20 p-4">
+          <p className="text-sm font-semibold">Go directly to the next step</p>
+          <p className="mt-1 text-xs text-muted-foreground">These links open the provider at the closest available account, purchase, or transfer page. Return here after completing that step—AgentStack never asks for your provider password.</p>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {FOUNDATION_LINKS.filter((link) => domainPoint === "need_domain" ? link.label === "Buy a domain" : true).map((link) => <a key={link.label} href={link.href} target="_blank" rel="noreferrer" className="flex items-center justify-between rounded-lg border bg-background p-3 text-sm transition hover:border-blue-400">
+              <span><span className="block font-medium">{link.label}</span><span className="block text-[11px] text-muted-foreground">{link.detail}</span></span><ArrowUpRight className="h-4 w-4 text-muted-foreground" />
+            </a>)}
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button type="button" variant="outline" render={<a href={saPath("/domain")} />}><ExternalLink className="mr-2 h-4 w-4" />Open AgentStack domain setup</Button>
+            <Button type="button" variant="outline" render={<a href={saPath("/website-studio")} />}>Open managed Website Studio</Button>
+          </div>
         </div>
         <p className="text-muted-foreground mt-4 text-xs">
           Nothing will be transferred or published without your approval.

@@ -16,7 +16,7 @@ export const ZACK_PRODUCT_KB = `# AgentStack product guide
 - Site Health: Site Health shows the completion score and remaining website/compliance tasks.
 - Clients: Conversations, People, Client Journeys, Calendar, Booking.
 - Growth: Lead Capture, Follow-Up Plans, Marketing Pages.
-- Business: Business Blueprint, AI Assistants, Connect Your Business, Domain, AI Website Studio, Templates, Analytics, Logs, Import Contacts, Settings.
+- Business: Business Blueprint, AI Assistants, Connections, Domain, AI Website Studio, Media Library, Templates, Analytics, Logs, Import Contacts, Settings.
 
 ## Guided setup
 - Before Step 1, choose Bring my business, Build my foundation, or Start fresh.
@@ -43,7 +43,8 @@ export const ZACK_PRODUCT_KB = `# AgentStack product guide
 - Follow-Up Plans: configure the response sequence connected to a lead source.
 - Client Journeys: track opportunities through the real-estate pipeline.
 - Booking: create and share appointment pages.
-- Connect Your Business: connect email, phone, calendar, Google Business Profile, website, and supported providers.
+- Connections: one place to connect email, phone, calendar, Google Business Profile, lead sources, websites, automation providers, and supported apps.
+- Media Library: upload approved logos, headshots, guides, and documents once, then reuse them throughout AgentStack and the Business Blueprint.
 - Domain: connect an existing domain or follow the guided new-domain setup. Nothing goes live without approval.
 - AI Website Studio: build and review the site; publication is a separate approved step.
 - AI Assistants: configure lead-facing chat, SMS, email, and voice behavior. These are different from Zack, who assists the operator inside AgentStack.

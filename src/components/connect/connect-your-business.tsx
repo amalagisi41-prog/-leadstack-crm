@@ -16,6 +16,9 @@ import {
   Search,
   Sparkles,
   Upload,
+  Globe2,
+  Workflow,
+  Code2,
 } from "lucide-react";
 import { useSubAccount } from "@/context/sub-account-context";
 import { getFirebaseDb } from "@/lib/firebase/client";
@@ -128,6 +131,7 @@ export function ConnectYourBusiness() {
     const formsHref = saPath("/forms");
     const aiAgentsHref = saPath("/ai-agents/web-chat");
     const idxHref = saPath("/idx");
+    const domainHref = saPath("/domain");
 
     const smsConnected = subAccount.twilioConfig?.enabled === true;
     const emailDomainVerified =
@@ -147,6 +151,38 @@ export function ConnectYourBusiness() {
       subAccount.idxEnabledByAgency === true && !subAccount.idxConfig?.enabled;
 
     return [
+      {
+        key: "domain-hosting",
+        icon: Globe2,
+        iconTone: "bg-cyan-500/10 text-cyan-700 dark:text-cyan-400",
+        title: "Domain & managed hosting",
+        detail: subAccount.customDomain ?? undefined,
+        blurb: "Buy a domain, connect one you own, or follow the exact transfer and hosting steps.",
+        status: subAccount.customDomain ? "connected" : "not_connected",
+        actionLabel: subAccount.customDomain ? "Manage" : "Set up",
+        actionHref: domainHref,
+      },
+      {
+        key: "gohighlevel",
+        icon: Workflow,
+        iconTone: "bg-sky-500/10 text-sky-700 dark:text-sky-400",
+        title: "GoHighLevel",
+        detail: subAccount.ghlImportConfig?.locationId ? "Connected" : undefined,
+        blurb: "Authorize read-only access, choose a location, and prepare a reviewed business and website transfer plan.",
+        status: subAccount.ghlImportConfig?.locationId ? "connected" : "not_connected",
+        actionLabel: subAccount.ghlImportConfig?.locationId ? "Manage transfer" : "Connect",
+        actionHref: saPath("/get-started"),
+      },
+      {
+        key: "api-automation",
+        icon: Code2,
+        iconTone: "bg-slate-500/10 text-slate-700 dark:text-slate-300",
+        title: "Zapier, Make & API",
+        blurb: "Connect supported automation tools through secure API keys and outbound webhooks.",
+        status: subAccount.apiAccessEnabledByAgency ? "connected" : "not_connected",
+        actionLabel: subAccount.apiAccessEnabledByAgency ? "Manage" : "Set up",
+        actionHref: settingsHref,
+      },
       {
         key: "email",
         icon: Mail,
@@ -310,10 +346,10 @@ export function ConnectYourBusiness() {
     <div className="space-y-6 pb-12">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Integrations</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Connections</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            The tools your AI assistants and follow-ups run on. Connect what
-            you need — everything else stays off until you turn it on.
+            One place to connect the apps, channels, domains, imports, and
+            plug-ins that power your AgentStack workspace.
           </p>
         </div>
         <div className="relative w-full sm:w-64">

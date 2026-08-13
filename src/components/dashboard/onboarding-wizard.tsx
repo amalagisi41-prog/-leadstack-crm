@@ -438,8 +438,8 @@ function StepConnect({
           icon={<Bot className="h-5 w-5 text-amber-500" />}
           title="More connections"
           description="Email, calendar, website, and social accounts can all be connected later from Settings."
-          href={saPath("/dashboard/settings")}
-          cta="View Settings"
+          href={saPath("/connect")}
+          cta="Open Connections"
         />
       </div>
 

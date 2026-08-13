@@ -38,6 +38,7 @@ import {
   Link2,
   UploadCloud,
   HeartPulse,
+  Images,
 } from "lucide-react";
 import { getFirebaseDb } from "@/lib/firebase/client";
 import { signOutUser } from "@/lib/firebase/auth";
@@ -153,10 +154,11 @@ const SUB_ACCOUNT_NAV_SECTIONS: NavSection[] = [
       { href: "/ai-agents", label: "AI Assistants", icon: Bot, enabled: true },
       {
         href: "/connect",
-        label: "Connect Your Business",
+        label: "Connections",
         icon: Plug,
         enabled: true,
       },
+      { href: "/media", label: "Media Library", icon: Images, enabled: true },
       { href: "/products", label: "Products", icon: Package, enabled: true },
       { href: "/website", label: "Website", icon: Globe, enabled: true },
       { href: "/domain", label: "Domain", icon: Link2, enabled: true },
