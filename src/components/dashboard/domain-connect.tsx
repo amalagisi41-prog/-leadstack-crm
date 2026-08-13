@@ -69,36 +69,76 @@ const REGISTRARS = [
 
 const PROVIDER_PORTALS = [
   {
+    key: "highlevel",
     name: "HighLevel Domains",
     url: "https://app.gohighlevel.com/",
     note: "Open Settings → Domains if GHL manages it",
+    steps: [
+      "Choose the correct business location.",
+      "Open Settings in the lower-left sidebar.",
+      "Open Domains and find the website address.",
+      "Leave every record unchanged and return to AgentStack.",
+    ],
   },
   {
+    key: "godaddy",
     name: "GoDaddy Domains",
     url: "https://dcc.godaddy.com/domains",
     note: "Open DNS and transfer settings",
+    steps: [
+      "Find the domain in My Products → Domains.",
+      "Open Manage DNS, but do not edit a record yet.",
+      "Confirm the domain is active and return to AgentStack.",
+    ],
   },
   {
+    key: "bluehost",
     name: "Bluehost Portal",
     url: "https://my.bluehost.com/hosting/app",
     note: "Open hosting and WordPress tools",
+    steps: [
+      "Open Websites and locate the current real-estate site.",
+      "Note the connected domain and whether the site uses WordPress.",
+      "Do not start a transfer or cancel the plan; return to AgentStack.",
+    ],
   },
   {
+    key: "wordpress",
     name: "WordPress.com",
     url: "https://wordpress.com/me/purchases",
     note: "Open domains, hosting, and exports",
+    steps: [
+      "Open Purchases or Sites and locate the current website.",
+      "Confirm its public domain and active plan.",
+      "Leave the live site unchanged and return to AgentStack.",
+    ],
   },
   {
+    key: "cloudflare",
     name: "Cloudflare",
-    url: "https://dash.cloudflare.com/",
-    note: "Open DNS management",
+    url: "https://dash.cloudflare.com/?to=/:account/domains",
+    note: "Find the domain; do not edit DNS yet",
+    steps: [
+      "In the left sidebar, open Domains → Overview.",
+      "Select the domain used by the current website.",
+      "Confirm its status is Active. Do not open Transfers and do not change nameservers.",
+      "Return to AgentStack and confirm that you found it.",
+    ],
   },
   {
+    key: "vercel",
     name: "Vercel",
     url: "https://vercel.com/dashboard",
     note: "Open managed deployment hosting",
+    steps: [
+      "Open the project serving the current website.",
+      "Open Settings → Domains and confirm the connected address.",
+      "Do not remove the domain; return to AgentStack.",
+    ],
   },
-];
+] as const;
+
+type ProviderKey = (typeof PROVIDER_PORTALS)[number]["key"];
 
 function CopyRow({ label, value }: { label: string; value: string }) {
   const [copied, setCopied] = useState(false);
@@ -137,6 +177,12 @@ export function DomainConnect() {
   const [saved, setSaved] = useState<string | null>(
     subAccount?.customDomain ?? null
   );
+  const [providerKey, setProviderKey] = useState<ProviderKey | null>(null);
+  const [providerConfirmed, setProviderConfirmed] = useState(false);
+
+  const selectedProvider = PROVIDER_PORTALS.find(
+    (provider) => provider.key === providerKey
+  );
 
   async function save() {
     setSaving(true);
@@ -173,18 +219,43 @@ export function DomainConnect() {
           <p className="mt-2 max-w-3xl text-sm leading-6 text-blue-100">
             You do not need to redesign pages or write code. We use your live
             website, Business Blueprint, approved media, and real-estate goals
-            to prepare an exact private replacement while the current site
-            stays online.
+            to prepare an exact private replacement while the current site stays
+            online.
           </p>
         </div>
 
         <div className="grid gap-px bg-slate-200 sm:grid-cols-5">
           {[
-            [Search, "1", "Find current setup", "Identify domain, DNS, host, and site source."],
-            [Code2, "2", "Copy design + code", "Recreate structure, content, forms, and mobile layout."],
-            [Sparkles, "3", "Improve privately", "Apply the Blueprint, compliance, SEO, and AI features."],
-            [Eye, "4", "Review replacement", "Compare the private build with the current live site."],
-            [Rocket, "5", "Approve cutover", "Change only the required DNS record after approval."],
+            [
+              Search,
+              "1",
+              "Find current setup",
+              "Identify domain, DNS, host, and site source.",
+            ],
+            [
+              Code2,
+              "2",
+              "Copy design + code",
+              "Recreate structure, content, forms, and mobile layout.",
+            ],
+            [
+              Sparkles,
+              "3",
+              "Improve privately",
+              "Apply the Blueprint, compliance, SEO, and AI features.",
+            ],
+            [
+              Eye,
+              "4",
+              "Review replacement",
+              "Compare the private build with the current live site.",
+            ],
+            [
+              Rocket,
+              "5",
+              "Approve cutover",
+              "Change only the required DNS record after approval.",
+            ],
           ].map(([Icon, number, title, detail]) => (
             <div key={String(number)} className="bg-white p-4">
               <div className="flex items-center gap-2">
@@ -218,244 +289,317 @@ export function DomainConnect() {
       </section>
 
       <div className="bg-card rounded-2xl border p-6">
-      <div className="flex items-center gap-3">
-        <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white">
-          <Globe className="h-5 w-5" />
-        </span>
-        <div>
-          <h2 className="font-semibold tracking-tight">
-            Step 1 — identify and secure the website address
-          </h2>
-          <p className="text-muted-foreground text-xs">
-            Tell us what you know. Zack guides anything you do not know.
-          </p>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="mt-4 flex gap-1 rounded-lg border p-1">
-        <button
-          onClick={() => setTab("unknown")}
-          className={`flex-1 rounded px-3 py-1.5 text-sm font-medium transition-colors ${tab === "unknown" ? "bg-[#1a2f50] text-white" : "text-muted-foreground hover:text-foreground"}`}
-        >
-          I&apos;m not sure
-        </button>
-        <button
-          onClick={() => setTab("existing")}
-          className={`flex-1 rounded px-3 py-1.5 text-sm font-medium transition-colors ${tab === "existing" ? "bg-[#1a2f50] text-white" : "text-muted-foreground hover:text-foreground"}`}
-        >
-          I have a domain
-        </button>
-        <button
-          onClick={() => setTab("new")}
-          className={`flex-1 rounded px-3 py-1.5 text-sm font-medium transition-colors ${tab === "new" ? "bg-[#1a2f50] text-white" : "text-muted-foreground hover:text-foreground"}`}
-        >
-          I need a domain
-        </button>
-      </div>
-
-      {tab === "existing" ? (
-        <div className="mt-4 space-y-4">
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium">Your domain</label>
-            <div className="flex gap-2">
-              <Input
-                value={domain}
-                onChange={(e) => setDomain(e.target.value)}
-                placeholder="janedoe-homes.com"
-                className="h-9"
-              />
-              <Button size="sm" onClick={save} disabled={saving}>
-                {saving ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  "Save"
-                )}
-              </Button>
-            </div>
-            {saved && (
-              <p className="flex items-center gap-1 text-[11px] text-emerald-600">
-                <Check className="h-3 w-3" /> Saved — do not change DNS yet.
-                Build and approve the replacement first.
-              </p>
-            )}
-          </div>
-
-          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-            <p className="flex items-center gap-2 text-sm font-semibold text-amber-950">
-              <Server className="h-4 w-4" /> Current provider discovery
-            </p>
-            <p className="mt-1 text-xs leading-5 text-amber-900">
-              A domain registrar, DNS provider, and website host can be three
-              different companies. Finding the registrar does not require a
-              transfer. AgentStack normally leaves registration and
-              nameservers in place and changes only the final website record.
-            </p>
-            <a
-              href={`https://lookup.icann.org/en/lookup?name=${encodeURIComponent(domain.trim().replace(/^https?:\/\//i, "").replace(/\/.*$/, ""))}`}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-blue-700"
-            >
-              Look up registrar and nameservers <ExternalLink className="h-3 w-3" />
-            </a>
-          </div>
-
-          <details className="rounded-xl border p-4">
-            <summary className="cursor-pointer text-sm font-semibold">
-              Final DNS records — use only after replacement approval
-            </summary>
-            <div className="mt-3">
-            <p className="mb-2 text-xs font-medium">
-              At cutover, AgentStack will confirm which of these records apply:
-            </p>
-            <div className="space-y-2">
-              {DNS_RECORDS.map((r) => (
-                <div key={r.type + r.name} className="rounded-lg border p-2.5">
-                  <p className="text-muted-foreground mb-1.5 text-[11px]">
-                    {r.note}
-                  </p>
-                  <div className="grid grid-cols-3 gap-2">
-                    <CopyRow label="Type" value={r.type} />
-                    <CopyRow label="Name" value={r.name} />
-                    <CopyRow label="Value" value={r.value} />
-                  </div>
-                </div>
-              ))}
-            </div>
-            <p className="text-muted-foreground mt-2 text-[11px]">
-              DNS changes can take a few minutes to a few hours to take effect.
-              Once they propagate, your site will resolve at your domain. Your
-              agency adds the domain in the hosting dashboard to issue the SSL
-              certificate.
-            </p>
-            </div>
-          </details>
+        <div className="flex items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white">
+            <Globe className="h-5 w-5" />
+          </span>
           <div>
-            <p className="mb-2 text-xs font-medium">
-              Open the account where your domain or website currently lives:
+            <h2 className="font-semibold tracking-tight">
+              Step 1 — identify and secure the website address
+            </h2>
+            <p className="text-muted-foreground text-xs">
+              Tell us what you know. Zack guides anything you do not know.
+            </p>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="mt-4 flex gap-1 rounded-lg border p-1">
+          <button
+            onClick={() => setTab("unknown")}
+            className={`flex-1 rounded px-3 py-1.5 text-sm font-medium transition-colors ${tab === "unknown" ? "bg-[#1a2f50] text-white" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            I&apos;m not sure
+          </button>
+          <button
+            onClick={() => setTab("existing")}
+            className={`flex-1 rounded px-3 py-1.5 text-sm font-medium transition-colors ${tab === "existing" ? "bg-[#1a2f50] text-white" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            I have a domain
+          </button>
+          <button
+            onClick={() => setTab("new")}
+            className={`flex-1 rounded px-3 py-1.5 text-sm font-medium transition-colors ${tab === "new" ? "bg-[#1a2f50] text-white" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            I need a domain
+          </button>
+        </div>
+
+        {tab === "existing" ? (
+          <div className="mt-4 space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium">Your domain</label>
+              <div className="flex gap-2">
+                <Input
+                  value={domain}
+                  onChange={(e) => setDomain(e.target.value)}
+                  placeholder="janedoe-homes.com"
+                  className="h-9"
+                />
+                <Button size="sm" onClick={save} disabled={saving}>
+                  {saving ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    "Save"
+                  )}
+                </Button>
+              </div>
+              {saved && (
+                <p className="flex items-center gap-1 text-[11px] text-emerald-600">
+                  <Check className="h-3 w-3" /> Saved — do not change DNS yet.
+                  Build and approve the replacement first.
+                </p>
+              )}
+            </div>
+
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+              <p className="flex items-center gap-2 text-sm font-semibold text-amber-950">
+                <Server className="h-4 w-4" /> Current provider discovery
+              </p>
+              <p className="mt-1 text-xs leading-5 text-amber-900">
+                A domain registrar, DNS provider, and website host can be three
+                different companies. Finding the registrar does not require a
+                transfer. AgentStack normally leaves registration and
+                nameservers in place and changes only the final website record.
+              </p>
+              <a
+                href="https://lookup.icann.org/en/lookup"
+                target="_blank"
+                rel="noreferrer"
+                className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-blue-700"
+              >
+                Open ICANN Lookup, then paste {domain || "your domain"}
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            </div>
+
+            <details className="rounded-xl border p-4">
+              <summary className="cursor-pointer text-sm font-semibold">
+                Final DNS records — use only after replacement approval
+              </summary>
+              <div className="mt-3">
+                <p className="mb-2 text-xs font-medium">
+                  At cutover, AgentStack will confirm which of these records
+                  apply:
+                </p>
+                <div className="space-y-2">
+                  {DNS_RECORDS.map((r) => (
+                    <div
+                      key={r.type + r.name}
+                      className="rounded-lg border p-2.5"
+                    >
+                      <p className="text-muted-foreground mb-1.5 text-[11px]">
+                        {r.note}
+                      </p>
+                      <div className="grid grid-cols-3 gap-2">
+                        <CopyRow label="Type" value={r.type} />
+                        <CopyRow label="Name" value={r.name} />
+                        <CopyRow label="Value" value={r.value} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-muted-foreground mt-2 text-[11px]">
+                  DNS changes can take a few minutes to a few hours to take
+                  effect. Once they propagate, your site will resolve at your
+                  domain. Your agency adds the domain in the hosting dashboard
+                  to issue the SSL certificate.
+                </p>
+              </div>
+            </details>
+            <div>
+              <p className="mb-2 text-xs font-medium">
+                Open the account where your domain or website currently lives:
+              </p>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {PROVIDER_PORTALS.map((provider) => (
+                  <button
+                    key={provider.name}
+                    type="button"
+                    onClick={() => {
+                      setProviderKey(provider.key);
+                      setProviderConfirmed(false);
+                    }}
+                    className={`bg-background flex items-center justify-between rounded-lg border p-3 text-left text-sm transition-colors hover:border-blue-300 ${providerKey === provider.key ? "border-blue-500 bg-blue-50 ring-2 ring-blue-500/15" : ""}`}
+                  >
+                    <div>
+                      <div className="font-medium">{provider.name}</div>
+                      <div className="text-muted-foreground text-[11px]">
+                        {provider.note}
+                      </div>
+                    </div>
+                    <ExternalLink className="text-muted-foreground h-3.5 w-3.5" />
+                  </button>
+                ))}
+              </div>
+            </div>
+            {selectedProvider ? (
+              <div className="rounded-2xl border-2 border-blue-200 bg-blue-50/70 p-5">
+                <p className="text-xs font-semibold tracking-[0.16em] text-blue-700 uppercase">
+                  Guided provider check
+                </p>
+                <h3 className="mt-1 text-base font-semibold">
+                  Keep this AgentStack checklist open
+                </h3>
+                <p className="text-muted-foreground mt-1 text-xs leading-5">
+                  {selectedProvider.name} opens in a separate tab. Complete only
+                  the discovery steps below, then return here. You are not
+                  connecting or changing DNS yet.
+                </p>
+                <ol className="mt-4 space-y-2">
+                  {selectedProvider.steps.map((step, index) => (
+                    <li
+                      key={step}
+                      className="flex gap-3 rounded-xl border bg-white p-3 text-sm"
+                    >
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#173b7a] text-xs font-bold text-white">
+                        {index + 1}
+                      </span>
+                      <span>{step}</span>
+                    </li>
+                  ))}
+                </ol>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    onClick={() =>
+                      window.open(
+                        selectedProvider.url,
+                        "agentstack-provider-check",
+                        "noopener,noreferrer"
+                      )
+                    }
+                  >
+                    Open {selectedProvider.name}
+                    <ExternalLink className="ml-2 h-4 w-4" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setProviderConfirmed(true)}
+                  >
+                    <CheckCircle2 className="mr-2 h-4 w-4" />I found{" "}
+                    {domain || "my domain"}
+                  </Button>
+                </div>
+                {providerConfirmed ? (
+                  <div className="mt-4 flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950">
+                    <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+                    <div>
+                      <p className="font-semibold">
+                        Provider found. Discovery is complete.
+                      </p>
+                      <p className="mt-1 text-xs leading-5">
+                        Leave that account unchanged. Continue below so
+                        AgentStack can build the private replacement before any
+                        cutover instructions appear.
+                      </p>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        ) : tab === "unknown" ? (
+          <div className="mt-4 space-y-4">
+            <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-[#173B7A]">
+              <p className="flex items-center gap-2 font-semibold">
+                <Search className="h-4 w-4" /> Zack can help you find it
+              </p>
+              <p className="mt-1 text-xs leading-5 text-[#526078]">
+                Start with the website address clients already use. You do not
+                need to remember the registrar or hosting company. Never share a
+                password with AgentStack.
+              </p>
+            </div>
+            <ol className="space-y-3 text-sm">
+              <li className="rounded-xl border p-4">
+                <p className="font-semibold">1. Check HighLevel first</p>
+                <p className="text-muted-foreground mt-1 text-xs">
+                  In your GHL location, open Settings → Domains. A domain
+                  purchased or connected through GHL normally appears there.
+                </p>
+                <a
+                  href="https://app.gohighlevel.com/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-blue-700"
+                >
+                  Open HighLevel <ExternalLink className="h-3 w-3" />
+                </a>
+              </li>
+              <li className="rounded-xl border p-4">
+                <p className="font-semibold">
+                  2. Look up the registered provider
+                </p>
+                <p className="text-muted-foreground mt-1 text-xs">
+                  ICANN Lookup can identify the registrar from the website
+                  address even when you cannot remember where it was purchased.
+                </p>
+                <a
+                  href="https://lookup.icann.org/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-blue-700"
+                >
+                  Open ICANN Lookup <ExternalLink className="h-3 w-3" />
+                </a>
+              </li>
+              <li className="rounded-xl border p-4">
+                <p className="font-semibold">
+                  3. Recover access, then return here
+                </p>
+                <p className="text-muted-foreground mt-1 text-xs">
+                  Use the provider&apos;s password recovery with the email that
+                  receives domain renewal receipts. Search that inbox for
+                  “domain renewal,” “registrar,” or the domain name.
+                </p>
+              </li>
+            </ol>
+            <div className="flex gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-xs leading-5 text-emerald-900">
+              <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
+              Keep the current DNS unchanged until the AgentStack replacement
+              has been reviewed and approved. This keeps the existing website
+              and email online.
+            </div>
+            <Button variant="outline" onClick={() => setTab("existing")}>
+              I found my provider
+            </Button>
+          </div>
+        ) : (
+          <div className="mt-4 space-y-3">
+            <p className="text-muted-foreground text-sm">
+              Don&apos;t have a domain yet? Register one at any of these — a
+              .com for your name or market (e.g.{" "}
+              <span className="font-medium">janedoe-homes.com</span>) usually
+              runs $10–15/year. Then come back and connect it under &ldquo;I
+              have a domain.&rdquo;
             </p>
             <div className="grid gap-2 sm:grid-cols-2">
-              {PROVIDER_PORTALS.map((provider) => (
+              {REGISTRARS.map((r) => (
                 <a
-                  key={provider.name}
-                  href={provider.url}
+                  key={r.name}
+                  href={r.url}
                   target="_blank"
                   rel="noreferrer"
                   className="bg-background flex items-center justify-between rounded-lg border p-3 text-sm transition-colors hover:border-blue-300"
                 >
                   <div>
-                    <div className="font-medium">{provider.name}</div>
+                    <div className="font-medium">{r.name}</div>
                     <div className="text-muted-foreground text-[11px]">
-                      {provider.note}
+                      {r.note}
                     </div>
                   </div>
                   <ExternalLink className="text-muted-foreground h-3.5 w-3.5" />
                 </a>
               ))}
             </div>
-          </div>
-        </div>
-      ) : tab === "unknown" ? (
-        <div className="mt-4 space-y-4">
-          <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-[#173B7A]">
-            <p className="flex items-center gap-2 font-semibold">
-              <Search className="h-4 w-4" /> Zack can help you find it
-            </p>
-            <p className="mt-1 text-xs leading-5 text-[#526078]">
-              Start with the website address clients already use. You do not
-              need to remember the registrar or hosting company. Never share a
-              password with AgentStack.
+            <p className="text-muted-foreground text-[11px]">
+              Tip: pick something short, easy to say on a call, and close to
+              your name or farm area. Avoid hyphens and numbers where you can.
             </p>
           </div>
-          <ol className="space-y-3 text-sm">
-            <li className="rounded-xl border p-4">
-              <p className="font-semibold">1. Check HighLevel first</p>
-              <p className="text-muted-foreground mt-1 text-xs">
-                In your GHL location, open Settings → Domains. A domain
-                purchased or connected through GHL normally appears there.
-              </p>
-              <a
-                href="https://app.gohighlevel.com/"
-                target="_blank"
-                rel="noreferrer"
-                className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-blue-700"
-              >
-                Open HighLevel <ExternalLink className="h-3 w-3" />
-              </a>
-            </li>
-            <li className="rounded-xl border p-4">
-              <p className="font-semibold">
-                2. Look up the registered provider
-              </p>
-              <p className="text-muted-foreground mt-1 text-xs">
-                ICANN Lookup can identify the registrar from the website address
-                even when you cannot remember where it was purchased.
-              </p>
-              <a
-                href="https://lookup.icann.org/"
-                target="_blank"
-                rel="noreferrer"
-                className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-blue-700"
-              >
-                Open ICANN Lookup <ExternalLink className="h-3 w-3" />
-              </a>
-            </li>
-            <li className="rounded-xl border p-4">
-              <p className="font-semibold">
-                3. Recover access, then return here
-              </p>
-              <p className="text-muted-foreground mt-1 text-xs">
-                Use the provider&apos;s password recovery with the email that
-                receives domain renewal receipts. Search that inbox for “domain
-                renewal,” “registrar,” or the domain name.
-              </p>
-            </li>
-          </ol>
-          <div className="flex gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-xs leading-5 text-emerald-900">
-            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
-            Keep the current DNS unchanged until the AgentStack replacement has
-            been reviewed and approved. This keeps the existing website and
-            email online.
-          </div>
-          <Button variant="outline" onClick={() => setTab("existing")}>
-            I found my provider
-          </Button>
-        </div>
-      ) : (
-        <div className="mt-4 space-y-3">
-          <p className="text-muted-foreground text-sm">
-            Don&apos;t have a domain yet? Register one at any of these — a .com
-            for your name or market (e.g.{" "}
-            <span className="font-medium">janedoe-homes.com</span>) usually runs
-            $10–15/year. Then come back and connect it under &ldquo;I have a
-            domain.&rdquo;
-          </p>
-          <div className="grid gap-2 sm:grid-cols-2">
-            {REGISTRARS.map((r) => (
-              <a
-                key={r.name}
-                href={r.url}
-                target="_blank"
-                rel="noreferrer"
-                className="bg-background flex items-center justify-between rounded-lg border p-3 text-sm transition-colors hover:border-blue-300"
-              >
-                <div>
-                  <div className="font-medium">{r.name}</div>
-                  <div className="text-muted-foreground text-[11px]">
-                    {r.note}
-                  </div>
-                </div>
-                <ExternalLink className="text-muted-foreground h-3.5 w-3.5" />
-              </a>
-            ))}
-          </div>
-          <p className="text-muted-foreground text-[11px]">
-            Tip: pick something short, easy to say on a call, and close to your
-            name or farm area. Avoid hyphens and numbers where you can.
-          </p>
-        </div>
-      )}
+        )}
       </div>
 
       {saved ? (
@@ -475,7 +619,19 @@ export function DomainConnect() {
                 You receive a working preview—not a blank design canvas.
               </p>
             </div>
-            <Button render={<a href={saPath("/website-studio?mode=replacement")} />}>
+            <Button
+              disabled={!providerConfirmed}
+              title={
+                providerConfirmed
+                  ? undefined
+                  : "Choose the current provider and confirm that you found the domain first"
+              }
+              render={
+                providerConfirmed ? (
+                  <a href={saPath("/website-studio?mode=replacement")} />
+                ) : undefined
+              }
+            >
               Start private replacement
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
@@ -486,12 +642,21 @@ export function DomainConnect() {
               "Private desktop and mobile comparison before launch",
               "One approval checklist for DNS, forms, analytics, and email",
             ].map((item) => (
-              <div key={item} className="flex gap-2 rounded-xl bg-slate-50 p-3 text-xs leading-5">
+              <div
+                key={item}
+                className="flex gap-2 rounded-xl bg-slate-50 p-3 text-xs leading-5"
+              >
                 <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
                 {item}
               </div>
             ))}
           </div>
+          {!providerConfirmed ? (
+            <p className="mt-4 text-xs font-medium text-amber-700">
+              Next: choose the current provider above and confirm that the
+              domain appears in that account. No DNS changes are needed.
+            </p>
+          ) : null}
         </section>
       ) : null}
     </div>
