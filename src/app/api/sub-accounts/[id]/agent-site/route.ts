@@ -38,14 +38,17 @@ function slugify(s: string): string {
 
 export async function GET(
   request: Request,
-  ctx: { params: Promise<{ id: string }> },
+  ctx: { params: Promise<{ id: string }> }
 ) {
   const { id: subAccountId } = await ctx.params;
   const access = await requireSubAccountAdmin(request, subAccountId);
   if (access instanceof NextResponse) return access;
 
   if (!(await websiteStudioGateOpen(subAccountId))) {
-    return NextResponse.json({ error: WEBSITE_STUDIO_LOCKED_MESSAGE }, { status: 403 });
+    return NextResponse.json(
+      { error: WEBSITE_STUDIO_LOCKED_MESSAGE },
+      { status: 403 }
+    );
   }
 
   const snap = await getAdminDb()
@@ -57,7 +60,7 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  ctx: { params: Promise<{ id: string }> },
+  ctx: { params: Promise<{ id: string }> }
 ) {
   const { id: subAccountId } = await ctx.params;
   const access = await requireSubAccountAdmin(request, subAccountId);
@@ -68,7 +71,10 @@ export async function PATCH(
   }
 
   if (!(await websiteStudioGateOpen(subAccountId))) {
-    return NextResponse.json({ error: WEBSITE_STUDIO_LOCKED_MESSAGE }, { status: 403 });
+    return NextResponse.json(
+      { error: WEBSITE_STUDIO_LOCKED_MESSAGE },
+      { status: 403 }
+    );
   }
 
   let body: {
@@ -86,6 +92,26 @@ export async function PATCH(
   }
 
   const db = getAdminDb();
+  const workspaceSnap = await db.doc(`subAccounts/${subAccountId}`).get();
+  const foundation = workspaceSnap.data()?.onboardingFoundation as
+    | {
+        domainStartingPoint?: string | null;
+        hostingStartingPoint?: string | null;
+      }
+    | undefined;
+  if (
+    !foundation?.domainStartingPoint ||
+    foundation.domainStartingPoint === "not_sure" ||
+    !foundation.hostingStartingPoint
+  ) {
+    return NextResponse.json(
+      {
+        error:
+          "Confirm your domain and hosting path before using Website Builder.",
+      },
+      { status: 409 }
+    );
+  }
   const ref = db.doc(`subAccounts/${subAccountId}/agentSites/${SITE_ID}`);
   const snap = await ref.get();
 
@@ -99,7 +125,7 @@ export async function PATCH(
     if (!templateId) {
       return NextResponse.json(
         { error: "Pick a template first." },
-        { status: 400 },
+        { status: 400 }
       );
     }
     const content = { ...emptyAgentSiteContent(), ...(body.content ?? {}) };
@@ -109,7 +135,9 @@ export async function PATCH(
       subAccountId,
       createdByUid: uid,
       templateId,
-      slug: body.slug ? slugify(body.slug) : slugify(content.agentName || subAccountId),
+      slug: body.slug
+        ? slugify(body.slug)
+        : slugify(content.agentName || subAccountId),
       status: "draft",
       content,
       designerTranscript: [],
@@ -128,22 +156,16 @@ export async function PATCH(
   };
   if (body.templateId) update.templateId = body.templateId;
   if (body.slug !== undefined) update.slug = slugify(body.slug);
-  if (typeof body.designerStep === "number") update.designerStep = body.designerStep;
-  if (Array.isArray(body.designerTranscript)) update.designerTranscript = body.designerTranscript;
+  if (typeof body.designerStep === "number")
+    update.designerStep = body.designerStep;
+  if (Array.isArray(body.designerTranscript))
+    update.designerTranscript = body.designerTranscript;
   if (body.content) {
     // Field-level merge so partial content updates don't wipe siblings.
     const current = (snap.data()?.content ?? {}) as AgentSiteContent;
     update.content = { ...current, ...body.content };
   }
   if (body.status === "published") {
-    const workspaceSnap = await db.doc(`subAccounts/${subAccountId}`).get();
-    const foundation = workspaceSnap.data()?.onboardingFoundation as { domainStartingPoint?: string | null; hostingStartingPoint?: string | null } | undefined;
-    if (!foundation?.domainStartingPoint || foundation.domainStartingPoint === "not_sure" || !foundation.hostingStartingPoint) {
-      return NextResponse.json(
-        { error: "Finish domain and hosting setup before publishing." },
-        { status: 409 },
-      );
-    }
     update.status = "published";
     update.publishedAt = FieldValue.serverTimestamp();
   } else if (body.status === "draft") {

@@ -58,6 +58,7 @@ export function WebsiteStudioApp() {
   const [savingDraft, setSavingDraft] = useState(false);
   const [view, setView] = useState<"builder" | "setup">("builder");
   const [foundationReady, setFoundationReady] = useState(false);
+  const [foundationLoaded, setFoundationLoaded] = useState(false);
 
   // Scaled live-preview sizing.
   const previewWrapRef = useRef<HTMLDivElement>(null);
@@ -90,9 +91,23 @@ export function WebsiteStudioApp() {
           fetch(`/api/sub-accounts/${subAccountId}/onboarding-foundation`),
         ]);
         const data = (await res.json()) as { site: AgentSiteDoc | null };
-        const foundationData = (await foundationRes.json().catch(() => ({}))) as { foundation?: { domainStartingPoint?: string | null; hostingStartingPoint?: string | null } };
+        const foundationData = (await foundationRes
+          .json()
+          .catch(() => ({}))) as {
+          foundation?: {
+            domainStartingPoint?: string | null;
+            hostingStartingPoint?: string | null;
+          };
+        };
         if (!active) return;
-        setFoundationReady(Boolean(foundationData.foundation?.domainStartingPoint && foundationData.foundation?.domainStartingPoint !== "not_sure" && foundationData.foundation?.hostingStartingPoint));
+        const ready = Boolean(
+          foundationData.foundation?.domainStartingPoint &&
+          foundationData.foundation.domainStartingPoint !== "not_sure" &&
+          foundationData.foundation?.hostingStartingPoint
+        );
+        setFoundationReady(ready);
+        setFoundationLoaded(true);
+        if (!ready) setView("setup");
         setSite(data.site);
         if (data.site) setContent(data.site.content);
       } catch {
@@ -222,9 +237,15 @@ export function WebsiteStudioApp() {
     <div className="flex w-fit items-center gap-1 rounded-lg border p-1">
       <button
         onClick={() => setView("builder")}
-        className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${view === "builder" ? "bg-[#1a2f50] text-white" : "text-muted-foreground hover:text-foreground"}`}
+        disabled={!foundationLoaded || !foundationReady}
+        title={
+          !foundationReady
+            ? "Confirm a domain and hosting path first"
+            : undefined
+        }
+        className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${view === "builder" ? "bg-[#1a2f50] text-white" : "text-muted-foreground hover:text-foreground"} disabled:cursor-not-allowed disabled:opacity-45`}
       >
-        Website Builder
+        {foundationReady ? "Website Builder" : "Website Builder · Locked"}
       </button>
       <button
         onClick={() => setView("setup")}
@@ -239,7 +260,12 @@ export function WebsiteStudioApp() {
     return (
       <div className="space-y-4">
         {tabRow}
-        <BusinessSetupAssistant />
+        <BusinessSetupAssistant
+          onFoundationChange={(ready) => {
+            setFoundationReady(ready);
+            setFoundationLoaded(true);
+          }}
+        />
       </div>
     );
   }
@@ -276,7 +302,26 @@ export function WebsiteStudioApp() {
     <div className="space-y-4">
       {tabRow}
       {/* Toolbar */}
-      {!foundationReady ? <div className="flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="text-sm font-semibold text-amber-900">Preview is ready. Publishing comes after the foundation.</p><p className="mt-1 text-xs text-amber-800">Choose the domain and hosting path first so visitors never receive an unfinished or disconnected site.</p></div><Button size="sm" variant="outline" render={<a href={`/sa/${subAccountId}/get-started`} />}>Finish domain &amp; hosting</Button></div> : null}
+      {!foundationReady ? (
+        <div className="flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-amber-900">
+              Preview is ready. Publishing comes after the foundation.
+            </p>
+            <p className="mt-1 text-xs text-amber-800">
+              Choose the domain and hosting path first so visitors never receive
+              an unfinished or disconnected site.
+            </p>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            render={<a href={`/sa/${subAccountId}/get-started`} />}
+          >
+            Finish domain &amp; hosting
+          </Button>
+        </div>
+      ) : null}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold tracking-tight">
@@ -314,13 +359,19 @@ export function WebsiteStudioApp() {
               <ExternalLink className="mr-1 h-3.5 w-3.5" /> View live
             </Button>
           )}
-          <Button size="sm" onClick={publish} disabled={publishing || !foundationReady}>
+          <Button
+            size="sm"
+            onClick={publish}
+            disabled={publishing || !foundationReady}
+          >
             <Rocket className="mr-1 h-3.5 w-3.5" />
             {publishing
               ? "Publishing…"
               : site.status === "published"
                 ? "Re-publish"
-                : foundationReady ? "Publish" : "Foundation required"}
+                : foundationReady
+                  ? "Publish"
+                  : "Foundation required"}
           </Button>
         </div>
       </div>
