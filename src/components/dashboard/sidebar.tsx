@@ -9,7 +9,6 @@ import {
   Home,
   Sparkles,
   Users,
-  GitBranch,
   Calendar,
   CalendarClock,
   CheckSquare,
@@ -105,12 +104,6 @@ const SUB_ACCOUNT_NAV_SECTIONS: NavSection[] = [
         badgeKey: "unreadConversations",
       },
       { href: "/contacts", label: "People", icon: Users, enabled: true },
-      {
-        href: "/pipeline",
-        label: "Client Journeys",
-        icon: GitBranch,
-        enabled: true,
-      },
       { href: "/calendar", label: "Calendar", icon: Calendar, enabled: true },
       {
         href: "/booking",
