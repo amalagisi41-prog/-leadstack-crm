@@ -52,6 +52,42 @@ export function removeCapturedCsp(html: string): string {
   );
 }
 
+/**
+ * Captured pages sometimes mark their stylesheet links as CORS resources.
+ * That is valid on the source origin, but causes Safari to discard the CSS
+ * when the isolated preview is hosted on AgentStack. Keep the stylesheet
+ * links, while removing the opt-in CORS attribute from the preview copy.
+ */
+export function normalizeCapturedStylesheetLinks(
+  html: string,
+  stylesheetUrls: string[]
+): string {
+  const normalized = html.replace(
+    /<link\b[^>]*>/gi,
+    (tag) => {
+      if (!/\brel\s*=\s*["'][^"']*\bstylesheet\b[^"']*["']/i.test(tag))
+        return tag;
+      return tag.replace(/\s+crossorigin(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+))?/gi, "");
+    }
+  );
+  const existing = new Set(
+    [...normalized.matchAll(/<link\b[^>]*\brel\s*=\s*["'][^"']*\bstylesheet\b[^"']*["'][^>]*>/gi)]
+      .map((match) => match[0].match(/\bhref\s*=\s*["']([^"']+)["']/i)?.[1])
+      .filter((href): href is string => Boolean(href))
+  );
+  const missing = [...new Set(stylesheetUrls)].filter((href) => !existing.has(href));
+  if (!missing.length) return normalized;
+  const links = missing
+    .map(
+      (href) =>
+        `<link rel="stylesheet" href="${href.replace(/&/g, "&amp;").replace(/"/g, "&quot;")}">`
+    )
+    .join("");
+  return /<head[^>]*>/i.test(normalized)
+    ? normalized.replace(/<head([^>]*)>/i, `<head$1>${links}`)
+    : links + normalized;
+}
+
 async function fetchStylesheet(url: string): Promise<string> {
   try {
     const response = await fetch(url, {

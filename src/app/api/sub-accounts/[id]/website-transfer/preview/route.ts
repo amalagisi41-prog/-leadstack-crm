@@ -7,6 +7,7 @@ import { getAdminDb } from "@/lib/firebase/admin";
 import {
   extractStylesheetUrls,
   inlineStylesheetAssets,
+  normalizeCapturedStylesheetLinks,
   removeCapturedCsp,
 } from "@/lib/website-transfer/styles";
 
@@ -43,8 +44,10 @@ export async function GET(
   const sourceUrl = String(transfer.data()?.sourceUrl ?? "");
   html = removeCapturedCsp(html);
   const source = sourceUrl ? new URL(sourceUrl) : null;
+  const stylesheetUrls = source ? extractStylesheetUrls(html, source) : [];
+  html = normalizeCapturedStylesheetLinks(html, stylesheetUrls);
   const inlineCss = await inlineStylesheetAssets(
-    source ? extractStylesheetUrls(html, source) : []
+    stylesheetUrls
   );
   const baseTag = sourceUrl
     ? '<base href="' + sourceUrl.replace(/\"/g, "&quot;") + '">'

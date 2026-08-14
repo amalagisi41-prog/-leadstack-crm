@@ -7,6 +7,7 @@ import { getAdminDb } from "@/lib/firebase/admin";
 import {
   extractStylesheetUrls,
   inlineStylesheetAssets,
+  normalizeCapturedStylesheetLinks,
   removeCapturedCsp,
 } from "@/lib/website-transfer/styles";
 
@@ -87,14 +88,16 @@ export async function GET(
   const sourceUrl =
     typeof transferData.sourceUrl === "string" ? transferData.sourceUrl : "";
   const source = sourceUrl ? new URL(sourceUrl) : null;
+  const capturedStylesheetUrls = source ? extractStylesheetUrls(html, source) : [];
   const stylesheetUrls = [
     ...(Array.isArray(inventory.stylesheets)
       ? inventory.stylesheets.filter(
           (value): value is string => typeof value === "string"
         )
       : []),
-    ...(source ? extractStylesheetUrls(html, source) : []),
+    ...capturedStylesheetUrls,
   ];
+  html = normalizeCapturedStylesheetLinks(html, [...new Set(stylesheetUrls)]);
   const inlineCss = await inlineStylesheetAssets(stylesheetUrls);
   // Keep serving the captured artifact even when server-side CSS fetching is
   // temporarily unavailable. The original <link rel="stylesheet"> elements
