@@ -7,6 +7,7 @@ import { getAdminDb } from "@/lib/firebase/admin";
 import {
   extractStylesheetUrls,
   inlineStylesheetAssets,
+  removeCapturedCsp,
 } from "@/lib/website-transfer/styles";
 
 /**
@@ -52,6 +53,7 @@ export async function GET(
         replace?: unknown;
       }>)
     : [];
+  html = removeCapturedCsp(html);
   for (const replacement of replacements) {
     if (
       typeof replacement.find === "string" &&

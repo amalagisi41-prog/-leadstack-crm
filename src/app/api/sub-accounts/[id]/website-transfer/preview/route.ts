@@ -7,6 +7,7 @@ import { getAdminDb } from "@/lib/firebase/admin";
 import {
   extractStylesheetUrls,
   inlineStylesheetAssets,
+  removeCapturedCsp,
 } from "@/lib/website-transfer/styles";
 
 export async function GET(
@@ -40,6 +41,7 @@ export async function GET(
       status: 404,
     });
   const sourceUrl = String(transfer.data()?.sourceUrl ?? "");
+  html = removeCapturedCsp(html);
   const source = sourceUrl ? new URL(sourceUrl) : null;
   const inlineCss = await inlineStylesheetAssets(
     source ? extractStylesheetUrls(html, source) : []

@@ -44,6 +44,14 @@ export function extractStylesheetUrls(html: string, base: URL): string[] {
   return [...new Set(values)].slice(0, MAX_STYLESHEETS);
 }
 
+/** Remove origin CSP metadata before serving a captured page on AgentStack. */
+export function removeCapturedCsp(html: string): string {
+  return html.replace(
+    /<meta\b[^>]*(?:http-equiv\s*=\s*["']?content-security-policy(?:-report-only)?["']?|content\s*=\s*["'][^"']*content-security-policy[^"']*["'][^>]*)[^>]*>/gi,
+    ""
+  );
+}
+
 async function fetchStylesheet(url: string): Promise<string> {
   try {
     const response = await fetch(url, {
