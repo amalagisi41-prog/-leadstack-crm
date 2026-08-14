@@ -130,9 +130,12 @@ export async function GET(
     : "";
   const styleBootstrap = baseTag + stylesheetLinks + inlineStyleTag + classlessStyleTag;
   const buildMarker = `<meta name="agentstack-build" content="private-replacement"><meta name="robots" content="noindex,nofollow"><style id="agentstack-replacement-safety">form{pointer-events:none}button,input,select,textarea{cursor:not-allowed}</style><style id="agentstack-ai-code-overrides">${customCss.replace(/<\/style/gi, "<\\/style")}</style>`;
+  const widgetOverrideTag = baseClasslessCss
+    ? '<style id="agentstack-widget-fallback">' + classlessEmbeddedWidgetStyles() + '</style>'
+    : "";
   const replacement = /<head[^>]*>/i.test(html)
-    ? html.replace(/<head([^>]*)>/i, "<head$1>" + styleBootstrap + buildMarker)
-    : styleBootstrap + buildMarker + html;
+    ? html.replace(/<head([^>]*)>/i, "<head$1>" + styleBootstrap + buildMarker + widgetOverrideTag)
+    : styleBootstrap + buildMarker + widgetOverrideTag + html;
 
   return new NextResponse(replacement, {
     headers: {

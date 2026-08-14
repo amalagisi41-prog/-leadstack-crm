@@ -140,6 +140,16 @@ idx-listings-carousel .idx-listing-card__core-fields{display:flex;flex-wrap:wrap
 idx-listings-carousel .idx-listing-card__mls img{display:block;max-width:80px;height:auto;object-fit:contain}
 @media(max-width:900px){idx-listings-carousel .idx-listings-carousel__properties{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:12px 16px}}
 @media(max-width:767px){main>div>div>header>nav>div:nth-of-type(2){display:none}main>div>div>header>nav>div:nth-of-type(3){display:flex;gap:8px}main>div>div>header>nav>div:nth-of-type(3) a[aria-label="Call us"],main>div>div>header>nav>div:nth-of-type(3) button[aria-label="Open menu"]{display:flex}idx-listings-carousel .idx-listings-carousel__properties{grid-template-columns:minmax(0,1fr);padding:12px 16px}chat-widget{right:12px!important;bottom:12px!important}chat-widget .lc_text-widget{width:min(340px,calc(100vw - 24px))}}
+/* Re-assert the safe card geometry after any captured/custom IDX overrides. */
+idx-listings-carousel .idx-listings-carousel,idx-listings-carousel .idx-listings-carousel__properties{width:100%!important;min-width:0!important;max-width:100%!important;margin:0!important;box-sizing:border-box!important}
+idx-listings-carousel .idx-listings-carousel__properties{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:18px!important;padding:16px clamp(16px,5vw,80px)!important;overflow:hidden!important}
+idx-listings-carousel .idx-listings-carousel__property{width:auto!important;min-width:0!important;max-width:100%!important;height:auto!important;overflow:hidden!important;box-sizing:border-box!important}
+idx-listings-carousel .idx-listing-card__image--wrap{width:100%!important;height:auto!important;aspect-ratio:4/3!important;overflow:hidden!important}
+idx-listings-carousel .idx-listing-card__image{width:100%!important;max-width:100%!important;height:100%!important;max-height:100%!important;object-fit:cover!important}
+idx-listings-carousel .idx-listing-card__favorite{position:absolute!important;top:10px!important;right:10px!important;z-index:4!important;width:22px!important;height:22px!important;overflow:hidden!important}
+idx-listings-carousel .idx-listing-card__favorite svg{display:block!important;width:18px!important;max-width:18px!important;height:18px!important;max-height:18px!important}
+@media(max-width:900px){idx-listings-carousel .idx-listings-carousel__properties{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px!important;padding:12px 16px!important}}
+@media(max-width:767px){idx-listings-carousel .idx-listings-carousel__properties{grid-template-columns:minmax(0,1fr)!important;padding:12px 16px!important}}
 `;
 }
 
