@@ -7,6 +7,7 @@ import { getAdminDb } from "@/lib/firebase/admin";
 import {
   extractStylesheetUrls,
   inlineStylesheetAssets,
+  classlessSnapshotStyles,
   normalizeCapturedStylesheetLinks,
   removeCapturedCsp,
 } from "@/lib/website-transfer/styles";
@@ -118,7 +119,11 @@ export async function GET(
       inlineCss.replace(/<\/style/gi, "<\\/style") +
       "</style>"
     : "";
-  const styleBootstrap = baseTag + stylesheetLinks + inlineStyleTag;
+  const classlessCss = classlessSnapshotStyles(html);
+  const classlessStyleTag = classlessCss
+    ? '<style id="agentstack-classless-fallback">' + classlessCss + '</style>'
+    : "";
+  const styleBootstrap = baseTag + stylesheetLinks + inlineStyleTag + classlessStyleTag;
   const buildMarker = `<meta name="agentstack-build" content="private-replacement"><meta name="robots" content="noindex,nofollow"><style id="agentstack-replacement-safety">form{pointer-events:none}button,input,select,textarea{cursor:not-allowed}</style><style id="agentstack-ai-code-overrides">${customCss.replace(/<\/style/gi, "<\\/style")}</style>`;
   const replacement = /<head[^>]*>/i.test(html)
     ? html.replace(/<head([^>]*)>/i, "<head$1>" + styleBootstrap + buildMarker)

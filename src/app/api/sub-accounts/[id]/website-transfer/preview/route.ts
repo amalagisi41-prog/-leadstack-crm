@@ -7,6 +7,7 @@ import { getAdminDb } from "@/lib/firebase/admin";
 import {
   extractStylesheetUrls,
   inlineStylesheetAssets,
+  classlessSnapshotStyles,
   normalizeCapturedStylesheetLinks,
   removeCapturedCsp,
 } from "@/lib/website-transfer/styles";
@@ -64,10 +65,14 @@ export async function GET(
       inlineCss.replace(/<\/style/gi, "<\\/style") +
       "</style>"
     : "";
-  if (baseTag || styleTag) {
+  const classlessCss = classlessSnapshotStyles(html);
+  const classlessStyleTag = classlessCss
+    ? '<style id="agentstack-classless-fallback">' + classlessCss + '</style>'
+    : "";
+  if (baseTag || styleTag || classlessStyleTag) {
     html = /<head[^>]*>/i.test(html)
-      ? html.replace(/<head([^>]*)>/i, "<head$1>" + baseTag + styleTag)
-      : baseTag + styleTag + html;
+      ? html.replace(/<head([^>]*)>/i, "<head$1>" + baseTag + styleTag + classlessStyleTag)
+      : baseTag + styleTag + classlessStyleTag + html;
   }
   return new NextResponse(html, {
     headers: {
