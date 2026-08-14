@@ -44,14 +44,15 @@ export async function GET(
   const inlineCss = await inlineStylesheetAssets(
     source ? extractStylesheetUrls(html, source) : []
   );
-  if (inlineCss) {
-    const baseTag = sourceUrl
-      ? '<base href="' + sourceUrl.replace(/\"/g, "&quot;") + '">'
-      : "";
-    const styleTag =
-      '<style id="agentstack-captured-styles">' +
+  const baseTag = sourceUrl
+    ? '<base href="' + sourceUrl.replace(/\"/g, "&quot;") + '">'
+    : "";
+  const styleTag = inlineCss
+    ? '<style id="agentstack-captured-styles">' +
       inlineCss.replace(/<\/style/gi, "<\\/style") +
-      "</style>";
+      "</style>"
+    : "";
+  if (baseTag || styleTag) {
     html = /<head[^>]*>/i.test(html)
       ? html.replace(/<head([^>]*)>/i, "<head$1>" + baseTag + styleTag)
       : baseTag + styleTag + html;
