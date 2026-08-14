@@ -4,6 +4,10 @@ import { gunzipSync } from "node:zlib";
 import { NextResponse } from "next/server";
 import { requireSubAccountAdmin } from "@/lib/auth/require-tenancy";
 import { getAdminDb } from "@/lib/firebase/admin";
+import {
+  extractStylesheetUrls,
+  inlineStylesheetAssets,
+} from "@/lib/website-transfer/styles";
 
 /**
  * Serves the isolated AgentStack replacement artifact. The scan snapshot is
@@ -80,10 +84,25 @@ export async function GET(
     : "";
   const sourceUrl =
     typeof transferData.sourceUrl === "string" ? transferData.sourceUrl : "";
+  const source = sourceUrl ? new URL(sourceUrl) : null;
+  const stylesheetUrls = [
+    ...(Array.isArray(inventory.stylesheets)
+      ? inventory.stylesheets.filter(
+          (value): value is string => typeof value === "string"
+        )
+      : []),
+    ...(source ? extractStylesheetUrls(html, source) : []),
+  ];
+  const inlineCss = await inlineStylesheetAssets(stylesheetUrls);
   const baseTag = sourceUrl
     ? '<base href="' + sourceUrl.replace(/\"/g, "&quot;") + '">'
     : "";
-  const styleBootstrap = baseTag + stylesheetLinks;
+  const inlineStyleTag = inlineCss
+    ? '<style id="agentstack-captured-styles">' +
+      inlineCss.replace(/<\/style/gi, "<\\/style") +
+      "</style>"
+    : "";
+  const styleBootstrap = baseTag + stylesheetLinks + inlineStyleTag;
   const buildMarker = `<meta name="agentstack-build" content="private-replacement"><meta name="robots" content="noindex,nofollow"><style id="agentstack-replacement-safety">form{pointer-events:none}button,input,select,textarea{cursor:not-allowed}</style><style id="agentstack-ai-code-overrides">${customCss.replace(/<\/style/gi, "<\\/style")}</style>`;
   const replacement = /<head[^>]*>/i.test(html)
     ? html.replace(/<head([^>]*)>/i, "<head$1>" + styleBootstrap + buildMarker)

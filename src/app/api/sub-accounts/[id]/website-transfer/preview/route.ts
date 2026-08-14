@@ -4,6 +4,10 @@ import { gunzipSync } from "node:zlib";
 import { NextResponse } from "next/server";
 import { requireSubAccountAdmin } from "@/lib/auth/require-tenancy";
 import { getAdminDb } from "@/lib/firebase/admin";
+import {
+  extractStylesheetUrls,
+  inlineStylesheetAssets,
+} from "@/lib/website-transfer/styles";
 
 export async function GET(
   request: Request,
@@ -35,6 +39,23 @@ export async function GET(
     return new NextResponse("Preview unavailable for this page.", {
       status: 404,
     });
+  const sourceUrl = String(transfer.data()?.sourceUrl ?? "");
+  const source = sourceUrl ? new URL(sourceUrl) : null;
+  const inlineCss = await inlineStylesheetAssets(
+    source ? extractStylesheetUrls(html, source) : []
+  );
+  if (inlineCss) {
+    const baseTag = sourceUrl
+      ? '<base href="' + sourceUrl.replace(/\"/g, "&quot;") + '">'
+      : "";
+    const styleTag =
+      '<style id="agentstack-captured-styles">' +
+      inlineCss.replace(/<\/style/gi, "<\\/style") +
+      "</style>";
+    html = /<head[^>]*>/i.test(html)
+      ? html.replace(/<head([^>]*)>/i, "<head$1>" + baseTag + styleTag)
+      : baseTag + styleTag + html;
+  }
   return new NextResponse(html, {
     headers: {
       "Content-Type": "text/html; charset=utf-8",

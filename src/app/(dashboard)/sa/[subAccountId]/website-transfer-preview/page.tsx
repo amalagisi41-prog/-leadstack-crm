@@ -164,9 +164,10 @@ export default function WebsiteTransferPreviewPage() {
         <>
           <div className="grid gap-4 lg:grid-cols-2">
             <Frame
-              title="Original live page"
-              src={selected.url}
+              title="Original page (captured from live site)"
+              src={`/api/sub-accounts/${subAccountId}/website-transfer/preview?page=${sourceIndex}`}
               device={device}
+              status="Read-only source capture"
             />
             <Frame
               title="Private coded replacement"
