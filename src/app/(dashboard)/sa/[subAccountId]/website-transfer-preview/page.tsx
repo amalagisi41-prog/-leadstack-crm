@@ -165,9 +165,9 @@ export default function WebsiteTransferPreviewPage() {
           <div className="grid gap-4 lg:grid-cols-2">
             <Frame
               title="Original live page"
-              src={`/api/sub-accounts/${subAccountId}/website-transfer/preview?page=${sourceIndex}`}
+              src={`/api/sub-accounts/${subAccountId}/website-transfer/preview?page=${sourceIndex}&live=1`}
               device={device}
-              status="Captured source"
+              status="Live source"
             />
             <Frame
               title="Private coded replacement"

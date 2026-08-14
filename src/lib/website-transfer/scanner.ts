@@ -40,7 +40,7 @@ async function assertPublicUrl(url: URL) {
   }
 }
 
-async function fetchPublicPage(url: URL): Promise<Response> {
+export async function fetchPublicPage(url: URL): Promise<Response> {
   let current = url;
   for (let redirect = 0; redirect < 6; redirect += 1) {
     await assertPublicUrl(current);
@@ -145,7 +145,7 @@ async function inlineStylesheets(
   return css.join("\n").slice(0, INLINE_CSS_LIMIT);
 }
 
-async function safeSnapshot(
+export async function safeSnapshot(
   html: string,
   source: URL,
   stylesheetUrls: string[],

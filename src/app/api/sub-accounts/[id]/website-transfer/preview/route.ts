@@ -14,6 +14,7 @@ import {
   removeCapturedCsp,
   removeCapturedStyleText,
 } from "@/lib/website-transfer/styles";
+import { fetchPublicPage, safeSnapshot } from "@/lib/website-transfer/scanner";
 
 export async function GET(
   request: Request,
@@ -29,7 +30,8 @@ export async function GET(
     ref.collection("snapshots").doc(String(index)).get(),
     ref.get(),
   ]);
-  const htmlGzip = snapshot.data()?.htmlGzip;
+  const snapshotData = snapshot.data() ?? {};
+  const htmlGzip = snapshotData.htmlGzip;
   const legacyPage = transfer.data()?.pages?.[index] as
     | { snapshotHtml?: string }
     | undefined;
@@ -41,11 +43,36 @@ export async function GET(
       html = undefined;
     }
   }
+  const sourceUrl = String(transfer.data()?.sourceUrl ?? "");
+  const pageUrl = String(snapshotData.url ?? sourceUrl);
+
+  // The left comparison pane should reflect the current public source, while
+  // the replacement pane remains pinned to the captured private artifact.
+  // Fall back to the snapshot if the source is temporarily unavailable.
+  if (url.searchParams.get("live") === "1" && pageUrl) {
+    try {
+      const liveResponse = await fetchPublicPage(new URL(pageUrl));
+      const contentType = liveResponse.headers.get("content-type") ?? "";
+      if (liveResponse.ok && contentType.includes("text/html")) {
+        const liveHtml = await liveResponse.text();
+        const liveSource = new URL(liveResponse.url || pageUrl);
+        const liveStylesheets = extractStylesheetUrls(liveHtml, liveSource);
+        html = await safeSnapshot(
+          liveHtml,
+          liveSource,
+          liveStylesheets,
+          new Map<string, Promise<string>>()
+        );
+      }
+    } catch {
+      // Preserve the captured source as a reliable comparison fallback.
+    }
+  }
+
   if (!html)
     return new NextResponse("Preview unavailable for this page.", {
       status: 404,
     });
-  const sourceUrl = String(transfer.data()?.sourceUrl ?? "");
   html = removeCapturedStyleText(removeCapturedCsp(html));
   const source = sourceUrl ? new URL(sourceUrl) : null;
   const stylesheetUrls = source ? extractStylesheetUrls(html, source) : [];
