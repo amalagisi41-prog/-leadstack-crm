@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { useSubAccount } from "@/context/sub-account-context";
 import { Button } from "@/components/ui/button";
 import { openAskAssistant } from "@/components/dashboard/ask-assistant-panel";
+import { ExactTransferStudio } from "@/components/website-studio/exact-transfer-studio";
 import type { WebsiteTransferDoc } from "@/types/website-transfer";
 
 export default function WebsiteTransferPreviewPage() {
@@ -58,6 +59,26 @@ export default function WebsiteTransferPreviewPage() {
         >
           Back to report and refresh scan
         </Button>
+      </div>
+    );
+  if (!transfer.baselineApprovedAt)
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="text-xl font-bold">Live-site baseline</h1>
+            <p className="text-muted-foreground text-sm">
+              Review the current live website before starting the private Vibe build.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            render={<Link href={saPath("/website-studio?mode=replacement")} />}
+          >
+            Back to report
+          </Button>
+        </div>
+        <ExactTransferStudio transfer={transfer} />
       </div>
     );
   const selectedEntry = uniquePages[page];
