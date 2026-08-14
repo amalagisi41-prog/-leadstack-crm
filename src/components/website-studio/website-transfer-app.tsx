@@ -41,8 +41,12 @@ const STATUS_STYLE: Record<TransferItemStatus, string> = {
 };
 
 export function WebsiteTransferApp() {
-  const { subAccountId, saPath } = useSubAccount();
-  const [sourceUrl, setSourceUrl] = useState("");
+  const { subAccountId, subAccount, saPath } = useSubAccount();
+  const [sourceUrl, setSourceUrl] = useState(
+    subAccount?.customDomain
+      ? `https://${subAccount.customDomain.replace(/^https?:\/\//, "")}`
+      : ""
+  );
   const [transfer, setTransfer] = useState<WebsiteTransferDoc | null>(null);
   const [loading, setLoading] = useState(true);
   const [scanning, setScanning] = useState(false);
@@ -57,10 +61,14 @@ export function WebsiteTransferApp() {
         if (data.transfer) {
           setTransfer(data.transfer);
           setSourceUrl(data.transfer.sourceUrl);
+        } else if (subAccount?.customDomain) {
+          setSourceUrl(
+            `https://${subAccount.customDomain.replace(/^https?:\/\//, "")}`
+          );
         }
       })
       .finally(() => setLoading(false));
-  }, [subAccountId]);
+  }, [subAccountId, subAccount?.customDomain]);
 
   async function scan() {
     setScanning(true);
@@ -225,10 +233,10 @@ export function WebsiteTransferApp() {
               </div>
               {transfer.privatePreviewPath ? (
                 <Button
-                  variant="outline"
+                  variant="default"
                   render={<Link href={transfer.privatePreviewPath} />}
                 >
-                  <Eye className="mr-2 h-4 w-4" /> Open private preview
+                  <Eye className="mr-2 h-4 w-4" /> Resume private comparison
                 </Button>
               ) : null}
             </div>

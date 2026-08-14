@@ -663,19 +663,9 @@ export function DomainConnect() {
               </p>
             </div>
             <Button
-              disabled={!providerConfirmed}
-              title={
-                providerConfirmed
-                  ? undefined
-                  : "Choose the current provider and confirm that you found the domain first"
-              }
-              render={
-                providerConfirmed ? (
-                  <a href={saPath("/website-studio?mode=replacement")} />
-                ) : undefined
-              }
+              render={<a href={saPath("/website-studio?mode=replacement")} />}
             >
-              Start private replacement
+              Start or resume private replacement
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
@@ -694,12 +684,11 @@ export function DomainConnect() {
               </div>
             ))}
           </div>
-          {!providerConfirmed ? (
-            <p className="mt-4 text-xs font-medium text-amber-700">
-              Next: choose the current provider above and confirm that the
-              domain appears in that account. No DNS changes are needed.
-            </p>
-          ) : null}
+          <p className="mt-4 text-xs font-medium text-emerald-700">
+            Provider discovery does not block the private build. Start now; Zack
+            will keep the live site and DNS unchanged while the scan, report,
+            and comparison are prepared.
+          </p>
         </section>
       ) : null}
     </div>
