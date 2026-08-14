@@ -49,6 +49,13 @@ export async function GET(
   const inlineCss = await inlineStylesheetAssets(
     stylesheetUrls
   );
+  console.info("[website-transfer] preview styles", {
+    id,
+    index,
+    stylesheetCount: stylesheetUrls.length,
+    inlineCssChars: inlineCss.length,
+    htmlChars: html.length,
+  });
   const baseTag = sourceUrl
     ? '<base href="' + sourceUrl.replace(/\"/g, "&quot;") + '">'
     : "";

@@ -99,6 +99,13 @@ export async function GET(
   ];
   html = normalizeCapturedStylesheetLinks(html, [...new Set(stylesheetUrls)]);
   const inlineCss = await inlineStylesheetAssets(stylesheetUrls);
+  console.info("[website-transfer] replacement styles", {
+    id,
+    index,
+    stylesheetCount: new Set(stylesheetUrls).size,
+    inlineCssChars: inlineCss.length,
+    htmlChars: html.length,
+  });
   // Keep serving the captured artifact even when server-side CSS fetching is
   // temporarily unavailable. The original <link rel="stylesheet"> elements
   // remain in the captured HTML, so the browser can load the same source CSS
