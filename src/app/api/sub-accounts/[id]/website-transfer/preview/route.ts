@@ -45,11 +45,12 @@ export async function GET(
   }
   const sourceUrl = String(transfer.data()?.sourceUrl ?? "");
   const pageUrl = String(snapshotData.url ?? sourceUrl);
+  const liveRequested = url.searchParams.get("live") === "1";
+  let liveLoaded = false;
 
   // The left comparison pane should reflect the current public source, while
   // the replacement pane remains pinned to the captured private artifact.
-  // Fall back to the snapshot if the source is temporarily unavailable.
-  if (url.searchParams.get("live") === "1" && pageUrl) {
+  if (liveRequested && pageUrl) {
     try {
       const liveResponse = await fetchPublicPage(new URL(pageUrl));
       const contentType = liveResponse.headers.get("content-type") ?? "";
@@ -63,10 +64,24 @@ export async function GET(
           liveStylesheets,
           new Map<string, Promise<string>>()
         );
+        liveLoaded = true;
       }
     } catch {
       // Preserve the captured source as a reliable comparison fallback.
     }
+  }
+
+  if (liveRequested && !liveLoaded) {
+    return new NextResponse(
+      "The live source is temporarily unavailable. Refresh the preview to try again.",
+      {
+        status: 503,
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8",
+          "Cache-Control": "no-store",
+        },
+      }
+    );
   }
 
   if (!html)
