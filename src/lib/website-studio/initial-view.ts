@@ -8,9 +8,8 @@ export function hasImportedExactSite(
   return Boolean(
     transfer &&
     (transfer.snapshotVersion ?? 1) >= 2 &&
-    transfer.pages?.some((page) => Boolean(page.snapshotHtml)) &&
-    transfer.status !== "scanning" &&
-    transfer.status !== "error"
+    transfer.pages?.length > 0 &&
+    ["preview_ready", "approved"].includes(transfer.status)
   );
 }
 

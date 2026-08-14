@@ -42,7 +42,23 @@ export async function GET(
       status: 404,
     });
 
-  const buildMarker = `<meta name="agentstack-build" content="private-replacement"><meta name="robots" content="noindex,nofollow"><style id="agentstack-replacement-safety">form{pointer-events:none}button,input,select,textarea{cursor:not-allowed}</style>`;
+  const replacements = Array.isArray(snapshot.data()?.replacements)
+    ? (snapshot.data()?.replacements as Array<{
+        find?: unknown;
+        replace?: unknown;
+      }>)
+    : [];
+  for (const replacement of replacements) {
+    if (
+      typeof replacement.find === "string" &&
+      replacement.find &&
+      typeof replacement.replace === "string"
+    ) {
+      html = html.split(replacement.find).join(replacement.replace);
+    }
+  }
+  const customCss = String(snapshot.data()?.customCss ?? "");
+  const buildMarker = `<meta name="agentstack-build" content="private-replacement"><meta name="robots" content="noindex,nofollow"><style id="agentstack-replacement-safety">form{pointer-events:none}button,input,select,textarea{cursor:not-allowed}</style><style id="agentstack-ai-code-overrides">${customCss.replace(/<\/style/gi, "<\\/style")}</style>`;
   const replacement = /<head[^>]*>/i.test(html)
     ? html.replace(/<head([^>]*)>/i, `<head$1>${buildMarker}`)
     : `${buildMarker}${html}`;

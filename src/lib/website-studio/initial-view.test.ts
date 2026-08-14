@@ -26,7 +26,6 @@ function transfer(
         formCount: 0,
         scriptCount: 0,
         notes: [],
-        snapshotHtml: "<html><body>Exact site</body></html>",
       },
     ],
     inventory: {

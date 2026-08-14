@@ -24,6 +24,7 @@ import { ContentEditor } from "./content-editor";
 import { BusinessSetupAssistant } from "./business-setup-assistant";
 import { AgentSiteRenderer } from "./agent-site-renderer";
 import { ExactTransferStudio } from "./exact-transfer-studio";
+import { WebsiteCodeStudio } from "./website-code-studio";
 import {
   AGENT_SITE_TEMPLATE_LIST,
   getTemplate,
@@ -288,8 +289,6 @@ export function WebsiteStudioApp({
       {hasImportedExactSite(transfer) ? (
         <a
           href={`/sa/${subAccountId}/website-studio/imported`}
-          target="_blank"
-          rel="noreferrer"
           className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${view === "exact" ? "bg-emerald-700 text-white" : "text-emerald-700 hover:text-emerald-900"}`}
         >
           Imported exact site
@@ -310,8 +309,6 @@ export function WebsiteStudioApp({
       </button>
       <a
         href={`/sa/${subAccountId}/website-studio/vibe`}
-        target="_blank"
-        rel="noreferrer"
         aria-disabled={!foundationLoaded || !foundationReady}
         onClick={(event) => {
           if (!foundationLoaded || !foundationReady) event.preventDefault();
@@ -339,7 +336,11 @@ export function WebsiteStudioApp({
     return (
       <div className="space-y-4">
         {tabRow}
-        <ExactTransferStudio transfer={transfer} />
+        {workspace === "vibe" ? (
+          <WebsiteCodeStudio transfer={transfer} />
+        ) : (
+          <ExactTransferStudio transfer={transfer} />
+        )}
       </div>
     );
   }

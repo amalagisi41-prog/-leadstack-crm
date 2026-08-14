@@ -13,7 +13,7 @@ import {
   LockKeyhole,
   Server,
   ShieldCheck,
-  ArrowUpRight,
+  ArrowRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSubAccount } from "@/context/sub-account-context";
@@ -93,6 +93,9 @@ export function BusinessSetupAssistant({
   const [domainConfirmed, setDomainConfirmed] = useState(false);
   const [hostingConfirmed, setHostingConfirmed] = useState(false);
   const [savingFoundation, setSavingFoundation] = useState(false);
+  const [hostingerMode, setHostingerMode] = useState<
+    "migration" | "new-site" | null
+  >(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -500,42 +503,67 @@ export function BusinessSetupAssistant({
               your current site remains available during the migration.
             </p>
             <p className="text-muted-foreground mt-2 text-xs">
-              Optional external service. Plan availability, migration
-              eligibility, pricing, support, and checkout are provided by
-              Hostinger—not AgentStack.
+              Choose the path here. AgentStack keeps the setup checklist and
+              your saved website details on this screen.
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
             <Button
-              variant="outline"
-              render={
-                <a
-                  href="https://www.hostinger.com/website-migration"
-                  target="_blank"
-                  rel="noreferrer"
-                  onClick={() => setHostingPoint("transfer_existing")}
-                />
-              }
+              type="button"
+              variant={hostingerMode === "migration" ? "default" : "outline"}
+              onClick={() => {
+                setHostingerMode("migration");
+                setHostingPoint("transfer_existing");
+              }}
             >
               Migrate an existing site
-              <ArrowUpRight className="ml-2 h-4 w-4" />
+              <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
             <Button
-              variant="outline"
-              render={
-                <a
-                  href="https://www.hostinger.com/web-hosting"
-                  target="_blank"
-                  rel="noreferrer"
-                  onClick={() => setHostingPoint("transfer_existing")}
-                />
-              }
+              type="button"
+              variant={hostingerMode === "new-site" ? "default" : "outline"}
+              onClick={() => {
+                setHostingerMode("new-site");
+                setHostingPoint("transfer_existing");
+              }}
             >
               Host a new website
-              <ArrowUpRight className="ml-2 h-4 w-4" />
+              <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
         </div>
+        {hostingerMode ? (
+          <div className="border-t border-violet-200 bg-white/70 p-5">
+            <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
+              <div>
+                <p className="text-sm font-semibold text-violet-950">
+                  {hostingerMode === "migration"
+                    ? "Existing-site migration selected"
+                    : "New Hostinger site selected"}
+                </p>
+                <p className="text-muted-foreground mt-1 text-xs">
+                  {hostingerMode === "migration"
+                    ? "AgentStack will use the domain and current-site URL already saved above and keep the live site unchanged during preparation."
+                    : "AgentStack will use the domain saved above and prepare the new-site hosting handoff without leaving this workspace."}
+                </p>
+              </div>
+              <Button
+                type="button"
+                onClick={() => {
+                  setHostingConfirmed(true);
+                  toast.success("Hostinger path saved in this workspace.");
+                }}
+              >
+                Save this hosting path
+              </Button>
+            </div>
+            <p className="mt-3 text-xs text-amber-800">
+              No DNS or provider account changes happen here. AgentStack will
+              show the required authorization or checkout only when the saved
+              site is ready for that step.
+            </p>
+          </div>
+        ) : null}
       </section>
 
       <div className="mx-auto max-w-2xl">
