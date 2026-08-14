@@ -13,6 +13,7 @@ import {
   LockKeyhole,
   Server,
   ShieldCheck,
+  ArrowUpRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSubAccount } from "@/context/sub-account-context";
@@ -483,6 +484,59 @@ export function BusinessSetupAssistant({
           </div>
         </section>
       )}
+
+      <section className="overflow-hidden rounded-2xl border border-violet-200 bg-gradient-to-r from-violet-50 via-white to-fuchsia-50">
+        <div className="grid gap-5 p-5 lg:grid-cols-[1fr_auto] lg:items-center">
+          <div>
+            <p className="text-xs font-bold tracking-[0.16em] text-violet-700 uppercase">
+              Optional migration &amp; hosting provider
+            </p>
+            <h2 className="mt-2 text-lg font-semibold text-violet-950">
+              Hostinger website migration and new-site hosting
+            </h2>
+            <p className="mt-1 max-w-3xl text-sm text-violet-900/75">
+              Use Hostinger when you prefer its managed hosting. Hostinger
+              advertises website migration with eligible hosting plans, while
+              your current site remains available during the migration.
+            </p>
+            <p className="text-muted-foreground mt-2 text-xs">
+              Optional external service. Plan availability, migration
+              eligibility, pricing, support, and checkout are provided by
+              Hostinger—not AgentStack.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
+            <Button
+              variant="outline"
+              render={
+                <a
+                  href="https://www.hostinger.com/website-migration"
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => setHostingPoint("transfer_existing")}
+                />
+              }
+            >
+              Migrate an existing site
+              <ArrowUpRight className="ml-2 h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              render={
+                <a
+                  href="https://www.hostinger.com/web-hosting"
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => setHostingPoint("transfer_existing")}
+                />
+              }
+            >
+              Host a new website
+              <ArrowUpRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </section>
 
       <div className="mx-auto max-w-2xl">
         <div className="mb-4">
