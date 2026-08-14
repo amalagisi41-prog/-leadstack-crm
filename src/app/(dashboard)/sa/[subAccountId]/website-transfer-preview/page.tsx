@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   CheckCircle2,
@@ -18,6 +19,7 @@ import type { WebsiteTransferDoc } from "@/types/website-transfer";
 
 export default function WebsiteTransferPreviewPage() {
   const { subAccountId, saPath } = useSubAccount();
+  const router = useRouter();
   const [transfer, setTransfer] = useState<WebsiteTransferDoc | null>(null);
   const [page, setPage] = useState(0);
   const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
@@ -200,9 +202,10 @@ export default function WebsiteTransferPreviewPage() {
               </Button>
               {transfer.status === "approved" ? (
                 <Button
-                  render={<Link href={saPath("/domain?stage=cutover")} />}
+                  type="button"
+                  onClick={() => router.push(saPath("/domain?stage=cutover"))}
                 >
-                  Continue to DNS cutover
+                  Continue to hosting &amp; DNS readiness
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               ) : (

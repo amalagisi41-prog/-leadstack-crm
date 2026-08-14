@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   ArrowRight,
   CheckCircle2,
@@ -21,6 +23,7 @@ import { toast } from "sonner";
 import { useSubAccount } from "@/context/sub-account-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { openAskAssistant } from "@/components/dashboard/ask-assistant-panel";
 
 /**
  * Guided domain setup — the final onboarding step. The operator either
@@ -125,17 +128,6 @@ const PROVIDER_PORTALS = [
       "Return to AgentStack and confirm that you found it.",
     ],
   },
-  {
-    key: "vercel",
-    name: "Vercel",
-    url: "https://vercel.com/dashboard",
-    note: "Open managed deployment hosting",
-    steps: [
-      "Open the project serving the current website.",
-      "Open Settings → Domains and confirm the connected address.",
-      "Do not remove the domain; return to AgentStack.",
-    ],
-  },
 ] as const;
 
 type ProviderKey = (typeof PROVIDER_PORTALS)[number]["key"];
@@ -169,8 +161,36 @@ function CopyRow({ label, value }: { label: string; value: string }) {
   );
 }
 
+function CutoverStatus({
+  label,
+  value,
+  complete,
+}: {
+  label: string;
+  value: string;
+  complete: boolean;
+}) {
+  return (
+    <div className="rounded-xl border bg-white p-4">
+      <p className="text-muted-foreground text-[11px] font-semibold tracking-wide uppercase">
+        {label}
+      </p>
+      <p className="mt-2 flex items-center gap-2 text-sm font-semibold">
+        {complete ? (
+          <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+        ) : (
+          <Loader2 className="h-4 w-4 text-amber-600" />
+        )}
+        {value}
+      </p>
+    </div>
+  );
+}
+
 export function DomainConnect() {
   const { subAccountId, subAccount, saPath } = useSubAccount();
+  const searchParams = useSearchParams();
+  const isCutover = searchParams.get("stage") === "cutover";
   const [tab, setTab] = useState<"existing" | "unknown" | "new">("existing");
   const [domain, setDomain] = useState(subAccount?.customDomain ?? "");
   const [saving, setSaving] = useState(false);
@@ -186,6 +206,9 @@ export function DomainConnect() {
   const [privatePreviewPath, setPrivatePreviewPath] = useState<string | null>(
     null
   );
+  const [detectedDnsProvider, setDetectedDnsProvider] = useState<string | null>(
+    null
+  );
 
   useEffect(() => {
     fetch(`/api/sub-accounts/${subAccountId}/website-transfer`)
@@ -195,17 +218,29 @@ export function DomainConnect() {
           transfer?: {
             status?: string;
             privatePreviewPath?: string;
+            inventory?: { dnsProvider?: string | null };
           } | null;
         }) => {
           setReplacementApproved(data.transfer?.status === "approved");
           setPrivatePreviewPath(data.transfer?.privatePreviewPath ?? null);
+          const dnsProvider = data.transfer?.inventory?.dnsProvider ?? null;
+          setDetectedDnsProvider(dnsProvider);
+          if (isCutover && dnsProvider?.toLowerCase() === "cloudflare") {
+            setProviderKey("cloudflare");
+            setProviderConfirmed(true);
+            setProviderOutcome("found");
+          }
         }
       )
       .catch(() => {
         setReplacementApproved(false);
         setPrivatePreviewPath(null);
       });
-  }, [subAccountId]);
+  }, [isCutover, subAccountId]);
+
+  const hostingTargetReady = Boolean(
+    privatePreviewPath?.startsWith("https://")
+  );
 
   const selectedProvider = PROVIDER_PORTALS.find(
     (provider) => provider.key === providerKey
@@ -315,6 +350,72 @@ export function DomainConnect() {
         </div>
       </section>
 
+      {isCutover ? (
+        <section className="rounded-2xl border-2 border-blue-300 bg-blue-50/70 p-6 shadow-sm">
+          <p className="text-xs font-semibold tracking-[0.16em] text-blue-700 uppercase">
+            Step 5 — safe DNS cutover
+          </p>
+          <h2 className="mt-1 text-xl font-bold">
+            Keep the live site connected until hosting is ready
+          </h2>
+          <p className="text-muted-foreground mt-2 max-w-3xl text-sm leading-6">
+            You are in AgentStack&apos;s cutover workspace. DNS changes stay
+            locked until the approved replacement has a dedicated hosting URL
+            and SSL target. This prevents the domain from opening the AgentStack
+            app or a generic Vercel dashboard.
+          </p>
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+            <CutoverStatus
+              label="Replacement"
+              value={replacementApproved ? "Approved" : "Approval required"}
+              complete={replacementApproved}
+            />
+            <CutoverStatus
+              label="Managed hosting"
+              value={
+                hostingTargetReady ? "Target ready" : "Target not provisioned"
+              }
+              complete={hostingTargetReady}
+            />
+            <CutoverStatus
+              label="DNS provider"
+              value={detectedDnsProvider ?? "Confirm below"}
+              complete={Boolean(detectedDnsProvider)}
+            />
+          </div>
+          {!hostingTargetReady ? (
+            <div className="mt-5 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">
+              <p className="font-semibold">No DNS changes yet</p>
+              <p className="mt-1 text-xs leading-5">
+                The visual replacement is approved, but its standalone hosting
+                destination has not been created. Zack can explain the saved
+                status and guide the hosting handoff without sending you to an
+                external dashboard blindly.
+              </p>
+            </div>
+          ) : null}
+          <div className="mt-5 flex flex-wrap gap-2">
+            <Button
+              type="button"
+              onClick={() =>
+                openAskAssistant({
+                  prompt:
+                    "Review my approved website replacement and current DNS provider. Tell me exactly what remains before managed hosting can be provisioned. Do not give DNS records until a dedicated hosting target is verified.",
+                })
+              }
+            >
+              Ask Zack for the next hosting step
+            </Button>
+            <Button
+              variant="outline"
+              render={<Link href={saPath("/website-transfer-preview")} />}
+            >
+              Back to comparison
+            </Button>
+          </div>
+        </section>
+      ) : null}
+
       <div className="bg-card rounded-2xl border p-6">
         <div className="flex items-center gap-3">
           <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white">
@@ -403,18 +504,20 @@ export function DomainConnect() {
             <details
               className="rounded-xl border p-4"
               onClick={(event) => {
-                if (!replacementApproved) {
+                if (!replacementApproved || !hostingTargetReady) {
                   event.preventDefault();
                   toast.error(
-                    "Review and approve the private replacement before opening DNS steps."
+                    !replacementApproved
+                      ? "Review and approve the private replacement before opening DNS steps."
+                      : "DNS stays locked until AgentStack verifies a dedicated hosting target."
                   );
                 }
               }}
             >
               <summary className="cursor-pointer text-sm font-semibold">
-                {replacementApproved
-                  ? "Final DNS records — replacement approved"
-                  : "Final DNS records — locked until replacement approval"}
+                {replacementApproved && hostingTargetReady
+                  ? "Final DNS records — hosting target verified"
+                  : "Final DNS records — locked until replacement and hosting are ready"}
               </summary>
               <div className="mt-3">
                 <p className="mb-2 text-xs font-medium">
