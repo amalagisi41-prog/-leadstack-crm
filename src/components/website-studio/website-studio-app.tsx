@@ -38,14 +38,17 @@ import {
 } from "@/types/agent-site";
 import type { WebsiteTransferDoc } from "@/types/website-transfer";
 import {
-  getInitialWebsiteStudioView,
   hasImportedExactSite,
   type WebsiteStudioView,
 } from "@/lib/website-studio/initial-view";
 
 const DESIGN_WIDTH = 1080;
 
-export function WebsiteStudioApp() {
+export function WebsiteStudioApp({
+  workspace = "home",
+}: {
+  workspace?: "home" | "vibe" | "exact";
+}) {
   const {
     subAccountId,
     subAccount,
@@ -148,11 +151,14 @@ export function WebsiteStudioApp() {
           setContent(loadedSite.content);
         }
         setView(
-          getInitialWebsiteStudioView({
-            foundationReady: ready,
-            transfer: transferData.transfer,
-            hasTemplateSite: Boolean(loadedSite),
-          })
+          !ready
+            ? "setup"
+            : workspace === "exact" &&
+                hasImportedExactSite(transferData.transfer)
+              ? "exact"
+              : workspace === "vibe"
+                ? "vibe"
+                : "builder"
         );
       } catch {
         // Network/parse failure — fall through to the empty-site state
@@ -164,7 +170,7 @@ export function WebsiteStudioApp() {
     return () => {
       active = false;
     };
-  }, [subAccountId, gateOpen, subAccountLoading]);
+  }, [subAccountId, gateOpen, subAccountLoading, workspace]);
 
   const patch = useCallback(
     async (body: Record<string, unknown>) => {
@@ -279,16 +285,39 @@ export function WebsiteStudioApp() {
     );
   }
 
-  const tabRow = (
+  const dedicatedWorkspace = workspace !== "home";
+  const tabRow = dedicatedWorkspace ? (
+    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-white p-3">
+      <div>
+        <p className="font-semibold">
+          {workspace === "exact"
+            ? "Imported exact-site workspace"
+            : "Dedicated AI Vibe Studio"}
+        </p>
+        <p className="text-muted-foreground text-xs">
+          Templates are hidden in this window so the selected design remains
+          isolated.
+        </p>
+      </div>
+      <Button
+        size="sm"
+        variant="outline"
+        render={<a href={`/sa/${subAccountId}/website-studio`} />}
+      >
+        Back to starting designs
+      </Button>
+    </div>
+  ) : (
     <div className="flex w-fit items-center gap-1 rounded-lg border p-1">
       {hasImportedExactSite(transfer) ? (
-        <button
-          type="button"
-          onClick={() => setView("exact")}
+        <a
+          href={`/sa/${subAccountId}/website-studio/imported`}
+          target="_blank"
+          rel="noreferrer"
           className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${view === "exact" ? "bg-emerald-700 text-white" : "text-emerald-700 hover:text-emerald-900"}`}
         >
           Imported exact site
-        </button>
+        </a>
       ) : null}
       <button
         type="button"
@@ -303,19 +332,23 @@ export function WebsiteStudioApp() {
       >
         {foundationReady ? "AgentStack Templates" : "Templates · Locked"}
       </button>
-      <button
-        type="button"
-        onClick={() => setView("vibe")}
-        disabled={!foundationLoaded || !foundationReady}
+      <a
+        href={`/sa/${subAccountId}/website-studio/vibe`}
+        target="_blank"
+        rel="noreferrer"
+        aria-disabled={!foundationLoaded || !foundationReady}
+        onClick={(event) => {
+          if (!foundationLoaded || !foundationReady) event.preventDefault();
+        }}
         title={
           !foundationReady
             ? "Confirm a domain and hosting path first"
             : undefined
         }
-        className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${view === "vibe" ? "bg-[#1a2f50] text-white" : "text-muted-foreground hover:text-foreground"} disabled:cursor-not-allowed disabled:opacity-45`}
+        className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${view === "vibe" ? "bg-[#1a2f50] text-white" : "text-muted-foreground hover:text-foreground"} aria-disabled:cursor-not-allowed aria-disabled:opacity-45`}
       >
         {foundationReady ? "Vibe Builder" : "Vibe Builder · Locked"}
-      </button>
+      </a>
       <button
         type="button"
         onClick={() => setView("setup")}
@@ -377,9 +410,10 @@ export function WebsiteStudioApp() {
               customize its content and branding in the private viewer.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => setView("vibe")}
+          <a
+            href={`/sa/${subAccountId}/website-studio/vibe`}
+            target="_blank"
+            rel="noreferrer"
             className="rounded-2xl border border-fuchsia-200 bg-gradient-to-br from-fuchsia-50 to-violet-50 p-5 text-left transition hover:-translate-y-0.5 hover:shadow-sm"
           >
             <WandSparkles className="h-5 w-5 text-fuchsia-600" />
@@ -393,7 +427,7 @@ export function WebsiteStudioApp() {
             <span className="mt-3 inline-flex text-sm font-semibold text-fuchsia-700">
               Open the side-by-side builder →
             </span>
-          </button>
+          </a>
         </div>
         <TemplateGallery
           onSelect={pickTemplate}
@@ -492,10 +526,16 @@ export function WebsiteStudioApp() {
             </p>
           </div>
         </div>
-        <Button size="sm" variant="outline" onClick={() => setView("builder")}>
-          <LayoutTemplate className="mr-1.5 h-3.5 w-3.5" />
-          Change starting design
-        </Button>
+        {!dedicatedWorkspace ? (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setView("builder")}
+          >
+            <LayoutTemplate className="mr-1.5 h-3.5 w-3.5" />
+            Change starting design
+          </Button>
+        ) : null}
       </div>
       {/* Toolbar */}
       {!foundationReady ? (
@@ -529,24 +569,25 @@ export function WebsiteStudioApp() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {/* Template switcher */}
-          <div className="flex items-center gap-1 rounded-lg border p-1">
-            <LayoutTemplate className="text-muted-foreground ml-1 h-3.5 w-3.5" />
-            {AGENT_SITE_TEMPLATE_LIST.map((t) => (
-              <button
-                type="button"
-                key={t.id}
-                onClick={() => switchTemplate(t.id)}
-                className={`rounded px-2 py-1 text-xs font-medium transition-colors ${
-                  t.id === site.templateId
-                    ? "bg-[#1a2f50] text-white"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {t.name}
-              </button>
-            ))}
-          </div>
+          {!dedicatedWorkspace ? (
+            <div className="flex items-center gap-1 rounded-lg border p-1">
+              <LayoutTemplate className="text-muted-foreground ml-1 h-3.5 w-3.5" />
+              {AGENT_SITE_TEMPLATE_LIST.map((t) => (
+                <button
+                  type="button"
+                  key={t.id}
+                  onClick={() => switchTemplate(t.id)}
+                  className={`rounded px-2 py-1 text-xs font-medium transition-colors ${
+                    t.id === site.templateId
+                      ? "bg-[#1a2f50] text-white"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {t.name}
+                </button>
+              ))}
+            </div>
+          ) : null}
           {site.status === "published" && (
             <Button
               variant="outline"
