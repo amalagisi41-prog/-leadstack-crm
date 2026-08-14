@@ -401,9 +401,10 @@ export function DomainConnect() {
             )}
             <Button
               variant="outline"
-              render={<Link href={saPath("/website-transfer-preview")} />}
+              type="button"
+              onClick={() => window.location.assign(saPath("/dashboard"))}
             >
-              Back to comparison
+              Continue working in AgentStack
             </Button>
             <Button
               type="button"

@@ -55,12 +55,38 @@ export async function GET(
   const { id } = await ctx.params;
   const access = await requireSubAccountAdmin(request, id);
   if (access instanceof NextResponse) return access;
-  const snap = await getAdminDb().doc(`subAccounts/${id}`).get();
+  const db = getAdminDb();
+  const [snap, transferSnap] = await Promise.all([
+    db.doc(`subAccounts/${id}`).get(),
+    db.doc(`subAccounts/${id}/websiteTransfers/current`).get(),
+  ]);
+  const saved = snap.data()?.onboardingFoundation ?? {};
+  const customDomain =
+    typeof snap.data()?.customDomain === "string"
+      ? snap.data()!.customDomain
+      : "";
+  const transfer = transferSnap.data();
+  const replacementFoundationReady =
+    transfer?.status === "approved" &&
+    ["requested", "ready"].includes(String(transfer?.hostingStatus));
   return NextResponse.json({
-    foundation: {
-      ...EMPTY_ONBOARDING_FOUNDATION,
-      ...(snap.data()?.onboardingFoundation ?? {}),
-    },
+    foundation: replacementFoundationReady
+      ? {
+          ...EMPTY_ONBOARDING_FOUNDATION,
+          ...saved,
+          completed: true,
+          mode: "transfer",
+          sourceUrl: transfer?.sourceUrl ?? saved.sourceUrl ?? "",
+          domainStartingPoint: "have_domain",
+          domainName: customDomain || saved.domainName || "",
+          domainSetupConfirmed: true,
+          hostingStartingPoint: "agentstack_managed",
+          hostingSetupConfirmed: true,
+        }
+      : {
+          ...EMPTY_ONBOARDING_FOUNDATION,
+          ...saved,
+        },
   });
 }
 

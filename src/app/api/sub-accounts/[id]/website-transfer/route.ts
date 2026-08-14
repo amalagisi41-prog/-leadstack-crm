@@ -195,11 +195,26 @@ export async function PATCH(
         { error: "Approve the private replacement before requesting hosting." },
         { status: 409 }
       );
-    await ref.update({
+    const now = Timestamp.now();
+    const db = getAdminDb();
+    const batch = db.batch();
+    batch.update(ref, {
       hostingStatus: "requested",
-      hostingRequestedAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
+      hostingRequestedAt: now,
+      updatedAt: now,
     });
+    batch.update(db.doc(`subAccounts/${id}`), {
+      "onboardingFoundation.completed": true,
+      "onboardingFoundation.mode": "transfer",
+      "onboardingFoundation.sourceUrl": snap.data()?.sourceUrl ?? "",
+      "onboardingFoundation.domainStartingPoint": "have_domain",
+      "onboardingFoundation.domainSetupConfirmed": true,
+      "onboardingFoundation.hostingStartingPoint": "agentstack_managed",
+      "onboardingFoundation.hostingSetupConfirmed": true,
+      "onboardingFoundation.updatedAt": now,
+      updatedAt: now,
+    });
+    await batch.commit();
     const updated = await ref.get();
     return NextResponse.json({ transfer: serialize(updated.data()!) });
   }
