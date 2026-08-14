@@ -113,9 +113,27 @@ export function WebsiteStudioApp() {
         setFoundationReady(ready);
         setFoundationLoaded(true);
         if (!ready) setView("setup");
-        setSite(data.site);
-        if (data.site) {
-          setContent(data.site.content);
+        let loadedSite = data.site;
+        if (loadedSite && ready) {
+          const hydrateRes = await fetch(
+            `/api/sub-accounts/${subAccountId}/agent-site`,
+            {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ hydrateFromBlueprint: true }),
+            }
+          );
+          if (hydrateRes.ok) {
+            const hydrated = (await hydrateRes.json()) as {
+              site?: AgentSiteDoc;
+            };
+            loadedSite = hydrated.site ?? loadedSite;
+          }
+        }
+        if (!active) return;
+        setSite(loadedSite);
+        if (loadedSite) {
+          setContent(loadedSite.content);
           if (ready) setView("vibe");
         }
       } catch {
@@ -246,6 +264,7 @@ export function WebsiteStudioApp() {
   const tabRow = (
     <div className="flex w-fit items-center gap-1 rounded-lg border p-1">
       <button
+        type="button"
         onClick={() => setView("builder")}
         disabled={!foundationLoaded || !foundationReady}
         title={
@@ -258,6 +277,7 @@ export function WebsiteStudioApp() {
         {foundationReady ? "AgentStack Templates" : "Templates · Locked"}
       </button>
       <button
+        type="button"
         onClick={() => setView("vibe")}
         disabled={!foundationLoaded || !foundationReady}
         title={
@@ -270,10 +290,11 @@ export function WebsiteStudioApp() {
         {foundationReady ? "Vibe Builder" : "Vibe Builder · Locked"}
       </button>
       <button
+        type="button"
         onClick={() => setView("setup")}
         className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${view === "setup" ? "bg-[#1a2f50] text-white" : "text-muted-foreground hover:text-foreground"}`}
       >
-        Business Setup
+        {foundationReady ? "Setup tools" : "Business Setup"}
       </button>
     </div>
   );
@@ -283,6 +304,7 @@ export function WebsiteStudioApp() {
       <div className="space-y-4">
         {tabRow}
         <BusinessSetupAssistant
+          foundationComplete={foundationReady}
           onFoundationChange={(ready) => {
             setFoundationReady(ready);
             setFoundationLoaded(true);
@@ -476,6 +498,7 @@ export function WebsiteStudioApp() {
             <LayoutTemplate className="text-muted-foreground ml-1 h-3.5 w-3.5" />
             {AGENT_SITE_TEMPLATE_LIST.map((t) => (
               <button
+                type="button"
                 key={t.id}
                 onClick={() => switchTemplate(t.id)}
                 className={`rounded px-2 py-1 text-xs font-medium transition-colors ${
@@ -519,6 +542,7 @@ export function WebsiteStudioApp() {
         <div className="flex h-[72vh] flex-col gap-2">
           <div className="flex items-center gap-1 rounded-lg border p-1">
             <button
+              type="button"
               onClick={() => setMode("designer")}
               className={`flex-1 rounded px-3 py-1.5 text-xs font-medium transition-colors ${
                 mode === "designer"
@@ -529,6 +553,7 @@ export function WebsiteStudioApp() {
               AI Designer
             </button>
             <button
+              type="button"
               onClick={() => setMode("edit")}
               className={`flex-1 rounded px-3 py-1.5 text-xs font-medium transition-colors ${
                 mode === "edit"

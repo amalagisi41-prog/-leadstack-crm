@@ -14,6 +14,14 @@ import {
   type AgentSiteContent,
   type AgentSiteTemplateId,
 } from "@/types/agent-site";
+import {
+  EMPTY_BUSINESS_PROFILE,
+  type BusinessProfileContent,
+} from "@/types/business-profile";
+import {
+  hydrateAgentSiteFromBlueprint,
+  isUntouchedAgentSite,
+} from "@/lib/website-studio/blueprint-content";
 
 /**
  * Website Studio site persistence. One primary site per sub-account at
@@ -84,6 +92,7 @@ export async function PATCH(
     slug?: string;
     designerStep?: number;
     designerTranscript?: unknown;
+    hydrateFromBlueprint?: boolean;
   };
   try {
     body = await request.json();
@@ -164,6 +173,42 @@ export async function PATCH(
     update.designerStep = body.designerStep;
   if (Array.isArray(body.designerTranscript))
     update.designerTranscript = body.designerTranscript;
+  if (body.hydrateFromBlueprint === true) {
+    const current = (snap.data()?.content ?? {}) as AgentSiteContent;
+    if (isUntouchedAgentSite(current)) {
+      const profileSnap = await db
+        .doc(`subAccounts/${subAccountId}/businessProfile/main`)
+        .get();
+      const profile = {
+        ...EMPTY_BUSINESS_PROFILE,
+        ...(profileSnap.exists
+          ? (profileSnap.data() as Partial<BusinessProfileContent>)
+          : {}),
+      } as BusinessProfileContent;
+      const hasBlueprintIdentity = Boolean(
+        profile.agentName.trim() ||
+        profile.brokerage.trim() ||
+        profile.phone.trim() ||
+        profile.email.trim() ||
+        profile.website.trim()
+      );
+      if (hasBlueprintIdentity) {
+        const hydrated = hydrateAgentSiteFromBlueprint(current, profile);
+        update.content = hydrated;
+        update.slug = slugify(
+          hydrated.agentName || hydrated.brokerage || subAccountId
+        );
+        update.designerTranscript = [
+          {
+            role: "designer",
+            content:
+              "I loaded the approved details from your Business Blueprint. Tell me what you want to change, and I’ll update the private preview beside us.",
+          },
+        ];
+        update.designerStep = 0;
+      }
+    }
+  }
   if (body.content) {
     // Field-level merge so partial content updates don't wipe siblings.
     const current = (snap.data()?.content ?? {}) as AgentSiteContent;

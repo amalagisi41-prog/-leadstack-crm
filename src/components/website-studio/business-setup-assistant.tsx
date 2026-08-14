@@ -108,8 +108,10 @@ const HOSTS = [
 
 export function BusinessSetupAssistant({
   onFoundationChange,
+  foundationComplete = false,
 }: {
   onFoundationChange?: (ready: boolean) => void;
+  foundationComplete?: boolean;
 }) {
   const { subAccountId, saPath } = useSubAccount();
   const agency = useAgency();
@@ -249,104 +251,209 @@ export function BusinessSetupAssistant({
 
   return (
     <div className="mx-auto max-w-5xl space-y-5">
-      <section className="bg-card overflow-hidden rounded-2xl border">
-        <div className="bg-gradient-to-r from-[#173b7a] to-[#315f9d] p-6 text-white">
-          <p className="text-xs font-semibold tracking-[0.18em] text-pink-200 uppercase">
-            Website foundation · required first
-          </p>
-          <h2 className="mt-2 text-xl font-bold">
-            Choose your domain and hosting before building.
-          </h2>
-          <p className="mt-2 max-w-3xl text-sm text-blue-100">
-            Register a new domain or connect one you own, then select where the
-            site will live. Provider checkout and passwords stay with the
-            provider.
-          </p>
-        </div>
+      {foundationComplete ? (
+        <section className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-emerald-950">
+          <div className="flex items-start gap-3">
+            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+            <div>
+              <p className="font-semibold">Website foundation is complete</p>
+              <p className="mt-1 text-sm text-emerald-900/75">
+                Your domain and managed-hosting path are already saved. There is
+                nothing to repeat here; return to Vibe Builder to keep editing
+                the private site.
+              </p>
+            </div>
+          </div>
+        </section>
+      ) : (
+        <section className="bg-card overflow-hidden rounded-2xl border">
+          <div className="bg-gradient-to-r from-[#173b7a] to-[#315f9d] p-6 text-white">
+            <p className="text-xs font-semibold tracking-[0.18em] text-pink-200 uppercase">
+              Website foundation · required first
+            </p>
+            <h2 className="mt-2 text-xl font-bold">
+              Choose your domain and hosting before building.
+            </h2>
+            <p className="mt-2 max-w-3xl text-sm text-blue-100">
+              Register a new domain or connect one you own, then select where
+              the site will live. Provider checkout and passwords stay with the
+              provider.
+            </p>
+          </div>
 
-        <div className="bg-muted/20 border-b px-5 py-4">
-          <div className="grid gap-2 sm:grid-cols-3">
-            {[
-              ["1", "Domain", domainConfirmed],
-              ["2", "Hosting", hostingConfirmed],
-              ["3", "Build website", domainConfirmed && hostingConfirmed],
-            ].map(([number, label, done]) => (
-              <div
-                key={String(number)}
-                className={cn(
-                  "bg-background flex items-center gap-3 rounded-xl border p-3 text-sm",
-                  done && "border-emerald-200 bg-emerald-50 text-emerald-800"
-                )}
-              >
-                <span
+          <div className="bg-muted/20 border-b px-5 py-4">
+            <div className="grid gap-2 sm:grid-cols-3">
+              {[
+                ["1", "Domain", domainConfirmed],
+                ["2", "Hosting", hostingConfirmed],
+                ["3", "Build website", domainConfirmed && hostingConfirmed],
+              ].map(([number, label, done]) => (
+                <div
+                  key={String(number)}
                   className={cn(
-                    "bg-muted flex h-7 w-7 items-center justify-center rounded-full font-semibold",
-                    done && "bg-emerald-600 text-white"
+                    "bg-background flex items-center gap-3 rounded-xl border p-3 text-sm",
+                    done && "border-emerald-200 bg-emerald-50 text-emerald-800"
                   )}
                 >
-                  {done ? <CheckCircle2 className="h-4 w-4" /> : number}
-                </span>
-                <span className="font-semibold">{label}</span>
-              </div>
-            ))}
+                  <span
+                    className={cn(
+                      "bg-muted flex h-7 w-7 items-center justify-center rounded-full font-semibold",
+                      done && "bg-emerald-600 text-white"
+                    )}
+                  >
+                    {done ? <CheckCircle2 className="h-4 w-4" /> : number}
+                  </span>
+                  <span className="font-semibold">{label}</span>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
 
-        <div className="space-y-6 p-5">
-          <div>
-            <div className="flex items-center gap-2">
-              <Globe className="h-5 w-5 text-blue-600" />
-              <h3 className="font-semibold">1. Domain</h3>
+          <div className="space-y-6 p-5">
+            <div>
+              <div className="flex items-center gap-2">
+                <Globe className="h-5 w-5 text-blue-600" />
+                <h3 className="font-semibold">1. Domain</h3>
+              </div>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <button
+                  type="button"
+                  onClick={() => setDomainPoint("have_domain")}
+                  className={cn(
+                    "rounded-xl border p-3 text-left text-sm",
+                    domainPoint === "have_domain" &&
+                      "border-blue-500 bg-blue-50 ring-2 ring-blue-500/15"
+                  )}
+                >
+                  <span className="font-semibold">I own a domain</span>
+                  <span className="text-muted-foreground mt-1 block text-xs">
+                    Connect it without moving it yet
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDomainPoint("need_domain")}
+                  className={cn(
+                    "rounded-xl border p-3 text-left text-sm",
+                    domainPoint === "need_domain" &&
+                      "border-blue-500 bg-blue-50 ring-2 ring-blue-500/15"
+                  )}
+                >
+                  <span className="font-semibold">I need a domain</span>
+                  <span className="text-muted-foreground mt-1 block text-xs">
+                    Register with a provider below
+                  </span>
+                </button>
+              </div>
+              {domainPoint === "need_domain" ? (
+                <div className="bg-muted/20 mt-3 rounded-xl border p-4">
+                  <p className="text-sm font-semibold">
+                    Choose where to register
+                  </p>
+                  <p className="text-muted-foreground mt-1 text-xs">
+                    The provider opens in a secure tab. Return here after
+                    checkout.
+                  </p>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                    {REGISTRARS.map((provider) => (
+                      <a
+                        key={provider.name}
+                        href={provider.href}
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={() => setDomainPoint("need_domain")}
+                        className="group bg-background rounded-xl border p-3 transition hover:border-blue-400 hover:shadow-sm"
+                      >
+                        <span
+                          className={cn(
+                            "flex h-9 w-9 items-center justify-center rounded-lg text-xs font-bold text-white",
+                            provider.color
+                          )}
+                        >
+                          {provider.initials}
+                        </span>
+                        <span className="mt-2 flex items-center gap-1 text-sm font-semibold">
+                          {provider.name}
+                          <ArrowUpRight className="h-3.5 w-3.5" />
+                        </span>
+                        <span className="text-muted-foreground mt-1 block text-[11px] leading-4">
+                          {provider.detail}
+                        </span>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+              {domainPoint === "have_domain" ? (
+                <div className="mt-3 rounded-xl border bg-blue-50 p-4">
+                  <p className="text-sm font-semibold text-[#173b7a]">
+                    Connect the domain you already own
+                  </p>
+                  <p className="text-muted-foreground mt-1 text-xs">
+                    Open Domain Setup for the exact DNS records. Your current
+                    website stays live while you connect it.
+                  </p>
+                  <Button
+                    className="mt-3"
+                    size="sm"
+                    variant="outline"
+                    render={<a href={saPath("/domain")} />}
+                  >
+                    <ShieldCheck className="mr-2 h-4 w-4" />
+                    Open AgentStack domain setup
+                  </Button>
+                </div>
+              ) : null}
+              {domainPoint !== "not_sure" ? (
+                <div className="mt-3 space-y-3 rounded-xl border p-4">
+                  <label className="block text-sm font-medium">
+                    What is the domain name?
+                  </label>
+                  <Input
+                    value={domainName}
+                    onChange={(event) => {
+                      setDomainName(event.target.value);
+                      setDomainConfirmed(false);
+                    }}
+                    placeholder="yourbusiness.com"
+                  />
+                  <label className="flex cursor-pointer items-start gap-3 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={domainConfirmed}
+                      onChange={(event) =>
+                        setDomainConfirmed(event.target.checked)
+                      }
+                      disabled={!domainName.trim()}
+                      className="mt-0.5 h-4 w-4"
+                    />
+                    <span>
+                      <strong className="block">
+                        I finished this domain step
+                      </strong>
+                      <span className="text-muted-foreground text-xs">
+                        I registered the domain or opened its connection
+                        instructions.
+                      </span>
+                    </span>
+                  </label>
+                </div>
+              ) : null}
             </div>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
-              <button
-                type="button"
-                onClick={() => setDomainPoint("have_domain")}
-                className={cn(
-                  "rounded-xl border p-3 text-left text-sm",
-                  domainPoint === "have_domain" &&
-                    "border-blue-500 bg-blue-50 ring-2 ring-blue-500/15"
-                )}
-              >
-                <span className="font-semibold">I own a domain</span>
-                <span className="text-muted-foreground mt-1 block text-xs">
-                  Connect it without moving it yet
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setDomainPoint("need_domain")}
-                className={cn(
-                  "rounded-xl border p-3 text-left text-sm",
-                  domainPoint === "need_domain" &&
-                    "border-blue-500 bg-blue-50 ring-2 ring-blue-500/15"
-                )}
-              >
-                <span className="font-semibold">I need a domain</span>
-                <span className="text-muted-foreground mt-1 block text-xs">
-                  Register with a provider below
-                </span>
-              </button>
-            </div>
-            {domainPoint === "need_domain" ? (
-              <div className="bg-muted/20 mt-3 rounded-xl border p-4">
-                <p className="text-sm font-semibold">
-                  Choose where to register
-                </p>
-                <p className="text-muted-foreground mt-1 text-xs">
-                  The provider opens in a secure tab. Return here after
-                  checkout.
-                </p>
-                <div className="mt-3 grid gap-2 sm:grid-cols-3">
-                  {REGISTRARS.map((provider) => (
-                    <a
-                      key={provider.name}
-                      href={provider.href}
-                      target="_blank"
-                      rel="noreferrer"
-                      onClick={() => setDomainPoint("need_domain")}
-                      className="group bg-background rounded-xl border p-3 transition hover:border-blue-400 hover:shadow-sm"
-                    >
+
+            <div
+              className={cn(
+                !domainConfirmed && "pointer-events-none opacity-45"
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <Server className="h-5 w-5 text-blue-600" />
+                <h3 className="font-semibold">2. Hosting</h3>
+              </div>
+              <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                {HOSTS.map((provider) => {
+                  const card = (
+                    <>
                       <span
                         className={cn(
                           "flex h-9 w-9 items-center justify-center rounded-lg text-xs font-bold text-white",
@@ -357,192 +464,105 @@ export function BusinessSetupAssistant({
                       </span>
                       <span className="mt-2 flex items-center gap-1 text-sm font-semibold">
                         {provider.name}
-                        <ArrowUpRight className="h-3.5 w-3.5" />
+                        {provider.href ? (
+                          <ArrowUpRight className="h-3.5 w-3.5" />
+                        ) : null}
                       </span>
                       <span className="text-muted-foreground mt-1 block text-[11px] leading-4">
                         {provider.detail}
                       </span>
+                      {hostingPoint === provider.value ? (
+                        <CheckCircle2 className="absolute top-2 right-2 h-4 w-4 text-blue-600" />
+                      ) : null}
+                    </>
+                  );
+                  const className = cn(
+                    "relative rounded-xl border bg-background p-3 text-left transition hover:border-blue-400",
+                    hostingPoint === provider.value &&
+                      "border-blue-500 bg-blue-50 ring-2 ring-blue-500/15"
+                  );
+                  return provider.href ? (
+                    <a
+                      key={provider.name}
+                      className={className}
+                      href={provider.href}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={() => setHostingPoint(provider.value)}
+                    >
+                      {card}
                     </a>
-                  ))}
-                </div>
+                  ) : (
+                    <button
+                      key={provider.name}
+                      type="button"
+                      className={className}
+                      onClick={() => setHostingPoint(provider.value)}
+                    >
+                      {card}
+                    </button>
+                  );
+                })}
               </div>
-            ) : null}
-            {domainPoint === "have_domain" ? (
-              <div className="mt-3 rounded-xl border bg-blue-50 p-4">
-                <p className="text-sm font-semibold text-[#173b7a]">
-                  Connect the domain you already own
-                </p>
-                <p className="text-muted-foreground mt-1 text-xs">
-                  Open Domain Setup for the exact DNS records. Your current
-                  website stays live while you connect it.
-                </p>
-                <Button
-                  className="mt-3"
-                  size="sm"
-                  variant="outline"
-                  render={<a href={saPath("/domain")} />}
-                >
-                  <ShieldCheck className="mr-2 h-4 w-4" />
-                  Open AgentStack domain setup
-                </Button>
-              </div>
-            ) : null}
-            {domainPoint !== "not_sure" ? (
-              <div className="mt-3 space-y-3 rounded-xl border p-4">
-                <label className="block text-sm font-medium">
-                  What is the domain name?
-                </label>
-                <Input
-                  value={domainName}
-                  onChange={(event) => {
-                    setDomainName(event.target.value);
-                    setDomainConfirmed(false);
-                  }}
-                  placeholder="yourbusiness.com"
-                />
-                <label className="flex cursor-pointer items-start gap-3 text-sm">
+              <p className="bg-muted/50 text-muted-foreground mt-3 flex items-start gap-2 rounded-lg p-3 text-xs">
+                <LockKeyhole className="mt-0.5 h-4 w-4 shrink-0" />
+                AgentStack stores your choice, not your provider password. Any
+                domain or hosting charge is confirmed at the provider checkout.
+              </p>
+              {hostingPoint ? (
+                <label className="mt-3 flex cursor-pointer items-start gap-3 rounded-xl border p-4 text-sm">
                   <input
                     type="checkbox"
-                    checked={domainConfirmed}
+                    checked={hostingConfirmed}
                     onChange={(event) =>
-                      setDomainConfirmed(event.target.checked)
+                      setHostingConfirmed(event.target.checked)
                     }
-                    disabled={!domainName.trim()}
                     className="mt-0.5 h-4 w-4"
                   />
                   <span>
                     <strong className="block">
-                      I finished this domain step
+                      I finished this hosting step
                     </strong>
                     <span className="text-muted-foreground text-xs">
-                      I registered the domain or opened its connection
-                      instructions.
+                      I selected managed hosting or completed the provider
+                      sign-in.
                     </span>
                   </span>
                 </label>
-              </div>
-            ) : null}
+              ) : null}
+            </div>
           </div>
 
-          <div
-            className={cn(!domainConfirmed && "pointer-events-none opacity-45")}
-          >
-            <div className="flex items-center gap-2">
-              <Server className="h-5 w-5 text-blue-600" />
-              <h3 className="font-semibold">2. Hosting</h3>
-            </div>
-            <div className="mt-3 grid gap-2 sm:grid-cols-3">
-              {HOSTS.map((provider) => {
-                const card = (
-                  <>
-                    <span
-                      className={cn(
-                        "flex h-9 w-9 items-center justify-center rounded-lg text-xs font-bold text-white",
-                        provider.color
-                      )}
-                    >
-                      {provider.initials}
-                    </span>
-                    <span className="mt-2 flex items-center gap-1 text-sm font-semibold">
-                      {provider.name}
-                      {provider.href ? (
-                        <ArrowUpRight className="h-3.5 w-3.5" />
-                      ) : null}
-                    </span>
-                    <span className="text-muted-foreground mt-1 block text-[11px] leading-4">
-                      {provider.detail}
-                    </span>
-                    {hostingPoint === provider.value ? (
-                      <CheckCircle2 className="absolute top-2 right-2 h-4 w-4 text-blue-600" />
-                    ) : null}
-                  </>
-                );
-                const className = cn(
-                  "relative rounded-xl border bg-background p-3 text-left transition hover:border-blue-400",
-                  hostingPoint === provider.value &&
-                    "border-blue-500 bg-blue-50 ring-2 ring-blue-500/15"
-                );
-                return provider.href ? (
-                  <a
-                    key={provider.name}
-                    className={className}
-                    href={provider.href}
-                    target="_blank"
-                    rel="noreferrer"
-                    onClick={() => setHostingPoint(provider.value)}
-                  >
-                    {card}
-                  </a>
-                ) : (
-                  <button
-                    key={provider.name}
-                    type="button"
-                    className={className}
-                    onClick={() => setHostingPoint(provider.value)}
-                  >
-                    {card}
-                  </button>
-                );
-              })}
-            </div>
-            <p className="bg-muted/50 text-muted-foreground mt-3 flex items-start gap-2 rounded-lg p-3 text-xs">
-              <LockKeyhole className="mt-0.5 h-4 w-4 shrink-0" />
-              AgentStack stores your choice, not your provider password. Any
-              domain or hosting charge is confirmed at the provider checkout.
+          <div className="bg-muted/20 flex flex-col gap-3 border-t p-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm">
+              <strong>
+                Website Builder unlocks after both steps are confirmed.
+              </strong>
+              <span className="text-muted-foreground ml-1">
+                You can change providers later.
+              </span>
             </p>
-            {hostingPoint ? (
-              <label className="mt-3 flex cursor-pointer items-start gap-3 rounded-xl border p-4 text-sm">
-                <input
-                  type="checkbox"
-                  checked={hostingConfirmed}
-                  onChange={(event) =>
-                    setHostingConfirmed(event.target.checked)
-                  }
-                  className="mt-0.5 h-4 w-4"
-                />
-                <span>
-                  <strong className="block">
-                    I finished this hosting step
-                  </strong>
-                  <span className="text-muted-foreground text-xs">
-                    I selected managed hosting or completed the provider
-                    sign-in.
-                  </span>
-                </span>
-              </label>
-            ) : null}
+            <Button
+              onClick={() => void saveFoundation()}
+              disabled={
+                savingFoundation ||
+                domainPoint === "not_sure" ||
+                !hostingPoint ||
+                !domainConfirmed ||
+                !hostingConfirmed ||
+                !domainName.trim()
+              }
+            >
+              {savingFoundation ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <CheckCircle2 className="mr-2 h-4 w-4" />
+              )}
+              Save foundation &amp; unlock builder
+            </Button>
           </div>
-        </div>
-
-        <div className="bg-muted/20 flex flex-col gap-3 border-t p-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm">
-            <strong>
-              Website Builder unlocks after both steps are confirmed.
-            </strong>
-            <span className="text-muted-foreground ml-1">
-              You can change providers later.
-            </span>
-          </p>
-          <Button
-            onClick={() => void saveFoundation()}
-            disabled={
-              savingFoundation ||
-              domainPoint === "not_sure" ||
-              !hostingPoint ||
-              !domainConfirmed ||
-              !hostingConfirmed ||
-              !domainName.trim()
-            }
-          >
-            {savingFoundation ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <CheckCircle2 className="mr-2 h-4 w-4" />
-            )}
-            Save foundation &amp; unlock builder
-          </Button>
-        </div>
-      </section>
+        </section>
+      )}
 
       <div className="mx-auto max-w-2xl">
         <div className="mb-4">

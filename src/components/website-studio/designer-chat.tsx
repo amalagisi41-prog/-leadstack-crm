@@ -48,7 +48,11 @@ export function DesignerChat({
   // Kick off the interview automatically if it hasn't started.
   useEffect(() => {
     if (turns.length === 0 && !loading)
-      void send("Hi! I'm ready to build my site.");
+      void send(
+        experience === "vibe"
+          ? "Load my approved Business Blueprint into this draft. Confirm what is already known and do not ask me to repeat it."
+          : "Hi! I'm ready to build my site."
+      );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
