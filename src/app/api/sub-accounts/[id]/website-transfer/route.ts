@@ -1,6 +1,7 @@
 import "server-only";
 
 import { randomUUID } from "crypto";
+import { gzipSync } from "node:zlib";
 import { NextResponse } from "next/server";
 import { Timestamp } from "firebase-admin/firestore";
 import { requireSubAccountAdmin } from "@/lib/auth/require-tenancy";
@@ -22,6 +23,16 @@ const EMPTY_INVENTORY = {
   hosting: null,
   dnsProvider: null,
 };
+
+function compressSnapshot(html: string): string {
+  let source = html;
+  let compressed = gzipSync(source).toString("base64");
+  while (compressed.length > 800_000 && source.length > 100_000) {
+    source = source.slice(0, Math.floor(source.length * 0.75));
+    compressed = gzipSync(source).toString("base64");
+  }
+  return compressed;
+}
 
 function serialize(data: Record<string, unknown>) {
   const convert = (value: unknown): unknown =>
@@ -101,6 +112,7 @@ export async function POST(
   const now = Timestamp.now();
   const base = {
     id: randomUUID(),
+    snapshotVersion: 2,
     sourceUrl: source.toString(),
     status: "scanning",
     stage: 2,
@@ -115,15 +127,33 @@ export async function POST(
   await ref.set(base);
   try {
     const report = await scanWebsite(source.toString());
+    const pages = report.pages.map((page) => {
+      const metadata = { ...page };
+      delete metadata.snapshotHtml;
+      return metadata;
+    });
     const complete = {
       ...base,
-      ...report,
+      pages,
+      inventory: report.inventory,
       status: "preview_ready",
       stage: 5,
       privatePreviewPath: `/sa/${id}/website-transfer-preview`,
       updatedAt: Timestamp.now(),
     };
-    await ref.set(complete);
+    const db = getAdminDb();
+    const batch = db.batch();
+    batch.set(ref, complete);
+    report.pages.forEach((page, index) => {
+      if (!page.snapshotHtml) return;
+      batch.set(ref.collection("snapshots").doc(String(index)), {
+        index,
+        url: page.url,
+        htmlGzip: compressSnapshot(page.snapshotHtml),
+        updatedAt: Timestamp.now(),
+      });
+    });
+    await batch.commit();
     return NextResponse.json({ transfer: serialize(complete) });
   } catch (error) {
     const message =

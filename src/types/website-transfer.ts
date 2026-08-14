@@ -38,6 +38,7 @@ export interface WebsiteTransferInventory {
 
 export interface WebsiteTransferDoc {
   id: string;
+  snapshotVersion?: number;
   sourceUrl: string;
   status: WebsiteTransferStatus;
   stage: number;

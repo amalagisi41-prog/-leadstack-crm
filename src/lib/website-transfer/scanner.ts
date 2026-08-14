@@ -1,7 +1,6 @@
 import "server-only";
 
 import { lookup } from "node:dns/promises";
-import sanitizeHtml from "sanitize-html";
 import type {
   WebsiteTransferInventory,
   WebsiteTransferPage,
@@ -9,7 +8,11 @@ import type {
 
 const PAGE_LIMIT = 20;
 const SNAPSHOT_LIMIT = 8;
-const SNAPSHOT_CHAR_LIMIT = 70_000;
+const SNAPSHOT_CHAR_LIMIT = 3_000_000;
+
+function comparableHost(hostname: string): string {
+  return hostname.toLowerCase().replace(/^www\./, "");
+}
 
 function isPrivateAddress(address: string): boolean {
   return (
@@ -104,53 +107,24 @@ function detectTechnology(html: string, headers: Headers) {
 }
 
 function safeSnapshot(html: string, source: URL): string {
-  const withBase = html.replace(
-    /<head([^>]*)>/i,
-    `<head$1><base href="${source.origin}/">`
-  );
-  return sanitizeHtml(withBase, {
-    allowedTags: sanitizeHtml.defaults.allowedTags.concat([
-      "html",
-      "head",
-      "body",
-      "style",
-      "link",
-      "meta",
-      "picture",
-      "source",
-      "svg",
-      "path",
-    ]),
-    allowedAttributes: {
-      "*": ["class", "id", "style", "title", "aria-*", "role"],
-      html: ["lang"],
-      link: ["rel", "href", "media", "type"],
-      meta: ["name", "content", "property", "charset", "http-equiv"],
-      img: ["src", "srcset", "sizes", "alt", "width", "height", "loading"],
-      source: ["src", "srcset", "type", "media", "sizes"],
-      a: ["href", "target", "rel"],
-      form: ["action", "method"],
-      input: ["type", "name", "value", "placeholder", "checked"],
-      textarea: ["name", "placeholder"],
-      button: ["type"],
-      svg: ["viewBox", "fill", "stroke", "xmlns"],
-      path: ["d", "fill", "stroke"],
-    },
-    allowedSchemes: ["http", "https", "mailto", "tel", "data"],
-    transformTags: {
-      form: (_tag, attrs) => ({
-        tagName: "div",
-        attribs: { ...attrs, "data-agentstack-form": "disabled" },
-      }),
-      a: (_tag, attrs) => ({
-        tagName: "a",
-        attribs: { ...attrs, target: "_blank", rel: "noreferrer" },
-      }),
-    },
-    exclusiveFilter(frame) {
-      return ["script", "iframe", "object", "embed"].includes(frame.tag);
-    },
-  }).slice(0, SNAPSHOT_CHAR_LIMIT);
+  const inert = html
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
+    .replace(/<iframe\b[^>]*>[\s\S]*?<\/iframe>/gi, "")
+    .replace(/<object\b[^>]*>[\s\S]*?<\/object>/gi, "")
+    .replace(/<embed\b[^>]*\/?\s*>/gi, "")
+    .replace(/\s+on[a-z]+\s*=\s*(["']).*?\1/gi, "")
+    .replace(/\s+on[a-z]+\s*=\s*[^\s>]+/gi, "")
+    .replace(/javascript:/gi, "#")
+    .replace(
+      /<form\b([^>]*)\baction\s*=\s*(["']).*?\2([^>]*)>/gi,
+      '<form$1 action="#"$3>'
+    )
+    .replace(/<form\b((?:(?!action=)[^>])*)>/gi, '<form$1 action="#">');
+  const safety = `<base href="${source.href}"><meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data:; style-src 'self' https: 'unsafe-inline'; img-src 'self' https: data: blob:; font-src 'self' https: data:; script-src 'none'; frame-src 'none'; object-src 'none'; form-action 'none';">`;
+  const withSafety = /<head[^>]*>/i.test(inert)
+    ? inert.replace(/<head([^>]*)>/i, `<head$1>${safety}`)
+    : `${safety}${inert}`;
+  return withSafety.slice(0, SNAPSHOT_CHAR_LIMIT);
 }
 
 export async function scanWebsite(sourceUrl: string): Promise<{
@@ -203,7 +177,9 @@ export async function scanWebsite(sourceUrl: string): Promise<{
         .map((href) => absolute(href, base))
         .filter((value): value is string => Boolean(value));
       const internal = hrefs.filter(
-        (href) => new URL(href).hostname === root.hostname
+        (href) =>
+          comparableHost(new URL(href).hostname) ===
+          comparableHost(root.hostname)
       );
       allLinks.push(...internal);
       for (const href of internal)

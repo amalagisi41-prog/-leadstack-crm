@@ -19,6 +19,23 @@ export default function WebsiteTransferPreviewPage() {
     return (
       <p className="text-muted-foreground p-6">Loading private comparison…</p>
     );
+  if ((transfer.snapshotVersion ?? 1) < 2)
+    return (
+      <div className="bg-card mx-auto max-w-2xl rounded-2xl border p-8 text-center shadow-sm">
+        <h1 className="text-xl font-bold">Refresh the visual copy</h1>
+        <p className="text-muted-foreground mt-2 text-sm">
+          The comparison engine has been upgraded to retain each page&apos;s
+          layout, styles, images, and responsive presentation. Run the read-only
+          scan once more to replace this older text-only snapshot.
+        </p>
+        <Button
+          className="mt-5"
+          render={<Link href={saPath("/website-studio?mode=replacement")} />}
+        >
+          Back to report and refresh scan
+        </Button>
+      </div>
+    );
   const selected = transfer.pages[page];
   return (
     <div className="space-y-4">
