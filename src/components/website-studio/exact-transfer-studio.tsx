@@ -98,13 +98,11 @@ export function ExactTransferStudio({
             title="Original live page"
             src={selected.url}
             device={device}
-            sandbox="allow-scripts allow-same-origin"
           />
           <TransferFrame
             title="Imported exact replacement"
             src={`/api/sub-accounts/${subAccountId}/website-transfer/replacement?page=${sourceIndex}`}
             device={device}
-            sandbox="allow-same-origin"
           />
         </div>
       ) : null}
@@ -143,12 +141,10 @@ function TransferFrame({
   title,
   src,
   device,
-  sandbox,
 }: {
   title: string;
   src: string;
   device: "desktop" | "mobile";
-  sandbox?: string;
 }) {
   return (
     <div className="overflow-hidden rounded-2xl border">
@@ -158,7 +154,6 @@ function TransferFrame({
           title={title}
           src={src}
           className={`mx-auto h-[70vh] bg-white shadow-sm transition-[width] ${device === "mobile" ? "w-[390px] max-w-full" : "w-full"}`}
-          sandbox={sandbox}
         />
       </div>
     </div>
