@@ -13,6 +13,7 @@ import {
   Rocket,
   LayoutTemplate,
   Lock,
+  WandSparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSubAccount } from "@/context/sub-account-context";
@@ -56,7 +57,7 @@ export function WebsiteStudioApp() {
   const [publishing, setPublishing] = useState(false);
   const [mode, setMode] = useState<"designer" | "edit">("designer");
   const [savingDraft, setSavingDraft] = useState(false);
-  const [view, setView] = useState<"builder" | "setup">("builder");
+  const [view, setView] = useState<"builder" | "vibe" | "setup">("builder");
   const [foundationReady, setFoundationReady] = useState(false);
   const [foundationLoaded, setFoundationLoaded] = useState(false);
 
@@ -113,7 +114,10 @@ export function WebsiteStudioApp() {
         setFoundationLoaded(true);
         if (!ready) setView("setup");
         setSite(data.site);
-        if (data.site) setContent(data.site.content);
+        if (data.site) {
+          setContent(data.site.content);
+          if (ready) setView("vibe");
+        }
       } catch {
         // Network/parse failure — fall through to the empty-site state
         // (template gallery) instead of spinning forever.
@@ -149,6 +153,7 @@ export function WebsiteStudioApp() {
       const s = await patch({ templateId: id });
       setSite(s);
       setContent(s.content);
+      setView("vibe");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not start.");
     } finally {
@@ -168,6 +173,7 @@ export function WebsiteStudioApp() {
       setSite(s);
       setContent(s.content);
       setMode("edit");
+      setView("vibe");
       toast.success("Artisan Home Network was loaded into a private draft.");
     } catch (error) {
       toast.error(
@@ -249,7 +255,19 @@ export function WebsiteStudioApp() {
         }
         className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${view === "builder" ? "bg-[#1a2f50] text-white" : "text-muted-foreground hover:text-foreground"} disabled:cursor-not-allowed disabled:opacity-45`}
       >
-        {foundationReady ? "Website Builder" : "Website Builder · Locked"}
+        {foundationReady ? "AgentStack Templates" : "Templates · Locked"}
+      </button>
+      <button
+        onClick={() => setView("vibe")}
+        disabled={!foundationLoaded || !foundationReady}
+        title={
+          !foundationReady
+            ? "Confirm a domain and hosting path first"
+            : undefined
+        }
+        className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${view === "vibe" ? "bg-[#1a2f50] text-white" : "text-muted-foreground hover:text-foreground"} disabled:cursor-not-allowed disabled:opacity-45`}
+      >
+        {foundationReady ? "Vibe Builder" : "Vibe Builder · Locked"}
       </button>
       <button
         onClick={() => setView("setup")}
@@ -286,15 +304,111 @@ export function WebsiteStudioApp() {
     );
   }
 
-  if (!site) {
+  if (view === "builder") {
     return (
       <div className="space-y-4">
         {tabRow}
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl border border-blue-200 bg-blue-50/70 p-5">
+            <LayoutTemplate className="h-5 w-5 text-blue-700" />
+            <h2 className="mt-3 font-semibold text-blue-950">
+              Start from an AgentStack template
+            </h2>
+            <p className="mt-1 text-sm text-blue-900/75">
+              Fastest path. Choose a conversion-tested real-estate design, then
+              customize its content and branding in the private viewer.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setView("vibe")}
+            className="rounded-2xl border border-fuchsia-200 bg-gradient-to-br from-fuchsia-50 to-violet-50 p-5 text-left transition hover:-translate-y-0.5 hover:shadow-sm"
+          >
+            <WandSparkles className="h-5 w-5 text-fuchsia-600" />
+            <h2 className="mt-3 font-semibold text-violet-950">
+              Create with Vibe Builder
+            </h2>
+            <p className="mt-1 text-sm text-violet-900/75">
+              Describe the look, voice, pages, and changes you want while the
+              private build updates beside your conversation.
+            </p>
+            <span className="mt-3 inline-flex text-sm font-semibold text-fuchsia-700">
+              Open the side-by-side builder →
+            </span>
+          </button>
+        </div>
         <TemplateGallery
           onSelect={pickTemplate}
           onImportReference={importArtisanPreset}
           selecting={selecting}
         />
+      </div>
+    );
+  }
+
+  if (!site) {
+    return (
+      <div className="space-y-4">
+        {tabRow}
+        <div className="grid min-h-[62vh] overflow-hidden rounded-2xl border lg:grid-cols-[380px_1fr]">
+          <div className="bg-card flex flex-col justify-center border-b p-7 lg:border-r lg:border-b-0">
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-fuchsia-500 to-violet-600 text-white shadow-sm">
+              <WandSparkles className="h-5 w-5" />
+            </span>
+            <p className="mt-5 text-xs font-bold tracking-[0.18em] text-fuchsia-600 uppercase">
+              Internal AgentStack builder
+            </p>
+            <h1 className="mt-2 text-2xl font-bold tracking-tight">
+              Describe it. Watch it take shape.
+            </h1>
+            <p className="text-muted-foreground mt-3 text-sm leading-6">
+              Zack uses your Business Blueprint to guide the first draft. You
+              can then prompt changes, edit the approved content directly, and
+              switch visual styles without leaving AgentStack.
+            </p>
+            <Button
+              className="mt-6"
+              onClick={() => void pickTemplate("coastal")}
+              disabled={!!selecting}
+            >
+              {selecting ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <WandSparkles className="mr-2 h-4 w-4" />
+              )}
+              Start a private Vibe build
+            </Button>
+            <button
+              type="button"
+              onClick={() => setView("builder")}
+              className="text-muted-foreground hover:text-foreground mt-3 text-sm font-medium"
+            >
+              Prefer a template? View designs
+            </button>
+          </div>
+          <div className="flex items-center justify-center bg-gradient-to-br from-[#edf4ff] via-white to-[#fff0f8] p-8">
+            <div className="w-full max-w-xl rounded-2xl border bg-white/90 p-6 shadow-xl shadow-blue-950/10">
+              <div className="flex items-center gap-2 border-b pb-4">
+                <span className="h-2.5 w-2.5 rounded-full bg-rose-400" />
+                <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
+                <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
+                <span className="text-muted-foreground ml-2 text-xs">
+                  Private live viewer
+                </span>
+              </div>
+              <div className="mt-6 space-y-3">
+                <div className="h-5 w-2/3 rounded bg-[#1d3f76]" />
+                <div className="h-3 w-full rounded bg-slate-200" />
+                <div className="h-3 w-4/5 rounded bg-slate-200" />
+                <div className="mt-6 grid grid-cols-3 gap-3">
+                  <div className="h-28 rounded-xl bg-blue-100" />
+                  <div className="h-28 rounded-xl bg-fuchsia-100" />
+                  <div className="h-28 rounded-xl bg-violet-100" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -305,6 +419,26 @@ export function WebsiteStudioApp() {
   return (
     <div className="space-y-4">
       {tabRow}
+      <div className="flex flex-col gap-3 rounded-2xl border border-fuchsia-200 bg-gradient-to-r from-fuchsia-50 to-violet-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex gap-3">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-fuchsia-500 to-violet-600 text-white">
+            <WandSparkles className="h-4 w-4" />
+          </span>
+          <div>
+            <p className="text-sm font-semibold text-violet-950">
+              Vibe Builder · private side-by-side workspace
+            </p>
+            <p className="mt-0.5 text-xs text-violet-900/70">
+              Prompt Zack or edit content on the left. Review every change live
+              on the right. Nothing publishes without your approval.
+            </p>
+          </div>
+        </div>
+        <Button size="sm" variant="outline" onClick={() => setView("builder")}>
+          <LayoutTemplate className="mr-1.5 h-3.5 w-3.5" />
+          Change starting design
+        </Button>
+      </div>
       {/* Toolbar */}
       {!foundationReady ? (
         <div className="flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -410,6 +544,7 @@ export function WebsiteStudioApp() {
               <DesignerChat
                 subAccountId={subAccountId}
                 brandName={brandName}
+                experience="vibe"
                 initialTranscript={site.designerTranscript ?? []}
                 initialStep={site.designerStep ?? 0}
                 totalSteps={10}

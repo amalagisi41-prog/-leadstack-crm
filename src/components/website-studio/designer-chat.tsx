@@ -19,6 +19,7 @@ export function DesignerChat({
   initialStep,
   totalSteps,
   onContent,
+  experience = "guided",
 }: {
   subAccountId: string;
   brandName: string;
@@ -26,6 +27,7 @@ export function DesignerChat({
   initialStep: number;
   totalSteps: number;
   onContent: (content: AgentSiteContent) => void;
+  experience?: "guided" | "vibe";
 }) {
   const [turns, setTurns] = useState<DesignerTurn[]>(initialTranscript);
   const [input, setInput] = useState("");
@@ -37,12 +39,16 @@ export function DesignerChat({
 
   const scrollDown = () =>
     requestAnimationFrame(() =>
-      scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" }),
+      scrollRef.current?.scrollTo({
+        top: scrollRef.current.scrollHeight,
+        behavior: "smooth",
+      })
     );
 
   // Kick off the interview automatically if it hasn't started.
   useEffect(() => {
-    if (turns.length === 0 && !loading) void send("Hi! I'm ready to build my site.");
+    if (turns.length === 0 && !loading)
+      void send("Hi! I'm ready to build my site.");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -52,16 +58,20 @@ export function DesignerChat({
     setError(null);
     setInput("");
     // Don't echo the auto-kickoff message.
-    if (turns.length > 0) setTurns((p) => [...p, { role: "agent", content: msg }]);
+    if (turns.length > 0)
+      setTurns((p) => [...p, { role: "agent", content: msg }]);
     setLoading(true);
     scrollDown();
 
     try {
-      const res = await fetch(`/api/sub-accounts/${subAccountId}/agent-site/designer`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: msg, brandName }),
-      });
+      const res = await fetch(
+        `/api/sub-accounts/${subAccountId}/agent-site/designer`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: msg, brandName, mode: experience }),
+        }
+      );
       const data = (await res.json().catch(() => ({}))) as {
         reply?: string;
         content?: AgentSiteContent;
@@ -85,7 +95,7 @@ export function DesignerChat({
   const pct = Math.round((Math.min(step, totalSteps) / totalSteps) * 100);
 
   return (
-    <div className="flex h-full flex-col rounded-2xl border bg-card">
+    <div className="bg-card flex h-full flex-col rounded-2xl border">
       {/* Header + progress */}
       <div className="border-b px-4 py-3">
         <div className="flex items-center gap-2">
@@ -93,13 +103,21 @@ export function DesignerChat({
             <Sparkles className="h-4 w-4" />
           </span>
           <div className="flex-1">
-            <p className="text-sm font-semibold">Designer</p>
-            <p className="text-[11px] text-muted-foreground">
-              {done ? "Your site is ready to preview & publish" : `Step ${Math.min(step + 1, totalSteps)} of ${totalSteps}`}
+            <p className="text-sm font-semibold">
+              {experience === "vibe" ? "Zack · Vibe Builder" : "Designer"}
+            </p>
+            <p className="text-muted-foreground text-[11px]">
+              {experience === "vibe"
+                ? "Prompt changes while the private preview updates"
+                : done
+                  ? "Your site is ready to preview & publish"
+                  : `Step ${Math.min(step + 1, totalSteps)} of ${totalSteps}`}
             </p>
           </div>
         </div>
-        <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-muted">
+        <div
+          className={`bg-muted mt-2 h-1 w-full overflow-hidden rounded-full ${experience === "vibe" ? "hidden" : ""}`}
+        >
           <div
             className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-500"
             style={{ width: `${done ? 100 : pct}%` }}
@@ -108,15 +126,24 @@ export function DesignerChat({
       </div>
 
       {/* Transcript */}
-      <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
+      <div
+        ref={scrollRef}
+        className="flex-1 space-y-3 overflow-y-auto px-4 py-4"
+      >
         {turns.map((t, i) => (
-          <div key={i} className={cn("flex", t.role === "agent" ? "justify-end" : "justify-start")}>
+          <div
+            key={i}
+            className={cn(
+              "flex",
+              t.role === "agent" ? "justify-end" : "justify-start"
+            )}
+          >
             <div
               className={cn(
-                "max-w-[85%] whitespace-pre-wrap rounded-2xl px-3 py-2 text-sm",
+                "max-w-[85%] rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap",
                 t.role === "agent"
                   ? "bg-[#1a2f50] text-white"
-                  : "border bg-background text-foreground",
+                  : "bg-background text-foreground border"
               )}
             >
               {t.content}
@@ -125,7 +152,7 @@ export function DesignerChat({
         ))}
         {loading && (
           <div className="flex justify-start">
-            <div className="flex items-center gap-2 rounded-2xl border bg-background px-3 py-2 text-sm text-muted-foreground">
+            <div className="bg-background text-muted-foreground flex items-center gap-2 rounded-2xl border px-3 py-2 text-sm">
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
               Designing…
             </div>
@@ -145,7 +172,13 @@ export function DesignerChat({
         <Input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder={done ? "Ask the Designer to tweak anything…" : "Type your answer…"}
+          placeholder={
+            experience === "vibe"
+              ? "Describe a change: warmer colors, stronger CTA, rewrite hero…"
+              : done
+                ? "Ask the Designer to tweak anything…"
+                : "Type your answer…"
+          }
           maxLength={1500}
           disabled={loading}
           className="h-9"

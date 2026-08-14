@@ -4,7 +4,12 @@ import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { requireSubAccountAdmin } from "@/lib/auth/require-tenancy";
-import { aiIsConfigured, callAi, type AiChatMessage } from "@/lib/comms/ai/openrouter";
+import {
+  aiIsConfigured,
+  callAi,
+  type AiChatMessage,
+} from "@/lib/comms/ai/openrouter";
+import { compileBusinessProfilePrompt } from "@/lib/business-profile/compile";
 import {
   websiteStudioGateOpen,
   WEBSITE_STUDIO_LOCKED_MESSAGE,
@@ -15,6 +20,10 @@ import {
   isLastStep,
 } from "@/lib/website-studio/designer";
 import type { AgentSiteContent, DesignerTurn } from "@/types/agent-site";
+import {
+  EMPTY_BUSINESS_PROFILE,
+  type BusinessProfileContent,
+} from "@/types/business-profile";
 
 /**
  * POST /api/sub-accounts/[id]/agent-site/designer
@@ -26,9 +35,23 @@ import type { AgentSiteContent, DesignerTurn } from "@/types/agent-site";
 
 const SITE_ID = "main";
 const CONTENT_KEYS = new Set<keyof AgentSiteContent>([
-  "agentName", "title", "brokerage", "tagline", "bio", "phone", "email",
-  "serviceAreas", "specialties", "logoUrl", "headshotUrl", "heroImageUrl",
-  "instagram", "facebook", "linkedin", "ctaHeadline", "ctaSubtext",
+  "agentName",
+  "title",
+  "brokerage",
+  "tagline",
+  "bio",
+  "phone",
+  "email",
+  "serviceAreas",
+  "specialties",
+  "logoUrl",
+  "headshotUrl",
+  "heroImageUrl",
+  "instagram",
+  "facebook",
+  "linkedin",
+  "ctaHeadline",
+  "ctaSubtext",
 ]);
 
 function parseModelJson(text: string): {
@@ -36,7 +59,11 @@ function parseModelJson(text: string): {
   reply?: string;
   advance?: boolean;
 } | null {
-  const cleaned = text.trim().replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
+  const cleaned = text
+    .trim()
+    .replace(/^```(?:json)?/i, "")
+    .replace(/```$/, "")
+    .trim();
   try {
     return JSON.parse(cleaned);
   } catch {
@@ -56,7 +83,7 @@ function parseModelJson(text: string): {
 /** Merge only known content keys; coerce specialties to a string array. */
 function applyFields(
   current: AgentSiteContent,
-  fields: Record<string, unknown>,
+  fields: Record<string, unknown>
 ): AgentSiteContent {
   const next = { ...current };
   for (const [k, v] of Object.entries(fields)) {
@@ -79,43 +106,57 @@ function applyFields(
 
 export async function POST(
   request: Request,
-  ctx: { params: Promise<{ id: string }> },
+  ctx: { params: Promise<{ id: string }> }
 ) {
   const { id: subAccountId } = await ctx.params;
   const access = await requireSubAccountAdmin(request, subAccountId);
   if (access instanceof NextResponse) return access;
 
   if (!(await websiteStudioGateOpen(subAccountId))) {
-    return NextResponse.json({ error: WEBSITE_STUDIO_LOCKED_MESSAGE }, { status: 403 });
+    return NextResponse.json(
+      { error: WEBSITE_STUDIO_LOCKED_MESSAGE },
+      { status: 403 }
+    );
   }
 
   if (!aiIsConfigured()) {
     return NextResponse.json(
-      { error: "The Designer isn't available on this deployment yet (OpenRouter isn't configured)." },
-      { status: 503 },
+      {
+        error:
+          "The Designer isn't available on this deployment yet (OpenRouter isn't configured).",
+      },
+      { status: 503 }
     );
   }
 
-  let body: { message?: unknown; brandName?: unknown };
+  let body: { message?: unknown; brandName?: unknown; mode?: unknown };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
-  const message = typeof body.message === "string" ? body.message.trim().slice(0, 1500) : "";
+  const message =
+    typeof body.message === "string" ? body.message.trim().slice(0, 1500) : "";
   if (!message) {
-    return NextResponse.json({ error: "A message is required." }, { status: 400 });
+    return NextResponse.json(
+      { error: "A message is required." },
+      { status: 400 }
+    );
   }
   const brandName =
     typeof body.brandName === "string" && body.brandName.trim()
       ? body.brandName.trim().slice(0, 80)
       : "your CRM";
+  const vibeMode = body.mode === "vibe";
 
   const db = getAdminDb();
   const ref = db.doc(`subAccounts/${subAccountId}/agentSites/${SITE_ID}`);
   const snap = await ref.get();
   if (!snap.exists) {
-    return NextResponse.json({ error: "Pick a template first." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Pick a template first." },
+      { status: 400 }
+    );
   }
   const site = snap.data() as {
     content: AgentSiteContent;
@@ -124,8 +165,34 @@ export async function POST(
   };
   const step = Math.min(site.designerStep ?? 0, DESIGNER_STEPS.length - 1);
 
+  const profileSnap = vibeMode
+    ? await db.doc(`subAccounts/${subAccountId}/businessProfile/main`).get()
+    : null;
+  const profile = profileSnap?.exists
+    ? ({
+        ...EMPTY_BUSINESS_PROFILE,
+        ...(profileSnap.data() as Partial<BusinessProfileContent>),
+      } as BusinessProfileContent)
+    : EMPTY_BUSINESS_PROFILE;
+  const blueprint = vibeMode ? compileBusinessProfilePrompt(profile) : null;
+  const systemPrompt = vibeMode
+    ? `You are Zack inside ${brandName}'s Vibe Builder. Help a real-estate professional customize a private website through short natural-language prompts. Apply every concrete request you can to the allowed website content fields. Never invent licenses, awards, sales numbers, testimonials, or market claims. If the request is unclear, ask one concise follow-up question. The visual style/template is controlled separately in the interface, so explain that briefly if asked to change layout beyond the available content fields.
+
+CURRENT WEBSITE CONTENT:
+${JSON.stringify(site.content)}
+
+${blueprint ? `APPROVED BUSINESS BLUEPRINT:\n${blueprint}` : "No approved Business Blueprint details are available yet."}
+
+Return STRICT JSON only:
+{
+  "fields": { <any allowed website content fields that should change> },
+  "reply": "<brief confirmation or one follow-up question>",
+  "advance": false
+}`
+    : buildDesignerSystemPrompt(step, site.content, brandName);
+
   const messages: AiChatMessage[] = [
-    { role: "system", content: buildDesignerSystemPrompt(step, site.content, brandName) },
+    { role: "system", content: systemPrompt },
     { role: "user", content: message },
   ];
 
@@ -137,19 +204,21 @@ export async function POST(
     console.error("[agent-site/designer] LLM failed", err);
     return NextResponse.json(
       { error: "The Designer had trouble responding. Try again." },
-      { status: 502 },
+      { status: 502 }
     );
   }
 
   if (!parsed) {
     return NextResponse.json(
-      { error: "The Designer returned an unexpected response. Try rephrasing." },
-      { status: 502 },
+      {
+        error: "The Designer returned an unexpected response. Try rephrasing.",
+      },
+      { status: 502 }
     );
   }
 
   const nextContent = applyFields(site.content, parsed.fields ?? {});
-  const advance = parsed.advance !== false;
+  const advance = vibeMode ? false : parsed.advance !== false;
   const done = advance && isLastStep(step);
   const nextStep = advance && !isLastStep(step) ? step + 1 : step;
   const reply = (parsed.reply ?? "Got it — what's next?").trim();
@@ -172,6 +241,6 @@ export async function POST(
     content: nextContent,
     step: nextStep,
     totalSteps: DESIGNER_STEPS.length,
-    done,
+    done: vibeMode ? false : done,
   });
 }
