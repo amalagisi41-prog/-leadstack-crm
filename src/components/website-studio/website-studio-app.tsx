@@ -37,6 +37,7 @@ import {
 } from "@/types/agent-site";
 import type { WebsiteTransferDoc } from "@/types/website-transfer";
 import {
+  getWorkspaceWebsiteStudioView,
   hasImportedExactSite,
   type WebsiteStudioView,
 } from "@/lib/website-studio/initial-view";
@@ -66,7 +67,9 @@ export function WebsiteStudioApp({
   const [publishing, setPublishing] = useState(false);
   const [mode, setMode] = useState<"designer" | "edit">("designer");
   const [savingDraft, setSavingDraft] = useState(false);
-  const [view, setView] = useState<WebsiteStudioView>("builder");
+  const [view, setView] = useState<WebsiteStudioView>(() =>
+    workspace === "home" ? "builder" : workspace
+  );
   const [transfer, setTransfer] = useState<WebsiteTransferDoc | null>(null);
   const [foundationReady, setFoundationReady] = useState(false);
   const [foundationLoaded, setFoundationLoaded] = useState(false);
@@ -150,14 +153,12 @@ export function WebsiteStudioApp({
           setContent(loadedSite.content);
         }
         setView(
-          !ready
-            ? "setup"
-            : (workspace === "exact" || workspace === "vibe") &&
-                hasImportedExactSite(transferData.transfer)
-              ? "exact"
-              : workspace === "vibe"
-                ? "vibe"
-                : "builder"
+          getWorkspaceWebsiteStudioView({
+            workspace,
+            foundationReady: ready,
+            transfer: transferData.transfer,
+            hasTemplateSite: Boolean(loadedSite),
+          })
         );
       } catch {
         // Network/parse failure — fall through to the empty-site state
@@ -332,6 +333,18 @@ export function WebsiteStudioApp({
     </div>
   );
 
+  if (loading) {
+    return (
+      <div className="space-y-4">
+        {dedicatedWorkspace ? tabRow : null}
+        <div className="text-muted-foreground flex h-64 items-center justify-center">
+          <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Preparing your
+          private website workspace…
+        </div>
+      </div>
+    );
+  }
+
   if (view === "exact" && transfer) {
     return (
       <div className="space-y-4">
@@ -360,18 +373,6 @@ export function WebsiteStudioApp({
     );
   }
 
-  if (loading) {
-    return (
-      <div className="space-y-4">
-        {tabRow}
-        <div className="text-muted-foreground flex h-64 items-center justify-center">
-          <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading AI Website
-          Studio…
-        </div>
-      </div>
-    );
-  }
-
   if (view === "builder") {
     return (
       <div className="space-y-4">
@@ -392,8 +393,6 @@ export function WebsiteStudioApp({
         <div className="grid gap-4 md:grid-cols-3">
           <a
             href={`/sa/${subAccountId}/website-studio/vibe`}
-            target="_blank"
-            rel="noreferrer"
             className="rounded-2xl border border-fuchsia-200 bg-gradient-to-br from-fuchsia-50 to-violet-50 p-5 text-left transition hover:-translate-y-0.5 hover:shadow-sm"
           >
             <WandSparkles className="h-5 w-5 text-fuchsia-600" />
@@ -410,9 +409,7 @@ export function WebsiteStudioApp({
           </a>
           {hasImportedExactSite(transfer) ? (
             <a
-              href={`/sa/${subAccountId}/website-studio/imported`}
-              target="_blank"
-              rel="noreferrer"
+              href={`/sa/${subAccountId}/website-studio/vibe`}
               className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 transition hover:-translate-y-0.5 hover:shadow-sm"
             >
               <ExternalLink className="h-5 w-5 text-emerald-700" />
@@ -420,8 +417,8 @@ export function WebsiteStudioApp({
                 Continue existing website
               </h2>
               <p className="mt-1 text-sm text-emerald-900/75">
-                Open the captured live site and exact imported replacement in
-                their dedicated comparison workspace.
+                Open the captured live site inside the AI coding workspace and
+                continue editing its real HTML and CSS.
               </p>
               <span className="mt-3 inline-flex text-sm font-semibold text-emerald-700">
                 Open imported site →

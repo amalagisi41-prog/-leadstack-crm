@@ -27,7 +27,20 @@ interface LibrarySnapshot {
   title: string;
   pageCount: number;
   createdAt: string | null;
+  sector: string | null;
+  versionType: string;
 }
+
+const SECTOR_VERSIONS = [
+  ["residential", "Residential"],
+  ["luxury", "Luxury"],
+  ["commercial", "Commercial"],
+  ["investor", "Investor"],
+  ["property_management", "Property management"],
+  ["rentals", "Rentals"],
+  ["new_construction", "New construction"],
+  ["brokerage_team", "Brokerage / team"],
+] as const;
 
 export function WebsiteCodeStudio({
   transfer,
@@ -62,6 +75,7 @@ export function WebsiteCodeStudio({
   const [snapshotUrl, setSnapshotUrl] = useState(transfer.sourceUrl);
   const [snapshotting, setSnapshotting] = useState(false);
   const [library, setLibrary] = useState<LibrarySnapshot[]>([]);
+  const [creatingSector, setCreatingSector] = useState<string | null>(null);
   const entry = pages[selected] ?? pages[0];
 
   useEffect(() => {
@@ -102,6 +116,37 @@ export function WebsiteCodeStudio({
       );
     } finally {
       setSnapshotting(false);
+    }
+  }
+
+  async function createSectorVersion(sector: string) {
+    if (creatingSector) return;
+    setCreatingSector(sector);
+    try {
+      const response = await fetch(
+        `/api/sub-accounts/${subAccountId}/website-transfer/library`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sector }),
+        }
+      );
+      const data = (await response.json().catch(() => ({}))) as {
+        snapshot?: LibrarySnapshot;
+        error?: string;
+      };
+      if (!response.ok || !data.snapshot)
+        throw new Error(data.error ?? "Could not create this sector version.");
+      setLibrary((current) => [data.snapshot!, ...current]);
+      toast.success(`${data.snapshot.title} saved.`);
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Could not create this sector version."
+      );
+    } finally {
+      setCreatingSector(null);
     }
   }
 
@@ -215,6 +260,30 @@ export function WebsiteCodeStudio({
             </Button>
           </div>
           <div className="mt-4 border-t border-blue-200 pt-4">
+            <p className="text-sm font-semibold">Create a sector version</p>
+            <p className="text-muted-foreground mt-1 text-xs">
+              Save a separate working copy of the current captured site for a
+              specific real estate audience. Each version remains independent.
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {SECTOR_VERSIONS.map(([value, label]) => (
+                <Button
+                  key={value}
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => void createSectorVersion(value)}
+                  disabled={Boolean(creatingSector)}
+                >
+                  {creatingSector === value ? (
+                    <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                  ) : null}
+                  {label}
+                </Button>
+              ))}
+            </div>
+          </div>
+          <div className="mt-4 border-t border-blue-200 pt-4">
             <p className="text-sm font-semibold">Snapshot library</p>
             {library.length ? (
               <div className="mt-2 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
@@ -230,6 +299,9 @@ export function WebsiteCodeStudio({
                       {snapshot.sourceUrl}
                     </p>
                     <p className="text-muted-foreground mt-2 text-xs">
+                      {snapshot.versionType === "sector"
+                        ? "Sector version · "
+                        : "Captured site · "}
                       {snapshot.pageCount} page
                       {snapshot.pageCount === 1 ? "" : "s"}
                       {snapshot.createdAt

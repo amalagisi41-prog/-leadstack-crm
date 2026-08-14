@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   getInitialWebsiteStudioView,
+  getWorkspaceWebsiteStudioView,
   hasImportedExactSite,
 } from "./initial-view";
 import type { WebsiteTransferDoc } from "@/types/website-transfer";
@@ -86,5 +87,27 @@ describe("website studio initial view", () => {
         hasTemplateSite: true,
       })
     ).toBe("vibe");
+  });
+
+  it("keeps the dedicated vibe route authoritative while setup loads", () => {
+    expect(
+      getWorkspaceWebsiteStudioView({
+        workspace: "vibe",
+        foundationReady: false,
+        transfer: null,
+        hasTemplateSite: false,
+      })
+    ).toBe("vibe");
+  });
+
+  it("opens an imported site on the vibe route regardless of foundation state", () => {
+    expect(
+      getWorkspaceWebsiteStudioView({
+        workspace: "vibe",
+        foundationReady: false,
+        transfer: transfer(),
+        hasTemplateSite: true,
+      })
+    ).toBe("exact");
   });
 });
