@@ -110,7 +110,11 @@ export async function GET(
       inlineCss.replace(/<\/style/gi, "<\\/style") +
       "</style>"
     : "";
-  const baseClasslessCss = classlessSnapshotStyles(html);
+  // A live request already contains the source site's real DOM and stylesheet
+  // cascade. Applying the handcrafted classless fallback on top of that live
+  // CSS changes hero sizing, navigation spacing, and section geometry. Keep
+  // the fallback for older captured/pre-hydration snapshots only.
+  const baseClasslessCss = liveLoaded ? "" : classlessSnapshotStyles(html);
   const classlessCss = baseClasslessCss
     ? baseClasslessCss + classlessSemanticLayoutStyles() + classlessEmbeddedWidgetStyles()
     : "";
