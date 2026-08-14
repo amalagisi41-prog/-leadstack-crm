@@ -12,6 +12,7 @@ import {
   classlessEmbeddedWidgetStyles,
   normalizeCapturedStylesheetLinks,
   removeCapturedCsp,
+  removeCapturedStyleText,
 } from "@/lib/website-transfer/styles";
 
 /**
@@ -57,7 +58,7 @@ export async function GET(
         replace?: unknown;
       }>)
     : [];
-  html = removeCapturedCsp(html);
+  html = removeCapturedStyleText(removeCapturedCsp(html));
   for (const replacement of replacements) {
     if (
       typeof replacement.find === "string" &&

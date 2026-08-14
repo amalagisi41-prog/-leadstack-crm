@@ -53,6 +53,21 @@ export function removeCapturedCsp(html: string): string {
 }
 
 /**
+ * Some captured pages contain the contents of a custom CSS field as a plain
+ * text node inside the widget markup instead of inside a <style> element.
+ * Leaving that node in the isolated replacement makes the CSS appear as a
+ * huge paragraph above the page. The replacement route injects the same CSS
+ * safely into <head>, so remove only the leaked widget text and preserve the
+ * surrounding markup.
+ */
+export function removeCapturedStyleText(html: string): string {
+  return html.replace(
+    /\/\*\s*IDX\s+Carousel\s+Widget\b[\s\S]*?(?=<\/div>\s*<\/idx-listings-carousel>)/gi,
+    ""
+  );
+}
+
+/**
  * Captured pages sometimes mark their stylesheet links as CORS resources.
  * That is valid on the source origin, but causes Safari to discard the CSS
  * when the isolated preview is hosted on AgentStack. Keep the stylesheet
