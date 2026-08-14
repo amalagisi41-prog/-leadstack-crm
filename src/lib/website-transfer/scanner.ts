@@ -9,6 +9,7 @@ import type {
 const PAGE_LIMIT = 20;
 const SNAPSHOT_LIMIT = 8;
 const SNAPSHOT_CHAR_LIMIT = 3_000_000;
+const INLINE_CSS_LIMIT = 900_000;
 
 function comparableHost(hostname: string): string {
   return hostname.toLowerCase().replace(/^www\./, "");
@@ -106,7 +107,50 @@ function detectTechnology(html: string, headers: Headers) {
   return { cms, hosting };
 }
 
-function safeSnapshot(html: string, source: URL): string {
+function rewriteCssUrls(css: string, stylesheetUrl: URL): string {
+  return css.replace(
+    /url\(\s*(["']?)(?!data:|https?:|\/\/|#)([^"')]+)\1\s*\)/gi,
+    (_match, _quote: string, value: string) => {
+      try {
+        return `url("${new URL(value.trim(), stylesheetUrl).toString()}")`;
+      } catch {
+        return `url("${value}")`;
+      }
+    }
+  );
+}
+
+async function inlineStylesheets(
+  stylesheetUrls: string[],
+  cache: Map<string, Promise<string>>
+): Promise<string> {
+  const css = await Promise.all(
+    stylesheetUrls.slice(0, 12).map((href) => {
+      let pending = cache.get(href);
+      if (!pending) {
+        pending = (async () => {
+          const url = new URL(href);
+          const response = await fetchPublicPage(url);
+          if (!response.ok) return "";
+          const contentType = response.headers.get("content-type") ?? "";
+          if (!contentType.includes("css") && !href.includes(".css")) return "";
+          const text = (await response.text()).slice(0, 300_000);
+          return rewriteCssUrls(text, new URL(response.url || href));
+        })().catch(() => "");
+        cache.set(href, pending);
+      }
+      return pending;
+    })
+  );
+  return css.join("\n").slice(0, INLINE_CSS_LIMIT);
+}
+
+async function safeSnapshot(
+  html: string,
+  source: URL,
+  stylesheetUrls: string[],
+  stylesheetCache: Map<string, Promise<string>>
+): Promise<string> {
   const inert = html
     .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
     .replace(/<iframe\b[^>]*>[\s\S]*?<\/iframe>/gi, "")
@@ -120,7 +164,8 @@ function safeSnapshot(html: string, source: URL): string {
       '<form$1 action="#"$3>'
     )
     .replace(/<form\b((?:(?!action=)[^>])*)>/gi, '<form$1 action="#">');
-  const safety = `<base href="${source.href}"><meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data:; style-src 'self' https: 'unsafe-inline'; img-src 'self' https: data: blob:; font-src 'self' https: data:; script-src 'none'; frame-src 'none'; object-src 'none'; form-action 'none';">`;
+  const capturedCss = await inlineStylesheets(stylesheetUrls, stylesheetCache);
+  const safety = `<base href="${source.href}"><meta http-equiv="Content-Security-Policy" content="default-src 'self' https: data:; style-src 'self' https: 'unsafe-inline'; img-src 'self' https: data: blob:; font-src 'self' https: data:; script-src 'none'; frame-src 'none'; object-src 'none'; form-action 'none';"><style id="agentstack-captured-styles">${capturedCss.replace(/<\/style/gi, "<\\/style")}</style>`;
   const withSafety = /<head[^>]*>/i.test(inert)
     ? inert.replace(/<head([^>]*)>/i, `<head$1>${safety}`)
     : `${safety}${inert}`;
@@ -146,6 +191,7 @@ export async function scanWebsite(sourceUrl: string): Promise<{
   let forms = 0;
   let cms: string | null = null;
   let hosting: string | null = null;
+  const stylesheetCache = new Map<string, Promise<string>>();
 
   while (queue.length && seen.size < PAGE_LIMIT) {
     const current = queue.shift()!;
@@ -248,7 +294,9 @@ export async function scanWebsite(sourceUrl: string): Promise<{
         scriptCount: pageScripts.length,
         notes,
         snapshotHtml:
-          pages.length < SNAPSHOT_LIMIT ? safeSnapshot(html, base) : undefined,
+          pages.length < SNAPSHOT_LIMIT
+            ? await safeSnapshot(html, base, pageStyles, stylesheetCache)
+            : undefined,
       });
     } catch (error) {
       pages.push({

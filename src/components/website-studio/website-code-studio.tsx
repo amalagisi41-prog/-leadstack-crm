@@ -49,6 +49,7 @@ export function WebsiteCodeStudio({
   ]);
   const [loading, setLoading] = useState(false);
   const [revision, setRevision] = useState(0);
+  const [previewSession] = useState(() => Date.now());
   const [showSnapshot, setShowSnapshot] = useState(false);
   const [snapshotUrl, setSnapshotUrl] = useState(transfer.sourceUrl);
   const [snapshotting, setSnapshotting] = useState(false);
@@ -271,7 +272,10 @@ export function WebsiteCodeStudio({
               <iframe
                 key={`${entry.sourceIndex}-${revision}`}
                 title="Private coded website preview"
-                src={`/api/sub-accounts/${subAccountId}/website-transfer/replacement?page=${entry.sourceIndex}&revision=${revision}`}
+                src={`/api/sub-accounts/${subAccountId}/website-transfer/replacement?page=${entry.sourceIndex}&revision=${revision}&session=${previewSession}`}
+                onLoad={(event) => {
+                  event.currentTarget.contentWindow?.scrollTo(0, 0);
+                }}
                 className={`mx-auto h-full bg-white shadow ${device === "mobile" ? "w-[390px] max-w-full" : "w-full"}`}
                 sandbox="allow-same-origin"
               />
