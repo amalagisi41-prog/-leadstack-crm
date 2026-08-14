@@ -128,7 +128,7 @@ export function ExactTransferStudio({
         </div>
       ) : null}
 
-      <section className="sticky bottom-4 z-10 flex flex-col gap-3 rounded-2xl border border-blue-200 bg-white/95 p-4 shadow-lg backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+      <section className="flex flex-col gap-3 rounded-2xl border border-blue-200 bg-white p-4 shadow-lg sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="font-semibold">Approve the live baseline</p>
           <p className="text-muted-foreground mt-1 text-xs">
