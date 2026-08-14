@@ -25,6 +25,7 @@ import { getFirebaseDb } from "@/lib/firebase/client";
 import { Button } from "@/components/ui/button";
 import { toDate } from "@/lib/format";
 import type { MessageTemplateDoc } from "@/types";
+import { WebsiteStarterTemplates } from "@/components/website-studio/website-starter-templates";
 
 export default function TemplatesListPage() {
   const { user, loading: authLoading } = useAuth();
@@ -36,7 +37,7 @@ export default function TemplatesListPage() {
     if (authLoading || !user || !agencyId) return;
     const q = query(
       collection(getFirebaseDb(), "message_templates"),
-      where("subAccountId", "==", subAccountId),
+      where("subAccountId", "==", subAccountId)
     );
     const unsub = onSnapshot(
       q,
@@ -45,12 +46,12 @@ export default function TemplatesListPage() {
         list.sort(
           (a, b) =>
             (toDate(b.createdAt)?.getTime() ?? 0) -
-            (toDate(a.createdAt)?.getTime() ?? 0),
+            (toDate(a.createdAt)?.getTime() ?? 0)
         );
         setTemplates(list);
         setLoading(false);
       },
-      () => setLoading(false),
+      () => setLoading(false)
     );
     return () => unsub();
   }, [user, agencyId, subAccountId, authLoading]);
@@ -66,11 +67,11 @@ export default function TemplatesListPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="mx-auto max-w-6xl space-y-8">
       <div>
         <Link
           href={saPath("/broadcasts")}
-          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
+          className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-xs"
         >
           <ArrowLeft className="h-3 w-3" />
           Back to automations
@@ -78,7 +79,7 @@ export default function TemplatesListPage() {
         <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Templates</h1>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground text-sm">
               Reusable email and SMS bodies, with merge tags resolved at
               send-time.
             </p>
@@ -92,12 +93,23 @@ export default function TemplatesListPage() {
         </div>
       </div>
 
+      <WebsiteStarterTemplates />
+
+      <div className="border-t pt-7">
+        <h2 className="text-xl font-bold tracking-tight">
+          Email and SMS templates
+        </h2>
+        <p className="text-muted-foreground mt-1 text-sm">
+          Reusable message content for broadcasts and automations.
+        </p>
+      </div>
+
       {loading ? (
         <div className="space-y-2">
           {Array.from({ length: 3 }).map((_, i) => (
             <div
               key={i}
-              className="h-16 animate-pulse rounded-xl border bg-muted/30"
+              className="bg-muted/30 h-16 animate-pulse rounded-xl border"
             />
           ))}
         </div>
@@ -108,7 +120,7 @@ export default function TemplatesListPage() {
           {templates.map((t) => (
             <li
               key={t.id}
-              className="flex items-center justify-between gap-3 rounded-xl border bg-card p-4"
+              className="bg-card flex items-center justify-between gap-3 rounded-xl border p-4"
             >
               <div className="flex min-w-0 items-center gap-3">
                 <span
@@ -127,11 +139,11 @@ export default function TemplatesListPage() {
                 <div className="min-w-0">
                   <Link
                     href={saPath(`/templates/${t.id}`)}
-                    className="block truncate font-medium hover:text-primary hover:underline"
+                    className="hover:text-primary block truncate font-medium hover:underline"
                   >
                     {t.name}
                   </Link>
-                  <p className="truncate text-xs text-muted-foreground">
+                  <p className="text-muted-foreground truncate text-xs">
                     {t.type === "email" && t.subject
                       ? `Subject: ${t.subject}`
                       : t.body.slice(0, 80) + (t.body.length > 80 ? "…" : "")}
@@ -159,12 +171,12 @@ export default function TemplatesListPage() {
 
 function EmptyState() {
   return (
-    <div className="rounded-2xl border border-dashed bg-card/50 p-10 text-center">
-      <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+    <div className="bg-card/50 rounded-2xl border border-dashed p-10 text-center">
+      <div className="bg-primary/10 text-primary mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl">
         <FileText className="h-5 w-5" />
       </div>
       <h3 className="text-base font-semibold">No templates yet</h3>
-      <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
+      <p className="text-muted-foreground mx-auto mt-1 max-w-md text-sm">
         Create an email or SMS template to use in an automation. Tags like{" "}
         <code>{"{{contact.firstName}}"}</code> get filled in at send-time.
       </p>

@@ -189,6 +189,7 @@ const SUB_ACCOUNT_NAV_SECTIONS: NavSection[] = [
 interface SidebarProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  desktopCollapsed?: boolean;
 }
 
 function activeSubAccountFromPath(pathname: string): string | null {
@@ -525,12 +526,18 @@ function SidebarLink({
   );
 }
 
-export function Sidebar({ open, onOpenChange }: SidebarProps) {
+export function Sidebar({
+  open,
+  onOpenChange,
+  desktopCollapsed = false,
+}: SidebarProps) {
   return (
     <>
-      <aside className="hidden w-60 shrink-0 bg-[#4F6F9F] md:block">
-        <SidebarContent />
-      </aside>
+      {!desktopCollapsed ? (
+        <aside className="hidden w-60 shrink-0 bg-[#4F6F9F] md:block">
+          <SidebarContent />
+        </aside>
+      ) : null}
 
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent side="left" className="w-60 p-0">

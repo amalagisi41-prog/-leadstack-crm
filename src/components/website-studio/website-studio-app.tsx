@@ -19,7 +19,6 @@ import { toast } from "sonner";
 import { useSubAccount } from "@/context/sub-account-context";
 import { useAgency } from "@/hooks/use-agency";
 import { Button } from "@/components/ui/button";
-import { TemplateGallery } from "./template-gallery";
 import { DesignerChat } from "./designer-chat";
 import { ContentEditor } from "./content-editor";
 import { BusinessSetupAssistant } from "./business-setup-assistant";
@@ -29,7 +28,6 @@ import {
   AGENT_SITE_TEMPLATE_LIST,
   getTemplate,
 } from "@/lib/website-studio/templates";
-import { ARTISAN_HOME_NETWORK_PRESET } from "@/lib/website-studio/presets";
 import {
   emptyAgentSiteContent,
   type AgentSiteContent,
@@ -153,7 +151,7 @@ export function WebsiteStudioApp({
         setView(
           !ready
             ? "setup"
-            : workspace === "exact" &&
+            : (workspace === "exact" || workspace === "vibe") &&
                 hasImportedExactSite(transferData.transfer)
               ? "exact"
               : workspace === "vibe"
@@ -198,31 +196,6 @@ export function WebsiteStudioApp({
       setView("vibe");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not start.");
-    } finally {
-      setSelecting(null);
-    }
-  }
-
-  async function importArtisanPreset() {
-    const preset = ARTISAN_HOME_NETWORK_PRESET;
-    setSelecting(preset.templateId);
-    try {
-      const s = await patch({
-        templateId: preset.templateId,
-        slug: preset.slug,
-        content: preset.content,
-      });
-      setSite(s);
-      setContent(s.content);
-      setMode("edit");
-      setView("vibe");
-      toast.success("Artisan Home Network was loaded into a private draft.");
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Could not import the reference site."
-      );
     } finally {
       setSelecting(null);
     }
@@ -292,11 +265,14 @@ export function WebsiteStudioApp({
         <p className="font-semibold">
           {workspace === "exact"
             ? "Imported exact-site workspace"
-            : "Dedicated AI Vibe Studio"}
+            : hasImportedExactSite(transfer)
+              ? "Dedicated AI Vibe Studio · Existing site"
+              : "Dedicated AI Vibe Studio"}
         </p>
         <p className="text-muted-foreground text-xs">
-          Templates are hidden in this window so the selected design remains
-          isolated.
+          {hasImportedExactSite(transfer)
+            ? "The imported HTML, CSS, fonts, colors, images, and layout are the source for this workspace."
+            : "Templates are hidden in this window so the selected design remains isolated."}
         </p>
       </div>
       <Button
@@ -398,18 +374,21 @@ export function WebsiteStudioApp({
   if (view === "builder") {
     return (
       <div className="space-y-4">
-        {tabRow}
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl border border-blue-200 bg-blue-50/70 p-5">
-            <LayoutTemplate className="h-5 w-5 text-blue-700" />
-            <h2 className="mt-3 font-semibold text-blue-950">
-              Start from an AgentStack template
-            </h2>
-            <p className="mt-1 text-sm text-blue-900/75">
-              Fastest path. Choose a conversion-tested real-estate design, then
-              customize its content and branding in the private viewer.
-            </p>
-          </div>
+        <section className="rounded-2xl border border-blue-200 bg-gradient-to-r from-blue-50 to-white p-6">
+          <p className="text-xs font-bold tracking-[0.16em] text-blue-700 uppercase">
+            AI Website Studio
+          </p>
+          <h1 className="mt-2 text-2xl font-bold tracking-tight">
+            Build a custom site or continue your existing one
+          </h1>
+          <p className="text-muted-foreground mt-2 max-w-3xl text-sm">
+            Work privately inside AgentStack. Managed domain, hosting, and
+            credentials stay in the guided workspace; nothing publishes until
+            you approve it.
+          </p>
+        </section>
+
+        <div className="grid gap-4 md:grid-cols-3">
           <a
             href={`/sa/${subAccountId}/website-studio/vibe`}
             target="_blank"
@@ -425,15 +404,68 @@ export function WebsiteStudioApp({
               private build updates beside your conversation.
             </p>
             <span className="mt-3 inline-flex text-sm font-semibold text-fuchsia-700">
-              Open the side-by-side builder →
+              Open custom AI Studio →
             </span>
           </a>
+          {hasImportedExactSite(transfer) ? (
+            <a
+              href={`/sa/${subAccountId}/website-studio/imported`}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 transition hover:-translate-y-0.5 hover:shadow-sm"
+            >
+              <ExternalLink className="h-5 w-5 text-emerald-700" />
+              <h2 className="mt-3 font-semibold text-emerald-950">
+                Continue existing website
+              </h2>
+              <p className="mt-1 text-sm text-emerald-900/75">
+                Open the captured live site and exact imported replacement in
+                their dedicated comparison workspace.
+              </p>
+              <span className="mt-3 inline-flex text-sm font-semibold text-emerald-700">
+                Open imported site →
+              </span>
+            </a>
+          ) : (
+            <a
+              href={`/sa/${subAccountId}/domain`}
+              className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 transition hover:-translate-y-0.5 hover:shadow-sm"
+            >
+              <ExternalLink className="h-5 w-5 text-emerald-700" />
+              <h2 className="mt-3 font-semibold text-emerald-950">
+                Bring an existing website
+              </h2>
+              <p className="mt-1 text-sm text-emerald-900/75">
+                Enter the live address and let AgentStack prepare its private
+                read-only capture.
+              </p>
+              <span className="mt-3 inline-flex text-sm font-semibold text-emerald-700">
+                Start existing-site setup →
+              </span>
+            </a>
+          )}
+          <button
+            type="button"
+            onClick={() => setView("setup")}
+            className="rounded-2xl border border-blue-200 bg-blue-50 p-5 text-left transition hover:-translate-y-0.5 hover:shadow-sm"
+          >
+            <Lock className="h-5 w-5 text-blue-700" />
+            <h2 className="mt-3 font-semibold text-blue-950">
+              Domain, hosting &amp; private keys
+            </h2>
+            <p className="mt-1 text-sm text-blue-900/75">
+              Use AgentStack-managed setup without leaving the platform or
+              exposing provider passwords in the builder.
+            </p>
+            <span className="mt-3 inline-flex text-sm font-semibold text-blue-700">
+              Open secure setup →
+            </span>
+          </button>
         </div>
-        <TemplateGallery
-          onSelect={pickTemplate}
-          onImportReference={importArtisanPreset}
-          selecting={selecting}
-        />
+        <p className="text-muted-foreground text-center text-xs">
+          Looking for a starter design? Website templates now live in the
+          Templates section.
+        </p>
       </div>
     );
   }

@@ -9,7 +9,6 @@ import {
   Search,
   Globe,
   Star,
-  ArrowUpRight,
   CheckCircle2,
   LockKeyhole,
   Server,
@@ -55,30 +54,6 @@ const TOPICS = [
   },
 ];
 
-const REGISTRARS = [
-  {
-    name: "GoDaddy",
-    initials: "Go",
-    detail: "Search, register, and pay",
-    href: "https://www.godaddy.com/domains",
-    color: "bg-emerald-600",
-  },
-  {
-    name: "Namecheap",
-    initials: "N",
-    detail: "Search, register, and pay",
-    href: "https://www.namecheap.com/domains/",
-    color: "bg-orange-500",
-  },
-  {
-    name: "Cloudflare",
-    initials: "Cf",
-    detail: "Register with DNS included",
-    href: "https://dash.cloudflare.com/?to=/:account/domains/register",
-    color: "bg-amber-500",
-  },
-] as const;
-
 const HOSTS = [
   {
     name: "AgentStack Managed",
@@ -87,22 +62,6 @@ const HOSTS = [
     value: "agentstack_managed" as const,
     href: "",
     color: "bg-[#1f4f91]",
-  },
-  {
-    name: "Vercel",
-    initials: "▲",
-    detail: "Connect or create modern hosting",
-    value: "keep_existing" as const,
-    href: "https://vercel.com/new",
-    color: "bg-black",
-  },
-  {
-    name: "Bluehost",
-    initials: "B",
-    detail: "WordPress hosting and transfers",
-    value: "transfer_existing" as const,
-    href: "https://www.bluehost.com/hosting",
-    color: "bg-blue-600",
   },
 ] as const;
 
@@ -275,9 +234,9 @@ export function BusinessSetupAssistant({
               Choose your domain and hosting before building.
             </h2>
             <p className="mt-2 max-w-3xl text-sm text-blue-100">
-              Register a new domain or connect one you own, then select where
-              the site will live. Provider checkout and passwords stay with the
-              provider.
+              Request a new domain or connect one you own, then use
+              AgentStack-managed hosting. Setup and private credentials remain
+              inside AgentStack.
             </p>
           </div>
 
@@ -341,47 +300,21 @@ export function BusinessSetupAssistant({
                 >
                   <span className="font-semibold">I need a domain</span>
                   <span className="text-muted-foreground mt-1 block text-xs">
-                    Register with a provider below
+                    Request registration inside AgentStack
                   </span>
                 </button>
               </div>
               {domainPoint === "need_domain" ? (
-                <div className="bg-muted/20 mt-3 rounded-xl border p-4">
-                  <p className="text-sm font-semibold">
-                    Choose where to register
+                <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50 p-4">
+                  <p className="text-sm font-semibold text-blue-950">
+                    AgentStack-managed domain registration
                   </p>
-                  <p className="text-muted-foreground mt-1 text-xs">
-                    The provider opens in a secure tab. Return here after
-                    checkout.
+                  <p className="mt-1 text-xs text-blue-900/75">
+                    Enter the domain you want below. AgentStack saves the
+                    request and keeps registration, DNS, SSL, and hosting in one
+                    guided workflow—no provider dashboard or password is
+                    required here.
                   </p>
-                  <div className="mt-3 grid gap-2 sm:grid-cols-3">
-                    {REGISTRARS.map((provider) => (
-                      <a
-                        key={provider.name}
-                        href={provider.href}
-                        target="_blank"
-                        rel="noreferrer"
-                        onClick={() => setDomainPoint("need_domain")}
-                        className="group bg-background rounded-xl border p-3 transition hover:border-blue-400 hover:shadow-sm"
-                      >
-                        <span
-                          className={cn(
-                            "flex h-9 w-9 items-center justify-center rounded-lg text-xs font-bold text-white",
-                            provider.color
-                          )}
-                        >
-                          {provider.initials}
-                        </span>
-                        <span className="mt-2 flex items-center gap-1 text-sm font-semibold">
-                          {provider.name}
-                          <ArrowUpRight className="h-3.5 w-3.5" />
-                        </span>
-                        <span className="text-muted-foreground mt-1 block text-[11px] leading-4">
-                          {provider.detail}
-                        </span>
-                      </a>
-                    ))}
-                  </div>
                 </div>
               ) : null}
               {domainPoint === "have_domain" ? (
@@ -450,7 +383,7 @@ export function BusinessSetupAssistant({
                 <Server className="h-5 w-5 text-blue-600" />
                 <h3 className="font-semibold">2. Hosting</h3>
               </div>
-              <div className="mt-3 grid gap-2 sm:grid-cols-3">
+              <div className="mt-3 grid gap-2">
                 {HOSTS.map((provider) => {
                   const card = (
                     <>
@@ -464,9 +397,6 @@ export function BusinessSetupAssistant({
                       </span>
                       <span className="mt-2 flex items-center gap-1 text-sm font-semibold">
                         {provider.name}
-                        {provider.href ? (
-                          <ArrowUpRight className="h-3.5 w-3.5" />
-                        ) : null}
                       </span>
                       <span className="text-muted-foreground mt-1 block text-[11px] leading-4">
                         {provider.detail}
@@ -481,18 +411,7 @@ export function BusinessSetupAssistant({
                     hostingPoint === provider.value &&
                       "border-blue-500 bg-blue-50 ring-2 ring-blue-500/15"
                   );
-                  return provider.href ? (
-                    <a
-                      key={provider.name}
-                      className={className}
-                      href={provider.href}
-                      target="_blank"
-                      rel="noreferrer"
-                      onClick={() => setHostingPoint(provider.value)}
-                    >
-                      {card}
-                    </a>
-                  ) : (
+                  return (
                     <button
                       key={provider.name}
                       type="button"
@@ -506,8 +425,9 @@ export function BusinessSetupAssistant({
               </div>
               <p className="bg-muted/50 text-muted-foreground mt-3 flex items-start gap-2 rounded-lg p-3 text-xs">
                 <LockKeyhole className="mt-0.5 h-4 w-4 shrink-0" />
-                AgentStack stores your choice, not your provider password. Any
-                domain or hosting charge is confirmed at the provider checkout.
+                Secret keys are stored server-side and are never displayed in
+                the website editor. Any domain or hosting charge must be
+                confirmed inside AgentStack before it is submitted.
               </p>
               {hostingPoint ? (
                 <label className="mt-3 flex cursor-pointer items-start gap-3 rounded-xl border p-4 text-sm">

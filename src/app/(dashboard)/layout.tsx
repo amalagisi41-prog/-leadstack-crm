@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { Sidebar } from "@/components/dashboard/sidebar";
 import { Header } from "@/components/dashboard/header";
 import { CommandPalette } from "@/components/search/command-palette";
@@ -14,6 +15,10 @@ export default function DashboardLayout({
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const pathname = usePathname();
+  const studioWorkspace = /\/website-studio\/(vibe|imported)(?:\/|$)/.test(
+    pathname
+  );
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -29,7 +34,11 @@ export default function DashboardLayout({
 
   return (
     <div className="flex h-screen">
-      <Sidebar open={sidebarOpen} onOpenChange={setSidebarOpen} />
+      <Sidebar
+        open={sidebarOpen}
+        onOpenChange={setSidebarOpen}
+        desktopCollapsed={studioWorkspace}
+      />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header
           onMenuClick={() => setSidebarOpen(true)}
