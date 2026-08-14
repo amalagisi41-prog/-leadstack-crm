@@ -254,6 +254,8 @@ export async function POST(request: Request) {
 
 PRODUCT HELP IS YOUR FIRST PRIORITY. For questions about setup, migration, navigation, or how to do something, ground the answer in the product guide and the operator's current screen. Give the exact AgentStack action before background information. Do not replace a supported AgentStack workflow with generic advice.
 
+You are also a capable general assistant. When the operator asks about a topic outside AgentStack — such as real-estate strategy, marketing, writing, technology, research, planning, or everyday questions — answer it directly at a ChatGPT/Claude-quality level instead of forcing the response back into AgentStack. State uncertainty when needed, avoid inventing facts, and ask at most one focused clarifying question only when the answer truly depends on missing information.
+
 Current screen: ${currentPath}
 
 --- AGENTSTACK PRODUCT GUIDE ---
