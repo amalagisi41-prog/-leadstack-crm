@@ -183,14 +183,28 @@ export function DomainConnect() {
     "found" | "empty" | null
   >(null);
   const [replacementApproved, setReplacementApproved] = useState(false);
+  const [privatePreviewPath, setPrivatePreviewPath] = useState<string | null>(
+    null
+  );
 
   useEffect(() => {
     fetch(`/api/sub-accounts/${subAccountId}/website-transfer`)
       .then((response) => response.json())
-      .then((data: { transfer?: { status?: string } | null }) =>
-        setReplacementApproved(data.transfer?.status === "approved")
+      .then(
+        (data: {
+          transfer?: {
+            status?: string;
+            privatePreviewPath?: string;
+          } | null;
+        }) => {
+          setReplacementApproved(data.transfer?.status === "approved");
+          setPrivatePreviewPath(data.transfer?.privatePreviewPath ?? null);
+        }
       )
-      .catch(() => setReplacementApproved(false));
+      .catch(() => {
+        setReplacementApproved(false);
+        setPrivatePreviewPath(null);
+      });
   }, [subAccountId]);
 
   const selectedProvider = PROVIDER_PORTALS.find(
@@ -663,9 +677,18 @@ export function DomainConnect() {
               </p>
             </div>
             <Button
-              render={<a href={saPath("/website-studio?mode=replacement")} />}
+              render={
+                <a
+                  href={
+                    privatePreviewPath ??
+                    saPath("/website-studio?mode=replacement")
+                  }
+                />
+              }
             >
-              Start or resume private replacement
+              {privatePreviewPath
+                ? "Resume side-by-side comparison"
+                : "Start private replacement"}
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
