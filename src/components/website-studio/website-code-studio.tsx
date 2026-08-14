@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Camera,
   Code2,
@@ -19,6 +19,14 @@ import type { WebsiteTransferDoc } from "@/types/website-transfer";
 interface Turn {
   role: "user" | "coder";
   content: string;
+}
+
+interface LibrarySnapshot {
+  id: string;
+  sourceUrl: string;
+  title: string;
+  pageCount: number;
+  createdAt: string | null;
 }
 
 export function WebsiteCodeStudio({
@@ -53,7 +61,17 @@ export function WebsiteCodeStudio({
   const [showSnapshot, setShowSnapshot] = useState(false);
   const [snapshotUrl, setSnapshotUrl] = useState(transfer.sourceUrl);
   const [snapshotting, setSnapshotting] = useState(false);
+  const [library, setLibrary] = useState<LibrarySnapshot[]>([]);
   const entry = pages[selected] ?? pages[0];
+
+  useEffect(() => {
+    void fetch(`/api/sub-accounts/${subAccountId}/website-transfer/library`)
+      .then((response) => response.json())
+      .then((data: { snapshots?: LibrarySnapshot[] }) =>
+        setLibrary(data.snapshots ?? [])
+      )
+      .catch(() => undefined);
+  }, [subAccountId]);
 
   async function createSnapshot() {
     const sourceUrl = snapshotUrl.trim();
@@ -195,6 +213,37 @@ export function WebsiteCodeStudio({
               )}
               Capture website
             </Button>
+          </div>
+          <div className="mt-4 border-t border-blue-200 pt-4">
+            <p className="text-sm font-semibold">Snapshot library</p>
+            {library.length ? (
+              <div className="mt-2 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+                {library.map((snapshot) => (
+                  <div
+                    key={snapshot.id}
+                    className="rounded-lg border bg-white p-3"
+                  >
+                    <p className="truncate text-sm font-semibold">
+                      {snapshot.title}
+                    </p>
+                    <p className="text-muted-foreground truncate text-xs">
+                      {snapshot.sourceUrl}
+                    </p>
+                    <p className="text-muted-foreground mt-2 text-xs">
+                      {snapshot.pageCount} page
+                      {snapshot.pageCount === 1 ? "" : "s"}
+                      {snapshot.createdAt
+                        ? ` · ${new Date(snapshot.createdAt).toLocaleString()}`
+                        : ""}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground mt-2 text-xs">
+                Capture a website to add the first saved snapshot.
+              </p>
+            )}
           </div>
         </section>
       ) : null}

@@ -147,14 +147,33 @@ export async function POST(
     const db = getAdminDb();
     const batch = db.batch();
     batch.set(ref, complete);
+    const libraryRef = db.doc(
+      `subAccounts/${id}/websiteSnapshotLibrary/${base.id}`
+    );
+    batch.set(libraryRef, {
+      id: base.id,
+      sourceUrl: complete.sourceUrl,
+      title: report.pages[0]?.title || new URL(complete.sourceUrl).hostname,
+      pageCount: pages.filter((page) => page.status !== "cannot_access").length,
+      status: "ready",
+      createdAt: now,
+      updatedAt: complete.updatedAt,
+    });
     report.pages.forEach((page, index) => {
       if (!page.snapshotHtml) return;
-      batch.set(ref.collection("snapshots").doc(String(index)), {
+      const snapshotPage = {
         index,
         url: page.url,
+        path: page.path,
+        title: page.title,
         htmlGzip: compressSnapshot(page.snapshotHtml),
         updatedAt: Timestamp.now(),
-      });
+      };
+      batch.set(ref.collection("snapshots").doc(String(index)), snapshotPage);
+      batch.set(
+        libraryRef.collection("pages").doc(String(index)),
+        snapshotPage
+      );
     });
     await batch.commit();
     return NextResponse.json({ transfer: serialize(complete) });
