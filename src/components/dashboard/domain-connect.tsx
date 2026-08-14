@@ -24,6 +24,7 @@ import { useSubAccount } from "@/context/sub-account-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { openAskAssistant } from "@/components/dashboard/ask-assistant-panel";
+import type { WebsiteTransferDoc } from "@/types/website-transfer";
 
 /**
  * Guided domain setup — the final onboarding step. The operator either
@@ -209,6 +210,11 @@ export function DomainConnect() {
   const [detectedDnsProvider, setDetectedDnsProvider] = useState<string | null>(
     null
   );
+  const [hostingStatus, setHostingStatus] = useState<
+    "not_requested" | "requested" | "ready"
+  >("not_requested");
+  const [hostingUrl, setHostingUrl] = useState<string | null>(null);
+  const [requestingHosting, setRequestingHosting] = useState(false);
 
   useEffect(() => {
     fetch(`/api/sub-accounts/${subAccountId}/website-transfer`)
@@ -219,10 +225,14 @@ export function DomainConnect() {
             status?: string;
             privatePreviewPath?: string;
             inventory?: { dnsProvider?: string | null };
+            hostingStatus?: "not_requested" | "requested" | "ready";
+            hostingUrl?: string | null;
           } | null;
         }) => {
           setReplacementApproved(data.transfer?.status === "approved");
           setPrivatePreviewPath(data.transfer?.privatePreviewPath ?? null);
+          setHostingStatus(data.transfer?.hostingStatus ?? "not_requested");
+          setHostingUrl(data.transfer?.hostingUrl ?? null);
           const dnsProvider = data.transfer?.inventory?.dnsProvider ?? null;
           setDetectedDnsProvider(dnsProvider);
           if (isCutover && dnsProvider?.toLowerCase() === "cloudflare") {
@@ -239,8 +249,39 @@ export function DomainConnect() {
   }, [isCutover, subAccountId]);
 
   const hostingTargetReady = Boolean(
-    privatePreviewPath?.startsWith("https://")
+    hostingStatus === "ready" && hostingUrl?.startsWith("https://")
   );
+
+  async function requestManagedHosting() {
+    setRequestingHosting(true);
+    try {
+      const response = await fetch(
+        `/api/sub-accounts/${subAccountId}/website-transfer`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "request_hosting" }),
+        }
+      );
+      const data = (await response.json().catch(() => ({}))) as {
+        transfer?: WebsiteTransferDoc;
+        error?: string;
+      };
+      if (!response.ok || !data.transfer)
+        throw new Error(data.error ?? "Hosting setup could not be requested.");
+      setHostingStatus(data.transfer.hostingStatus ?? "requested");
+      setHostingUrl(data.transfer.hostingUrl ?? null);
+      toast.success("Managed hosting setup requested.");
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Hosting setup could not be requested."
+      );
+    } finally {
+      setRequestingHosting(false);
+    }
+  }
 
   const selectedProvider = PROVIDER_PORTALS.find(
     (provider) => provider.key === providerKey
@@ -266,6 +307,141 @@ export function DomainConnect() {
     } finally {
       setSaving(false);
     }
+  }
+
+  if (isCutover) {
+    return (
+      <div className="mx-auto max-w-4xl space-y-5">
+        <section className="rounded-2xl border-2 border-blue-300 bg-white p-6 shadow-sm">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-semibold tracking-[0.16em] text-blue-700 uppercase">
+                Final step — hosting and DNS
+              </p>
+              <h1 className="mt-2 text-2xl font-bold">
+                {hostingStatus === "requested"
+                  ? "AgentStack is preparing your hosted site"
+                  : hostingTargetReady
+                    ? "Your hosting target is ready"
+                    : "One action remains: request managed hosting"}
+              </h1>
+              <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-6">
+                {hostingStatus === "requested"
+                  ? "Your request is saved. Keep the current website and Cloudflare settings unchanged. AgentStack must create and verify the standalone URL and SSL before DNS instructions unlock."
+                  : hostingTargetReady
+                    ? "AgentStack verified the hosted replacement. Continue with the provider-specific DNS checklist below."
+                    : "AgentStack needs to create a standalone hosted destination for the approved replacement. You do not need to open Vercel, transfer the domain, or change Cloudflare yet."}
+              </p>
+            </div>
+            <span className="rounded-full bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-800">
+              Step 5 of 5
+            </span>
+          </div>
+
+          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            <CutoverStatus
+              label="Replacement"
+              value={replacementApproved ? "Approved" : "Approval required"}
+              complete={replacementApproved}
+            />
+            <CutoverStatus
+              label="Managed hosting"
+              value={
+                hostingTargetReady
+                  ? "Verified"
+                  : hostingStatus === "requested"
+                    ? "Setup requested"
+                    : "Action required"
+              }
+              complete={hostingTargetReady}
+            />
+            <CutoverStatus
+              label="DNS provider"
+              value={detectedDnsProvider ?? "Cloudflare"}
+              complete={Boolean(detectedDnsProvider)}
+            />
+          </div>
+
+          {!hostingTargetReady ? (
+            <div className="mt-6 rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-950">
+              <p className="text-sm font-semibold">Do not change DNS yet</p>
+              <p className="mt-1 text-xs leading-5">
+                The existing site and email remain live. DNS records will appear
+                here only after AgentStack verifies the dedicated hosting
+                destination.
+              </p>
+            </div>
+          ) : null}
+
+          <div className="mt-6 flex flex-wrap gap-2">
+            {hostingStatus === "not_requested" ? (
+              <Button
+                type="button"
+                onClick={requestManagedHosting}
+                disabled={requestingHosting || !replacementApproved}
+              >
+                {requestingHosting ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Server className="mr-2 h-4 w-4" />
+                )}
+                Request AgentStack managed hosting
+              </Button>
+            ) : hostingStatus === "requested" ? (
+              <Button type="button" disabled>
+                <CheckCircle2 className="mr-2 h-4 w-4" /> Hosting request saved
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                onClick={() => setProviderKey("cloudflare")}
+              >
+                Open exact Cloudflare cutover checklist
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              render={<Link href={saPath("/website-transfer-preview")} />}
+            >
+              Back to comparison
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() =>
+                openAskAssistant({
+                  prompt:
+                    "Explain the current hosting and DNS cutover status in plain language. Tell me only the next action I need to take and do not send me to an external dashboard.",
+                })
+              }
+            >
+              Ask Zack what this means
+            </Button>
+          </div>
+        </section>
+
+        <section className="rounded-2xl border bg-slate-50 p-5">
+          <h2 className="font-semibold">What AgentStack does next</h2>
+          <ol className="mt-3 grid gap-3 text-sm sm:grid-cols-3">
+            {[
+              "Create the isolated hosted deployment",
+              "Verify the private URL and SSL certificate",
+              "Unlock only the Cloudflare records you need",
+            ].map((step, index) => (
+              <li
+                key={step}
+                className="flex gap-3 rounded-xl border bg-white p-3"
+              >
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#173b7a] text-xs font-bold text-white">
+                  {index + 1}
+                </span>
+                {step}
+              </li>
+            ))}
+          </ol>
+        </section>
+      </div>
+    );
   }
 
   return (

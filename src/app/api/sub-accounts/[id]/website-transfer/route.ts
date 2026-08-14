@@ -121,6 +121,9 @@ export async function POST(
     error: null,
     privatePreviewPath: null,
     approvedAt: null,
+    hostingStatus: "not_requested",
+    hostingRequestedAt: null,
+    hostingUrl: null,
     createdAt: now,
     updatedAt: now,
   };
@@ -177,14 +180,30 @@ export async function PATCH(
   const access = await requireSubAccountAdmin(request, id);
   if (access instanceof NextResponse) return access;
   const body = (await request.json().catch(() => ({}))) as { action?: string };
-  if (body.action !== "approve")
+  if (!body.action || !["approve", "request_hosting"].includes(body.action))
     return NextResponse.json({ error: "Unsupported action." }, { status: 400 });
   const ref = getAdminDb().doc(`subAccounts/${id}/websiteTransfers/current`);
   const snap = await ref.get();
-  if (
-    !snap.exists ||
-    !["preview_ready", "approved"].includes(String(snap.data()?.status))
-  )
+  if (!snap.exists)
+    return NextResponse.json(
+      { error: "Create and review the private preview first." },
+      { status: 409 }
+    );
+  if (body.action === "request_hosting") {
+    if (snap.data()?.status !== "approved")
+      return NextResponse.json(
+        { error: "Approve the private replacement before requesting hosting." },
+        { status: 409 }
+      );
+    await ref.update({
+      hostingStatus: "requested",
+      hostingRequestedAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    });
+    const updated = await ref.get();
+    return NextResponse.json({ transfer: serialize(updated.data()!) });
+  }
+  if (!["preview_ready", "approved"].includes(String(snap.data()?.status)))
     return NextResponse.json(
       { error: "Create and review the private preview first." },
       { status: 409 }
