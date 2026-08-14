@@ -20,6 +20,10 @@ import {
   type BusinessProfileContent,
 } from "@/types/business-profile";
 import type { WebsiteTransferDoc } from "@/types/website-transfer";
+import {
+  getCutoverGuidance,
+  hostingIsReady,
+} from "@/lib/assistant/cutover-guidance";
 
 /**
  * POST /api/assistant
@@ -135,6 +139,9 @@ function websiteTransferContext(value: unknown, question: string): string {
   return `\n\n--- WEBSITE REPLACEMENT AUDIT CONTEXT ---
 Transfer status: ${transfer.status ?? "unknown"}
 Private comparison: ${transfer.privatePreviewPath ? "ready" : "not ready"}
+Managed hosting status: ${transfer.hostingStatus ?? "not_requested"}
+Verified hosting URL: ${transfer.hostingUrl?.trim() || "not available"}
+DNS cutover: ${hostingIsReady(transfer) ? "unlocked" : "LOCKED — do not change DNS records or nameservers"}
 ${lines.join("\n")}
 The left pane is the live source. The right pane is AgentStack's isolated replacement rendering. Forms, third-party scripts, analytics, and live data are intentionally disabled until approval. Do not ask the operator to restate facts already present here, in the approved screen context, or in the Business Blueprint. Do not claim a pixel-perfect visual check that the evidence cannot prove. Separate the result into: Verified by AgentStack; Needs your visual approval; Cannot be tested until connected. End with one next action.
 --- END WEBSITE REPLACEMENT AUDIT CONTEXT ---`;
@@ -189,6 +196,7 @@ export async function POST(request: Request) {
 
   // Optional tenancy context — verify membership before reading the profile.
   let context = "";
+  let currentTransfer: Partial<WebsiteTransferDoc> | null = null;
   const subAccountId =
     typeof body.subAccountId === "string" && body.subAccountId.trim()
       ? body.subAccountId.trim()
@@ -201,7 +209,9 @@ export async function POST(request: Request) {
         .doc(`subAccounts/${subAccountId}/businessProfile/main`)
         .get(),
       getAdminDb().doc(`subAccounts/${subAccountId}`).get(),
-      currentPath.includes("/website-transfer-preview")
+      currentPath.includes("/website-transfer-preview") ||
+      currentPath.includes("/domain?stage=cutover") ||
+      currentPath.includes("/website-studio")
         ? getAdminDb()
             .doc(`subAccounts/${subAccountId}/websiteTransfers/current`)
             .get()
@@ -216,10 +226,24 @@ export async function POST(request: Request) {
         compileBusinessProfilePrompt(profile) ?? profileContext(profile);
     }
     context += foundationContext(workspaceSnap.data()?.onboardingFoundation);
-    if (transferSnap?.exists)
-      context += websiteTransferContext(transferSnap.data(), question);
+    if (transferSnap?.exists) {
+      currentTransfer = transferSnap.data() as Partial<WebsiteTransferDoc>;
+      context += websiteTransferContext(currentTransfer, question);
+    }
   }
   context += screenContext(body.screenContext);
+
+  const asksAboutCutover =
+    currentPath.includes("/domain?stage=cutover") &&
+    /hosting|dns|cutover|nameserver|next action|what (?:does|this) mean/i.test(
+      question
+    );
+  if (asksAboutCutover) {
+    return NextResponse.json({
+      answer: getCutoverGuidance(currentTransfer),
+      action: null,
+    });
+  }
 
   const studioRails =
     mode === "studio"
@@ -245,6 +269,8 @@ You may PROPOSE one controlled action only when the operator clearly asks you to
 - set_feature_gate: feature is broadcastsEnabled, outboundVoiceEnabled, whatsappEnabled, metaInboxEnabled, websiteEnabled, websiteStudioEnabled, socialPlannerEnabled, communityEnabled, idxEnabled, apiAccessEnabled, or emailDomainEnabled; enabled boolean. Agency-owner permission is required and the server will enforce it.
 
 Never propose actions for billing, purchases, deletion, publishing, sending communications, credentials, member access, or data imports. Explain those steps instead.
+
+HOSTING AND DNS SAFETY: Saved website-transfer state overrides generic route assumptions and chat history. Never say a replacement is hosted, live, SSL-verified, or ready for DNS unless Managed hosting status is ready AND Verified hosting URL is present. While DNS cutover is LOCKED, the only correct operator action is to leave DNS records and nameservers unchanged and wait inside AgentStack for the verified records to appear.
 
 Return ONLY a JSON object in this exact shape:
 {"answer":"Your concise response","action":null}
