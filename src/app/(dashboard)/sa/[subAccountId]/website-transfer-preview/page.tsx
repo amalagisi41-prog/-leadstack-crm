@@ -168,6 +168,7 @@ export default function WebsiteTransferPreviewPage() {
               src={selected.url}
               device={device}
               status="Read-only live source"
+              sandbox="allow-scripts allow-same-origin"
             />
             <Frame
               title="Private coded replacement"
@@ -178,6 +179,7 @@ export default function WebsiteTransferPreviewPage() {
                   ? "Interactive items need approval"
                   : "Visual copy ready"
               }
+              sandbox="allow-same-origin"
             />
           </div>
           <section className="sticky bottom-4 z-10 flex flex-col gap-4 rounded-2xl border border-blue-200 bg-white/95 p-4 shadow-lg backdrop-blur sm:flex-row sm:items-center sm:justify-between">
@@ -232,11 +234,13 @@ function Frame({
   src,
   device,
   status,
+  sandbox,
 }: {
   title: string;
   src: string;
   device: "desktop" | "mobile";
   status?: string;
+  sandbox?: string;
 }) {
   return (
     <div className="overflow-hidden rounded-2xl border">
@@ -253,7 +257,7 @@ function Frame({
           title={title}
           src={src}
           className={`mx-auto h-[70vh] bg-white shadow-sm transition-[width] ${device === "mobile" ? "w-[390px] max-w-full" : "w-full"}`}
-          sandbox="allow-same-origin"
+          sandbox={sandbox}
         />
       </div>
     </div>
