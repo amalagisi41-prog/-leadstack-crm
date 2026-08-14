@@ -58,10 +58,36 @@ export async function GET(
     }
   }
   const customCss = String(snapshot.data()?.customCss ?? "");
+  const transferData = transfer.data() ?? {};
+  const inventory = (transferData.inventory ?? {}) as {
+    stylesheets?: unknown;
+  };
+  const stylesheetLinks = Array.isArray(inventory.stylesheets)
+    ? inventory.stylesheets
+        .filter((value): value is string => {
+          try {
+            return /^https?:$/.test(new URL(value).protocol);
+          } catch {
+            return false;
+          }
+        })
+        .slice(0, 24)
+        .map((href) => {
+          const safeHref = href.replace(/&/g, "&amp;").replace(/\"/g, "&quot;");
+          return '<link rel="stylesheet" href="' + safeHref + '">';
+        })
+        .join("")
+    : "";
+  const sourceUrl =
+    typeof transferData.sourceUrl === "string" ? transferData.sourceUrl : "";
+  const baseTag = sourceUrl
+    ? '<base href="' + sourceUrl.replace(/\"/g, "&quot;") + '">'
+    : "";
+  const styleBootstrap = baseTag + stylesheetLinks;
   const buildMarker = `<meta name="agentstack-build" content="private-replacement"><meta name="robots" content="noindex,nofollow"><style id="agentstack-replacement-safety">form{pointer-events:none}button,input,select,textarea{cursor:not-allowed}</style><style id="agentstack-ai-code-overrides">${customCss.replace(/<\/style/gi, "<\\/style")}</style>`;
   const replacement = /<head[^>]*>/i.test(html)
-    ? html.replace(/<head([^>]*)>/i, `<head$1>${buildMarker}`)
-    : `${buildMarker}${html}`;
+    ? html.replace(/<head([^>]*)>/i, "<head$1>" + styleBootstrap + buildMarker)
+    : styleBootstrap + buildMarker + html;
 
   return new NextResponse(replacement, {
     headers: {
