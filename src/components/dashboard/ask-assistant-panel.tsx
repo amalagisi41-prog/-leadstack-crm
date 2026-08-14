@@ -2,10 +2,21 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Bot, Check, Loader2, Send, ShieldCheck, Sparkles, X } from "lucide-react";
+import {
+  Bot,
+  Check,
+  Eye,
+  EyeOff,
+  Loader2,
+  Send,
+  ShieldCheck,
+  Sparkles,
+  X,
+} from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import type { ZackAction } from "@/lib/assistant/actions";
+import { cleanAssistantAnswer } from "@/lib/assistant/response";
 
 /**
  * "Ask Zack" — the operator's AI assistant, available on every
@@ -35,11 +46,18 @@ export function openAskAssistant(options?: OpenAskAssistantOptions) {
   window.dispatchEvent(
     new CustomEvent<OpenAskAssistantOptions>(OPEN_EVENT, {
       detail: options ?? {},
-    }),
+    })
   );
 }
 
-const STUDIO_PATHS = ["/website-studio", "/social", "/funnels", "/broadcasts", "/templates", "/website"];
+const STUDIO_PATHS = [
+  "/website-studio",
+  "/social",
+  "/funnels",
+  "/broadcasts",
+  "/templates",
+  "/website",
+];
 
 const CRM_SUGGESTIONS = [
   "Write a follow-up email for a buyer who went quiet",
@@ -69,6 +87,7 @@ export function AskAssistantPanel() {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState(false);
+  const [screenContextAllowed, setScreenContextAllowed] = useState(false);
   const [actionState, setActionState] = useState<
     Record<number, "running" | "done" | "error">
   >({});
@@ -79,6 +98,15 @@ export function AskAssistantPanel() {
   const subAccountId = pathname?.match(/^\/sa\/([^/]+)/)?.[1] ?? null;
   const isStudio = STUDIO_PATHS.some((p) => pathname?.includes(p));
   const suggestions = isStudio ? STUDIO_SUGGESTIONS : CRM_SUGGESTIONS;
+
+  const readVisibleScreen = useCallback((): string | undefined => {
+    if (!screenContextAllowed) return undefined;
+    const main = document.querySelector("main");
+    const visibleText = (main?.textContent ?? document.body.textContent ?? "")
+      .replace(/\s+/g, " ")
+      .trim();
+    return visibleText ? visibleText.slice(0, 12000) : undefined;
+  }, [screenContextAllowed]);
 
   useEffect(() => {
     function onOpen(e: Event) {
@@ -120,6 +148,7 @@ export function AskAssistantPanel() {
             mode: isStudio ? "studio" : "crm",
             firstName,
             currentPath: `${pathname}${window.location.search}`,
+            screenContext: readVisibleScreen(),
           }),
         });
         const data = (await res.json()) as {
@@ -131,20 +160,35 @@ export function AskAssistantPanel() {
           ...m,
           {
             role: "assistant",
-            content: res.ok && data.answer ? data.answer : (data.error ?? "Something went wrong — try again."),
+            content:
+              res.ok && data.answer
+                ? cleanAssistantAnswer(data.answer)
+                : (data.error ?? "Something went wrong — try again."),
             action: res.ok ? data.action : null,
           },
         ]);
       } catch {
         setMessages((m) => [
           ...m,
-          { role: "assistant", content: "I couldn't reach the server. Check your connection and try again." },
+          {
+            role: "assistant",
+            content:
+              "I couldn't reach the server. Check your connection and try again.",
+          },
         ]);
       } finally {
         setThinking(false);
       }
     },
-    [messages, thinking, subAccountId, isStudio, firstName, pathname],
+    [
+      messages,
+      thinking,
+      subAccountId,
+      isStudio,
+      firstName,
+      pathname,
+      readVisibleScreen,
+    ]
   );
 
   useEffect(() => {
@@ -185,7 +229,8 @@ export function AskAssistantPanel() {
         const data = (await response.json().catch(() => ({}))) as {
           error?: string;
         };
-        if (!response.ok) throw new Error(data.error ?? "The change could not be applied.");
+        if (!response.ok)
+          throw new Error(data.error ?? "The change could not be applied.");
       }
       setActionState((state) => ({ ...state, [messageIndex]: "done" }));
       setMessages((items) => [
@@ -217,34 +262,67 @@ export function AskAssistantPanel() {
         className="fixed inset-0 z-40 bg-black/20 md:bg-transparent"
       />
       <aside
-        className="fixed inset-y-0 right-0 z-50 flex w-full max-w-[400px] flex-col border-l bg-card shadow-2xl"
+        className="bg-card fixed inset-y-0 right-0 z-50 flex w-full max-w-[400px] flex-col border-l shadow-2xl"
         role="dialog"
         aria-label={`Ask ${ASSISTANT_NAME}`}
       >
         {/* header */}
-        <div className="flex shrink-0 items-center justify-between gap-3 bg-primary px-4 py-3.5 text-primary-foreground">
+        <div className="bg-primary text-primary-foreground flex shrink-0 items-center justify-between gap-3 px-4 py-3.5">
           <div className="flex items-center gap-3">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-rose-600">
               <Bot className="h-5 w-5 text-white" />
             </span>
             <div>
-              <p className="font-semibold leading-tight">{ASSISTANT_NAME}</p>
-              <p className="text-xs text-primary-foreground/60">Ask me anything</p>
+              <p className="leading-tight font-semibold">{ASSISTANT_NAME}</p>
+              <p className="text-primary-foreground/60 text-xs">
+                Ask me anything
+              </p>
             </div>
           </div>
           <button
             onClick={() => setOpen(false)}
             aria-label="Close"
-            className="rounded-md p-1.5 text-primary-foreground/70 transition-colors hover:bg-white/10 hover:text-primary-foreground"
+            className="text-primary-foreground/70 hover:text-primary-foreground rounded-md p-1.5 transition-colors hover:bg-white/10"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
+        <div className="bg-muted/30 shrink-0 border-b px-3 py-2">
+          <button
+            type="button"
+            aria-pressed={screenContextAllowed}
+            onClick={() => setScreenContextAllowed((allowed) => !allowed)}
+            className={cn(
+              "flex min-h-9 w-full items-center justify-between gap-3 rounded-lg border px-3 text-left text-xs transition-colors",
+              screenContextAllowed
+                ? "border-emerald-300 bg-emerald-50 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-100"
+                : "bg-background text-muted-foreground hover:bg-muted"
+            )}
+          >
+            <span className="flex items-center gap-2 font-medium">
+              {screenContextAllowed ? (
+                <Eye className="h-3.5 w-3.5" />
+              ) : (
+                <EyeOff className="h-3.5 w-3.5" />
+              )}
+              {screenContextAllowed
+                ? "Zack can use this screen"
+                : "Allow Zack to use this screen"}
+            </span>
+            <span>{screenContextAllowed ? "On" : "Off"}</span>
+          </button>
+          <p className="text-muted-foreground mt-1 px-1 text-[11px] leading-4">
+            Shares visible page text and saved transfer details with Zack for
+            this chat. Turn it off anytime.
+          </p>
+        </div>
+
         {/* thread */}
         <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto p-4">
           <AssistantBubble>
-            Hi{firstName ? ` ${firstName}` : ""}! I&apos;m Zack, your AgentStack assistant.
+            Hi{firstName ? ` ${firstName}` : ""}! I&apos;m Zack, your AgentStack
+            assistant.
             {isStudio
               ? " I'm also your marketing and design assistant here in the Studio — ask me for listing copy, captions, campaign ideas, or design advice."
               : " I know your business and your goals. Ask me anything — I can write emails, prep you for appointments, or tell you what to do next."}
@@ -262,8 +340,8 @@ export function AskAssistantPanel() {
                     onDecline={() =>
                       setMessages((items) =>
                         items.map((item, index) =>
-                          index === i ? { ...item, action: null } : item,
-                        ),
+                          index === i ? { ...item, action: null } : item
+                        )
                       )
                     }
                   />
@@ -271,11 +349,11 @@ export function AskAssistantPanel() {
               </div>
             ) : (
               <div key={i} className="flex justify-end">
-                <div className="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-br-sm bg-foreground px-3.5 py-2.5 text-sm text-background">
+                <div className="bg-foreground text-background max-w-[85%] rounded-2xl rounded-br-sm px-3.5 py-2.5 text-sm whitespace-pre-wrap">
                   {m.content}
                 </div>
               </div>
-            ),
+            )
           )}
 
           {thinking && (
@@ -294,7 +372,7 @@ export function AskAssistantPanel() {
                 <button
                   key={s}
                   onClick={() => void ask(s)}
-                  className="flex items-center gap-2 rounded-full border bg-background px-3.5 py-2 text-left text-xs transition-colors hover:bg-muted"
+                  className="bg-background hover:bg-muted flex items-center gap-2 rounded-full border px-3.5 py-2 text-left text-xs transition-colors"
                 >
                   <Sparkles className="h-3.5 w-3.5 shrink-0 text-rose-500" />
                   {s}
@@ -324,7 +402,7 @@ export function AskAssistantPanel() {
                 void ask(input);
               }
             }}
-            className="max-h-32 min-h-[44px] flex-1 resize-none rounded-full border bg-muted/60 px-4 py-2.5 text-sm outline-none placeholder:text-muted-foreground/60 focus:border-rose-500/50 focus:ring-1 focus:ring-rose-500/30"
+            className="bg-muted/60 placeholder:text-muted-foreground/60 max-h-32 min-h-[44px] flex-1 resize-none rounded-full border px-4 py-2.5 text-sm outline-none focus:border-rose-500/50 focus:ring-1 focus:ring-rose-500/30"
           />
           <button
             type="submit"
@@ -400,7 +478,7 @@ function AssistantBubble({ children }: { children: React.ReactNode }) {
       <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-rose-600">
         <Sparkles className="h-3.5 w-3.5 text-white" />
       </span>
-      <div className="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-tl-sm border bg-background px-3.5 py-2.5 text-sm leading-relaxed">
+      <div className="bg-background max-w-[85%] rounded-2xl rounded-tl-sm border px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap">
         {children}
       </div>
     </div>
@@ -410,7 +488,7 @@ function AssistantBubble({ children }: { children: React.ReactNode }) {
 function Dot({ delay }: { delay: string }) {
   return (
     <span
-      className="h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/60"
+      className="bg-muted-foreground/60 h-1.5 w-1.5 animate-bounce rounded-full"
       style={{ animationDelay: delay }}
     />
   );
@@ -422,8 +500,8 @@ export function AskAssistantButton({ className }: { className?: string }) {
     <button
       onClick={() => openAskAssistant()}
       className={cn(
-        "flex items-center gap-1.5 rounded-full border bg-card px-3.5 py-2 text-sm font-medium transition-colors hover:bg-muted",
-        className,
+        "bg-card hover:bg-muted flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm font-medium transition-colors",
+        className
       )}
     >
       <Sparkles className="h-3.5 w-3.5 text-rose-500" />
