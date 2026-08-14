@@ -106,6 +106,43 @@ export function classlessSemanticLayoutStyles(): string {
   return `main>div>div>header{position:relative;display:block;padding:0;background:#0b1f2a;color:#fff}main>div>div>header>nav{position:absolute;top:0;left:0;right:0;z-index:20;padding:24px clamp(20px,5vw,80px)}main>div>div>header>section:first-of-type{position:relative;display:flex;flex-direction:column;justify-content:center;min-height:720px;overflow:hidden;padding:150px 20px 90px;text-align:center;color:#fff;background:#0b1f2a}main>div>div>header>section:first-of-type>div:first-child{position:absolute;inset:0;z-index:0}main>div>div>header>section:first-of-type img[alt*="drone"]{display:block;width:100%;height:100%;object-fit:cover;opacity:.78}main>div>div>header>section:first-of-type>div:nth-child(2){position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:18px}main>div>div>header>section:first-of-type h1{max-width:1000px;margin:0;color:#fff;font-size:clamp(42px,6vw,88px);font-weight:800;line-height:.98;letter-spacing:-.04em;text-shadow:0 3px 18px rgba(0,0,0,.35)}main>div>div>header>section:first-of-type h1 span{white-space:pre-line}main>div>div>header>section:first-of-type h1+div{font-size:clamp(16px,2vw,24px);font-weight:700}main>div>div>header>section:first-of-type form{display:flex;width:min(800px,92vw);margin-top:12px;background:#fff;border-radius:8px;overflow:hidden}main>div>div>header>section:first-of-type form input{flex:1;min-width:0;border:0;padding:20px;font-size:16px;color:#18303a}main>div>div>header>section:first-of-type form button{width:76px;border:0;background:#0b2944}main>div>div>header>section:first-of-type>div:nth-child(3) a{display:inline-block;padding:16px 32px;background:#0b2944;color:#fff;font-weight:800;letter-spacing:.04em;text-decoration:none}main>div>div>header>section>section[data-ahn-home-listings]{padding:14px 0 24px;background:#fff}main>div>div>header>section>section[data-ahn-home-listings]>div:first-child{text-align:center;color:#d4ad42;font-weight:800;letter-spacing:.2em}@media(max-width:767px){main>div>div>header>section:first-of-type{min-height:680px;padding-top:130px}main>div>div>header>section:first-of-type h1{font-size:42px}}`;
 }
 
+/** Keep captured contact controls, chat, and IDX cards usable without their source scripts. */
+export function classlessEmbeddedWidgetStyles(): string {
+  return `
+main>div>div>header>nav>div:nth-of-type(2) a:first-child{border:1px solid rgba(255,255,255,.25);background:rgba(11,31,42,.48);color:#fff}
+main>div>div>header>nav>div:nth-of-type(3){display:none}
+main>div>div>header>nav>div:nth-of-type(3) a[aria-label="Call us"],main>div>div>header>nav>div:nth-of-type(3) button[aria-label="Open menu"]{align-items:center;justify-content:center;width:42px;height:42px;padding:0;border:1px solid rgba(255,255,255,.35);border-radius:999px;background:rgba(11,31,42,.72);color:#fff;text-decoration:none;box-sizing:border-box}
+main>div>div>header>nav>div:nth-of-type(3) a[aria-label="Call us"]::before{content:"☎";font-size:17px;line-height:1}
+main>div>div>header>nav>div:nth-of-type(3) button[aria-label="Open menu"]::before{content:"☰";font-size:20px;line-height:1}
+
+chat-widget{display:block!important;position:fixed!important;right:20px!important;bottom:20px!important;z-index:1000!important;width:auto!important;height:auto!important;pointer-events:none}
+chat-widget>div{display:block!important}
+chat-widget .lc_text-widget{display:block!important;position:relative!important;right:auto!important;bottom:auto!important;width:min(360px,calc(100vw - 40px));font-family:inherit;pointer-events:auto}
+chat-widget .lc_text-widget--prompt{display:flex!important;align-items:center;gap:10px;min-height:56px;padding:12px 14px;border:1px solid rgba(20,40,52,.14);border-radius:16px;background:#fff;box-shadow:0 10px 28px rgba(15,35,48,.2);box-sizing:border-box}
+chat-widget .lc_text-widget_prompt--msg-bubble{display:flex!important;align-items:center;gap:10px;min-width:0;color:#18303a;font-size:14px;line-height:1.3}
+chat-widget .lc_text-widget_prompt--avatar{display:block!important;flex:0 0 40px;width:40px;height:40px;border-radius:50%;object-fit:cover}
+chat-widget .lc_text-widget_prompt--prompt-text{display:block!important;flex:1;min-width:0}
+chat-widget .lc_text-widget_prompt--prompt-close{display:flex!important;align-items:center;justify-content:center;flex:0 0 26px;width:26px;height:26px;padding:0;border:0;border-radius:50%;background:#eff3f5;color:#18303a}
+chat-widget .lc_text-widget_prompt--prompt-close svg{width:14px!important;height:14px!important;fill:#18303a!important}
+
+main>div>div>header>section>section[data-ahn-home-listings]{contain:layout paint;overflow:hidden}
+main>div>div>header>section>section[data-ahn-home-listings]>div:nth-child(2),main>div>div>header>section>section[data-ahn-home-listings]>div:nth-child(2)>div{width:100%;max-width:100%;min-width:0;box-sizing:border-box}
+idx-listings-carousel{display:block!important;width:100%;max-width:100%;min-width:0;overflow:hidden;box-sizing:border-box}
+idx-listings-carousel .idx-listings-carousel{display:block!important;width:100%;max-width:100%;min-width:0;box-sizing:border-box}
+idx-listings-carousel .idx-listings-carousel__properties{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;width:100%;max-width:100%;padding:16px clamp(16px,5vw,80px);box-sizing:border-box}
+idx-listings-carousel .idx-listings-carousel__property{display:block!important;width:auto!important;min-width:0!important;max-width:100%;box-sizing:border-box;overflow:hidden;border:1px solid rgba(24,48,58,.12);border-radius:10px;background:#fff;box-shadow:0 3px 12px rgba(24,48,58,.08)}
+idx-listings-carousel .idx-listing-card__wrap{position:relative;display:block;width:100%;min-width:0;box-sizing:border-box}
+idx-listings-carousel .idx-listing-card__image--wrap{position:relative;width:100%;aspect-ratio:4/3;overflow:hidden;box-sizing:border-box}
+idx-listings-carousel .idx-listing-card__image{display:block!important;width:100%!important;height:100%!important;max-width:100%;object-fit:cover;box-sizing:border-box}
+idx-listings-carousel .idx-listing-card__link{position:absolute;inset:0;z-index:2;display:block}
+idx-listings-carousel .idx-listing-card__details,idx-listings-carousel .idx-listing-card__additional-info{max-width:100%;min-width:0;padding:10px 12px;box-sizing:border-box;overflow-wrap:anywhere}
+idx-listings-carousel .idx-listing-card__core-fields{display:flex;flex-wrap:wrap;gap:6px}
+idx-listings-carousel .idx-listing-card__mls img{display:block;max-width:80px;height:auto;object-fit:contain}
+@media(max-width:900px){idx-listings-carousel .idx-listings-carousel__properties{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:12px 16px}}
+@media(max-width:767px){main>div>div>header>nav>div:nth-of-type(2){display:none}main>div>div>header>nav>div:nth-of-type(3){display:flex;gap:8px}main>div>div>header>nav>div:nth-of-type(3) a[aria-label="Call us"],main>div>div>header>nav>div:nth-of-type(3) button[aria-label="Open menu"]{display:flex}idx-listings-carousel .idx-listings-carousel__properties{grid-template-columns:minmax(0,1fr);padding:12px 16px}chat-widget{right:12px!important;bottom:12px!important}chat-widget .lc_text-widget{width:min(340px,calc(100vw - 24px))}}
+`;
+}
+
 async function fetchStylesheet(url: string): Promise<string> {
   try {
     const response = await fetch(url, {

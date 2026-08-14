@@ -9,6 +9,7 @@ import {
   inlineStylesheetAssets,
   classlessSnapshotStyles,
   classlessSemanticLayoutStyles,
+  classlessEmbeddedWidgetStyles,
   normalizeCapturedStylesheetLinks,
   removeCapturedCsp,
 } from "@/lib/website-transfer/styles";
@@ -122,7 +123,7 @@ export async function GET(
     : "";
   const baseClasslessCss = classlessSnapshotStyles(html);
   const classlessCss = baseClasslessCss
-    ? baseClasslessCss + classlessSemanticLayoutStyles()
+    ? baseClasslessCss + classlessSemanticLayoutStyles() + classlessEmbeddedWidgetStyles()
     : "";
   const classlessStyleTag = classlessCss
     ? '<style id="agentstack-classless-fallback">' + classlessCss + '</style>'
