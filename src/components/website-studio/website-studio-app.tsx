@@ -24,6 +24,7 @@ import { DesignerChat } from "./designer-chat";
 import { ContentEditor } from "./content-editor";
 import { BusinessSetupAssistant } from "./business-setup-assistant";
 import { AgentSiteRenderer } from "./agent-site-renderer";
+import { ExactTransferStudio } from "./exact-transfer-studio";
 import {
   AGENT_SITE_TEMPLATE_LIST,
   getTemplate,
@@ -35,6 +36,7 @@ import {
   type AgentSiteDoc,
   type AgentSiteTemplateId,
 } from "@/types/agent-site";
+import type { WebsiteTransferDoc } from "@/types/website-transfer";
 
 const DESIGN_WIDTH = 1080;
 
@@ -57,7 +59,10 @@ export function WebsiteStudioApp() {
   const [publishing, setPublishing] = useState(false);
   const [mode, setMode] = useState<"designer" | "edit">("designer");
   const [savingDraft, setSavingDraft] = useState(false);
-  const [view, setView] = useState<"builder" | "vibe" | "setup">("builder");
+  const [view, setView] = useState<"exact" | "builder" | "vibe" | "setup">(
+    "builder"
+  );
+  const [transfer, setTransfer] = useState<WebsiteTransferDoc | null>(null);
   const [foundationReady, setFoundationReady] = useState(false);
   const [foundationLoaded, setFoundationLoaded] = useState(false);
 
@@ -87,9 +92,10 @@ export function WebsiteStudioApp() {
     let active = true;
     (async () => {
       try {
-        const [res, foundationRes] = await Promise.all([
+        const [res, foundationRes, transferRes] = await Promise.all([
           fetch(`/api/sub-accounts/${subAccountId}/agent-site`),
           fetch(`/api/sub-accounts/${subAccountId}/onboarding-foundation`),
+          fetch(`/api/sub-accounts/${subAccountId}/website-transfer`),
         ]);
         const data = (await res.json()) as { site: AgentSiteDoc | null };
         const foundationData = (await foundationRes
@@ -102,6 +108,9 @@ export function WebsiteStudioApp() {
             hostingSetupConfirmed?: boolean;
           };
         };
+        const transferData = (await transferRes.json().catch(() => ({}))) as {
+          transfer?: WebsiteTransferDoc | null;
+        };
         if (!active) return;
         const ready = Boolean(
           foundationData.foundation?.domainStartingPoint &&
@@ -112,6 +121,7 @@ export function WebsiteStudioApp() {
         );
         setFoundationReady(ready);
         setFoundationLoaded(true);
+        setTransfer(transferData.transfer ?? null);
         if (!ready) setView("setup");
         let loadedSite = data.site;
         if (loadedSite && ready) {
@@ -135,6 +145,14 @@ export function WebsiteStudioApp() {
         if (loadedSite) {
           setContent(loadedSite.content);
           if (ready) setView("vibe");
+        }
+        if (
+          ready &&
+          transferData.transfer &&
+          (transferData.transfer.snapshotVersion ?? 1) >= 2 &&
+          ["preview_ready", "approved"].includes(transferData.transfer.status)
+        ) {
+          setView("exact");
         }
       } catch {
         // Network/parse failure — fall through to the empty-site state
@@ -263,6 +281,17 @@ export function WebsiteStudioApp() {
 
   const tabRow = (
     <div className="flex w-fit items-center gap-1 rounded-lg border p-1">
+      {transfer &&
+      (transfer.snapshotVersion ?? 1) >= 2 &&
+      ["preview_ready", "approved"].includes(transfer.status) ? (
+        <button
+          type="button"
+          onClick={() => setView("exact")}
+          className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${view === "exact" ? "bg-emerald-700 text-white" : "text-emerald-700 hover:text-emerald-900"}`}
+        >
+          Imported exact site
+        </button>
+      ) : null}
       <button
         type="button"
         onClick={() => setView("builder")}
@@ -298,6 +327,15 @@ export function WebsiteStudioApp() {
       </button>
     </div>
   );
+
+  if (view === "exact" && transfer) {
+    return (
+      <div className="space-y-4">
+        {tabRow}
+        <ExactTransferStudio transfer={transfer} />
+      </div>
+    );
+  }
 
   if (view === "setup") {
     return (
