@@ -37,6 +37,11 @@ import {
   type AgentSiteTemplateId,
 } from "@/types/agent-site";
 import type { WebsiteTransferDoc } from "@/types/website-transfer";
+import {
+  getInitialWebsiteStudioView,
+  hasImportedExactSite,
+  type WebsiteStudioView,
+} from "@/lib/website-studio/initial-view";
 
 const DESIGN_WIDTH = 1080;
 
@@ -59,9 +64,7 @@ export function WebsiteStudioApp() {
   const [publishing, setPublishing] = useState(false);
   const [mode, setMode] = useState<"designer" | "edit">("designer");
   const [savingDraft, setSavingDraft] = useState(false);
-  const [view, setView] = useState<"exact" | "builder" | "vibe" | "setup">(
-    "builder"
-  );
+  const [view, setView] = useState<WebsiteStudioView>("builder");
   const [transfer, setTransfer] = useState<WebsiteTransferDoc | null>(null);
   const [foundationReady, setFoundationReady] = useState(false);
   const [foundationLoaded, setFoundationLoaded] = useState(false);
@@ -122,7 +125,6 @@ export function WebsiteStudioApp() {
         setFoundationReady(ready);
         setFoundationLoaded(true);
         setTransfer(transferData.transfer ?? null);
-        if (!ready) setView("setup");
         let loadedSite = data.site;
         if (loadedSite && ready) {
           const hydrateRes = await fetch(
@@ -144,16 +146,14 @@ export function WebsiteStudioApp() {
         setSite(loadedSite);
         if (loadedSite) {
           setContent(loadedSite.content);
-          if (ready) setView("vibe");
         }
-        if (
-          ready &&
-          transferData.transfer &&
-          (transferData.transfer.snapshotVersion ?? 1) >= 2 &&
-          ["preview_ready", "approved"].includes(transferData.transfer.status)
-        ) {
-          setView("exact");
-        }
+        setView(
+          getInitialWebsiteStudioView({
+            foundationReady: ready,
+            transfer: transferData.transfer,
+            hasTemplateSite: Boolean(loadedSite),
+          })
+        );
       } catch {
         // Network/parse failure — fall through to the empty-site state
         // (template gallery) instead of spinning forever.
@@ -281,9 +281,7 @@ export function WebsiteStudioApp() {
 
   const tabRow = (
     <div className="flex w-fit items-center gap-1 rounded-lg border p-1">
-      {transfer &&
-      (transfer.snapshotVersion ?? 1) >= 2 &&
-      ["preview_ready", "approved"].includes(transfer.status) ? (
+      {hasImportedExactSite(transfer) ? (
         <button
           type="button"
           onClick={() => setView("exact")}
