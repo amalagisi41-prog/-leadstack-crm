@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
-import { ArrowRight, CheckCircle2, Monitor, Smartphone } from "lucide-react";
+import { ArrowRight, CheckCircle2, Loader2, Monitor, Smartphone } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useSubAccount } from "@/context/sub-account-context";
 import type { WebsiteTransferDoc } from "@/types/website-transfer";
@@ -15,6 +15,7 @@ export function ExactTransferStudio({
   const { subAccountId, saPath } = useSubAccount();
   const [page, setPage] = useState(0);
   const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
+  const [approving, setApproving] = useState(false);
   const uniquePages = useMemo(() => {
     const seen = new Set<string>();
     return transfer.pages
@@ -29,36 +30,56 @@ export function ExactTransferStudio({
   const selected = selectedEntry?.item;
   const sourceIndex = selectedEntry?.index ?? 0;
 
+  async function approveBaseline() {
+    setApproving(true);
+    try {
+      const response = await fetch(
+        `/api/sub-accounts/${subAccountId}/website-transfer`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "approve_live_baseline" }),
+        }
+      );
+      const data = (await response.json().catch(() => ({}))) as {
+        transfer?: WebsiteTransferDoc;
+        error?: string;
+      };
+      if (!response.ok || !data.transfer)
+        throw new Error(data.error ?? "Approval could not be saved.");
+      toast.success("Live baseline approved. Opening Website Vibe Studio.");
+      window.location.href = saPath("/website-studio/vibe");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Approval could not be saved."
+      );
+    } finally {
+      setApproving(false);
+    }
+  }
+
   return (
     <div className="space-y-4">
-      <section className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-start gap-3">
-            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
-            <div>
-              <p className="font-semibold text-emerald-950">
-                Imported exact design
-              </p>
-              <p className="mt-1 max-w-3xl text-sm text-emerald-900/75">
-                This is the captured replacement—not an AgentStack template. Its
-                page HTML, CSS, fonts, colors, images, layout, and responsive
-                rules remain attached to the imported pages.
-              </p>
-            </div>
+      <section className="rounded-2xl border border-blue-200 bg-blue-50 p-5">
+        <div className="flex items-start gap-3">
+          <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-blue-700" />
+          <div>
+            <p className="font-semibold text-blue-950">Live-site baseline preview</p>
+            <p className="mt-1 max-w-3xl text-sm text-blue-900/75">
+              Review the current public website first. This read-only view does
+              not publish, replace, or connect anything. Website Vibe Studio
+              remains locked until you approve this baseline.
+            </p>
           </div>
-          <Button render={<Link href={saPath("/website-transfer-preview")} />}>
-            Open full comparison
-          </Button>
         </div>
       </section>
 
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-slate-50 p-3">
         <div>
-          <p className="text-sm font-semibold">Original and imported code</p>
+          <p className="text-sm font-semibold">Current live website</p>
           <p className="text-muted-foreground text-xs">
-            Choose every page and verify desktop and mobile before hosting.
-            Forms, analytics, and third-party scripts stay isolated until their
-            connections are approved.
+            Choose a page and check desktop and mobile rendering before starting
+            the connected Vibe build.
           </p>
         </div>
         <div className="flex rounded-lg border bg-white p-1">
@@ -93,69 +114,39 @@ export function ExactTransferStudio({
       </div>
 
       {selected ? (
-        <div className="grid gap-4 lg:grid-cols-2">
-          <TransferFrame
-            title="Original live page"
-            src={`/api/sub-accounts/${subAccountId}/website-transfer/preview?page=${sourceIndex}&live=1`}
-            device={device}
-          />
-          <TransferFrame
-            title="Imported exact replacement"
-            src={`/api/sub-accounts/${subAccountId}/website-transfer/replacement?page=${sourceIndex}`}
-            device={device}
-          />
+        <div className="overflow-hidden rounded-2xl border">
+          <div className="bg-muted px-4 py-2 text-xs font-semibold">
+            Live source · {selected.path}
+          </div>
+          <div className="overflow-auto bg-slate-100 p-2">
+            <iframe
+              title={`Live source ${selected.path}`}
+              src={`/api/sub-accounts/${subAccountId}/website-transfer/preview?page=${sourceIndex}&live=1`}
+              className={`mx-auto h-[76vh] bg-white shadow-sm transition-[width] ${device === "mobile" ? "w-[390px] max-w-full" : "w-full"}`}
+            />
+          </div>
         </div>
       ) : null}
 
       <section className="sticky bottom-4 z-10 flex flex-col gap-3 rounded-2xl border border-blue-200 bg-white/95 p-4 shadow-lg backdrop-blur sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="font-semibold">Exact-design workflow</p>
+          <p className="font-semibold">Approve the live baseline</p>
           <p className="text-muted-foreground mt-1 text-xs">
-            Use the comparison to report differences. Continue only with this
-            imported replacement; Luxe, Coastal, and Metro are separate optional
-            redesigns.
+            Approval opens the connected Website Vibe Studio. Nothing is
+            published until you approve a later build.
           </p>
         </div>
         <Button
-          render={
-            <Link
-              href={
-                transfer.status === "approved"
-                  ? saPath("/domain?stage=cutover")
-                  : saPath("/website-transfer-preview")
-              }
-            />
-          }
+          onClick={approveBaseline}
+          disabled={approving || Boolean(transfer.baselineApprovedAt)}
         >
-          {transfer.status === "approved"
-            ? "Continue imported site to hosting"
-            : "Review and approve imported site"}
+          {approving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+          {transfer.baselineApprovedAt
+            ? "Live baseline approved"
+            : "Approve live baseline"}
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </section>
-    </div>
-  );
-}
-
-function TransferFrame({
-  title,
-  src,
-  device,
-}: {
-  title: string;
-  src: string;
-  device: "desktop" | "mobile";
-}) {
-  return (
-    <div className="overflow-hidden rounded-2xl border">
-      <div className="bg-muted px-4 py-2 text-xs font-semibold">{title}</div>
-      <div className="overflow-auto bg-slate-100 p-2">
-        <iframe
-          title={title}
-          src={src}
-          className={`mx-auto h-[70vh] bg-white shadow-sm transition-[width] ${device === "mobile" ? "w-[390px] max-w-full" : "w-full"}`}
-        />
-      </div>
     </div>
   );
 }

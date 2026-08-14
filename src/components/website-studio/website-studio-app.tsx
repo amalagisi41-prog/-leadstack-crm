@@ -261,6 +261,10 @@ export function WebsiteStudioApp({
   }
 
   const dedicatedWorkspace = workspace !== "home";
+  const importedBaselineReady = Boolean(transfer?.baselineApprovedAt);
+  const vibeReady =
+    foundationReady &&
+    (!hasImportedExactSite(transfer) || importedBaselineReady);
   const tabRow = dedicatedWorkspace ? (
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-white p-3">
       <div>
@@ -310,18 +314,20 @@ export function WebsiteStudioApp({
       </button>
       <a
         href={`/sa/${subAccountId}/website-studio/vibe`}
-        aria-disabled={!foundationLoaded || !foundationReady}
+        aria-disabled={!foundationLoaded || !vibeReady}
         onClick={(event) => {
-          if (!foundationLoaded || !foundationReady) event.preventDefault();
+          if (!foundationLoaded || !vibeReady) event.preventDefault();
         }}
         title={
-          !foundationReady
-            ? "Confirm a domain and hosting path first"
+          !vibeReady
+            ? !foundationReady
+              ? "Confirm a domain and hosting path first"
+              : "Approve the live baseline first"
             : undefined
         }
         className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${view === "vibe" ? "bg-[#1a2f50] text-white" : "text-muted-foreground hover:text-foreground"} aria-disabled:cursor-not-allowed aria-disabled:opacity-45`}
       >
-        {foundationReady ? "Vibe Builder" : "Vibe Builder · Locked"}
+        {vibeReady ? "Vibe Builder" : "Vibe Builder · Locked"}
       </a>
       <button
         type="button"

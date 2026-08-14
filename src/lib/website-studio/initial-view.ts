@@ -40,7 +40,9 @@ export function getWorkspaceWebsiteStudioView({
   hasTemplateSite: boolean;
 }): WebsiteStudioView {
   if (workspace === "vibe") {
-    return hasImportedExactSite(transfer) ? "exact" : "vibe";
+    return hasImportedExactSite(transfer) && !transfer?.baselineApprovedAt
+      ? "exact"
+      : "vibe";
   }
   if (workspace === "exact") {
     return hasImportedExactSite(transfer) ? "exact" : "setup";

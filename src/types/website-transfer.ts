@@ -47,6 +47,7 @@ export interface WebsiteTransferDoc {
   error: string | null;
   privatePreviewPath: string | null;
   approvedAt: string | null;
+  baselineApprovedAt?: string | null;
   hostingStatus?: "not_requested" | "requested" | "ready";
   hostingRequestedAt?: string | null;
   hostingUrl?: string | null;

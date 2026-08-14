@@ -121,6 +121,7 @@ export async function POST(
     error: null,
     privatePreviewPath: null,
     approvedAt: null,
+    baselineApprovedAt: null,
     hostingStatus: "not_requested",
     hostingRequestedAt: null,
     hostingUrl: null,
@@ -199,7 +200,12 @@ export async function PATCH(
   const access = await requireSubAccountAdmin(request, id);
   if (access instanceof NextResponse) return access;
   const body = (await request.json().catch(() => ({}))) as { action?: string };
-  if (!body.action || !["approve", "request_hosting"].includes(body.action))
+  if (
+    !body.action ||
+    !["approve", "approve_live_baseline", "request_hosting"].includes(
+      body.action
+    )
+  )
     return NextResponse.json({ error: "Unsupported action." }, { status: 400 });
   const ref = getAdminDb().doc(`subAccounts/${id}/websiteTransfers/current`);
   const snap = await ref.get();
@@ -208,6 +214,19 @@ export async function PATCH(
       { error: "Create and review the private preview first." },
       { status: 409 }
     );
+  if (body.action === "approve_live_baseline") {
+    if (!["preview_ready", "approved"].includes(String(snap.data()?.status)))
+      return NextResponse.json(
+        { error: "Create the live preview before approving the baseline." },
+        { status: 409 }
+      );
+    await ref.update({
+      baselineApprovedAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    });
+    const updated = await ref.get();
+    return NextResponse.json({ transfer: serialize(updated.data()!) });
+  }
   if (body.action === "request_hosting") {
     if (snap.data()?.status !== "approved")
       return NextResponse.json(
