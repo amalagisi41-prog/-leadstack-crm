@@ -94,24 +94,10 @@ export async function GET(
     ...(source ? extractStylesheetUrls(html, source) : []),
   ];
   const inlineCss = await inlineStylesheetAssets(stylesheetUrls);
-  // Some origin hosts (notably sites behind an intermittently resolvable DNS
-  // provider) allow the browser to load their CSS but reject server-side
-  // asset fetches. In that case, serving the raw captured HTML is misleading.
-  // Fall back to the read-only origin page inside the sandboxed preview so the
-  // operator still sees the real design while the private artifact remains
-  // unchanged. Once the stylesheet capture succeeds, this route serves the
-  // isolated replacement again.
-  if (!inlineCss.trim() && !customCss.trim()) {
-    const pageUrl =
-      typeof snapshot.data()?.url === "string"
-        ? snapshot.data()?.url
-        : sourceUrl;
-    try {
-      if (pageUrl) return NextResponse.redirect(new URL(pageUrl), 307);
-    } catch {
-      // Keep the captured fallback below if the source URL is malformed.
-    }
-  }
+  // Keep serving the captured artifact even when server-side CSS fetching is
+  // temporarily unavailable. The original <link rel="stylesheet"> elements
+  // remain in the captured HTML, so the browser can load the same source CSS
+  // directly while the private replacement stays isolated from the live site.
   const baseTag = sourceUrl
     ? '<base href="' + sourceUrl.replace(/\"/g, "&quot;") + '">'
     : "";

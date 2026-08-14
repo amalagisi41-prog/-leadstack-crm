@@ -96,7 +96,7 @@ export function ExactTransferStudio({
         <div className="grid gap-4 lg:grid-cols-2">
           <TransferFrame
             title="Original live page"
-            src={selected.url}
+            src={`/api/sub-accounts/${subAccountId}/website-transfer/preview?page=${sourceIndex}`}
             device={device}
           />
           <TransferFrame
