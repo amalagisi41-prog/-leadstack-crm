@@ -270,14 +270,14 @@ export function WebsiteStudioApp({
       <div>
         <p className="font-semibold">
           {workspace === "exact"
-            ? "Imported exact-site workspace"
+            ? "Live-site approval workspace"
             : hasImportedExactSite(transfer)
               ? "Dedicated AI Vibe Studio · Existing site"
               : "Dedicated AI Vibe Studio"}
         </p>
         <p className="text-muted-foreground text-xs">
           {hasImportedExactSite(transfer)
-            ? "The imported HTML, CSS, fonts, colors, images, and layout are the source for this workspace."
+            ? "Review the current live source first. Vibe Studio opens only after you approve this baseline."
             : "Templates are hidden in this window so the selected design remains isolated."}
         </p>
       </div>
@@ -296,7 +296,7 @@ export function WebsiteStudioApp({
           href={`/sa/${subAccountId}/website-studio/imported`}
           className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${view === "exact" ? "bg-emerald-700 text-white" : "text-emerald-700 hover:text-emerald-900"}`}
         >
-          Imported exact site
+          Live-site baseline
         </a>
       ) : null}
       <button
