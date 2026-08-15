@@ -61,9 +61,19 @@ export function removeCapturedCsp(html: string): string {
  * surrounding markup.
  */
 export function removeCapturedStyleText(html: string): string {
-  return html.replace(
-    /\/\*\s*IDX\s+Carousel\s+Widget\b[\s\S]*?(?=(?:<\/div>\s*)*<\/idx-listings-carousel\b)/gi,
+  const styleBlocks: string[] = [];
+  const stylePlaceholder = "\u0000AGENTSTACK_STYLE_BLOCK_";
+  const withoutStyles = html.replace(/<style\b[\s\S]*?<\/style\s*>/gi, (block) => {
+    styleBlocks.push(block);
+    return `${stylePlaceholder}${styleBlocks.length - 1}\u0000`;
+  });
+  const cleaned = withoutStyles.replace(
+    /\/\*\s*IDX\s+Carousel\s+Widget\b[\s\S]*?(?=(?:<\/div>\s*)*<idx-listings-carousel\b)/gi,
     ""
+  );
+  return cleaned.replace(
+    new RegExp(`${stylePlaceholder}(\\d+)\\u0000`, "g"),
+    (_match, index: string) => styleBlocks[Number(index)] ?? ""
   );
 }
 

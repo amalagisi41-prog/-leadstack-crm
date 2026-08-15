@@ -29,4 +29,14 @@ describe("website transfer stylesheet safety", () => {
 
     expect(cleaned).toBe("<idx-listings-carousel><div></div></idx-listings-carousel>");
   });
+
+  it("does not remove an IDX comment from captured stylesheet CSS", () => {
+    const html =
+      '<head><style>/* IDX Carousel Widget */ idx-listings-carousel{display:block}</style></head>' +
+      '<idx-listings-carousel><div>/* IDX Carousel Widget */ body{color:red}</div></idx-listings-carousel>';
+    const cleaned = removeCapturedStyleText(html);
+
+    expect(cleaned).toContain("/* IDX Carousel Widget */ idx-listings-carousel{display:block}");
+    expect(cleaned).toContain("<idx-listings-carousel><div></div></idx-listings-carousel>");
+  });
 });
