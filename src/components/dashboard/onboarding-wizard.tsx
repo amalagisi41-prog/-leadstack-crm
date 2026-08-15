@@ -22,6 +22,7 @@ import {
   Loader2,
   HeartPulse,
 } from "lucide-react";
+import { SUB_ACCOUNT_ROUTES } from "@/lib/navigation/sub-account-routes";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ONBOARDING_STEP_IDS } from "@/lib/onboarding/steps";
@@ -663,7 +664,7 @@ function StepRespond({
 
       <div className="flex flex-wrap items-center gap-3">
         <Button
-          render={<Link href={saPath("/workflows")} />}
+          render={<Link href={saPath(SUB_ACCOUNT_ROUTES.workflows)} />}
           onClick={onNext}
         >
           Enable Speed-to-Lead

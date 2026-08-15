@@ -1,5 +1,4 @@
 import type { Timestamp, FieldValue } from "firebase-admin/firestore";
-import type { HeroVariant } from "@/lib/website-studio/templates";
 
 /**
  * Website Studio — an AI-guided, template-based agent website.
@@ -17,6 +16,33 @@ export type AgentSiteTemplateId = "luxe" | "coastal" | "metro";
 
 export type AgentSiteStatus = "draft" | "published";
 
+export type AgentSiteSectionType =
+  | "header"
+  | "hero"
+  | "about"
+  | "specialties"
+  | "idx"
+  | "listings"
+  | "testimonials"
+  | "cta"
+  | "footer";
+
+export interface AgentSiteSection {
+  /** Stable identity used by the editor when a section moves. */
+  id: AgentSiteSectionType;
+  type: AgentSiteSectionType;
+  visible: boolean;
+}
+
+/**
+ * Versioned visual-builder payload. Content stays separate so Zack, manual
+ * editing, templates, and future Puck controls all operate on one site model.
+ */
+export interface AgentSiteComposition {
+  version: 1;
+  sections: AgentSiteSection[];
+}
+
 /** A single showcased listing / featured property card. */
 export interface AgentSiteListing {
   title: string;
@@ -30,6 +56,16 @@ export interface AgentSiteTestimonial {
   quote: string;
   author: string;
   detail: string; // e.g. "Sold in Westport, CT"
+}
+
+export interface AgentSiteCompliance {
+  licenseStates: string;
+  licenseNumber: string;
+  privacyPolicyUrl: string;
+  termsUrl: string;
+  fairHousingStatement: string;
+  smsConsentEnabled: boolean;
+  smsConsentDisclosure: string;
 }
 
 /**
@@ -63,43 +99,14 @@ export interface AgentSiteContent {
   testimonials: AgentSiteTestimonial[];
   ctaHeadline: string;
   ctaSubtext: string;
-  // SEO (single-page site: one set of tags for the one published page).
-  // Falls back to agentName/tagline/heroImageUrl when blank.
-  metaTitle: string;
-  metaDescription: string;
-  ogImageUrl: string;
+  /** Optional on legacy drafts; required fields are enforced before publish. */
+  compliance?: AgentSiteCompliance;
 }
 
 /** One turn in the AI Designer interview transcript. */
 export interface DesignerTurn {
   role: "designer" | "agent";
   content: string;
-}
-
-/**
- * Visual overrides on top of the chosen template's design tokens. Every
- * field is optional — undefined falls back to the template default. Set
- * and validated via lib/website-studio/design.ts; `customCss` is scoped
- * there before it's ever persisted, since the renderer this feeds runs
- * live inside the dashboard during preview, not only the public site.
- */
-export interface AgentSiteDesign {
-  bg?: string;
-  surface?: string;
-  text?: string;
-  muted?: string;
-  accent?: string;
-  accentText?: string;
-  border?: string;
-  fontDisplay?: string;
-  fontBody?: string;
-  radius?: number;
-  heroVariant?: HeroVariant;
-  customCss?: string;
-}
-
-export function emptyAgentSiteDesign(): AgentSiteDesign {
-  return {};
 }
 
 export interface AgentSiteDoc {
@@ -111,8 +118,8 @@ export interface AgentSiteDoc {
   slug: string;
   status: AgentSiteStatus;
   content: AgentSiteContent;
-  /** Visual overrides on top of the template's tokens. Defaults to {}. */
-  design: AgentSiteDesign;
+  /** Missing on legacy documents; the renderer supplies the v1 default. */
+  composition?: AgentSiteComposition;
   /** The AI Designer interview so the agent can resume where they left off. */
   designerTranscript: DesignerTurn[];
   /** Which guided step the interview is on (index into the designer script). */
@@ -120,6 +127,41 @@ export interface AgentSiteDoc {
   publishedAt: Timestamp | FieldValue | null;
   createdAt: Timestamp | FieldValue | null;
   updatedAt: Timestamp | FieldValue | null;
+  /** Approval is valid only while its fingerprint matches the current draft. */
+  releaseAssurance?: AgentSiteReleaseApproval;
+}
+
+export interface AgentSiteReleaseApproval {
+  fingerprint: string;
+  passed: boolean;
+  blockerCount: number;
+  warningCount: number;
+  approvedByUid: string;
+  approvedAt: Timestamp | FieldValue | null;
+}
+
+export type AgentSiteRevisionSource =
+  | "zack"
+  | "content"
+  | "structure"
+  | "puck"
+  | "publish"
+  | "restore";
+
+/** Immutable recovery point stored below the primary AgentStack site. */
+export interface AgentSiteRevision {
+  id: string;
+  siteId: string;
+  subAccountId: string;
+  createdByUid: string;
+  source: AgentSiteRevisionSource;
+  label: string;
+  templateId: AgentSiteTemplateId;
+  slug: string;
+  status: AgentSiteStatus;
+  content: AgentSiteContent;
+  composition: AgentSiteComposition;
+  createdAt: Timestamp | FieldValue | null;
 }
 
 export function emptyAgentSiteContent(): AgentSiteContent {
@@ -144,8 +186,16 @@ export function emptyAgentSiteContent(): AgentSiteContent {
     testimonials: [],
     ctaHeadline: "",
     ctaSubtext: "",
-    metaTitle: "",
-    metaDescription: "",
-    ogImageUrl: "",
+    compliance: {
+      licenseStates: "",
+      licenseNumber: "",
+      privacyPolicyUrl: "",
+      termsUrl: "",
+      fairHousingStatement:
+        "We are pledged to the letter and spirit of U.S. policy for the achievement of equal housing opportunity throughout the nation.",
+      smsConsentEnabled: false,
+      smsConsentDisclosure:
+        "By providing your phone number, you agree to receive calls and text messages about your inquiry. Consent is not a condition of service. Message and data rates may apply. Reply STOP to opt out.",
+    },
   };
 }

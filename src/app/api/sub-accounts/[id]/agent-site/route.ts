@@ -9,15 +9,17 @@ import {
   WEBSITE_STUDIO_LOCKED_MESSAGE,
 } from "@/lib/website-studio/gate";
 import { AGENT_SITE_TEMPLATES } from "@/lib/website-studio/templates";
-import { applyDesignFields } from "@/lib/website-studio/design";
-import { screenContentFields } from "@/lib/website-studio/content-compliance";
 import {
   emptyAgentSiteContent,
-  emptyAgentSiteDesign,
+  type AgentSiteComposition,
   type AgentSiteContent,
-  type AgentSiteDesign,
+  type AgentSiteRevisionSource,
   type AgentSiteTemplateId,
 } from "@/types/agent-site";
+import {
+  defaultAgentSiteComposition,
+  normalizeAgentSiteComposition,
+} from "@/lib/website-studio/site-composition";
 import {
   EMPTY_BUSINESS_PROFILE,
   type BusinessProfileContent,
@@ -26,6 +28,11 @@ import {
   hydrateAgentSiteFromBlueprint,
   isUntouchedAgentSite,
 } from "@/lib/website-studio/blueprint-content";
+import {
+  assessAgentSitePublishReadiness,
+  hasPublishBlockers,
+} from "@/lib/website-studio/publish-readiness";
+import { releaseFingerprint } from "@/lib/website-studio/release-fingerprint";
 
 /**
  * Website Studio site persistence. One primary site per sub-account at
@@ -92,12 +99,14 @@ export async function PATCH(
   let body: {
     templateId?: string;
     content?: Partial<AgentSiteContent>;
-    design?: Record<string, unknown>;
+    composition?: AgentSiteComposition;
     status?: "draft" | "published";
     slug?: string;
     designerStep?: number;
     designerTranscript?: unknown;
     hydrateFromBlueprint?: boolean;
+    revisionSource?: AgentSiteRevisionSource;
+    revisionLabel?: string;
   };
   try {
     body = await request.json();
@@ -115,21 +124,13 @@ export async function PATCH(
         hostingSetupConfirmed?: boolean;
       }
     | undefined;
-  if (
-    !foundation?.domainStartingPoint ||
-    foundation.domainStartingPoint === "not_sure" ||
-    !foundation.hostingStartingPoint ||
-    foundation.domainSetupConfirmed === false ||
-    foundation.hostingSetupConfirmed === false
-  ) {
-    return NextResponse.json(
-      {
-        error:
-          "Confirm your domain and hosting path before using Website Builder.",
-      },
-      { status: 409 }
-    );
-  }
+  const foundationReady = Boolean(
+    foundation?.domainStartingPoint &&
+    foundation.domainStartingPoint !== "not_sure" &&
+    foundation.hostingStartingPoint &&
+    foundation.domainSetupConfirmed !== false &&
+    foundation.hostingSetupConfirmed !== false
+  );
   const ref = db.doc(`subAccounts/${subAccountId}/agentSites/${SITE_ID}`);
   const snap = await ref.get();
 
@@ -147,9 +148,6 @@ export async function PATCH(
       );
     }
     const content = { ...emptyAgentSiteContent(), ...(body.content ?? {}) };
-    const design: AgentSiteDesign = body.design
-      ? applyDesignFields(emptyAgentSiteDesign(), body.design)
-      : emptyAgentSiteDesign();
     await ref.set({
       id: SITE_ID,
       agencyId,
@@ -161,7 +159,7 @@ export async function PATCH(
         : slugify(content.agentName || subAccountId),
       status: "draft",
       content,
-      design,
+      composition: defaultAgentSiteComposition(),
       designerTranscript: [],
       designerStep: 0,
       publishedAt: null,
@@ -219,48 +217,92 @@ export async function PATCH(
     }
   }
   if (body.content) {
-    // Same Fair Housing screening the AI path gets — this is a second write
-    // path onto the same published fields, so leaving it unguarded would
-    // just move the risk rather than remove it. Hand-typed copy is refused
-    // outright (rather than silently dropped) so the author knows why.
-    const screened = screenContentFields(
-      body.content as Record<string, unknown>
-    );
-    if (screened.blocked.length > 0) {
-      // Detail goes in `error` itself so every existing client surfaces
-      // something actionable through its normal toast path; `blocked` is
-      // there for callers that want to highlight the offending inputs.
-      const detail = screened.blocked
-        .map((b) => `${b.field}: ${b.phrases.map((p) => `"${p}"`).join(", ")}`)
-        .join("; ");
-      return NextResponse.json(
-        {
-          error: `This copy can't be saved — it may violate Fair Housing rules (${detail}). Language referencing or implying preferences about protected classes can't appear on a published listing site.`,
-          blocked: screened.blocked,
-        },
-        { status: 422 }
-      );
-    }
     // Field-level merge so partial content updates don't wipe siblings.
     const current = (snap.data()?.content ?? {}) as AgentSiteContent;
-    update.content = { ...current, ...body.content };
+    update.content = {
+      ...current,
+      ...body.content,
+      compliance: body.content.compliance
+        ? { ...current.compliance, ...body.content.compliance }
+        : current.compliance,
+    };
   }
-  if (body.design) {
-    // Re-validated here too (not just in the designer route) — this PATCH
-    // endpoint is a second write path onto the same customCss field the
-    // renderer trusts as pre-sanitized, so it can never be the gap that
-    // lets unscoped CSS through.
-    const currentDesign = (snap.data()?.design ?? {}) as AgentSiteDesign;
-    update.design = applyDesignFields(currentDesign, body.design);
+  if (body.composition) {
+    update.composition = normalizeAgentSiteComposition(body.composition);
   }
   if (body.status === "published") {
+    if (!foundationReady) {
+      return NextResponse.json(
+        {
+          error:
+            "Confirm your domain and hosting path before publishing this site.",
+        },
+        { status: 409 }
+      );
+    }
+    const publishContent = (update.content ??
+      snap.data()?.content ??
+      emptyAgentSiteContent()) as AgentSiteContent;
+    const readinessIssues = assessAgentSitePublishReadiness(publishContent);
+    if (hasPublishBlockers(readinessIssues)) {
+      return NextResponse.json(
+        {
+          error:
+            "Complete the required website and compliance details before publishing.",
+          readinessIssues,
+        },
+        { status: 409 }
+      );
+    }
+    const publishComposition = (update.composition ??
+      snap.data()?.composition) as AgentSiteComposition | undefined;
+    const fingerprint = releaseFingerprint(publishContent, publishComposition);
+    const assurance = snap.data()?.releaseAssurance as
+      | { fingerprint?: string; passed?: boolean }
+      | undefined;
+    if (!assurance?.passed || assurance.fingerprint !== fingerprint) {
+      return NextResponse.json(
+        {
+          error:
+            "Run and approve the release check for this exact draft before publishing.",
+        },
+        { status: 409 }
+      );
+    }
     update.status = "published";
     update.publishedAt = FieldValue.serverTimestamp();
   } else if (body.status === "draft") {
     update.status = "draft";
   }
 
-  await ref.update(update);
+  const shouldCreateRevision = Boolean(
+    body.templateId ||
+    body.content ||
+    body.composition ||
+    body.hydrateFromBlueprint ||
+    body.status
+  );
+  const batch = db.batch();
+  if (shouldCreateRevision) {
+    const current = snap.data() ?? {};
+    const revisionRef = ref.collection("revisions").doc();
+    batch.set(revisionRef, {
+      id: revisionRef.id,
+      siteId: SITE_ID,
+      subAccountId,
+      createdByUid: uid,
+      source: body.revisionSource ?? "content",
+      label: body.revisionLabel?.trim().slice(0, 120) || "Saved change",
+      templateId: current.templateId,
+      slug: current.slug,
+      status: current.status,
+      content: current.content ?? emptyAgentSiteContent(),
+      composition: normalizeAgentSiteComposition(current.composition),
+      createdAt: FieldValue.serverTimestamp(),
+    });
+  }
+  batch.update(ref, update);
+  await batch.commit();
   const fresh = await ref.get();
   return NextResponse.json({ ok: true, site: fresh.data() });
 }

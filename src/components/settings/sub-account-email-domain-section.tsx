@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { SUB_ACCOUNT_ROUTES } from "@/lib/navigation/sub-account-routes";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import {
@@ -84,71 +86,37 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function ReplyToBanner({
-  subAccountId,
+  saPath,
   action,
-  onSaved,
 }: {
-  subAccountId: string;
+  saPath: (path: string) => string;
   action: string;
-  onSaved: () => void;
 }) {
-  const [value, setValue] = useState("");
-  const [saving, setSaving] = useState(false);
-
-  async function save(event: FormEvent) {
-    event.preventDefault();
-    setSaving(true);
-    try {
-      const res = await fetch(`/api/sub-accounts/${subAccountId}/reply-to`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ replyToEmail: value }),
-      });
-      const data = (await res.json().catch(() => ({}))) as { error?: string };
-      if (!res.ok) throw new Error(data.error ?? "Could not save.");
-      toast.success("Reply-To address saved.");
-      onSaved();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not save.");
-    } finally {
-      setSaving(false);
-    }
-  }
-
   return (
     <div className="flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 text-sm text-amber-700 dark:text-amber-400">
       <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-      <div className="min-w-0 flex-1">
+      <div>
         <p className="font-medium">Set a Reply-To address first</p>
         <p className="mt-1">
           Replies to broadcasts and automated emails come back to your Reply-To
           address. Once you send from your own subdomain, that subdomain has no
           inbox by default — replies to it will bounce unless Reply-To routes
-          them elsewhere. Set one here, then {action}.
+          them elsewhere. Set one on the{" "}
+          <Link
+            href={saPath(SUB_ACCOUNT_ROUTES.messagingSettings)}
+            className="underline hover:no-underline"
+          >
+            Messaging settings
+          </Link>
+          , then come back here to {action}.
         </p>
-        <form onSubmit={save} className="mt-3 flex flex-wrap items-center gap-2">
-          <Input
-            type="email"
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            placeholder="you@yourbrokerage.com"
-            className="h-9 w-full max-w-xs bg-background"
-            required
-          />
-          <Button type="submit" size="sm" disabled={saving || !value.trim()}>
-            {saving ? (
-              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-            ) : null}
-            {saving ? "Saving…" : "Save Reply-To"}
-          </Button>
-        </form>
       </div>
     </div>
   );
 }
 
 export function SubAccountEmailDomainSection() {
-  const { subAccountId, subAccount, isAdmin } = useSubAccount();
+  const { subAccountId, subAccount, isAdmin, saPath } = useSubAccount();
   const cfg = subAccount?.resendConfig ?? null;
   const gateOpen = subAccount?.emailDomainEnabledByAgency === true;
   const needsReplyTo = !subAccount?.replyToEmail?.trim();
@@ -306,7 +274,7 @@ export function SubAccountEmailDomainSection() {
           </div>
         </div>
       ) : !cfg && needsReplyTo ? (
-        <ReplyToBanner subAccountId={subAccountId} action="add your domain" onSaved={() => window.location.reload()} />
+        <ReplyToBanner saPath={saPath} action="add your domain" />
       ) : !cfg ? (
         <form onSubmit={handleAdd} className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
@@ -366,7 +334,7 @@ export function SubAccountEmailDomainSection() {
       ) : (
         <div className="space-y-4">
           {needsReplyTo && (
-            <ReplyToBanner subAccountId={subAccountId} action="verify your domain" onSaved={() => window.location.reload()} />
+            <ReplyToBanner saPath={saPath} action="verify your domain" />
           )}
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-background p-3">
             <div className="min-w-0">

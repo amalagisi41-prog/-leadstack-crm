@@ -21,19 +21,30 @@ export default async function PublishedAgentSite({
 }) {
   const { subAccountId, slug } = await params;
 
-  const snap = await getAdminDb()
-    .doc(`subAccounts/${subAccountId}/agentSites/main`)
-    .get();
+  const db = getAdminDb();
+  const [snap, subAccountSnap] = await Promise.all([
+    db.doc(`subAccounts/${subAccountId}/agentSites/main`).get(),
+    db.doc(`subAccounts/${subAccountId}`).get(),
+  ]);
 
   if (!snap.exists) notFound();
   const site = snap.data() as AgentSiteDoc;
   if (site.status !== "published" || site.slug !== slug) notFound();
+  const subAccount = subAccountSnap.data();
+  const idxConnected = Boolean(
+    subAccount?.idxEnabledByAgency === true && subAccount?.idxConfig?.enabled
+  );
 
   return (
     <AgentSiteRenderer
       template={getTemplate(site.templateId)}
       content={site.content}
-      design={site.design ?? {}}
+      composition={site.composition}
+      idx={{
+        connected: idxConnected,
+        url: `/idx/${subAccountId}`,
+        displayName: subAccount?.idxConfig?.displayName,
+      }}
     />
   );
 }
@@ -49,31 +60,11 @@ export async function generateMetadata({
     .get();
   if (!snap.exists) return { title: "Agent Website" };
   const site = snap.data() as AgentSiteDoc;
-  if (site.status !== "published" || site.slug !== slug) return { title: "Not found" };
+  if (site.status !== "published" || site.slug !== slug)
+    return { title: "Not found" };
   const name = site.content.agentName || "Agent";
-  const title =
-    site.content.metaTitle.trim() ||
-    `${name}${site.content.title ? ` — ${site.content.title}` : ""}`;
-  const description =
-    site.content.metaDescription.trim() ||
-    site.content.tagline ||
-    site.content.bio ||
-    undefined;
-  const ogImage = site.content.ogImageUrl.trim() || site.content.heroImageUrl || undefined;
   return {
-    title,
-    description,
-    openGraph: {
-      title,
-      description,
-      type: "profile",
-      images: ogImage ? [{ url: ogImage }] : undefined,
-    },
-    twitter: {
-      card: ogImage ? "summary_large_image" : "summary",
-      title,
-      description,
-      images: ogImage ? [ogImage] : undefined,
-    },
+    title: `${name}${site.content.title ? ` — ${site.content.title}` : ""}`,
+    description: site.content.tagline || site.content.bio || undefined,
   };
 }

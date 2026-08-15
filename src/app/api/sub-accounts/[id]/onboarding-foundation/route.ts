@@ -67,8 +67,9 @@ export async function GET(
       : "";
   const transfer = transferSnap.data();
   const replacementFoundationReady =
-    transfer?.status === "approved" &&
-    ["requested", "ready"].includes(String(transfer?.hostingStatus));
+    transfer?.hostingStatus === "ready" &&
+    typeof transfer?.hostingUrl === "string" &&
+    transfer.hostingUrl.startsWith("https://");
   return NextResponse.json({
     foundation: replacementFoundationReady
       ? {

@@ -10,6 +10,15 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "images.unsplash.com" },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: "/sa/:subAccountId/website-transfer-preview",
+        destination: "/sa/:subAccountId/website-studio",
+        permanent: false,
+      },
+    ];
+  },
   async headers() {
     return [
       {
@@ -36,7 +45,10 @@ const nextConfig: NextConfig = {
         headers: [
           { key: "Cache-Control", value: "public, max-age=300, s-maxage=300" },
           { key: "Access-Control-Allow-Origin", value: "*" },
-          { key: "Content-Type", value: "application/javascript; charset=utf-8" },
+          {
+            key: "Content-Type",
+            value: "application/javascript; charset=utf-8",
+          },
         ],
       },
     ];

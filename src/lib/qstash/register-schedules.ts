@@ -62,6 +62,13 @@ const SCHEDULES: ScheduleSpec[] = [
       "Every 6 hours, fan out to sync each IDX-connected sub-account's MLS listings.",
   },
   {
+    scheduleId: "agentstack-website-release-monitor",
+    path: "/api/cron/website-release-monitor",
+    cron: "*/15 * * * *",
+    description:
+      "Every 15 minutes, verify published AgentStack sites still return the shared responsive renderer and legal surface.",
+  },
+  {
     scheduleId: "agentstack-workflow-time-triggers",
     path: "/api/cron/workflow-time-triggers",
     cron: "0 9 * * *",

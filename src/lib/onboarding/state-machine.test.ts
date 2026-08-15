@@ -37,6 +37,17 @@ describe("computeOnboardingState", () => {
     expect(state.nextRecommendedAction?.id).toBe("ai");
   });
 
+  it("sends Speed-to-Lead setup to the canonical Follow-Up Plans route", () => {
+    const state = computeOnboardingState([
+      "business_profile",
+      "contacts",
+      "sms",
+      "form",
+    ]);
+    expect(state.nextRecommendedAction?.id).toBe("automation");
+    expect(state.nextRecommendedAction?.href).toBe("/workflows");
+  });
+
   it("only the trailing domain step left — resumes at the Close screen", () => {
     const allButDomain = ONBOARDING_STEP_IDS.filter((id) => id !== "domain");
     const state = computeOnboardingState(allButDomain);
@@ -54,7 +65,10 @@ describe("computeOnboardingState", () => {
   });
 
   it("unknown step ids in the persisted list are ignored, not counted", () => {
-    const state = computeOnboardingState(["business_profile", "not_a_real_step"]);
+    const state = computeOnboardingState([
+      "business_profile",
+      "not_a_real_step",
+    ]);
     expect(state.completedCount).toBe(1);
     expect(state.completedStepIds).toEqual(["business_profile"]);
   });

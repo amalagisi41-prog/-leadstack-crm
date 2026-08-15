@@ -13,7 +13,6 @@ import {
   ExternalLink,
   ArrowUpRight,
   CreditCard,
-  Eye,
   Server,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -221,10 +220,6 @@ export function OnboardingFoundation({
   const buildPercent = Math.round(
     (buildSteps.filter((step) => step.done).length / buildSteps.length) * 100
   );
-  const previewUrl = /^https?:\/\//i.test(sourceUrl.trim())
-    ? sourceUrl.trim().split(/[\s,]+/)[0]
-    : "";
-
   return (
     <div className="mx-auto max-w-5xl space-y-6 pb-16">
       <div className="rounded-2xl border bg-gradient-to-br from-[#1b3d7a] to-[#16305f] p-7 text-white shadow-sm">
@@ -385,10 +380,9 @@ export function OnboardingFoundation({
                 draft for your approval.
               </p>
               <p className="mt-2 rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs leading-5 text-[#173b7a]">
-                No redesign work is required from you. Your public website is
-                the reference; AgentStack prepares a private coded replacement
-                and asks for approval before any domain, hosting, or publishing
-                change.
+                Your public website stays live while the provider transfer is
+                tracked. AgentStack does not proxy that site into the editor;
+                Website Studio previews only the site AgentStack hosts.
               </p>
             </div>
           </div>
@@ -632,16 +626,13 @@ export function OnboardingFoundation({
       </section>
 
       <section className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
-        <div className="bg-card overflow-hidden rounded-2xl border">
+        <div className="bg-card rounded-2xl border p-5">
           <div className="flex items-center justify-between border-b p-4">
             <div>
-              <p className="flex items-center gap-2 font-semibold">
-                <Eye className="h-4 w-4 text-blue-600" />
-                Live build viewer
-              </p>
+              <p className="font-semibold">Website Studio</p>
               <p className="text-muted-foreground mt-1 text-xs">
-                See the existing site or open the new build without leaving your
-                setup.
+                Build and preview the AgentStack-hosted site without leaving
+                your workspace.
               </p>
             </div>
             <Button
@@ -652,46 +643,22 @@ export function OnboardingFoundation({
               Open Studio
             </Button>
           </div>
-          {previewUrl ? (
-            <iframe
-              title="Existing website preview"
-              src={previewUrl}
-              className="h-72 w-full bg-white"
-              sandbox="allow-scripts allow-same-origin"
-            />
-          ) : (
-            <div className="flex h-72 flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-pink-50 p-8 text-center">
-              <Sparkles className="h-8 w-8 text-pink-500" />
-              <p className="mt-3 font-semibold">
-                Your site preview will appear here
-              </p>
-              <p className="text-muted-foreground mt-1 max-w-sm text-sm">
-                Connect an existing website above, or open AI Website Studio to
-                build with Claude and the Vibe.co workflow.
-              </p>
-              <div className="mt-4 flex gap-2">
-                <Button
-                  size="sm"
-                  render={<a href={saPath("/website-studio")} />}
-                >
-                  Build with AI
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  render={
-                    <a
-                      href="https://vibe.co"
-                      target="_blank"
-                      rel="noreferrer"
-                    />
-                  }
-                >
-                  Connect Vibe.co
-                </Button>
-              </div>
-            </div>
-          )}
+          <div className="flex h-64 flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-pink-50 p-8 text-center">
+            <Sparkles className="h-8 w-8 text-pink-500" />
+            <p className="mt-3 font-semibold">Your private build starts here</p>
+            <p className="text-muted-foreground mt-1 max-w-sm text-sm">
+              Choose a ready-made real-estate site or describe the design to
+              Zack. The preview and public renderer use the same structured
+              AgentStack site.
+            </p>
+            <Button
+              className="mt-4"
+              size="sm"
+              render={<a href={saPath("/website-studio")} />}
+            >
+              Open Website Studio
+            </Button>
+          </div>
         </div>
         <div className="bg-card rounded-2xl border p-5">
           <CreditCard className="h-5 w-5 text-blue-600" />
