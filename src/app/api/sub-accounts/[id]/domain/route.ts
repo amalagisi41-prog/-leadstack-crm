@@ -50,7 +50,30 @@ export async function PATCH(
     domain = normalized;
   }
 
-  await getAdminDb().doc(`subAccounts/${subAccountId}`).update({
+  const db = getAdminDb();
+
+  // A domain can only point at one workspace. Without this check two
+  // sub-accounts could each claim the same host, leaving which one it
+  // actually serves undefined — and silently breaking the live site of
+  // whichever tenant connected it first.
+  if (domain) {
+    const clash = await db
+      .collection("subAccounts")
+      .where("customDomain", "==", domain)
+      .limit(2)
+      .get();
+    const takenByOther = clash.docs.some((doc) => doc.id !== subAccountId);
+    if (takenByOther) {
+      return NextResponse.json(
+        {
+          error: `${domain} is already connected to another workspace. Disconnect it there first, or contact your agency administrator.`,
+        },
+        { status: 409 },
+      );
+    }
+  }
+
+  await db.doc(`subAccounts/${subAccountId}`).update({
     customDomain: domain,
     updatedAt: FieldValue.serverTimestamp(),
   });

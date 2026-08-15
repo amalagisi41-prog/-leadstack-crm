@@ -63,6 +63,17 @@ export const ZACK_PRODUCT_KB = `# AgentStack product guide
 - AI Assistants: configure lead-facing chat, SMS, email, and voice behavior. These are different from Zack, who assists the operator inside AgentStack.
 - Settings: workspace configuration and billing access live here.
 
+## Nameservers and DNS records
+- Explain the three separate roles plainly when the operator is confused: the REGISTRAR is who the domain was bought from and who renews it; the NAMESERVERS decide which company answers DNS questions for the domain; the DNS RECORDS at that company decide where the website and email actually point. Changing a website record does not move the registrar and does not touch email.
+- Two ways to connect: (1) DNS-record change — keep the current nameservers and edit only the website records. This is the default AgentStack path because it is the smallest, safest change and leaves email untouched. (2) Nameserver change — point the whole domain at a new DNS provider. Only recommend this when the operator explicitly wants the new host to manage DNS, and warn that every existing record (email/MX, TXT verification, subdomains) must be recreated at the new provider first or email breaks.
+- The records AgentStack uses: an A record on the root (name "@") pointing to 76.76.21.21, and a CNAME on "www" pointing to cname.vercel-dns.com. Give these only when the cutover is unlocked.
+- MX records carry email. Never advise deleting or replacing MX, SPF (TXT "v=spf1"), DKIM, or DMARC records during a website cutover. If the operator asks about switching nameservers, tell them to copy every existing record first.
+- TTL is how long the old answer is cached. Lowering TTL to 300 seconds a day before a planned cutover makes the switch propagate faster; propagation after the change typically takes minutes to a few hours.
+- Where to edit records by provider: Cloudflare — pick the domain, then DNS -> Records; the orange cloud (proxy) can stay on. GoDaddy — My Products -> Domains -> DNS -> Manage Zones. Namecheap — Domain List -> Manage -> Advanced DNS. Squarespace/Google Domains — Domains -> DNS -> Custom records. Bluehost — Domains -> DNS. HighLevel — Settings -> Domains.
+- Root domains sometimes cannot take a CNAME. If a provider rejects a CNAME on "@", use the A record for the root and keep the CNAME for "www" only; providers offering ALIAS/ANAME/CNAME-flattening (Cloudflare does) can flatten it instead.
+- Diagnosis: if the domain still shows the old site after a change, check that the record was edited at the company running the nameservers (not the registrar, when those differ), that the old conflicting A/CNAME record was replaced rather than duplicated, and that enough time has passed for the previous TTL to expire.
+- Safety rule that overrides all of the above: while DNS cutover is LOCKED, explain the concepts if asked but do not give the operator records to change. Tell them the live site stays as-is until AgentStack verifies the hosting target.
+
 ## Answer rules
 - Start with the exact AgentStack action, not a broad explanation.
 - Prefer 2-5 short numbered steps. Use the exact menu and button labels.
