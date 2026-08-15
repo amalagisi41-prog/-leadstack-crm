@@ -1,4 +1,4 @@
-export type WebsiteStudioView = "builder" | "vibe" | "setup";
+export type WebsiteStudioView = "builder" | "vibe" | "setup" | "seo";
 export type WebsiteStudioWorkspace = "home" | "vibe";
 
 // The live-site baseline approval flow was retired (Website Studio 2.0,

@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { DesignerChat } from "./designer-chat";
 import { ContentEditor } from "./content-editor";
 import { BusinessSetupAssistant } from "./business-setup-assistant";
+import { SeoSettingsPanel } from "./seo-settings-panel";
 import { AgentSiteRenderer } from "./agent-site-renderer";
 import {
   AGENT_SITE_TEMPLATE_LIST,
@@ -308,6 +309,13 @@ export function WebsiteStudioApp({
       >
         {foundationReady ? "Setup tools" : "Business Setup"}
       </button>
+      <button
+        type="button"
+        onClick={() => setView("seo")}
+        className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${view === "seo" ? "bg-[#1a2f50] text-white" : "text-muted-foreground hover:text-foreground"}`}
+      >
+        SEO
+      </button>
     </div>
   );
 
@@ -334,6 +342,26 @@ export function WebsiteStudioApp({
             setFoundationLoaded(true);
           }}
         />
+      </div>
+    );
+  }
+
+  if (view === "seo") {
+    return (
+      <div className="space-y-4">
+        {tabRow}
+        {site ? (
+          <SeoSettingsPanel
+            subAccountId={subAccountId}
+            content={content}
+            onSaved={setContent}
+          />
+        ) : (
+          <div className="text-muted-foreground rounded-2xl border border-dashed p-8 text-center text-sm">
+            Start a site in the Vibe Builder or pick a template first — SEO
+            settings apply to your published page.
+          </div>
+        )}
       </div>
     );
   }
