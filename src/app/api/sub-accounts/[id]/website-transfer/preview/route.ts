@@ -98,10 +98,9 @@ export async function GET(
   const stylesheetUrls = stylesheetBase
     ? extractStylesheetUrls(html, stylesheetBase)
     : [];
+  // Keep original stylesheet links AND inline as fallback
   html = normalizeCapturedStylesheetLinks(html, stylesheetUrls, stylesheetBase);
-  const inlineCss = await inlineStylesheetAssets(
-    stylesheetUrls
-  );
+  const inlineCss = await inlineStylesheetAssets(stylesheetUrls);
   console.info("[website-transfer] preview styles", {
     id,
     index,

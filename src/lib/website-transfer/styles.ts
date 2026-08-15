@@ -295,21 +295,32 @@ main>div>div>footer img{display:block;max-width:190px;height:auto}
 async function fetchStylesheet(url: string): Promise<string> {
   try {
     const response = await fetch(url, {
-      signal: AbortSignal.timeout(10_000),
+      signal: AbortSignal.timeout(15_000),
       headers: {
         Accept: "text/css,*/*;q=0.1",
         "User-Agent":
-          "AgentStack-Site-Transfer/1.0 (+https://agentstackcrm.app)",
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        Referer: new URL(url).origin + "/",
       },
     });
-    if (!response.ok) return "";
-    const contentType = response.headers.get("content-type") ?? "";
-    if (!contentType.includes("css") && !/\.css(?:[?#]|$)/i.test(url))
+    if (!response.ok) {
+      console.warn(`[website-transfer] stylesheet fetch failed: ${url} (${response.status})`);
       return "";
+    }
+    const contentType = response.headers.get("content-type") ?? "";
+    if (!contentType.includes("css") && !/\.css(?:[?#]|$)/i.test(url)) {
+      console.warn(`[website-transfer] stylesheet not CSS: ${url} (${contentType})`);
+      return "";
+    }
     const text = (await response.text()).slice(0, MAX_STYLESHEET_CHARS);
-    if (/^\s*<(?:!doctype|html|head|body)\b/i.test(text)) return "";
+    if (/^\s*<(?:!doctype|html|head|body)\b/i.test(text)) {
+      console.warn(`[website-transfer] stylesheet returned HTML: ${url}`);
+      return "";
+    }
+    console.info(`[website-transfer] fetched stylesheet: ${url} (${text.length} bytes)`);
     return rewriteCssUrls(text, new URL(response.url || url));
-  } catch {
+  } catch (error) {
+    console.error(`[website-transfer] stylesheet fetch error: ${url}`, error instanceof Error ? error.message : String(error));
     return "";
   }
 }
