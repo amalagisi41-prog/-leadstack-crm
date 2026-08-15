@@ -142,7 +142,7 @@ export async function POST(
       inventory: report.inventory,
       status: "preview_ready",
       stage: 5,
-      privatePreviewPath: `/sa/${id}/website-transfer-preview`,
+      privatePreviewPath: `/sa/${id}/website-studio/vibe`,
       updatedAt: Timestamp.now(),
     };
     const db = getAdminDb();

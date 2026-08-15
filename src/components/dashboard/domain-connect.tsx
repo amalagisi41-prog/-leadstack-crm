@@ -585,9 +585,9 @@ export function DomainConnect() {
             </Button>
             <Button
               variant="outline"
-              render={<Link href={saPath("/website-transfer-preview")} />}
+              render={<Link href={saPath("/website-studio")} />}
             >
-              Back to comparison
+              Open Website Studio
             </Button>
           </div>
         </section>
@@ -957,18 +957,9 @@ export function DomainConnect() {
               </p>
             </div>
             <Button
-              render={
-                <a
-                  href={
-                    privatePreviewPath ??
-                    saPath("/website-studio?mode=replacement")
-                  }
-                />
-              }
+              render={<a href={saPath("/website-studio/vibe")} />}
             >
-              {privatePreviewPath
-                ? "Resume side-by-side comparison"
-                : "Start private replacement"}
+              Open AI Website Studio
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>

@@ -23,8 +23,6 @@ import { DesignerChat } from "./designer-chat";
 import { ContentEditor } from "./content-editor";
 import { BusinessSetupAssistant } from "./business-setup-assistant";
 import { AgentSiteRenderer } from "./agent-site-renderer";
-import { ExactTransferStudio } from "./exact-transfer-studio";
-import { WebsiteCodeStudio } from "./website-code-studio";
 import {
   AGENT_SITE_TEMPLATE_LIST,
   getTemplate,
@@ -35,10 +33,8 @@ import {
   type AgentSiteDoc,
   type AgentSiteTemplateId,
 } from "@/types/agent-site";
-import type { WebsiteTransferDoc } from "@/types/website-transfer";
 import {
   getWorkspaceWebsiteStudioView,
-  hasImportedExactSite,
   type WebsiteStudioView,
 } from "@/lib/website-studio/initial-view";
 
@@ -47,7 +43,7 @@ const DESIGN_WIDTH = 1080;
 export function WebsiteStudioApp({
   workspace = "home",
 }: {
-  workspace?: "home" | "vibe" | "exact";
+  workspace?: "home" | "vibe";
 }) {
   const {
     subAccountId,
@@ -70,7 +66,6 @@ export function WebsiteStudioApp({
   const [view, setView] = useState<WebsiteStudioView>(() =>
     workspace === "home" ? "builder" : workspace
   );
-  const [transfer, setTransfer] = useState<WebsiteTransferDoc | null>(null);
   const [foundationReady, setFoundationReady] = useState(false);
   const [foundationLoaded, setFoundationLoaded] = useState(false);
 
@@ -100,10 +95,9 @@ export function WebsiteStudioApp({
     let active = true;
     (async () => {
       try {
-        const [res, foundationRes, transferRes] = await Promise.all([
+        const [res, foundationRes] = await Promise.all([
           fetch(`/api/sub-accounts/${subAccountId}/agent-site`),
           fetch(`/api/sub-accounts/${subAccountId}/onboarding-foundation`),
-          fetch(`/api/sub-accounts/${subAccountId}/website-transfer`),
         ]);
         const data = (await res.json()) as { site: AgentSiteDoc | null };
         const foundationData = (await foundationRes
@@ -116,9 +110,6 @@ export function WebsiteStudioApp({
             hostingSetupConfirmed?: boolean;
           };
         };
-        const transferData = (await transferRes.json().catch(() => ({}))) as {
-          transfer?: WebsiteTransferDoc | null;
-        };
         if (!active) return;
         const ready = Boolean(
           foundationData.foundation?.domainStartingPoint &&
@@ -129,7 +120,6 @@ export function WebsiteStudioApp({
         );
         setFoundationReady(ready);
         setFoundationLoaded(true);
-        setTransfer(transferData.transfer ?? null);
         let loadedSite = data.site;
         if (loadedSite && ready) {
           const hydrateRes = await fetch(
@@ -156,7 +146,6 @@ export function WebsiteStudioApp({
           getWorkspaceWebsiteStudioView({
             workspace,
             foundationReady: ready,
-            transfer: transferData.transfer,
             hasTemplateSite: Boolean(loadedSite),
           })
         );
@@ -261,24 +250,14 @@ export function WebsiteStudioApp({
   }
 
   const dedicatedWorkspace = workspace !== "home";
-  const importedBaselineReady = Boolean(transfer?.baselineApprovedAt);
-  const vibeReady =
-    foundationReady &&
-    (!hasImportedExactSite(transfer) || importedBaselineReady);
+  const vibeReady = foundationReady;
   const tabRow = dedicatedWorkspace ? (
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-white p-3">
       <div>
-        <p className="font-semibold">
-          {workspace === "exact"
-            ? "Live-site approval workspace"
-            : hasImportedExactSite(transfer)
-              ? "Dedicated AI Vibe Studio · Existing site"
-              : "Dedicated AI Vibe Studio"}
-        </p>
+        <p className="font-semibold">Dedicated AI Vibe Studio</p>
         <p className="text-muted-foreground text-xs">
-          {hasImportedExactSite(transfer)
-            ? "Review the current live source first. Vibe Studio opens only after you approve this baseline."
-            : "Templates are hidden in this window so the selected design remains isolated."}
+          Templates are hidden in this window so the selected design remains
+          isolated.
         </p>
       </div>
       <Button
@@ -291,14 +270,6 @@ export function WebsiteStudioApp({
     </div>
   ) : (
     <div className="flex w-fit items-center gap-1 rounded-lg border p-1">
-      {hasImportedExactSite(transfer) ? (
-        <a
-          href={`/sa/${subAccountId}/website-studio/imported`}
-          className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${view === "exact" ? "bg-emerald-700 text-white" : "text-emerald-700 hover:text-emerald-900"}`}
-        >
-          Live-site baseline
-        </a>
-      ) : null}
       <button
         type="button"
         onClick={() => setView("builder")}
@@ -319,11 +290,7 @@ export function WebsiteStudioApp({
           if (!foundationLoaded || !vibeReady) event.preventDefault();
         }}
         title={
-          !vibeReady
-            ? !foundationReady
-              ? "Confirm a domain and hosting path first"
-              : "Approve the live baseline first"
-            : undefined
+          !vibeReady ? "Confirm a domain and hosting path first" : undefined
         }
         className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${view === "vibe" ? "bg-[#1a2f50] text-white" : "text-muted-foreground hover:text-foreground"} aria-disabled:cursor-not-allowed aria-disabled:opacity-45`}
       >
@@ -347,19 +314,6 @@ export function WebsiteStudioApp({
           <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Preparing your
           private website workspace…
         </div>
-      </div>
-    );
-  }
-
-  if (view === "exact" && transfer) {
-    return (
-      <div className="space-y-4">
-        {tabRow}
-        {workspace === "vibe" ? (
-          <WebsiteCodeStudio transfer={transfer} />
-        ) : (
-          <ExactTransferStudio transfer={transfer} />
-        )}
       </div>
     );
   }
@@ -413,41 +367,22 @@ export function WebsiteStudioApp({
               Open custom AI Studio →
             </span>
           </a>
-          {hasImportedExactSite(transfer) ? (
-            <a
-              href={`/sa/${subAccountId}/website-studio/vibe`}
-              className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 transition hover:-translate-y-0.5 hover:shadow-sm"
-            >
-              <ExternalLink className="h-5 w-5 text-emerald-700" />
-              <h2 className="mt-3 font-semibold text-emerald-950">
-                Continue existing website
-              </h2>
-              <p className="mt-1 text-sm text-emerald-900/75">
-                Open the approved live baseline, then make private changes in
-                the coding workspace. The public site remains untouched.
-              </p>
-              <span className="mt-3 inline-flex text-sm font-semibold text-emerald-700">
-                Open imported site →
-              </span>
-            </a>
-          ) : (
-            <a
-              href={`/sa/${subAccountId}/domain`}
-              className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 transition hover:-translate-y-0.5 hover:shadow-sm"
-            >
-              <ExternalLink className="h-5 w-5 text-emerald-700" />
-              <h2 className="mt-3 font-semibold text-emerald-950">
-                Bring an existing website
-              </h2>
-              <p className="mt-1 text-sm text-emerald-900/75">
-                Enter the live address and review a read-only baseline before
-                any private rebuild work begins.
-              </p>
-              <span className="mt-3 inline-flex text-sm font-semibold text-emerald-700">
-                Start existing-site setup →
-              </span>
-            </a>
-          )}
+          <a
+            href={`/sa/${subAccountId}/domain`}
+            className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 transition hover:-translate-y-0.5 hover:shadow-sm"
+          >
+            <ExternalLink className="h-5 w-5 text-emerald-700" />
+            <h2 className="mt-3 font-semibold text-emerald-950">
+              Bring an existing website
+            </h2>
+            <p className="mt-1 text-sm text-emerald-900/75">
+              Connect your domain and hosting in the guided workspace — we
+              walk you through the move step by step.
+            </p>
+            <span className="mt-3 inline-flex text-sm font-semibold text-emerald-700">
+              Start existing-site setup →
+            </span>
+          </a>
           <button
             type="button"
             onClick={() => setView("setup")}

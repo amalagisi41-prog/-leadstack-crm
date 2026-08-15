@@ -20,7 +20,6 @@ import {
   Building,
   Building2,
   Workflow,
-  Globe,
   Compass,
   Lock,
   Send,
@@ -153,7 +152,6 @@ const SUB_ACCOUNT_NAV_SECTIONS: NavSection[] = [
       },
       { href: "/media", label: "Media Library", icon: Images, enabled: true },
       { href: "/products", label: "Products", icon: Package, enabled: true },
-      { href: "/website", label: "Website", icon: Globe, enabled: true },
       { href: "/domain", label: "Domain", icon: Link2, enabled: true },
       {
         href: "/website-studio",
