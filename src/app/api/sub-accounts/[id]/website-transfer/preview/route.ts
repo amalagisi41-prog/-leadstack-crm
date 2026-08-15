@@ -105,9 +105,13 @@ export async function GET(
   console.info("[website-transfer] preview styles", {
     id,
     index,
+    liveLoaded,
     stylesheetCount: stylesheetUrls.length,
+    stylesheetUrls: stylesheetUrls.slice(0, 3), // Log first 3 URLs for debugging
     inlineCssChars: inlineCss.length,
+    inlineCssPreview: inlineCss.slice(0, 200), // Log first 200 chars
     htmlChars: html.length,
+    hasInlineStyles: html.includes("<style"),
   });
   const baseHref = (liveSource ?? source)?.href;
   const baseTag = baseHref
