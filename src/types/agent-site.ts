@@ -63,6 +63,11 @@ export interface AgentSiteContent {
   testimonials: AgentSiteTestimonial[];
   ctaHeadline: string;
   ctaSubtext: string;
+  // SEO (single-page site: one set of tags for the one published page).
+  // Falls back to agentName/tagline/heroImageUrl when blank.
+  metaTitle: string;
+  metaDescription: string;
+  ogImageUrl: string;
 }
 
 /** One turn in the AI Designer interview transcript. */
@@ -139,5 +144,8 @@ export function emptyAgentSiteContent(): AgentSiteContent {
     testimonials: [],
     ctaHeadline: "",
     ctaSubtext: "",
+    metaTitle: "",
+    metaDescription: "",
+    ogImageUrl: "",
   };
 }

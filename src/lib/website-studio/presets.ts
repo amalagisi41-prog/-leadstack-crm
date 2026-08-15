@@ -52,5 +52,9 @@ export const ARTISAN_HOME_NETWORK_PRESET: WebsiteStudioPreset = {
     ctaHeadline: "Tell us what your home needs next.",
     ctaSubtext:
       "Share your project or property goal and we will connect you with the right next step.",
+    metaTitle: "Artisan Home Network | Trusted Home Professionals",
+    metaDescription:
+      "Connect with trusted professionals for buying, selling, improving, and maintaining your home — all in one network.",
+    ogImageUrl: "",
   },
 };

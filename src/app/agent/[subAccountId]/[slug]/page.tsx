@@ -51,8 +51,29 @@ export async function generateMetadata({
   const site = snap.data() as AgentSiteDoc;
   if (site.status !== "published" || site.slug !== slug) return { title: "Not found" };
   const name = site.content.agentName || "Agent";
+  const title =
+    site.content.metaTitle.trim() ||
+    `${name}${site.content.title ? ` — ${site.content.title}` : ""}`;
+  const description =
+    site.content.metaDescription.trim() ||
+    site.content.tagline ||
+    site.content.bio ||
+    undefined;
+  const ogImage = site.content.ogImageUrl.trim() || site.content.heroImageUrl || undefined;
   return {
-    title: `${name}${site.content.title ? ` — ${site.content.title}` : ""}`,
-    description: site.content.tagline || site.content.bio || undefined,
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: "profile",
+      images: ogImage ? [{ url: ogImage }] : undefined,
+    },
+    twitter: {
+      card: ogImage ? "summary_large_image" : "summary",
+      title,
+      description,
+      images: ogImage ? [ogImage] : undefined,
+    },
   };
 }

@@ -207,6 +207,31 @@ export function ContentEditor({
           <Field label="CTA headline" value={local.ctaHeadline} onChange={(v) => set("ctaHeadline", v)} />
           <Field label="CTA subtext" value={local.ctaSubtext} onChange={(v) => set("ctaSubtext", v)} textarea />
         </Group>
+
+        <Group title="SEO">
+          <p className="text-muted-foreground -mt-1 text-xs">
+            Controls how this page appears in search results and social-media link previews.
+          </p>
+          <Field
+            label={`Search title (${local.metaTitle.length}/60)`}
+            value={local.metaTitle}
+            onChange={(v) => set("metaTitle", v)}
+            placeholder={local.agentName ? `${local.agentName} | ${local.title || "REALTOR®"}` : "Your name | Your title"}
+          />
+          <Field
+            label={`Search description (${local.metaDescription.length}/155)`}
+            value={local.metaDescription}
+            onChange={(v) => set("metaDescription", v)}
+            placeholder={local.tagline || "A short, compelling summary of who you help and where."}
+            textarea
+          />
+          <Field
+            label="Social preview image URL"
+            value={local.ogImageUrl}
+            onChange={(v) => set("ogImageUrl", v)}
+            placeholder={local.heroImageUrl || "https://… (defaults to your hero image)"}
+          />
+        </Group>
       </div>
     </div>
   );

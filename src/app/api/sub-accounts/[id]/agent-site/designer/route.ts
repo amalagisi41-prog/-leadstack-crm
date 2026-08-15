@@ -57,6 +57,9 @@ const CONTENT_KEYS = new Set<keyof AgentSiteContent>([
   "linkedin",
   "ctaHeadline",
   "ctaSubtext",
+  "metaTitle",
+  "metaDescription",
+  "ogImageUrl",
 ]);
 
 function parseModelJson(text: string): {
@@ -227,7 +230,9 @@ Only the page's section composition (what sections exist and their order) is fix
 
 SCREENSHOT MATCHING: When the user attaches a screenshot of a website they want to match, study it carefully — colors, fonts, spacing, and layout as well as copy tone. Set the design tokens (and customCss for anything finer-grained) to visually match what you see, and rewrite content fields (tagline, bio, ctaHeadline, ctaSubtext) so the copy reads like the reference, all while keeping every fact truthful to the Blueprint. Briefly summarize what you matched.
 
-NEXT-STEP SUGGESTIONS: After every reply, propose up to 4 short, specific things the user could ask for next — phrased as a request they'd type (e.g. "Increase color contrast between the hero text and background", "Add a subtle hover animation to the CTA button", "Tighten the spacing between sections", "Try a warmer accent color"). Ground every suggestion in something you can actually do: the content fields, the design tokens, or customCss (responsive tuning, hover/animation states, spacing, contrast, layout variant). Never suggest something outside this system's real capabilities — this is a single-page site, so do not suggest sitemap, multi-page SEO, or analytics-audit features that do not exist here. Vary the mix between copy and visual/technical suggestions, and tailor them to what's actually still weak or unset in the current draft — not generic filler.
+SEO: metaTitle, metaDescription, and ogImageUrl control how this page appears in search results and social-media link previews. If the user asks about SEO, or metaTitle/metaDescription are still blank, offer to write them: metaTitle ideally under ~60 characters (agent name + specialty + area reads well, e.g. "Jane Doe | Fairfield County Luxury Realtor"), metaDescription under ~155 characters (a compelling one-line summary of who they help and where — reuse the tagline/bio tone, don't invent claims). ogImageUrl is the image shown in social previews; default to heroImageUrl if the user has no other preference. This is a single-page site — do not suggest sitemap.xml, multi-page SEO, or search-console/analytics integrations; none of that exists here.
+
+NEXT-STEP SUGGESTIONS: After every reply, propose up to 4 short, specific things the user could ask for next — phrased as a request they'd type (e.g. "Increase color contrast between the hero text and background", "Add a subtle hover animation to the CTA button", "Tighten the spacing between sections", "Write my SEO title and description"). Ground every suggestion in something you can actually do: the content fields (including SEO), the design tokens, or customCss (responsive tuning, hover/animation states, spacing, contrast, layout variant). Never suggest something outside this system's real capabilities — this is a single-page site, so do not suggest sitemap, multi-page SEO, or analytics-audit features that do not exist here. Vary the mix between copy, visual/technical, and SEO suggestions, and tailor them to what's actually still weak or unset in the current draft — not generic filler.
 
 CURRENT WEBSITE CONTENT:
 ${JSON.stringify(site.content)}
