@@ -51,6 +51,7 @@ export function WebsiteTransferApp() {
   const [loading, setLoading] = useState(true);
   const [scanning, setScanning] = useState(false);
   const [approving, setApproving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`/api/sub-accounts/${subAccountId}/website-transfer`)
@@ -72,6 +73,7 @@ export function WebsiteTransferApp() {
 
   async function scan() {
     setScanning(true);
+    setError(null);
     try {
       const res = await fetch(
         `/api/sub-accounts/${subAccountId}/website-transfer`,
@@ -85,14 +87,19 @@ export function WebsiteTransferApp() {
         transfer?: WebsiteTransferDoc;
         error?: string;
       };
-      if (!res.ok || !data.transfer)
-        throw new Error(data.error ?? "The scan could not finish.");
+      if (!res.ok || !data.transfer) {
+        const msg = data.error ?? "The scan could not finish.";
+        setError(msg);
+        toast.error(msg);
+        throw new Error(msg);
+      }
       setTransfer(data.transfer);
+      setError(null);
       toast.success("Read-only scan complete. Your private report is ready.");
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "The scan could not finish."
-      );
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "The scan could not finish.";
+      setError(msg);
     } finally {
       setScanning(false);
     }
@@ -100,6 +107,7 @@ export function WebsiteTransferApp() {
 
   async function approve() {
     setApproving(true);
+    setError(null);
     try {
       const res = await fetch(
         `/api/sub-accounts/${subAccountId}/website-transfer`,
@@ -113,16 +121,21 @@ export function WebsiteTransferApp() {
         transfer?: WebsiteTransferDoc;
         error?: string;
       };
-      if (!res.ok || !data.transfer)
-        throw new Error(data.error ?? "Approval could not be saved.");
+      if (!res.ok || !data.transfer) {
+        const msg = data.error ?? "Approval could not be saved.";
+        setError(msg);
+        toast.error(msg);
+        throw new Error(msg);
+      }
       setTransfer(data.transfer);
+      setError(null);
       toast.success(
         "Private rebuild approved. Hosting and DNS guidance is now unlocked."
       );
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Approval could not be saved."
-      );
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : "Approval could not be saved.";
+      setError(msg);
     } finally {
       setApproving(false);
     }
@@ -133,6 +146,30 @@ export function WebsiteTransferApp() {
       <div className="text-muted-foreground flex h-52 items-center justify-center">
         <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading transfer
         workspace…
+      </div>
+    );
+
+  if (error && !transfer)
+    return (
+      <div className="mx-auto max-w-2xl space-y-4 rounded-2xl border border-red-200 bg-red-50 p-6">
+        <div className="flex items-start gap-3">
+          <XCircle className="mt-0.5 h-5 w-5 text-red-700" />
+          <div className="flex-1">
+            <p className="font-semibold text-red-900">Could not load transfer workspace</p>
+            <p className="text-muted-foreground mt-2 text-sm">{error}</p>
+            <div className="mt-4 flex gap-2">
+              <Button onClick={() => window.location.reload()}>
+                Try again
+              </Button>
+              <Button
+                variant="outline"
+                render={<Link href={saPath("/website-studio")} />}
+              >
+                Back to website studio
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
     );
   const counts = transfer?.pages.reduce(
@@ -172,6 +209,12 @@ export function WebsiteTransferApp() {
       </div>
       <section className="rounded-2xl border p-5">
         <h2 className="font-semibold">1. Enter the live website</h2>
+        {error && transfer && (
+          <div className="text-red-700 border-red-200 bg-red-50 mt-3 rounded-lg border p-3 text-sm">
+            <p className="font-medium">{error}</p>
+            <p className="mt-1 text-xs">Try refreshing the page or contact support if the issue persists.</p>
+          </div>
+        )}
         <div className="mt-3 flex flex-col gap-2 sm:flex-row">
           <input
             className="h-10 flex-1 rounded-lg border px-3 text-sm"
