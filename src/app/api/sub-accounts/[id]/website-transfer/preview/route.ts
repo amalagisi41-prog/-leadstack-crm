@@ -123,9 +123,9 @@ export async function GET(
   // framework-dependent layers). Keep the real DOM and assets, then add a
   // deterministic semantic guardrail so the baseline never degrades to raw
   // browser defaults while it is being reviewed.
-  const baseClasslessCss = classlessSnapshotStyles(html, liveLoaded);
+  const baseClasslessCss = classlessSnapshotStyles(html, false);
   const classlessCss = liveLoaded
-    ? baseClasslessCss + classlessSemanticLayoutStyles() + classlessEmbeddedWidgetStyles()
+    ? ""
     : baseClasslessCss
       ? baseClasslessCss + classlessSemanticLayoutStyles() + classlessEmbeddedWidgetStyles()
       : "";
