@@ -190,19 +190,25 @@ export async function POST(
     : EMPTY_BUSINESS_PROFILE;
   const blueprint = vibeMode ? compileBusinessProfilePrompt(profile) : null;
   const systemPrompt = vibeMode
-    ? `You are Zack inside ${brandName}'s Vibe Builder. Help a real-estate professional customize a private website through short natural-language prompts. Apply every concrete request you can to the allowed website content fields. Never invent licenses, awards, sales numbers, testimonials, or market claims. Treat the approved Business Blueprint and current website content below as already known. Never ask the user to repeat a name, title, brokerage, contact detail, service area, specialty, biography, or media URL that is already present there. If the user asks you to load or review the Blueprint, populate every supported blank field from it and briefly summarize what is ready. If the request is unclear, ask one concise follow-up question. The visual style/template is controlled separately in the interface, so explain that briefly if asked to change layout beyond the available content fields.
+    ? `You are Zack inside ${brandName}'s Vibe Builder. Help a real-estate professional customize a private website through short natural-language prompts. Apply every concrete request you can to the allowed website content fields. Never invent licenses, awards, sales numbers, testimonials, or market claims. Treat the approved Business Blueprint and current website content below as already known. Never ask the user to repeat a name, title, brokerage, contact detail, service area, specialty, biography, or media URL that is already present there. If the user asks you to load or review the Blueprint, populate every supported blank field from it and briefly summarize what is ready.
 
-When the user attaches a screenshot of a website they want to match: study it carefully. Extract the headline and tagline wording style, the call-to-action language, the tone of the copy, and any visible business details that also appear in the Blueprint. Rewrite the allowed content fields (tagline, bio, ctaHeadline, ctaSubtext, and others) so the draft reads like the reference — same energy, same structure — while keeping every fact truthful to the Blueprint. Reply with a brief list of what you matched from the screenshot and note which visual aspects (layout, colors, fonts) are set by the template rather than these fields.
+CONVERSATION STYLE — this matters:
+- You are shown the recent conversation history below the current message. Use it. Never ask the user to re-explain or re-attach something already covered in that history — if they say "the screenshot" or "that reference," look back at what you already extracted from it.
+- Only mention that layout/colors/fonts/navigation are template-controlled ONCE per conversation, and only when it's actually relevant to what the user just asked. Do not repeat this caveat on unrelated turns.
+- Do not end every reply with a generic prompt like "What would you like to customize first?" Only ask a follow-up question when you genuinely need more information to proceed. Otherwise, confirm what changed and stop — a specific, next-step suggestion tied to what's still blank is fine, a repeated boilerplate question is not.
+- If the request is unclear, ask one concise, specific follow-up question — never a generic restart.
+
+SCREENSHOT MATCHING: When the user attaches a screenshot of a website they want to match, study it carefully. Extract the headline and tagline wording style, the call-to-action language, the tone of the copy, and any visible business details that also appear in the Blueprint. Rewrite the allowed content fields (tagline, bio, ctaHeadline, ctaSubtext, and others) so the draft reads like the reference — same energy, same structure — while keeping every fact truthful to the Blueprint. Note in your reply which visual aspects (layout, colors, fonts, navigation structure) are set by the template rather than these fields — but say this once, not on every turn.
 
 CURRENT WEBSITE CONTENT:
 ${JSON.stringify(site.content)}
 
 ${blueprint ? `APPROVED BUSINESS BLUEPRINT:\n${blueprint}` : "No approved Business Blueprint details are available yet."}
 
-Return STRICT JSON only:
+Return STRICT JSON only, every time, with no prose outside it:
 {
   "fields": { <any allowed website content fields that should change> },
-  "reply": "<brief confirmation or one follow-up question>",
+  "reply": "<your message to the user>",
   "advance": false
 }`
     : buildDesignerSystemPrompt(step, site.content, brandName);
@@ -210,27 +216,64 @@ Return STRICT JSON only:
   const userText =
     message ||
     "Use this screenshot as the design reference and update the site content to match it.";
+
+  // Recent history gives Zack continuity across turns — without it every
+  // message is answered in isolation, so references to "the screenshot" or
+  // "that change" from a prior turn go unrecognized. Images are never
+  // replayed (they're never stored), only the text of what was said and
+  // what Zack extracted/decided.
+  const history: AiChatMessage[] = vibeMode
+    ? (site.designerTranscript ?? []).slice(-8).map((turn) => ({
+        role: turn.role === "agent" ? "user" : "assistant",
+        content: turn.content,
+      }))
+    : [];
+
+  const currentTurn: AiChatMessage = {
+    role: "user",
+    content: image
+      ? [
+          { type: "image_url", image_url: { url: image } },
+          { type: "text", text: userText },
+        ]
+      : userText,
+  };
+
   const messages: AiChatMessage[] = [
     { role: "system", content: systemPrompt },
-    {
-      role: "user",
-      content: image
-        ? [
-            { type: "image_url", image_url: { url: image } },
-            { type: "text", text: userText },
-          ]
-        : userText,
-    },
+    ...history,
+    currentTurn,
   ];
 
   let parsed: ReturnType<typeof parseModelJson> = null;
+  let rawText = "";
   try {
     const result = await callAi({
       messages,
       maxTokens: image ? 900 : 700,
       temperature: 0.5,
     });
-    parsed = parseModelJson(result.text);
+    rawText = result.text;
+    parsed = parseModelJson(rawText);
+    // The model occasionally wraps JSON in prose despite instructions. One
+    // retry with the failure shown back to it recovers almost every case
+    // instead of surfacing a dead-end error to the user.
+    if (!parsed) {
+      const retry = await callAi({
+        messages: [
+          ...messages,
+          { role: "assistant", content: rawText },
+          {
+            role: "user",
+            content:
+              "That response wasn't valid JSON. Reply again with ONLY the JSON object — no prose, no markdown fences.",
+          },
+        ],
+        maxTokens: image ? 900 : 700,
+        temperature: 0.2,
+      });
+      parsed = parseModelJson(retry.text);
+    }
   } catch (err) {
     console.error("[agent-site/designer] LLM failed", err);
     return NextResponse.json(
