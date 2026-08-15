@@ -7,7 +7,7 @@ import {
 describe("website transfer stylesheet safety", () => {
   it("makes captured stylesheet links absolute for isolated previews", () => {
     const html =
-      '<head><link rel="stylesheet" crossorigin="anonymous" href="/assets/site.css"></head>';
+      '<head><link rel="stylesheet" crossorigin="anonymous" integrity="sha256-test" nonce="stale" href="/assets/site.css"></head>';
     const normalized = normalizeCapturedStylesheetLinks(
       html,
       ["https://www.example.com/assets/site.css"],
@@ -18,6 +18,8 @@ describe("website transfer stylesheet safety", () => {
       'href="https://www.example.com/assets/site.css"'
     );
     expect(normalized).not.toContain("crossorigin");
+    expect(normalized).not.toContain("integrity");
+    expect(normalized).not.toContain("nonce");
   });
 
   it("removes leaked IDX custom CSS text without removing the widget shell", () => {

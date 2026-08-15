@@ -135,6 +135,7 @@ async function inlineStylesheets(
           const contentType = response.headers.get("content-type") ?? "";
           if (!contentType.includes("css") && !href.includes(".css")) return "";
           const text = (await response.text()).slice(0, 300_000);
+          if (/^\s*<(?:!doctype|html|head|body)\b/i.test(text)) return "";
           return rewriteCssUrls(text, new URL(response.url || href));
         })().catch(() => "");
         cache.set(href, pending);

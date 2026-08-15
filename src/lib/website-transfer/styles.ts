@@ -86,6 +86,9 @@ export function normalizeCapturedStylesheetLinks(
       const withoutCors = tag.replace(
         /\s+crossorigin(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+))?/gi,
         ""
+      ).replace(
+        /\s+(?:integrity|nonce)(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+))?/gi,
+        ""
       );
       if (!base) return withoutCors;
       const href = withoutCors.match(/\bhref\s*=\s*(["'])(.*?)\1/i);
@@ -243,6 +246,7 @@ async function fetchStylesheet(url: string): Promise<string> {
     if (!contentType.includes("css") && !/\.css(?:[?#]|$)/i.test(url))
       return "";
     const text = (await response.text()).slice(0, MAX_STYLESHEET_CHARS);
+    if (/^\s*<(?:!doctype|html|head|body)\b/i.test(text)) return "";
     return rewriteCssUrls(text, new URL(response.url || url));
   } catch {
     return "";
