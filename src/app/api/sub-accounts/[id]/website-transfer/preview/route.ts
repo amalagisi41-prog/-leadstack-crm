@@ -146,7 +146,7 @@ export async function GET(
     headers: {
       "Content-Type": "text/html; charset=utf-8",
       "Content-Security-Policy":
-        "default-src 'self' https: data:; style-src 'self' https: 'unsafe-inline'; img-src 'self' https: data: blob:; font-src 'self' https: data:; script-src 'none'; frame-src 'none'; object-src 'none'; frame-ancestors 'self'; form-action 'none';",
+        "default-src 'none'; style-src 'self' 'unsafe-inline' https:; img-src * data: blob:; font-src 'self' https: data:; script-src 'none'; frame-src 'none'; object-src 'none'; frame-ancestors 'self'; form-action 'none'; connect-src 'none'; media-src 'none';",
       "Cache-Control": "private, no-store",
       "X-AgentStack-Preview-Mode": liveLoaded ? "live-baseline" : "captured",
       "X-AgentStack-Stylesheet-Count": String(stylesheetUrls.length),
