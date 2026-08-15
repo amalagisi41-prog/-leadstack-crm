@@ -146,7 +146,7 @@ export function AgentSiteRenderer({
 
       {/* Hero */}
       {template.heroVariant === "split" ? (
-        <section style={{ ...container, display: "grid", gap: 40, gridTemplateColumns: "1fr 1fr", alignItems: "center", padding: "56px 24px 72px" }}>
+        <section style={{ ...container, display: "grid", gap: 40, gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", alignItems: "center", padding: "56px 24px 72px" }}>
           <div>
             <div style={eyebrow}>{title} · {areas}</div>
             <h1 style={{ fontFamily: template.fontDisplay, fontSize: 52, lineHeight: 1.05, margin: "0 0 18px", fontWeight: 600 }}>
@@ -193,9 +193,9 @@ export function AgentSiteRenderer({
       )}
 
       {/* About */}
-      <section style={{ ...container, display: "grid", gap: 40, gridTemplateColumns: "300px 1fr", alignItems: "center", padding: "72px 24px" }}>
+      <section style={{ ...container, display: "grid", gap: 40, gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", alignItems: "center", padding: "72px 24px" }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={headshot} alt={name} style={{ width: "100%", height: 340, objectFit: "cover", borderRadius: template.radius }} />
+        <img src={headshot} alt={name} style={{ width: "100%", maxWidth: 340, height: 340, objectFit: "cover", borderRadius: template.radius }} />
         <div>
           <div style={eyebrow}>About {name.split(" ")[0]}</div>
           <h2 style={h2}>{name}</h2>
@@ -209,7 +209,7 @@ export function AgentSiteRenderer({
         <div style={{ ...container, padding: "56px 24px" }}>
           <div style={eyebrow}>What I do</div>
           <h2 style={h2}>Specialties</h2>
-          <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(3, 1fr)" }}>
+          <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
             {specialties.map((s) => (
               <div key={s} style={{ ...card, padding: 20, fontSize: 16, fontWeight: 600 }}>
                 <span style={{ color: p.accent, marginRight: 8 }}>◆</span>
@@ -225,7 +225,7 @@ export function AgentSiteRenderer({
         <section style={{ ...container, padding: "72px 24px" }}>
           <div style={eyebrow}>Featured</div>
           <h2 style={h2}>Properties</h2>
-          <div style={{ display: "grid", gap: 20, gridTemplateColumns: "repeat(3, 1fr)" }}>
+          <div style={{ display: "grid", gap: 20, gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
             {content.listings.map((l, i) => (
               <div key={i} style={card}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -248,7 +248,7 @@ export function AgentSiteRenderer({
           <div style={{ ...container, padding: "64px 24px" }}>
             <div style={eyebrow}>Client love</div>
             <h2 style={h2}>What people say</h2>
-            <div style={{ display: "grid", gap: 20, gridTemplateColumns: "repeat(2, 1fr)" }}>
+            <div style={{ display: "grid", gap: 20, gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
               {content.testimonials.map((t, i) => (
                 <div key={i} style={{ ...card, padding: 24 }}>
                   <p style={{ fontSize: 18, fontFamily: template.fontDisplay, marginBottom: 14 }}>&ldquo;{t.quote}&rdquo;</p>
