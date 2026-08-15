@@ -1,0 +1,30 @@
+import { describe, expect, it } from "vitest";
+import {
+  normalizeCapturedStylesheetLinks,
+  removeCapturedStyleText,
+} from "./styles";
+
+describe("website transfer stylesheet safety", () => {
+  it("makes captured stylesheet links absolute for isolated previews", () => {
+    const html =
+      '<head><link rel="stylesheet" crossorigin="anonymous" href="/assets/site.css"></head>';
+    const normalized = normalizeCapturedStylesheetLinks(
+      html,
+      ["https://www.example.com/assets/site.css"],
+      new URL("https://www.example.com/")
+    );
+
+    expect(normalized).toContain(
+      'href="https://www.example.com/assets/site.css"'
+    );
+    expect(normalized).not.toContain("crossorigin");
+  });
+
+  it("removes leaked IDX custom CSS text without removing the widget shell", () => {
+    const html =
+      '<idx-listings-carousel><div>/* IDX Carousel Widget */ body{color:red}</div></idx-listings-carousel>';
+    const cleaned = removeCapturedStyleText(html);
+
+    expect(cleaned).toBe("<idx-listings-carousel><div></div></idx-listings-carousel>");
+  });
+});

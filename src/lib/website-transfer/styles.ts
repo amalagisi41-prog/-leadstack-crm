@@ -62,7 +62,7 @@ export function removeCapturedCsp(html: string): string {
  */
 export function removeCapturedStyleText(html: string): string {
   return html.replace(
-    /\/\*\s*IDX\s+Carousel\s+Widget\b[\s\S]*?(?=<\/div>\s*<\/idx-listings-carousel>)/gi,
+    /\/\*\s*IDX\s+Carousel\s+Widget\b[\s\S]*?(?=(?:<\/div>\s*)*<\/idx-listings-carousel\b)/gi,
     ""
   );
 }
@@ -75,14 +75,30 @@ export function removeCapturedStyleText(html: string): string {
  */
 export function normalizeCapturedStylesheetLinks(
   html: string,
-  stylesheetUrls: string[]
+  stylesheetUrls: string[],
+  base?: URL | null
 ): string {
   const normalized = html.replace(
     /<link\b[^>]*>/gi,
     (tag) => {
       if (!/\brel\s*=\s*["'][^"']*\bstylesheet\b[^"']*["']/i.test(tag))
         return tag;
-      return tag.replace(/\s+crossorigin(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+))?/gi, "");
+      const withoutCors = tag.replace(
+        /\s+crossorigin(?:\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+))?/gi,
+        ""
+      );
+      if (!base) return withoutCors;
+      const href = withoutCors.match(/\bhref\s*=\s*(["'])(.*?)\1/i);
+      if (!href?.[2]) return withoutCors;
+      try {
+        const absoluteHref = new URL(decodeHtml(href[2]), base).toString();
+        return withoutCors.replace(
+          href[0],
+          `href="${absoluteHref.replace(/&/g, "&amp;").replace(/"/g, "&quot;")}"`
+        );
+      } catch {
+        return withoutCors;
+      }
     }
   );
   const existing = new Set(

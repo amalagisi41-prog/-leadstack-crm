@@ -23,11 +23,11 @@ const STAGES = [
   "Address",
   "Read-only scan",
   "Inventory",
-  "Transfer report",
-  "Private preview",
-  "Compare",
-  "Approve",
-  "DNS cutover",
+  "Readiness report",
+  "Live baseline",
+  "Private rebuild",
+  "Approval",
+  "Hosting",
 ];
 const STATUS_LABEL: Record<TransferItemStatus, string> = {
   copied: "Copied",
@@ -117,7 +117,7 @@ export function WebsiteTransferApp() {
         throw new Error(data.error ?? "Approval could not be saved.");
       setTransfer(data.transfer);
       toast.success(
-        "Replacement approved. Exact DNS cutover guidance is now unlocked."
+        "Private rebuild approved. Hosting and DNS guidance is now unlocked."
       );
     } catch (error) {
       toast.error(
@@ -147,15 +147,16 @@ export function WebsiteTransferApp() {
     <div className="mx-auto max-w-6xl space-y-5">
       <div className="rounded-2xl bg-[#1d3f76] p-6 text-white">
         <p className="text-xs font-bold tracking-[.18em] text-pink-300">
-          EXACT WEBSITE REPLACEMENT
+          LIVE-SITE BASELINE + PRIVATE REBUILD
         </p>
         <h1 className="mt-2 text-2xl font-bold">
-          Zack copies the current site before anything changes.
+          Review the public site first. Build privately only when it is safe.
         </h1>
         <p className="mt-2 max-w-3xl text-sm text-blue-100">
-          Enter the live address. AgentStack reads only public pages,
-          inventories the site, creates a private safe preview, and records your
-          approval. Your live site, domain, email, and DNS remain untouched.
+          Enter the live address. AgentStack checks the current public pages,
+          creates an isolated read-only baseline, and records your approval
+          before the private Vibe build opens. Your live site, domain, email,
+          forms, analytics, and DNS stay untouched.
         </p>
       </div>
       <div className="grid gap-2 sm:grid-cols-4 lg:grid-cols-8">
@@ -226,9 +227,9 @@ export function WebsiteTransferApp() {
           <section className="rounded-2xl border p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 className="font-semibold">Visual transfer report</h2>
+                <h2 className="font-semibold">Site readiness report</h2>
                 <p className="text-muted-foreground text-sm">
-                  Every accessible page is recorded below.
+                  Every page is checked before you start a private rebuild.
                 </p>
               </div>
               {transfer.privatePreviewPath ? (
@@ -236,7 +237,7 @@ export function WebsiteTransferApp() {
                   variant="default"
                   render={<Link href={transfer.privatePreviewPath} />}
                 >
-                  <Eye className="mr-2 h-4 w-4" /> Resume private comparison
+                  <Eye className="mr-2 h-4 w-4" /> Open live baseline
                 </Button>
               ) : null}
             </div>
@@ -308,18 +309,18 @@ export function WebsiteTransferApp() {
             <div className="flex items-start gap-3">
               <ShieldCheck className="mt-0.5 h-5 w-5 text-blue-700" />
               <div className="flex-1">
-                <h2 className="font-semibold">Approval gate</h2>
+                <h2 className="font-semibold">Safe approval gate</h2>
                 <p className="text-muted-foreground mt-1 text-sm">
-                  Compare the private snapshot page-by-page. Approval is saved
-                  with a timestamp. DNS instructions stay locked until this step
-                  is complete.
+                  Approve the live baseline first. The private rebuild remains
+                  isolated until you review it separately. DNS and hosting
+                  instructions stay locked until both checks are complete.
                 </p>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {transfer.status !== "approved" ? (
                     <Button onClick={approve} disabled={approving}>
                       {approving
                         ? "Saving approval…"
-                        : "Approve private replacement"}
+                        : "Open live baseline"}
                     </Button>
                   ) : (
                     <Button
@@ -338,7 +339,7 @@ export function WebsiteTransferApp() {
                       />
                     }
                   >
-                    Open original site
+                    Open live site
                   </Button>
                 </div>
               </div>

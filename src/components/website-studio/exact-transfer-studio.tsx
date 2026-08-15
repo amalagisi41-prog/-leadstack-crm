@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, CheckCircle2, Loader2, Monitor, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,9 @@ export function ExactTransferStudio({
   const [page, setPage] = useState(0);
   const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
   const [approving, setApproving] = useState(false);
+  const [baselineState, setBaselineState] = useState<
+    "checking" | "ready" | "unavailable"
+  >("checking");
   const uniquePages = useMemo(() => {
     const seen = new Set<string>();
     return transfer.pages
@@ -29,6 +32,26 @@ export function ExactTransferStudio({
   const selectedEntry = uniquePages[page];
   const selected = selectedEntry?.item;
   const sourceIndex = selectedEntry?.index ?? 0;
+  const previewSrc = `/api/sub-accounts/${subAccountId}/website-transfer/preview?page=${sourceIndex}&live=1`;
+
+  useEffect(() => {
+    let cancelled = false;
+    setBaselineState("checking");
+    void fetch(previewSrc, { cache: "no-store" })
+      .then((response) => {
+        if (cancelled) return;
+        const mode = response.headers.get("x-agentstack-preview-mode");
+        setBaselineState(
+          response.ok && mode === "live-baseline" ? "ready" : "unavailable"
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setBaselineState("unavailable");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [previewSrc]);
 
   async function approveBaseline() {
     setApproving(true);
@@ -64,7 +87,7 @@ export function ExactTransferStudio({
         <div className="flex items-start gap-3">
           <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-blue-700" />
           <div>
-            <p className="font-semibold text-blue-950">Live-site baseline preview</p>
+            <p className="font-semibold text-blue-950">Live-site baseline preview · read-only</p>
             <p className="mt-1 max-w-3xl text-sm text-blue-900/75">
               Review the current public website first. This read-only view does
               not publish, replace, or connect anything. Website Vibe Studio
@@ -76,11 +99,18 @@ export function ExactTransferStudio({
 
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-slate-50 p-3">
         <div>
-          <p className="text-sm font-semibold">Current live website</p>
-          <p className="text-muted-foreground text-xs">
-            Choose a page and check desktop and mobile rendering before starting
-            the connected Vibe build.
-          </p>
+            <p className="text-sm font-semibold">Current live website</p>
+            <p className="text-muted-foreground text-xs">
+              Choose a page and check desktop and mobile rendering before starting
+              the connected Vibe build.
+            </p>
+            <p className="mt-1 text-xs font-semibold">
+              {baselineState === "checking"
+                ? "Checking live source…"
+                : baselineState === "ready"
+                  ? "Live source verified · scripts isolated · nothing published"
+                  : "Live source unavailable · refresh before approving"}
+            </p>
         </div>
         <div className="flex rounded-lg border bg-white p-1">
           <button
@@ -121,7 +151,7 @@ export function ExactTransferStudio({
           <div className="overflow-auto bg-slate-100 p-2">
             <iframe
               title={`Live source ${selected.path}`}
-              src={`/api/sub-accounts/${subAccountId}/website-transfer/preview?page=${sourceIndex}&live=1`}
+              src={previewSrc}
               className={`mx-auto h-[76vh] bg-white shadow-sm transition-[width] ${device === "mobile" ? "w-[390px] max-w-full" : "w-full"}`}
             />
           </div>
@@ -138,7 +168,11 @@ export function ExactTransferStudio({
         </div>
         <Button
           onClick={approveBaseline}
-          disabled={approving || Boolean(transfer.baselineApprovedAt)}
+          disabled={
+            approving ||
+            Boolean(transfer.baselineApprovedAt) ||
+            baselineState !== "ready"
+          }
         >
           {approving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
           {transfer.baselineApprovedAt

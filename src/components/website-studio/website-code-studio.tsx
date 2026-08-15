@@ -65,7 +65,7 @@ export function WebsiteCodeStudio({
     {
       role: "coder",
       content:
-        "I’m your AI Website Coder. I’m working from the imported HTML, CSS, fonts, colors, images, and responsive layout—not an AgentStack template. Describe a visual, layout, or copy change and I’ll update the private preview.",
+        "I’m your AI Website Coder. The live-site baseline is the source of truth; this workspace is a private rebuild, not a published copy. Describe a visual, layout, or copy change and I’ll update the isolated preview.",
     },
   ]);
   const [loading, setLoading] = useState(false);
@@ -193,7 +193,7 @@ export function WebsiteCodeStudio({
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="font-semibold">Private coded website workspace</p>
+          <p className="font-semibold">Private rebuild workspace</p>
           <p className="text-muted-foreground text-xs">
             Imported site source · edits remain private · desktop and mobile
           </p>
@@ -206,7 +206,7 @@ export function WebsiteCodeStudio({
             onClick={() => setShowSnapshot((current) => !current)}
           >
             <Camera className="mr-2 h-4 w-4" />
-            Create or refresh snapshot
+            Refresh reference capture
           </Button>
           <div className="flex rounded-lg border bg-white p-1">
             <button
@@ -341,7 +341,7 @@ export function WebsiteCodeStudio({
               <div>
                 <p className="text-sm font-semibold">AI Website Coder</p>
                 <p className="text-muted-foreground text-[11px]">
-                  Real HTML/CSS modifications
+                  Isolated layout and code edits
                 </p>
               </div>
             </div>

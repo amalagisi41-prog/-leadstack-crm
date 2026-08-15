@@ -423,8 +423,8 @@ export function WebsiteStudioApp({
                 Continue existing website
               </h2>
               <p className="mt-1 text-sm text-emerald-900/75">
-                Open the captured live site inside the AI coding workspace and
-                continue editing its real HTML and CSS.
+                Open the approved live baseline, then make private changes in
+                the coding workspace. The public site remains untouched.
               </p>
               <span className="mt-3 inline-flex text-sm font-semibold text-emerald-700">
                 Open imported site →
@@ -440,8 +440,8 @@ export function WebsiteStudioApp({
                 Bring an existing website
               </h2>
               <p className="mt-1 text-sm text-emerald-900/75">
-                Enter the live address and let AgentStack prepare its private
-                read-only capture.
+                Enter the live address and review a read-only baseline before
+                any private rebuild work begins.
               </p>
               <span className="mt-3 inline-flex text-sm font-semibold text-emerald-700">
                 Start existing-site setup →

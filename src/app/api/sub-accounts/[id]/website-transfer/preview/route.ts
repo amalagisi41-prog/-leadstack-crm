@@ -47,6 +47,7 @@ export async function GET(
   const pageUrl = String(snapshotData.url ?? sourceUrl);
   const liveRequested = url.searchParams.get("live") === "1";
   let liveLoaded = false;
+  let liveSource: URL | null = null;
 
   // The left comparison pane should reflect the current public source, while
   // the replacement pane remains pinned to the captured private artifact.
@@ -56,7 +57,7 @@ export async function GET(
       const contentType = liveResponse.headers.get("content-type") ?? "";
       if (liveResponse.ok && contentType.includes("text/html")) {
         const liveHtml = await liveResponse.text();
-        const liveSource = new URL(liveResponse.url || pageUrl);
+        liveSource = new URL(liveResponse.url || pageUrl);
         const liveStylesheets = extractStylesheetUrls(liveHtml, liveSource);
         html = await safeSnapshot(
           liveHtml,
@@ -88,10 +89,16 @@ export async function GET(
     return new NextResponse("Preview unavailable for this page.", {
       status: 404,
     });
-  html = removeCapturedStyleText(removeCapturedCsp(html));
+  html = removeCapturedStyleText(removeCapturedCsp(html)).replace(
+    /<base\b[^>]*>/gi,
+    ""
+  );
   const source = sourceUrl ? new URL(sourceUrl) : null;
-  const stylesheetUrls = source ? extractStylesheetUrls(html, source) : [];
-  html = normalizeCapturedStylesheetLinks(html, stylesheetUrls);
+  const stylesheetBase = liveSource ?? source;
+  const stylesheetUrls = stylesheetBase
+    ? extractStylesheetUrls(html, stylesheetBase)
+    : [];
+  html = normalizeCapturedStylesheetLinks(html, stylesheetUrls, stylesheetBase);
   const inlineCss = await inlineStylesheetAssets(
     stylesheetUrls
   );
@@ -102,8 +109,9 @@ export async function GET(
     inlineCssChars: inlineCss.length,
     htmlChars: html.length,
   });
-  const baseTag = sourceUrl
-    ? '<base href="' + sourceUrl.replace(/\"/g, "&quot;") + '">'
+  const baseHref = (liveSource ?? source)?.href;
+  const baseTag = baseHref
+    ? '<base href="' + baseHref.replace(/\"/g, "&quot;") + '">'
     : "";
   const styleTag = inlineCss
     ? '<style id="agentstack-captured-styles">' +
@@ -132,6 +140,8 @@ export async function GET(
       "Content-Security-Policy":
         "default-src 'self' https: data:; style-src 'self' https: 'unsafe-inline'; img-src 'self' https: data: blob:; font-src 'self' https: data:; script-src 'none'; frame-src 'none'; object-src 'none'; frame-ancestors 'self'; form-action 'none';",
       "Cache-Control": "private, no-store",
+      "X-AgentStack-Preview-Mode": liveLoaded ? "live-baseline" : "captured",
+      "X-AgentStack-Stylesheet-Count": String(stylesheetUrls.length),
     },
   });
 }

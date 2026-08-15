@@ -58,7 +58,10 @@ export async function GET(
         replace?: unknown;
       }>)
     : [];
-  html = removeCapturedStyleText(removeCapturedCsp(html));
+  html = removeCapturedStyleText(removeCapturedCsp(html)).replace(
+    /<base\b[^>]*>/gi,
+    ""
+  );
   for (const replacement of replacements) {
     if (
       typeof replacement.find === "string" &&
@@ -101,7 +104,11 @@ export async function GET(
       : []),
     ...capturedStylesheetUrls,
   ];
-  html = normalizeCapturedStylesheetLinks(html, [...new Set(stylesheetUrls)]);
+  html = normalizeCapturedStylesheetLinks(
+    html,
+    [...new Set(stylesheetUrls)],
+    source
+  );
   const inlineCss = await inlineStylesheetAssets(stylesheetUrls);
   console.info("[website-transfer] replacement styles", {
     id,
@@ -114,8 +121,8 @@ export async function GET(
   // temporarily unavailable. The original <link rel="stylesheet"> elements
   // remain in the captured HTML, so the browser can load the same source CSS
   // directly while the private replacement stays isolated from the live site.
-  const baseTag = sourceUrl
-    ? '<base href="' + sourceUrl.replace(/\"/g, "&quot;") + '">'
+  const baseTag = source
+    ? '<base href="' + source.href.replace(/\"/g, "&quot;") + '">'
     : "";
   const inlineStyleTag = inlineCss
     ? '<style id="agentstack-captured-styles">' +

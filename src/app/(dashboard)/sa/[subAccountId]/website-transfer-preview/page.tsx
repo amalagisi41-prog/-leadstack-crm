@@ -116,9 +116,9 @@ export default function WebsiteTransferPreviewPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold">Private page comparison</h1>
+          <h1 className="text-xl font-bold">Private rebuild comparison</h1>
           <p className="text-muted-foreground text-sm">
-            Original on the left. Private coded replacement on the right.
+            Live source on the left. Isolated private rebuild on the right.
           </p>
         </div>
         <Button
@@ -130,7 +130,7 @@ export default function WebsiteTransferPreviewPage() {
       </div>
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-slate-50 p-3">
         <div>
-          <p className="text-sm font-semibold">Review the coded replacement</p>
+          <p className="text-sm font-semibold">Review the private rebuild</p>
           <p className="text-muted-foreground text-xs">
             Matching visuals are expected. Forms, scripts, analytics, and live
             data remain isolated until approval.
@@ -201,7 +201,7 @@ export default function WebsiteTransferPreviewPage() {
               }
             />
           </div>
-          <section className="sticky bottom-4 z-10 flex flex-col gap-4 rounded-2xl border border-blue-200 bg-white/95 p-4 shadow-lg backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+          <section className="flex flex-col gap-4 rounded-2xl border border-blue-200 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-semibold">What happens next?</p>
               <p className="text-muted-foreground mt-1 text-xs">
