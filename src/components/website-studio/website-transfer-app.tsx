@@ -186,7 +186,7 @@ export function WebsiteTransferApp() {
       <div className="rounded-2xl bg-blue-50 border border-blue-200 p-4">
         <div className="grid gap-4 sm:grid-cols-3">
           <div>
-            <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide">What's connected</p>
+            <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide">What&apos;s connected</p>
             <p className="mt-2 font-medium">
               {transfer?.sourceUrl ? (
                 <>
@@ -213,7 +213,7 @@ export function WebsiteTransferApp() {
             </p>
           </div>
           <div>
-            <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide">What's next</p>
+            <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide">What&apos;s next</p>
             <p className="mt-2 text-sm font-medium">
               {!transfer ? (
                 <span className="text-blue-700">Enter your website URL and run scan</span>

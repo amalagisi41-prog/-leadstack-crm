@@ -101,7 +101,7 @@ export default function WebsiteTransferPreviewPage() {
             <div>
               <p className="font-semibold text-blue-900">What to do here</p>
               <p className="text-muted-foreground mt-1 text-sm">
-                You're viewing your live website in a read-only, isolated preview. Check that images,
+                You&apos;re viewing your live website in a read-only, isolated preview. Check that images,
                 text, and layout look correct on both desktop and mobile. When satisfied, approve the
                 baseline below to unlock the Vibe builder.
               </p>
