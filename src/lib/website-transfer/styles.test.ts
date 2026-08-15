@@ -39,4 +39,12 @@ describe("website transfer stylesheet safety", () => {
     expect(cleaned).toContain("/* IDX Carousel Widget */ idx-listings-carousel{display:block}");
     expect(cleaned).toContain("<idx-listings-carousel><div></div></idx-listings-carousel>");
   });
+
+  it("removes a leaked IDX block when the source closes a generic wrapper", () => {
+    const html =
+      '<div class="widget">/* IDX Carousel Widget 167021 */ *{overflow:visible!important}</div><main>Hero</main>';
+    expect(removeCapturedStyleText(html)).toBe(
+      '<div class="widget"></div><main>Hero</main>'
+    );
+  });
 });

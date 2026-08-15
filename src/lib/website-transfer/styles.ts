@@ -68,7 +68,7 @@ export function removeCapturedStyleText(html: string): string {
     return `${stylePlaceholder}${styleBlocks.length - 1}\u0000`;
   });
   const cleaned = withoutStyles.replace(
-    /\/\*\s*IDX\s+Carousel\s+Widget\b[\s\S]*?(?=(?:<\/div>\s*)*<idx-listings-carousel\b)/gi,
+    /\/\*\s*IDX\s+Carousel\s+Widget\b[\s\S]*?(?=<\/?(?:div|idx-listings-carousel|section|main|body)\b|$)/gi,
     ""
   );
   return cleaned.replace(
