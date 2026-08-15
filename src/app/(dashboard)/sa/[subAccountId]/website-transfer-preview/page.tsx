@@ -64,6 +64,7 @@ export default function WebsiteTransferPreviewPage() {
   if (!transfer.baselineApprovedAt)
     return (
       <div className="space-y-4">
+        {/* Status & Navigation */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-xl font-bold">Live-site baseline</h1>
@@ -71,13 +72,46 @@ export default function WebsiteTransferPreviewPage() {
               Review the current live website before starting the private Vibe build.
             </p>
           </div>
-          <Button
-            variant="outline"
-            render={<Link href={saPath("/website-studio?mode=replacement")} />}
-          >
-            Back to report
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              render={<Link href={saPath("/website-studio?mode=replacement")} />}
+            >
+              ← Back to report
+            </Button>
+            <Button
+              variant="ghost"
+              render={
+                <a
+                  href={transfer.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                />
+              }
+            >
+              Open live site ↗
+            </Button>
+          </div>
         </div>
+
+        {/* Guidance */}
+        <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+          <div className="flex items-start gap-3">
+            <CheckCircle2 className="mt-0.5 h-5 w-5 text-blue-700" />
+            <div>
+              <p className="font-semibold text-blue-900">What to do here</p>
+              <p className="text-muted-foreground mt-1 text-sm">
+                You're viewing your live website in a read-only, isolated preview. Check that images,
+                text, and layout look correct on both desktop and mobile. When satisfied, approve the
+                baseline below to unlock the Vibe builder.
+              </p>
+              <p className="text-muted-foreground mt-2 text-xs">
+                💡 Open your live site in another tab to compare side-by-side.
+              </p>
+            </div>
+          </div>
+        </div>
+
         <ExactTransferStudio transfer={transfer} />
       </div>
     );
