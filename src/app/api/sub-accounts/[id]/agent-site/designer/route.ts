@@ -129,7 +129,12 @@ export async function POST(
     );
   }
 
-  let body: { message?: unknown; brandName?: unknown; mode?: unknown };
+  let body: {
+    message?: unknown;
+    brandName?: unknown;
+    mode?: unknown;
+    image?: unknown;
+  };
   try {
     body = await request.json();
   } catch {
@@ -137,7 +142,16 @@ export async function POST(
   }
   const message =
     typeof body.message === "string" ? body.message.trim().slice(0, 1500) : "";
-  if (!message) {
+  // Optional reference screenshot as a compact data URL. The client
+  // downscales/compresses before upload; re-validate shape and size here so
+  // the route never forwards arbitrary payloads to the model.
+  const image =
+    typeof body.image === "string" &&
+    /^data:image\/(?:png|jpe?g|webp);base64,[A-Za-z0-9+/=]+$/.test(body.image) &&
+    body.image.length <= 4_000_000
+      ? body.image
+      : null;
+  if (!message && !image) {
     return NextResponse.json(
       { error: "A message is required." },
       { status: 400 }
@@ -178,6 +192,8 @@ export async function POST(
   const systemPrompt = vibeMode
     ? `You are Zack inside ${brandName}'s Vibe Builder. Help a real-estate professional customize a private website through short natural-language prompts. Apply every concrete request you can to the allowed website content fields. Never invent licenses, awards, sales numbers, testimonials, or market claims. Treat the approved Business Blueprint and current website content below as already known. Never ask the user to repeat a name, title, brokerage, contact detail, service area, specialty, biography, or media URL that is already present there. If the user asks you to load or review the Blueprint, populate every supported blank field from it and briefly summarize what is ready. If the request is unclear, ask one concise follow-up question. The visual style/template is controlled separately in the interface, so explain that briefly if asked to change layout beyond the available content fields.
 
+When the user attaches a screenshot of a website they want to match: study it carefully. Extract the headline and tagline wording style, the call-to-action language, the tone of the copy, and any visible business details that also appear in the Blueprint. Rewrite the allowed content fields (tagline, bio, ctaHeadline, ctaSubtext, and others) so the draft reads like the reference — same energy, same structure — while keeping every fact truthful to the Blueprint. Reply with a brief list of what you matched from the screenshot and note which visual aspects (layout, colors, fonts) are set by the template rather than these fields.
+
 CURRENT WEBSITE CONTENT:
 ${JSON.stringify(site.content)}
 
@@ -191,14 +207,29 @@ Return STRICT JSON only:
 }`
     : buildDesignerSystemPrompt(step, site.content, brandName);
 
+  const userText =
+    message ||
+    "Use this screenshot as the design reference and update the site content to match it.";
   const messages: AiChatMessage[] = [
     { role: "system", content: systemPrompt },
-    { role: "user", content: message },
+    {
+      role: "user",
+      content: image
+        ? [
+            { type: "image_url", image_url: { url: image } },
+            { type: "text", text: userText },
+          ]
+        : userText,
+    },
   ];
 
   let parsed: ReturnType<typeof parseModelJson> = null;
   try {
-    const result = await callAi({ messages, maxTokens: 700, temperature: 0.5 });
+    const result = await callAi({
+      messages,
+      maxTokens: image ? 900 : 700,
+      temperature: 0.5,
+    });
     parsed = parseModelJson(result.text);
   } catch (err) {
     console.error("[agent-site/designer] LLM failed", err);
@@ -223,9 +254,12 @@ Return STRICT JSON only:
   const nextStep = advance && !isLastStep(step) ? step + 1 : step;
   const reply = (parsed.reply ?? "Got it — what's next?").trim();
 
+  // Persist a marker instead of the image itself — Firestore documents cap
+  // at 1MB and the transcript must stay small.
+  const storedAgentTurn = image ? `${userText} 📎 [screenshot attached]` : message;
   const transcript: DesignerTurn[] = [
     ...(site.designerTranscript ?? []),
-    { role: "agent" as const, content: message },
+    { role: "agent" as const, content: storedAgentTurn },
     { role: "designer" as const, content: reply },
   ].slice(-40);
 

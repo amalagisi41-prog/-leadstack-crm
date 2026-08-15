@@ -15,9 +15,17 @@ import "server-only";
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const DEFAULT_MODEL = "anthropic/claude-haiku-4-5";
 
+/**
+ * OpenAI-style multimodal content part. Vision-capable models on OpenRouter
+ * (including the Claude default) accept data-URL images via `image_url`.
+ */
+export type AiContentPart =
+  | { type: "text"; text: string }
+  | { type: "image_url"; image_url: { url: string } };
+
 export interface AiChatMessage {
   role: "system" | "user" | "assistant";
-  content: string;
+  content: string | AiContentPart[];
 }
 
 export interface AiCompletionResult {
