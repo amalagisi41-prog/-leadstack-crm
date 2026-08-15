@@ -118,14 +118,17 @@ export async function GET(
       inlineCss.replace(/<\/style/gi, "<\\/style") +
       "</style>"
     : "";
-  // A live request already contains the source site's real DOM and stylesheet
-  // cascade. Applying the handcrafted classless fallback on top of that live
-  // CSS changes hero sizing, navigation spacing, and section geometry. Keep
-  // the fallback for older captured/pre-hydration snapshots only.
+  // Public-site styles can be rejected by an isolated browser frame (for
+  // example when a source stylesheet is served with restrictive CORS or
+  // framework-dependent layers). Keep the real DOM and assets, then add a
+  // deterministic semantic guardrail so the baseline never degrades to raw
+  // browser defaults while it is being reviewed.
   const baseClasslessCss = liveLoaded ? "" : classlessSnapshotStyles(html);
-  const classlessCss = baseClasslessCss
-    ? baseClasslessCss + classlessSemanticLayoutStyles() + classlessEmbeddedWidgetStyles()
-    : "";
+  const classlessCss = liveLoaded
+    ? classlessSemanticLayoutStyles() + classlessEmbeddedWidgetStyles()
+    : baseClasslessCss
+      ? baseClasslessCss + classlessSemanticLayoutStyles() + classlessEmbeddedWidgetStyles()
+      : "";
   const classlessStyleTag = classlessCss
     ? '<style id="agentstack-classless-fallback">' + classlessCss + '</style>'
     : "";
