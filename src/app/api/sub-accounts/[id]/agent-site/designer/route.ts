@@ -20,6 +20,10 @@ import {
   isLastStep,
 } from "@/lib/website-studio/designer";
 import { applyDesignFields } from "@/lib/website-studio/design";
+import {
+  screenContentFields,
+  describeBlockedFields,
+} from "@/lib/website-studio/content-compliance";
 import type {
   AgentSiteContent,
   AgentSiteDesign,
@@ -330,14 +334,27 @@ Return STRICT JSON only, every time, with no prose outside it:
     );
   }
 
-  const nextContent = applyFields(site.content, parsed.fields ?? {});
+  // Fair Housing screening on generated copy. The Blueprint tells Zack the
+  // rules, but an instruction is not a control — anything that slips through
+  // is dropped here rather than persisted to a page that gets published.
+  const screened = screenContentFields(parsed.fields ?? {});
+  if (screened.blocked.length > 0) {
+    console.warn("[agent-site/designer] fair housing block", {
+      subAccountId,
+      blocked: screened.blocked,
+    });
+  }
+
+  const nextContent = applyFields(site.content, screened.safeFields);
   const nextDesign = vibeMode
     ? applyDesignFields(currentDesign, parsed.design ?? {})
     : currentDesign;
   const advance = vibeMode ? false : parsed.advance !== false;
   const done = advance && isLastStep(step);
   const nextStep = advance && !isLastStep(step) ? step + 1 : step;
-  const reply = (parsed.reply ?? "Got it — what's next?").trim();
+  const reply =
+    (parsed.reply ?? "Got it — what's next?").trim() +
+    describeBlockedFields(screened.blocked);
   const suggestions = vibeMode ? parseSuggestions(parsed.suggestions) : [];
 
   // Persist a marker instead of the image itself — Firestore documents cap

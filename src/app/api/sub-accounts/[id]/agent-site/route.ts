@@ -10,6 +10,7 @@ import {
 } from "@/lib/website-studio/gate";
 import { AGENT_SITE_TEMPLATES } from "@/lib/website-studio/templates";
 import { applyDesignFields } from "@/lib/website-studio/design";
+import { screenContentFields } from "@/lib/website-studio/content-compliance";
 import {
   emptyAgentSiteContent,
   emptyAgentSiteDesign,
@@ -218,6 +219,28 @@ export async function PATCH(
     }
   }
   if (body.content) {
+    // Same Fair Housing screening the AI path gets — this is a second write
+    // path onto the same published fields, so leaving it unguarded would
+    // just move the risk rather than remove it. Hand-typed copy is refused
+    // outright (rather than silently dropped) so the author knows why.
+    const screened = screenContentFields(
+      body.content as Record<string, unknown>
+    );
+    if (screened.blocked.length > 0) {
+      // Detail goes in `error` itself so every existing client surfaces
+      // something actionable through its normal toast path; `blocked` is
+      // there for callers that want to highlight the offending inputs.
+      const detail = screened.blocked
+        .map((b) => `${b.field}: ${b.phrases.map((p) => `"${p}"`).join(", ")}`)
+        .join("; ");
+      return NextResponse.json(
+        {
+          error: `This copy can't be saved — it may violate Fair Housing rules (${detail}). Language referencing or implying preferences about protected classes can't appear on a published listing site.`,
+          blocked: screened.blocked,
+        },
+        { status: 422 }
+      );
+    }
     // Field-level merge so partial content updates don't wipe siblings.
     const current = (snap.data()?.content ?? {}) as AgentSiteContent;
     update.content = { ...current, ...body.content };
