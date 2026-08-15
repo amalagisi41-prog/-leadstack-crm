@@ -29,6 +29,7 @@ export function ExactTransferStudio({
         return true;
       });
   }, [transfer.pages]);
+  const [iframeHeight, setIframeHeight] = useState(900);
   const selectedEntry = uniquePages[page];
   const selected = selectedEntry?.item;
   const sourceIndex = selectedEntry?.index ?? 0;
@@ -50,6 +51,39 @@ export function ExactTransferStudio({
       });
     return () => {
       cancelled = true;
+    };
+  }, [previewSrc]);
+
+  useEffect(() => {
+    const iframe = document.querySelector(
+      'iframe[title*="Live source"]'
+    ) as HTMLIFrameElement | null;
+    if (!iframe) return;
+
+    const updateHeight = () => {
+      try {
+        const doc = iframe.contentDocument || iframe.contentWindow?.document;
+        if (doc?.documentElement) {
+          const height = Math.max(
+            doc.documentElement.scrollHeight,
+            doc.body.scrollHeight,
+            600
+          );
+          setIframeHeight(Math.min(height, 2000));
+        }
+      } catch {
+        // Cross-origin or not yet loaded
+      }
+    };
+
+    const timer = setTimeout(updateHeight, 500);
+    iframe.addEventListener("load", updateHeight);
+    window.addEventListener("resize", updateHeight);
+
+    return () => {
+      clearTimeout(timer);
+      iframe.removeEventListener("load", updateHeight);
+      window.removeEventListener("resize", updateHeight);
     };
   }, [previewSrc]);
 
@@ -152,7 +186,15 @@ export function ExactTransferStudio({
             <iframe
               title={`Live source ${selected.path}`}
               src={previewSrc}
-              className={`mx-auto h-[76vh] bg-white shadow-sm transition-[width] ${device === "mobile" ? "w-[390px] max-w-full" : "w-full"}`}
+              frameBorder="0"
+              className={`mx-auto bg-white shadow-sm transition-[width,height] ${device === "mobile" ? "w-[390px] max-w-full" : "w-full"}`}
+              style={{
+                display: "block",
+                minHeight: "600px",
+                height: `${iframeHeight}px`,
+                border: "none",
+                borderRadius: "8px"
+              }}
             />
           </div>
         </div>
