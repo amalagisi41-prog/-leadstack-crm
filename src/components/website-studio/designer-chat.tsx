@@ -5,7 +5,11 @@ import { Sparkles, Send, Loader2, ImagePlus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import type { AgentSiteContent, DesignerTurn } from "@/types/agent-site";
+import type {
+  AgentSiteContent,
+  AgentSiteDesign,
+  DesignerTurn,
+} from "@/types/agent-site";
 
 /** Local transcript entry: server turns plus an optional client-only image. */
 type ChatTurn = DesignerTurn & { image?: string };
@@ -52,6 +56,7 @@ export function DesignerChat({
   initialStep,
   totalSteps,
   onContent,
+  onDesign,
   experience = "guided",
 }: {
   subAccountId: string;
@@ -60,6 +65,8 @@ export function DesignerChat({
   initialStep: number;
   totalSteps: number;
   onContent: (content: AgentSiteContent) => void;
+  /** Vibe mode only — colors/fonts/radius/hero-layout/custom CSS updates. */
+  onDesign?: (design: AgentSiteDesign) => void;
   experience?: "guided" | "vibe";
 }) {
   const [turns, setTurns] = useState<ChatTurn[]>(initialTranscript);
@@ -69,6 +76,7 @@ export function DesignerChat({
   const [error, setError] = useState<string | null>(null);
   const [step, setStep] = useState(initialStep);
   const [done, setDone] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -118,6 +126,7 @@ export function DesignerChat({
     setError(null);
     setInput("");
     setAttachment(null);
+    setSuggestions([]);
     // Don't echo the auto-kickoff message.
     if (turns.length > 0)
       setTurns((p) => [
@@ -148,6 +157,8 @@ export function DesignerChat({
       const data = (await res.json().catch(() => ({}))) as {
         reply?: string;
         content?: AgentSiteContent;
+        design?: AgentSiteDesign;
+        suggestions?: string[];
         step?: number;
         done?: boolean;
         error?: string;
@@ -155,6 +166,8 @@ export function DesignerChat({
       if (!res.ok) throw new Error(data.error ?? "Something went wrong.");
       setTurns((p) => [...p, { role: "designer", content: data.reply ?? "" }]);
       if (data.content) onContent(data.content);
+      if (data.design) onDesign?.(data.design);
+      setSuggestions(Array.isArray(data.suggestions) ? data.suggestions : []);
       if (typeof data.step === "number") setStep(data.step);
       if (data.done) setDone(true);
       scrollDown();
@@ -241,6 +254,23 @@ export function DesignerChat({
         )}
         {error && <p className="text-xs text-rose-600">{error}</p>}
       </div>
+
+      {/* Suggested next steps — grounded in what Zack can actually do
+          (content fields, design tokens, customCss), never generic filler. */}
+      {suggestions.length > 0 && !loading ? (
+        <div className="flex flex-wrap gap-1.5 border-t px-3 pt-2.5">
+          {suggestions.map((s, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => void send(s)}
+              className="rounded-full border border-fuchsia-200 bg-fuchsia-50 px-3 py-1 text-xs font-medium text-fuchsia-800 transition-colors hover:bg-fuchsia-100"
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
       {/* Pending attachment */}
       {attachment ? (

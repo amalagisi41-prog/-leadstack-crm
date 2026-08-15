@@ -9,9 +9,12 @@ import {
   WEBSITE_STUDIO_LOCKED_MESSAGE,
 } from "@/lib/website-studio/gate";
 import { AGENT_SITE_TEMPLATES } from "@/lib/website-studio/templates";
+import { applyDesignFields } from "@/lib/website-studio/design";
 import {
   emptyAgentSiteContent,
+  emptyAgentSiteDesign,
   type AgentSiteContent,
+  type AgentSiteDesign,
   type AgentSiteTemplateId,
 } from "@/types/agent-site";
 import {
@@ -88,6 +91,7 @@ export async function PATCH(
   let body: {
     templateId?: string;
     content?: Partial<AgentSiteContent>;
+    design?: Record<string, unknown>;
     status?: "draft" | "published";
     slug?: string;
     designerStep?: number;
@@ -142,6 +146,9 @@ export async function PATCH(
       );
     }
     const content = { ...emptyAgentSiteContent(), ...(body.content ?? {}) };
+    const design: AgentSiteDesign = body.design
+      ? applyDesignFields(emptyAgentSiteDesign(), body.design)
+      : emptyAgentSiteDesign();
     await ref.set({
       id: SITE_ID,
       agencyId,
@@ -153,6 +160,7 @@ export async function PATCH(
         : slugify(content.agentName || subAccountId),
       status: "draft",
       content,
+      design,
       designerTranscript: [],
       designerStep: 0,
       publishedAt: null,
@@ -213,6 +221,14 @@ export async function PATCH(
     // Field-level merge so partial content updates don't wipe siblings.
     const current = (snap.data()?.content ?? {}) as AgentSiteContent;
     update.content = { ...current, ...body.content };
+  }
+  if (body.design) {
+    // Re-validated here too (not just in the designer route) — this PATCH
+    // endpoint is a second write path onto the same customCss field the
+    // renderer trusts as pre-sanitized, so it can never be the gap that
+    // lets unscoped CSS through.
+    const currentDesign = (snap.data()?.design ?? {}) as AgentSiteDesign;
+    update.design = applyDesignFields(currentDesign, body.design);
   }
   if (body.status === "published") {
     update.status = "published";

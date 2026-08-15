@@ -19,7 +19,12 @@ import {
   buildDesignerSystemPrompt,
   isLastStep,
 } from "@/lib/website-studio/designer";
-import type { AgentSiteContent, DesignerTurn } from "@/types/agent-site";
+import { applyDesignFields } from "@/lib/website-studio/design";
+import type {
+  AgentSiteContent,
+  AgentSiteDesign,
+  DesignerTurn,
+} from "@/types/agent-site";
 import {
   EMPTY_BUSINESS_PROFILE,
   type BusinessProfileContent,
@@ -56,8 +61,10 @@ const CONTENT_KEYS = new Set<keyof AgentSiteContent>([
 
 function parseModelJson(text: string): {
   fields?: Record<string, unknown>;
+  design?: Record<string, unknown>;
   reply?: string;
   advance?: boolean;
+  suggestions?: unknown;
 } | null {
   const cleaned = text
     .trim()
@@ -78,6 +85,17 @@ function parseModelJson(text: string): {
     }
     return null;
   }
+}
+
+/** Up to 4 clickable next-step suggestions; short strings only. */
+function parseSuggestions(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((s): s is string => typeof s === "string")
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 4)
+    .map((s) => s.slice(0, 140));
 }
 
 /** Merge only known content keys; coerce specialties to a string array. */
@@ -174,9 +192,11 @@ export async function POST(
   }
   const site = snap.data() as {
     content: AgentSiteContent;
+    design?: AgentSiteDesign;
     designerStep: number;
     designerTranscript?: DesignerTurn[];
   };
+  const currentDesign = site.design ?? {};
   const step = Math.min(site.designerStep ?? 0, DESIGNER_STEPS.length - 1);
 
   const profileSnap = vibeMode
@@ -190,25 +210,39 @@ export async function POST(
     : EMPTY_BUSINESS_PROFILE;
   const blueprint = vibeMode ? compileBusinessProfilePrompt(profile) : null;
   const systemPrompt = vibeMode
-    ? `You are Zack inside ${brandName}'s Vibe Builder. Help a real-estate professional customize a private website through short natural-language prompts. Apply every concrete request you can to the allowed website content fields. Never invent licenses, awards, sales numbers, testimonials, or market claims. Treat the approved Business Blueprint and current website content below as already known. Never ask the user to repeat a name, title, brokerage, contact detail, service area, specialty, biography, or media URL that is already present there. If the user asks you to load or review the Blueprint, populate every supported blank field from it and briefly summarize what is ready.
+    ? `You are Zack inside ${brandName}'s Vibe Builder. Help a real-estate professional customize a private website through short natural-language prompts. Apply every concrete request you can to the allowed website content fields AND design tokens below. Never invent licenses, awards, sales numbers, testimonials, or market claims. Treat the approved Business Blueprint and current website content/design below as already known. Never ask the user to repeat a name, title, brokerage, contact detail, service area, specialty, biography, or media URL that is already present there. If the user asks you to load or review the Blueprint, populate every supported blank field from it and briefly summarize what is ready.
 
 CONVERSATION STYLE — this matters:
 - You are shown the recent conversation history below the current message. Use it. Never ask the user to re-explain or re-attach something already covered in that history — if they say "the screenshot" or "that reference," look back at what you already extracted from it.
-- Only mention that layout/colors/fonts/navigation are template-controlled ONCE per conversation, and only when it's actually relevant to what the user just asked. Do not repeat this caveat on unrelated turns.
-- Do not end every reply with a generic prompt like "What would you like to customize first?" Only ask a follow-up question when you genuinely need more information to proceed. Otherwise, confirm what changed and stop — a specific, next-step suggestion tied to what's still blank is fine, a repeated boilerplate question is not.
+- Do not end every reply with a generic prompt like "What would you like to customize first?" Only ask a follow-up question when you genuinely need more information to proceed. Otherwise, confirm what changed and stop — a specific, next-step suggestion tied to what's still unset is fine, a repeated boilerplate question is not.
 - If the request is unclear, ask one concise, specific follow-up question — never a generic restart.
 
-SCREENSHOT MATCHING: When the user attaches a screenshot of a website they want to match, study it carefully. Extract the headline and tagline wording style, the call-to-action language, the tone of the copy, and any visible business details that also appear in the Blueprint. Rewrite the allowed content fields (tagline, bio, ctaHeadline, ctaSubtext, and others) so the draft reads like the reference — same energy, same structure — while keeping every fact truthful to the Blueprint. Note in your reply which visual aspects (layout, colors, fonts, navigation structure) are set by the template rather than these fields — but say this once, not on every turn.
+DESIGN CONTROL: You can change colors, fonts, corner radius, and the hero layout directly via the "design" field below — these are NOT template-locked, you can set them on every request that calls for it. Available design tokens:
+- Colors (hex or rgb/rgba/hsl/hsla): bg, surface, text, muted, accent, accentText, border
+- Fonts (a font name or stack, e.g. "Georgia, serif"): fontDisplay (headings), fontBody (paragraphs)
+- radius: corner roundness in px, 0–48
+- heroVariant: "overlay" | "split" | "centered" — the hero section's layout
+- customCss: raw CSS for anything the tokens above don't cover (spacing, hiding/emphasizing an element, animation, fine-tuned positioning). It is automatically scoped to just this site, so write normal selectors (e.g. "h1 { letter-spacing: 2px }") — you do not need to prefix anything yourself.
+Only the page's section composition (what sections exist and their order) is fixed by the chosen template's code and genuinely out of reach — mention that once if directly relevant, not on unrelated turns.
+
+SCREENSHOT MATCHING: When the user attaches a screenshot of a website they want to match, study it carefully — colors, fonts, spacing, and layout as well as copy tone. Set the design tokens (and customCss for anything finer-grained) to visually match what you see, and rewrite content fields (tagline, bio, ctaHeadline, ctaSubtext) so the copy reads like the reference, all while keeping every fact truthful to the Blueprint. Briefly summarize what you matched.
+
+NEXT-STEP SUGGESTIONS: After every reply, propose up to 4 short, specific things the user could ask for next — phrased as a request they'd type (e.g. "Increase color contrast between the hero text and background", "Add a subtle hover animation to the CTA button", "Tighten the spacing between sections", "Try a warmer accent color"). Ground every suggestion in something you can actually do: the content fields, the design tokens, or customCss (responsive tuning, hover/animation states, spacing, contrast, layout variant). Never suggest something outside this system's real capabilities — this is a single-page site, so do not suggest sitemap, multi-page SEO, or analytics-audit features that do not exist here. Vary the mix between copy and visual/technical suggestions, and tailor them to what's actually still weak or unset in the current draft — not generic filler.
 
 CURRENT WEBSITE CONTENT:
 ${JSON.stringify(site.content)}
+
+CURRENT DESIGN OVERRIDES (unset keys use the chosen template's defaults):
+${JSON.stringify(currentDesign)}
 
 ${blueprint ? `APPROVED BUSINESS BLUEPRINT:\n${blueprint}` : "No approved Business Blueprint details are available yet."}
 
 Return STRICT JSON only, every time, with no prose outside it:
 {
   "fields": { <any allowed website content fields that should change> },
+  "design": { <any design tokens/customCss that should change> },
   "reply": "<your message to the user>",
+  "suggestions": [ <up to 4 short next-step prompts, see NEXT-STEP SUGGESTIONS above> ],
   "advance": false
 }`
     : buildDesignerSystemPrompt(step, site.content, brandName);
@@ -292,10 +326,14 @@ Return STRICT JSON only, every time, with no prose outside it:
   }
 
   const nextContent = applyFields(site.content, parsed.fields ?? {});
+  const nextDesign = vibeMode
+    ? applyDesignFields(currentDesign, parsed.design ?? {})
+    : currentDesign;
   const advance = vibeMode ? false : parsed.advance !== false;
   const done = advance && isLastStep(step);
   const nextStep = advance && !isLastStep(step) ? step + 1 : step;
   const reply = (parsed.reply ?? "Got it — what's next?").trim();
+  const suggestions = vibeMode ? parseSuggestions(parsed.suggestions) : [];
 
   // Persist a marker instead of the image itself — Firestore documents cap
   // at 1MB and the transcript must stay small.
@@ -308,6 +346,7 @@ Return STRICT JSON only, every time, with no prose outside it:
 
   await ref.update({
     content: nextContent,
+    design: nextDesign,
     designerStep: nextStep,
     designerTranscript: transcript,
     updatedAt: FieldValue.serverTimestamp(),
@@ -316,6 +355,8 @@ Return STRICT JSON only, every time, with no prose outside it:
   return NextResponse.json({
     reply,
     content: nextContent,
+    design: nextDesign,
+    suggestions,
     step: nextStep,
     totalSteps: DESIGNER_STEPS.length,
     done: vibeMode ? false : done,

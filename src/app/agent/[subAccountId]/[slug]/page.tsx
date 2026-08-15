@@ -30,7 +30,11 @@ export default async function PublishedAgentSite({
   if (site.status !== "published" || site.slug !== slug) notFound();
 
   return (
-    <AgentSiteRenderer template={getTemplate(site.templateId)} content={site.content} />
+    <AgentSiteRenderer
+      template={getTemplate(site.templateId)}
+      content={site.content}
+      design={site.design ?? {}}
+    />
   );
 }
 

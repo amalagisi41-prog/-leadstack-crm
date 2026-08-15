@@ -29,7 +29,9 @@ import {
 } from "@/lib/website-studio/templates";
 import {
   emptyAgentSiteContent,
+  emptyAgentSiteDesign,
   type AgentSiteContent,
+  type AgentSiteDesign,
   type AgentSiteDoc,
   type AgentSiteTemplateId,
 } from "@/types/agent-site";
@@ -59,6 +61,7 @@ export function WebsiteStudioApp({
   const [content, setContent] = useState<AgentSiteContent>(
     emptyAgentSiteContent()
   );
+  const [design, setDesign] = useState<AgentSiteDesign>(emptyAgentSiteDesign());
   const [selecting, setSelecting] = useState<AgentSiteTemplateId | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [mode, setMode] = useState<"designer" | "edit">("designer");
@@ -141,6 +144,7 @@ export function WebsiteStudioApp({
         setSite(loadedSite);
         if (loadedSite) {
           setContent(loadedSite.content);
+          setDesign(loadedSite.design ?? emptyAgentSiteDesign());
         }
         setView(
           getWorkspaceWebsiteStudioView({
@@ -184,6 +188,7 @@ export function WebsiteStudioApp({
       const s = await patch({ templateId: id });
       setSite(s);
       setContent(s.content);
+      setDesign(s.design ?? emptyAgentSiteDesign());
       setView("vibe");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not start.");
@@ -622,6 +627,7 @@ export function WebsiteStudioApp({
                 initialStep={site.designerStep ?? 0}
                 totalSteps={10}
                 onContent={setContent}
+                onDesign={setDesign}
               />
             ) : (
               <ContentEditor
@@ -653,7 +659,11 @@ export function WebsiteStudioApp({
                 height: scale > 0 ? undefined : 0,
               }}
             >
-              <AgentSiteRenderer template={template} content={content} />
+              <AgentSiteRenderer
+                template={template}
+                content={content}
+                design={design}
+              />
             </div>
           </div>
         </div>

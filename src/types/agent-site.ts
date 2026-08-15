@@ -1,4 +1,5 @@
 import type { Timestamp, FieldValue } from "firebase-admin/firestore";
+import type { HeroVariant } from "@/lib/website-studio/templates";
 
 /**
  * Website Studio — an AI-guided, template-based agent website.
@@ -70,6 +71,32 @@ export interface DesignerTurn {
   content: string;
 }
 
+/**
+ * Visual overrides on top of the chosen template's design tokens. Every
+ * field is optional — undefined falls back to the template default. Set
+ * and validated via lib/website-studio/design.ts; `customCss` is scoped
+ * there before it's ever persisted, since the renderer this feeds runs
+ * live inside the dashboard during preview, not only the public site.
+ */
+export interface AgentSiteDesign {
+  bg?: string;
+  surface?: string;
+  text?: string;
+  muted?: string;
+  accent?: string;
+  accentText?: string;
+  border?: string;
+  fontDisplay?: string;
+  fontBody?: string;
+  radius?: number;
+  heroVariant?: HeroVariant;
+  customCss?: string;
+}
+
+export function emptyAgentSiteDesign(): AgentSiteDesign {
+  return {};
+}
+
 export interface AgentSiteDoc {
   id: string;
   agencyId: string;
@@ -79,6 +106,8 @@ export interface AgentSiteDoc {
   slug: string;
   status: AgentSiteStatus;
   content: AgentSiteContent;
+  /** Visual overrides on top of the template's tokens. Defaults to {}. */
+  design: AgentSiteDesign;
   /** The AI Designer interview so the agent can resume where they left off. */
   designerTranscript: DesignerTurn[];
   /** Which guided step the interview is on (index into the designer script). */
