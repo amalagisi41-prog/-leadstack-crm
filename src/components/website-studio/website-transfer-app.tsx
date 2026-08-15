@@ -182,6 +182,53 @@ export function WebsiteTransferApp() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-5">
+      {/* Current Status */}
+      <div className="rounded-2xl bg-blue-50 border border-blue-200 p-4">
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div>
+            <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide">What's connected</p>
+            <p className="mt-2 font-medium">
+              {transfer?.sourceUrl ? (
+                <>
+                  <a href={transfer.sourceUrl} target="_blank" rel="noopener noreferrer" className="text-blue-700 hover:underline">
+                    {transfer.sourceUrl}
+                  </a>
+                  <span className="text-xs text-blue-600 ml-2">✓ Verified</span>
+                </>
+              ) : (
+                <span className="text-gray-500">No website yet</span>
+              )}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide">Status</p>
+            <p className="mt-2 font-medium">
+              {!transfer ? (
+                <span className="text-amber-700">Ready to scan</span>
+              ) : transfer.baselineApprovedAt ? (
+                <span className="text-emerald-700">✓ Baseline approved</span>
+              ) : (
+                <span className="text-amber-700">Awaiting approval</span>
+              )}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide">What's next</p>
+            <p className="mt-2 text-sm font-medium">
+              {!transfer ? (
+                <span className="text-blue-700">Enter your website URL and run scan</span>
+              ) : !transfer.baselineApprovedAt ? (
+                <span className="text-blue-700">Review baseline and approve</span>
+              ) : (
+                <Link href={saPath("/domain?stage=cutover")} className="text-blue-700 hover:underline">
+                  Prepare domain cutover →
+                </Link>
+              )}
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="rounded-2xl bg-[#1d3f76] p-6 text-white">
         <p className="text-xs font-bold tracking-[.18em] text-pink-300">
           LIVE-SITE BASELINE + PRIVATE REBUILD
