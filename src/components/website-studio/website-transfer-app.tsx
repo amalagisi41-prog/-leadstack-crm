@@ -320,7 +320,7 @@ export function WebsiteTransferApp() {
                     <Button onClick={approve} disabled={approving}>
                       {approving
                         ? "Saving approval…"
-                        : "Open live baseline"}
+                        : "Approve live baseline"}
                     </Button>
                   ) : (
                     <Button
@@ -335,8 +335,10 @@ export function WebsiteTransferApp() {
                       <a
                         href={transfer.sourceUrl}
                         target="_blank"
-                        rel="noreferrer"
-                      />
+                        rel="noopener noreferrer"
+                      >
+                        Open live site
+                      </a>
                     }
                   >
                     Open live site
