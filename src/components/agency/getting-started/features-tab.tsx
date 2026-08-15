@@ -113,7 +113,7 @@ const FEATURES: Feature[] = [
     icon: Zap,
     title: "Automations",
     tone: "violet",
-    href: "/automations",
+    href: "/workflows",
     description:
       "Workflow Recipes v1 ships Speed-to-Lead: SMS + email + owner notify on form submit. Send-window restrictions, opt-out compliance (HMAC-signed unsubscribe links + Twilio STOP/START), and template merge tags built in.",
   },

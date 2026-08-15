@@ -663,7 +663,7 @@ function StepRespond({
 
       <div className="flex flex-wrap items-center gap-3">
         <Button
-          render={<Link href={saPath("/automations")} />}
+          render={<Link href={saPath("/workflows")} />}
           onClick={onNext}
         >
           Enable Speed-to-Lead

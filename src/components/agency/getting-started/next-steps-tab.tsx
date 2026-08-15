@@ -71,7 +71,7 @@ const STEPS: NextStep[] = [
     title: "Attach an automation to that form",
     why: "Wire the Speed-to-Lead recipe so every submission gets an SMS + email reply within seconds, plus an owner notification. Compliance (unsubscribe + STOP/START) is built in.",
     cta: "Open Automations",
-    href: "/automations",
+    href: "/workflows",
     icon: Zap,
     requiresSubAccount: true,
     tone: "pink",

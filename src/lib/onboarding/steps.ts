@@ -97,7 +97,7 @@ export const ONBOARDING_STEPS: readonly OnboardingStepMeta[] = [
     description:
       "Attach the Speed-to-Lead automation to your form so every new inquiry gets an SMS and email within 60 seconds — automatically.",
     cta: "Set Up Automation",
-    href: "/automations",
+    href: "/workflows",
     videoMinutes: 4,
   },
   {
