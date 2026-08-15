@@ -124,7 +124,9 @@ export async function GET(
   // deterministic semantic guardrail so the baseline never degrades to raw
   // browser defaults while it is being reviewed.
   const baseClasslessCss = classlessSnapshotStyles(html, false);
-  const classlessCss = liveLoaded
+  // If live website loaded but stylesheet fetch failed, use fallback styles
+  const shouldUseFallback = !inlineCss || inlineCss.length < 1000;
+  const classlessCss = liveLoaded && !shouldUseFallback
     ? ""
     : baseClasslessCss
       ? baseClasslessCss + classlessSemanticLayoutStyles() + classlessEmbeddedWidgetStyles()
