@@ -7,6 +7,7 @@ import {
   identifyDnsHost,
   nameserversMatch,
   recordsToPreserve,
+  resolveTargetNameservers,
   type DnsRecordSnapshot,
   type DomainDnsSnapshot,
 } from "./records";
@@ -206,5 +207,79 @@ describe("catching an outage after the switch", () => {
     );
     expect(result.ok).toBe(true);
     expect(result.message).toBeNull();
+  });
+});
+
+describe("the nameservers a deployment hands out", () => {
+  /**
+   * This is the single most dangerous string in the product. A nameserver
+   * pair answers only for the zones inside the account it was issued to, so
+   * pointing an agent's domain at a pair that has no zone for it removes the
+   * domain from DNS altogether — site down, mail down, and no error anywhere
+   * to explain it. A default is therefore not a convenience, it is an outage
+   * waiting for the first deployment that forgets to override it.
+   */
+  it("resolves to nothing when unset", () => {
+    expect(resolveTargetNameservers(undefined)).toEqual([]);
+    expect(resolveTargetNameservers(null)).toEqual([]);
+    expect(resolveTargetNameservers("")).toEqual([]);
+    expect(resolveTargetNameservers("   ")).toEqual([]);
+  });
+
+  it("accepts a properly configured pair", () => {
+    expect(
+      resolveTargetNameservers("ns1.example-dns.com, ns2.example-dns.com")
+    ).toEqual(["ns1.example-dns.com", "ns2.example-dns.com"]);
+  });
+
+  it("normalises case and the trailing root dot", () => {
+    expect(
+      resolveTargetNameservers("NS1.Example-DNS.com.,ns2.example-dns.com.")
+    ).toEqual(["ns1.example-dns.com", "ns2.example-dns.com"]);
+  });
+
+  it("treats a lone nameserver as unset rather than a configuration", () => {
+    // One entry is a truncated paste, and half a pair is not a working
+    // delegation — better to fall back to the record-only path.
+    expect(resolveTargetNameservers("ns1.example-dns.com")).toEqual([]);
+    expect(
+      resolveTargetNameservers("ns1.example-dns.com,ns1.example-dns.com")
+    ).toEqual([]);
+  });
+
+  it("discards anything that is not a bare hostname", () => {
+    expect(
+      resolveTargetNameservers("https://ns1.example.com,ns2.example.com")
+    ).toEqual([]);
+    expect(
+      resolveTargetNameservers("ns1.example.com/path,ns2.example.com")
+    ).toEqual([]);
+    expect(resolveTargetNameservers("localhost,ns2.example.com")).toEqual([]);
+    expect(resolveTargetNameservers("ns 1.example.com,ns2.example.com")).toEqual(
+      []
+    );
+  });
+
+  it("never invents Cloudflare's shared pair", () => {
+    // The literal that used to be the fallback. It belongs to one Cloudflare
+    // account; every agent following it would have been delegating their
+    // domain to a zone that does not exist.
+    for (const input of [undefined, null, "", "  ,  "]) {
+      expect(resolveTargetNameservers(input)).not.toContain(
+        "kim.ns.cloudflare.com"
+      );
+    }
+  });
+
+  it("produces a value nameserversMatch can actually confirm against", () => {
+    const target = resolveTargetNameservers("ns1.example-dns.com,ns2.example-dns.com");
+    expect(nameserversMatch(["NS1.example-dns.com.", "ns2.example-dns.com"], target)).toBe(
+      true
+    );
+    // And an unset deployment can never report a match, so the cutover step
+    // cannot mark itself complete by accident.
+    expect(nameserversMatch(["ns1.example-dns.com"], resolveTargetNameservers(""))).toBe(
+      false
+    );
   });
 });

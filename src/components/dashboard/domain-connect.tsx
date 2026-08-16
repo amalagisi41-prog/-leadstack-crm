@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { openAskAssistant } from "@/components/dashboard/ask-assistant-panel";
 import { DnsCutoverWizard } from "@/components/dashboard/dns-cutover-wizard";
+import { resolveTargetNameservers } from "@/lib/dns/records";
 import { deriveHostingReadiness } from "@/lib/site-health/hosting-readiness";
 import type { WebsiteTransferDoc } from "@/types/website-transfer";
 import {
@@ -35,16 +36,15 @@ const HOSTINGER_TRANSFER_URL =
   process.env.NEXT_PUBLIC_HOSTINGER_TRANSFER_URL ??
   "https://www.hostinger.com/";
 /**
- * Nameservers the guided cutover tells agents to set. Configurable because a
- * white-label deployment points at its own DNS host.
+ * Nameservers the guided cutover tells agents to set — only when this
+ * deployment actually runs DNS and has been configured with its own pair.
+ * Unset resolves to none, and the cutover guide keeps the domain where it is
+ * rather than sending agents to a nameserver pair that would not answer for
+ * their domain.
  */
-const TARGET_NAMESERVERS = (
-  process.env.NEXT_PUBLIC_TARGET_NAMESERVERS ??
-  "kim.ns.cloudflare.com,walt.ns.cloudflare.com"
-)
-  .split(",")
-  .map((ns) => ns.trim())
-  .filter(Boolean);
+const TARGET_NAMESERVERS = resolveTargetNameservers(
+  process.env.NEXT_PUBLIC_TARGET_NAMESERVERS
+);
 
 const HOSTINGER_NEW_URL =
   process.env.NEXT_PUBLIC_HOSTINGER_NEW_SITE_URL ??

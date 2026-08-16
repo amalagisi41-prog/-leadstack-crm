@@ -181,6 +181,38 @@ export function assessEmailRisk(
   };
 }
 
+/**
+ * A hostname that could plausibly be a nameserver: at least two labels, no
+ * scheme, no path, no spaces.
+ */
+const NAMESERVER_RE = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+$/;
+
+/**
+ * The nameservers this deployment tells agents to switch to — or nothing.
+ *
+ * There is no default, and that is the point. A nameserver pair is issued per
+ * account by the DNS provider; Cloudflare's `kim`/`walt` pair answers for the
+ * zones in one specific Cloudflare account and nobody else's. An agent who
+ * points their domain at a pair that has no zone for it does not get a broken
+ * website — they get no DNS at all. The site goes dark, the mail stops, and it
+ * stays that way until they revert and wait out propagation.
+ *
+ * So a missing or malformed value resolves to an empty list, and the cutover
+ * guide drops to the record-only path instead of inventing an answer. Fewer
+ * than two entries is treated as unset: a lone nameserver is a typo, not a
+ * configuration.
+ */
+export function resolveTargetNameservers(
+  raw: string | null | undefined
+): string[] {
+  const parsed = (raw ?? "")
+    .split(",")
+    .map((ns) => ns.trim().toLowerCase().replace(/\.$/, ""))
+    .filter((ns) => NAMESERVER_RE.test(ns));
+  const unique = [...new Set(parsed)];
+  return unique.length >= 2 ? unique : [];
+}
+
 /** Have the nameservers actually moved to the intended host yet? */
 export function nameserversMatch(
   current: string[],

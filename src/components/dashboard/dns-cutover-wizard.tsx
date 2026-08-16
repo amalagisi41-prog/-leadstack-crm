@@ -38,6 +38,20 @@ import {
  * re-created and confirmed. Not warned about — locked. And the agent is never
  * asked to know their own records: AgentStack reads them and prints the exact
  * rows to copy.
+ *
+ * There are two routes through here, and which one an agent gets depends on
+ * whether the deployment has nameservers configured at all:
+ *
+ *   Record-only (the default, and the safer one). The domain stays where it
+ *   is. The agent adds an A record or CNAME at the DNS host they already use.
+ *   Authority never moves, so mail cannot break, and there is nothing to lock.
+ *
+ *   Full cutover. Only offered when this deployment actually runs DNS and has
+ *   a nameserver pair to hand out. Authority moves, everything at the old host
+ *   has to be re-created first, and the email interlock applies.
+ *
+ * The wizard never invents a nameserver pair to fill the gap. See
+ * `resolveTargetNameservers` for why that would be the worst possible failure.
  */
 
 type StepState = "done" | "active" | "locked";
@@ -181,13 +195,17 @@ function RecordTable({
 
 export function DnsCutoverWizard({
   subAccountId,
-  /** Nameservers the domain should end up on, e.g. Cloudflare's pair. */
-  targetNameservers,
+  /**
+   * Nameservers the domain should end up on. Empty — the default — means this
+   * deployment does not run DNS, and the agent is guided down the record-only
+   * path instead. Never populate this with a guess.
+   */
+  targetNameservers = [],
   /** Website records the new host needs, shown in step 3. */
   targetWebsiteRecords = [],
 }: {
   subAccountId: string;
-  targetNameservers: string[];
+  targetNameservers?: string[];
   targetWebsiteRecords?: DnsRecordSnapshot[];
 }) {
   const [before, setBefore] = useState<DomainDnsSnapshot | null>(null);
@@ -258,22 +276,38 @@ export function DnsCutoverWizard({
     );
   }
 
+  // Which of the two routes this agent is on. A cutover moves authority over
+  // the domain and can take mail down; the record-only path cannot.
+  const movingNameservers = targetNameservers.length > 0;
+
   const risk = assessEmailRisk(before);
   const preserve = recordsToPreserve(before);
   const currentHost = identifyDnsHost(before.nameservers);
-  const switched = nameserversMatch(
-    (after ?? before).nameservers,
-    targetNameservers
-  );
+  const switched =
+    movingNameservers &&
+    nameserversMatch((after ?? before).nameservers, targetNameservers);
   const survival = emailSurvivedCutover(before, after);
 
   // The safety interlock: with email on this domain, the nameserver step
-  // stays locked until the agent confirms the records are re-created.
-  const emailStepDone = !risk.hasEmail || emailCopied;
+  // stays locked until the agent confirms the records are re-created. It only
+  // applies to a cutover — on the record-only path the mail records are never
+  // touched, so gating behind them would be an obstacle with no hazard behind
+  // it, which is its own kind of dead end.
+  const emailStepDone = !movingNameservers || !risk.hasEmail || emailCopied;
+
+  // What "the change has been made" means on each route.
+  const changeApplied = movingNameservers ? switched : websiteAdded;
+
+  /** Where the agent is being sent to type the records. */
+  const hostPhrase = movingNameservers
+    ? "your new DNS host"
+    : currentHost.label === "your current DNS provider"
+      ? "your current DNS provider"
+      : `${currentHost.label}, where your domain is managed today`;
 
   return (
     <div className="space-y-4">
-      {risk.warning ? (
+      {movingNameservers && risk.warning ? (
         <div className="flex items-start gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-4">
           <Mail className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" />
           <div>
@@ -317,17 +351,21 @@ export function DnsCutoverWizard({
         step={2}
         state={emailStepDone ? "done" : "active"}
         title={
-          risk.hasEmail
-            ? "Copy your email records to the new DNS host"
-            : "No email records to move"
+          !movingNameservers
+            ? "Your email is not affected"
+            : risk.hasEmail
+              ? "Copy your email records to the new DNS host"
+              : "No email records to move"
         }
         description={
-          risk.hasEmail
-            ? "Add each row below at your new DNS host exactly as shown, then tick the box. Do this before touching nameservers — these are what keep your email working."
-            : "This domain has no mail records, so there is nothing here that could break. Continue to the next step."
+          !movingNameservers
+            ? `You are adding one record at ${currentHost.label}, where ${before.domain} is already managed. Nothing else on the domain changes${risk.hasEmail ? `, so your ${risk.mxCount} mail ${risk.mxCount === 1 ? "record" : "records"} keep working exactly as they do now` : ""}. There is nothing to move.`
+            : risk.hasEmail
+              ? "Add each row below at your new DNS host exactly as shown, then tick the box. Do this before touching nameservers — these are what keep your email working."
+              : "This domain has no mail records, so there is nothing here that could break. Continue to the next step."
         }
       >
-        {risk.hasEmail ? (
+        {movingNameservers && risk.hasEmail ? (
           <>
             <RecordTable
               records={preserve}
@@ -358,17 +396,17 @@ export function DnsCutoverWizard({
         step={3}
         state={!emailStepDone ? "locked" : websiteAdded ? "done" : "active"}
         title="Add your website records"
-        description="These point your domain at your website. Add them at the same new DNS host."
+        description={`These point your domain at your website. Add them at ${hostPhrase}.`}
       >
         {targetWebsiteRecords.length > 0 ? (
           <RecordTable
             records={targetWebsiteRecords}
-            caption="Add these at your new DNS host."
+            caption={`Add these at ${hostPhrase}.`}
           />
         ) : (
           <p className="text-muted-foreground mt-3 rounded-xl border border-dashed p-3 text-sm">
-            Your website host will give you one A record or CNAME. Add it at
-            the new DNS host, then tick below.
+            Your website host will give you one A record or CNAME. Add it at{" "}
+            {hostPhrase}, then tick below.
           </p>
         )}
         <label className="mt-3 flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-sm">
@@ -380,66 +418,113 @@ export function DnsCutoverWizard({
           />
           <span>
             <strong className="block">
-              My website records are added at the new DNS host
+              My website records are added at {hostPhrase}
             </strong>
           </span>
         </label>
       </StepShell>
 
-      <StepShell
-        step={4}
-        state={
-          switched ? "done" : emailStepDone && websiteAdded ? "active" : "locked"
-        }
-        title="Change your nameservers"
-        description={
-          switched
-            ? "Your nameservers are pointing at the new host. This step is complete."
-            : `This is the switch itself. Log in where your domain is registered${currentHost.label !== "your current DNS provider" ? ` (${currentHost.label})` : ""}, find "Nameservers", choose custom, and replace what is there with these two.`
-        }
-      >
-        <div className="mt-3 rounded-xl border bg-slate-50 p-3">
-          <p className="text-[11px] font-semibold tracking-wide text-slate-500 uppercase">
-            Set your nameservers to
+      {/*
+        Step 4 is the dangerous one, so it only exists when there is a real
+        nameserver pair to move to. Otherwise it is replaced by a step that
+        confirms — in as many words — that no nameserver change is required,
+        rather than leaving an empty box the agent has to interpret.
+      */}
+      {movingNameservers ? (
+        <StepShell
+          step={4}
+          state={
+            switched
+              ? "done"
+              : emailStepDone && websiteAdded
+                ? "active"
+                : "locked"
+          }
+          title="Change your nameservers"
+          description={
+            switched
+              ? "Your nameservers are pointing at the new host. This step is complete."
+              : `This is the switch itself. Log in where your domain is registered${currentHost.label !== "your current DNS provider" ? ` (${currentHost.label})` : ""}, find "Nameservers", choose custom, and replace what is there with these two.`
+          }
+        >
+          <div className="mt-3 rounded-xl border bg-slate-50 p-3">
+            <p className="text-[11px] font-semibold tracking-wide text-slate-500 uppercase">
+              Set your nameservers to
+            </p>
+            <ul className="mt-1 space-y-0.5">
+              {targetNameservers.map((ns) => (
+                <li key={ns} className="font-mono text-xs">
+                  {ns}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <p className="text-muted-foreground mt-3 text-xs leading-5">
+            Replace the existing nameservers rather than adding to them. The
+            change usually takes effect within an hour, but can take up to 48.
+            Your website and email keep working the whole time, because you
+            copied the records first.
           </p>
-          <ul className="mt-1 space-y-0.5">
-            {targetNameservers.map((ns) => (
-              <li key={ns} className="font-mono text-xs">
-                {ns}
-              </li>
-            ))}
-          </ul>
-        </div>
-        <p className="text-muted-foreground mt-3 text-xs leading-5">
-          Replace the existing nameservers rather than adding to them. The
-          change usually takes effect within an hour, but can take up to 48.
-          Your website and email keep working the whole time, because you
-          copied the records first.
-        </p>
-        {currentHost.url ? (
-          <Button
-            className="mt-3"
-            size="sm"
-            variant="outline"
-            render={
-              <a
-                href={currentHost.url}
-                target="_blank"
-                rel="noopener noreferrer"
-              />
-            }
-          >
-            Open {currentHost.label}
-            <ExternalLink className="ml-2 h-4 w-4" />
-          </Button>
-        ) : null}
-      </StepShell>
+          {currentHost.url ? (
+            <Button
+              className="mt-3"
+              size="sm"
+              variant="outline"
+              render={
+                <a
+                  href={currentHost.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                />
+              }
+            >
+              Open {currentHost.label}
+              <ExternalLink className="ml-2 h-4 w-4" />
+            </Button>
+          ) : null}
+        </StepShell>
+      ) : (
+        <StepShell
+          step={4}
+          state="done"
+          title="You do not need to change your nameservers"
+          description={`AgentStack does not take over your domain. ${before.domain} stays exactly where it is${currentHost.label !== "your current DNS provider" ? ` at ${currentHost.label}` : ""} — the record you added in the previous step is the whole change. If any guide tells you to swap your nameservers for AgentStack, it is out of date; doing that would take your site and your email offline.`}
+        >
+          {currentHost.url ? (
+            <Button
+              className="mt-3"
+              size="sm"
+              variant="outline"
+              render={
+                <a
+                  href={currentHost.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                />
+              }
+            >
+              Open {currentHost.label}
+              <ExternalLink className="ml-2 h-4 w-4" />
+            </Button>
+          ) : null}
+        </StepShell>
+      )}
 
       <StepShell
         step={5}
-        state={switched && survival.ok ? "done" : switched ? "active" : "locked"}
+        state={
+          changeApplied && survival.ok
+            ? "done"
+            : changeApplied
+              ? "active"
+              : "locked"
+        }
         title="Check it worked"
-        description="Run this after you have changed the nameservers. We re-read your domain and confirm both the website and your email survived."
+        description={
+          movingNameservers
+            ? "Run this after you have changed the nameservers. We re-read your domain and confirm both the website and your email survived."
+            : "Run this once you have saved the record. We re-read your domain and confirm it resolves — and that nothing else on it moved."
+        }
       >
         <Button
           className="mt-3"
@@ -458,14 +543,16 @@ export function DnsCutoverWizard({
         {after ? (
           <div className="mt-3 space-y-2">
             <p className="flex items-start gap-2 text-sm">
-              {switched ? (
-                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
-              ) : (
+              {movingNameservers && !switched ? (
                 <Server className="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" />
+              ) : (
+                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
               )}
-              {switched
-                ? "Nameservers have moved to the new host."
-                : "Nameservers have not changed yet. This can take up to 48 hours — check again later."}
+              {!movingNameservers
+                ? `${before.domain} is still served by ${currentHost.label}, which is what we expect — your nameservers were not meant to change.`
+                : switched
+                  ? "Nameservers have moved to the new host."
+                  : "Nameservers have not changed yet. This can take up to 48 hours — check again later."}
             </p>
             {survival.message ? (
               <p
