@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Check, HeartPulse, Loader2 } from "lucide-react";
 import { useSubAccount } from "@/context/sub-account-context";
@@ -26,15 +26,70 @@ export default function SiteHealthPage() {
   const { subAccountId, saPath } = useSubAccount();
   const [result, setResult] = useState<HealthResult | null>(null);
   const [error, setError] = useState(false);
+  const [checkingSite, setCheckingSite] = useState(false);
+  const [siteMessage, setSiteMessage] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    const response = await fetch(`/api/sub-accounts/${subAccountId}/site-health`);
+    if (!response.ok) throw new Error("health check failed");
+    return (await response.json()) as HealthResult;
+  }, [subAccountId]);
+
+  /**
+   * Ask the server to confirm the agent's own website is live.
+   *
+   * Runs automatically once when the website task is outstanding, so an
+   * agent who already has a site never has to know this check exists — the
+   * task simply clears. The server returns a cached verdict when a current
+   * one exists, so this does not hit their host on every page view.
+   */
+  const verifySite = useCallback(
+    async (force: boolean) => {
+      setCheckingSite(true);
+      setSiteMessage(null);
+      try {
+        const response = await fetch(
+          `/api/sub-accounts/${subAccountId}/site-health/verify-site`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ force }),
+          }
+        );
+        const data = (await response.json().catch(() => ({}))) as {
+          verification?: { status: string; reason: string };
+          error?: string;
+        };
+        if (!response.ok) {
+          setSiteMessage(data.error ?? "We could not check your website.");
+          return;
+        }
+        if (data.verification) setSiteMessage(data.verification.reason);
+        setResult(await load());
+      } catch {
+        setSiteMessage("We could not check your website just now.");
+      } finally {
+        setCheckingSite(false);
+      }
+    },
+    [subAccountId, load]
+  );
 
   useEffect(() => {
     let active = true;
     setError(false);
-    void fetch(`/api/sub-accounts/${subAccountId}/site-health`)
-      .then(async (response) => {
-        if (!response.ok) throw new Error("health check failed");
-        const data = (await response.json()) as HealthResult;
-        if (active) setResult(data);
+    void load()
+      .then((data) => {
+        if (!active) return;
+        setResult(data);
+        // Zero-touch: if the publish task is outstanding, check whether the
+        // agent already has a live site at their saved domain before asking
+        // them to build one.
+        const websiteTask = data.tasks.find((task) => task.id === "website");
+        const domainTask = data.tasks.find((task) => task.id === "domain");
+        if (websiteTask && !websiteTask.complete && domainTask?.complete) {
+          void verifySite(false);
+        }
       })
       .catch(() => {
         if (active) setError(true);
@@ -42,7 +97,7 @@ export default function SiteHealthPage() {
     return () => {
       active = false;
     };
-  }, [subAccountId]);
+  }, [subAccountId, load, verifySite]);
 
   const remaining = useMemo(
     () => result?.tasks.filter((task) => !task.complete) ?? [],
@@ -115,6 +170,12 @@ export default function SiteHealthPage() {
           </span>
         </div>
 
+        {siteMessage ? (
+          <p className="bg-muted/40 text-muted-foreground mt-4 rounded-lg border p-3 text-sm">
+            {siteMessage}
+          </p>
+        ) : null}
+
         <div className="mt-5 space-y-3">
           {result.tasks.map((task, index) => (
             <div
@@ -142,7 +203,34 @@ export default function SiteHealthPage() {
                   {task.detail}
                 </p>
               </div>
-              {!task.complete ? (
+              {task.id === "website" ? (
+                /* An agent who already has a site should not be sent to a
+                   builder they do not need — offer the check first. */
+                <div className="flex shrink-0 flex-wrap items-center gap-2">
+                  {!task.complete ? (
+                    <>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => void verifySite(true)}
+                        disabled={checkingSite}
+                      >
+                        {checkingSite ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : null}
+                        I already have a website
+                      </Button>
+                      <Button size="sm" render={<Link href={saPath(task.href)} />}>
+                        {task.action} <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </>
+                  ) : (
+                    <span className="text-sm font-medium text-emerald-700">
+                      Done
+                    </span>
+                  )}
+                </div>
+              ) : !task.complete ? (
                 <Button size="sm" render={<Link href={saPath(task.href)} />}>
                   {task.action} <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>

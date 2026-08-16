@@ -109,28 +109,39 @@ describe("Site Health — persona B: agent bringing an existing website", () => 
     ...ENGAGEMENT_DONE,
   };
 
-  it("CANNOT reach 100% — 'Publish your website' has no external path", () => {
+  it("reaches 100% once their own live site is verified", () => {
+    // This persona used to be capped at 88% with nothing left they could do:
+    // the publish task accepted only an AgentStack-hosted site, so an agent
+    // who kept their existing website could never clear it.
+    const verified = { ...keepsOwnSite, externalSiteVerified: true };
+
+    expect(computeSiteHealth(verified).score).toBe(100);
+    expect(remainingSiteHealthTaskIds(verified)).toEqual([]);
+  });
+
+  it("still holds at 88% while the site is unverified", () => {
     const result = computeSiteHealth(keepsOwnSite);
 
-    // Everything an agent who keeps their own site can possibly do is done.
+    // Verification is the whole point — an unchecked claim must not pass.
     expect(result.completed).toBe(7);
     expect(result.score).toBe(88);
     expect(remainingSiteHealthTaskIds(keepsOwnSite)).toEqual(["website"]);
   });
 
-  it("the blocking task only accepts an AgentStack-hosted site", () => {
-    const websiteTask = computeSiteHealth(keepsOwnSite).tasks.find(
+  it("describes the task in a way that admits an existing site", () => {
+    const pending = computeSiteHealth(keepsOwnSite).tasks.find(
       (task) => task.id === "website"
     )!;
+    expect(pending.detail).toContain("connect the one you already have");
 
-    // Neither a connected domain nor connected hosting satisfies it; the
-    // completion rule reads published AgentStack documents only.
-    expect(websiteTask.complete).toBe(false);
-    expect(websiteTask.detail).toContain("AgentStack website");
-    expect(websiteTask.action).toBe("Open Website Studio");
+    const done = computeSiteHealth({
+      ...keepsOwnSite,
+      externalSiteVerified: true,
+    }).tasks.find((task) => task.id === "website")!;
+    expect(done.detail).toContain("your own domain");
   });
 
-  it("clears only once a site is published inside AgentStack", () => {
+  it("also clears via a site published inside AgentStack", () => {
     expect(
       computeSiteHealth({ ...keepsOwnSite, publishedAgentSite: true }).score
     ).toBe(100);

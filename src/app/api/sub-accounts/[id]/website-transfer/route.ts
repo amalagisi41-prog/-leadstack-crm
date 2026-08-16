@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { Timestamp } from "firebase-admin/firestore";
 import { requireSubAccountAdmin } from "@/lib/auth/require-tenancy";
 import { getAdminDb } from "@/lib/firebase/admin";
+import { normalizePublicUrl } from "@/lib/net/public-url";
 
 function serialize(data: Record<string, unknown>) {
   const convert = (value: unknown): unknown =>
@@ -20,33 +21,6 @@ function serialize(data: Record<string, unknown>) {
             )
           : value;
   return convert(data);
-}
-
-function normalizeSource(value: unknown): URL | null {
-  if (typeof value !== "string") return null;
-  try {
-    const url = new URL(
-      /^https?:\/\//i.test(value.trim())
-        ? value.trim()
-        : `https://${value.trim()}`
-    );
-    if (!/^https?:$/.test(url.protocol)) return null;
-    const host = url.hostname.toLowerCase();
-    if (
-      host === "localhost" ||
-      host === "0.0.0.0" ||
-      host === "::1" ||
-      /^127\./.test(host) ||
-      /^10\./.test(host) ||
-      /^192\.168\./.test(host) ||
-      /^169\.254\./.test(host) ||
-      /^172\.(1[6-9]|2\d|3[01])\./.test(host)
-    )
-      return null;
-    return url;
-  } catch {
-    return null;
-  }
 }
 
 export async function GET(
@@ -80,7 +54,7 @@ export async function POST(
     sourceUrl?: unknown;
     sourcePlatform?: unknown;
   };
-  const source = normalizeSource(body.sourceUrl);
+  const source = normalizePublicUrl(body.sourceUrl);
   if (!source) {
     return NextResponse.json(
       { error: "Enter the public address of your current website." },

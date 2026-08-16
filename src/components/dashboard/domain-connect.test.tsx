@@ -293,7 +293,7 @@ describe("Website & Domain — step 3 names what is missing", () => {
     expect(screen.getByText(/finish step 2 to unlock/i)).toBeInTheDocument();
   });
 
-  it("keeps DNS record values hidden until the hosted site is verified", async () => {
+  it("tells an agent staying put that there is no DNS change to make", async () => {
     customDomain = "artisanhomenetwork.com";
     mockApi({
       foundation: {
@@ -303,6 +303,34 @@ describe("Website & Domain — step 3 names what is missing", () => {
         sourceUrl: "",
         domainStartingPoint: "have_domain",
         hostingStartingPoint: "keep_existing",
+        hostingSetupConfirmed: true,
+        domainName: "artisanhomenetwork.com",
+        profileImported: false,
+      },
+    });
+    await renderLoaded();
+    await userEvent.click(screen.getByText("I have a website"));
+
+    // Leaving this step "locked" forever implied unfinished work that will
+    // never exist — there is no cutover when the host is not changing.
+    expect(screen.getByText("DNS — nothing to change")).toBeInTheDocument();
+    expect(screen.queryByText("Locked")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/record values stay hidden/i)
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps DNS record values hidden until the hosted site is verified", async () => {
+    customDomain = "artisanhomenetwork.com";
+    mockApi({
+      foundation: {
+        completed: true,
+        mode: "transfer",
+        sourcePlatform: "wordpress",
+        sourceUrl: "",
+        domainStartingPoint: "have_domain",
+        // A migration does have a cutover, so the gate still applies.
+        hostingStartingPoint: "transfer_existing",
         hostingSetupConfirmed: true,
         domainName: "artisanhomenetwork.com",
         profileImported: false,

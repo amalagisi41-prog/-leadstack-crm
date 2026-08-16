@@ -22,6 +22,12 @@ export interface SiteHealthInputs {
   publishedWebsite: boolean;
   /** True when agentSites/main has status "published". */
   publishedAgentSite: boolean;
+  /**
+   * True when the agent's own website — hosted anywhere — was verified live
+   * over HTTPS at the saved domain. Without this, an agent who keeps their
+   * existing site can never clear the website task no matter what they do.
+   */
+  externalSiteVerified?: boolean;
   /** subAccounts/{id}.customDomain */
   customDomain?: string;
   hasLeadForm: boolean;
@@ -76,8 +82,13 @@ export function buildSiteHealthTasks(
     {
       id: "website",
       title: "Publish your website",
-      detail: "Put an approved AgentStack website online.",
-      complete: inputs.publishedWebsite || inputs.publishedAgentSite,
+      detail: inputs.externalSiteVerified
+        ? "Your website is live at your own domain."
+        : "Put a website online — build one here, or connect the one you already have.",
+      complete:
+        inputs.publishedWebsite ||
+        inputs.publishedAgentSite ||
+        inputs.externalSiteVerified === true,
       href: "/website-studio",
       action: "Open Website Studio",
     },

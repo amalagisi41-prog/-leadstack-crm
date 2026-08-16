@@ -4,6 +4,10 @@ import { NextResponse } from "next/server";
 import { requireSubAccountMember } from "@/lib/auth/require-tenancy";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { computeSiteHealth } from "@/lib/site-health/tasks";
+import {
+  isVerificationCurrent,
+  type SiteVerificationRecord,
+} from "@/lib/site-health/liveness";
 import type { BusinessProfileContent } from "@/types/business-profile";
 
 export async function GET(
@@ -53,6 +57,12 @@ export async function GET(
     publishedAgentSite,
     customDomain:
       typeof sub.customDomain === "string" ? sub.customDomain : undefined,
+    // An agent who keeps their own website clears the publish task on a
+    // verified live site. Read-only here — the probe runs in verify-site.
+    externalSiteVerified: isVerificationCurrent(
+      sub.externalSiteVerification as SiteVerificationRecord | undefined,
+      typeof sub.customDomain === "string" ? sub.customDomain : undefined
+    ),
     hasLeadForm: !formsSnap.empty,
     hasBookingPage: !bookingSnap.empty,
     webChatEnabled: chatSnap.exists && chatSnap.data()?.enabled === true,

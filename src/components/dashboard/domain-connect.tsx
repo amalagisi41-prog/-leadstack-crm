@@ -238,6 +238,12 @@ export function DomainConnect() {
   const hostLabel =
     EXISTING_HOSTS.find((host) => host.id === foundation.sourcePlatform)
       ?.label ?? "your current host";
+  // Staying on the current host means there is no cutover: the domain
+  // already points where it should. Leaving step 3 "locked" forever implied
+  // unfinished work that will never exist.
+  const dnsNotNeeded =
+    foundation.hostingStartingPoint === "keep_existing" &&
+    foundation.hostingSetupConfirmed === true;
 
   /**
    * Only the choices that make sense for the selected situation. An agent
@@ -778,20 +784,30 @@ export function DomainConnect() {
           <StepHeader
             step={3}
             state={
-              hostingReady ? "active" : hostingConnected ? "active" : "locked"
+              dnsNotNeeded
+                ? "done"
+                : hostingReady || hostingConnected
+                  ? "active"
+                  : "locked"
             }
-            title="Point DNS"
-            description="The last step connects the domain to the host. AgentStack never edits nameservers or email DNS for you — Zack walks you through the exact records to add at your registrar."
+            title={dnsNotNeeded ? "DNS — nothing to change" : "Point DNS"}
+            description={
+              dnsNotNeeded
+                ? `You're staying on ${hostLabel}, so your domain already points where it should. There is no cutover and no DNS change to make. Ask Zack if you ever want to move it.`
+                : "The last step connects the domain to the host. AgentStack never edits nameservers or email DNS for you — Zack walks you through the exact records to add at your registrar."
+            }
           />
 
-          <ul className="mt-4 space-y-2">
-            <Requirement met={domainSaved} label="Domain saved" />
-            <Requirement met={hostingConnected} label="Host connected" />
-            <Requirement
-              met={hostingReady}
-              label="Hosted site verified over HTTPS (required before record values are shown)"
-            />
-          </ul>
+          {!dnsNotNeeded ? (
+            <ul className="mt-4 space-y-2">
+              <Requirement met={domainSaved} label="Domain saved" />
+              <Requirement met={hostingConnected} label="Host connected" />
+              <Requirement
+                met={hostingReady}
+                label="Hosted site verified over HTTPS (required before record values are shown)"
+              />
+            </ul>
+          ) : null}
 
           <div className="mt-4 flex flex-wrap gap-2">
             <Button
@@ -811,7 +827,7 @@ export function DomainConnect() {
             </Button>
           </div>
 
-          {!hostingReady ? (
+          {!hostingReady && !dnsNotNeeded ? (
             <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-950">
               {hostingConnected
                 ? "DNS record values stay hidden until hosting and SSL are verified, so a change can’t take your live site down mid-setup. Zack can still prepare you for the step."
