@@ -1697,3 +1697,57 @@ No new env vars beyond what's already required. The affiliate surfaces are gated
 - **GHL import job hangs at "queued"** — QStash isn't delivering the first step callback. Check `QSTASH_URL` region matches the signing keys, and that `/api/import/ghl/step` is in the `PUBLIC_PATH_PATTERNS` (it must be, since security is the QStash signature).
 - **GHL import succeeds but custom fields are empty** — the GHL custom field keys don't match the AgentStack custom field definitions. The import logs the unmapped fields in `importJobs/{jobId}.unmappedFields`. Create matching custom field definitions first, then re-import.
 - **`STRIPE_FOUNDERS_PRICE_ID` not recognized** — this env var is only read by the founders-cohort checkout flow in `src/lib/stripe/checkout.ts`. If you don't have a founders cohort, leave it unset — the standard `STRIPE_PRO_PRICE_ID` flow is unaffected.
+
+## The new-user standard: no guessing
+
+Every surface a new agent can reach is built for someone who has never used
+a CRM, has never edited DNS, and does not know what a "sub-account", "A2P",
+"CNAME", or "blueprint" is. They are not stupid and they are not lazy — they
+have simply never seen this before, and they are running a business while
+they learn it. Guidance is not a nicety here; it is the product.
+
+Apply this to any onboarding, setup, migration, or first-run surface.
+
+**Never ask the user for something the app can find out.** If a value is
+readable — their DNS records, who hosts their site, what their domain
+resolves to, what is already in their profile — read it and show it. Asking
+someone to "enter your MX records" when the server can look them up is
+handing them a task they will get wrong.
+
+**Never leave a screen without a next action.** Every state, including the
+finished ones, ends in something to click. "There is nothing to do here" is a
+dead end; say where to go and link to it. A completed state shows what was
+saved, offers the next step, and offers a way to change it.
+
+**Say what is missing by name.** "Locked", "incomplete", and "3 items left"
+tell a first-timer nothing. Name the specific thing, say why it is blocked,
+and link to where it is fixed.
+
+**Never mark work complete that the user did not do.** Skipping is not doing.
+Clicking Next is not doing. A false "you're done" is worse than no guidance,
+because it removes the only signal that anything remains. Derive completion
+from real state wherever possible; where it cannot be derived, record an
+explicit, dated, attributed confirmation and label it as one.
+
+**Order steps so a mistake is impossible, and enforce the order.** Where
+doing things in the wrong sequence causes damage — changing nameservers
+before copying MX records, cancelling an old platform before porting a phone
+number — the dangerous step is *locked* until the protective one is
+confirmed. A warning the user can click past is not enough.
+
+**Absence of evidence is never evidence of success.** A check that cannot
+confirm something returns "unknown" and asks; it never returns "fine". Show
+the evidence so the user can judge it themselves.
+
+**Label with the noun the user is looking at.** A sidebar item, a button, and
+the screen it opens must agree. Mismatched labels teach users that the
+interface cannot be trusted, and then they start guessing.
+
+**Name the destination.** "Log into GoDaddy" beats "log into your DNS
+provider"; "Open Website Studio" beats "continue". Where a third party is
+involved, identify which one and link to it.
+
+Reference implementations: `components/dashboard/dns-cutover-wizard.tsx`
+(enforced ordering, read-don't-ask), `lib/site-health/migration-independence.ts`
+(verified vs. attested completion), `components/dashboard/domain-connect.tsx`
+(numbered steps that stay visible when locked, naming what is missing).

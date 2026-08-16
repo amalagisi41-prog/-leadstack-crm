@@ -16,12 +16,16 @@ import {
  * `advance([...])` calls inside the wizard component exactly.
  */
 export const WIZARD_STEP_STEP_IDS: readonly (readonly OnboardingStepId[])[] = [
-  ["business_profile"], // 0 — Build
-  ["contacts", "sms"], // 1 — Connect
-  ["form"], // 2 — Capture
-  ["automation", "ai"], // 3 — Respond
-  ["pipeline"], // 4 — Nurture
-  ["domain"], // 5 — Close (the one step id with no earlier screen)
+  ["domain"], // 0 — Domain + Hosting
+  ["business_profile"], // 1 — Business Blueprint
+  ["form"], // 2 — Lead Capture
+  ["automation", "ai"], // 3 — Instant AI Response
+  ["pipeline"], // 4 — Follow-Up
+  // 5 — Go Live. Importing contacts and connecting a phone number are real
+  // tasks this wizard only links out to, so clicking through never marks
+  // them. Listing them here means an agent who has not done them resumes on
+  // the final screen, which names both and links to each.
+  ["contacts", "sms"],
 ];
 
 export interface OnboardingRecommendedAction {

@@ -25,7 +25,10 @@ import {
 import { SUB_ACCOUNT_ROUTES } from "@/lib/navigation/sub-account-routes";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { ONBOARDING_STEP_IDS } from "@/lib/onboarding/steps";
+import {
+  ONBOARDING_STEPS,
+  ONBOARDING_STEP_IDS,
+} from "@/lib/onboarding/steps";
 import { computeOnboardingState } from "@/lib/onboarding/state-machine";
 import { AGENTSTACK_METHOD_NAME } from "@/config/landing";
 
@@ -73,19 +76,19 @@ const WIZARD_STEPS = [
   },
   {
     id: "capture" as const,
-    label: "Connect Business",
+    label: "Lead Capture",
     icon: Target,
     tagline: "Lead capture systems",
   },
   {
     id: "respond" as const,
-    label: "Choose Goals",
+    label: "Instant AI Response",
     icon: Zap,
     tagline: "Instant AI response",
   },
   {
     id: "nurture" as const,
-    label: "Launch Marketing",
+    label: "Follow-Up",
     icon: TrendingUp,
     tagline: "Automatic follow-up",
   },
@@ -182,12 +185,15 @@ export function OnboardingWizard({
   const finish = useCallback(async () => {
     if (finishing) return;
     setFinishing(true);
-    const all = [...ONBOARDING_STEP_IDS];
-    setCompleted(new Set(all));
-    await persistSteps(subAccountId, all);
+    // Persist only what the agent actually did. This used to mark every step
+    // complete on the way out, so someone who skipped the whole wizard was
+    // told they were finished — and the checklist agreed, claiming they had
+    // imported contacts and connected a phone number they had never touched.
+    const done = ONBOARDING_STEP_IDS.filter((id) => completed.has(id));
+    await persistSteps(subAccountId, done);
     router.replace(saPath("/dashboard?welcome=1"));
     router.refresh();
-  }, [finishing, router, saPath, subAccountId]);
+  }, [completed, finishing, router, saPath, subAccountId]);
 
   return (
     <div className="to-background flex min-h-[calc(100vh-4rem)] flex-col bg-gradient-to-b from-[#fff8ee]">
@@ -259,14 +265,14 @@ export function OnboardingWizard({
             {currentStep === 0 && (
               <StepBuild
                 saPath={saPath}
-                onNext={() => advance(["business_profile"])}
+                onNext={() => advance(["domain"])}
               />
             )}
             {currentStep === 1 && (
               <StepConnect
                 saPath={saPath}
-                onNext={() => advance(["contacts", "sms"])}
-                onSkip={() => advance(["contacts", "sms"])}
+                onNext={() => advance(["business_profile"])}
+                onSkip={() => advance()}
               />
             )}
             {currentStep === 2 && (
@@ -275,14 +281,14 @@ export function OnboardingWizard({
                 onChoose={setChosenFunnel}
                 saPath={saPath}
                 onNext={() => advance(["form"])}
-                onSkip={() => advance(["form"])}
+                onSkip={() => advance()}
               />
             )}
             {currentStep === 3 && (
               <StepRespond
                 saPath={saPath}
                 onNext={() => advance(["automation", "ai"])}
-                onSkip={() => advance(["automation", "ai"])}
+                onSkip={() => advance()}
               />
             )}
             {currentStep === 4 && (
@@ -296,6 +302,7 @@ export function OnboardingWizard({
                 completed={completed}
                 onFinish={finish}
                 finishing={finishing}
+                saPath={saPath}
               />
             )}
 
@@ -770,21 +777,28 @@ function StepClose({
   completed,
   onFinish,
   finishing,
+  saPath,
 }: {
   completed: Set<string>;
   onFinish: () => Promise<void>;
   finishing: boolean;
+  saPath: (p: string) => string;
 }) {
   const doneCount = ONBOARDING_STEP_IDS.filter((id) =>
     completed.has(id)
   ).length;
   const totalCount = ONBOARDING_STEP_IDS.length;
+  const remaining = ONBOARDING_STEPS.filter((step) => !completed.has(step.id));
 
   return (
     <StepShell
       icon={<Star className="h-6 w-6 text-amber-500" />}
       eyebrow="Step 6: Start your first working day"
-      title="Setup is finished. Here is what happens next."
+      title={
+        remaining.length === 0
+          ? "Setup is finished. Here is what happens next."
+          : "Almost there — here is what is still missing."
+      }
       subtitle={`${AGENTSTACK_METHOD_NAME} is now configured. Enter Today to see one recommended action, confirm your website foundation, and test the lead-to-appointment workflow before inviting real leads.`}
     >
       <div className="my-6 rounded-xl border border-emerald-200 bg-emerald-50/60 p-5 dark:border-emerald-800/40 dark:bg-emerald-950/20">
@@ -800,13 +814,50 @@ function StepClose({
             style={{ width: `${(doneCount / totalCount) * 100}%` }}
           />
         </div>
-        {doneCount < totalCount && (
-          <p className="mt-2 text-xs text-emerald-600 dark:text-emerald-500">
-            You can finish the remaining steps any time from your workspace
-            checklist.
-          </p>
-        )}
       </div>
+
+      {/*
+        Name what is left, with a link to each. The old copy said "you can
+        finish the remaining steps any time from your workspace checklist" —
+        which leaves someone who has never used a CRM to work out what is
+        missing and where it lives. Two steps (importing contacts and
+        connecting a phone number) are never completed by this wizard at all,
+        so for most agents this list is never empty.
+      */}
+      {remaining.length > 0 ? (
+        <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-5">
+          <p className="text-sm font-semibold text-amber-950">
+            {remaining.length} {remaining.length === 1 ? "step" : "steps"} still
+            to do
+          </p>
+          <p className="mt-1 text-xs leading-5 text-amber-900/80">
+            None of these are done yet. Each one takes a few minutes — start
+            wherever you like.
+          </p>
+          <div className="mt-4 space-y-2">
+            {remaining.map((step) => (
+              <div
+                key={step.id}
+                className="flex flex-col gap-3 rounded-xl border bg-white p-3 sm:flex-row sm:items-center"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium">{step.title}</p>
+                  <p className="text-muted-foreground mt-0.5 text-xs leading-5">
+                    {step.description}
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  render={<Link href={saPath(step.href)} />}
+                >
+                  {step.cta} <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       <div className="mb-6 rounded-2xl border bg-[#f7faff] p-5">
         <p className="text-xs font-semibold tracking-widest text-[#DB4F9B] uppercase">
