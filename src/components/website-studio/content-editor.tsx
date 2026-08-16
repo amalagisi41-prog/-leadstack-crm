@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { Plus, Trash2, Save } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -46,11 +46,19 @@ function Field({
   placeholder?: string;
   textarea?: boolean;
 }) {
+  // Without an explicit id the label is only visually adjacent to its input:
+  // a screen reader announces an unnamed text box, and clicking the label
+  // does nothing. Several of these fields have no placeholder either, so the
+  // association is the only name the control has.
+  const id = useId();
   return (
     <div className="space-y-1">
-      <Label className="text-xs">{label}</Label>
+      <Label className="text-xs" htmlFor={id}>
+        {label}
+      </Label>
       {textarea ? (
         <textarea
+          id={id}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
@@ -59,6 +67,7 @@ function Field({
         />
       ) : (
         <Input
+          id={id}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
