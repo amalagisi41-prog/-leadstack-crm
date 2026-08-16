@@ -14,6 +14,8 @@ import {
   Server,
   ShieldCheck,
   ArrowRight,
+  Settings2,
+  Network,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSubAccount } from "@/context/sub-account-context";
@@ -54,6 +56,13 @@ const TOPICS = [
     q: "How do I set up my Google Business Profile?",
   },
 ];
+
+/** Plain-language name for each saved hosting path. */
+const HOSTING_LABELS: Record<HostingStartingPoint, string> = {
+  agentstack_managed: "AgentStack managed hosting",
+  transfer_existing: "Migrating to a new host",
+  keep_existing: "Staying on your current host",
+};
 
 const HOSTS = [
   {
@@ -96,6 +105,10 @@ export function BusinessSetupAssistant({
   const [hostingerMode, setHostingerMode] = useState<
     "migration" | "new-site" | null
   >(null);
+  // A completed foundation used to collapse into a banner with no controls at
+  // all. Reopening the form is what keeps "you can change providers later"
+  // from being a promise the screen cannot keep.
+  const [editingFoundation, setEditingFoundation] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -117,15 +130,32 @@ export function BusinessSetupAssistant({
     };
   }, [subAccountId]);
 
+  /**
+   * Persist the foundation.
+   *
+   * Callers pass explicit values rather than relying on the state they just
+   * set — a `setState` in the same handler has not landed yet, so reading it
+   * here would save the previous choice.
+   */
   async function saveFoundation(
-    nextDomain = domainPoint,
-    nextHosting = hostingPoint
+    overrides: {
+      domainStartingPoint?: DomainStartingPoint;
+      hostingStartingPoint?: HostingStartingPoint;
+      domainSetupConfirmed?: boolean;
+      hostingSetupConfirmed?: boolean;
+    } = {}
   ) {
+    const nextDomain = overrides.domainStartingPoint ?? domainPoint;
+    const nextHosting = overrides.hostingStartingPoint ?? hostingPoint;
+    const nextDomainConfirmed =
+      overrides.domainSetupConfirmed ?? domainConfirmed;
+    const nextHostingConfirmed =
+      overrides.hostingSetupConfirmed ?? hostingConfirmed;
     if (
       nextDomain === "not_sure" ||
       !nextHosting ||
-      !domainConfirmed ||
-      !hostingConfirmed ||
+      !nextDomainConfirmed ||
+      !nextHostingConfirmed ||
       !domainName.trim()
     ) {
       toast.error("Complete and confirm the domain and hosting steps first.");
@@ -147,8 +177,8 @@ export function BusinessSetupAssistant({
             domainStartingPoint: nextDomain,
             hostingStartingPoint: nextHosting,
             domainName,
-            domainSetupConfirmed: domainConfirmed,
-            hostingSetupConfirmed: hostingConfirmed,
+            domainSetupConfirmed: nextDomainConfirmed,
+            hostingSetupConfirmed: nextHostingConfirmed,
             profileImported: foundation?.profileImported === true,
           }),
         }
@@ -160,6 +190,11 @@ export function BusinessSetupAssistant({
       if (!response.ok)
         throw new Error(data.error ?? "Could not save the foundation.");
       if (data.foundation) setFoundation(data.foundation);
+      setHostingPoint(nextHosting);
+      setDomainPoint(nextDomain);
+      setDomainConfirmed(nextDomainConfirmed);
+      setHostingConfirmed(nextHostingConfirmed);
+      setEditingFoundation(false);
       onFoundationChange?.(true);
       toast.success("Foundation saved. Website Builder is now available.");
     } catch (cause) {
@@ -214,18 +249,70 @@ export function BusinessSetupAssistant({
 
   return (
     <div className="mx-auto max-w-5xl space-y-5">
-      {foundationComplete ? (
-        <section className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-emerald-950">
-          <div className="flex items-start gap-3">
+      {foundationComplete && !editingFoundation ? (
+        /*
+          This used to be a terminal state: a banner saying "there is nothing
+          to repeat here; return to Vibe Builder" — with no link to Vibe
+          Builder, no record of what had actually been saved, no way to change
+          it, and no route to the DNS step. It told the user to leave and gave
+          them no door. Every claim it makes is now backed by a control.
+        */
+        <section className="overflow-hidden rounded-2xl border border-emerald-200 bg-emerald-50">
+          <div className="flex items-start gap-3 p-5">
             <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
-            <div>
-              <p className="font-semibold">Website foundation is complete</p>
-              <p className="mt-1 text-sm text-emerald-900/75">
-                Your domain and managed-hosting path are already saved. There is
-                nothing to repeat here; return to Vibe Builder to keep editing
-                the private site.
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold text-emerald-950">
+                Website foundation is complete
               </p>
+              <p className="mt-1 text-sm text-emerald-900/75">
+                Here is what is saved. You can change any of it, or carry on to
+                the next step.
+              </p>
+
+              <dl className="mt-4 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-xl border border-emerald-200 bg-white p-3">
+                  <dt className="text-[11px] font-semibold tracking-wide text-emerald-900/60 uppercase">
+                    Domain
+                  </dt>
+                  <dd className="mt-1 truncate text-sm font-semibold text-emerald-950">
+                    {domainName.trim() || "Not saved yet"}
+                  </dd>
+                </div>
+                <div className="rounded-xl border border-emerald-200 bg-white p-3">
+                  <dt className="text-[11px] font-semibold tracking-wide text-emerald-900/60 uppercase">
+                    Hosting
+                  </dt>
+                  <dd className="mt-1 truncate text-sm font-semibold text-emerald-950">
+                    {hostingPoint
+                      ? HOSTING_LABELS[hostingPoint]
+                      : "Not saved yet"}
+                  </dd>
+                </div>
+              </dl>
             </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2 border-t border-emerald-200 bg-white/60 p-4">
+            <Button render={<a href={saPath("/website-studio/vibe")} />}>
+              <Sparkles className="mr-2 h-4 w-4" />
+              Continue in Vibe Builder
+            </Button>
+            {/* The DNS step lives on the domain page; without this link the
+                walkthrough simply ended before its last step. */}
+            <Button
+              variant="outline"
+              render={<a href={saPath("/domain")} />}
+            >
+              <Network className="mr-2 h-4 w-4" />
+              Domain, hosting &amp; DNS steps
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setEditingFoundation(true)}
+            >
+              <Settings2 className="mr-2 h-4 w-4" />
+              Change domain or hosting
+            </Button>
           </div>
         </section>
       ) : (
@@ -466,24 +553,37 @@ export function BusinessSetupAssistant({
                 You can change providers later.
               </span>
             </p>
-            <Button
-              onClick={() => void saveFoundation()}
-              disabled={
-                savingFoundation ||
-                domainPoint === "not_sure" ||
-                !hostingPoint ||
-                !domainConfirmed ||
-                !hostingConfirmed ||
-                !domainName.trim()
-              }
-            >
-              {savingFoundation ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <CheckCircle2 className="mr-2 h-4 w-4" />
-              )}
-              Save foundation &amp; unlock builder
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              {editingFoundation ? (
+                <Button
+                  variant="outline"
+                  onClick={() => setEditingFoundation(false)}
+                  disabled={savingFoundation}
+                >
+                  Cancel
+                </Button>
+              ) : null}
+              <Button
+                onClick={() => void saveFoundation()}
+                disabled={
+                  savingFoundation ||
+                  domainPoint === "not_sure" ||
+                  !hostingPoint ||
+                  !domainConfirmed ||
+                  !hostingConfirmed ||
+                  !domainName.trim()
+                }
+              >
+                {savingFoundation ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                )}
+                {editingFoundation
+                  ? "Save changes"
+                  : "Save foundation & unlock builder"}
+              </Button>
+            </div>
           </div>
         </section>
       )}
@@ -547,13 +647,24 @@ export function BusinessSetupAssistant({
                     : "AgentStack will use the domain saved above and prepare the new-site hosting handoff without leaving this workspace."}
                 </p>
               </div>
+              {/* This previously flipped a local checkbox and announced
+                  "saved" without writing anything — a reload lost the choice.
+                  It now persists through the same foundation PATCH as every
+                  other path, and reports honestly when the domain step is
+                  still outstanding. */}
               <Button
                 type="button"
-                onClick={() => {
-                  setHostingConfirmed(true);
-                  toast.success("Hostinger path saved in this workspace.");
-                }}
+                disabled={savingFoundation}
+                onClick={() =>
+                  void saveFoundation({
+                    hostingStartingPoint: "transfer_existing",
+                    hostingSetupConfirmed: true,
+                  })
+                }
               >
+                {savingFoundation ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : null}
                 Save this hosting path
               </Button>
             </div>
