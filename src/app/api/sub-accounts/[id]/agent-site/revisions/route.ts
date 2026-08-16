@@ -5,7 +5,10 @@ import { FieldValue } from "firebase-admin/firestore";
 import { requireSubAccountAdmin } from "@/lib/auth/require-tenancy";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { normalizeAgentSiteComposition } from "@/lib/website-studio/site-composition";
-import { emptyAgentSiteContent } from "@/types/agent-site";
+import {
+  emptyAgentSiteContent,
+  emptyAgentSiteDesign,
+} from "@/types/agent-site";
 
 const SITE_ID = "main";
 
@@ -76,6 +79,7 @@ export async function POST(
     status: current.status,
     content: current.content ?? emptyAgentSiteContent(),
     composition: normalizeAgentSiteComposition(current.composition),
+    design: current.design ?? emptyAgentSiteDesign(),
     createdAt: FieldValue.serverTimestamp(),
   });
   batch.update(siteRef, {
@@ -83,6 +87,7 @@ export async function POST(
     slug: revision.slug,
     content: revision.content ?? emptyAgentSiteContent(),
     composition: normalizeAgentSiteComposition(revision.composition),
+    design: revision.design ?? emptyAgentSiteDesign(),
     status: "draft",
     updatedAt: FieldValue.serverTimestamp(),
   });

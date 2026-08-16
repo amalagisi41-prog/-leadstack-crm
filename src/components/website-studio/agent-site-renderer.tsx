@@ -2,10 +2,12 @@ import type { CSSProperties } from "react";
 import type {
   AgentSiteComposition,
   AgentSiteContent,
+  AgentSiteDesign,
   AgentSiteSectionType,
 } from "@/types/agent-site";
 import type { AgentSiteTemplate } from "@/lib/website-studio/templates";
 import { normalizeAgentSiteComposition } from "@/lib/website-studio/site-composition";
+import { SITE_CANVAS_ID } from "@/lib/website-studio/design";
 
 /**
  * Renders an agent site from a template (design tokens) + content. Pure,
@@ -30,18 +32,43 @@ const PH = {
 };
 
 export function AgentSiteRenderer({
-  template,
+  template: baseTemplate,
   content,
   composition,
   idx,
   editing = false,
+  design,
 }: {
   template: AgentSiteTemplate;
   content: AgentSiteContent;
   composition?: AgentSiteComposition;
   idx?: { connected: boolean; url: string; displayName?: string };
   editing?: boolean;
+  /** Vibe Builder overrides on top of the template's tokens. */
+  design?: AgentSiteDesign;
 }) {
+  // Only defined override keys replace the template default so a partial
+  // design (e.g. just an accent color) doesn't blank out the rest. Merged
+  // once here so every reference below (`template.*`) picks up overrides
+  // without threading `design` through the whole render body.
+  const template: AgentSiteTemplate = {
+    ...baseTemplate,
+    palette: {
+      ...baseTemplate.palette,
+      ...(design?.bg ? { bg: design.bg } : {}),
+      ...(design?.surface ? { surface: design.surface } : {}),
+      ...(design?.text ? { text: design.text } : {}),
+      ...(design?.muted ? { muted: design.muted } : {}),
+      ...(design?.accent ? { accent: design.accent } : {}),
+      ...(design?.accentText ? { accentText: design.accentText } : {}),
+      ...(design?.border ? { border: design.border } : {}),
+    },
+    fontDisplay: design?.fontDisplay?.trim() || baseTemplate.fontDisplay,
+    fontBody: design?.fontBody?.trim() || baseTemplate.fontBody,
+    radius:
+      typeof design?.radius === "number" ? design.radius : baseTemplate.radius,
+    heroVariant: design?.heroVariant ?? baseTemplate.heroVariant,
+  };
   const p = template.palette;
   const page = normalizeAgentSiteComposition(composition);
   const sectionPlacement = (
@@ -113,7 +140,7 @@ export function AgentSiteRenderer({
   };
 
   return (
-    <div className="agent-site-root" style={root}>
+    <div id={SITE_CANVAS_ID} className="agent-site-root" style={root}>
       <style>{`
         .agent-site-root img { max-width: 100%; }
         .agent-site-hero-split,
@@ -141,6 +168,12 @@ export function AgentSiteRenderer({
           .agent-site-idx-frame { min-height: 900px; }
         }
       `}</style>
+      {/* Custom CSS is scoped + sanitized before it's ever saved (see
+          lib/website-studio/design.ts), so it's safe to render as-is here
+          even though this component mounts inside the live dashboard. */}
+      {design?.customCss ? (
+        <style dangerouslySetInnerHTML={{ __html: design.customCss }} />
+      ) : null}
       {/* Header */}
       <header
         className="agent-site-header"

@@ -1,4 +1,4 @@
-export type WebsiteStudioView = "builder" | "vibe" | "setup";
+export type WebsiteStudioView = "builder" | "vibe" | "setup" | "seo";
 export type WebsiteStudioWorkspace = "home" | "vibe";
 
 export function getInitialWebsiteStudioView({

@@ -23,6 +23,7 @@ import { DesignerChat } from "./designer-chat";
 import { ContentEditor } from "./content-editor";
 import { SiteStructureEditor } from "./site-structure-editor";
 import { BusinessSetupAssistant } from "./business-setup-assistant";
+import { SeoSettingsPanel } from "./seo-settings-panel";
 import { AgentSiteRenderer } from "./agent-site-renderer";
 import { WebsitePreviewCanvas } from "./website-preview-canvas";
 import { SiteRevisionHistory } from "./site-revision-history";
@@ -32,8 +33,10 @@ import {
 } from "@/lib/website-studio/templates";
 import {
   emptyAgentSiteContent,
+  emptyAgentSiteDesign,
   type AgentSiteComposition,
   type AgentSiteContent,
+  type AgentSiteDesign,
   type AgentSiteDoc,
   type AgentSiteTemplateId,
 } from "@/types/agent-site";
@@ -89,6 +92,7 @@ export function WebsiteStudioApp({
   const [composition, setComposition] = useState<AgentSiteComposition>(
     defaultAgentSiteComposition()
   );
+  const [design, setDesign] = useState<AgentSiteDesign>(emptyAgentSiteDesign());
   const [selecting, setSelecting] = useState<AgentSiteTemplateId | null>(null);
   const [publishing, setPublishing] = useState(false);
   const [mode, setMode] = useState<
@@ -207,6 +211,7 @@ export function WebsiteStudioApp({
             window.sessionStorage.setItem(eventKey, "1");
             recordJourneyEvent("trusted_preview");
           }
+          setDesign(loadedSite.design ?? emptyAgentSiteDesign());
         }
         setView(
           getWorkspaceWebsiteStudioView({
@@ -261,6 +266,7 @@ export function WebsiteStudioApp({
       setSite(s);
       setContent(s.content);
       setComposition(normalizeAgentSiteComposition(s.composition));
+      setDesign(s.design ?? emptyAgentSiteDesign());
       setView("vibe");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not start.");
@@ -433,6 +439,13 @@ export function WebsiteStudioApp({
       >
         Website &amp; Domain
       </button>
+      <button
+        type="button"
+        onClick={() => setView("seo")}
+        className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${view === "seo" ? "bg-[#1a2f50] text-white" : "text-muted-foreground hover:text-foreground"}`}
+      >
+        SEO
+      </button>
     </div>
   );
 
@@ -458,6 +471,26 @@ export function WebsiteStudioApp({
             setFoundationReady(ready);
           }}
         />
+      </div>
+    );
+  }
+
+  if (view === "seo") {
+    return (
+      <div className="space-y-4">
+        {tabRow}
+        {site ? (
+          <SeoSettingsPanel
+            subAccountId={subAccountId}
+            content={content}
+            onSaved={setContent}
+          />
+        ) : (
+          <div className="text-muted-foreground rounded-2xl border border-dashed p-8 text-center text-sm">
+            Start a site in the Vibe Builder first. SEO settings apply to its
+            published page.
+          </div>
+        )}
       </div>
     );
   }
@@ -816,6 +849,7 @@ export function WebsiteStudioApp({
               setComposition(
                 normalizeAgentSiteComposition(restored.composition)
               );
+              setDesign(restored.design ?? emptyAgentSiteDesign());
             }}
           />
           <Button
@@ -930,6 +964,10 @@ export function WebsiteStudioApp({
                     setContent(next);
                     setReleaseApproved(false);
                   }}
+                  onDesign={(next) => {
+                    setDesign(next);
+                    setReleaseApproved(false);
+                  }}
                 />
               ) : mode === "edit" ? (
                 <ContentEditor
@@ -954,7 +992,6 @@ export function WebsiteStudioApp({
               )}
             </div>
           </div>
-
           <div className="bg-muted/30 overflow-hidden rounded-2xl border">
             <div className="bg-card flex items-center justify-between gap-3 border-b px-4 py-2">
               <span className="text-muted-foreground text-xs font-medium">
@@ -992,6 +1029,7 @@ export function WebsiteStudioApp({
                 template={template}
                 content={content}
                 composition={composition}
+                design={design}
                 editing
                 idx={{
                   connected: Boolean(

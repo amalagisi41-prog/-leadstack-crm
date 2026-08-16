@@ -9,10 +9,14 @@ import {
   WEBSITE_STUDIO_LOCKED_MESSAGE,
 } from "@/lib/website-studio/gate";
 import { AGENT_SITE_TEMPLATES } from "@/lib/website-studio/templates";
+import { applyDesignFields } from "@/lib/website-studio/design";
+import { screenContentFields } from "@/lib/website-studio/content-compliance";
 import {
   emptyAgentSiteContent,
+  emptyAgentSiteDesign,
   type AgentSiteComposition,
   type AgentSiteContent,
+  type AgentSiteDesign,
   type AgentSiteRevisionSource,
   type AgentSiteTemplateId,
 } from "@/types/agent-site";
@@ -74,7 +78,15 @@ export async function GET(
     .doc(`subAccounts/${subAccountId}/agentSites/${SITE_ID}`)
     .get();
 
-  return NextResponse.json({ site: snap.exists ? snap.data() : null });
+  if (!snap.exists) return NextResponse.json({ site: null });
+  const site = snap.data() ?? {};
+  return NextResponse.json({
+    site: {
+      ...site,
+      content: { ...emptyAgentSiteContent(), ...(site.content ?? {}) },
+      design: site.design ?? emptyAgentSiteDesign(),
+    },
+  });
 }
 
 export async function PATCH(
@@ -100,6 +112,7 @@ export async function PATCH(
     templateId?: string;
     content?: Partial<AgentSiteContent>;
     composition?: AgentSiteComposition;
+    design?: Record<string, unknown>;
     status?: "draft" | "published";
     slug?: string;
     designerStep?: number;
@@ -148,6 +161,9 @@ export async function PATCH(
       );
     }
     const content = { ...emptyAgentSiteContent(), ...(body.content ?? {}) };
+    const design: AgentSiteDesign = body.design
+      ? applyDesignFields(emptyAgentSiteDesign(), body.design)
+      : emptyAgentSiteDesign();
     await ref.set({
       id: SITE_ID,
       agencyId,
@@ -160,6 +176,7 @@ export async function PATCH(
       status: "draft",
       content,
       composition: defaultAgentSiteComposition(),
+      design,
       designerTranscript: [],
       designerStep: 0,
       publishedAt: null,
@@ -217,6 +234,24 @@ export async function PATCH(
     }
   }
   if (body.content) {
+    const screened = screenContentFields(
+      body.content as Record<string, unknown>
+    );
+    if (screened.blocked.length > 0) {
+      const detail = screened.blocked
+        .map(
+          (item) =>
+            `${item.field}: ${item.phrases.map((phrase) => `"${phrase}"`).join(", ")}`
+        )
+        .join("; ");
+      return NextResponse.json(
+        {
+          error: `This copy can't be saved — it may violate Fair Housing rules (${detail}). Rephrase language that references or implies preferences about protected classes.`,
+          blocked: screened.blocked,
+        },
+        { status: 422 }
+      );
+    }
     // Field-level merge so partial content updates don't wipe siblings.
     const current = (snap.data()?.content ?? {}) as AgentSiteContent;
     update.content = {
@@ -229,6 +264,14 @@ export async function PATCH(
   }
   if (body.composition) {
     update.composition = normalizeAgentSiteComposition(body.composition);
+  }
+  if (body.design) {
+    // Re-validated here too (not just in the designer route) — this PATCH
+    // endpoint is a second write path onto the same customCss field the
+    // renderer trusts as pre-sanitized, so it can never be the gap that
+    // lets unscoped CSS through.
+    const currentDesign = (snap.data()?.design ?? {}) as AgentSiteDesign;
+    update.design = applyDesignFields(currentDesign, body.design);
   }
   if (body.status === "published") {
     if (!foundationReady) {
@@ -256,7 +299,14 @@ export async function PATCH(
     }
     const publishComposition = (update.composition ??
       snap.data()?.composition) as AgentSiteComposition | undefined;
-    const fingerprint = releaseFingerprint(publishContent, publishComposition);
+    const publishDesign = (update.design ?? snap.data()?.design) as
+      | AgentSiteDesign
+      | undefined;
+    const fingerprint = releaseFingerprint(
+      publishContent,
+      publishComposition,
+      publishDesign
+    );
     const assurance = snap.data()?.releaseAssurance as
       | { fingerprint?: string; passed?: boolean }
       | undefined;
@@ -279,6 +329,7 @@ export async function PATCH(
     body.templateId ||
     body.content ||
     body.composition ||
+    body.design ||
     body.hydrateFromBlueprint ||
     body.status
   );
@@ -298,6 +349,7 @@ export async function PATCH(
       status: current.status,
       content: current.content ?? emptyAgentSiteContent(),
       composition: normalizeAgentSiteComposition(current.composition),
+      design: current.design ?? emptyAgentSiteDesign(),
       createdAt: FieldValue.serverTimestamp(),
     });
   }

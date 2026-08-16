@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import type {
   AgentSiteComposition,
   AgentSiteContent,
+  AgentSiteDesign,
 } from "@/types/agent-site";
 import { normalizeAgentSiteComposition } from "./site-composition";
 
@@ -21,7 +22,8 @@ function stable(value: unknown): unknown {
 
 export function releaseFingerprint(
   content: AgentSiteContent,
-  composition?: AgentSiteComposition
+  composition?: AgentSiteComposition,
+  design?: AgentSiteDesign
 ) {
   return createHash("sha256")
     .update(
@@ -29,6 +31,7 @@ export function releaseFingerprint(
         stable({
           content,
           composition: normalizeAgentSiteComposition(composition),
+          design: design ?? {},
         })
       )
     )

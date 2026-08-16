@@ -32,7 +32,11 @@ async function buildReport(subAccountId: string) {
     ref,
     site,
     report,
-    fingerprint: releaseFingerprint(site.content, site.composition),
+    fingerprint: releaseFingerprint(
+      site.content,
+      site.composition,
+      site.design
+    ),
   };
 }
 

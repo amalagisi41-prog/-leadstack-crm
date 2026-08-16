@@ -1,4 +1,5 @@
 import type { Timestamp, FieldValue } from "firebase-admin/firestore";
+import type { HeroVariant } from "@/lib/website-studio/templates";
 
 /**
  * Website Studio — an AI-guided, template-based agent website.
@@ -101,12 +102,43 @@ export interface AgentSiteContent {
   ctaSubtext: string;
   /** Optional on legacy drafts; required fields are enforced before publish. */
   compliance?: AgentSiteCompliance;
+  // SEO (single-page site: one set of tags for the one published page).
+  // Falls back to agentName/tagline/heroImageUrl when blank.
+  metaTitle: string;
+  metaDescription: string;
+  ogImageUrl: string;
 }
 
 /** One turn in the AI Designer interview transcript. */
 export interface DesignerTurn {
   role: "designer" | "agent";
   content: string;
+}
+
+/**
+ * Visual overrides on top of the chosen template's design tokens. Every
+ * field is optional — undefined falls back to the template default. Set
+ * and validated via lib/website-studio/design.ts; `customCss` is scoped
+ * there before it's ever persisted, since the renderer this feeds runs
+ * live inside the dashboard during preview, not only the public site.
+ */
+export interface AgentSiteDesign {
+  bg?: string;
+  surface?: string;
+  text?: string;
+  muted?: string;
+  accent?: string;
+  accentText?: string;
+  border?: string;
+  fontDisplay?: string;
+  fontBody?: string;
+  radius?: number;
+  heroVariant?: HeroVariant;
+  customCss?: string;
+}
+
+export function emptyAgentSiteDesign(): AgentSiteDesign {
+  return {};
 }
 
 export interface AgentSiteDoc {
@@ -120,6 +152,8 @@ export interface AgentSiteDoc {
   content: AgentSiteContent;
   /** Missing on legacy documents; the renderer supplies the v1 default. */
   composition?: AgentSiteComposition;
+  /** Visual overrides on top of the template's tokens. Defaults to {}. */
+  design: AgentSiteDesign;
   /** The AI Designer interview so the agent can resume where they left off. */
   designerTranscript: DesignerTurn[];
   /** Which guided step the interview is on (index into the designer script). */
@@ -161,6 +195,7 @@ export interface AgentSiteRevision {
   status: AgentSiteStatus;
   content: AgentSiteContent;
   composition: AgentSiteComposition;
+  design: AgentSiteDesign;
   createdAt: Timestamp | FieldValue | null;
 }
 
@@ -197,5 +232,8 @@ export function emptyAgentSiteContent(): AgentSiteContent {
       smsConsentDisclosure:
         "By providing your phone number, you agree to receive calls and text messages about your inquiry. Consent is not a condition of service. Message and data rates may apply. Reply STOP to opt out.",
     },
+    metaTitle: "",
+    metaDescription: "",
+    ogImageUrl: "",
   };
 }

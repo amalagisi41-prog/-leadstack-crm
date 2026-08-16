@@ -62,7 +62,12 @@ const previewContent: AgentSiteContent = {
     },
   ],
   ctaHeadline: "Ready to make your move?",
-  ctaSubtext: "Tell me what you are planning and I will help map the next step.",
+  ctaSubtext:
+    "Tell me what you are planning and I will help map the next step.",
+  metaTitle: "Jordan Avery | Fairfield County REALTOR®",
+  metaDescription:
+    "Local real estate guidance for buyers, sellers, and investors across Fairfield County.",
+  ogImageUrl: "",
 };
 
 export default function WebsiteStudioPreviewPage() {
