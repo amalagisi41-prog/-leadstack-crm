@@ -19,6 +19,7 @@ import { useSubAccount } from "@/context/sub-account-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { openAskAssistant } from "@/components/dashboard/ask-assistant-panel";
+import { DnsCutoverWizard } from "@/components/dashboard/dns-cutover-wizard";
 import type { WebsiteTransferDoc } from "@/types/website-transfer";
 import {
   EMPTY_ONBOARDING_FOUNDATION,
@@ -32,6 +33,18 @@ type Situation = "existing" | "new" | "switching";
 const HOSTINGER_TRANSFER_URL =
   process.env.NEXT_PUBLIC_HOSTINGER_TRANSFER_URL ??
   "https://www.hostinger.com/";
+/**
+ * Nameservers the guided cutover tells agents to set. Configurable because a
+ * white-label deployment points at its own DNS host.
+ */
+const TARGET_NAMESERVERS = (
+  process.env.NEXT_PUBLIC_TARGET_NAMESERVERS ??
+  "kim.ns.cloudflare.com,walt.ns.cloudflare.com"
+)
+  .split(",")
+  .map((ns) => ns.trim())
+  .filter(Boolean);
+
 const HOSTINGER_NEW_URL =
   process.env.NEXT_PUBLIC_HOSTINGER_NEW_SITE_URL ??
   "https://www.hostinger.com/";
@@ -807,6 +820,18 @@ export function DomainConnect() {
                 label="Hosted site verified over HTTPS (required before record values are shown)"
               />
             </ul>
+          ) : null}
+
+          {/* The guided cutover only appears once there is a host to point
+              at. It reads the domain's live records and locks the nameserver
+              step until the email ones have been re-created. */}
+          {!dnsNotNeeded && hostingConnected ? (
+            <div className="mt-5">
+              <DnsCutoverWizard
+                subAccountId={subAccountId}
+                targetNameservers={TARGET_NAMESERVERS}
+              />
+            </div>
           ) : null}
 
           <div className="mt-4 flex flex-wrap gap-2">
