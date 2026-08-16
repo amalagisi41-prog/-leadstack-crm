@@ -107,6 +107,16 @@ export function Footer({ brand }: { brand: ResolvedBrand }) {
                 </Link>
               </li>
               <li>
+                {/* Open-source notices need to be reachable: the Puck MIT
+                    attribution is a license condition, not optional docs. */}
+                <Link
+                  href="/licensing"
+                  className="transition-colors hover:text-[#173B7A]"
+                >
+                  Software Licensing
+                </Link>
+              </li>
+              <li>
                 <Link
                   href="/security"
                   className="transition-colors hover:text-[#173B7A]"
