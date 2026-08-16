@@ -105,7 +105,9 @@ describe("Website & Domain — the three steps are always visible", () => {
     mockApi();
     await renderLoaded();
 
-    expect(screen.getByText(/choose your situation above/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/choose your situation above/i)
+    ).toBeInTheDocument();
     expect(screen.queryByText("Connect your host")).not.toBeInTheDocument();
   });
 });
@@ -421,7 +423,7 @@ describe("Website & Domain — status summary", () => {
     });
     await renderLoaded();
 
-    expect(screen.getByText("Bluehost")).toBeInTheDocument();
+    expect(screen.getAllByText("Bluehost").length).toBeGreaterThan(0);
     expect(screen.getByText("example-realty.test")).toBeInTheDocument();
     expect(screen.queryByText("Not started")).not.toBeInTheDocument();
   });

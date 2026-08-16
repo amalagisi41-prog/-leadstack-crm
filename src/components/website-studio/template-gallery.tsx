@@ -37,12 +37,12 @@ export function TemplateGallery({
           </span>
           <div>
             <p className="font-semibold text-[#173B7A]">
-              Starter template: Home Services Network
+              Real estate starter
             </p>
             <p className="mt-1 text-sm text-[#526078]">
-              Load the network positioning, service categories, service-area
-              placeholder, and call to action into a private Coastal draft.
-              Contact details and media stay unassigned until approved.
+              Start a private Coastal draft with realtor-focused sections,
+              service-area prompts, and calls to action. Your brand, contact
+              details, domain, and media stay private to your account.
             </p>
           </div>
         </div>
@@ -51,7 +51,7 @@ export function TemplateGallery({
           onClick={onImportReference}
           className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-[#173B7A] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
         >
-          {selecting ? "Importing…" : "Import reference"}
+          {selecting ? "Starting…" : "Use starter"}
           <ArrowRight className="h-4 w-4" />
         </button>
       </div>

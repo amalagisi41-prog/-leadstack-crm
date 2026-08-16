@@ -66,8 +66,8 @@ function offerNativeInstall() {
 }
 
 beforeEach(() => {
-  localStorage.clear();
-  sessionStorage.clear();
+  window.localStorage.clear();
+  window.sessionStorage.clear();
   asDevice(CHROME_ANDROID);
 });
 
@@ -102,7 +102,7 @@ describe("the sign-in prompt", () => {
     first.unmount();
 
     // A new browser session, but the snooze is still running.
-    sessionStorage.clear();
+    window.sessionStorage.clear();
     const second = render(<InstallPrompt />);
     await waitFor(() =>
       expect(screen.queryByText(/put agentstack on your phone/i)).not.toBeInTheDocument()
@@ -111,8 +111,8 @@ describe("the sign-in prompt", () => {
 
     // Once the snooze lapses it must return — dismissing is not a permanent
     // opt-out, which is exactly what the previous banner got wrong.
-    sessionStorage.clear();
-    localStorage.setItem(
+    window.sessionStorage.clear();
+    window.localStorage.setItem(
       "agentstack:app-install-snoozed-until:v1",
       new Date(Date.now() - 1000).toISOString()
     );
@@ -123,7 +123,7 @@ describe("the sign-in prompt", () => {
   });
 
   it("stays away once the app is genuinely installed", async () => {
-    localStorage.setItem("agentstack:app-installed:v1", "1");
+    window.localStorage.setItem("agentstack:app-installed:v1", "1");
     render(<InstallPrompt />);
     await waitFor(() =>
       expect(
@@ -164,7 +164,7 @@ describe("platforms with no install button", () => {
     );
     view.unmount();
 
-    sessionStorage.clear();
+    window.sessionStorage.clear();
     render(<InstallPrompt />);
     await waitFor(() =>
       expect(
@@ -193,7 +193,7 @@ describe("the native install path", () => {
     window.dispatchEvent(new Event("appinstalled"));
     view.unmount();
 
-    sessionStorage.clear();
+    window.sessionStorage.clear();
     render(<InstallPrompt />);
     await waitFor(() =>
       expect(
@@ -224,7 +224,7 @@ describe("the sidebar callout", () => {
   });
 
   it("disappears once the app is installed", async () => {
-    localStorage.setItem("agentstack:app-installed:v1", "1");
+    window.localStorage.setItem("agentstack:app-installed:v1", "1");
     render(<InstallCallout />);
     await waitFor(() =>
       expect(

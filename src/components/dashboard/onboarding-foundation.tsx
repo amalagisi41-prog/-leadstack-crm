@@ -85,12 +85,14 @@ export function OnboardingFoundation({
 }) {
   const searchParams = useSearchParams();
   const ghlStatus = searchParams.get("ghl");
-  const [mode, setMode] = useState<OnboardingFoundationMode>("transfer");
+  // Most first-run customers are building their first AgentStack site. Start
+  // them on that path instead of dropping them into a migration workflow.
+  const [mode, setMode] = useState<OnboardingFoundationMode>("foundation");
   const [platform, setPlatform] =
     useState<BusinessSourcePlatform>("gohighlevel");
   const [sourceUrl, setSourceUrl] = useState("");
   const [domainPoint, setDomainPoint] =
-    useState<DomainStartingPoint>("not_sure");
+    useState<DomainStartingPoint>("need_domain");
   const [hostingPoint, setHostingPoint] =
     useState<HostingStartingPoint>("agentstack_managed");
   const [importing, setImporting] = useState(false);
@@ -172,6 +174,16 @@ export function OnboardingFoundation({
   }
 
   async function continueToSetup() {
+    if (domainPoint === "not_sure") {
+      toast.error(
+        "Choose whether you need a new domain or already own one before continuing."
+      );
+      return;
+    }
+    if (!hostingPoint) {
+      toast.error("Choose how your website will be hosted.");
+      return;
+    }
     setSaving(true);
     try {
       const response = await fetch(

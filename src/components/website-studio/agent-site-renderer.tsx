@@ -123,7 +123,10 @@ export function AgentSiteRenderer({
     padding: "0 24px",
   };
   const accentBtn: CSSProperties = {
-    display: "inline-block",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 44,
     background: p.accent,
     color: p.accentText,
     padding: "13px 26px",
@@ -151,7 +154,7 @@ export function AgentSiteRenderer({
         .agent-site-idx-frame { display: block; width: 100%; min-height: 760px; border: 0; }
         @media (max-width: 720px) {
           .agent-site-header { padding: 16px !important; }
-          .agent-site-header a { padding: 10px 14px !important; font-size: 13px !important; }
+          .agent-site-header a { min-height: 44px; padding: 10px 14px !important; font-size: 13px !important; }
           .agent-site-hero-split,
           .agent-site-about { grid-template-columns: 1fr; }
           .agent-site-hero-split { padding-top: 40px !important; padding-bottom: 48px !important; }
