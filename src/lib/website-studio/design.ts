@@ -25,14 +25,43 @@ const DESIGN_COLOR_KEYS: (keyof AgentSiteDesign)[] = [
 ];
 const DESIGN_FONT_KEYS: (keyof AgentSiteDesign)[] = ["fontDisplay", "fontBody"];
 const HERO_VARIANTS: HeroVariant[] = ["overlay", "split", "centered"];
-const MAX_CUSTOM_CSS_CHARS = 20_000;
-const FORBIDDEN_CSS_PATTERNS = [
-  /@import/i,
-  /expression\s*\(/i,
-  /javascript:/i,
-  /-moz-binding/i,
-  /behavior\s*:/i,
+export const MAX_CUSTOM_CSS_CHARS = 20_000;
+
+/**
+ * Labelled so a rejection can be explained rather than silently swallowed —
+ * pasted CSS from an external tool is the common case, and "nothing
+ * happened" is a terrible answer when the reason is knowable.
+ */
+const FORBIDDEN_CSS_PATTERNS: Array<{ label: string; re: RegExp }> = [
+  { label: "@import", re: /@import/i },
+  { label: "expression()", re: /expression\s*\(/i },
+  { label: "javascript: URL", re: /javascript:/i },
+  { label: "-moz-binding", re: /-moz-binding/i },
+  { label: "behavior:", re: /behavior\s*:/i },
 ];
+
+/** Every design key the Vibe Builder recognizes, including customCss. */
+export const DESIGN_TOKEN_KEYS: readonly (keyof AgentSiteDesign)[] = [
+  "bg",
+  "surface",
+  "text",
+  "muted",
+  "accent",
+  "accentText",
+  "border",
+  "fontDisplay",
+  "fontBody",
+  "radius",
+  "heroVariant",
+  "customCss",
+];
+
+/** Names of the disallowed constructs found in `css` (empty when clean). */
+export function findForbiddenCssPatterns(css: string): string[] {
+  return FORBIDDEN_CSS_PATTERNS.filter(({ re }) => re.test(css)).map(
+    ({ label }) => label
+  );
+}
 
 /** Loose but safe: hex, rgb()/rgba()/hsl()/hsla(), or a few keywords. */
 function isSafeColor(value: string): boolean {
@@ -146,7 +175,7 @@ function sanitizeCustomCss(raw: unknown): string | null {
   const trimmed = raw.trim();
   if (!trimmed) return "";
   if (trimmed.length > MAX_CUSTOM_CSS_CHARS) return null;
-  if (FORBIDDEN_CSS_PATTERNS.some((re) => re.test(trimmed))) return "";
+  if (findForbiddenCssPatterns(trimmed).length > 0) return "";
   return scopeCustomCss(trimmed);
 }
 

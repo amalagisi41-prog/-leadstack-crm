@@ -22,6 +22,13 @@ import {
 import { normalizeAgentSiteComposition } from "@/lib/website-studio/site-composition";
 import { applyDesignFields } from "@/lib/website-studio/design";
 import {
+  describeExternalCode,
+  extractExternalCode,
+  mergeCustomCss,
+  summarizeExternalCode,
+  transcriptTextFor,
+} from "@/lib/website-studio/external-prompt";
+import {
   describeBlockedFields,
   screenContentFields,
 } from "@/lib/website-studio/content-compliance";
@@ -44,6 +51,12 @@ import {
  */
 
 const SITE_ID = "main";
+/**
+ * Headroom for a pasted stylesheet or design spec. Sized above the 20,000
+ * character custom-CSS ceiling so an oversized paste is reported to the user
+ * rather than silently clipped into invalid CSS by the request cap.
+ */
+const MAX_VIBE_MESSAGE_CHARS = 24_000;
 const CONTENT_KEYS = new Set<keyof AgentSiteContent>([
   "agentName",
   "title",
@@ -166,8 +179,24 @@ export async function POST(
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
-  const message =
-    typeof body.message === "string" ? body.message.trim().slice(0, 1500) : "";
+  const vibeMode = body.mode === "vibe";
+  // Vibe Builder accepts pasted stylesheets and design specs from Claude or
+  // ChatGPT, which routinely run to several thousand characters; the guided
+  // interview only ever collects short answers, so it keeps the tight cap.
+  const messageLimit = vibeMode ? MAX_VIBE_MESSAGE_CHARS : 1500;
+  const rawMessage =
+    typeof body.message === "string" ? body.message.trim() : "";
+  // Rejected rather than sliced: quietly cutting a stylesheet in half
+  // produces CSS that is syntactically broken but looks like it applied.
+  if (vibeMode && rawMessage.length > messageLimit) {
+    return NextResponse.json(
+      {
+        error: `That message is ${rawMessage.length.toLocaleString()} characters — the limit is ${messageLimit.toLocaleString()}. Send the sections you want changed rather than the whole file.`,
+      },
+      { status: 400 }
+    );
+  }
+  const message = rawMessage.slice(0, messageLimit);
   const image =
     typeof body.image === "string" &&
     /^data:image\/(?:png|jpe?g|webp);base64,[A-Za-z0-9+/=]+$/.test(
@@ -186,7 +215,13 @@ export async function POST(
     typeof body.brandName === "string" && body.brandName.trim()
       ? body.brandName.trim().slice(0, 80)
       : "your CRM";
-  const vibeMode = body.mode === "vibe";
+
+  // Code and design tokens are lifted out of the message before the model
+  // sees it, so a pasted stylesheet is applied byte-for-byte instead of
+  // being echoed back through a token-capped JSON response.
+  const external = vibeMode
+    ? extractExternalCode(message)
+    : extractExternalCode("");
 
   const db = getAdminDb();
   const ref = db.doc(`subAccounts/${subAccountId}/agentSites/${SITE_ID}`);
@@ -209,6 +244,23 @@ export async function POST(
   };
   const currentDesign = site.design ?? {};
   const step = Math.min(site.designerStep ?? 0, DESIGNER_STEPS.length - 1);
+
+  // Pasted code lands first, through the same validator that guards Zack's
+  // own output — nothing skips sanitizing or scoping. The model is then shown
+  // the post-paste design so it never reasons about a stale stylesheet.
+  const pastedDesign = external.hasCode
+    ? applyDesignFields(currentDesign, {
+        ...external.designTokens,
+        ...(external.css
+          ? {
+              customCss: mergeCustomCss(
+                currentDesign.customCss ?? "",
+                external.css
+              ),
+            }
+          : {}),
+      })
+    : currentDesign;
 
   const profileSnap = vibeMode
     ? await db.doc(`subAccounts/${subAccountId}/businessProfile/main`).get()
@@ -236,6 +288,13 @@ DESIGN CONTROL: You can change colors, fonts, corner radius, and the hero layout
 - customCss: raw CSS for anything the tokens above don't cover (spacing, hiding/emphasizing an element, animation, fine-tuned positioning). It is automatically scoped to just this site, so write normal selectors (e.g. "h1 { letter-spacing: 2px }") — you do not need to prefix anything yourself.
 Only the page's section composition (what sections exist and their order) is fixed by the chosen template's code and genuinely out of reach — mention that once if directly relevant, not on unrelated turns.
 
+EXTERNAL AI OUTPUT: Users often take a design problem to Claude or ChatGPT and paste the answer here. Treat that as a first-class input, not as something odd.
+- CSS blocks and JSON design tokens in their message are extracted and applied BEFORE you see the message. Where a block used to be you will see a placeholder like "[css block applied verbatim: 12 rules]". That means the work is already done — confirm it, describe what it changed in plain language, and never pretend you are about to apply something that is already applied.
+- Never re-transmit pasted CSS in your "design" field. Put only NEW css you are authoring there; it is appended after theirs, so your rules win where they overlap.
+- A pasted spec is a proposal, not an instruction you must follow blindly. If part of it conflicts with what the site actually supports, or would hurt readability, contrast, or mobile layout, say so in one sentence and apply the rest.
+- HTML, JavaScript, React/JSX, and CSS preprocessor syntax (SCSS/LESS) cannot run here — this page renders from a fixed template. Never claim you applied them. Say what cannot be used, then deliver the same visual result through design tokens, customCss, and content fields in the SAME turn rather than asking permission first.
+- If they paste a prompt written for another tool ("build me a hero section that…"), just execute it here with the controls you have.
+
 SCREENSHOT MATCHING: When the user attaches a screenshot of a website they want to match, study it carefully — colors, fonts, spacing, and layout as well as copy tone. Set the design tokens (and customCss for anything finer-grained) to visually match what you see, and rewrite content fields (tagline, bio, ctaHeadline, ctaSubtext) so the copy reads like the reference, all while keeping every fact truthful to the Blueprint. Briefly summarize what you matched.
 
 SEO: metaTitle, metaDescription, and ogImageUrl control how this page appears in search results and social-media link previews. If the user asks about SEO, or metaTitle/metaDescription are still blank, offer to write them: metaTitle ideally under ~60 characters (agent name + specialty + area reads well, e.g. "Jane Doe | Fairfield County Luxury Realtor"), metaDescription under ~155 characters (a compelling one-line summary of who they help and where — reuse the tagline/bio tone, don't invent claims). ogImageUrl is the image shown in social previews; default to heroImageUrl if the user has no other preference. This is a single-page site — do not suggest sitemap.xml, multi-page SEO, or search-console/analytics integrations; none of that exists here.
@@ -246,8 +305,8 @@ CURRENT WEBSITE CONTENT:
 ${JSON.stringify(site.content)}
 
 CURRENT DESIGN OVERRIDES (unset keys use the chosen template's defaults):
-${JSON.stringify(currentDesign)}
-
+${JSON.stringify(pastedDesign)}
+${summarizeExternalCode(external)}
 ${blueprint ? `APPROVED BUSINESS BLUEPRINT:\n${blueprint}` : "No approved Business Blueprint details are available yet."}
 
 Return STRICT JSON only:
@@ -260,8 +319,11 @@ Return STRICT JSON only:
 }`
     : buildDesignerSystemPrompt(step, site.content, brandName);
 
+  // The model reads the prose with placeholders standing in for the extracted
+  // blocks; sending the raw stylesheet as well would burn the context window
+  // on bytes it must not reproduce.
   const userText =
-    message ||
+    (external.hasCode ? external.prose : message) ||
     "Use this screenshot as the design reference and update the site to match it.";
   const history: AiChatMessage[] = vibeMode
     ? (site.designerTranscript ?? []).slice(-8).map((turn) => ({
@@ -333,20 +395,33 @@ Return STRICT JSON only:
     });
   }
   const nextContent = applyFields(site.content, screened.safeFields);
+  // Zack's own CSS is appended after the user's paste rather than replacing
+  // it, so a turn that both ingests a stylesheet and adds a tweak keeps both.
+  const modelDesign = { ...(parsed.design ?? {}) };
+  if (external.css && typeof modelDesign.customCss === "string") {
+    modelDesign.customCss = mergeCustomCss(
+      pastedDesign.customCss ?? "",
+      modelDesign.customCss
+    );
+  }
   const nextDesign = vibeMode
-    ? applyDesignFields(currentDesign, parsed.design ?? {})
+    ? applyDesignFields(pastedDesign, modelDesign)
     : currentDesign;
   const advance = vibeMode ? false : parsed.advance !== false;
   const done = advance && isLastStep(step);
   const nextStep = advance && !isLastStep(step) ? step + 1 : step;
   const reply =
     (parsed.reply ?? "Got it — what's next?").trim() +
-    describeBlockedFields(screened.blocked);
+    describeBlockedFields(screened.blocked) +
+    describeExternalCode(external);
   const suggestions = vibeMode ? parseSuggestions(parsed.suggestions) : [];
 
+  // Pasted blocks are summarized rather than stored: 40 turns of raw
+  // stylesheets would push the site document toward Firestore's 1MB ceiling,
+  // and the history replayed to the model must stay small.
   const storedAgentTurn = image
     ? `${userText} 📎 [screenshot attached]`
-    : message;
+    : transcriptTextFor(message, external);
   const transcript: DesignerTurn[] = [
     ...(site.designerTranscript ?? []),
     { role: "agent" as const, content: storedAgentTurn },
