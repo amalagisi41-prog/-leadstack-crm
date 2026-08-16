@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import {
   ExternalLink,
@@ -97,6 +97,8 @@ export function WebsiteStudioApp({
     "designer" | "edit" | "structure" | "visual"
   >("designer");
   const [savingDraft, setSavingDraft] = useState(false);
+  const [revealGroup, setRevealGroup] = useState<string | undefined>();
+  const editorPanelRef = useRef<HTMLDivElement>(null);
   const [savingStructure, setSavingStructure] = useState(false);
   const [view, setView] = useState<WebsiteStudioView>(() =>
     workspace === "home" ? "builder" : workspace
@@ -251,6 +253,18 @@ export function WebsiteStudioApp({
     [subAccountId]
   );
 
+  /** Switch to the manual editor and actually bring it on-screen. */
+  function openEditor(group?: string) {
+    setMode("edit");
+    setRevealGroup(group);
+    requestAnimationFrame(() =>
+      editorPanelRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      })
+    );
+  }
+
   async function pickTemplate(id: AgentSiteTemplateId) {
     setSelecting(id);
     try {
@@ -326,7 +340,7 @@ export function WebsiteStudioApp({
     }
     if (publishBlocked) {
       toast.error("Complete the publish checklist before publishing.");
-      setMode("edit");
+      openEditor("Real estate compliance");
       return;
     }
     if (!releaseApproved) {
@@ -733,7 +747,11 @@ export function WebsiteStudioApp({
             )}
           </div>
           {publishBlocked ? (
-            <Button size="sm" variant="outline" onClick={() => setMode("edit")}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => openEditor("Real estate compliance")}
+            >
               Fix details
             </Button>
           ) : null}
@@ -904,7 +922,7 @@ export function WebsiteStudioApp({
         </div>
       ) : (
         <div className="grid gap-4 lg:grid-cols-[380px_1fr]">
-          <div className="flex h-[72vh] flex-col gap-2">
+          <div ref={editorPanelRef} className="flex h-[72vh] flex-col gap-2">
             <div className="flex items-center gap-1 rounded-lg border p-1">
               <button
                 type="button"
@@ -967,6 +985,7 @@ export function WebsiteStudioApp({
                 />
               ) : mode === "edit" ? (
                 <ContentEditor
+                  revealGroup={revealGroup}
                   content={content}
                   onChange={(next) => {
                     setContent(next);

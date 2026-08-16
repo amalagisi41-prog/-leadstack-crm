@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, Trash2, Save } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -69,6 +69,10 @@ function Field({
   );
 }
 
+function groupAnchorId(title: string) {
+  return `content-group-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+}
+
 function Group({
   title,
   children,
@@ -77,7 +81,7 @@ function Group({
   children: React.ReactNode;
 }) {
   return (
-    <div className="space-y-3 rounded-xl border p-3">
+    <div id={groupAnchorId(title)} className="space-y-3 rounded-xl border p-3">
       <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
         {title}
       </p>
@@ -91,15 +95,32 @@ export function ContentEditor({
   onChange,
   onSave,
   saving,
+  revealGroup,
 }: {
   content: AgentSiteContent;
   onChange: (c: AgentSiteContent) => void;
   onSave: (c: AgentSiteContent) => Promise<void>;
   saving: boolean;
+  /**
+   * Group title to scroll to when the editor opens. The publish checklist
+   * sends users here to fix compliance fields, which sit near the bottom of
+   * a long form — landing at the top reads as "nothing happened".
+   */
+  revealGroup?: string;
 }) {
   const [local, setLocal] = useState<AgentSiteContent>(() =>
     normalizeAgentSiteContent(content)
   );
+
+  useEffect(() => {
+    if (!revealGroup) return;
+    const target = document.getElementById(groupAnchorId(revealGroup));
+    if (!target) return;
+    const raf = requestAnimationFrame(() =>
+      target.scrollIntoView({ behavior: "smooth", block: "start" })
+    );
+    return () => cancelAnimationFrame(raf);
+  }, [revealGroup]);
 
   function set<K extends keyof AgentSiteContent>(
     key: K,
