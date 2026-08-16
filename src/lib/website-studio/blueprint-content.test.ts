@@ -34,7 +34,7 @@ describe("website studio blueprint hydration", () => {
   it("does not overwrite a customized draft", () => {
     const current = {
       ...emptyAgentSiteContent(),
-      agentName: "Artisan Home Network",
+      agentName: "Example Realty",
       tagline: "A custom headline",
     };
     const result = hydrateAgentSiteFromBlueprint(current, {

@@ -91,7 +91,7 @@ beforeEach(() => {
 
 describe("Website & Domain — the three steps are always visible", () => {
   it("shows all three numbered steps once a situation is chosen", async () => {
-    customDomain = "artisanhomenetwork.com";
+    customDomain = "example-realty.test";
     mockApi();
     await renderLoaded();
     await userEvent.click(screen.getByText("I have a website"));
@@ -129,7 +129,7 @@ describe("Website & Domain — step 2 is reachable", () => {
     await userEvent.click(screen.getByText("I have a website"));
     await userEvent.type(
       screen.getByLabelText(/domain you own/i),
-      "artisanhomenetwork.com"
+      "example-realty.test"
     );
 
     expect(
@@ -138,7 +138,7 @@ describe("Website & Domain — step 2 is reachable", () => {
   });
 
   it("offers keep-or-transfer for an agent who already has a site", async () => {
-    customDomain = "artisanhomenetwork.com";
+    customDomain = "example-realty.test";
     mockApi();
     await renderLoaded();
     await userEvent.click(screen.getByText("I have a website"));
@@ -163,7 +163,7 @@ describe("Website & Domain — step 2 is reachable", () => {
   });
 
   it("lets an existing host be named — the case that had no control at all", async () => {
-    customDomain = "artisanhomenetwork.com";
+    customDomain = "example-realty.test";
     mockApi();
     await renderLoaded();
     await userEvent.click(screen.getByText("I have a website"));
@@ -178,7 +178,7 @@ describe("Website & Domain — step 2 is reachable", () => {
   });
 
   it("labels the Hostinger step instead of leaving a bare link", async () => {
-    customDomain = "artisanhomenetwork.com";
+    customDomain = "example-realty.test";
     mockApi();
     await renderLoaded();
     await userEvent.click(screen.getByText("I have a website"));
@@ -195,16 +195,16 @@ describe("Website & Domain — step 2 is reachable", () => {
 
 describe("Website & Domain — saving hosting", () => {
   it("sends the complete foundation, since the PATCH replaces it wholesale", async () => {
-    customDomain = "artisanhomenetwork.com";
+    customDomain = "example-realty.test";
     const { calls } = mockApi({
       foundation: {
         completed: false,
         mode: "transfer",
         sourcePlatform: null,
-        sourceUrl: "https://artisanhomenetwork.com",
+        sourceUrl: "https://example-realty.test",
         domainStartingPoint: "have_domain",
         hostingStartingPoint: null,
-        domainName: "artisanhomenetwork.com",
+        domainName: "example-realty.test",
         profileImported: true,
       },
     });
@@ -232,16 +232,16 @@ describe("Website & Domain — saving hosting", () => {
       hostingStartingPoint: "keep_existing",
       sourcePlatform: "wordpress",
       hostingSetupConfirmed: true,
-      domainName: "artisanhomenetwork.com",
+      domainName: "example-realty.test",
       domainSetupConfirmed: true,
       // Progress made earlier in onboarding must survive the replace.
       profileImported: true,
-      sourceUrl: "https://artisanhomenetwork.com",
+      sourceUrl: "https://example-realty.test",
     });
   });
 
   it("does not confirm a transfer that the provider has not completed", async () => {
-    customDomain = "artisanhomenetwork.com";
+    customDomain = "example-realty.test";
     const { calls } = mockApi();
     await renderLoaded();
     await userEvent.click(screen.getByText("I have a website"));
@@ -265,7 +265,7 @@ describe("Website & Domain — saving hosting", () => {
   });
 
   it("confirms the connection once a host is saved", async () => {
-    customDomain = "artisanhomenetwork.com";
+    customDomain = "example-realty.test";
     mockApi();
     await renderLoaded();
     await userEvent.click(screen.getByText("I have a website"));
@@ -282,7 +282,7 @@ describe("Website & Domain — saving hosting", () => {
 
 describe("Website & Domain — step 3 names what is missing", () => {
   it("lists the outstanding prerequisites rather than only 'locked'", async () => {
-    customDomain = "artisanhomenetwork.com";
+    customDomain = "example-realty.test";
     mockApi();
     await renderLoaded();
     await userEvent.click(screen.getByText("I have a website"));
@@ -294,7 +294,7 @@ describe("Website & Domain — step 3 names what is missing", () => {
   });
 
   it("tells an agent staying put that there is no DNS change to make", async () => {
-    customDomain = "artisanhomenetwork.com";
+    customDomain = "example-realty.test";
     mockApi({
       foundation: {
         completed: true,
@@ -304,7 +304,7 @@ describe("Website & Domain — step 3 names what is missing", () => {
         domainStartingPoint: "have_domain",
         hostingStartingPoint: "keep_existing",
         hostingSetupConfirmed: true,
-        domainName: "artisanhomenetwork.com",
+        domainName: "example-realty.test",
         profileImported: false,
       },
     });
@@ -321,7 +321,7 @@ describe("Website & Domain — step 3 names what is missing", () => {
   });
 
   it("keeps DNS record values hidden until the hosted site is verified", async () => {
-    customDomain = "artisanhomenetwork.com";
+    customDomain = "example-realty.test";
     mockApi({
       foundation: {
         completed: true,
@@ -332,7 +332,7 @@ describe("Website & Domain — step 3 names what is missing", () => {
         // A migration does have a cutover, so the gate still applies.
         hostingStartingPoint: "transfer_existing",
         hostingSetupConfirmed: true,
-        domainName: "artisanhomenetwork.com",
+        domainName: "example-realty.test",
         profileImported: false,
       },
     });
@@ -359,7 +359,7 @@ describe("Website & Domain — step 3 names what is missing", () => {
   });
 
   it("hands Zack the real domain and host so guidance is specific", async () => {
-    customDomain = "artisanhomenetwork.com";
+    customDomain = "example-realty.test";
     mockApi({
       foundation: {
         completed: true,
@@ -369,7 +369,7 @@ describe("Website & Domain — step 3 names what is missing", () => {
         domainStartingPoint: "have_domain",
         hostingStartingPoint: "keep_existing",
         hostingSetupConfirmed: true,
-        domainName: "artisanhomenetwork.com",
+        domainName: "example-realty.test",
         profileImported: false,
       },
     });
@@ -380,17 +380,17 @@ describe("Website & Domain — step 3 names what is missing", () => {
     );
 
     const { prompt } = openAskAssistant.mock.calls[0][0] as { prompt: string };
-    expect(prompt).toContain("artisanhomenetwork.com");
+    expect(prompt).toContain("example-realty.test");
     expect(prompt).toContain("GoDaddy");
   });
 
   it("unlocks the record values once the hosted site is verified", async () => {
-    customDomain = "artisanhomenetwork.com";
+    customDomain = "example-realty.test";
     mockApi({
       transfer: {
         hostingStatus: "ready",
-        hostingUrl: "https://artisanhomenetwork.com",
-        sourceUrl: "https://artisanhomenetwork.com",
+        hostingUrl: "https://example-realty.test",
+        sourceUrl: "https://example-realty.test",
       },
     });
     await renderLoaded();
@@ -405,7 +405,7 @@ describe("Website & Domain — step 3 names what is missing", () => {
 
 describe("Website & Domain — status summary", () => {
   it("reports the connected host by name rather than 'Not started'", async () => {
-    customDomain = "artisanhomenetwork.com";
+    customDomain = "example-realty.test";
     mockApi({
       foundation: {
         completed: true,
@@ -415,14 +415,14 @@ describe("Website & Domain — status summary", () => {
         domainStartingPoint: "have_domain",
         hostingStartingPoint: "keep_existing",
         hostingSetupConfirmed: true,
-        domainName: "artisanhomenetwork.com",
+        domainName: "example-realty.test",
         profileImported: false,
       },
     });
     await renderLoaded();
 
     expect(screen.getByText("Bluehost")).toBeInTheDocument();
-    expect(screen.getByText("artisanhomenetwork.com")).toBeInTheDocument();
+    expect(screen.getByText("example-realty.test")).toBeInTheDocument();
     expect(screen.queryByText("Not started")).not.toBeInTheDocument();
   });
 

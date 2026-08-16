@@ -20,7 +20,7 @@ import {
 
 const snapshot = (records: DnsRecordSnapshot[], nameservers: string[] = []):
   DomainDnsSnapshot => ({
-  domain: "artisanhomenetwork.com",
+  domain: "example-realty.test",
   nameservers,
   records,
   checkedAt: "2026-08-16T12:00:00Z",

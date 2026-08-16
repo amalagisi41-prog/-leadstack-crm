@@ -11,24 +11,31 @@ export interface WebsiteStudioPreset {
 }
 
 /**
- * First-party Artisan Home Network starter migration. It imports editable
- * positioning and structure only; contact details and media remain blank
- * until the subscriber approves and supplies them.
+ * Generic home-services network starter.
+ *
+ * This preset previously carried a real customer's business identity — their
+ * name, positioning, tagline, bio, and meta copy — and it is offered to every
+ * subscriber in the Website Studio gallery. That shipped one customer's
+ * branding and marketing copy to every other customer, including competing
+ * agents in the same market.
+ *
+ * A starter is platform content and must be generic. Customer sites belong in
+ * that customer's own sub-account, never in the shared template registry.
  */
-export const ARTISAN_HOME_NETWORK_PRESET: WebsiteStudioPreset = {
-  id: "artisan-home-network",
-  name: "Artisan Home Network",
+export const HOME_SERVICES_NETWORK_PRESET: WebsiteStudioPreset = {
+  id: "home-services-network",
+  name: "Home Services Network",
   description:
     "Start with an editable home-services network site inside AgentStack Website Studio.",
   sourceUrl: "",
   templateId: "coastal",
-  slug: "artisan-home-network",
+  slug: "home-services-network",
   content: {
-    agentName: "Artisan Home Network",
+    agentName: "",
     title: "Trusted home professionals · One connected network",
     brokerage: "",
     tagline: "Better homes start with the right people.",
-    bio: "Artisan Home Network connects homeowners with trusted professionals for buying, selling, improving, maintaining, and enjoying their homes. Start with your goal and we will help you find the right path and the right specialist.",
+    bio: "We connect homeowners with trusted professionals for buying, selling, improving, maintaining, and enjoying their homes. Start with your goal and we will help you find the right path and the right specialist.",
     phone: "",
     email: "",
     serviceAreas: "Local markets · Expanding network",
@@ -52,7 +59,7 @@ export const ARTISAN_HOME_NETWORK_PRESET: WebsiteStudioPreset = {
     ctaHeadline: "Tell us what your home needs next.",
     ctaSubtext:
       "Share your project or property goal and we will connect you with the right next step.",
-    metaTitle: "Artisan Home Network | Trusted Home Professionals",
+    metaTitle: "",
     metaDescription:
       "Connect with trusted professionals for buying, selling, improving, and maintaining your home — all in one network.",
     ogImageUrl: "",

@@ -30,7 +30,7 @@ const NOTHING: SiteHealthInputs = {
 /** The blueprint + compliance work every persona has to do. */
 const PROFILE_DONE: SiteHealthInputs["profile"] = {
   completeness: 90,
-  brokerage: "Artisan Home Network",
+  brokerage: "Example Realty",
   licenseNumber: "RES.0800123",
   fairHousing: true,
   noLegalTaxAdvice: true,
@@ -98,14 +98,14 @@ describe("Site Health — persona A: new agent with nothing, builds in AgentStac
 });
 
 describe("Site Health — persona B: agent bringing an existing website", () => {
-  // The Artisan Home Network case: a real site already live on its own host,
+  // The Example Realty case: a real site already live on its own host,
   // domain connected, hosting connected, and no intention of rebuilding it in
   // Website Studio.
   const keepsOwnSite: SiteHealthInputs = {
     profile: PROFILE_DONE,
     publishedWebsite: false,
     publishedAgentSite: false,
-    customDomain: "artisanhomenetwork.com",
+    customDomain: "example-realty.test",
     ...ENGAGEMENT_DONE,
   };
 
@@ -159,7 +159,7 @@ describe("Site Health — persona C: agent migrating from another CRM", () => {
     profile: PROFILE_DONE,
     publishedWebsite: false,
     publishedAgentSite: false,
-    customDomain: "artisanhomenetwork.com",
+    customDomain: "example-realty.test",
     hasLeadForm: true,
     hasBookingPage: false,
     webChatEnabled: false,
@@ -191,7 +191,7 @@ describe("Site Health — the domain task", () => {
   it("counts any saved custom domain, regardless of where DNS points", () => {
     // Deliberate: the task is satisfied by saving the domain, so an agent is
     // never held at 88% waiting on a DNS propagation this app cannot observe.
-    const withDomain = { ...NOTHING, customDomain: "artisanhomenetwork.com" };
+    const withDomain = { ...NOTHING, customDomain: "example-realty.test" };
     expect(remainingSiteHealthTaskIds(withDomain)).not.toContain("domain");
   });
 

@@ -13,7 +13,7 @@ import {
 describe("identifying who serves a website", () => {
   it("catches a site still served by GoHighLevel", () => {
     const detection = detectHostingPlatform({
-      finalHost: "artisanhomenetwork.com",
+      finalHost: "example-realty.test",
       headers: { server: "nginx" },
       body: '<script src="https://cdn.msgsndr.com/bundle.js"></script>',
     });
@@ -27,7 +27,7 @@ describe("identifying who serves a website", () => {
     const detection = detectHostingPlatform({
       finalHost: "funnels.leadconnectorhq.com",
       headers: {},
-      redirectHosts: ["artisanhomenetwork.com"],
+      redirectHosts: ["example-realty.test"],
     });
 
     expect(detection.platform).toBe("gohighlevel");
@@ -61,7 +61,7 @@ describe("identifying who serves a website", () => {
 
   it("reports unknown rather than guessing when nothing matches", () => {
     const detection = detectHostingPlatform({
-      finalHost: "artisanhomenetwork.com",
+      finalHost: "example-realty.test",
       headers: { server: "cloudflare" },
       body: "<html><body>Hello</body></html>",
     });
@@ -69,7 +69,7 @@ describe("identifying who serves a website", () => {
     expect(detection.platform).toBeNull();
     expect(detection.confidence).toBe("unknown");
     // The agent still sees what was observed, so they can judge it themselves.
-    expect(detection.evidence).toContain("served from artisanhomenetwork.com");
+    expect(detection.evidence).toContain("served from example-realty.test");
     expect(detection.evidence.join(" ")).toMatch(/cloudflare/);
   });
 
@@ -85,7 +85,7 @@ describe("identifying who serves a website", () => {
 
 describe("deciding whether a site has left the old platform", () => {
   const onGhl = detectHostingPlatform({
-    finalHost: "artisanhomenetwork.com",
+    finalHost: "example-realty.test",
     headers: {},
     body: "cdn.msgsndr.com",
   });
@@ -94,7 +94,7 @@ describe("deciding whether a site has left the old platform", () => {
     headers: {},
   });
   const unknown = detectHostingPlatform({
-    finalHost: "artisanhomenetwork.com",
+    finalHost: "example-realty.test",
     headers: { server: "cloudflare" },
   });
 

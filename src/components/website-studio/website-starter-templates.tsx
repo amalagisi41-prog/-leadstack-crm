@@ -4,7 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useSubAccount } from "@/context/sub-account-context";
 import { TemplateGallery } from "./template-gallery";
-import { ARTISAN_HOME_NETWORK_PRESET } from "@/lib/website-studio/presets";
+import { HOME_SERVICES_NETWORK_PRESET } from "@/lib/website-studio/presets";
 import type { AgentSiteTemplateId } from "@/types/agent-site";
 
 export function WebsiteStarterTemplates() {
@@ -51,7 +51,7 @@ export function WebsiteStarterTemplates() {
         selecting={selecting}
         onSelect={(templateId) => void start({ templateId }, templateId)}
         onImportReference={() => {
-          const preset = ARTISAN_HOME_NETWORK_PRESET;
+          const preset = HOME_SERVICES_NETWORK_PRESET;
           void start(
             {
               templateId: preset.templateId,

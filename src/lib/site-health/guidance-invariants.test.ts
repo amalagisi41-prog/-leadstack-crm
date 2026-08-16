@@ -266,7 +266,7 @@ describe("nothing waits on an administrator", () => {
       agentSitePublished: false,
       siteVerifiedLive: false,
       legacyHostingStatus: "ready",
-      legacyHostingUrl: "https://artisanhomenetwork.com",
+      legacyHostingUrl: "https://example-realty.test",
     });
     expect(readiness.ready).toBe(true);
   });
@@ -277,7 +277,7 @@ describe("nothing waits on an administrator", () => {
       agentSitePublished: false,
       siteVerifiedLive: false,
       legacyHostingStatus: "ready",
-      legacyHostingUrl: "http://artisanhomenetwork.com",
+      legacyHostingUrl: "http://example-realty.test",
     });
     expect(readiness.ready).toBe(false);
   });

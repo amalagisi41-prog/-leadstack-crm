@@ -8,10 +8,10 @@ import { normalizePublicUrl, normalizePublicUrlString } from "./public-url";
  */
 describe("public URL guard", () => {
   it("accepts ordinary public addresses", () => {
-    expect(normalizePublicUrl("https://artisanhomenetwork.com")?.hostname).toBe(
-      "artisanhomenetwork.com"
+    expect(normalizePublicUrl("https://example-realty.test")?.hostname).toBe(
+      "example-realty.test"
     );
-    expect(normalizePublicUrl("artisanhomenetwork.com")?.protocol).toBe(
+    expect(normalizePublicUrl("example-realty.test")?.protocol).toBe(
       "https:"
     );
     expect(normalizePublicUrl("http://example.com")?.protocol).toBe("http:");

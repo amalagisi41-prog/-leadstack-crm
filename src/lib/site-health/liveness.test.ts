@@ -12,7 +12,7 @@ const at = (url: string, statusCode: number, protocol = "https:") =>
 
 describe("interpreting a website's response", () => {
   it("counts a plain 200 as live", () => {
-    const record = at("https://artisanhomenetwork.com/", 200);
+    const record = at("https://example-realty.test/", 200);
     expect(record.status).toBe("live");
     expect(record.statusCode).toBe(200);
   });
@@ -20,8 +20,8 @@ describe("interpreting a website's response", () => {
   it("counts a redirect as live", () => {
     // Most real sites answer their apex with a 301 to www or to https;
     // following it would tell us nothing extra about whether a site exists.
-    expect(at("https://artisanhomenetwork.com/", 301).status).toBe("live");
-    expect(at("https://artisanhomenetwork.com/", 308).status).toBe("live");
+    expect(at("https://example-realty.test/", 301).status).toBe("live");
+    expect(at("https://example-realty.test/", 308).status).toBe("live");
   });
 
   it("counts a protected site as live", () => {
@@ -31,26 +31,26 @@ describe("interpreting a website's response", () => {
   });
 
   it("does not count a missing page as live", () => {
-    const record = at("https://artisanhomenetwork.com/", 404);
+    const record = at("https://example-realty.test/", 404);
     expect(record.status).toBe("unreachable");
     expect(record.reason).toMatch(/nothing is published/i);
   });
 
   it("distinguishes a host error from an empty domain", () => {
-    const record = at("https://artisanhomenetwork.com/", 503);
+    const record = at("https://example-realty.test/", 503);
     expect(record.status).toBe("unreachable");
     expect(record.reason).toMatch(/server error/i);
     expect(record.reason).toMatch(/pointed correctly/i);
   });
 
   it("refuses to pass a site served without TLS", () => {
-    const record = at("http://artisanhomenetwork.com/", 200, "http:");
+    const record = at("http://example-realty.test/", 200, "http:");
     expect(record.status).toBe("insecure");
     expect(record.reason).toMatch(/SSL certificate/i);
   });
 
   it("explains a network failure in terms an agent can act on", () => {
-    const record = livenessNetworkFailure("https://artisanhomenetwork.com/");
+    const record = livenessNetworkFailure("https://example-realty.test/");
     expect(record.status).toBe("unreachable");
     expect(record.reason).toMatch(/DNS/i);
   });
@@ -61,7 +61,7 @@ describe("whether a stored verification still counts", () => {
   const record = (
     overrides: Partial<SiteVerificationRecord> = {}
   ): SiteVerificationRecord => ({
-    url: "https://artisanhomenetwork.com/",
+    url: "https://example-realty.test/",
     status: "live",
     reason: "Your website is live.",
     checkedAt: "2026-08-15T12:00:00Z",
@@ -70,20 +70,20 @@ describe("whether a stored verification still counts", () => {
 
   it("accepts a recent live check of the saved domain", () => {
     expect(
-      isVerificationCurrent(record(), "artisanhomenetwork.com", now)
+      isVerificationCurrent(record(), "example-realty.test", now)
     ).toBe(true);
   });
 
   it("ignores the www prefix on either side", () => {
     expect(
       isVerificationCurrent(
-        record({ url: "https://www.artisanhomenetwork.com/" }),
-        "artisanhomenetwork.com",
+        record({ url: "https://www.example-realty.test/" }),
+        "example-realty.test",
         now
       )
     ).toBe(true);
     expect(
-      isVerificationCurrent(record(), "www.artisanhomenetwork.com", now)
+      isVerificationCurrent(record(), "www.example-realty.test", now)
     ).toBe(true);
   });
 
@@ -93,7 +93,7 @@ describe("whether a stored verification still counts", () => {
         now.getTime() - (SITE_VERIFICATION_TTL_DAYS + 1) * 86_400_000
       ).toISOString(),
     });
-    expect(isVerificationCurrent(stale, "artisanhomenetwork.com", now)).toBe(
+    expect(isVerificationCurrent(stale, "example-realty.test", now)).toBe(
       false
     );
   });
@@ -109,11 +109,11 @@ describe("whether a stored verification still counts", () => {
     expect(
       isVerificationCurrent(
         record({ status: "unreachable" }),
-        "artisanhomenetwork.com",
+        "example-realty.test",
         now
       )
     ).toBe(false);
-    expect(isVerificationCurrent(null, "artisanhomenetwork.com", now)).toBe(
+    expect(isVerificationCurrent(null, "example-realty.test", now)).toBe(
       false
     );
   });
@@ -127,14 +127,14 @@ describe("whether a stored verification still counts", () => {
     expect(
       isVerificationCurrent(
         record({ url: "not a url" }),
-        "artisanhomenetwork.com",
+        "example-realty.test",
         now
       )
     ).toBe(false);
     expect(
       isVerificationCurrent(
         record({ checkedAt: "whenever" }),
-        "artisanhomenetwork.com",
+        "example-realty.test",
         now
       )
     ).toBe(false);
@@ -143,7 +143,7 @@ describe("whether a stored verification still counts", () => {
   it("rejects a check dated in the future", () => {
     const future = record({ checkedAt: "2027-01-01T00:00:00Z" });
     expect(
-      isVerificationCurrent(future, "artisanhomenetwork.com", now)
+      isVerificationCurrent(future, "example-realty.test", now)
     ).toBe(false);
   });
 });

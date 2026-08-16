@@ -37,7 +37,7 @@ export function TemplateGallery({
           </span>
           <div>
             <p className="font-semibold text-[#173B7A]">
-              Starter migration ready: Artisan Home Network
+              Starter template: Home Services Network
             </p>
             <p className="mt-1 text-sm text-[#526078]">
               Load the network positioning, service categories, service-area

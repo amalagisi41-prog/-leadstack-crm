@@ -188,7 +188,7 @@ describe("Site Health as a whole", () => {
   const base: SiteHealthInputs = {
     profile: {
       completeness: 90,
-      brokerage: "Artisan Home Network",
+      brokerage: "Example Realty",
       licenseNumber: "RES.0800123",
       fairHousing: true,
       noLegalTaxAdvice: true,
@@ -197,7 +197,7 @@ describe("Site Health as a whole", () => {
     publishedWebsite: false,
     publishedAgentSite: false,
     externalSiteVerified: true,
-    customDomain: "artisanhomenetwork.com",
+    customDomain: "example-realty.test",
     hasLeadForm: true,
     hasBookingPage: true,
     webChatEnabled: true,

@@ -42,7 +42,7 @@ const SAVED: OnboardingFoundation = {
   sourceUrl: "",
   domainStartingPoint: "have_domain",
   hostingStartingPoint: "agentstack_managed",
-  domainName: "artisanhomenetwork.com",
+  domainName: "example-realty.test",
   domainSetupConfirmed: true,
   hostingSetupConfirmed: true,
   profileImported: false,
@@ -107,7 +107,7 @@ describe("completed foundation — the screen must not dead-end", () => {
     mockApi();
     await renderComplete();
 
-    expect(await screen.findByText("artisanhomenetwork.com")).toBeInTheDocument();
+    expect(await screen.findByText("example-realty.test")).toBeInTheDocument();
     expect(
       screen.getByText("AgentStack managed hosting")
     ).toBeInTheDocument();
@@ -175,7 +175,7 @@ describe("completed foundation — changing a saved choice", () => {
     // Re-editing must not start from a blank form and silently drop the
     // domain when saved again.
     expect(
-      screen.getByDisplayValue("artisanhomenetwork.com")
+      screen.getByDisplayValue("example-realty.test")
     ).toBeInTheDocument();
   });
 });
@@ -204,7 +204,7 @@ describe("Hostinger path — saving must actually save", () => {
     expect(patch.body).toMatchObject({
       hostingStartingPoint: "transfer_existing",
       hostingSetupConfirmed: true,
-      domainName: "artisanhomenetwork.com",
+      domainName: "example-realty.test",
     });
   });
 

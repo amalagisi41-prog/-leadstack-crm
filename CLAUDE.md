@@ -1751,3 +1751,40 @@ Reference implementations: `components/dashboard/dns-cutover-wizard.tsx`
 (enforced ordering, read-don't-ask), `lib/site-health/migration-independence.ts`
 (verified vs. attested completion), `components/dashboard/domain-connect.tsx`
 (numbered steps that stay visible when locked, naming what is missing).
+
+## AgentStack and customer businesses are separate entities
+
+AgentStack is the SaaS platform — a CRM and business-management product for
+real-estate businesses. Its customers are separate businesses that use it.
+Artisan Home Network is one such customer: a real-estate sales website. They
+are not the same entity, are not affiliated for legal purposes, and must
+never be blended in code, content, tests, or documents.
+
+This has gone wrong twice and both failures looked harmless in the diff:
+
+**Customer identity shipped as platform content.** A Website Studio starter
+preset carried a real customer's business name, positioning, tagline, bio,
+and meta copy, and was offered to every subscriber in the template gallery —
+including competing agents in the same market. Starters, templates, demo
+data, and fixtures are platform content and must be generic. A customer's
+site belongs in that customer's sub-account and nowhere else.
+
+**Customer data in the vendor's test suite.** A live customer domain was used
+across ten test files. Use reserved example domains (`.test`, `example.com`)
+and invented business names. A real customer's domain in a fixture invites a
+test that actually resolves it, and it embeds a commercial relationship in
+the source tree.
+
+Legal documents follow the same split, and the distinction is load-bearing:
+
+- `/privacy`, `/terms`, `/licensing` are AGENTSTACK'S OWN policies, governing
+  the SaaS. They name the AgentStack entity and are configured from
+  `config/legal.ts`.
+- A customer's website needs ITS OWN privacy policy and terms, naming that
+  customer's entity. AgentStack's policies are the wrong document for a
+  customer site — different controller, different data practices, different
+  entity. The publish-readiness `privacyPolicyUrl` / `termsUrl` fields are
+  the customer's URLs, never AgentStack's.
+
+When writing anything user-facing, be explicit about which entity is meant.
+"The company" is ambiguous here and gets it wrong.
