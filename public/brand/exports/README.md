@@ -30,9 +30,18 @@ stores, mobile home screens, desktop launchers, and future native applications.
 
 ## UI and media layouts
 
-- `agentstack-mark-on-light-*`: cream-tile primary for light or mixed layouts.
-- `agentstack-tile-transparent-edge-*`: navy-tile alternate for dark, colored,
-  or photographic layouts.
+Use the bare marks here. The tile belongs on standalone icons, not on top of a
+layout that already has a background of its own.
+
+- `agentstack-mark-on-light-*`: bare navy mark, transparent, for cream, white,
+  and other light layouts.
+- `agentstack-mark-on-dark-*`: bare cream mark, transparent, for navy, black,
+  and other dark or photographic layouts.
+
+The standalone tiles remain available for branding and marketing artwork:
+
+- `agentstack-tile-cream-*`: cream-tile primary, transparent edge.
+- `agentstack-tile-transparent-edge-*`: navy-tile alternate, transparent edge.
 
 ## Required contrast rule
 

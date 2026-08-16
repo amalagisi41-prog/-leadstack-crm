@@ -2,22 +2,24 @@
   "brand": "AgentStack",
   "version": "2026-08-16",
   "masters": {
-    "lightBackground": "/brand/agentstack-mark-on-light.png",
+    "markOnLight": "/brand/agentstack-mark-on-light.png",
+    "markOnDark": "/brand/agentstack-mark-on-dark.png",
     "appTile": "/brand/agentstack-app-tile.png",
-    "darkBackground": "/brand/agentstack-app-tile-dark.png"
+    "appTileDark": "/brand/agentstack-app-tile-dark.png"
   },
   "recommended": {
     "goHighLevelMarketplace": "/brand/exports/marketplace/agentstack-marketplace-800.png",
     "appStore": "/brand/exports/app/agentstack-app-icon-1024.png",
     "socialProfile": "/brand/exports/social/agentstack-profile-1080.png",
     "lightInterface": "/brand/exports/ui/agentstack-mark-on-light-512.png",
-    "darkOrColoredInterface": "/brand/exports/ui/agentstack-tile-transparent-edge-512.png"
+    "darkOrColoredInterface": "/brand/exports/ui/agentstack-mark-on-dark-512.png"
   },
   "rules": {
-    "lightBackground": "Use the primary cream-tile artwork for light or mixed surfaces.",
-    "darkBackground": "Use the navy-tile alternate for dark, colored, or photographic surfaces.",
+    "lightBackground": "Use the bare navy mark on cream, white, and other light surfaces.",
+    "darkBackground": "Use the bare cream mark on navy, black, and other dark surfaces.",
     "chevrons": "The lower chevron is retired. The upper chevron is 10% smaller than the original, deep dark navy on cream and cream on navy, with identical approved geometry and 3D treatment.",
-    "robot": "Both variants use the same crooked-smile robot. It uses the alternate tile's darkest core navy—not the former medium blue—on cream and the original cream color on navy.",
-    "aspectRatio": "Always preserve the original 1:1 aspect ratio."
+    "robot": "Both variants use the same crooked-smile robot. It uses the alternate tile's darkest core navy\u2014not the former medium blue\u2014on cream and the original cream color on navy.",
+    "aspectRatio": "Always preserve the original 1:1 aspect ratio.",
+    "tileUsage": "The tile is for standalone use only: install and app icons, marketplace listings, social profiles, and branding or marketing artwork. Anywhere the mark is placed onto an existing page, slide, or panel, use the bare transparent mark instead \u2014 that surface is already its background."
   }
 }

@@ -3,15 +3,23 @@ interface LogoMarkProps {
   className?: string;
   idSuffix?: string;
   /**
-   * `light` is the navy/coral mark for white, cream, and other light surfaces.
-   * `dark` is the self-contained blue tile for dark or colored surfaces.
+   * `light` is the navy mark, for cream, white, and other light surfaces.
+   * `dark` is the cream mark, for navy, black, and other dark surfaces.
    */
   tone?: "light" | "dark";
 }
 
 /**
  * Canonical AgentStack mark used across platform chrome and public surfaces.
- * Never place the cream-chevron artwork directly on a light background.
+ *
+ * Both tones are the bare mark on a transparent background. The tile is
+ * reserved for standalone use — install icons, marketplace listings, branding
+ * and marketing artwork — because anywhere inside the product the mark is
+ * already sitting on a surface, and a tile there is a second background
+ * stacked on the first.
+ *
+ * Pick the tone from the surface behind it, not from the page's overall theme:
+ * the navy mark disappears on navy, and the cream mark disappears on cream.
  */
 export function LogoMark({
   size = 20,

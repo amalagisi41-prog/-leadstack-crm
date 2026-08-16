@@ -19,13 +19,24 @@ consistently.
   and arrow stroke in both versions.
 - Do not independently recreate, move, recolor, or resize any part of the mark.
 
+## When the tile is used, and when it is not
+
+The tile is for **standalone use only** — install and app icons, marketplace
+listings, social profiles, and future branding and marketing artwork. In those
+places the mark has no surface of its own, so the tile supplies one.
+
+Everywhere the mark is placed onto a page, a slide, or a panel, use the bare
+mark on a transparent background. That surface is already the mark's
+background; adding a tile stacks a second one on top of it.
+
+Never place a tile over artwork that already carries the brand.
+
 ## Approved versions
 
 ### Light backgrounds
 
-Use `public/brand/agentstack-mark-on-light.png` on white, pale gray, and other
-light surfaces. The self-contained warm-cream tile increases edge and silhouette
-readability when the mark is reduced.
+Use `public/brand/agentstack-mark-on-light.png` — the deep core-navy mark on a
+transparent background — on cream, white, pale gray, and other light surfaces.
 
 In React, this is the default:
 
@@ -35,11 +46,9 @@ In React, this is the default:
 
 ### Dark or colored backgrounds
 
-Use `public/brand/agentstack-app-tile-dark.png` on navy, black, saturated,
-photographic, or otherwise dark surfaces. It preserves the navy tile treatment
-from the original attached mark, including its cream upper chevron and cream
-robot, while removing the lower chevron. The UI derivative is
-`public/icons/logo-dark-192.png`.
+Use `public/brand/agentstack-mark-on-dark.png` — the cream mark on a
+transparent background — on navy, black, saturated, photographic, or otherwise
+dark surfaces. The UI derivative is `public/icons/logo-dark-192.png`.
 
 In React:
 
@@ -47,28 +56,37 @@ In React:
 <LogoMark tone="dark" />
 ```
 
+Choose the tone from the surface immediately behind the mark, not from the
+page's overall theme. The navy mark vanishes on navy; the cream mark vanishes
+on cream.
+
 ### App, marketplace, social, and install icons
 
 Use `public/brand/agentstack-app-tile.png`, the cream-tile primary master. All
 PWA, app-store, marketplace, web-icon, and social-profile exports are derived
-from this master because it remains clearer at small sizes.
+from this master because it remains clearer at small sizes. The navy-tile
+master `public/brand/agentstack-app-tile-dark.png` is the alternate for dark
+and colored standalone placements.
 
 ## Non-negotiable contrast rule
 
-Use the cream-tile primary on light or mixed contexts and the navy-tile
-alternate on dark or colored contexts. Do not place the navy-tile alternate on
-a similar navy surface without adequate separation. The lower chevron is
-retired. Never swap the approved chevron or robot colors between variants.
+On light or mixed surfaces use the navy mark; on dark or colored surfaces use
+the cream mark. Where a tile is used standalone, the cream tile serves light
+and mixed contexts and the navy tile serves dark ones — and the navy tile must
+not be placed on a similar navy surface without adequate separation. The lower
+chevron is retired. Never swap the approved chevron or robot colors between
+variants.
 
 ## Asset roles
 
 | Asset                                                   | Use                                                   |
 | ------------------------------------------------------- | ----------------------------------------------------- |
-| `agentstack-mark-on-light.png`                          | Master mark for light backgrounds                     |
-| `agentstack-app-tile.png`                               | Primary cream-tile app and small-size master          |
-| `agentstack-app-tile-dark.png`                          | Alternate navy-tile master for dark/colored surfaces  |
-| `logo-light-192.png`, `logo-light-512.png`              | Web UI derivatives for light backgrounds              |
-| `logo-dark-192.png`, `logo-dark-512.png`                | Transparent-edge tile derivatives for colored/dark UI |
+| `agentstack-mark-on-light.png`                          | Bare navy mark, transparent — light surfaces          |
+| `agentstack-mark-on-dark.png`                           | Bare cream mark, transparent — dark surfaces          |
+| `agentstack-app-tile.png`                               | Primary cream-tile master — standalone icons only     |
+| `agentstack-app-tile-dark.png`                          | Alternate navy-tile master — standalone icons only    |
+| `logo-light-192.png`, `logo-light-512.png`              | Bare navy mark, UI derivatives                        |
+| `logo-dark-192.png`, `logo-dark-512.png`                | Bare cream mark, UI derivatives                       |
 | `icon-192.png`, `icon-512.png`, `icon-512-maskable.png` | PWA and install icons                                 |
 | `apple-touch-icon.png`                                  | Apple home-screen icon                                |
 | `src/app/icon.png`                                      | Next.js browser/app metadata icon                     |

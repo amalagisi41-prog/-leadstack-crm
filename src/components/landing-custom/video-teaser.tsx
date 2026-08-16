@@ -17,8 +17,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { LogoMark } from "@/components/brand/logo-mark";
-
 const SLIDES = Array.from(
   { length: 8 },
   (_, index) => `/agentstack-presentation/slide-${index + 1}.webp`
@@ -145,15 +143,12 @@ export function VideoTeaser() {
               />
             ))}
 
-            {activeSlide < closingStart && (
-              <div className="pointer-events-none absolute top-3 right-3 z-20 drop-shadow-[0_5px_12px_rgba(23,59,122,0.22)] sm:top-4 sm:right-4">
-                <LogoMark
-                  tone="dark"
-                  size={44}
-                  className="h-8 w-8 object-contain sm:h-10 sm:w-10"
-                />
-              </div>
-            )}
+            {/*
+              No corner badge over the slides. Each slide already carries the
+              AgentStack wordmark in its own artwork, and the tile is reserved
+              for standalone use — pinning one over a slide stacked a second
+              logo on top of the first.
+            */}
 
             <FadeFrame active={activeSlide === closingStart}>
               <div className="grid h-full grid-cols-[44%_56%] items-center gap-3 px-5 sm:gap-6 sm:px-10 lg:px-14">
@@ -195,7 +190,14 @@ export function VideoTeaser() {
               <div className="flex h-full items-center justify-center px-6">
                 <div className="flex flex-col items-center">
                   <ClosingWordmark />
-                  <p className="-mt-7 text-[10px] font-semibold tracking-[0.22em] text-[#173B7A] uppercase sm:-mt-9 sm:text-sm">
+                  {/*
+                    The mark is trimmed to its artwork now, so this sits below
+                    it directly. It used to be pulled up by a negative margin
+                    to close the gap left by the tile's padding — against a
+                    trimmed mark that same offset would print the line over
+                    the robot's face.
+                  */}
+                  <p className="mt-3 text-[10px] font-semibold tracking-[0.22em] text-[#173B7A] uppercase sm:mt-4 sm:text-sm">
                     Real estate solutions
                   </p>
                 </div>
