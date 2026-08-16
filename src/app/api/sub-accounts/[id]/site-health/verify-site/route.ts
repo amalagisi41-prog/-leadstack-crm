@@ -11,6 +11,7 @@ import {
   livenessNetworkFailure,
   type SiteVerificationRecord,
 } from "@/lib/site-health/liveness";
+import { detectHostingPlatform } from "@/lib/site-health/platform-detection";
 
 /**
  * POST /api/sub-accounts/[id]/site-health/verify-site
@@ -27,6 +28,31 @@ import {
  */
 
 const REQUEST_TIMEOUT_MS = 8000;
+const MAX_REDIRECTS = 3;
+/** Enough HTML to carry the platform fingerprints, not enough to be a DoS. */
+const MAX_BODY_BYTES = 200_000;
+
+async function readCappedBody(response: Response): Promise<string> {
+  const reader = response.body?.getReader();
+  if (!reader) return "";
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    while (total < MAX_BODY_BYTES) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+      total += value.byteLength;
+    }
+  } catch {
+    // A truncated read still yields whatever arrived — good enough to scan.
+  } finally {
+    void reader.cancel().catch(() => undefined);
+  }
+  return new TextDecoder().decode(
+    chunks.length === 1 ? chunks[0] : Buffer.concat(chunks)
+  ).slice(0, MAX_BODY_BYTES);
+}
 
 export async function POST(
   request: Request,
@@ -83,17 +109,54 @@ export async function POST(
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   try {
-    const response = await fetch(target.toString(), {
-      method: "GET",
-      redirect: "manual",
-      signal: controller.signal,
-      headers: { "User-Agent": "AgentStack-SiteHealth/1.0" },
-    });
-    record = evaluateLivenessResponse({
-      url: target.toString(),
-      protocol: target.protocol,
-      statusCode: response.status,
-    });
+    // Redirects are followed by hand, re-vetting every hop: `redirect:
+    // "follow"` would let a redirect to 169.254.169.254 pull cloud metadata,
+    // and the guard on the first URL cannot see later hops.
+    let current = new URL(target.toString());
+    const redirectHosts: string[] = [current.hostname];
+    let response: Response | null = null;
+
+    for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+      response = await fetch(current.toString(), {
+        method: "GET",
+        redirect: "manual",
+        signal: controller.signal,
+        headers: { "User-Agent": "AgentStack-SiteHealth/1.0" },
+      });
+      const location = response.headers.get("location");
+      if (response.status < 300 || response.status >= 400 || !location) break;
+      const next = normalizePublicUrl(new URL(location, current).toString());
+      if (!next) break; // redirect into a private address — stop, don't follow
+      current = next;
+      redirectHosts.push(current.hostname);
+      response = null;
+    }
+
+    if (!response) {
+      record = livenessNetworkFailure(target.toString());
+    } else {
+      const headers: Record<string, string> = {};
+      response.headers.forEach((value, key) => {
+        headers[key.toLowerCase()] = value;
+      });
+      const body = await readCappedBody(response);
+      const detection = detectHostingPlatform({
+        finalHost: current.hostname,
+        headers,
+        body,
+        redirectHosts,
+      });
+      record = {
+        ...evaluateLivenessResponse({
+          url: current.toString(),
+          protocol: current.protocol,
+          statusCode: response.status,
+        }),
+        servedByPlatform: detection.platform,
+        servedByLabel: detection.label,
+        evidence: detection.evidence,
+      };
+    }
   } catch {
     record = livenessNetworkFailure(target.toString());
   } finally {

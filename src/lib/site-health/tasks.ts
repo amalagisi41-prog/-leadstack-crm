@@ -1,3 +1,10 @@
+import {
+  assessCancellationReadiness,
+  buildMigrationIndependenceTasks,
+  type CancellationReadiness,
+  type MigrationIndependenceInputs,
+} from "./migration-independence";
+
 /**
  * Site Health scoring.
  *
@@ -31,6 +38,12 @@ export interface SiteHealthInputs {
   /** subAccounts/{id}.customDomain */
   customDomain?: string;
   hasLeadForm: boolean;
+  /**
+   * Present only for an account that migrated from another platform. When
+   * set, its checks join the score so 100% means the old subscription can be
+   * cancelled safely rather than merely that AgentStack is configured.
+   */
+  independence?: MigrationIndependenceInputs;
   hasBookingPage: boolean;
   webChatEnabled: boolean;
   businessEmailVerified: boolean;
@@ -50,6 +63,8 @@ export interface SiteHealthResult {
   completed: number;
   total: number;
   tasks: SiteHealthTask[];
+  /** Null when the account did not migrate from anywhere. */
+  cancellation: CancellationReadiness | null;
 }
 
 export function buildSiteHealthTasks(
@@ -136,13 +151,26 @@ export function buildSiteHealthTasks(
 }
 
 export function computeSiteHealth(inputs: SiteHealthInputs): SiteHealthResult {
-  const tasks = buildSiteHealthTasks(inputs);
+  // For an account that migrated, 100% has to mean "safe to cancel the old
+  // subscription" — so the independence checks are part of the score, not a
+  // separate panel someone can miss. An account that started fresh has no
+  // independence tasks and is unaffected.
+  const tasks = [
+    ...buildSiteHealthTasks(inputs),
+    ...(inputs.independence
+      ? buildMigrationIndependenceTasks(inputs.independence)
+      : []),
+  ];
   const completed = tasks.filter((task) => task.complete).length;
+  const cancellation = inputs.independence
+    ? assessCancellationReadiness(inputs.independence)
+    : null;
   return {
     score: Math.round((completed / tasks.length) * 100),
     completed,
     total: tasks.length,
     tasks,
+    cancellation,
   };
 }
 

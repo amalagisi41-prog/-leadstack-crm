@@ -2,7 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Check, HeartPulse, Loader2 } from "lucide-react";
+import {
+  ArrowRight,
+  Check,
+  HeartPulse,
+  Loader2,
+  ShieldAlert,
+  ShieldCheck,
+} from "lucide-react";
 import { useSubAccount } from "@/context/sub-account-context";
 import { Button } from "@/components/ui/button";
 
@@ -15,12 +22,27 @@ interface HealthTask {
   action: string;
 }
 
+interface CancellationReadiness {
+  ready: boolean;
+  blocking: string[];
+  platformLabel: string | null;
+}
+
 interface HealthResult {
   score: number;
   completed: number;
   total: number;
   tasks: HealthTask[];
+  cancellation: CancellationReadiness | null;
 }
+
+/** Tasks the agent confirms by hand, mapped to their stored ack id. */
+const ACK_FOR_TASK: Record<string, string> = {
+  "independence-website": "website_independent",
+  "independence-conversations": "conversations_saved",
+  "independence-automations": "calendars_rebuilt",
+  "independence-backup": "backup_exported",
+};
 
 export default function SiteHealthPage() {
   const { subAccountId, saPath } = useSubAccount();
@@ -99,6 +121,22 @@ export default function SiteHealthPage() {
     };
   }, [subAccountId, load, verifySite]);
 
+  /** Record (or withdraw) a step only the agent can vouch for. */
+  const acknowledge = useCallback(
+    async (ackId: string, confirmed: boolean) => {
+      await fetch(
+        `/api/sub-accounts/${subAccountId}/site-health/migration-ack`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ack: ackId, confirmed }),
+        }
+      );
+      setResult(await load());
+    },
+    [subAccountId, load]
+  );
+
   const remaining = useMemo(
     () => result?.tasks.filter((task) => !task.complete) ?? [],
     [result]
@@ -155,6 +193,46 @@ export default function SiteHealthPage() {
         </div>
       </section>
 
+      {result.cancellation ? (
+        /*
+          The whole point of the number. An agent reading "100%" was
+          previously being told AgentStack was configured — not that anything
+          could safely be switched off. Cancelling on that reading can take a
+          live website down or release a business phone number for good.
+        */
+        <section
+          className={`rounded-2xl border p-5 ${
+            result.cancellation.ready
+              ? "border-emerald-200 bg-emerald-50"
+              : "border-amber-200 bg-amber-50"
+          }`}
+        >
+          <div className="flex items-start gap-3">
+            {result.cancellation.ready ? (
+              <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+            ) : (
+              <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+            )}
+            <div>
+              <p
+                className={`font-semibold ${result.cancellation.ready ? "text-emerald-950" : "text-amber-950"}`}
+              >
+                {result.cancellation.ready
+                  ? `Safe to cancel ${result.cancellation.platformLabel ?? "your old platform"}`
+                  : `Do not cancel ${result.cancellation.platformLabel ?? "your old platform"} yet`}
+              </p>
+              <p
+                className={`mt-1 text-sm ${result.cancellation.ready ? "text-emerald-900/80" : "text-amber-900/80"}`}
+              >
+                {result.cancellation.ready
+                  ? "Nothing in this workspace still depends on it. Your website, phone number, email, and data are all on your own accounts."
+                  : `${result.cancellation.blocking.length} ${result.cancellation.blocking.length === 1 ? "item" : "items"} below still depend on it. Cancelling now could take your website offline or release your phone number permanently.`}
+              </p>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
       <section className="bg-card rounded-2xl border p-6">
         <div className="flex items-end justify-between gap-4">
           <div>
@@ -203,7 +281,43 @@ export default function SiteHealthPage() {
                   {task.detail}
                 </p>
               </div>
-              {task.id === "website" ? (
+              {ACK_FOR_TASK[task.id] ? (
+                <div className="flex shrink-0 flex-wrap items-center gap-2">
+                  {task.complete ? (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        void acknowledge(ACK_FOR_TASK[task.id], false)
+                      }
+                      className="text-muted-foreground hover:text-foreground text-xs underline"
+                    >
+                      Undo
+                    </button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      onClick={() =>
+                        void acknowledge(ACK_FOR_TASK[task.id], true)
+                      }
+                    >
+                      {task.action}
+                    </Button>
+                  )}
+                  {task.complete ? (
+                    <span className="text-sm font-medium text-emerald-700">
+                      Done
+                    </span>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      render={<Link href={saPath(task.href)} />}
+                    >
+                      Open <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              ) : task.id === "website" ? (
                 /* An agent who already has a site should not be sent to a
                    builder they do not need — offer the check first. */
                 <div className="flex shrink-0 flex-wrap items-center gap-2">

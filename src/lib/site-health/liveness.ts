@@ -30,6 +30,11 @@ export interface SiteVerificationRecord {
   reason: string;
   /** ISO timestamp of the check. */
   checkedAt: string;
+  /** Who was found to be serving the site, when identifiable. */
+  servedByPlatform?: string | null;
+  servedByLabel?: string | null;
+  /** What the scan observed, shown to the agent before they cancel anything. */
+  evidence?: string[];
 }
 
 /**
