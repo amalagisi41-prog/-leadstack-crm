@@ -17,6 +17,33 @@ export type AgentSiteTemplateId = "luxe" | "coastal" | "metro";
 
 export type AgentSiteStatus = "draft" | "published";
 
+export type AgentSiteSectionType =
+  | "header"
+  | "hero"
+  | "about"
+  | "specialties"
+  | "idx"
+  | "listings"
+  | "testimonials"
+  | "cta"
+  | "footer";
+
+export interface AgentSiteSection {
+  /** Stable identity used by the editor when a section moves. */
+  id: AgentSiteSectionType;
+  type: AgentSiteSectionType;
+  visible: boolean;
+}
+
+/**
+ * Versioned visual-builder payload. Content stays separate so Zack, manual
+ * editing, templates, and future Puck controls all operate on one site model.
+ */
+export interface AgentSiteComposition {
+  version: 1;
+  sections: AgentSiteSection[];
+}
+
 /** A single showcased listing / featured property card. */
 export interface AgentSiteListing {
   title: string;
@@ -30,6 +57,16 @@ export interface AgentSiteTestimonial {
   quote: string;
   author: string;
   detail: string; // e.g. "Sold in Westport, CT"
+}
+
+export interface AgentSiteCompliance {
+  licenseStates: string;
+  licenseNumber: string;
+  privacyPolicyUrl: string;
+  termsUrl: string;
+  fairHousingStatement: string;
+  smsConsentEnabled: boolean;
+  smsConsentDisclosure: string;
 }
 
 /**
@@ -63,6 +100,8 @@ export interface AgentSiteContent {
   testimonials: AgentSiteTestimonial[];
   ctaHeadline: string;
   ctaSubtext: string;
+  /** Optional on legacy drafts; required fields are enforced before publish. */
+  compliance?: AgentSiteCompliance;
   // SEO (single-page site: one set of tags for the one published page).
   // Falls back to agentName/tagline/heroImageUrl when blank.
   metaTitle: string;
@@ -111,6 +150,8 @@ export interface AgentSiteDoc {
   slug: string;
   status: AgentSiteStatus;
   content: AgentSiteContent;
+  /** Missing on legacy documents; the renderer supplies the v1 default. */
+  composition?: AgentSiteComposition;
   /** Visual overrides on top of the template's tokens. Defaults to {}. */
   design: AgentSiteDesign;
   /** The AI Designer interview so the agent can resume where they left off. */
@@ -120,6 +161,42 @@ export interface AgentSiteDoc {
   publishedAt: Timestamp | FieldValue | null;
   createdAt: Timestamp | FieldValue | null;
   updatedAt: Timestamp | FieldValue | null;
+  /** Approval is valid only while its fingerprint matches the current draft. */
+  releaseAssurance?: AgentSiteReleaseApproval;
+}
+
+export interface AgentSiteReleaseApproval {
+  fingerprint: string;
+  passed: boolean;
+  blockerCount: number;
+  warningCount: number;
+  approvedByUid: string;
+  approvedAt: Timestamp | FieldValue | null;
+}
+
+export type AgentSiteRevisionSource =
+  | "zack"
+  | "content"
+  | "structure"
+  | "puck"
+  | "publish"
+  | "restore";
+
+/** Immutable recovery point stored below the primary AgentStack site. */
+export interface AgentSiteRevision {
+  id: string;
+  siteId: string;
+  subAccountId: string;
+  createdByUid: string;
+  source: AgentSiteRevisionSource;
+  label: string;
+  templateId: AgentSiteTemplateId;
+  slug: string;
+  status: AgentSiteStatus;
+  content: AgentSiteContent;
+  composition: AgentSiteComposition;
+  design: AgentSiteDesign;
+  createdAt: Timestamp | FieldValue | null;
 }
 
 export function emptyAgentSiteContent(): AgentSiteContent {
@@ -144,6 +221,17 @@ export function emptyAgentSiteContent(): AgentSiteContent {
     testimonials: [],
     ctaHeadline: "",
     ctaSubtext: "",
+    compliance: {
+      licenseStates: "",
+      licenseNumber: "",
+      privacyPolicyUrl: "",
+      termsUrl: "",
+      fairHousingStatement:
+        "We are pledged to the letter and spirit of U.S. policy for the achievement of equal housing opportunity throughout the nation.",
+      smsConsentEnabled: false,
+      smsConsentDisclosure:
+        "By providing your phone number, you agree to receive calls and text messages about your inquiry. Consent is not a condition of service. Message and data rates may apply. Reply STOP to opt out.",
+    },
     metaTitle: "",
     metaDescription: "",
     ogImageUrl: "",

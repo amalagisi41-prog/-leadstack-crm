@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { SUB_ACCOUNT_ROUTES } from "@/lib/navigation/sub-account-routes";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import {
@@ -83,6 +85,14 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+/**
+ * Inline Reply-To editor. This is deliberately an editor rather than a link:
+ * `replyToEmail` is initialized to null at sub-account creation and the
+ * Messaging settings tab has no field for it, so pointing users there leaves
+ * the sending domain permanently unconfigurable (and the "Verify your
+ * business email" site-health item permanently unreachable). Setting it here
+ * resolves the block exactly where the block is reported.
+ */
 function ReplyToBanner({
   subAccountId,
   action,
@@ -148,7 +158,7 @@ function ReplyToBanner({
 }
 
 export function SubAccountEmailDomainSection() {
-  const { subAccountId, subAccount, isAdmin } = useSubAccount();
+  const { subAccountId, subAccount, isAdmin, saPath } = useSubAccount();
   const cfg = subAccount?.resendConfig ?? null;
   const gateOpen = subAccount?.emailDomainEnabledByAgency === true;
   const needsReplyTo = !subAccount?.replyToEmail?.trim();

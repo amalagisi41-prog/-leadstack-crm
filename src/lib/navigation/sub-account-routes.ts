@@ -22,11 +22,13 @@ export const SUB_ACCOUNT_ROUTES = {
   booking: "/booking",
   domain: "/domain",
   websiteStudio: "/website-studio",
+  website: "/website-studio",
   websiteStudioVibe: "/website-studio/vibe",
   businessProfile: "/business-profile",
   aiAgents: "/ai-agents",
   siteHealth: "/site-health",
   getStarted: "/get-started",
+  messagingSettings: "/dashboard/settings?tab=messaging",
 } as const;
 
 export type SubAccountRouteKey = keyof typeof SUB_ACCOUNT_ROUTES;

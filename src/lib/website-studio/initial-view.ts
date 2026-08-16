@@ -1,9 +1,6 @@
 export type WebsiteStudioView = "builder" | "vibe" | "setup" | "seo";
 export type WebsiteStudioWorkspace = "home" | "vibe";
 
-// The live-site baseline approval flow was retired (Website Studio 2.0,
-// Phase 1). The Studio never routes through an "exact" review view anymore:
-// Vibe unlocks as soon as the domain/hosting foundation is confirmed.
 export function getInitialWebsiteStudioView({
   foundationReady,
   hasTemplateSite,
@@ -11,7 +8,9 @@ export function getInitialWebsiteStudioView({
   foundationReady: boolean;
   hasTemplateSite: boolean;
 }): WebsiteStudioView {
-  if (!foundationReady) return "setup";
+  // Drafting is available immediately. Domain and hosting readiness is a
+  // publish gate, not a design gate.
+  void foundationReady;
   return hasTemplateSite ? "vibe" : "builder";
 }
 

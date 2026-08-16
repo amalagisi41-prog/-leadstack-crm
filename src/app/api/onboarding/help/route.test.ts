@@ -21,7 +21,7 @@ const AUTH = { "x-user-uid": "operator-1" };
 
 function makeRequest(
   body: unknown,
-  headers: Record<string, string> = AUTH,
+  headers: Record<string, string> = AUTH
 ): Request {
   return new Request("http://localhost/api/onboarding/help", {
     method: "POST",
@@ -34,7 +34,8 @@ function makeRequest(
 function lastSystemPrompt(): string {
   const call = vi.mocked(callAi).mock.calls.at(-1);
   const messages = call?.[0]?.messages ?? [];
-  return messages.find((m) => m.role === "system")?.content ?? "";
+  const content = messages.find((m) => m.role === "system")?.content;
+  return typeof content === "string" ? content : "";
 }
 
 beforeEach(() => {
@@ -43,14 +44,18 @@ beforeEach(() => {
 
 describe("POST /api/onboarding/help", () => {
   it("rejects unauthenticated requests (no x-user-uid) with 401", async () => {
-    const res = await POST(makeRequest({ question: "How do I import contacts?" }, {}));
+    const res = await POST(
+      makeRequest({ question: "How do I import contacts?" }, {})
+    );
     expect(res.status).toBe(401);
     expect(callAi).not.toHaveBeenCalled();
   });
 
   it("returns 503 (not a hallucinated answer) when OpenRouter isn't configured", async () => {
     vi.mocked(aiIsConfigured).mockReturnValueOnce(false);
-    const res = await POST(makeRequest({ question: "How do I connect Twilio?" }));
+    const res = await POST(
+      makeRequest({ question: "How do I connect Twilio?" })
+    );
     expect(res.status).toBe(503);
     const body = await res.json();
     expect(body.error).toMatch(/isn't available|not configured|OpenRouter/i);
@@ -71,7 +76,7 @@ describe("POST /api/onboarding/help", () => {
 
   it("answers a valid question, grounded in the help KB", async () => {
     const res = await POST(
-      makeRequest({ question: "How do I connect my phone number?" }),
+      makeRequest({ question: "How do I connect my phone number?" })
     );
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -98,7 +103,7 @@ describe("POST /api/onboarding/help", () => {
       makeRequest({
         question: "How do I turn on Speed-to-Lead?",
         brandName: "AgentStack",
-      }),
+      })
     );
     expect(lastSystemPrompt()).toContain("AgentStack");
   });
@@ -114,7 +119,7 @@ describe("POST /api/onboarding/help", () => {
           { role: "user", content: "" }, // empty, dropped
           { role: "user" }, // no content, dropped
         ],
-      }),
+      })
     );
 
     const messages = vi.mocked(callAi).mock.calls[0][0].messages;

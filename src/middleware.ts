@@ -49,6 +49,10 @@ const PUBLIC_PATHS = [
   // "IDX Listings (IDX Broker) v1".
   "/api/cron/idx-listing-sync",
   "/api/idx",
+  // Published Website Studio health monitor — scheduled fan-out and signed
+  // worker. Both verify QStash signatures inside their route handlers.
+  "/api/cron/website-release-monitor",
+  "/api/agent-site/monitor",
   // Smart Workflows time-based triggers — daily fan-out + its per-sub-account
   // step worker. Both signature-verified inside the route.
   "/api/cron/workflow-time-triggers",

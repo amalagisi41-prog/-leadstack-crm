@@ -11,10 +11,15 @@ import {
   Copy,
   Trash2,
   MessageSquare,
+  Home,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useSubAccount } from "@/context/sub-account-context";
-import { subscribeToForms, createForm, deleteForm } from "@/lib/firestore/forms";
+import {
+  subscribeToForms,
+  createForm,
+  deleteForm,
+} from "@/lib/firestore/forms";
 import { describeFirestoreError } from "@/lib/firebase/error";
 import { toDate } from "@/lib/format";
 import { Button } from "@/components/ui/button";
@@ -27,7 +32,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import type { LeadForm } from "@/types/forms";
+import type { FormTemplate, LeadForm } from "@/types/forms";
+import { realtorFormRecipes } from "@/lib/forms/realtor-recipes";
 
 export default function FormsPage() {
   const { user, loading: authLoading } = useAuth();
@@ -37,17 +43,15 @@ export default function FormsPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
+  const [presetOpen, setPresetOpen] = useState(false);
 
   useEffect(() => {
     if (authLoading || !user || !agencyId) return;
     setLoading(true);
-    const unsub = subscribeToForms(
-      { agencyId, subAccountId },
-      (list) => {
-        setForms(list);
-        setLoading(false);
-      },
-    );
+    const unsub = subscribeToForms({ agencyId, subAccountId }, (list) => {
+      setForms(list);
+      setLoading(false);
+    });
     return () => unsub();
   }, [user, agencyId, subAccountId, authLoading]);
 
@@ -58,7 +62,7 @@ export default function FormsPage() {
       const id = await createForm(
         { agencyId, subAccountId },
         user.uid,
-        newName.trim(),
+        newName.trim()
       );
       toast.success("Form created");
       setCreateOpen(false);
@@ -80,13 +84,36 @@ export default function FormsPage() {
         { agencyId, subAccountId },
         user.uid,
         "Contact us",
-        "contact",
+        "contact"
       );
       toast.success("Contact form created");
       window.location.href = saPath(`/forms/${id}`);
     } catch (err) {
       console.error(err);
-      toast.error(`Couldn't create contact form. ${describeFirestoreError(err)}`);
+      toast.error(
+        `Couldn't create contact form. ${describeFirestoreError(err)}`
+      );
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  async function handleCreatePreset(template: FormTemplate, name: string) {
+    if (!user || !agencyId || creating) return;
+    setCreating(true);
+    try {
+      const id = await createForm(
+        { agencyId, subAccountId },
+        user.uid,
+        name,
+        template
+      );
+      toast.success(`${name} created`);
+      setPresetOpen(false);
+      window.location.href = saPath(`/forms/${id}`);
+    } catch (err) {
+      console.error(err);
+      toast.error(`Couldn't create form. ${describeFirestoreError(err)}`);
     } finally {
       setCreating(false);
     }
@@ -104,8 +131,7 @@ export default function FormsPage() {
   }
 
   function copyLink(form: LeadForm) {
-    const origin =
-      typeof window !== "undefined" ? window.location.origin : "";
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
     navigator.clipboard.writeText(`${origin}/f/${form.id}`);
     toast.success("Public link copied");
   }
@@ -115,11 +141,19 @@ export default function FormsPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Lead Capture</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Public lead-capture forms. Every submission becomes a contact.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setPresetOpen(true)}
+            disabled={creating}
+          >
+            <Home className="mr-1 h-4 w-4" />
+            Realtor presets
+          </Button>
           <Button
             variant="outline"
             onClick={handleCreateContact}
@@ -187,10 +221,40 @@ export default function FormsPage() {
               >
                 Cancel
               </Button>
-              <Button onClick={handleCreate} disabled={creating || !newName.trim()}>
+              <Button
+                onClick={handleCreate}
+                disabled={creating || !newName.trim()}
+              >
                 {creating ? "Creating…" : "Create & edit"}
               </Button>
             </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+      <Sheet open={presetOpen} onOpenChange={setPresetOpen}>
+        <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
+          <SheetHeader>
+            <SheetTitle>Real-estate form presets</SheetTitle>
+            <SheetDescription>
+              Start with the right fields, CRM tags, deal creation, thank-you
+              state, and SMS consent language.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="grid gap-2 p-4 pt-0">
+            {realtorFormRecipes().map((recipe) => (
+              <button
+                key={recipe.id}
+                type="button"
+                disabled={creating}
+                onClick={() => void handleCreatePreset(recipe.id, recipe.name)}
+                className="hover:border-primary/40 hover:bg-muted/40 rounded-xl border p-4 text-left transition disabled:opacity-50"
+              >
+                <p className="text-sm font-semibold">{recipe.name}</p>
+                <p className="text-muted-foreground mt-1 text-xs">
+                  {recipe.description}
+                </p>
+              </button>
+            ))}
           </div>
         </SheetContent>
       </Sheet>
@@ -211,7 +275,7 @@ function FormCard({
 }) {
   const created = toDate(form.createdAt);
   return (
-    <div className="group flex flex-col rounded-2xl border bg-card p-5 transition-all hover:border-primary/30 hover:shadow-sm">
+    <div className="group bg-card hover:border-primary/30 flex flex-col rounded-2xl border p-5 transition-all hover:shadow-sm">
       <div className="flex items-start justify-between gap-2">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 via-violet-500 to-pink-500 text-white">
           <FileText className="h-4 w-4" />
@@ -227,11 +291,11 @@ function FormCard({
         </span>
       </div>
       <h3 className="mt-3 truncate font-semibold">{form.name}</h3>
-      <p className="mt-0.5 text-xs text-muted-foreground">
+      <p className="text-muted-foreground mt-0.5 text-xs">
         {form.fields.length} fields · {form.submissionCount ?? 0} submissions
       </p>
       {created && (
-        <p className="mt-0.5 text-[11px] text-muted-foreground">
+        <p className="text-muted-foreground mt-0.5 text-[11px]">
           Created{" "}
           {created.toLocaleDateString("en-GB", {
             day: "numeric",
@@ -262,7 +326,7 @@ function FormCard({
           size="sm"
           variant="ghost"
           onClick={onDelete}
-          className="ml-auto text-destructive hover:text-destructive"
+          className="text-destructive hover:text-destructive ml-auto"
         >
           <Trash2 className="h-3.5 w-3.5" />
         </Button>
@@ -277,7 +341,7 @@ function ListSkeleton() {
       {Array.from({ length: 3 }).map((_, i) => (
         <div
           key={i}
-          className="h-40 animate-pulse rounded-2xl border bg-muted/30"
+          className="bg-muted/30 h-40 animate-pulse rounded-2xl border"
         />
       ))}
     </div>
@@ -299,16 +363,12 @@ function EmptyState({
         <FileText className="h-6 w-6" />
       </div>
       <h3 className="text-base font-semibold">Create your first lead form</h3>
-      <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
+      <p className="text-muted-foreground mx-auto mt-1 max-w-sm text-sm">
         Drop a public form on your site. Submissions land as contacts in your
         pipeline automatically.
       </p>
       <div className="mt-6 flex flex-wrap justify-center gap-2">
-        <Button
-          variant="outline"
-          onClick={onCreateContact}
-          disabled={creating}
-        >
+        <Button variant="outline" onClick={onCreateContact} disabled={creating}>
           <MessageSquare className="mr-1 h-4 w-4" />
           Quick contact form
         </Button>
@@ -317,7 +377,7 @@ function EmptyState({
           New form
         </Button>
       </div>
-      <p className="mt-3 text-[11px] text-muted-foreground">
+      <p className="text-muted-foreground mt-3 text-[11px]">
         Quick contact form pre-fills Name, Email, Phone, and Message.
       </p>
     </div>

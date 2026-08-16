@@ -1,3 +1,5 @@
+import { SUB_ACCOUNT_ROUTES } from "@/lib/navigation/sub-account-routes";
+
 /**
  * Canonical onboarding-checklist steps.
  *
@@ -61,7 +63,7 @@ export const ONBOARDING_STEPS: readonly OnboardingStepMeta[] = [
     description:
       "Tell AgentStack about your business once — name, brokerage, services, brand voice, compliance rules, and FAQs. Every AI agent, email, and automation pulls from this profile automatically.",
     cta: "Set up business profile",
-    href: "/business-profile",
+    href: SUB_ACCOUNT_ROUTES.businessProfile,
     videoMinutes: 5,
   },
   {
@@ -88,16 +90,16 @@ export const ONBOARDING_STEPS: readonly OnboardingStepMeta[] = [
     description:
       "Create a form for your website or a landing page. Every submission auto-creates a contact and drops them into your pipeline.",
     cta: "Build a Form",
-    href: "/forms",
+    href: SUB_ACCOUNT_ROUTES.forms,
     videoMinutes: 5,
   },
   {
     id: "automation",
-    title: "Turn on Speed-to-Lead",
+    title: "Turn on your Speed-to-Lead plan",
     description:
       "Attach the Speed-to-Lead automation to your form so every new inquiry gets an SMS and email within 60 seconds — automatically.",
-    cta: "Set Up Automation",
-    href: "/workflows",
+    cta: "Open Follow-Up Plans",
+    href: SUB_ACCOUNT_ROUTES.workflows,
     videoMinutes: 4,
   },
   {
@@ -106,7 +108,7 @@ export const ONBOARDING_STEPS: readonly OnboardingStepMeta[] = [
     description:
       "Your pipeline is pre-set for real estate: New Lead → Contacted → Showing Scheduled → Offer Made → Closed. Drag deals as they progress.",
     cta: "View Deals",
-    href: "/pipeline",
+    href: SUB_ACCOUNT_ROUTES.pipeline,
     videoMinutes: 3,
   },
   {
@@ -115,7 +117,7 @@ export const ONBOARDING_STEPS: readonly OnboardingStepMeta[] = [
     description:
       "Your AI agent persona is pre-written for a CT realtor. Review it, add your business name, then enable it on SMS and Web Chat.",
     cta: "Set Up AI Agent",
-    href: "/ai-agents",
+    href: SUB_ACCOUNT_ROUTES.aiAgents,
     videoMinutes: 5,
   },
   {
@@ -124,7 +126,7 @@ export const ONBOARDING_STEPS: readonly OnboardingStepMeta[] = [
     description:
       "The final step — point your website to your own domain. Already own one? We'll show you the exact DNS records to add. Need one? We'll walk you through registering a new one.",
     cta: "Connect Domain",
-    href: "/domain",
+    href: SUB_ACCOUNT_ROUTES.domain,
     videoMinutes: 4,
   },
 ];

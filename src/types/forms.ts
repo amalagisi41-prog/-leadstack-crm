@@ -106,7 +106,18 @@ export interface FormSubmission {
  * Email, Phone, Message). Add new presets here and surface them in the
  * forms list page when needed.
  */
-export type FormTemplate = "blank" | "contact";
+export type FormTemplate =
+  | "blank"
+  | "contact"
+  | "buyer"
+  | "seller"
+  | "renter"
+  | "investor"
+  | "valuation"
+  | "showing"
+  | "open_house"
+  | "recruiting"
+  | "referral";
 
 export function defaultFormFields(): FormField[] {
   return [
@@ -198,8 +209,7 @@ export function contactFormFields(): FormField[] {
 export function contactFormSettings(): FormSettings {
   return {
     ...defaultFormSettings(),
-    thankYouMessage:
-      "Thanks for reaching out — we'll get back to you shortly.",
+    thankYouMessage: "Thanks for reaching out — we'll get back to you shortly.",
     autoTags: ["form", "contact"],
   };
 }

@@ -1,10 +1,7 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import {
   ExternalLink,
   Loader2,
@@ -12,6 +9,9 @@ import {
   LayoutTemplate,
   Lock,
   WandSparkles,
+  ShieldCheck,
+  TriangleAlert,
+  ClipboardCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSubAccount } from "@/context/sub-account-context";
@@ -19,10 +19,12 @@ import { useAgency } from "@/hooks/use-agency";
 import { Button } from "@/components/ui/button";
 import { DesignerChat } from "./designer-chat";
 import { ContentEditor } from "./content-editor";
+import { SiteStructureEditor } from "./site-structure-editor";
 import { BusinessSetupAssistant } from "./business-setup-assistant";
 import { SeoSettingsPanel } from "./seo-settings-panel";
 import { AgentSiteRenderer } from "./agent-site-renderer";
 import { WebsitePreviewCanvas } from "./website-preview-canvas";
+import { SiteRevisionHistory } from "./site-revision-history";
 import {
   AGENT_SITE_TEMPLATE_LIST,
   getTemplate,
@@ -30,16 +32,40 @@ import {
 import {
   emptyAgentSiteContent,
   emptyAgentSiteDesign,
+  type AgentSiteComposition,
   type AgentSiteContent,
   type AgentSiteDesign,
   type AgentSiteDoc,
   type AgentSiteTemplateId,
 } from "@/types/agent-site";
 import {
+  defaultAgentSiteComposition,
+  normalizeAgentSiteComposition,
+} from "@/lib/website-studio/site-composition";
+import {
   getWorkspaceWebsiteStudioView,
   type WebsiteStudioView,
 } from "@/lib/website-studio/initial-view";
+import {
+  assessAgentSitePublishReadiness,
+  hasPublishBlockers,
+} from "@/lib/website-studio/publish-readiness";
+import type { ReleaseAssuranceReport } from "@/lib/website-studio/release-assurance";
 
+const PuckAgentSiteEditor = dynamic(
+  () =>
+    import("./puck-agent-site-editor").then(
+      (module) => module.PuckAgentSiteEditor
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="text-muted-foreground flex h-[72vh] items-center justify-center rounded-2xl border text-sm">
+        Loading visual builder…
+      </div>
+    ),
+  }
+);
 
 export function WebsiteStudioApp({
   workspace = "home",
@@ -60,16 +86,61 @@ export function WebsiteStudioApp({
   const [content, setContent] = useState<AgentSiteContent>(
     emptyAgentSiteContent()
   );
+  const [composition, setComposition] = useState<AgentSiteComposition>(
+    defaultAgentSiteComposition()
+  );
   const [design, setDesign] = useState<AgentSiteDesign>(emptyAgentSiteDesign());
   const [selecting, setSelecting] = useState<AgentSiteTemplateId | null>(null);
   const [publishing, setPublishing] = useState(false);
-  const [mode, setMode] = useState<"designer" | "edit">("designer");
+  const [mode, setMode] = useState<
+    "designer" | "edit" | "structure" | "visual"
+  >("designer");
   const [savingDraft, setSavingDraft] = useState(false);
+  const [savingStructure, setSavingStructure] = useState(false);
   const [view, setView] = useState<WebsiteStudioView>(() =>
     workspace === "home" ? "builder" : workspace
   );
   const [foundationReady, setFoundationReady] = useState(false);
-  const [foundationLoaded, setFoundationLoaded] = useState(false);
+  const [releaseReport, setReleaseReport] =
+    useState<ReleaseAssuranceReport | null>(null);
+  const [releaseApproved, setReleaseApproved] = useState(false);
+  const [checkingRelease, setCheckingRelease] = useState(false);
+  const readinessIssues = useMemo(
+    () => assessAgentSitePublishReadiness(content),
+    [content]
+  );
+  const publishBlocked = hasPublishBlockers(readinessIssues);
+  const recordJourneyEvent = useCallback(
+    (event: "trusted_preview" | "release_approved" | "published") => {
+      if (!subAccountId) return;
+      void fetch(`/api/sub-accounts/${subAccountId}/onboarding-evaluation`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ event }),
+      });
+    },
+    [subAccountId]
+  );
+
+  useEffect(() => {
+    if (!site || !subAccountId) return;
+    let active = true;
+    void (async () => {
+      const response = await fetch(
+        `/api/sub-accounts/${subAccountId}/agent-site/release-assurance`
+      );
+      const data = (await response.json().catch(() => ({}))) as {
+        report?: ReleaseAssuranceReport;
+        approved?: boolean;
+      };
+      if (!active || !response.ok) return;
+      setReleaseReport(data.report ?? null);
+      setReleaseApproved(data.approved === true);
+    })();
+    return () => {
+      active = false;
+    };
+  }, [site, subAccountId]);
 
   useEffect(() => {
     // Wait for the sub-account context to settle (success OR failure)
@@ -108,7 +179,6 @@ export function WebsiteStudioApp({
           foundationData.foundation.hostingSetupConfirmed !== false
         );
         setFoundationReady(ready);
-        setFoundationLoaded(true);
         let loadedSite = data.site;
         if (loadedSite && ready) {
           const hydrateRes = await fetch(
@@ -130,6 +200,12 @@ export function WebsiteStudioApp({
         setSite(loadedSite);
         if (loadedSite) {
           setContent(loadedSite.content);
+          setComposition(normalizeAgentSiteComposition(loadedSite.composition));
+          const eventKey = `agentstack-trusted-preview-${subAccountId}`;
+          if (!window.sessionStorage.getItem(eventKey)) {
+            window.sessionStorage.setItem(eventKey, "1");
+            recordJourneyEvent("trusted_preview");
+          }
           setDesign(loadedSite.design ?? emptyAgentSiteDesign());
         }
         setView(
@@ -149,7 +225,13 @@ export function WebsiteStudioApp({
     return () => {
       active = false;
     };
-  }, [subAccountId, gateOpen, subAccountLoading, workspace]);
+  }, [
+    subAccountId,
+    gateOpen,
+    subAccountLoading,
+    workspace,
+    recordJourneyEvent,
+  ]);
 
   const patch = useCallback(
     async (body: Record<string, unknown>) => {
@@ -171,9 +253,14 @@ export function WebsiteStudioApp({
   async function pickTemplate(id: AgentSiteTemplateId) {
     setSelecting(id);
     try {
-      const s = await patch({ templateId: id });
+      const s = await patch({
+        templateId: id,
+        revisionSource: "structure",
+        revisionLabel: `Before switching to ${getTemplate(id).name}`,
+      });
       setSite(s);
       setContent(s.content);
+      setComposition(normalizeAgentSiteComposition(s.composition));
       setDesign(s.design ?? emptyAgentSiteDesign());
       setView("vibe");
     } catch (e) {
@@ -197,11 +284,37 @@ export function WebsiteStudioApp({
   async function saveContent(next: AgentSiteContent) {
     setSavingDraft(true);
     try {
-      const s = await patch({ content: next });
+      const s = await patch({
+        content: next,
+        revisionSource: "content",
+        revisionLabel: "Before manual content edit",
+      });
       setSite(s);
       setContent(s.content);
     } finally {
       setSavingDraft(false);
+    }
+  }
+
+  async function saveComposition(
+    next: AgentSiteComposition,
+    source: "structure" | "puck" = "structure"
+  ) {
+    setSavingStructure(true);
+    try {
+      const s = await patch({
+        composition: next,
+        revisionSource: source,
+        revisionLabel:
+          source === "puck"
+            ? "Before Puck visual edit"
+            : "Before page structure edit",
+      });
+      const normalized = normalizeAgentSiteComposition(s.composition);
+      setSite(s);
+      setComposition(normalized);
+    } finally {
+      setSavingStructure(false);
     }
   }
 
@@ -210,15 +323,56 @@ export function WebsiteStudioApp({
       toast.error("Finish domain and hosting setup before publishing.");
       return;
     }
+    if (publishBlocked) {
+      toast.error("Complete the publish checklist before publishing.");
+      setMode("edit");
+      return;
+    }
+    if (!releaseApproved) {
+      toast.error("Run and approve the release check before publishing.");
+      return;
+    }
     setPublishing(true);
     try {
-      const s = await patch({ status: "published" });
+      const s = await patch({
+        status: "published",
+        revisionSource: "publish",
+        revisionLabel: "Before publish",
+      });
       setSite(s);
       toast.success("Your site is live!");
+      recordJourneyEvent("published");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not publish.");
     } finally {
       setPublishing(false);
+    }
+  }
+
+  async function runReleaseAssurance() {
+    setCheckingRelease(true);
+    try {
+      const response = await fetch(
+        `/api/sub-accounts/${subAccountId}/agent-site/release-assurance`,
+        { method: "POST" }
+      );
+      const data = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        report?: ReleaseAssuranceReport;
+        approved?: boolean;
+      };
+      if (data.report) setReleaseReport(data.report);
+      if (!response.ok) throw new Error(data.error || "Release check failed.");
+      setReleaseApproved(data.approved === true);
+      toast.success("Release check passed and this draft is approved.");
+      recordJourneyEvent("release_approved");
+    } catch (error) {
+      setReleaseApproved(false);
+      toast.error(
+        error instanceof Error ? error.message : "Release check failed."
+      );
+    } finally {
+      setCheckingRelease(false);
     }
   }
 
@@ -241,14 +395,13 @@ export function WebsiteStudioApp({
   }
 
   const dedicatedWorkspace = workspace !== "home";
-  const vibeReady = foundationReady;
   const tabRow = dedicatedWorkspace ? (
     <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-white p-3">
       <div>
-        <p className="font-semibold">Dedicated AI Vibe Studio</p>
+        <p className="font-semibold">Vibe Website Studio</p>
         <p className="text-muted-foreground text-xs">
-          Templates are hidden in this window so the selected design remains
-          isolated.
+          Design and preview the AgentStack-hosted site. Nothing publishes until
+          you approve it.
         </p>
       </div>
       <Button
@@ -264,35 +417,22 @@ export function WebsiteStudioApp({
       <button
         type="button"
         onClick={() => setView("builder")}
-        disabled={!foundationLoaded || !foundationReady}
-        title={
-          !foundationReady
-            ? "Confirm a domain and hosting path first"
-            : undefined
-        }
-        className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${view === "builder" ? "bg-[#1a2f50] text-white" : "text-muted-foreground hover:text-foreground"} disabled:cursor-not-allowed disabled:opacity-45`}
+        className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${view === "builder" ? "bg-[#1a2f50] text-white" : "text-muted-foreground hover:text-foreground"}`}
       >
-        {foundationReady ? "AgentStack Templates" : "Templates · Locked"}
+        Ready-made sites
       </button>
       <a
         href={`/sa/${subAccountId}/website-studio/vibe`}
-        aria-disabled={!foundationLoaded || !vibeReady}
-        onClick={(event) => {
-          if (!foundationLoaded || !vibeReady) event.preventDefault();
-        }}
-        title={
-          !vibeReady ? "Confirm a domain and hosting path first" : undefined
-        }
-        className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${view === "vibe" ? "bg-[#1a2f50] text-white" : "text-muted-foreground hover:text-foreground"} aria-disabled:cursor-not-allowed aria-disabled:opacity-45`}
+        className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${view === "vibe" ? "bg-[#1a2f50] text-white" : "text-muted-foreground hover:text-foreground"}`}
       >
-        {vibeReady ? "Vibe Builder" : "Vibe Builder · Locked"}
+        Vibe Builder
       </a>
       <button
         type="button"
         onClick={() => setView("setup")}
         className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${view === "setup" ? "bg-[#1a2f50] text-white" : "text-muted-foreground hover:text-foreground"}`}
       >
-        {foundationReady ? "Setup tools" : "Business Setup"}
+        Website &amp; Domain
       </button>
       <button
         type="button"
@@ -324,7 +464,6 @@ export function WebsiteStudioApp({
           foundationComplete={foundationReady}
           onFoundationChange={(ready) => {
             setFoundationReady(ready);
-            setFoundationLoaded(true);
           }}
         />
       </div>
@@ -343,8 +482,8 @@ export function WebsiteStudioApp({
           />
         ) : (
           <div className="text-muted-foreground rounded-2xl border border-dashed p-8 text-center text-sm">
-            Start a site in the Vibe Builder or pick a template first — SEO
-            settings apply to your published page.
+            Start a site in the Vibe Builder first. SEO settings apply to its
+            published page.
           </div>
         )}
       </div>
@@ -391,14 +530,14 @@ export function WebsiteStudioApp({
           >
             <ExternalLink className="h-5 w-5 text-emerald-700" />
             <h2 className="mt-3 font-semibold text-emerald-950">
-              Bring an existing website
+              I already have a website
             </h2>
             <p className="mt-1 text-sm text-emerald-900/75">
-              Connect your domain and hosting in the guided workspace — we
-              walk you through the move step by step.
+              Keep the current site live while you choose the guided hosting and
+              transfer path. AgentStack never proxies it into the editor.
             </p>
             <span className="mt-3 inline-flex text-sm font-semibold text-emerald-700">
-              Start existing-site setup →
+              Open Website &amp; Domain →
             </span>
           </a>
           <button
@@ -547,6 +686,117 @@ export function WebsiteStudioApp({
           </Button>
         </div>
       ) : null}
+      <div
+        className={`rounded-xl border p-4 ${
+          publishBlocked
+            ? "border-amber-200 bg-amber-50"
+            : "border-emerald-200 bg-emerald-50"
+        }`}
+      >
+        <div className="flex items-start gap-3">
+          {publishBlocked ? (
+            <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
+          ) : (
+            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" />
+          )}
+          <div className="min-w-0 flex-1">
+            <p
+              className={`text-sm font-semibold ${
+                publishBlocked ? "text-amber-950" : "text-emerald-950"
+              }`}
+            >
+              {publishBlocked
+                ? "Publish checklist needs attention"
+                : "Required publishing details are complete"}
+            </p>
+            {readinessIssues.length ? (
+              <ul className="mt-2 grid gap-1 text-xs sm:grid-cols-2">
+                {readinessIssues.map((issue) => (
+                  <li
+                    key={`${issue.field}-${issue.message}`}
+                    className={
+                      issue.severity === "blocker"
+                        ? "text-amber-900"
+                        : "text-slate-600"
+                    }
+                  >
+                    {issue.severity === "blocker" ? "Required" : "Review"}:{" "}
+                    {issue.message}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-1 text-xs text-emerald-800">
+                Domain readiness is checked separately when you publish.
+              </p>
+            )}
+          </div>
+          {publishBlocked ? (
+            <Button size="sm" variant="outline" onClick={() => setMode("edit")}>
+              Fix details
+            </Button>
+          ) : null}
+        </div>
+      </div>
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex gap-3">
+            <ClipboardCheck className="mt-0.5 h-4 w-4 shrink-0 text-slate-700" />
+            <div>
+              <p className="text-sm font-semibold text-slate-950">
+                Release assurance
+              </p>
+              <p className="mt-1 text-xs text-slate-600">
+                Checks the exact draft’s route, responsive structure, assets,
+                lead path, compliance, integrations, and rollback target.
+              </p>
+              {releaseReport ? (
+                <div className="mt-2 text-xs text-slate-700">
+                  <p className="font-medium">
+                    {
+                      releaseReport.checks.filter(
+                        (check) => check.status === "passed"
+                      ).length
+                    }{" "}
+                    passed ·{" "}
+                    {
+                      releaseReport.checks.filter(
+                        (check) => check.status === "warning"
+                      ).length
+                    }{" "}
+                    warnings ·{" "}
+                    {
+                      releaseReport.checks.filter(
+                        (check) => check.status === "blocked"
+                      ).length
+                    }{" "}
+                    blocked
+                  </p>
+                  <ul className="mt-2 space-y-1 text-rose-700">
+                    {releaseReport.checks
+                      .filter((check) => check.status === "blocked")
+                      .map((check) => (
+                        <li key={check.id}>• {check.detail}</li>
+                      ))}
+                  </ul>
+                </div>
+              ) : null}
+            </div>
+          </div>
+          <Button
+            size="sm"
+            variant={releaseApproved ? "outline" : "default"}
+            onClick={() => void runReleaseAssurance()}
+            disabled={checkingRelease}
+          >
+            {checkingRelease
+              ? "Checking…"
+              : releaseApproved
+                ? "Approved for release"
+                : "Run release check"}
+          </Button>
+        </div>
+      </div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold tracking-tight">
@@ -586,88 +836,185 @@ export function WebsiteStudioApp({
               <ExternalLink className="mr-1 h-3.5 w-3.5" /> View live
             </Button>
           )}
+          <SiteRevisionHistory
+            subAccountId={subAccountId}
+            onRestore={(restored) => {
+              setSite(restored);
+              setContent(restored.content);
+              setComposition(
+                normalizeAgentSiteComposition(restored.composition)
+              );
+              setDesign(restored.design ?? emptyAgentSiteDesign());
+            }}
+          />
           <Button
             size="sm"
             onClick={publish}
-            disabled={publishing || !foundationReady}
+            disabled={
+              publishing ||
+              !foundationReady ||
+              publishBlocked ||
+              !releaseApproved
+            }
           >
             <Rocket className="mr-1 h-3.5 w-3.5" />
             {publishing
               ? "Publishing…"
               : site.status === "published"
                 ? "Re-publish"
-                : foundationReady
+                : foundationReady && !publishBlocked && releaseApproved
                   ? "Publish"
-                  : "Foundation required"}
+                  : !releaseApproved
+                    ? "Release check required"
+                    : publishBlocked
+                      ? "Checklist required"
+                      : "Foundation required"}
           </Button>
         </div>
       </div>
 
       {/* Split: Designer chat + live preview */}
-      <div className="grid gap-4 lg:grid-cols-[380px_1fr]">
-        <div className="flex h-[72vh] flex-col gap-2">
-          <div className="flex items-center gap-1 rounded-lg border p-1">
-            <button
-              type="button"
+      {mode === "visual" ? (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between rounded-xl border px-4 py-3">
+            <div>
+              <div className="text-sm font-semibold">Puck + Zack</div>
+              <div className="text-muted-foreground text-xs">
+                Drag sections visually. Zack and manual content edits continue
+                to use the same site data.
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => setMode("designer")}
-              className={`flex-1 rounded px-3 py-1.5 text-xs font-medium transition-colors ${
-                mode === "designer"
-                  ? "bg-[#1a2f50] text-white"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
             >
-              AI Designer
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode("edit")}
-              className={`flex-1 rounded px-3 py-1.5 text-xs font-medium transition-colors ${
-                mode === "edit"
-                  ? "bg-[#1a2f50] text-white"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Edit content
-            </button>
+              Back to Zack
+            </Button>
           </div>
-          <div className="min-h-0 flex-1">
-            {mode === "designer" ? (
-              <DesignerChat
-                subAccountId={subAccountId}
-                brandName={brandName}
-                experience="vibe"
-                initialTranscript={site.designerTranscript ?? []}
-                initialStep={site.designerStep ?? 0}
-                totalSteps={10}
-                onContent={setContent}
-                onDesign={setDesign}
-              />
-            ) : (
-              <ContentEditor
+          <PuckAgentSiteEditor
+            composition={composition}
+            onChange={(next) => {
+              setComposition(next);
+              setReleaseApproved(false);
+            }}
+            onSave={(next) => saveComposition(next, "puck")}
+          />
+        </div>
+      ) : (
+        <div className="grid gap-4 lg:grid-cols-[380px_1fr]">
+          <div className="flex h-[72vh] flex-col gap-2">
+            <div className="flex items-center gap-1 rounded-lg border p-1">
+              <button
+                type="button"
+                onClick={() => setMode("designer")}
+                className={`flex-1 rounded px-3 py-1.5 text-xs font-medium transition-colors ${
+                  mode === "designer"
+                    ? "bg-[#1a2f50] text-white"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                AI Designer
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode("edit")}
+                className={`flex-1 rounded px-3 py-1.5 text-xs font-medium transition-colors ${
+                  mode === "edit"
+                    ? "bg-[#1a2f50] text-white"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Edit content
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode("structure")}
+                className={`flex-1 rounded px-3 py-1.5 text-xs font-medium transition-colors ${
+                  mode === "structure"
+                    ? "bg-[#1a2f50] text-white"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Page structure
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode("visual")}
+                className="text-muted-foreground hover:text-foreground flex-1 rounded px-3 py-1.5 text-xs font-medium transition-colors"
+              >
+                Puck + Zack
+              </button>
+            </div>
+            <div className="min-h-0 flex-1">
+              {mode === "designer" ? (
+                <DesignerChat
+                  subAccountId={subAccountId}
+                  brandName={brandName}
+                  experience="vibe"
+                  initialTranscript={site.designerTranscript ?? []}
+                  initialStep={site.designerStep ?? 0}
+                  totalSteps={10}
+                  onContent={(next) => {
+                    setContent(next);
+                    setReleaseApproved(false);
+                  }}
+                  onDesign={(next) => {
+                    setDesign(next);
+                    setReleaseApproved(false);
+                  }}
+                />
+              ) : mode === "edit" ? (
+                <ContentEditor
+                  content={content}
+                  onChange={(next) => {
+                    setContent(next);
+                    setReleaseApproved(false);
+                  }}
+                  onSave={saveContent}
+                  saving={savingDraft}
+                />
+              ) : (
+                <SiteStructureEditor
+                  composition={composition}
+                  onChange={(next) => {
+                    setComposition(next);
+                    setReleaseApproved(false);
+                  }}
+                  onSave={saveComposition}
+                  saving={savingStructure}
+                />
+              )}
+            </div>
+          </div>
+          <div className="bg-muted/30 overflow-hidden rounded-2xl border">
+            <div className="bg-card flex items-center justify-between gap-3 border-b px-4 py-2">
+              <span className="text-muted-foreground text-xs font-medium">
+                Live preview · updates as you answer
+              </span>
+            </div>
+            {/* Device and zoom controls live inside the canvas, which renders
+                into an iframe at the true device viewport. */}
+            <WebsitePreviewCanvas className="max-h-[72vh] overflow-y-auto">
+              <AgentSiteRenderer
+                template={template}
                 content={content}
-                onChange={setContent}
-                onSave={saveContent}
-                saving={savingDraft}
+                composition={composition}
+                design={design}
+                editing
+                idx={{
+                  connected: Boolean(
+                    subAccount?.idxEnabledByAgency === true &&
+                    subAccount.idxConfig?.enabled
+                  ),
+                  url: `/idx/${subAccountId}`,
+                  displayName: subAccount?.idxConfig?.displayName ?? undefined,
+                }}
               />
-            )}
+            </WebsitePreviewCanvas>
           </div>
         </div>
-
-        <div className="bg-muted/30 overflow-hidden rounded-2xl border">
-          <div className="bg-card flex items-center justify-between border-b px-4 py-2">
-            <span className="text-muted-foreground text-xs font-medium">
-              Live preview · updates as you answer
-            </span>
-          </div>
-          <WebsitePreviewCanvas className="max-h-[72vh] overflow-y-auto">
-            <AgentSiteRenderer
-              template={template}
-              content={content}
-              design={design}
-            />
-          </WebsitePreviewCanvas>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

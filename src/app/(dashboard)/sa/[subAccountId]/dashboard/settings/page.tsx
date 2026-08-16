@@ -72,6 +72,27 @@ export default function SettingsPage() {
   const [profile, setProfile] = useState<UserDoc | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [deals, setDeals] = useState<Deal[]>([]);
+  const [settingsTab, setSettingsTab] = useState("admin");
+
+  useEffect(() => {
+    const requestedTab = new URLSearchParams(window.location.search).get("tab");
+    if (
+      requestedTab &&
+      ["admin", "messaging", "api", "custom-fields", "import"].includes(
+        requestedTab
+      )
+    ) {
+      setSettingsTab(requestedTab);
+    }
+  }, []);
+
+  function changeSettingsTab(tab: string) {
+    setSettingsTab(tab);
+    const url = new URL(window.location.href);
+    if (tab === "admin") url.searchParams.delete("tab");
+    else url.searchParams.set("tab", tab);
+    window.history.replaceState(null, "", url);
+  }
 
   useEffect(() => {
     if (!user) return;
@@ -191,7 +212,7 @@ export default function SettingsPage() {
         </p>
       </div>
 
-      <Tabs defaultValue="admin">
+      <Tabs value={settingsTab} onValueChange={changeSettingsTab}>
         <TabsList>
           <TabsTrigger value="admin">Admin</TabsTrigger>
           <TabsTrigger value="messaging">Messaging</TabsTrigger>

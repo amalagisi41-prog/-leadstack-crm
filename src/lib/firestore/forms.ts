@@ -21,6 +21,7 @@ import {
   type LeadForm,
 } from "@/types/forms";
 import type { TenantScope } from "@/types";
+import { getRealtorFormRecipe } from "@/lib/forms/realtor-recipes";
 
 const FORMS = "forms";
 
@@ -37,29 +38,30 @@ function slugify(name: string): string {
 export function subscribeToForms(
   scope: TenantScope,
   callback: (forms: LeadForm[]) => void,
-  onError?: (err: Error) => void,
+  onError?: (err: Error) => void
 ): Unsubscribe {
   const q = query(
     collection(getFirebaseDb(), FORMS),
-    where("subAccountId", "==", scope.subAccountId),
+    where("subAccountId", "==", scope.subAccountId)
   );
   return onSnapshot(
     q,
     (snap) => {
-      const forms = snap.docs.map(
-        (d) => ({ id: d.id, ...(d.data() as Omit<LeadForm, "id">) }),
-      );
+      const forms = snap.docs.map((d) => ({
+        id: d.id,
+        ...(d.data() as Omit<LeadForm, "id">),
+      }));
       forms.sort((a, b) => toMillis(b.createdAt) - toMillis(a.createdAt));
       callback(forms);
     },
-    (err) => onError?.(err),
+    (err) => onError?.(err)
   );
 }
 
 export function subscribeToForm(
   id: string,
   callback: (form: LeadForm | null) => void,
-  onError?: (err: Error) => void,
+  onError?: (err: Error) => void
 ): Unsubscribe {
   return onSnapshot(
     doc(getFirebaseDb(), FORMS, id),
@@ -70,7 +72,7 @@ export function subscribeToForm(
       }
       callback({ id: snap.id, ...(snap.data() as Omit<LeadForm, "id">) });
     },
-    (err) => onError?.(err),
+    (err) => onError?.(err)
   );
 }
 
@@ -78,12 +80,15 @@ export async function createForm(
   scope: TenantScope,
   createdByUid: string,
   name: string,
-  template: FormTemplate = "blank",
+  template: FormTemplate = "blank"
 ): Promise<string> {
+  const recipe = getRealtorFormRecipe(template);
   const fields =
-    template === "contact" ? contactFormFields() : defaultFormFields();
+    recipe?.fields ??
+    (template === "contact" ? contactFormFields() : defaultFormFields());
   const settings =
-    template === "contact" ? contactFormSettings() : defaultFormSettings();
+    recipe?.settings ??
+    (template === "contact" ? contactFormSettings() : defaultFormSettings());
   const ref = await addDoc(collection(getFirebaseDb(), FORMS), {
     name,
     slug: slugify(name),
@@ -112,7 +117,7 @@ export async function updateForm(
       | "createdAt"
       | "submissionCount"
     >
-  >,
+  >
 ): Promise<void> {
   await updateDoc(doc(getFirebaseDb(), FORMS, id), {
     ...data,

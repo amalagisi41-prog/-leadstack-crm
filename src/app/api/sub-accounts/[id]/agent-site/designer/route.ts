@@ -19,10 +19,11 @@ import {
   buildDesignerSystemPrompt,
   isLastStep,
 } from "@/lib/website-studio/designer";
+import { normalizeAgentSiteComposition } from "@/lib/website-studio/site-composition";
 import { applyDesignFields } from "@/lib/website-studio/design";
 import {
-  screenContentFields,
   describeBlockedFields,
+  screenContentFields,
 } from "@/lib/website-studio/content-compliance";
 import type {
   AgentSiteContent,
@@ -167,12 +168,11 @@ export async function POST(
   }
   const message =
     typeof body.message === "string" ? body.message.trim().slice(0, 1500) : "";
-  // Optional reference screenshot as a compact data URL. The client
-  // downscales/compresses before upload; re-validate shape and size here so
-  // the route never forwards arbitrary payloads to the model.
   const image =
     typeof body.image === "string" &&
-    /^data:image\/(?:png|jpe?g|webp);base64,[A-Za-z0-9+/=]+$/.test(body.image) &&
+    /^data:image\/(?:png|jpe?g|webp);base64,[A-Za-z0-9+/=]+$/.test(
+      body.image
+    ) &&
     body.image.length <= 4_000_000
       ? body.image
       : null;
@@ -198,6 +198,10 @@ export async function POST(
     );
   }
   const site = snap.data() as {
+    templateId: string;
+    slug: string;
+    status: string;
+    composition?: unknown;
     content: AgentSiteContent;
     design?: AgentSiteDesign;
     designerStep: number;
@@ -246,7 +250,7 @@ ${JSON.stringify(currentDesign)}
 
 ${blueprint ? `APPROVED BUSINESS BLUEPRINT:\n${blueprint}` : "No approved Business Blueprint details are available yet."}
 
-Return STRICT JSON only, every time, with no prose outside it:
+Return STRICT JSON only:
 {
   "fields": { <any allowed website content fields that should change> },
   "design": { <any design tokens/customCss that should change> },
@@ -258,58 +262,45 @@ Return STRICT JSON only, every time, with no prose outside it:
 
   const userText =
     message ||
-    "Use this screenshot as the design reference and update the site content to match it.";
-
-  // Recent history gives Zack continuity across turns — without it every
-  // message is answered in isolation, so references to "the screenshot" or
-  // "that change" from a prior turn go unrecognized. Images are never
-  // replayed (they're never stored), only the text of what was said and
-  // what Zack extracted/decided.
+    "Use this screenshot as the design reference and update the site to match it.";
   const history: AiChatMessage[] = vibeMode
     ? (site.designerTranscript ?? []).slice(-8).map((turn) => ({
-        role: turn.role === "agent" ? "user" : "assistant",
+        role:
+          turn.role === "agent" ? ("user" as const) : ("assistant" as const),
         content: turn.content,
       }))
     : [];
-
-  const currentTurn: AiChatMessage = {
-    role: "user",
-    content: image
-      ? [
-          { type: "image_url", image_url: { url: image } },
-          { type: "text", text: userText },
-        ]
-      : userText,
-  };
-
   const messages: AiChatMessage[] = [
     { role: "system", content: systemPrompt },
     ...history,
-    currentTurn,
+    {
+      role: "user",
+      content: image
+        ? [
+            { type: "image_url", image_url: { url: image } },
+            { type: "text", text: userText },
+          ]
+        : userText,
+    },
   ];
 
   let parsed: ReturnType<typeof parseModelJson> = null;
-  let rawText = "";
   try {
     const result = await callAi({
       messages,
       maxTokens: image ? 900 : 700,
       temperature: 0.5,
     });
-    rawText = result.text;
-    parsed = parseModelJson(rawText);
-    // The model occasionally wraps JSON in prose despite instructions. One
-    // retry with the failure shown back to it recovers almost every case
-    // instead of surfacing a dead-end error to the user.
+    parsed = parseModelJson(result.text);
     if (!parsed) {
       const retry = await callAi({
         messages: [
           ...messages,
-          { role: "assistant", content: rawText },
+          { role: "assistant", content: result.text },
           {
             role: "user",
             content:
-              "That response wasn't valid JSON. Reply again with ONLY the JSON object — no prose, no markdown fences.",
+              "That response wasn't valid JSON. Reply with only the JSON object, without prose or markdown fences.",
           },
         ],
         maxTokens: image ? 900 : 700,
@@ -334,9 +325,6 @@ Return STRICT JSON only, every time, with no prose outside it:
     );
   }
 
-  // Fair Housing screening on generated copy. The Blueprint tells Zack the
-  // rules, but an instruction is not a control — anything that slips through
-  // is dropped here rather than persisted to a page that gets published.
   const screened = screenContentFields(parsed.fields ?? {});
   if (screened.blocked.length > 0) {
     console.warn("[agent-site/designer] fair housing block", {
@@ -344,7 +332,6 @@ Return STRICT JSON only, every time, with no prose outside it:
       blocked: screened.blocked,
     });
   }
-
   const nextContent = applyFields(site.content, screened.safeFields);
   const nextDesign = vibeMode
     ? applyDesignFields(currentDesign, parsed.design ?? {})
@@ -357,22 +344,40 @@ Return STRICT JSON only, every time, with no prose outside it:
     describeBlockedFields(screened.blocked);
   const suggestions = vibeMode ? parseSuggestions(parsed.suggestions) : [];
 
-  // Persist a marker instead of the image itself — Firestore documents cap
-  // at 1MB and the transcript must stay small.
-  const storedAgentTurn = image ? `${userText} 📎 [screenshot attached]` : message;
+  const storedAgentTurn = image
+    ? `${userText} 📎 [screenshot attached]`
+    : message;
   const transcript: DesignerTurn[] = [
     ...(site.designerTranscript ?? []),
     { role: "agent" as const, content: storedAgentTurn },
     { role: "designer" as const, content: reply },
   ].slice(-40);
 
-  await ref.update({
+  const revisionRef = ref.collection("revisions").doc();
+  const batch = db.batch();
+  batch.set(revisionRef, {
+    id: revisionRef.id,
+    siteId: SITE_ID,
+    subAccountId,
+    createdByUid: access.uid,
+    source: "zack",
+    label: "Before Zack update",
+    templateId: site.templateId,
+    slug: site.slug,
+    status: site.status,
+    content: site.content,
+    composition: normalizeAgentSiteComposition(site.composition),
+    design: currentDesign,
+    createdAt: FieldValue.serverTimestamp(),
+  });
+  batch.update(ref, {
     content: nextContent,
     design: nextDesign,
     designerStep: nextStep,
     designerTranscript: transcript,
     updatedAt: FieldValue.serverTimestamp(),
   });
+  await batch.commit();
 
   return NextResponse.json({
     reply,

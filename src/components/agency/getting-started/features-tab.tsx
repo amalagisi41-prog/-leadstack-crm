@@ -22,6 +22,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SUB_ACCOUNT_ROUTES } from "@/lib/navigation/sub-account-routes";
 
 interface Feature {
   icon: LucideIcon;
@@ -111,9 +112,9 @@ const FEATURES: Feature[] = [
   },
   {
     icon: Zap,
-    title: "Automations",
+    title: "Follow-Up Plans",
     tone: "violet",
-    href: "/workflows",
+    href: SUB_ACCOUNT_ROUTES.workflows,
     description:
       "Workflow Recipes v1 ships Speed-to-Lead: SMS + email + owner notify on form submit. Send-window restrictions, opt-out compliance (HMAC-signed unsubscribe links + Twilio STOP/START), and template merge tags built in.",
   },
@@ -135,11 +136,11 @@ const FEATURES: Feature[] = [
   },
   {
     icon: Globe,
-    title: "Website builder",
+    title: "Website Studio",
     tone: "emerald",
-    href: "/website",
+    href: "/website-studio",
     description:
-      "Stand up a marketing site for the client via gitpage.site. Sectioned form (Basics / Pages / Services / Business / Design / FAQ), polled async build, live URL in 1–3 minutes. One website per sub-account.",
+      "Create an AgentStack-hosted real-estate website with ready-made starting points, direct section controls, Zack-assisted copy, and a private preview before publishing.",
   },
   {
     icon: BarChart3,
@@ -178,7 +179,7 @@ interface FeaturesTabProps {
 export function FeaturesTab({ firstSubAccountId }: FeaturesTabProps) {
   return (
     <div className="space-y-3">
-      <p className="text-sm text-muted-foreground">
+      <p className="text-muted-foreground text-sm">
         Each surface, at a glance. Links open in the same tab — use back to
         return.
       </p>
@@ -213,7 +214,7 @@ function FeatureCard({
         : null;
 
   return (
-    <li className="flex flex-col rounded-xl border bg-card p-4">
+    <li className="bg-card flex flex-col rounded-xl border p-4">
       <div className="flex items-start gap-3">
         <span
           className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${tone.bg} ${tone.text}`}
@@ -222,7 +223,7 @@ function FeatureCard({
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium">{feature.title}</p>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="text-muted-foreground mt-1 text-xs">
             {feature.description}
           </p>
         </div>
@@ -230,11 +231,7 @@ function FeatureCard({
       {feature.infoOnly ? null : (
         <div className="mt-3 flex justify-end">
           {href ? (
-            <Button
-              size="sm"
-              variant="outline"
-              render={<Link href={href} />}
-            >
+            <Button size="sm" variant="outline" render={<Link href={href} />}>
               {feature.cta ?? "Open"}
               <ArrowRight className="ml-1 h-3 w-3" />
             </Button>

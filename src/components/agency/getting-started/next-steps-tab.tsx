@@ -14,6 +14,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SUB_ACCOUNT_ROUTES } from "@/lib/navigation/sub-account-routes";
 
 interface NextStep {
   number: number;
@@ -68,20 +69,20 @@ const STEPS: NextStep[] = [
   },
   {
     number: 5,
-    title: "Attach an automation to that form",
+    title: "Attach a follow-up plan to that form",
     why: "Wire the Speed-to-Lead recipe so every submission gets an SMS + email reply within seconds, plus an owner notification. Compliance (unsubscribe + STOP/START) is built in.",
-    cta: "Open Automations",
-    href: "/workflows",
+    cta: "Open Follow-Up Plans",
+    href: SUB_ACCOUNT_ROUTES.workflows,
     icon: Zap,
     requiresSubAccount: true,
     tone: "pink",
   },
   {
     number: 6,
-    title: "Spin up a client website",
-    why: "Use the Website tab to push a marketing site to gitpage.site. Click Sample to prefill a demo build, or fill in the client's details. Live URL in 1–3 minutes.",
-    cta: "Open Website",
-    href: "/website",
+    title: "Create the real-estate website",
+    why: "Open Website Studio, choose a ready-made business site, customize sections directly, and preview the AgentStack-hosted draft before publishing.",
+    cta: "Open Website Studio",
+    href: SUB_ACCOUNT_ROUTES.website,
     icon: Globe,
     requiresSubAccount: true,
     tone: "amber",
@@ -115,7 +116,7 @@ interface NextStepsTabProps {
 export function NextStepsTab({ firstSubAccountId }: NextStepsTabProps) {
   return (
     <div className="space-y-3">
-      <p className="text-sm text-muted-foreground">
+      <p className="text-muted-foreground text-sm">
         A recommended order for the first hour. Each step takes a couple of
         minutes — feel free to skip around.
       </p>
@@ -148,7 +149,7 @@ function StepCard({
     : step.href;
 
   return (
-    <li className="flex flex-col gap-3 rounded-xl border bg-card p-4 sm:flex-row sm:items-center">
+    <li className="bg-card flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center">
       <div className="flex flex-1 items-start gap-3">
         <span
           className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${tone.bg} ${tone.text}`}
@@ -157,7 +158,7 @@ function StepCard({
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium">{step.title}</p>
-          <p className="mt-1 text-xs text-muted-foreground">{step.why}</p>
+          <p className="text-muted-foreground mt-1 text-xs">{step.why}</p>
         </div>
       </div>
       <div className="flex shrink-0 justify-end sm:justify-start">

@@ -66,5 +66,19 @@ export function hydrateAgentSiteFromBlueprint(
     ctaSubtext:
       profile.responsePreference.trim() ||
       "Share your goals and we’ll help you choose the right next step.",
+    compliance: {
+      ...current.compliance,
+      licenseStates: profile.licenseStates.trim(),
+      licenseNumber: profile.licenseNumber.trim(),
+      privacyPolicyUrl: current.compliance?.privacyPolicyUrl ?? "",
+      termsUrl: current.compliance?.termsUrl ?? "",
+      fairHousingStatement:
+        current.compliance?.fairHousingStatement ??
+        "We are pledged to the letter and spirit of U.S. policy for the achievement of equal housing opportunity throughout the nation.",
+      smsConsentEnabled: current.compliance?.smsConsentEnabled ?? false,
+      smsConsentDisclosure:
+        current.compliance?.smsConsentDisclosure ??
+        "By providing your phone number, you agree to receive calls and text messages about your inquiry. Consent is not a condition of service. Message and data rates may apply. Reply STOP to opt out.",
+    },
   };
 }

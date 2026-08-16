@@ -1,38 +1,10 @@
 import "server-only";
 
 import { randomUUID } from "crypto";
-import { gzipSync } from "node:zlib";
 import { NextResponse } from "next/server";
 import { Timestamp } from "firebase-admin/firestore";
 import { requireSubAccountAdmin } from "@/lib/auth/require-tenancy";
 import { getAdminDb } from "@/lib/firebase/admin";
-import { scanWebsite } from "@/lib/website-transfer/scanner";
-
-const EMPTY_INVENTORY = {
-  pages: 0,
-  navigationLinks: [],
-  images: [],
-  fonts: [],
-  colors: [],
-  stylesheets: [],
-  scripts: [],
-  forms: 0,
-  tracking: [],
-  redirects: [],
-  cms: null,
-  hosting: null,
-  dnsProvider: null,
-};
-
-function compressSnapshot(html: string): string {
-  let source = html;
-  let compressed = gzipSync(source).toString("base64");
-  while (compressed.length > 800_000 && source.length > 100_000) {
-    source = source.slice(0, Math.floor(source.length * 0.75));
-    compressed = gzipSync(source).toString("base64");
-  }
-  return compressed;
-}
 
 function serialize(data: Record<string, unknown>) {
   const convert = (value: unknown): unknown =>
@@ -92,6 +64,11 @@ export async function GET(
   });
 }
 
+/**
+ * Saves a resumable migration intent only. AgentStack deliberately does not
+ * proxy, scan, or execute the external website. Provider transfer status is
+ * attached to this record in the guided Website & Domain workflow.
+ */
 export async function POST(
   request: Request,
   ctx: { params: Promise<{ id: string }> }
@@ -101,95 +78,39 @@ export async function POST(
   if (access instanceof NextResponse) return access;
   const body = (await request.json().catch(() => ({}))) as {
     sourceUrl?: unknown;
+    sourcePlatform?: unknown;
   };
   const source = normalizeSource(body.sourceUrl);
-  if (!source)
+  if (!source) {
     return NextResponse.json(
-      { error: "Enter a public website address." },
+      { error: "Enter the public address of your current website." },
       { status: 400 }
     );
-  const ref = getAdminDb().doc(`subAccounts/${id}/websiteTransfers/current`);
+  }
+
   const now = Timestamp.now();
-  const base = {
+  const transfer = {
     id: randomUUID(),
-    snapshotVersion: 2,
     sourceUrl: source.toString(),
-    status: "scanning",
-    stage: 2,
-    pages: [],
-    inventory: EMPTY_INVENTORY,
-    error: null,
-    privatePreviewPath: null,
-    approvedAt: null,
-    baselineApprovedAt: null,
+    sourcePlatform:
+      typeof body.sourcePlatform === "string"
+        ? body.sourcePlatform.slice(0, 50)
+        : "other",
+    status: "setup_required",
+    stage: 1,
+    provider: null,
+    providerStatus: "not_started",
     hostingStatus: "not_requested",
     hostingRequestedAt: null,
     hostingUrl: null,
+    error: null,
     createdAt: now,
     updatedAt: now,
   };
-  await ref.set(base);
-  try {
-    const report = await scanWebsite(source.toString());
-    const pages = report.pages.map((page) => {
-      const metadata = { ...page };
-      delete metadata.snapshotHtml;
-      return metadata;
-    });
-    const complete = {
-      ...base,
-      pages,
-      inventory: report.inventory,
-      status: "preview_ready",
-      stage: 5,
-      privatePreviewPath: `/sa/${id}/website-studio/vibe`,
-      updatedAt: Timestamp.now(),
-    };
-    const db = getAdminDb();
-    const batch = db.batch();
-    batch.set(ref, complete);
-    const libraryRef = db.doc(
-      `subAccounts/${id}/websiteSnapshotLibrary/${base.id}`
-    );
-    batch.set(libraryRef, {
-      id: base.id,
-      sourceUrl: complete.sourceUrl,
-      title: report.pages[0]?.title || new URL(complete.sourceUrl).hostname,
-      pageCount: pages.filter((page) => page.status !== "cannot_access").length,
-      status: "ready",
-      createdAt: now,
-      updatedAt: complete.updatedAt,
-    });
-    report.pages.forEach((page, index) => {
-      if (!page.snapshotHtml) return;
-      const snapshotPage = {
-        index,
-        url: page.url,
-        path: page.path,
-        title: page.title,
-        htmlGzip: compressSnapshot(page.snapshotHtml),
-        updatedAt: Timestamp.now(),
-      };
-      batch.set(ref.collection("snapshots").doc(String(index)), snapshotPage);
-      batch.set(
-        libraryRef.collection("pages").doc(String(index)),
-        snapshotPage
-      );
-    });
-    await batch.commit();
-    return NextResponse.json({ transfer: serialize(complete) });
-  } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "The read-only scan could not finish.";
-    await ref.update({
-      status: "error",
-      error: message,
-      updatedAt: Timestamp.now(),
-    });
-    return NextResponse.json({ error: message }, { status: 502 });
-  }
+  await getAdminDb()
+    .doc(`subAccounts/${id}/websiteTransfers/current`)
+    .set(transfer);
+  return NextResponse.json({ transfer: serialize(transfer) });
 }
 
 export async function PATCH(
@@ -200,73 +121,40 @@ export async function PATCH(
   const access = await requireSubAccountAdmin(request, id);
   if (access instanceof NextResponse) return access;
   const body = (await request.json().catch(() => ({}))) as { action?: string };
-  if (
-    !body.action ||
-    !["approve", "approve_live_baseline", "request_hosting"].includes(
-      body.action
-    )
-  )
+  if (body.action !== "request_hosting") {
     return NextResponse.json({ error: "Unsupported action." }, { status: 400 });
-  const ref = getAdminDb().doc(`subAccounts/${id}/websiteTransfers/current`);
+  }
+
+  const db = getAdminDb();
+  const ref = db.doc(`subAccounts/${id}/websiteTransfers/current`);
   const snap = await ref.get();
-  if (!snap.exists)
+  if (!snap.exists) {
     return NextResponse.json(
-      { error: "Create and review the private preview first." },
+      { error: "Save your current website address first." },
       { status: 409 }
     );
-  if (body.action === "approve_live_baseline") {
-    if (!["preview_ready", "approved"].includes(String(snap.data()?.status)))
-      return NextResponse.json(
-        { error: "Create the live preview before approving the baseline." },
-        { status: 409 }
-      );
-    await ref.update({
-      baselineApprovedAt: Timestamp.now(),
-      updatedAt: Timestamp.now(),
-    });
-    const updated = await ref.get();
-    return NextResponse.json({ transfer: serialize(updated.data()!) });
   }
-  if (body.action === "request_hosting") {
-    if (snap.data()?.status !== "approved")
-      return NextResponse.json(
-        { error: "Approve the private replacement before requesting hosting." },
-        { status: 409 }
-      );
-    const now = Timestamp.now();
-    const db = getAdminDb();
-    const batch = db.batch();
-    batch.update(ref, {
-      hostingStatus: "requested",
-      hostingRequestedAt: now,
-      updatedAt: now,
-    });
-    batch.update(db.doc(`subAccounts/${id}`), {
-      "onboardingFoundation.completed": true,
-      "onboardingFoundation.mode": "transfer",
-      "onboardingFoundation.sourceUrl": snap.data()?.sourceUrl ?? "",
-      "onboardingFoundation.domainStartingPoint": "have_domain",
-      "onboardingFoundation.domainSetupConfirmed": true,
-      "onboardingFoundation.hostingStartingPoint": "agentstack_managed",
-      "onboardingFoundation.hostingSetupConfirmed": true,
-      "onboardingFoundation.updatedAt": now,
-      updatedAt: now,
-    });
-    await batch.commit();
-    const updated = await ref.get();
-    return NextResponse.json({ transfer: serialize(updated.data()!) });
-  }
-  if (!["preview_ready", "approved"].includes(String(snap.data()?.status)))
-    return NextResponse.json(
-      { error: "Create and review the private preview first." },
-      { status: 409 }
-    );
-  await ref.update({
-    status: "approved",
-    stage: 7,
-    approvedAt: Timestamp.now(),
-    updatedAt: Timestamp.now(),
+
+  const now = Timestamp.now();
+  const batch = db.batch();
+  batch.update(ref, {
+    status: "transfer_requested",
+    stage: 2,
+    hostingStatus: "requested",
+    hostingRequestedAt: now,
+    updatedAt: now,
   });
+  batch.update(db.doc(`subAccounts/${id}`), {
+    "onboardingFoundation.completed": false,
+    "onboardingFoundation.mode": "transfer",
+    "onboardingFoundation.sourceUrl": snap.data()?.sourceUrl ?? "",
+    "onboardingFoundation.domainStartingPoint": "have_domain",
+    "onboardingFoundation.hostingStartingPoint": "transfer_existing",
+    "onboardingFoundation.hostingSetupConfirmed": false,
+    "onboardingFoundation.updatedAt": now,
+    updatedAt: now,
+  });
+  await batch.commit();
   const updated = await ref.get();
   return NextResponse.json({ transfer: serialize(updated.data()!) });
 }
