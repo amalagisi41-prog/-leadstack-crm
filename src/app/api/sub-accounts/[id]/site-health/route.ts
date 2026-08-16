@@ -3,6 +3,7 @@ import "server-only";
 import { NextResponse } from "next/server";
 import { requireSubAccountMember } from "@/lib/auth/require-tenancy";
 import { getAdminDb } from "@/lib/firebase/admin";
+import { computeSiteHealth } from "@/lib/site-health/tasks";
 import type { BusinessProfileContent } from "@/types/business-profile";
 
 export async function GET(
@@ -44,85 +45,22 @@ export async function GET(
   const publishedAgentSite =
     agentSiteSnap.exists && agentSiteSnap.data()?.status === "published";
 
-  const tasks = [
-    {
-      id: "blueprint",
-      title: "Complete your Business Blueprint",
-      detail: "Give your website and AI accurate business information.",
-      complete: (profile.completeness ?? 0) >= 80,
-      href: "/business-profile",
-      action: "Complete profile",
-    },
-    {
-      id: "compliance",
-      title: "Confirm business and compliance details",
-      detail: "Add brokerage, license, disclosure, and opt-out information.",
-      complete: Boolean(
-        profile.brokerage &&
-        profile.licenseNumber &&
-        profile.fairHousing === true &&
-        profile.noLegalTaxAdvice === true &&
-        profile.optOutLanguage
-      ),
-      href: "/business-profile",
-      action: "Review details",
-    },
-    {
-      id: "website",
-      title: "Publish your website",
-      detail: "Put an approved AgentStack website online.",
-      complete: publishedWebsite || publishedAgentSite,
-      href: "/website-studio",
-      action: "Open Website Studio",
-    },
-    {
-      id: "domain",
-      title: "Connect your domain",
-      detail: "Use a web address that belongs to your business.",
-      complete: Boolean(sub.customDomain),
-      href: "/domain",
-      action: "Connect domain",
-    },
-    {
-      id: "lead-capture",
-      title: "Create a lead-capture form",
-      detail: "Give website visitors a simple way to contact you.",
-      complete: !formsSnap.empty,
-      href: "/forms",
-      action: "Create form",
-    },
-    {
-      id: "booking",
-      title: "Create a booking page",
-      detail: "Let qualified leads choose an appointment time.",
-      complete: !bookingSnap.empty,
-      href: "/booking",
-      action: "Set up booking",
-    },
-    {
-      id: "chat",
-      title: "Turn on website chat",
-      detail: "Answer common questions and capture leads while you are busy.",
-      complete: chatSnap.exists && chatSnap.data()?.enabled === true,
-      href: "/ai-agents/web-chat",
-      action: "Set up chat",
-    },
-    {
-      id: "email",
-      title: "Verify your business email",
-      detail: "Send follow-up from a trusted business address.",
-      complete: sub.resendConfig?.status === "verified",
-      href: "/dashboard/settings",
-      action: "Verify email",
-    },
-  ];
+  // Scoring lives in lib/site-health/tasks so it can be exercised persona by
+  // persona without a live Firestore read. This route only does the reads.
+  const result = computeSiteHealth({
+    profile,
+    publishedWebsite,
+    publishedAgentSite,
+    customDomain:
+      typeof sub.customDomain === "string" ? sub.customDomain : undefined,
+    hasLeadForm: !formsSnap.empty,
+    hasBookingPage: !bookingSnap.empty,
+    webChatEnabled: chatSnap.exists && chatSnap.data()?.enabled === true,
+    businessEmailVerified: sub.resendConfig?.status === "verified",
+  });
 
-  const completed = tasks.filter((task) => task.complete).length;
   return NextResponse.json({
-    score: Math.round((completed / tasks.length) * 100),
-    completed,
-    total: tasks.length,
-    tasks,
+    ...result,
     checkedAt: new Date().toISOString(),
   });
 }
