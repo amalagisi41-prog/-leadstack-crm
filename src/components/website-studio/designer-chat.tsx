@@ -9,7 +9,9 @@ import {
   X,
   Code2,
   AlertTriangle,
+  RotateCcw,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
@@ -91,6 +93,7 @@ export function DesignerChat({
   const [step, setStep] = useState(initialStep);
   const [done, setDone] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [clearing, setClearing] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const composerRef = useRef<HTMLTextAreaElement>(null);
@@ -122,6 +125,52 @@ export function DesignerChat({
         behavior: "smooth",
       })
     );
+
+  const hasLegacyTranscript = useMemo(
+    () =>
+      experience === "vibe" &&
+      turns.some(
+        (turn) =>
+          turn.role === "designer" &&
+          (/controlled by (?:your|the) template/i.test(turn.content) ||
+            /^what would you like to customize first\??$/i.test(
+              turn.content.trim()
+            ))
+      ),
+    [experience, turns]
+  );
+
+  async function clearConversation() {
+    if (clearing || loading) return;
+    setClearing(true);
+    setError(null);
+    try {
+      const response = await fetch(
+        `/api/sub-accounts/${subAccountId}/agent-site`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ designerTranscript: [], designerStep: 0 }),
+        }
+      );
+      const data = (await response.json().catch(() => ({}))) as {
+        error?: string;
+      };
+      if (!response.ok)
+        throw new Error(data.error ?? "Could not reset the conversation.");
+      setTurns([]);
+      setStep(0);
+      setSuggestions([]);
+      setDone(false);
+      toast.success("Zack conversation reset. Your website draft was kept.");
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Could not reset the conversation."
+      );
+    } finally {
+      setClearing(false);
+    }
+  }
 
   // Kick off the interview automatically if it hasn't started.
   useEffect(() => {
@@ -247,6 +296,24 @@ export function DesignerChat({
                   : `Step ${Math.min(step + 1, totalSteps)} of ${totalSteps}`}
             </p>
           </div>
+          {experience === "vibe" && turns.length > 0 ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={() => void clearConversation()}
+              disabled={loading || clearing}
+              className="h-7 px-2 text-[11px]"
+              title="Clear Zack's conversation while keeping the website draft"
+            >
+              {clearing ? (
+                <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+              ) : (
+                <RotateCcw className="mr-1 h-3 w-3" />
+              )}
+              Start fresh
+            </Button>
+          ) : null}
         </div>
         <div
           className={`bg-muted mt-2 h-1 w-full overflow-hidden rounded-full ${experience === "vibe" ? "hidden" : ""}`}
@@ -259,6 +326,23 @@ export function DesignerChat({
       </div>
 
       {/* Transcript */}
+      {hasLegacyTranscript ? (
+        <div className="mx-3 mt-3 flex items-start justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+          <span>
+            This conversation contains replies from the previous builder. Zack
+            can now change colors, fonts, spacing, layout variants, and custom
+            CSS directly.
+          </span>
+          <button
+            type="button"
+            onClick={() => void clearConversation()}
+            disabled={loading || clearing}
+            className="shrink-0 font-semibold underline underline-offset-2"
+          >
+            Reset chat
+          </button>
+        </div>
+      ) : null}
       <div
         ref={scrollRef}
         className="flex-1 space-y-3 overflow-y-auto px-4 py-4"
@@ -353,7 +437,9 @@ export function DesignerChat({
                           ...new Set(
                             pastedCode.unsupported.map((b) => b.language)
                           ),
-                        ].join(", ")} can’t run here — Zack will translate the intent into styling instead`
+                        ].join(
+                          ", "
+                        )} can’t run here — Zack will translate the intent into styling instead`
                       : null,
                   ]
                     .filter(Boolean)

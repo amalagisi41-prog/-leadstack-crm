@@ -43,7 +43,8 @@ export function InstallPrompt() {
     if (isStandalone) return;
 
     const ua = navigator.userAgent;
-    const isIos = /iPhone|iPad|iPod/.test(ua) ||
+    const isIos =
+      /iPhone|iPad|iPod/.test(ua) ||
       (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
     const isSafari = /Safari/.test(ua) && !/Chrome|CriOS|Edg|OPR/.test(ua);
 
@@ -90,14 +91,23 @@ export function InstallPrompt() {
   const brandName =
     LANDING_VARIANT === "custom" ? CUSTOM_BRAND.name : "AgentStack";
 
+  const safariDesktop = platform === "safari-desktop";
+
   return (
-    <div className="mx-4 mt-4 flex items-start gap-3 rounded-2xl border border-[#AFC7EA] bg-[#EDF5FF] p-4 text-sm shadow-sm">
+    <div
+      className={
+        safariDesktop
+          ? "fixed right-4 bottom-4 z-40 flex w-[min(360px,calc(100vw-2rem))] items-start gap-3 rounded-xl border border-[#AFC7EA] bg-[#EDF5FF] p-3 text-sm shadow-lg"
+          : "mx-4 mt-4 flex items-start gap-3 rounded-2xl border border-[#AFC7EA] bg-[#EDF5FF] p-4 text-sm shadow-sm"
+      }
+      role="status"
+    >
       <Image
         src="/brand/exports/ui/agentstack-tile-transparent-edge-128.png"
         alt="AgentStack"
-        width={40}
-        height={40}
-        className="mt-0.5 h-10 w-10 shrink-0 rounded-xl object-contain"
+        width={safariDesktop ? 32 : 40}
+        height={safariDesktop ? 32 : 40}
+        className={`${safariDesktop ? "h-8 w-8" : "h-10 w-10"} mt-0.5 shrink-0 rounded-xl object-contain`}
         priority
       />
       <div className="flex-1">
@@ -107,19 +117,19 @@ export function InstallPrompt() {
         {platform === "ios" ? (
           <p className="mt-1 text-xs leading-5 text-[#526078]">
             Tap <Share className="mx-0.5 inline h-3.5 w-3.5" /> Share, then
-            &quot;Add to Home Screen.&quot; AgentStack will open like an app from
-            your phone or iPad.
+            &quot;Add to Home Screen.&quot; AgentStack will open like an app
+            from your phone or iPad.
           </p>
         ) : platform === "safari-desktop" ? (
           <p className="mt-1 text-xs leading-5 text-[#526078]">
-            In Safari, choose File → Add to Dock to keep AgentStack in your
-            Dock and open it like a desktop app.
+            In Safari, choose File → Add to Dock to keep AgentStack in your Dock
+            and open it like a desktop app.
           </p>
         ) : platform === "browser" ? (
           <p className="mt-1 text-xs leading-5 text-[#526078]">
             Use your browser menu and choose &quot;Install AgentStack&quot; or
-            &quot;Create shortcut.&quot; The Install button will appear here when your
-            browser is ready.
+            &quot;Create shortcut.&quot; The Install button will appear here
+            when your browser is ready.
           </p>
         ) : (
           <p className="mt-1 text-xs leading-5 text-[#526078]">

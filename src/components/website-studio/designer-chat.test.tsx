@@ -27,7 +27,9 @@ function mockFetchOnce(body: Record<string, unknown>, ok = true) {
   return fetchMock;
 }
 
-function renderVibe(overrides: Partial<Parameters<typeof DesignerChat>[0]> = {}) {
+function renderVibe(
+  overrides: Partial<Parameters<typeof DesignerChat>[0]> = {}
+) {
   return render(
     <DesignerChat
       subAccountId="sub-1"
@@ -143,7 +145,8 @@ describe("Vibe composer — telling the user what a paste will do", () => {
     renderVibe();
     fireEvent.change(screen.getByPlaceholderText(VIBE_PLACEHOLDER), {
       target: {
-        value: '```css\n@import url("https://x.example/a.css");\nh1 { color: red }\n```',
+        value:
+          '```css\n@import url("https://x.example/a.css");\nh1 { color: red }\n```',
       },
     });
 
@@ -162,6 +165,32 @@ describe("Vibe composer — telling the user what a paste will do", () => {
 });
 
 describe("Vibe composer — interaction", () => {
+  it("warns about obsolete builder replies and resets only the conversation", async () => {
+    const fetchMock = mockFetchOnce({ site: {} });
+    renderVibe({
+      initialTranscript: [
+        {
+          role: "designer",
+          content: "Colors and fonts are controlled by your template.",
+        },
+      ],
+    });
+
+    expect(
+      screen.getByText(/replies from the previous builder/i)
+    ).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: /reset chat/i }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    expect(sentBody(fetchMock)).toEqual({
+      designerTranscript: [],
+      designerStep: 0,
+    });
+    expect(
+      screen.queryByText(/replies from the previous builder/i)
+    ).not.toBeInTheDocument();
+  });
+
   it("sends on Enter and adds a newline on Shift+Enter", async () => {
     const user = userEvent.setup();
     const fetchMock = mockFetchOnce({ reply: "Applied." });
@@ -179,7 +208,10 @@ describe("Vibe composer — interaction", () => {
   });
 
   it("restores the message and rolls back the echo when the request fails", async () => {
-    const fetchMock = mockFetchOnce({ error: "The Designer had trouble." }, false);
+    const fetchMock = mockFetchOnce(
+      { error: "The Designer had trouble." },
+      false
+    );
     renderVibe();
 
     const composer = screen.getByPlaceholderText(VIBE_PLACEHOLDER);

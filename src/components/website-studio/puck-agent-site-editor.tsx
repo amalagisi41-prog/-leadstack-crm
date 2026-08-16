@@ -101,11 +101,19 @@ export function PuckAgentSiteEditor({
         headerTitle="AgentStack Visual Builder"
         headerPath="Website Studio / Puck + Zack"
         onChange={updateComposition}
-        onPublish={(next) => {
-          const normalized = puckDataToComposition(next, composition);
-          onChange(normalized);
-          void onSave(normalized);
-        }}
+        renderHeaderActions={({ state }) => (
+          <button
+            type="button"
+            onClick={() => {
+              const normalized = puckDataToComposition(state.data, composition);
+              onChange(normalized);
+              void onSave(normalized);
+            }}
+            className="rounded-md bg-[#1a2f50] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#294a78]"
+          >
+            Save layout
+          </button>
+        )}
         permissions={{ duplicate: false }}
         viewports={[
           { width: 390, height: "auto", label: "Mobile", icon: "Smartphone" },
