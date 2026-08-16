@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { openAskAssistant } from "@/components/dashboard/ask-assistant-panel";
 import { DnsCutoverWizard } from "@/components/dashboard/dns-cutover-wizard";
+import { deriveHostingReadiness } from "@/lib/site-health/hosting-readiness";
 import type { WebsiteTransferDoc } from "@/types/website-transfer";
 import {
   EMPTY_ONBOARDING_FOUNDATION,
@@ -205,6 +206,7 @@ export function DomainConnect() {
   const [existingHost, setExistingHost] =
     useState<BusinessSourcePlatform>("wordpress");
   const [savingHosting, setSavingHosting] = useState(false);
+  const [agentSitePublished, setAgentSitePublished] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -224,6 +226,13 @@ export function DomainConnect() {
         }
       })
       .catch(() => undefined);
+    fetch(`/api/sub-accounts/${subAccountId}/agent-site`)
+      .then((response) => response.json())
+      .then((data: { site?: { status?: string } | null }) => {
+        if (!active) return;
+        setAgentSitePublished(data.site?.status === "published");
+      })
+      .catch(() => undefined);
     fetch(`/api/sub-accounts/${subAccountId}/website-transfer`)
       .then((response) => response.json())
       .then((data: { transfer?: WebsiteTransferDoc | null }) => {
@@ -240,10 +249,19 @@ export function DomainConnect() {
     };
   }, [subAccountId, subAccount?.customDomain]);
 
-  const hostingReady = Boolean(
-    transfer?.hostingStatus === "ready" &&
-    transfer.hostingUrl?.startsWith("https://")
-  );
+  // Derived from observable state rather than `transfer.hostingStatus`,
+  // which no code path ever set to "ready" — leaving the DNS gate permanently
+  // shut and support as the only way through.
+  const readiness = deriveHostingReadiness({
+    hostingStartingPoint: foundation.hostingStartingPoint,
+    agentSitePublished,
+    siteVerifiedLive: Boolean(
+      transfer?.hostingUrl?.startsWith("https://")
+    ),
+    legacyHostingStatus: transfer?.hostingStatus,
+    legacyHostingUrl: transfer?.hostingUrl,
+  });
+  const hostingReady = readiness.ready;
   const domainSaved = Boolean(savedDomain.trim());
   const hostingConnected = Boolean(
     foundation.hostingStartingPoint && foundation.hostingSetupConfirmed
@@ -255,8 +273,7 @@ export function DomainConnect() {
   // already points where it should. Leaving step 3 "locked" forever implied
   // unfinished work that will never exist.
   const dnsNotNeeded =
-    foundation.hostingStartingPoint === "keep_existing" &&
-    foundation.hostingSetupConfirmed === true;
+    readiness.notApplicable && foundation.hostingSetupConfirmed === true;
 
   /**
    * Only the choices that make sense for the selected situation. An agent
@@ -855,7 +872,7 @@ export function DomainConnect() {
           {!hostingReady && !dnsNotNeeded ? (
             <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-950">
               {hostingConnected
-                ? "DNS record values stay hidden until hosting and SSL are verified, so a change can’t take your live site down mid-setup. Zack can still prepare you for the step."
+                ? readiness.reason
                 : "Finish step 2 to unlock DNS guidance."}
             </p>
           ) : null}

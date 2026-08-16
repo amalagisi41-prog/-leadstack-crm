@@ -343,9 +343,10 @@ describe("Website & Domain — step 3 names what is missing", () => {
       name: /ask Zack about nameservers & DNS/i,
     });
     expect(dnsButton).toBeEnabled();
-    expect(
-      screen.getByText(/record values stay hidden until hosting and SSL/i)
-    ).toBeInTheDocument();
+    // The gate now says what it depends on AND that it opens by itself. It
+    // used to read a field no code ever wrote, so the only way past it was to
+    // contact support.
+    expect(screen.getByText(/nothing to request/i)).toBeInTheDocument();
 
     await userEvent.click(dnsButton);
     expect(openAskAssistant).toHaveBeenCalledWith(
