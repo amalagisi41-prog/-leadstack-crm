@@ -1,9 +1,10 @@
 {
   "brand": "AgentStack",
-  "version": "2026-08-11",
+  "version": "2026-08-16",
   "masters": {
     "lightBackground": "/brand/agentstack-mark-on-light.png",
-    "appTile": "/brand/agentstack-app-tile.png"
+    "appTile": "/brand/agentstack-app-tile.png",
+    "darkBackground": "/brand/agentstack-app-tile-dark.png"
   },
   "recommended": {
     "goHighLevelMarketplace": "/brand/exports/marketplace/agentstack-marketplace-800.png",
@@ -13,8 +14,10 @@
     "darkOrColoredInterface": "/brand/exports/ui/agentstack-tile-transparent-edge-512.png"
   },
   "rules": {
-    "lightBackground": "Use the navy and coral mark-on-light artwork.",
-    "creamChevrons": "Cream chevrons may appear only inside the approved blue tile and never directly on white or light backgrounds.",
+    "lightBackground": "Use the primary cream-tile artwork for light or mixed surfaces.",
+    "darkBackground": "Use the navy-tile alternate for dark, colored, or photographic surfaces.",
+    "chevrons": "The lower chevron is retired. The upper chevron is 10% smaller than the original, deep dark navy on cream and cream on navy, with identical approved geometry and 3D treatment.",
+    "robot": "Both variants use the same crooked-smile robot. It uses the alternate tile's darkest core navy—not the former medium blue—on cream and the original cream color on navy.",
     "aspectRatio": "Always preserve the original 1:1 aspect ratio."
   }
 }

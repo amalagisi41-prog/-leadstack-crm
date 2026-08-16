@@ -7,7 +7,11 @@
 // this app's own static assets. Everything else (Firestore, API routes, auth)
 // passes straight through untouched -- this is not meant to be an offline
 // data cache, just an offline "you're offline" shell instead of a dead tab.
-const CACHE_NAME = "agentstack-shell-v1";
+// Bump this whenever a cached shell asset's *contents* change under the same
+// URL. The icons are cached by path, so without a new cache name an already
+// installed PWA keeps serving the previous artwork as its offline fallback —
+// which is how a retired logo outlives the deploy that replaced it.
+const CACHE_NAME = "agentstack-shell-v2";
 const SHELL_URLS = ["/icons/icon-192.png", "/icons/icon-512.png"];
 
 self.addEventListener("install", (event) => {
