@@ -237,3 +237,37 @@ export function emptyAgentSiteContent(): AgentSiteContent {
     ogImageUrl: "",
   };
 }
+
+/**
+ * Fill in any field a stored document predates.
+ *
+ * Site docs are written once and read forever, so a doc created before a
+ * field existed comes back from Firestore without it. The editor renders
+ * things like `content.metaTitle.length`, which throws on `undefined` and
+ * takes down the whole client with a blank "Application error" page.
+ * Normalizing at every read boundary means adding a future field can never
+ * break an existing site.
+ */
+export function normalizeAgentSiteContent(
+  stored: Partial<AgentSiteContent> | null | undefined
+): AgentSiteContent {
+  const base = emptyAgentSiteContent();
+  if (!stored) return base;
+  const merged = { ...base, ...stored };
+  // Array fields need their own guard: an explicit `null` in the document
+  // would survive the spread and still break `.map`/`.join`.
+  merged.specialties = Array.isArray(stored.specialties)
+    ? stored.specialties
+    : [];
+  merged.galleryUrls = Array.isArray(stored.galleryUrls)
+    ? stored.galleryUrls
+    : [];
+  merged.listings = Array.isArray(stored.listings) ? stored.listings : [];
+  merged.testimonials = Array.isArray(stored.testimonials)
+    ? stored.testimonials
+    : [];
+  // `compliance` is a nested object the publish checklist reads field by
+  // field, so a partial one from an older doc needs filling too.
+  merged.compliance = { ...base.compliance!, ...(stored.compliance ?? {}) };
+  return merged;
+}

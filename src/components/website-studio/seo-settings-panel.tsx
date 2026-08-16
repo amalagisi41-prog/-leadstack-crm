@@ -26,9 +26,11 @@ export function SeoSettingsPanel({
   content: AgentSiteContent;
   onSaved: (content: AgentSiteContent) => void;
 }) {
-  const [metaTitle, setMetaTitle] = useState(content.metaTitle);
-  const [metaDescription, setMetaDescription] = useState(content.metaDescription);
-  const [ogImageUrl, setOgImageUrl] = useState(content.ogImageUrl);
+  const [metaTitle, setMetaTitle] = useState(content.metaTitle ?? "");
+  const [metaDescription, setMetaDescription] = useState(
+    content.metaDescription ?? ""
+  );
+  const [ogImageUrl, setOgImageUrl] = useState(content.ogImageUrl ?? "");
   const [saving, setSaving] = useState(false);
 
   const titlePreview =

@@ -6,11 +6,12 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type {
-  AgentSiteCompliance,
-  AgentSiteContent,
-  AgentSiteListing,
-  AgentSiteTestimonial,
+import {
+  normalizeAgentSiteContent,
+  type AgentSiteCompliance,
+  type AgentSiteContent,
+  type AgentSiteListing,
+  type AgentSiteTestimonial,
 } from "@/types/agent-site";
 
 const DEFAULT_COMPLIANCE: AgentSiteCompliance = {
@@ -96,7 +97,9 @@ export function ContentEditor({
   onSave: (c: AgentSiteContent) => Promise<void>;
   saving: boolean;
 }) {
-  const [local, setLocal] = useState<AgentSiteContent>(content);
+  const [local, setLocal] = useState<AgentSiteContent>(() =>
+    normalizeAgentSiteContent(content)
+  );
 
   function set<K extends keyof AgentSiteContent>(
     key: K,
@@ -498,40 +501,6 @@ export function ContentEditor({
           />
         </Group>
 
-        <Group title="SEO">
-          <p className="text-muted-foreground -mt-1 text-xs">
-            Controls how this page appears in search results and social-media
-            link previews.
-          </p>
-          <Field
-            label={`Search title (${local.metaTitle.length}/60)`}
-            value={local.metaTitle}
-            onChange={(v) => set("metaTitle", v)}
-            placeholder={
-              local.agentName
-                ? `${local.agentName} | ${local.title || "REALTOR®"}`
-                : "Your name | Your title"
-            }
-          />
-          <Field
-            label={`Search description (${local.metaDescription.length}/155)`}
-            value={local.metaDescription}
-            onChange={(v) => set("metaDescription", v)}
-            placeholder={
-              local.tagline ||
-              "A short, compelling summary of who you help and where."
-            }
-            textarea
-          />
-          <Field
-            label="Social preview image URL"
-            value={local.ogImageUrl}
-            onChange={(v) => set("ogImageUrl", v)}
-            placeholder={
-              local.heroImageUrl || "https://… (defaults to your hero image)"
-            }
-          />
-        </Group>
       </div>
     </div>
   );

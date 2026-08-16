@@ -32,6 +32,7 @@ import {
 import {
   emptyAgentSiteContent,
   emptyAgentSiteDesign,
+  normalizeAgentSiteContent,
   type AgentSiteComposition,
   type AgentSiteContent,
   type AgentSiteDesign,
@@ -199,7 +200,7 @@ export function WebsiteStudioApp({
         if (!active) return;
         setSite(loadedSite);
         if (loadedSite) {
-          setContent(loadedSite.content);
+          setContent(normalizeAgentSiteContent(loadedSite.content));
           setComposition(normalizeAgentSiteComposition(loadedSite.composition));
           const eventKey = `agentstack-trusted-preview-${subAccountId}`;
           if (!window.sessionStorage.getItem(eventKey)) {
@@ -259,7 +260,7 @@ export function WebsiteStudioApp({
         revisionLabel: `Before switching to ${getTemplate(id).name}`,
       });
       setSite(s);
-      setContent(s.content);
+      setContent(normalizeAgentSiteContent(s.content));
       setComposition(normalizeAgentSiteComposition(s.composition));
       setDesign(s.design ?? emptyAgentSiteDesign());
       setView("vibe");
@@ -290,7 +291,7 @@ export function WebsiteStudioApp({
         revisionLabel: "Before manual content edit",
       });
       setSite(s);
-      setContent(s.content);
+      setContent(normalizeAgentSiteContent(s.content));
     } finally {
       setSavingDraft(false);
     }
@@ -840,7 +841,7 @@ export function WebsiteStudioApp({
             subAccountId={subAccountId}
             onRestore={(restored) => {
               setSite(restored);
-              setContent(restored.content);
+              setContent(normalizeAgentSiteContent(restored.content));
               setComposition(
                 normalizeAgentSiteComposition(restored.composition)
               );
