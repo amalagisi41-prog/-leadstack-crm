@@ -17,6 +17,35 @@ import type { SiteHealthTask } from "./tasks";
  *     where the app quietly assumes the best.
  */
 
+/**
+ * Platforms an agent would actually cancel after migrating.
+ *
+ * `sourcePlatform` carries two different meanings depending on which control
+ * wrote it: the CRM someone migrated away from, or — when they pick "Keep my
+ * current host" — the web host they are staying on. Only the first is
+ * something to wind down.
+ *
+ * Without this distinction, choosing "Keep my current host → WordPress"
+ * produced a seven-item checklist telling the agent to port their phone
+ * number off WordPress and export a backup before cancelling it, and dropped
+ * the score from a denominator of 8 to 15. A workspace that never migrated
+ * from anything was being told not to cancel a subscription it never had.
+ */
+const PRIOR_CRM_PLATFORMS = new Set([
+  "gohighlevel",
+  "followupboss",
+  "kvcore",
+  "lofty",
+  "chime",
+]);
+
+/** True when this platform is a CRM the agent would wind down, not a host. */
+export function isPriorCrmPlatform(
+  platform: string | null | undefined
+): boolean {
+  return Boolean(platform && PRIOR_CRM_PLATFORMS.has(platform));
+}
+
 /** Things no code here can observe, so the agent confirms them by hand. */
 export type MigrationAckId =
   | "conversations_saved"
@@ -78,7 +107,9 @@ function ackComplete(
 export function buildMigrationIndependenceTasks(
   inputs: MigrationIndependenceInputs
 ): SiteHealthTask[] {
-  if (!inputs.migratedFrom) return [];
+  // A web host in `migratedFrom` is not a subscription to cancel — see
+  // PRIOR_CRM_PLATFORMS above.
+  if (!isPriorCrmPlatform(inputs.migratedFrom)) return [];
   const from = inputs.migratedFromLabel ?? "your old platform";
 
   return [

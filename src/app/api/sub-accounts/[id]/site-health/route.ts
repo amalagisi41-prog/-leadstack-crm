@@ -8,7 +8,10 @@ import {
   PLATFORM_SIGNATURES,
   isConfirmedOffPlatform,
 } from "@/lib/site-health/platform-detection";
-import type { MigrationAcks } from "@/lib/site-health/migration-independence";
+import {
+  isPriorCrmPlatform,
+  type MigrationAcks,
+} from "@/lib/site-health/migration-independence";
 import {
   isVerificationCurrent,
   type SiteVerificationRecord,
@@ -75,7 +78,11 @@ export async function GET(
   const foundation = (sub.onboardingFoundation ?? {}) as {
     sourcePlatform?: string | null;
   };
-  const migratedFrom = foundation.sourcePlatform ?? null;
+  // Only a prior CRM counts as something to migrate off and cancel; the same
+  // field also holds the web host of an agent who is simply staying put.
+  const migratedFrom = isPriorCrmPlatform(foundation.sourcePlatform)
+    ? foundation.sourcePlatform!
+    : null;
   const migratedFromLabel =
     PLATFORM_SIGNATURES.find((p) => p.id === migratedFrom)?.label ??
     (migratedFrom ? migratedFrom : null);

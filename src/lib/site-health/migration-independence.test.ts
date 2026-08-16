@@ -232,3 +232,49 @@ describe("Site Health as a whole", () => {
     expect(result.cancellation).toBeNull();
   });
 });
+
+describe("a web host is not a subscription to cancel", () => {
+  // `sourcePlatform` holds two different things depending on which control
+  // wrote it. Picking "Keep my current host → WordPress" used to produce a
+  // seven-item checklist about porting a phone number off WordPress, and
+  // moved the score's denominator from 8 to 15.
+  const hosts = ["wordpress", "bluehost", "godaddy", "wix", "squarespace",
+    "vercel", "hostinger", "other"];
+
+  for (const host of hosts) {
+    it(`shows no cancellation checklist for ${host}`, () => {
+      const inputs = { ...NOT_READY, migratedFrom: host, migratedFromLabel: host };
+      expect(buildMigrationIndependenceTasks(inputs)).toEqual([]);
+      expect(assessCancellationReadiness(inputs).ready).toBe(false);
+    });
+  }
+
+  it("still shows it for a CRM the agent actually migrated off", () => {
+    for (const crm of ["gohighlevel", "followupboss", "kvcore", "lofty", "chime"]) {
+      const inputs = { ...NOT_READY, migratedFrom: crm, migratedFromLabel: crm };
+      expect(buildMigrationIndependenceTasks(inputs)).toHaveLength(7);
+    }
+  });
+
+  it("keeps a host-only account on the original eight tasks", () => {
+    // The scoring symptom: 27% is only reachable with a denominator of 15.
+    const result = computeSiteHealth({
+      ...({
+        profile: {},
+        publishedWebsite: false,
+        publishedAgentSite: false,
+        hasLeadForm: false,
+        hasBookingPage: false,
+        webChatEnabled: false,
+        businessEmailVerified: false,
+      } as SiteHealthInputs),
+      independence: {
+        ...NOT_READY,
+        migratedFrom: "wordpress",
+        migratedFromLabel: "WordPress.com",
+      },
+    });
+    expect(result.total).toBe(8);
+    expect(result.cancellation?.ready).toBe(false);
+  });
+});
