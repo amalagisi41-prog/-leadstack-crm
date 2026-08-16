@@ -3,8 +3,6 @@
 import {
   useCallback,
   useEffect,
-  useLayoutEffect,
-  useRef,
   useState,
 } from "react";
 import {
@@ -24,6 +22,7 @@ import { ContentEditor } from "./content-editor";
 import { BusinessSetupAssistant } from "./business-setup-assistant";
 import { SeoSettingsPanel } from "./seo-settings-panel";
 import { AgentSiteRenderer } from "./agent-site-renderer";
+import { WebsitePreviewCanvas } from "./website-preview-canvas";
 import {
   AGENT_SITE_TEMPLATE_LIST,
   getTemplate,
@@ -41,7 +40,6 @@ import {
   type WebsiteStudioView,
 } from "@/lib/website-studio/initial-view";
 
-const DESIGN_WIDTH = 1080;
 
 export function WebsiteStudioApp({
   workspace = "home",
@@ -72,19 +70,6 @@ export function WebsiteStudioApp({
   );
   const [foundationReady, setFoundationReady] = useState(false);
   const [foundationLoaded, setFoundationLoaded] = useState(false);
-
-  // Scaled live-preview sizing.
-  const previewWrapRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(0.5);
-  useLayoutEffect(() => {
-    const el = previewWrapRef.current;
-    if (!el) return;
-    const ro = new ResizeObserver(() => {
-      setScale(el.clientWidth / DESIGN_WIDTH);
-    });
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [site]);
 
   useEffect(() => {
     // Wait for the sub-account context to settle (success OR failure)
@@ -674,26 +659,13 @@ export function WebsiteStudioApp({
               Live preview · updates as you answer
             </span>
           </div>
-          <div
-            ref={previewWrapRef}
-            className="h-[calc(72vh-41px)] overflow-y-auto"
-          >
-            {/* Scale the 1080px design down to the panel width. */}
-            <div
-              style={{
-                width: DESIGN_WIDTH,
-                transform: `scale(${scale})`,
-                transformOrigin: "top left",
-                height: scale > 0 ? undefined : 0,
-              }}
-            >
-              <AgentSiteRenderer
-                template={template}
-                content={content}
-                design={design}
-              />
-            </div>
-          </div>
+          <WebsitePreviewCanvas className="max-h-[72vh] overflow-y-auto">
+            <AgentSiteRenderer
+              template={template}
+              content={content}
+              design={design}
+            />
+          </WebsitePreviewCanvas>
         </div>
       </div>
     </div>
