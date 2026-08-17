@@ -20,7 +20,13 @@ vi.mock("@/lib/firebase/admin", () => ({
 
 vi.mock("@/lib/comms/ai/openrouter", () => ({
   aiIsConfigured: vi.fn(() => true),
-  callAi: vi.fn(async () => ({ text: '{"agentName":"Jane Doe"}' })),
+  callAi: vi.fn(async () => ({
+    text: '{"agentName":"Jane Doe"}',
+    promptTokens: 0,
+    completionTokens: 0,
+    totalTokens: 0,
+    model: "test",
+  })),
 }));
 
 vi.mock("@/lib/business-profile/read-public-page", async () => {
@@ -31,6 +37,7 @@ vi.mock("@/lib/business-profile/read-public-page", async () => {
 });
 
 import { POST } from "./route";
+import { callAi } from "@/lib/comms/ai/openrouter";
 import {
   PageReadError,
   readPublicPage,
@@ -94,6 +101,70 @@ describe("POST business-profile/import", () => {
     expect(body.error).toMatch(/fill your Blueprint in by hand/);
     // And never leaks the internal message.
     expect(body.error).not.toMatch(/boom/);
+  });
+
+  it("answers in JSON when the extraction model fails", async () => {
+    // callAi was unguarded, so an OpenRouter outage became an uncaught throw,
+    // which Next.js turns into a 500 with an empty body — and an empty body
+    // reaches the browser as "Unexpected end of JSON input".
+    vi.mocked(readPublicPage).mockResolvedValueOnce("Jane Doe, REALTOR.");
+    vi.mocked(callAi).mockRejectedValueOnce(new Error("OpenRouter 429: slow down"));
+
+    const res = await POST(
+      makeRequest({ url: "https://janedoerealty.com/about" }),
+      ctx
+    );
+    const body = await res.json();
+
+    expect(res.status).toBe(503);
+    expect(body.error).toMatch(/we read your page/i);
+    expect(body.error).toMatch(/fill your Blueprint in by hand/i);
+    // Their page was fine — do not blame their link for our outage.
+    expect(body.error).not.toMatch(/could not read|blocks automated/i);
+    expect(body.error).not.toMatch(/openrouter|429/i);
+  });
+
+  it("answers in JSON when the model returns something unparseable", async () => {
+    vi.mocked(readPublicPage).mockResolvedValueOnce("Jane Doe, REALTOR.");
+    vi.mocked(callAi).mockResolvedValueOnce({
+      text: "I'm afraid I can't.",
+      promptTokens: 0,
+      completionTokens: 0,
+      totalTokens: 0,
+      model: "test",
+    });
+
+    const res = await POST(
+      makeRequest({ url: "https://janedoerealty.com/about" }),
+      ctx
+    );
+    expect(res.status).toBe(502);
+    expect((await res.json()).error).toMatch(/fill your Blueprint in by hand/i);
+  });
+
+  it("answers in JSON when something unexpected throws", async () => {
+    // The outer guard. Without it Next.js writes no body at all.
+    vi.mocked(readPublicPage).mockResolvedValueOnce("Jane Doe, REALTOR.");
+    setMock.mockRejectedValueOnce(new Error("Firestore unavailable"));
+
+    const res = await POST(
+      makeRequest({ url: "https://janedoerealty.com/about" }),
+      ctx
+    );
+    const text = await res.text();
+
+    expect(res.status).toBe(500);
+    expect(text.length).toBeGreaterThan(0); // never an empty body
+    expect(JSON.parse(text).error).toMatch(/Nothing was changed/i);
+  });
+
+  it("caps the extraction call so it cannot outlive the function", async () => {
+    vi.mocked(readPublicPage).mockResolvedValueOnce("Jane Doe, REALTOR.");
+    await POST(makeRequest({ url: "https://janedoerealty.com/about" }), ctx);
+
+    const [args] = vi.mocked(callAi).mock.calls.at(-1)!;
+    expect(args.timeoutMs).toBeGreaterThan(0);
+    expect(args.timeoutMs).toBeLessThan(30_000);
   });
 
   it("rejects a private address before any request goes out", async () => {

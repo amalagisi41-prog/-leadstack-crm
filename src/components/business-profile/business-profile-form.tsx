@@ -33,6 +33,7 @@ import {
   SERVICE_SPECIALTIES,
   type BusinessProfileContent,
 } from "@/types/business-profile";
+import { readJson } from "@/lib/http/read-json";
 
 const MAX_LIST_ITEMS = 30;
 
@@ -122,14 +123,20 @@ export function BusinessProfileForm() {
         const res = await fetch(
           `/api/sub-accounts/${subAccountId}/business-profile`
         );
-        const data = (await res.json()) as {
+        const data = await readJson<{
           profile: BusinessProfileContent;
           completeness: number;
-        };
+        }>(res);
         if (!active) return;
+        // An empty or failed body must not blank the form the operator is
+        // looking at; leave the defaults and let them fill it in.
+        if (!data.profile) {
+          if (data.error) toast.error(data.error);
+          return;
+        }
         setContent({ ...EMPTY_BUSINESS_PROFILE, ...data.profile });
         setImportUrl(data.profile.website ?? "");
-        setCompleteness(data.completeness);
+        setCompleteness(data.completeness ?? 0);
       } finally {
         if (active) setLoading(false);
       }
@@ -150,7 +157,7 @@ export function BusinessProfileForm() {
     setAssistingField(field);
     try {
       const res = await fetch(`/api/sub-accounts/${subAccountId}/business-profile/assist`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ field, label, currentValue: content[field] }) });
-      const data = await res.json() as { value?: string; error?: string };
+      const data = await readJson<{ value?: string }>(res);
       if (!res.ok || typeof data.value !== "string") throw new Error(data.error ?? "AI assist failed.");
       set(field, data.value as BusinessProfileContent[typeof field]);
       toast.success(`${label} drafted from your Business Blueprint. Review before saving.`);
@@ -212,10 +219,7 @@ export function BusinessProfileForm() {
           body: JSON.stringify(content),
         }
       );
-      const data = (await res.json()) as {
-        completeness?: number;
-        error?: string;
-      };
+      const data = await readJson<{ completeness?: number }>(res);
       if (!res.ok) throw new Error(data.error ?? "Couldn't save.");
       setCompleteness(data.completeness ?? completeness);
       toast.success("Business Blueprint saved. Every AI tool now uses it.");
@@ -253,11 +257,10 @@ export function BusinessProfileForm() {
             body: JSON.stringify({ url, platform: "website" }),
           }
         );
-        const data = (await res.json()) as {
+        const data = await readJson<{
           profile?: BusinessProfileContent;
           completeness?: number;
-          error?: string;
-        };
+        }>(res);
         if (!res.ok || !data.profile) {
           failures.push(data.error ?? `Could not import ${url}.`);
           continue;
@@ -299,7 +302,7 @@ export function BusinessProfileForm() {
           body: JSON.stringify({ apply: true }),
         }
       );
-      const data = (await res.json()) as { error?: string };
+      const data = await readJson<{ ok?: boolean }>(res);
       if (!res.ok) throw new Error(data.error ?? "Couldn't generate.");
       toast.success(
         "AI persona generated and applied. Your assistants are ready."

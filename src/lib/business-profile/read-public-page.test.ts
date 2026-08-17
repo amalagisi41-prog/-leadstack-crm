@@ -387,3 +387,51 @@ describe("when Firecrawl is configured", () => {
     await expect(readPublicPage(PROFILE)).resolves.toMatch(/Jane has helped/);
   });
 });
+
+describe("staying inside the time the function is allowed to run", () => {
+  // The regression that replaced one bad message with a worse one: three
+  // attempts each under their own timeout still added past the platform's
+  // function limit, the gateway killed the invocation, and an empty body
+  // reached the browser as "Unexpected end of JSON input".
+
+  it("does not start an attempt it has no budget for", async () => {
+    fetchMock.mockImplementation(
+      () => new Promise(() => {}) // never settles
+    );
+
+    const started = Date.now();
+    const error = await readPublicPage(PROFILE, 1_200).catch((e) => e);
+
+    expect(error).toBeInstanceOf(PageReadError);
+    expect(error.reason).toBe("too-slow");
+    // Well inside the budget, because it declined to start a doomed attempt.
+    expect(Date.now() - started).toBeLessThan(3_000);
+  });
+
+  it("tells the operator the portal was too slow, and where to go instead", () => {
+    const message = readFailureMessage("too-slow", PROFILE);
+    expect(message).toMatch(/did not answer in time/i);
+    expect(message).toMatch(/brokerage or personal website/i);
+    expect(message).toMatch(/fill your Blueprint in by hand/i);
+  });
+
+  it("prefers a real diagnosis over a timeout when it has both", () => {
+    expect(
+      mostInformative([{ reason: "too-slow" }, { reason: "blocked" }]).reason
+    ).toBe("blocked");
+    expect(
+      mostInformative([{ reason: "too-slow" }, { reason: "unreachable" }]).reason
+    ).toBe("too-slow");
+  });
+
+  it("abandons a Firecrawl scrape that overruns the budget", async () => {
+    vi.mocked(firecrawlIsConfigured).mockReturnValue(true);
+    vi.mocked(scrapeUrl).mockImplementation(() => new Promise(() => {}));
+    fetchMock.mockResolvedValueOnce(htmlResponse(BIO));
+
+    // Firecrawl never answers; the direct read still gets its turn.
+    await expect(readPublicPage(PROFILE, 6_000)).resolves.toMatch(
+      /Jane has helped/
+    );
+  });
+});

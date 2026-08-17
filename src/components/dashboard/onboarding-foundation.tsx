@@ -23,6 +23,7 @@ import type {
   HostingStartingPoint,
   OnboardingFoundationMode,
 } from "@/types/onboarding-foundation";
+import { readJson } from "@/lib/http/read-json";
 
 const platforms: { value: BusinessSourcePlatform; label: string }[] = [
   { value: "gohighlevel", label: "GoHighLevel (GHL)" },
@@ -113,9 +114,7 @@ export function OnboardingFoundation({
           body: JSON.stringify({ consent: true }),
         }
       );
-      const data = (await response.json().catch(() => ({}))) as {
-        error?: string;
-      };
+      const data = await readJson<{ ok?: boolean }>(response);
       if (!response.ok)
         throw new Error(data.error ?? "Could not start transfer.");
       toast.success(
@@ -155,7 +154,7 @@ export function OnboardingFoundation({
             body: JSON.stringify({ url, platform }),
           }
         );
-        const data = (await response.json()) as { error?: string };
+        const data = await readJson<{ ok?: boolean }>(response);
         if (response.ok) imported += 1;
         else lastError = data.error ?? "Could not read that link.";
       }
@@ -192,7 +191,7 @@ export function OnboardingFoundation({
           }),
         }
       );
-      const data = (await response.json()) as { error?: string };
+      const data = await readJson<{ ok?: boolean }>(response);
       if (!response.ok)
         throw new Error(data.error ?? "Could not save your choice.");
       onComplete();

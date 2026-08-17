@@ -16,6 +16,13 @@ const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const DEFAULT_MODEL = "anthropic/claude-haiku-4-5";
 
 /**
+ * Backstop so no caller can hang forever. Generous, because background
+ * workers legitimately wait on long generations; interactive routes should
+ * pass a much tighter `timeoutMs` of their own.
+ */
+const DEFAULT_TIMEOUT_MS = 60_000;
+
+/**
  * OpenAI-style multimodal content part. Vision-capable models on OpenRouter
  * (including the Claude default) accept data-URL images via `image_url`.
  */
@@ -72,6 +79,7 @@ export async function callAi({
   maxTokens = 400,
   temperature = 0.5,
   responseFormat,
+  timeoutMs = DEFAULT_TIMEOUT_MS,
 }: {
   model?: string;
   messages: AiChatMessage[];
@@ -81,6 +89,14 @@ export async function callAi({
   temperature?: number;
   /** Ask compatible models to return a machine-readable JSON object. */
   responseFormat?: { type: "json_object" };
+  /**
+   * Ceiling on the round trip. Callers running inside a request the operator
+   * is waiting on should pass something well under their own function limit:
+   * a serverless invocation killed by the gateway returns an empty body, and
+   * an empty body reaches the browser as "Unexpected end of JSON input"
+   * rather than anything the operator can act on.
+   */
+  timeoutMs?: number;
 }): Promise<AiCompletionResult> {
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
@@ -108,6 +124,9 @@ export async function callAi({
       temperature,
       ...(responseFormat ? { response_format: responseFormat } : {}),
     }),
+    // Without this the call can hang for as long as the platform allows the
+    // function to live, and then be killed with no response written at all.
+    signal: AbortSignal.timeout(timeoutMs),
   });
 
   if (!res.ok) {

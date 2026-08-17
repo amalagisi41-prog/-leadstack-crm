@@ -54,7 +54,42 @@ function parseObject(text: string): Record<string, unknown> {
   return JSON.parse(text.slice(start, end + 1)) as Record<string, unknown>;
 }
 
+/**
+ * Reading a page and extracting from it is slower than the platform's default
+ * function ceiling, and a function killed by the gateway writes no body at
+ * all — which surfaces in the browser as "Unexpected end of JSON input", a
+ * message about our infrastructure shown to an operator who asked about their
+ * website. The budgets below are sized to finish inside this.
+ *
+ *   read (24s, READ_BUDGET_MS) + extract (20s) + Firestore ≈ 50s
+ */
+export const maxDuration = 60;
+
+/** Leaves headroom under maxDuration for the Firestore read and write. */
+const EXTRACT_TIMEOUT_MS = 20_000;
+
 export async function POST(
+  request: Request,
+  ctx: { params: Promise<{ id: string }> }
+) {
+  try {
+    return await importProfile(request, ctx);
+  } catch (error) {
+    // Anything unhandled here would otherwise become a 500 with an empty
+    // body. This route is the first screen of the product; it always answers
+    // in JSON, and always with something the operator can do next.
+    console.error("business-profile import failed", error);
+    return NextResponse.json(
+      {
+        error:
+          "Something went wrong on our side while importing. Nothing was changed — try again, or fill your Blueprint in by hand below.",
+      },
+      { status: 500 }
+    );
+  }
+}
+
+async function importProfile(
   request: Request,
   ctx: { params: Promise<{ id: string }> }
 ) {
@@ -99,36 +134,49 @@ export async function POST(
     );
   }
 
-  const completion = await callAi({
-    // A complete Business Blueprint is substantially larger than an SMS
-    // reply. JSON mode plus a dedicated output budget prevents the model's
-    // object from being truncated before its closing brace.
-    maxTokens: 1_800,
-    temperature: 0,
-    responseFormat: { type: "json_object" },
-    messages: [
+  let completion: { text: string };
+  try {
+    completion = await callAi({
+      // A complete Business Blueprint is substantially larger than an SMS
+      // reply. JSON mode plus a dedicated output budget prevents the model's
+      // object from being truncated before its closing brace.
+      maxTokens: 1_800,
+      temperature: 0,
+      responseFormat: { type: "json_object" },
+      timeoutMs: EXTRACT_TIMEOUT_MS,
+      messages: [
+        {
+          role: "system",
+          content:
+            "Extract a factual real-estate business profile from supplied website text. Return one JSON object only. Never guess license numbers, contact details, brokerage, service areas, claims, or testimonials. Use empty strings/arrays when not explicit. services may only contain buyers, sellers, investors, rentals, relocation, luxury, first_time_buyers, commercial. brandVoice may only be professional, luxury, friendly, investor, casual, formal.",
+        },
+        {
+          role: "user",
+          content: `Source URL: ${url}\nSource platform: ${String(body?.platform ?? "website")}\n\nReturn JSON with: agentName,title,brokerage,licenseStates,licenseNumber,phone,email,website,languages,clientExperience,idealClientProfile,clientPromise,serviceAreas,priceRanges,specialties,services,brandVoice,businessHours,responsePreference,bio,headshotUrl,logoUrl,testimonials.\n\nWEBSITE TEXT:\n${markdown}`,
+        },
+      ],
+    });
+  } catch (error) {
+    // OpenRouter is down, rate-limiting us, or slower than the budget. The
+    // operator's page was fine, so say that rather than blaming their link.
+    console.error("business-profile import: extraction call failed", error);
+    return NextResponse.json(
       {
-        role: "system",
-        content:
-          "Extract a factual real-estate business profile from supplied website text. Return one JSON object only. Never guess license numbers, contact details, brokerage, service areas, claims, or testimonials. Use empty strings/arrays when not explicit. services may only contain buyers, sellers, investors, rentals, relocation, luxury, first_time_buyers, commercial. brandVoice may only be professional, luxury, friendly, investor, casual, formal.",
+        error:
+          "We read your page, but the AI that fills the form is not responding right now. Try again in a minute — or fill your Blueprint in by hand below, which always works.",
       },
-      {
-        role: "user",
-        content: `Source URL: ${url}\nSource platform: ${String(body?.platform ?? "website")}\n\nReturn JSON with: agentName,title,brokerage,licenseStates,licenseNumber,phone,email,website,languages,clientExperience,idealClientProfile,clientPromise,serviceAreas,priceRanges,specialties,services,brandVoice,businessHours,responsePreference,bio,headshotUrl,logoUrl,testimonials.\n\nWEBSITE TEXT:\n${markdown}`,
-      },
-    ],
-  });
+      { status: 503 }
+    );
+  }
 
   let extracted: Record<string, unknown>;
   try {
     extracted = parseObject(completion.text);
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       {
         error:
-          error instanceof Error
-            ? error.message
-            : "Could not parse imported profile.",
+          "We read your page, but could not turn it into profile fields. Try again, or fill your Blueprint in by hand below.",
       },
       { status: 502 }
     );

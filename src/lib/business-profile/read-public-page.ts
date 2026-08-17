@@ -33,9 +33,26 @@ const MAX_TEXT = 18_000;
 /** Response body ceiling, before tag stripping. */
 const MAX_BODY = 250_000;
 
-const DIRECT_TIMEOUT_MS = 15_000;
-const READER_TIMEOUT_MS = 20_000;
+const DIRECT_TIMEOUT_MS = 10_000;
+const READER_TIMEOUT_MS = 14_000;
 const MAX_REDIRECTS = 4;
+
+/**
+ * Wall-clock ceiling for the whole read, across every route it tries.
+ *
+ * Per-request timeouts are not enough on their own: three attempts that each
+ * come in under their own limit still add up past what the platform allows a
+ * serverless function to run for, and a function killed by the gateway
+ * returns an empty body — which reaches the operator as a raw
+ * "Unexpected end of JSON input" rather than anything about their website.
+ *
+ * This budget plus the extraction call must stay comfortably inside the
+ * route's `maxDuration`. Raise them together or not at all.
+ */
+export const READ_BUDGET_MS = 24_000;
+
+/** Below this there is no point starting another attempt. */
+const MIN_ATTEMPT_MS = 2_500;
 
 // ---------------------------------------------------------------------------
 // URL vetting
@@ -193,7 +210,8 @@ export type ReadFailure =
   | "provider-error" // their server is broken right now
   | "not-a-page" // a file, not a web page
   | "unreadable" // 200, but the text is drawn by JavaScript
-  | "unreachable"; // DNS, TLS, timeout, redirect loop
+  | "too-slow" // the budget ran out before anything answered
+  | "unreachable"; // DNS, TLS, or a redirect loop
 
 export class PageReadError extends Error {
   readonly reason: ReadFailure;
@@ -212,12 +230,13 @@ export class PageReadError extends Error {
  * former tells them what to change.
  */
 const INFORMATIVENESS: Record<ReadFailure, number> = {
-  missing: 6,
-  private: 5,
-  "not-a-page": 4,
-  blocked: 3,
-  unreadable: 2,
-  "provider-error": 1,
+  missing: 7,
+  private: 6,
+  "not-a-page": 5,
+  blocked: 4,
+  unreadable: 3,
+  "provider-error": 2,
+  "too-slow": 1,
   unreachable: 0,
 };
 
@@ -275,6 +294,8 @@ export function readFailureMessage(
       return `That link points at a file rather than a web page. Paste the address of the page it sits on instead.`;
     case "unreadable":
       return `${site} draws that page in the browser, so there was no text for us to read. Try a page that shows your bio as plain text — a brokerage profile or About page usually works — ${BY_HAND}.`;
+    case "too-slow":
+      return `${site} did not answer in time. Big portal profiles are often too slow to read this way — try your brokerage or personal website instead, ${BY_HAND}.`;
     case "unreachable":
       return `We could not reach ${site}. Check the address is right and that the site is up, then try again, ${BY_HAND}.`;
   }
@@ -327,7 +348,34 @@ async function readViaFirecrawl(target: string): Promise<string | null> {
   }
 }
 
-async function readDirect(startUrl: string): Promise<ReadOutcome> {
+/**
+ * Give up waiting on an attempt once the budget says so.
+ *
+ * The abandoned promise is left to settle on its own — every attempt here
+ * resolves rather than rejects, so nothing is left unhandled.
+ */
+async function withinBudget<T>(
+  work: Promise<T>,
+  ms: number,
+  onExpiry: T
+): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      work,
+      new Promise<T>((resolve) => {
+        timer = setTimeout(() => resolve(onExpiry), Math.max(ms, 0));
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
+async function readDirect(
+  startUrl: string,
+  timeoutMs: number
+): Promise<ReadOutcome> {
   let current = startUrl;
 
   for (let hop = 0; hop < MAX_REDIRECTS; hop += 1) {
@@ -340,10 +388,14 @@ async function readDirect(startUrl: string): Promise<ReadOutcome> {
           "Accept-Language": "en-US,en;q=0.9",
         },
         redirect: "manual",
-        signal: AbortSignal.timeout(DIRECT_TIMEOUT_MS),
+        signal: AbortSignal.timeout(timeoutMs),
       });
-    } catch {
-      return { ok: false, failure: { reason: "unreachable" } };
+    } catch (error) {
+      const reason =
+        error instanceof Error && error.name === "TimeoutError"
+          ? "too-slow"
+          : "unreachable";
+      return { ok: false, failure: { reason } };
     }
 
     if (response.status >= 300 && response.status < 400) {
@@ -382,15 +434,22 @@ async function readDirect(startUrl: string): Promise<ReadOutcome> {
 /** The reader service reports the target's status inside its own 200 body. */
 const READER_TARGET_STATUS = /target url returned error (\d{3})/i;
 
-async function readViaReader(target: string): Promise<ReadOutcome> {
+async function readViaReader(
+  target: string,
+  timeoutMs: number
+): Promise<ReadOutcome> {
   let response: Response;
   try {
     response = await fetch(readerUrl(target), {
       headers: { Accept: "text/plain", "User-Agent": PROFILE_IMPORT_UA },
-      signal: AbortSignal.timeout(READER_TIMEOUT_MS),
+      signal: AbortSignal.timeout(timeoutMs),
     });
-  } catch {
-    return { ok: false, failure: { reason: "unreachable" } };
+  } catch (error) {
+    const reason =
+      error instanceof Error && error.name === "TimeoutError"
+        ? "too-slow"
+        : "unreachable";
+    return { ok: false, failure: { reason } };
   }
 
   if (!response.ok) {
@@ -427,24 +486,48 @@ export function mostInformative(attempts: readonly Attempt[]): Attempt {
  * Read a public page as plain text, trying every route we have before giving
  * up, and throwing a PageReadError the operator can act on when none work.
  */
-export async function readPublicPage(startUrl: string): Promise<string> {
-  const scraped = await readViaFirecrawl(startUrl);
-  if (scraped) return scraped;
-
+export async function readPublicPage(
+  startUrl: string,
+  budgetMs: number = READ_BUDGET_MS
+): Promise<string> {
+  const deadline = Date.now() + budgetMs;
+  const left = () => deadline - Date.now();
   const attempts: Attempt[] = [];
 
-  const direct = await readDirect(startUrl);
-  if (direct.ok) return direct.text;
-  attempts.push(direct.failure);
+  // Firecrawl renders the page properly, so it is the only route that reads a
+  // JavaScript-built portal profile. It is also the slowest, hence the race —
+  // and hence the half-budget cap: a scrape that overruns must still leave
+  // the two cheaper routes a turn rather than consuming everything.
+  const scraped = await withinBudget(
+    readViaFirecrawl(startUrl),
+    Math.min(left() / 2, 12_000),
+    null
+  );
+  if (scraped) return scraped;
 
-  // A dead link is dead for the reader service too. Skipping it here keeps a
-  // definite answer fast instead of spending another twenty seconds to
-  // confirm it.
-  if (direct.failure.reason !== "missing") {
-    const relayed = await readViaReader(startUrl);
-    if (relayed.ok) return relayed.text;
-    attempts.push(relayed.failure);
+  if (left() >= MIN_ATTEMPT_MS) {
+    const direct = await readDirect(
+      startUrl,
+      Math.min(left(), DIRECT_TIMEOUT_MS)
+    );
+    if (direct.ok) return direct.text;
+    attempts.push(direct.failure);
+
+    // A dead link is dead for the reader service too. Skipping it keeps a
+    // definite answer fast instead of spending the rest of the budget
+    // confirming it.
+    if (direct.failure.reason !== "missing" && left() >= MIN_ATTEMPT_MS) {
+      const relayed = await readViaReader(
+        startUrl,
+        Math.min(left(), READER_TIMEOUT_MS)
+      );
+      if (relayed.ok) return relayed.text;
+      attempts.push(relayed.failure);
+    }
   }
+
+  // Everything overran rather than answering.
+  if (attempts.length === 0) attempts.push({ reason: "too-slow" });
 
   const worst = mostInformative(attempts);
   throw new PageReadError(
