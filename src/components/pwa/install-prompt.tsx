@@ -1,160 +1,135 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Image from "next/image";
-import { Share, X } from "lucide-react";
+import Link from "next/link";
+import { Check, Smartphone } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { InstallSteps } from "@/components/pwa/install-steps";
+import { useAppInstall } from "@/hooks/use-app-install";
 import { CUSTOM_BRAND, LANDING_VARIANT } from "@/config/landing";
 
-const DISMISSED_KEY = "agentstack:install-app-banner-dismissed:v2";
-
-interface BeforeInstallPromptEvent extends Event {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
-}
-
 /**
- * "Install this app" nudge, mounted once in the authenticated dashboard
- * shell so every signed-in operator sees it (not just during onboarding) --
- * but only when not already installed. A dismissal is remembered for this
- * version of the banner so returning members are not repeatedly interrupted.
+ * The install prompt shown once per sign-in until the app is actually
+ * installed.
  *
- * Two paths, since there's no unified browser API for this:
- *  - Chromium (Chrome/Edge, on phone OR desktop) fires `beforeinstallprompt`;
- *    we capture it and drive the native install flow from our own button.
- *  - Apple browsers use their manual Share -> Add to Home Screen or
- *    File -> Add to Dock flows, so the banner gives device-specific steps.
+ * It is a modal rather than a banner because the previous inline strip was
+ * dismissed permanently on first sight and never seen again — most operators
+ * never learned the app existed. It is also why nothing here silences the
+ * prompt outright: dismissing snoozes, on a lengthening ladder, and the
+ * sidebar entry plus the download page stay available in between.
+ *
+ * The icon shown is the same cream tile that gets installed. Previewing one
+ * icon and installing a different one is a small lie told at exactly the
+ * moment the user is deciding whether to trust the thing.
  */
 export function InstallPrompt() {
-  const [installEvent, setInstallEvent] =
-    useState<BeforeInstallPromptEvent | null>(null);
-  const [platform, setPlatform] = useState<
-    "chromium" | "ios" | "safari-desktop" | "browser" | null
-  >(null);
-  const [dismissed, setDismissed] = useState(true);
-
-  useEffect(() => {
-    if (localStorage.getItem(DISMISSED_KEY)) return;
-
-    const isStandalone =
-      window.matchMedia("(display-mode: standalone)").matches ||
-      // iOS Safari's own non-standard flag for "already installed".
-      (navigator as unknown as { standalone?: boolean }).standalone === true;
-    if (isStandalone) return;
-
-    const ua = navigator.userAgent;
-    const isIos =
-      /iPhone|iPad|iPod/.test(ua) ||
-      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-    const isSafari = /Safari/.test(ua) && !/Chrome|CriOS|Edg|OPR/.test(ua);
-
-    function onBeforeInstallPrompt(e: Event) {
-      e.preventDefault();
-      setInstallEvent(e as BeforeInstallPromptEvent);
-      setPlatform("chromium");
-      setDismissed(false);
-    }
-
-    // Show the banner immediately after signup. Chromium upgrades the action
-    // to its native install prompt when `beforeinstallprompt` arrives.
-    if (isIos) {
-      setPlatform("ios");
-      setDismissed(false);
-    } else if (isSafari) {
-      setPlatform("safari-desktop");
-      setDismissed(false);
-    } else {
-      setPlatform("browser");
-      setDismissed(false);
-      window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
-    }
-
-    return () =>
-      window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt);
-  }, []);
-
-  function dismiss() {
-    localStorage.setItem(DISMISSED_KEY, "1");
-    setDismissed(true);
-  }
-
-  async function install() {
-    if (!installEvent) return;
-    await installEvent.prompt();
-    const { outcome } = await installEvent.userChoice;
-    if (outcome === "accepted") dismiss();
-    else dismiss();
-  }
-
-  if (dismissed || !platform) return null;
+  const {
+    shouldPrompt,
+    platform,
+    canInstallDirectly,
+    manualOnly,
+    install,
+    snooze,
+    markInstalled,
+  } = useAppInstall();
+  const [busy, setBusy] = useState(false);
 
   const brandName =
     LANDING_VARIANT === "custom" ? CUSTOM_BRAND.name : "AgentStack";
 
-  const safariDesktop = platform === "safari-desktop";
+  if (!shouldPrompt) return null;
+
+  async function onInstall() {
+    setBusy(true);
+    try {
+      await install();
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
-    <div
-      className={
-        safariDesktop
-          ? "fixed right-4 bottom-4 z-40 flex w-[min(360px,calc(100vw-2rem))] items-start gap-3 rounded-xl border border-[#AFC7EA] bg-[#EDF5FF] p-3 text-sm shadow-lg"
-          : "mx-4 mt-4 flex items-start gap-3 rounded-2xl border border-[#AFC7EA] bg-[#EDF5FF] p-4 text-sm shadow-sm"
-      }
-      role="status"
-    >
-      <Image
-        src="/brand/exports/ui/agentstack-tile-transparent-edge-128.png"
-        alt="AgentStack"
-        width={safariDesktop ? 32 : 40}
-        height={safariDesktop ? 32 : 40}
-        className={`${safariDesktop ? "h-8 w-8" : "h-10 w-10"} mt-0.5 shrink-0 rounded-xl object-contain`}
-        priority
-      />
-      <div className="flex-1">
-        <p className="font-semibold text-[#173B7A]">
-          Get the {brandName} app on this device
-        </p>
-        {platform === "ios" ? (
-          <p className="mt-1 text-xs leading-5 text-[#526078]">
-            Tap <Share className="mx-0.5 inline h-3.5 w-3.5" /> Share, then
-            &quot;Add to Home Screen.&quot; AgentStack will open like an app
-            from your phone or iPad.
-          </p>
-        ) : platform === "safari-desktop" ? (
-          <p className="mt-1 text-xs leading-5 text-[#526078]">
-            In Safari, choose File → Add to Dock to keep AgentStack in your Dock
-            and open it like a desktop app.
-          </p>
-        ) : platform === "browser" ? (
-          <p className="mt-1 text-xs leading-5 text-[#526078]">
-            Use your browser menu and choose &quot;Install AgentStack&quot; or
-            &quot;Create shortcut.&quot; The Install button will appear here
-            when your browser is ready.
+    <Dialog open onOpenChange={(next) => !next && snooze()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <div className="flex items-center gap-3">
+            <Image
+              src="/icons/icon-192.png"
+              alt=""
+              aria-hidden="true"
+              width={56}
+              height={56}
+              className="h-14 w-14 shrink-0 object-contain"
+              priority
+            />
+            <div className="min-w-0">
+              <DialogTitle className="text-left">
+                Put {brandName} on your phone
+              </DialogTitle>
+              <DialogDescription className="text-left">
+                One tap from your home screen — no URL to remember, and it opens
+                full-screen like any other app.
+              </DialogDescription>
+            </div>
+          </div>
+        </DialogHeader>
+
+        {canInstallDirectly ? (
+          <p className="text-sm leading-6 text-[#3C4A60]">
+            Your browser can add it for you. This takes a few seconds and you
+            can remove it at any time.
           </p>
         ) : (
-          <p className="mt-1 text-xs leading-5 text-[#526078]">
-            Add AgentStack to your desktop or home screen for one-tap access,
-            with no URL to remember.
-          </p>
+          <InstallSteps platform={platform} brandName={brandName} />
         )}
-        {platform === "chromium" && (
-          <Button
-            size="sm"
-            className="mt-2 h-8 bg-[#173B7A] text-xs text-white hover:bg-[#244c8e]"
-            onClick={install}
-          >
-            Install app
-          </Button>
-        )}
-      </div>
-      <button
-        type="button"
-        onClick={dismiss}
-        aria-label="Dismiss"
-        className="shrink-0 text-[#65758D] hover:text-[#173B7A]"
-      >
-        <X className="h-4 w-4" />
-      </button>
-    </div>
+
+        <div className="mt-1 flex flex-col gap-2">
+          {canInstallDirectly ? (
+            <Button
+              onClick={onInstall}
+              disabled={busy}
+              className="w-full bg-[#173B7A] text-white hover:bg-[#244c8e]"
+            >
+              <Smartphone className="mr-2 h-4 w-4" />
+              {busy ? "Opening installer…" : `Install ${brandName}`}
+            </Button>
+          ) : null}
+
+          {manualOnly ? (
+            // On iOS no event ever fires, so a self-report is the only way this
+            // prompt can ever learn to stop.
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={markInstalled}
+            >
+              <Check className="mr-2 h-4 w-4" />
+              I&rsquo;ve added it — don&rsquo;t ask again
+            </Button>
+          ) : null}
+
+          <div className="flex items-center justify-between gap-3 pt-1">
+            <Button variant="ghost" size="sm" onClick={snooze}>
+              Remind me later
+            </Button>
+            <Link
+              href="/download"
+              onClick={snooze}
+              className="text-xs font-semibold text-[#173B7A] underline underline-offset-2"
+            >
+              Show me how on another device
+            </Link>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

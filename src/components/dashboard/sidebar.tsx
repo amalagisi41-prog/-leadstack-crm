@@ -45,6 +45,7 @@ import { useUnreadConversationsCount } from "@/hooks/use-unread-conversations";
 import { useAuth } from "@/hooks/use-auth";
 import { useAgency } from "@/hooks/use-agency";
 import { LogoMark } from "@/components/brand/logo-mark";
+import { InstallCallout } from "@/components/pwa/install-callout";
 import { cn } from "@/lib/utils";
 import {
   Sheet,
@@ -460,6 +461,10 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
       {/* User footer */}
       <div className="pb-safe border-t border-white/20 p-3">
+        {/* Removes itself once the app is installed. */}
+        <div className="mb-2">
+          <InstallCallout />
+        </div>
         <button
           className="flex min-h-11 w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-sm text-white/85 transition-colors hover:bg-[#6EA8FE] hover:text-[#102A4C]"
           onClick={() => signOutUser()}

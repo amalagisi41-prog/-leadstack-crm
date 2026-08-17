@@ -7,12 +7,17 @@
 // this app's own static assets. Everything else (Firestore, API routes, auth)
 // passes straight through untouched -- this is not meant to be an offline
 // data cache, just an offline "you're offline" shell instead of a dead tab.
+//
 // Bump this whenever a cached shell asset's *contents* change under the same
-// URL. The icons are cached by path, so without a new cache name an already
-// installed PWA keeps serving the previous artwork as its offline fallback —
+// URL. The icons and the offline page are cached by path, so without a new
+// cache name an already installed PWA keeps serving the previous copies --
 // which is how a retired logo outlives the deploy that replaced it.
-const CACHE_NAME = "agentstack-shell-v2";
-const SHELL_URLS = ["/icons/icon-192.png", "/icons/icon-512.png"];
+const CACHE_NAME = "agentstack-shell-v3";
+
+// The offline fallback is the reason this worker earns its keep, so it is
+// precached alongside the icons it renders.
+const OFFLINE_URL = "/offline";
+const SHELL_URLS = ["/icons/icon-192.png", "/icons/icon-512.png", OFFLINE_URL];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -43,7 +48,7 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
-  // Only handle page navigations and this app's own /icons — leave every
+  // Only handle page navigations and this app's own shell assets — leave every
   // other request (API routes, Firestore/Firebase, Next.js data fetches)
   // completely alone so nothing here can shadow live data with a stale copy.
   const isNavigation = request.mode === "navigate";
@@ -59,6 +64,22 @@ self.addEventListener("fetch", (event) => {
         }
         return response;
       })
-      .catch(() => caches.match(request)),
+      .catch(async () => {
+        // Navigations are never cached individually -- serving a stale
+        // dashboard would show yesterday's leads as though they were current.
+        // The offline page is the honest answer instead.
+        //
+        // Falling through to `undefined` here is not an option: respondWith
+        // rejects on it and the browser shows its own error page, which is
+        // what this worker previously did despite the comment above claiming
+        // otherwise.
+        const cached = await caches.match(request);
+        if (cached) return cached;
+        if (isNavigation) {
+          const offline = await caches.match(OFFLINE_URL);
+          if (offline) return offline;
+        }
+        return Response.error();
+      }),
   );
 });

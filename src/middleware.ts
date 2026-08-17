@@ -153,6 +153,14 @@ const PUBLIC_PATHS = [
   // exclusion list (unlike images), so it still needs an explicit entry.
   "/manifest.webmanifest",
   "/sw.js",
+  // Install instructions and the offline fallback. Both have to resolve
+  // without a session: /download doubles as the marketing site's "get the
+  // app" destination and is usually opened on a second device that has not
+  // signed in yet, and /offline is precached by the service worker on first
+  // visit, before anyone has authenticated at all. A login redirect on either
+  // would cache a redirect as the offline page.
+  "/download",
+  "/offline",
   // Affiliate program — own session model (magic-link HMAC cookie), not
   // Firebase Auth. Auth checks happen inside each route/page.
   "/affiliate",
