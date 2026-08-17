@@ -60,7 +60,14 @@ export function TemplateBriefPicker({
         const blocked = brief.blockedBy.length > 0;
 
         return (
-          <article key={template.id} className="rounded-2xl border bg-white p-5">
+          // Labelled so each card is its own navigable region. With nine
+          // starting points on the page, an unlabelled list of articles gives
+          // a screen-reader user no way to tell which one they are inside.
+          <article
+            key={template.id}
+            aria-label={template.name}
+            className="rounded-2xl border bg-white p-5"
+          >
             <h3 className="font-semibold">{template.name}</h3>
             <p className="text-muted-foreground text-xs">{template.audience}</p>
             <p className="mt-2 text-sm leading-6">{template.summary}</p>

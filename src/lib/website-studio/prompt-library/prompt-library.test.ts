@@ -248,3 +248,80 @@ describe("composing the brief", () => {
     }
   });
 });
+
+describe("the profile taxonomy", () => {
+  it("covers the shapes a real-estate business actually takes", () => {
+    expect(SITE_TEMPLATES.map((t) => t.id).sort()).toEqual([
+      "brokerage",
+      "buyer-specialist",
+      "commercial-broker",
+      "established-agent",
+      "listing-specialist",
+      "luxury-agent",
+      "new-solo-agent",
+      "property-manager",
+      "team-lead",
+    ]);
+  });
+
+  it("tells the experienced agent the opposite of the new one", () => {
+    // The new-agent brief says they cannot lead with a track record. Handing
+    // that to someone with twenty years would actively undersell them, which
+    // is the whole reason this is a separate template rather than a tweak.
+    const fresh = getTemplate("new-solo-agent")!.brief;
+    const seasoned = getTemplate("established-agent")!.brief;
+
+    expect(fresh).toMatch(/cannot yet lead with a track record/i);
+    expect(seasoned).toMatch(/Lead with experience/i);
+    expect(seasoned).toMatch(/years in the business/i);
+  });
+
+  it("carries the honesty rule into every single brief", () => {
+    // The constraint that must never be lost when a template is added: no
+    // invented production figures, on any profile.
+    for (const template of SITE_TEMPLATES) {
+      expect(template.brief, template.id).toMatch(/do not invent/i);
+    }
+  });
+
+  it("keeps every brief off the subject of who lives somewhere", () => {
+    for (const template of SITE_TEMPLATES) {
+      // Whitespace-tolerant: the briefs are wrapped template literals, so
+      // these phrases span line breaks.
+      expect(template.brief, template.id).toMatch(
+        /never describe who a neighbourhood is\s+for|Never describe desired\s+tenant characteristics|Never imply exclusivity of clientele/i
+      );
+    }
+  });
+
+  it("stops each specialty from giving advice it has no standing to give", () => {
+    // Each one names the professional boundary its reader is most likely to
+    // push against.
+    expect(getTemplate("buyer-specialist")!.brief).toMatch(/point to a lender/i);
+    expect(getTemplate("listing-specialist")!.brief).toMatch(
+      /Do not quote a value for\s+any property/i
+    );
+    expect(getTemplate("commercial-broker")!.brief).toMatch(
+      /Do not state or imply returns, cap rates/i
+    );
+    expect(getTemplate("team-lead")!.brief).toMatch(
+      /never imply the team is an independent\s+brokerage/i
+    );
+  });
+
+  it("gives every template a working manifest, not just prose", () => {
+    for (const template of SITE_TEMPLATES) {
+      expect(template.requires.length, template.id).toBeGreaterThan(0);
+      expect(template.produces.length, template.id).toBeGreaterThan(3);
+      expect(template.summary.trim().length, template.id).toBeGreaterThan(20);
+      // Every one must refuse to run on an empty profile.
+      const blocked = composeTemplateBrief(
+        template,
+        resolveCapabilities(NOTHING_CONNECTED)
+      );
+      expect(blocked.blockedBy.map((c) => c.id), template.id).toEqual([
+        "businessProfile",
+      ]);
+    }
+  });
+});

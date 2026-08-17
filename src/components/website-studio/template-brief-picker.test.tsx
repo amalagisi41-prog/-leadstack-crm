@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { TemplateBriefPicker } from "./template-brief-picker";
 import type { CapabilityInputs } from "@/lib/website-studio/prompt-library/capabilities";
@@ -43,7 +43,17 @@ const PROFILE_ONLY: CapabilityInputs = {
 
 const EMPTY: CapabilityInputs = { ...PROFILE_ONLY, profileCompleteness: 5 };
 
-function renderPicker(capabilities: CapabilityInputs) {
+/**
+ * Render the picker and scope to one card.
+ *
+ * Every template renders the same controls, so an unscoped query matches all
+ * nine. Each card is an aria-labelled region, which is how a screen-reader
+ * user tells them apart too.
+ */
+function renderPicker(
+  capabilities: CapabilityInputs,
+  templateName: RegExp = /new agent, first website/i
+) {
   const onUseBrief = vi.fn();
   render(
     <TemplateBriefPicker
@@ -52,14 +62,15 @@ function renderPicker(capabilities: CapabilityInputs) {
       onUseBrief={onUseBrief}
     />
   );
-  return { onUseBrief };
+  const card = within(screen.getByRole("article", { name: templateName }));
+  return { onUseBrief, card };
 }
 
 describe("when everything is connected", () => {
   it("offers the build with no warnings attached", async () => {
-    const { onUseBrief } = renderPicker(READY);
+    const { onUseBrief, card } = renderPicker(READY);
 
-    const button = screen.getByRole("button", { name: /build this site/i });
+    const button = card.getByRole("button", { name: /build this site/i });
     expect(button).toBeEnabled();
 
     await userEvent.click(button);
@@ -71,30 +82,30 @@ describe("when everything is connected", () => {
 
 describe("when a section cannot be filled", () => {
   it("says so before the run, not after", async () => {
-    renderPicker(PROFILE_ONLY);
+    const { card } = renderPicker(PROFILE_ONLY);
 
-    expect(screen.getByText(/live listings feed/i)).toBeInTheDocument();
-    expect(screen.getByText(/no feed is connected|not enabled/i)).toBeInTheDocument();
+    expect(card.getByText(/live listings feed/i)).toBeInTheDocument();
+    expect(card.getByText(/no feed is connected|not enabled/i)).toBeInTheDocument();
     // Named, so the agent knows what they are giving up. Two sections drop
     // here — listings and testimonials — and both must be called out.
     expect(
-      screen.getAllByText(/section will\s+be left out/i)
+      card.getAllByText(/section will\s+be left out/i)
     ).toHaveLength(2);
   });
 
   it("offers a way to fix it that lands on a real page", () => {
-    renderPicker(PROFILE_ONLY);
+    const { card } = renderPicker(PROFILE_ONLY);
     // base-ui's Button renders its `render` element with role="button",
     // which overrides the anchor's implicit link role — so this is queried
     // as a button and checked for the href it actually navigates to.
-    const link = screen.getByRole("button", { name: /see idx/i });
+    const link = card.getByRole("button", { name: /see idx/i });
     expect(link).toHaveAttribute("href", "/sa/sub-1/idx");
   });
 
   it("still lets them build, and labels the trade-off honestly", async () => {
-    const { onUseBrief } = renderPicker(PROFILE_ONLY);
+    const { onUseBrief, card } = renderPicker(PROFILE_ONLY);
 
-    const button = screen.getByRole("button", {
+    const button = card.getByRole("button", {
       name: /build without the missing parts/i,
     });
     await userEvent.click(button);
@@ -108,9 +119,9 @@ describe("when a section cannot be filled", () => {
 
 describe("when there is nothing to write from", () => {
   it("refuses rather than generating filler with their name on it", async () => {
-    const { onUseBrief } = renderPicker(EMPTY);
+    const { onUseBrief, card } = renderPicker(EMPTY);
 
-    const button = screen.getByRole("button", { name: /add your details first/i });
+    const button = card.getByRole("button", { name: /add your details first/i });
     expect(button).toBeDisabled();
 
     await userEvent.click(button);
@@ -118,12 +129,10 @@ describe("when there is nothing to write from", () => {
   });
 
   it("explains why, and where to go", () => {
-    renderPicker(EMPTY);
+    const { card } = renderPicker(EMPTY);
+    expect(card.getAllByText(/reads like a template/i).length).toBeGreaterThan(0);
     expect(
-      screen.getAllByText(/reads like a template/i).length
-    ).toBeGreaterThan(0);
-    expect(
-      screen.getByRole("button", { name: /fill this in/i })
+      card.getByRole("button", { name: /fill this in/i })
     ).toHaveAttribute("href", "/sa/sub-1/business-profile");
   });
 });
