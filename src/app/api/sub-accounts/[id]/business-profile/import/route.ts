@@ -5,10 +5,10 @@ import { NextResponse } from "next/server";
 import { requireSubAccountAdmin } from "@/lib/auth/require-tenancy";
 import { getAdminDb } from "@/lib/firebase/admin";
 import {
-  scrapeUrl,
-  firecrawlIsConfigured,
-  FirecrawlError,
-} from "@/lib/firecrawl/client";
+  PageReadError,
+  readPublicPage,
+  safePublicUrl,
+} from "@/lib/business-profile/read-public-page";
 import { aiIsConfigured, callAi } from "@/lib/comms/ai/openrouter";
 import { businessProfileCompleteness } from "@/lib/business-profile/compile";
 import {
@@ -46,126 +46,6 @@ const IMPORT_KEYS: (keyof BusinessProfileContent)[] = [
   "testimonials",
 ];
 
-function safeUrl(value: unknown): string | null {
-  if (typeof value !== "string") return null;
-  const candidate = /^https?:\/\//i.test(value.trim())
-    ? value.trim()
-    : `https://${value.trim()}`;
-  try {
-    const url = new URL(candidate);
-    if (url.protocol !== "http:" && url.protocol !== "https:") return null;
-    if (url.username || url.password || isPrivateHost(url.hostname))
-      return null;
-    return url.toString();
-  } catch {
-    return null;
-  }
-}
-
-function isPrivateHost(hostname: string): boolean {
-  const host = hostname.toLowerCase().replace(/^\[|\]$/g, "");
-  return (
-    host === "localhost" ||
-    host.endsWith(".localhost") ||
-    host === "0.0.0.0" ||
-    host === "::1" ||
-    host.startsWith("10.") ||
-    host.startsWith("127.") ||
-    host.startsWith("169.254.") ||
-    host.startsWith("192.168.") ||
-    /^172\.(1[6-9]|2\d|3[01])\./.test(host) ||
-    host.startsWith("fc") ||
-    host.startsWith("fd") ||
-    host.startsWith("fe80:")
-  );
-}
-
-function readableText(html: string): string {
-  return html
-    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ")
-    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, " ")
-    .replace(/<svg\b[^>]*>[\s\S]*?<\/svg>/gi, " ")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/gi, " ")
-    .replace(/&amp;/gi, "&")
-    .replace(/&quot;/gi, '"')
-    .replace(/&#39;|&apos;/gi, "'")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-async function readPublicPage(startUrl: string): Promise<string> {
-  if (firecrawlIsConfigured()) {
-    return (await scrapeUrl(startUrl)).markdown.slice(0, 18000);
-  }
-
-  let current = startUrl;
-  for (let redirects = 0; redirects <= 3; redirects += 1) {
-    const response = await fetch(current, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (compatible; AgentStackProfileImport/1.0; +https://agentstackcrm.app)",
-        Accept: "text/html,text/plain;q=0.9",
-      },
-      redirect: "manual",
-      signal: AbortSignal.timeout(15_000),
-    });
-    if (response.status >= 300 && response.status < 400) {
-      const location = response.headers.get("location");
-      const next = location
-        ? safeUrl(new URL(location, current).toString())
-        : null;
-      if (!next)
-        throw new Error("That website redirected to an unsafe address.");
-      current = next;
-      continue;
-    }
-    if (!response.ok) {
-      return readWithPublicFallback(startUrl, response.status);
-    }
-    const contentType = response.headers.get("content-type") ?? "";
-    if (
-      !contentType.includes("text/html") &&
-      !contentType.includes("text/plain")
-    ) {
-      throw new Error("That link is not a readable public web page.");
-    }
-    const body = (await response.text()).slice(0, 250_000);
-    const text = readableText(body).slice(0, 18000);
-    if (!text)
-      throw new Error("No readable business details were found on that page.");
-    return text;
-  }
-  throw new Error("That website redirected too many times.");
-}
-
-async function readWithPublicFallback(
-  publicUrl: string,
-  originalStatus: number
-): Promise<string> {
-  const response = await fetch(`https://r.jina.ai/http://${publicUrl}`, {
-    headers: {
-      Accept: "text/plain",
-      "User-Agent": "AgentStackProfileImport/1.0",
-    },
-    signal: AbortSignal.timeout(30_000),
-  });
-  if (!response.ok) {
-    throw new Error(`That website returned ${originalStatus}.`);
-  }
-  const text = (await response.text()).slice(0, 250_000);
-  const blocked =
-    /title:\s*access denied/i.test(text) ||
-    /target url returned error 403/i.test(text) ||
-    /you don.?t have permission to access/i.test(text);
-  if (blocked || text.trim().length < 500) {
-    throw new Error(
-      "That provider blocks automated profile reading. Try your brokerage website or another public profile."
-    );
-  }
-  return text.slice(0, 18_000);
-}
-
 function parseObject(text: string): Record<string, unknown> {
   const start = text.indexOf("{");
   const end = text.lastIndexOf("}");
@@ -191,10 +71,13 @@ export async function POST(
     url?: unknown;
     platform?: unknown;
   } | null;
-  const url = safeUrl(body?.url);
+  const url = safePublicUrl(body?.url);
   if (!url)
     return NextResponse.json(
-      { error: "Enter a valid public website or profile URL." },
+      {
+        error:
+          "That does not look like a public web address. Paste the full link, starting with https://.",
+      },
       { status: 400 }
     );
 
@@ -202,11 +85,18 @@ export async function POST(
   try {
     markdown = await readPublicPage(url);
   } catch (error) {
-    const message =
-      error instanceof FirecrawlError
-        ? error.message
-        : "Could not read that website.";
-    return NextResponse.json({ error: message }, { status: 502 });
+    // readPublicPage names the reason and the next step. Only a genuine bug
+    // reaches the fallback, and even that says what to do instead — the old
+    // behaviour collapsed every specific message into a dead end.
+    return NextResponse.json(
+      {
+        error:
+          error instanceof PageReadError
+            ? error.message
+            : "Something went wrong reading that page. Try another link, or fill your Blueprint in by hand — every field here is editable.",
+      },
+      { status: 502 }
+    );
   }
 
   const completion = await callAi({
