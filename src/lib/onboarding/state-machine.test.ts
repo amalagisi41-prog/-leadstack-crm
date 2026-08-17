@@ -42,11 +42,11 @@ describe("the wizard maps to the work it actually shows", () => {
     expect(WIZARD_STEP_STEP_IDS[1]).toEqual(["business_profile"]);
   });
 
-  it("keeps contacts and the phone number on the final screen", () => {
+  it("keeps the link-out tasks on the final screen", () => {
     // The wizard only links out for these two, so clicking Next never
     // completes them. Placing them last means an unfinished agent resumes on
     // the screen that names them.
-    expect(WIZARD_STEP_STEP_IDS[5]).toEqual(["contacts", "sms"]);
+    expect(WIZARD_STEP_STEP_IDS[5]).toEqual(["contacts", "sms", "booking"]);
   });
 });
 
@@ -115,13 +115,13 @@ describe("situation: agent who clicks Finish without doing anything", () => {
     expect(state.nextRecommendedAction?.id).toBe("domain");
   });
 
-  it("still has all eight steps listed with somewhere to go", () => {
+  it("still has every step listed with somewhere to go", () => {
     const state = computeOnboardingState([]);
     const outstanding = ONBOARDING_STEPS.filter(
       (step) => !state.completedStepIds.includes(step.id)
     );
 
-    expect(outstanding).toHaveLength(8);
+    expect(outstanding).toHaveLength(ONBOARDING_STEP_IDS.length);
     for (const step of outstanding) {
       expect(step.title.length).toBeGreaterThan(0);
       expect(step.cta.length).toBeGreaterThan(0);

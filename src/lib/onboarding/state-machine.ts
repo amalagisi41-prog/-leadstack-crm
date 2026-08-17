@@ -5,7 +5,7 @@ import {
 } from "./steps";
 
 /**
- * Pure state machine over the 8 canonical onboarding-checklist step ids
+ * Pure state machine over the 9 canonical onboarding-checklist step ids
  * (lib/onboarding/steps.ts). No I/O — safe to import from both the
  * server-only API route and client components, and unit-testable directly.
  *
@@ -21,11 +21,11 @@ export const WIZARD_STEP_STEP_IDS: readonly (readonly OnboardingStepId[])[] = [
   ["form"], // 2 — Lead Capture
   ["automation", "ai"], // 3 — Instant AI Response
   ["pipeline"], // 4 — Follow-Up
-  // 5 — Go Live. Importing contacts and connecting a phone number are real
-  // tasks this wizard only links out to, so clicking through never marks
-  // them. Listing them here means an agent who has not done them resumes on
-  // the final screen, which names both and links to each.
-  ["contacts", "sms"],
+  // 5 — Go Live. Importing contacts, connecting a phone number and setting up
+  // booking are real tasks this wizard only links out to, so clicking through
+  // never marks them. Listing them here means an agent who has not done them
+  // resumes on the final screen, which names each and links to it.
+  ["contacts", "sms", "booking"],
 ];
 
 export interface OnboardingRecommendedAction {

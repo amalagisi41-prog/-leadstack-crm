@@ -24,12 +24,22 @@ export type OnboardingStepId =
   | "sms"
   | "form"
   | "automation"
+  | "booking"
   | "pipeline"
   | "ai"
   | "domain";
 
 export interface OnboardingStepMeta {
   id: OnboardingStepId;
+  /**
+   * The outcome, not the task.
+   *
+   * "Connect your domain" describes work the operator has to do. "Book more
+   * appointments with automated scheduling" describes what they get for doing
+   * it. A checklist of chores gets abandoned; a list of outcomes gets worked
+   * through, and it is the reason the same nine items read as a benefit rather
+   * than a backlog.
+   */
   title: string;
   description: string;
   /** CTA button label in the expanded step. */
@@ -59,7 +69,7 @@ export interface OnboardingMethodStepMeta {
 export const ONBOARDING_STEPS: readonly OnboardingStepMeta[] = [
   {
     id: "business_profile",
-    title: "Set up your business profile",
+    title: "Get every AI reply sounding like you",
     description:
       "Tell AgentStack about your business once — name, brokerage, services, brand voice, compliance rules, and FAQs. Every AI agent, email, and automation pulls from this profile automatically.",
     cta: "Set up business profile",
@@ -68,7 +78,7 @@ export const ONBOARDING_STEPS: readonly OnboardingStepMeta[] = [
   },
   {
     id: "contacts",
-    title: "Import your contacts",
+    title: "Bring your whole database into one place",
     description:
       "Upload a CSV from your old CRM or add your first contacts manually. Your entire database lives here.",
     cta: "Go to People",
@@ -77,7 +87,7 @@ export const ONBOARDING_STEPS: readonly OnboardingStepMeta[] = [
   },
   {
     id: "sms",
-    title: "Connect your phone number",
+    title: "Text and call leads without leaving the CRM",
     description:
       "Link your dedicated Twilio number so you can send and receive SMS directly in the CRM — and the AI can reply on your behalf.",
     cta: "Open SMS Settings",
@@ -86,7 +96,7 @@ export const ONBOARDING_STEPS: readonly OnboardingStepMeta[] = [
   },
   {
     id: "form",
-    title: "Build your lead capture form",
+    title: "Turn website visitors into leads automatically",
     description:
       "Create a form for your website or a landing page. Every submission auto-creates a contact and drops them into your pipeline.",
     cta: "Build a Form",
@@ -95,7 +105,7 @@ export const ONBOARDING_STEPS: readonly OnboardingStepMeta[] = [
   },
   {
     id: "automation",
-    title: "Turn on your Speed-to-Lead plan",
+    title: "Answer every new lead within 60 seconds",
     description:
       "Attach the Speed-to-Lead automation to your form so every new inquiry gets an SMS and email within 60 seconds — automatically.",
     cta: "Open Follow-Up Plans",
@@ -103,8 +113,17 @@ export const ONBOARDING_STEPS: readonly OnboardingStepMeta[] = [
     videoMinutes: 4,
   },
   {
+    id: "booking",
+    title: "Book more appointments with automated scheduling",
+    description:
+      "Share a link and let clients pick a time that already works for you. Confirmations and reminders go out on their own, so fewer people forget to turn up.",
+    cta: "Set Up Booking",
+    href: SUB_ACCOUNT_ROUTES.booking,
+    videoMinutes: 4,
+  },
+  {
     id: "pipeline",
-    title: "Review your pipeline",
+    title: "See exactly where every deal stands",
     description:
       "Your pipeline is pre-set for real estate: New Lead → Contacted → Showing Scheduled → Offer Made → Closed. Drag deals as they progress.",
     cta: "View Deals",
@@ -113,7 +132,7 @@ export const ONBOARDING_STEPS: readonly OnboardingStepMeta[] = [
   },
   {
     id: "ai",
-    title: "Activate your AI agent",
+    title: "Let AI answer questions while you show homes",
     description:
       "Your AI agent persona is pre-written for a CT realtor. Review it, add your business name, then enable it on SMS and Web Chat.",
     cta: "Set Up AI Agent",
@@ -122,7 +141,7 @@ export const ONBOARDING_STEPS: readonly OnboardingStepMeta[] = [
   },
   {
     id: "domain",
-    title: "Connect your domain",
+    title: "Put your business on your own web address",
     description:
       "The final step — point your website to your own domain. Already own one? We'll show you the exact DNS records to add. Need one? We'll walk you through registering a new one.",
     cta: "Connect Domain",

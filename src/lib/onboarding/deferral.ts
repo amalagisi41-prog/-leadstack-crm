@@ -93,6 +93,14 @@ const DEFERRALS: Record<OnboardingStepId, Omit<StepDeferral, "id">> = {
     skipLabel: "Set up my pipeline later",
     blockingReason: "",
   },
+  booking: {
+    deferral: "deferrable",
+    cost: "Clients will have to phone or email you to arrange a time.",
+    returnWhen:
+      "Come back once you are taking enough appointments that the back-and-forth is costing you evenings.",
+    skipLabel: "Set up booking later",
+    blockingReason: "",
+  },
   ai: {
     deferral: "deferrable",
     cost: "No assistant will answer questions from visitors on your site.",
