@@ -3,6 +3,7 @@ import { Providers } from "@/components/providers";
 import { RefTracker } from "@/components/affiliate/ref-tracker";
 import { AnalyticsScripts } from "@/components/analytics-scripts";
 import { CUSTOM_BRAND, LANDING_VARIANT } from "@/config/landing";
+import { versionedIcon } from "@/lib/pwa/icon-version";
 import "./globals.css";
 
 // Metadata follows the same variant the landing page renders. The custom
@@ -17,12 +18,12 @@ const AGENTSTACK_DESCRIPTION =
   "Capture leads, run pipelines, and book meetings from one simple workspace. Built for small teams that want to replace five tools with one.";
 const APP_ICONS: Metadata["icons"] = {
   icon: [
-    { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
-    { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+    { url: versionedIcon("/icons/icon-192.png"), sizes: "192x192", type: "image/png" },
+    { url: versionedIcon("/icons/icon-512.png"), sizes: "512x512", type: "image/png" },
   ],
   apple: [
     {
-      url: "/icons/apple-touch-icon.png",
+      url: versionedIcon("/icons/apple-touch-icon.png"),
       sizes: "180x180",
       type: "image/png",
     },

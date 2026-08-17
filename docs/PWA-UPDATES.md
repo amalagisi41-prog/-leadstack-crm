@@ -13,13 +13,45 @@ and for the two files that can break it.
 | --- | --- |
 | Any server code, page, API route, data | Immediately — never cached |
 | Any client code (JS/CSS chunks) | On the app's next load |
-| App name, description, icons | On the manifest's next fetch |
-| The offline page and icons | On the next successful online fetch |
+| App name, description | On the manifest's next fetch |
+| Icons rendered *inside* the app | On the next successful online fetch |
+| **The installed app's launcher icon** | **Not automatically — see below** |
 
 The service worker caches exactly three things — the two PWA icons and
 `/offline` — and every request is network-first. The cache is a fallback for
 when the network fails, never a source of truth. That means a stale cached
 asset self-heals the next time it is fetched successfully.
+
+## The launcher icon is a snapshot, and mostly cannot be replaced
+
+This is the one thing a deploy genuinely cannot push to an installed app, and
+it surprises people every time.
+
+When someone installs the app, the operating system copies the icon into the
+Dock, home screen, or launcher. That copy belongs to the OS. Replacing the
+bytes on the server changes what the *site* serves; it does not reach into the
+Dock and repaint what is already there.
+
+| Platform | Does a shipped icon change reach an existing install? |
+| --- | --- |
+| macOS Safari (Add to Dock) | **No.** Remove from the Dock and add it again. |
+| iOS / iPadOS home screen | **No.** Delete the icon and re-add from Share → Add to Home Screen. |
+| Android Chrome | Eventually — Chrome re-mints the WebAPK, usually within a few days of use. |
+| Desktop Chrome / Edge | Usually, on a later launch. Reinstalling forces it. |
+
+There is no web API that changes an installed icon, on any platform. Anyone
+saying otherwise is describing the icon the *page* renders, not the one in the
+Dock.
+
+What we can control is whether the platforms that *do* refresh actually notice.
+They compare icon URLs, not bytes — so replacing the artwork at the same path
+looks like no change at all and Android will keep the old WebAPK. Bump
+`ICON_VERSION` in `src/lib/pwa/icon-version.ts` whenever the artwork changes;
+it is appended as `?v=` to every manifest and `<link rel="icon">` entry, which
+is what makes the change visible to them.
+
+**When rebranding, tell users to re-add the app.** For anyone on macOS or iOS
+that is the only way they will ever see the new icon.
 
 ## The case that needs handling: an app that is never closed
 
