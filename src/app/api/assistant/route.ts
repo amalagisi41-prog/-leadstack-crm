@@ -9,6 +9,8 @@ import {
   type AiChatMessage,
 } from "@/lib/comms/ai/openrouter";
 import { ZACK_PRODUCT_KB } from "@/lib/assistant/zack-kb";
+import { checkAdviceBoundaries } from "@/lib/assistant/advice-boundaries";
+import { CLARIFY_POLICY_PROMPT } from "@/lib/assistant/clarify";
 import { sanitizeZackAction } from "@/lib/assistant/actions";
 import {
   cleanAssistantAnswer,
@@ -217,6 +219,17 @@ export async function POST(request: Request) {
     });
   }
 
+  // Professional-advice boundaries are checked before the model runs, not
+  // asked of it. A system-prompt instruction is advice to a model; one unlucky
+  // generation puts a legal, tax, valuation, or lending opinion on the record
+  // under a licensed agent's name, and it is the agent who carries it. The
+  // knowledge base still describes the same boundaries so the model declines in
+  // the same voice for phrasings this check does not predict.
+  const boundary = checkAdviceBoundaries(question);
+  if (boundary) {
+    return NextResponse.json({ answer: boundary.response, action: null });
+  }
+
   const studioRails =
     mode === "studio"
       ? `\n\nYou are currently in the operator's marketing Studio. In addition to CRM help, act as their marketing and design assistant: write listing descriptions, social captions, ad copy, email campaigns, and landing-page copy in their brand voice; advise on page layout, imagery, color, and typography choices; and suggest which lead-capture systems or funnels fit their goal. When writing copy, produce ready-to-paste text.`
@@ -226,7 +239,9 @@ export async function POST(request: Request) {
 
 PRODUCT HELP IS YOUR FIRST PRIORITY. For questions about setup, migration, navigation, or how to do something, ground the answer in the product guide and the operator's current screen. Give the exact AgentStack action before background information. Do not replace a supported AgentStack workflow with generic advice.
 
-You are also a capable general assistant. When the operator asks about a topic outside AgentStack — such as real-estate strategy, marketing, writing, technology, research, planning, or everyday questions — answer it directly at a ChatGPT/Claude-quality level instead of forcing the response back into AgentStack. State uncertainty when needed, avoid inventing facts, and ask at most one focused clarifying question only when the answer truly depends on missing information.
+You are also a capable general assistant. When the operator asks about a topic outside AgentStack — such as real-estate strategy, marketing, writing, technology, research, planning, or everyday questions — answer it directly at a ChatGPT/Claude-quality level instead of forcing the response back into AgentStack. State uncertainty when needed and never invent facts.
+
+${CLARIFY_POLICY_PROMPT}
 
 Current screen: ${currentPath}
 
@@ -234,7 +249,7 @@ Current screen: ${currentPath}
 ${ZACK_PRODUCT_KB}
 --- END PRODUCT GUIDE ---
 
-You can also draft emails and SMS follow-ups, plan next steps for a client, prep them for appointments and listing presentations, and summarize what to focus on. Be concise, concrete, and action-first. Use short paragraphs or tight numbered steps. When drafting a message, output ready-to-send text. Never invent client data or product capabilities. If essential information is missing, ask one short clarifying question. When WEBSITE REPLACEMENT AUDIT CONTEXT is present, perform the audit immediately and do not ask the operator to repeat information AgentStack already has.${studioRails}${context}
+You can also draft emails and SMS follow-ups, plan next steps for a client, prep them for appointments and listing presentations, and summarize what to focus on. Be concise, concrete, and action-first. Use short paragraphs or tight numbered steps. When drafting a message, output ready-to-send text. Never invent client data or product capabilities. When WEBSITE REPLACEMENT AUDIT CONTEXT is present, perform the audit immediately and do not ask the operator to repeat information AgentStack already has.${studioRails}${context}
 
 You may PROPOSE one controlled action only when the operator clearly asks you to open a page or change a setting. A proposal never executes automatically; AgentStack will show a permission card and the operator must confirm it. Supported actions:
 - navigate: an AgentStack path beginning with /sa/${subAccountId ?? "WORKSPACE_ID"}/ or /me/settings
