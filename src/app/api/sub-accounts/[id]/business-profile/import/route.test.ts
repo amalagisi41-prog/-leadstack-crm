@@ -19,20 +19,19 @@ vi.mock("@/lib/firebase/admin", () => ({
 }));
 
 vi.mock("@/lib/comms/ai/openrouter", async () => {
-  const actual =
-    await vi.importActual<typeof import("@/lib/comms/ai/openrouter")>(
-      "@/lib/comms/ai/openrouter"
-    );
+  const actual = await vi.importActual<
+    typeof import("@/lib/comms/ai/openrouter")
+  >("@/lib/comms/ai/openrouter");
   return {
-  ...actual,
-  aiIsConfigured: vi.fn(() => true),
-  callAi: vi.fn(async () => ({
-    text: '{"agentName":"Jane Doe"}',
-    promptTokens: 0,
-    completionTokens: 0,
-    totalTokens: 0,
-    model: "test",
-  })),
+    ...actual,
+    aiIsConfigured: vi.fn(() => true),
+    callAi: vi.fn(async () => ({
+      text: '{"agentName":"Jane Doe"}',
+      promptTokens: 0,
+      completionTokens: 0,
+      totalTokens: 0,
+      model: "test",
+    })),
   };
 });
 
@@ -72,6 +71,13 @@ function makeRequest(body: unknown): Request {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.mocked(callAi).mockResolvedValue({
+    text: '{"agentName":"Jane Doe"}',
+    promptTokens: 0,
+    completionTokens: 0,
+    totalTokens: 0,
+    model: "test",
+  });
 });
 
 describe("POST business-profile/import", () => {
@@ -134,9 +140,36 @@ describe("POST business-profile/import", () => {
     expect(body.error).not.toMatch(/openrouter|429/i);
   });
 
-  it("answers in JSON when the model returns something unparseable", async () => {
+  it("retries once when a model returns something unparseable", async () => {
     vi.mocked(readPublicPage).mockResolvedValueOnce("Jane Doe, REALTOR.");
-    vi.mocked(callAi).mockResolvedValueOnce({
+    vi.mocked(callAi)
+      .mockResolvedValueOnce({
+        text: "I'm afraid I can't.",
+        promptTokens: 0,
+        completionTokens: 0,
+        totalTokens: 0,
+        model: "test",
+      })
+      .mockResolvedValueOnce({
+        text: '```json\n{"agentName":"Jane Doe"}\n```',
+        promptTokens: 0,
+        completionTokens: 0,
+        totalTokens: 0,
+        model: "free/test",
+      });
+
+    const res = await POST(
+      makeRequest({ url: "https://janedoerealty.com/about" }),
+      ctx
+    );
+    expect(res.status).toBe(200);
+    expect((await res.json()).profile.agentName).toBe("Jane Doe");
+    expect(callAi).toHaveBeenCalledTimes(2);
+  });
+
+  it("answers in JSON when both structured-output attempts are invalid", async () => {
+    vi.mocked(readPublicPage).mockResolvedValueOnce("Jane Doe, REALTOR.");
+    vi.mocked(callAi).mockResolvedValue({
       text: "I'm afraid I can't.",
       promptTokens: 0,
       completionTokens: 0,
@@ -149,7 +182,8 @@ describe("POST business-profile/import", () => {
       ctx
     );
     expect(res.status).toBe(502);
-    expect((await res.json()).error).toMatch(/by hand/i);
+    expect((await res.json()).error).toMatch(/another public website/i);
+    expect(callAi).toHaveBeenCalledTimes(2);
   });
 
   it("answers in JSON when something unexpected throws", async () => {
@@ -210,7 +244,9 @@ describe("POST business-profile/import", () => {
   it("does not tell them to retry a misconfiguration", async () => {
     // A wrong key or a spent balance will not fix itself on the third attempt.
     vi.mocked(readPublicPage).mockResolvedValueOnce("Jane Doe, REALTOR.");
-    vi.mocked(callAi).mockRejectedValueOnce(new AiError("nope", { status: 401 }));
+    vi.mocked(callAi).mockRejectedValueOnce(
+      new AiError("nope", { status: 401 })
+    );
 
     const res = await POST(
       makeRequest({ url: "https://janedoerealty.com/about" }),

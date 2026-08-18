@@ -156,34 +156,41 @@ async function importProfile(
     );
   }
 
+  const extractionMessages = [
+    {
+      role: "system" as const,
+      content:
+        "Extract a factual real-estate business profile from supplied website text. Return one compact JSON object only, with no markdown or commentary. Never guess license numbers, contact details, brokerage, service areas, claims, or testimonials. Use empty strings/arrays when not explicit. services may only contain buyers, sellers, investors, rentals, relocation, luxury, first_time_buyers, commercial. brandVoice may only be professional, luxury, friendly, investor, casual, formal.",
+    },
+    {
+      role: "user" as const,
+      content: `Source URL: ${url}\nSource platform: ${String(body?.platform ?? "website")}\n\nReturn JSON with: agentName,title,brokerage,licenseStates,licenseNumber,phone,email,website,languages,clientExperience,idealClientProfile,clientPromise,serviceAreas,priceRanges,specialties,services,brandVoice,businessHours,responsePreference,bio,headshotUrl,logoUrl,testimonials.\n\nWEBSITE TEXT:\n${markdown}`,
+    },
+  ];
+
+  async function extractProfile(maxTokens: number) {
+    return callAi({
+      maxTokens,
+      temperature: 0,
+      responseFormat: { type: "json_object" },
+      timeoutMs: Math.max(
+        REQUEST_BUDGET_MS - (Date.now() - startedAt) - FIRESTORE_RESERVE_MS,
+        MIN_EXTRACT_MS
+      ),
+      messages: extractionMessages,
+    });
+  }
+
   let completion: Awaited<ReturnType<typeof callAi>>;
   try {
-    completion = await callAi({
+    completion = await extractProfile(
       // A complete Business Blueprint is substantially larger than an SMS
       // reply. JSON mode plus a dedicated output budget prevents the model's
       // object from being truncated before its closing brace.
       // The operator reviews the factual draft; optional fields compress well.
       // Staying below the free-account allowance keeps onboarding functional.
-      maxTokens: 800,
-      temperature: 0,
-      responseFormat: { type: "json_object" },
-      // Whatever the read did not spend, less the reserve for Firestore.
-      timeoutMs: Math.max(
-        REQUEST_BUDGET_MS - (Date.now() - startedAt) - FIRESTORE_RESERVE_MS,
-        MIN_EXTRACT_MS
-      ),
-      messages: [
-        {
-          role: "system",
-          content:
-            "Extract a factual real-estate business profile from supplied website text. Return one JSON object only. Never guess license numbers, contact details, brokerage, service areas, claims, or testimonials. Use empty strings/arrays when not explicit. services may only contain buyers, sellers, investors, rentals, relocation, luxury, first_time_buyers, commercial. brandVoice may only be professional, luxury, friendly, investor, casual, formal.",
-        },
-        {
-          role: "user",
-          content: `Source URL: ${url}\nSource platform: ${String(body?.platform ?? "website")}\n\nReturn JSON with: agentName,title,brokerage,licenseStates,licenseNumber,phone,email,website,languages,clientExperience,idealClientProfile,clientPromise,serviceAreas,priceRanges,specialties,services,brandVoice,businessHours,responsePreference,bio,headshotUrl,logoUrl,testimonials.\n\nWEBSITE TEXT:\n${markdown}`,
-        },
-      ],
-    });
+      800
+    );
   } catch (error) {
     // The operator's page was fine, so do not blame their link — and name the
     // actual fault, because "not responding" covered a timeout, a bad key, an
@@ -210,13 +217,31 @@ async function importProfile(
   try {
     extracted = parseObject(completion.text);
   } catch {
-    return NextResponse.json(
-      {
-        error:
-          "We read your page, but could not turn it into profile fields. Try again, or fill your Blueprint in by hand below.",
-      },
-      { status: 502 }
-    );
+    // The free router can select a different structured-output model on each
+    // request. Occasionally a model wraps or truncates its object despite
+    // JSON mode. Retry once inside this request so the operator does not have
+    // to discover that implementation detail by clicking again.
+    try {
+      completion = await extractProfile(650);
+      void recordAiUsage({
+        subAccountId: id,
+        feature: "blueprint_import_retry",
+        completion,
+      });
+      extracted = parseObject(completion.text);
+    } catch (error) {
+      console.error(
+        "business-profile import: invalid structured output",
+        error
+      );
+      return NextResponse.json(
+        {
+          error:
+            "We read your page, but could not turn it into profile fields. Try another public website or fill your Blueprint in by hand below.",
+        },
+        { status: 502 }
+      );
+    }
   }
 
   const db = getAdminDb();
