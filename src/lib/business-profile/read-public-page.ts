@@ -489,8 +489,17 @@ async function readViaReader(
 ): Promise<ReadOutcome> {
   let response: Response;
   try {
+    // Anonymous reader traffic is capped at roughly twenty requests an hour
+    // per IP. A burst of imports — one operator testing, let alone a tenant
+    // base — exhausts that and every portal read dies at this stage with a
+    // 429. A (free) reader key raises the ceiling by orders of magnitude.
+    const readerKey = process.env.JINA_READER_API_KEY?.trim();
     response = await fetch(readerUrl(target), {
-      headers: { Accept: "text/plain", "User-Agent": PROFILE_IMPORT_UA },
+      headers: {
+        Accept: "text/plain",
+        "User-Agent": PROFILE_IMPORT_UA,
+        ...(readerKey ? { Authorization: `Bearer ${readerKey}` } : {}),
+      },
       signal: AbortSignal.timeout(timeoutMs),
     });
   } catch (error) {
