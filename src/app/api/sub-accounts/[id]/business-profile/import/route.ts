@@ -5,9 +5,11 @@ import { requireSubAccountAdmin } from "@/lib/auth/require-tenancy";
 import { getAdminDb } from "@/lib/firebase/admin";
 import {
   PageReadError,
-  readPublicPage,
+  readPublicPageContent,
   safePublicUrl,
+  type PageContent,
 } from "@/lib/business-profile/read-public-page";
+import { extractStructuredProfile } from "@/lib/business-profile/structured-profile";
 import { callAi } from "@/lib/comms/ai/openrouter";
 import { recordAiUsage } from "@/lib/comms/ai/usage";
 import {
@@ -361,9 +363,9 @@ async function importProfile(
       { status: 400 }
     );
 
-  let markdown: string;
+  let page: PageContent;
   try {
-    markdown = await readPublicPage(url);
+    page = await readPublicPageContent(url);
   } catch (error) {
     // readPublicPage names the reason and the next step. Only a genuine bug
     // reaches the fallback, and even that says what to do instead — the old
@@ -379,12 +381,22 @@ async function importProfile(
     );
   }
 
+  const markdown = page.text;
+
   // Supported directory pages should not depend on an LLM merely to copy
   // stable, labelled facts. If the source reader already has every launch
   // essential, use it directly. This is both more accurate and resilient to
   // provider keys, credits, model routing, timeouts, and malformed output.
+  //
+  // Every other source gets the generic structured extractor: schema.org
+  // JSON-LD and tel:/mailto: links are the page's own machine-readable
+  // declaration of who the agent is, and they were previously stripped out
+  // before the model ever saw the page. Facts from structure are
+  // deterministic, so they merge ahead of model output further down.
   const isZillowSource = directoryProfileHost(url).endsWith("zillow.com");
-  const sourceFacts = isZillowSource ? zillowProfileFromPage(url, markdown) : {};
+  const sourceFacts = isZillowSource
+    ? zillowProfileFromPage(url, markdown)
+    : extractStructuredProfile({ raw: page.raw, kind: page.kind, url });
   const sourceCompleteness =
     Object.keys(sourceFacts).length > 0
       ? businessProfileCompleteness({
@@ -484,7 +496,10 @@ async function importProfile(
     // Keep the operator moving when the provider/key is temporarily
     // unavailable. This draft contains only facts we can read directly; it
     // is still review-only and never writes until Save profile is pressed.
-    const fallback = conservativeProfileFromPage(url, markdown);
+    const fallback = {
+      ...conservativeProfileFromPage(url, markdown),
+      ...sourceFacts,
+    };
     if (Object.keys(fallback).length > 0) {
       completion = { text: Object.entries(fallback).map(([k, v]) => `${k}=${v}`).join("\n"), promptTokens: 0, completionTokens: 0, totalTokens: 0, model: "local-reader" };
     } else {

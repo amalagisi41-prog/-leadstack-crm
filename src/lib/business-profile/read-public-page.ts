@@ -341,16 +341,33 @@ interface Attempt {
   status?: number;
 }
 
+/**
+ * What a successful read hands back.
+ *
+ * `text` is the cleaned, capped prose the extraction model sees. `raw` is the
+ * body as the source delivered it — HTML from a direct fetch, markdown from a
+ * reader — kept because a page's machine-readable structure (JSON-LD,
+ * tel:/mailto: links) lives there and is destroyed by the text cleanup.
+ */
+export interface PageContent {
+  text: string;
+  raw: string;
+  kind: "html" | "markdown";
+}
+
 type ReadOutcome =
-  | { ok: true; text: string }
+  | { ok: true; page: PageContent }
   | { ok: false; failure: Attempt };
 
 function fromQuality(
   quality: PageQuality,
   text: string,
   target: string,
+  raw: string,
+  kind: "html" | "markdown",
 ): ReadOutcome {
-  if (quality === "readable") return { ok: true, text: extractionText(target, text) };
+  if (quality === "readable")
+    return { ok: true, page: { text: extractionText(target, text), raw, kind } };
   return {
     ok: false,
     failure: { reason: quality === "blocked" ? "blocked" : "unreadable" },
@@ -365,12 +382,16 @@ function fromQuality(
  * names our API key — so anything short of usable markdown falls through to
  * the direct read, which can speak accurately about their link.
  */
-async function readViaFirecrawl(target: string): Promise<string | null> {
+async function readViaFirecrawl(target: string): Promise<PageContent | null> {
   if (!firecrawlIsConfigured()) return null;
   try {
     const { markdown } = await scrapeUrl(target);
     if (classifyPageText(markdown) !== "readable") return null;
-    return extractionText(target, markdown);
+    return {
+      text: extractionText(target, markdown),
+      raw: markdown.slice(0, MAX_BODY),
+      kind: "markdown",
+    };
   } catch {
     return null;
   }
@@ -453,7 +474,7 @@ async function readDirect(
 
     const body = (await response.text().catch(() => "")).slice(0, MAX_BODY);
     const text = readableText(body);
-    return fromQuality(classifyPageText(text), text, startUrl);
+    return fromQuality(classifyPageText(text), text, startUrl, body, "html");
   }
 
   return { ok: false, failure: { reason: "unreachable" } };
@@ -495,7 +516,7 @@ async function readViaReader(
     return { ok: false, failure: { reason: statusReason(status), status } };
   }
 
-  return fromQuality(classifyPageText(text), text, target);
+  return fromQuality(classifyPageText(text), text, target, text, "markdown");
 }
 
 // ---------------------------------------------------------------------------
@@ -534,6 +555,20 @@ export async function readPublicPage(
   startUrl: string,
   budgetMs: number = READ_BUDGET_MS
 ): Promise<string> {
+  return (await readPublicPageContent(startUrl, budgetMs)).text;
+}
+
+/**
+ * Read a public page keeping both the cleaned text and the raw body.
+ *
+ * The raw body matters because a page's machine-readable structure — JSON-LD,
+ * tel:/mailto: links — is exactly what the text cleanup removes, and it is
+ * the most reliable source of profile facts a site offers.
+ */
+export async function readPublicPageContent(
+  startUrl: string,
+  budgetMs: number = READ_BUDGET_MS
+): Promise<PageContent> {
   const deadline = Date.now() + budgetMs;
   const left = () => deadline - Date.now();
   const attempts: Attempt[] = [];
@@ -557,7 +592,7 @@ export async function readPublicPage(
       startUrl,
       Math.min(left() - MIN_ATTEMPT_MS, 11_000)
     );
-    if (relayed.ok) return relayed.text;
+    if (relayed.ok) return relayed.page;
     attempts.push(relayed.failure);
 
     if (left() >= MIN_ATTEMPT_MS) {
@@ -565,7 +600,7 @@ export async function readPublicPage(
         startUrl,
         Math.min(left(), DIRECT_TIMEOUT_MS)
       );
-      if (direct.ok) return direct.text;
+      if (direct.ok) return direct.page;
       attempts.push(direct.failure);
     }
   } else if (left() >= MIN_ATTEMPT_MS) {
@@ -573,7 +608,7 @@ export async function readPublicPage(
       startUrl,
       Math.min(left(), DIRECT_TIMEOUT_MS)
     );
-    if (direct.ok) return direct.text;
+    if (direct.ok) return direct.page;
     attempts.push(direct.failure);
 
     // A dead link is dead for the reader service too. Skipping it keeps a
@@ -584,7 +619,7 @@ export async function readPublicPage(
         startUrl,
         Math.min(left(), READER_TIMEOUT_MS)
       );
-      if (relayed.ok) return relayed.text;
+      if (relayed.ok) return relayed.page;
       attempts.push(relayed.failure);
     }
   }

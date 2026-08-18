@@ -43,15 +43,21 @@ vi.mock("@/lib/business-profile/read-public-page", async () => {
   const actual = await vi.importActual<
     typeof import("@/lib/business-profile/read-public-page")
   >("@/lib/business-profile/read-public-page");
-  return { ...actual, readPublicPage: vi.fn() };
+  return { ...actual, readPublicPageContent: vi.fn() };
 });
 
 import { POST } from "./route";
 import { AiError, callAi } from "@/lib/comms/ai/openrouter";
 import {
   PageReadError,
-  readPublicPage,
+  readPublicPageContent,
+  type PageContent,
 } from "@/lib/business-profile/read-public-page";
+
+/** Wrap plain text the way the reader now delivers it. */
+function pageOf(text: string, kind: PageContent["kind"] = "markdown"): PageContent {
+  return { text, raw: text, kind };
+}
 
 /**
  * The regression: the catch here replaced every diagnosed failure with
@@ -87,7 +93,7 @@ beforeEach(() => {
 
 describe("POST business-profile/import", () => {
   it("passes the diagnosed reason and next step straight through", async () => {
-    vi.mocked(readPublicPage).mockRejectedValueOnce(
+    vi.mocked(readPublicPageContent).mockRejectedValueOnce(
       new PageReadError(
         "Homes.com blocks automated reading, so we could not pull your details from that page. Paste your brokerage or personal website instead — an About or agent-bio page works best — or fill your Blueprint in by hand — every field here is editable.",
         "blocked"
@@ -107,7 +113,7 @@ describe("POST business-profile/import", () => {
   });
 
   it("still says what to do when something unexpected breaks", async () => {
-    vi.mocked(readPublicPage).mockRejectedValueOnce(new Error("boom"));
+    vi.mocked(readPublicPageContent).mockRejectedValueOnce(new Error("boom"));
 
     const res = await POST(
       makeRequest({ url: "https://janedoerealty.com/about" }),
@@ -125,7 +131,7 @@ describe("POST business-profile/import", () => {
     // callAi was unguarded, so an OpenRouter outage became an uncaught throw,
     // which Next.js turns into a 500 with an empty body — and an empty body
     // reaches the browser as "Unexpected end of JSON input".
-    vi.mocked(readPublicPage).mockResolvedValueOnce("Jane Doe, REALTOR.");
+    vi.mocked(readPublicPageContent).mockResolvedValueOnce(pageOf("Jane Doe, REALTOR."));
     vi.mocked(callAi).mockRejectedValueOnce(
       new AiError("OpenRouter 429: slow down", { status: 429 })
     );
@@ -146,7 +152,7 @@ describe("POST business-profile/import", () => {
   });
 
   it("parses the low-overhead line protocol and ignores unapproved keys", async () => {
-    vi.mocked(readPublicPage).mockResolvedValueOnce("Jane Doe, REALTOR.");
+    vi.mocked(readPublicPageContent).mockResolvedValueOnce(pageOf("Jane Doe, REALTOR."));
     vi.mocked(callAi).mockResolvedValueOnce({
       text: [
         "agentName=Jane Doe",
@@ -179,7 +185,7 @@ describe("POST business-profile/import", () => {
   });
 
   it("retries malformed line output once as structured JSON", async () => {
-    vi.mocked(readPublicPage).mockResolvedValueOnce("Jane Doe, REALTOR.");
+    vi.mocked(readPublicPageContent).mockResolvedValueOnce(pageOf("Jane Doe, REALTOR."));
     vi.mocked(callAi)
       .mockResolvedValueOnce({
         text: "I'm afraid I can't.",
@@ -209,7 +215,7 @@ describe("POST business-profile/import", () => {
   });
 
   it("answers in JSON when both parser attempts are invalid", async () => {
-    vi.mocked(readPublicPage).mockResolvedValueOnce("Jane Doe, REALTOR.");
+    vi.mocked(readPublicPageContent).mockResolvedValueOnce(pageOf("Jane Doe, REALTOR."));
     vi.mocked(callAi).mockResolvedValue({
       text: "I'm afraid I can't.",
       promptTokens: 0,
@@ -229,7 +235,7 @@ describe("POST business-profile/import", () => {
 
   it("answers in JSON when something unexpected throws", async () => {
     // The outer guard. Without it Next.js writes no body at all.
-    vi.mocked(readPublicPage).mockResolvedValueOnce("Jane Doe, REALTOR.");
+    vi.mocked(readPublicPageContent).mockResolvedValueOnce(pageOf("Jane Doe, REALTOR."));
     getMock.mockRejectedValueOnce(new Error("Firestore unavailable"));
 
     const res = await POST(
@@ -247,7 +253,7 @@ describe("POST business-profile/import", () => {
     // A flat 20s cap on a call that previously had no timeout is what broke
     // AI-assisted setup: a full Blueprint regularly takes longer than that.
     // The budget now adapts, and must stay inside maxDuration (60s).
-    vi.mocked(readPublicPage).mockResolvedValueOnce("Jane Doe, REALTOR.");
+    vi.mocked(readPublicPageContent).mockResolvedValueOnce(pageOf("Jane Doe, REALTOR."));
     await POST(makeRequest({ url: "https://janedoerealty.com/about" }), ctx);
 
     const [args] = vi.mocked(callAi).mock.calls.at(-1)!;
@@ -256,9 +262,9 @@ describe("POST business-profile/import", () => {
   });
 
   it("still leaves the model a workable floor after a slow read", async () => {
-    vi.mocked(readPublicPage).mockImplementationOnce(async () => {
+    vi.mocked(readPublicPageContent).mockImplementationOnce(async () => {
       await new Promise((resolve) => setTimeout(resolve, 60));
-      return "Jane Doe, REALTOR.";
+      return pageOf("Jane Doe, REALTOR.");
     });
     await POST(makeRequest({ url: "https://janedoerealty.com/about" }), ctx);
 
@@ -267,7 +273,7 @@ describe("POST business-profile/import", () => {
   });
 
   it("names the fault instead of calling everything 'not responding'", async () => {
-    vi.mocked(readPublicPage).mockResolvedValueOnce("Jane Doe, REALTOR.");
+    vi.mocked(readPublicPageContent).mockResolvedValueOnce(pageOf("Jane Doe, REALTOR."));
     vi.mocked(callAi).mockRejectedValueOnce(
       new AiError("did not respond in time", { timedOut: true })
     );
@@ -284,7 +290,7 @@ describe("POST business-profile/import", () => {
 
   it("does not tell them to retry a misconfiguration", async () => {
     // A wrong key or a spent balance will not fix itself on the third attempt.
-    vi.mocked(readPublicPage).mockResolvedValueOnce("Jane Doe, REALTOR.");
+    vi.mocked(readPublicPageContent).mockResolvedValueOnce(pageOf("Jane Doe, REALTOR."));
     vi.mocked(callAi).mockRejectedValueOnce(
       new AiError("nope", { status: 401 })
     );
@@ -301,13 +307,71 @@ describe("POST business-profile/import", () => {
     expect(body.error).toMatch(/by hand/i);
   });
 
+  it("keeps a page's own JSON-LD facts even when the model returns almost nothing", async () => {
+    // The Crexi regression: the page declares the agent in schema.org
+    // structure, the text cleanup strips it, and a weak model answer left the
+    // import at 29%. Structure is the page's own declaration — it must win.
+    vi.mocked(readPublicPageContent).mockResolvedValueOnce(
+      pageOf(
+        `<html><head><script type="application/ld+json">
+          {"@type":"Person","name":"Seamus Costigan",
+           "worksFor":{"@type":"Organization","name":"Marr Caruso Realty Group"},
+           "telephone":"(203) 550-0531","email":"sc.newbridge@gmail.com",
+           "url":"https://newbridge-properties.com/"}
+        </script></head><body>Profile</body></html>`,
+        "html"
+      )
+    );
+    vi.mocked(callAi).mockResolvedValueOnce({
+      text: "agentName=Seamus Costigan",
+      promptTokens: 0,
+      completionTokens: 0,
+      totalTokens: 0,
+      model: "test",
+    });
+
+    const res = await POST(
+      makeRequest({ url: "https://www.crexi.com/profile/seamus-costigan" }),
+      ctx
+    );
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.profile.agentName).toBe("Seamus Costigan");
+    expect(body.profile.brokerage).toBe("Marr Caruso Realty Group");
+    expect(body.profile.phone).toBe("(203) 550-0531");
+    expect(body.profile.email).toBe("sc.newbridge@gmail.com");
+    expect(body.profile.website).toBe("https://newbridge-properties.com/");
+    expect(body.extractionMode).toBe("source-reader");
+  });
+
+  it("hands the structured facts to the operator even when the AI is down", async () => {
+    vi.mocked(readPublicPageContent).mockResolvedValueOnce(
+      pageOf(
+        `<html><head><script type="application/ld+json">
+          {"@type":"Person","name":"Seamus Costigan","telephone":"(203) 550-0531"}
+        </script></head><body>Profile</body></html>`,
+        "html"
+      )
+    );
+    vi.mocked(callAi).mockRejectedValueOnce(new AiError("nope", { status: 402 }));
+
+    const res = await POST(
+      makeRequest({ url: "https://www.crexi.com/profile/seamus-costigan" }),
+      ctx
+    );
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.profile.agentName).toBe("Seamus Costigan");
+    expect(body.profile.phone).toBe("(203) 550-0531");
+  });
+
   it("rejects a private address before any request goes out", async () => {
     const res = await POST(
       makeRequest({ url: "http://169.254.169.254/latest/meta-data/" }),
       ctx
     );
     expect(res.status).toBe(400);
-    expect(readPublicPage).not.toHaveBeenCalled();
+    expect(readPublicPageContent).not.toHaveBeenCalled();
   });
 
   it("returns a review draft without mutating the approved profile", async () => {
@@ -316,9 +380,9 @@ describe("POST business-profile/import", () => {
       email: "approved@example.com",
       website: "https://approved.example.com",
     };
-    vi.mocked(readPublicPage).mockResolvedValueOnce(
+    vi.mocked(readPublicPageContent).mockResolvedValueOnce(pageOf(
       "Jane Doe is a REALTOR in Fairfield County."
-    );
+    ));
 
     const res = await POST(
       makeRequest({ url: "https://janedoerealty.com/about" }),
@@ -335,7 +399,7 @@ describe("POST business-profile/import", () => {
   });
 
   it("rejects an incomplete Zillow read without changing the saved profile", async () => {
-    vi.mocked(readPublicPage).mockResolvedValueOnce("Jane Doe, REALTOR.");
+    vi.mocked(readPublicPageContent).mockResolvedValueOnce(pageOf("Jane Doe, REALTOR."));
 
     const source = "https://www.zillow.com/profile/jane-doe";
     const res = await POST(makeRequest({ url: source }), ctx);
@@ -350,7 +414,7 @@ describe("POST business-profile/import", () => {
 
   it("builds a complete Zillow review draft without calling AI", async () => {
     const source = "https://www.zillow.com/profile/Seamus%20Costigan";
-    vi.mocked(readPublicPage).mockResolvedValueOnce(`
+    vi.mocked(readPublicPageContent).mockResolvedValueOnce(pageOf(`
       # Seamus Costigan
       Marr Caruso Realty Group 5.0 [28 reviews](#reviews)
       Real Estate Agent in Stamford, CT
@@ -368,7 +432,7 @@ describe("POST business-profile/import", () => {
       ## Contact Seamus Costigan
       [(203) 550-0531](tel:2035500531)
       [sc.newbridge@gmail.com](mailto:sc.newbridge@gmail.com)
-    `);
+    `));
     vi.mocked(callAi).mockResolvedValueOnce({
       text: "agentName=Seamus Costigan",
       promptTokens: 0,
@@ -404,7 +468,7 @@ describe("POST business-profile/import", () => {
 
   it("ignores Zillow title/navigation noise and reads encoded contact links", async () => {
     const source = "https://www.zillow.com/profile/Seamus%20Costigan";
-    vi.mocked(readPublicPage).mockResolvedValueOnce(`
+    vi.mocked(readPublicPageContent).mockResolvedValueOnce(pageOf(`
       Title: Seamus Costigan - Real Estate Agent in Stamford, CT - Reviews | Zillow
       Report a problem Profile Summary. Overview: Sales Statistics & Listings.
       Report a problem Report a problem Seamus Costigan Marr Caruso Realty Group 5.0 28 reviews Recent Sales
@@ -418,7 +482,7 @@ describe("POST business-profile/import", () => {
       [sc.newbridge@gmail.com](mailto:sc.newbridge@gmail.com)
       Service areas (3) [Norwalk, CT](/norwalk-ct/) [Stamford, CT](/stamford-ct/) [Fairfield, CT](/fairfield-ct/)
       Nearby cities Real Estate in Armonk
-    `);
+    `));
 
     const res = await POST(makeRequest({ url: source }), ctx);
     const body = await res.json();
