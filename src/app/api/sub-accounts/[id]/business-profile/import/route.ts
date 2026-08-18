@@ -1,6 +1,5 @@
 import "server-only";
 
-import { FieldValue } from "firebase-admin/firestore";
 import { NextResponse } from "next/server";
 import { requireSubAccountAdmin } from "@/lib/auth/require-tenancy";
 import { getAdminDb } from "@/lib/firebase/admin";
@@ -9,7 +8,7 @@ import {
   readPublicPage,
   safePublicUrl,
 } from "@/lib/business-profile/read-public-page";
-import { aiIsConfigured, callAi } from "@/lib/comms/ai/openrouter";
+import { callAi } from "@/lib/comms/ai/openrouter";
 import { recordAiUsage } from "@/lib/comms/ai/usage";
 import {
   AI_FAILURE_CODES,
@@ -29,6 +28,15 @@ import {
 
 const VOICES = new Set(BRAND_VOICES.map((item) => item.id));
 const SERVICES = new Set(SERVICE_SPECIALTIES.map((item) => item.id));
+// Blueprint imports need a deterministic model, but must also honor the
+// workspace's OpenRouter privacy policy. The former hard-coded `:free` model
+// was rejected when free endpoints required data retention the account had
+// disabled. Use an explicit import override when configured; otherwise use
+// a vetted privacy-compatible model. Do not inherit the global model here:
+// a legacy `openrouter/free` setting can select the same incompatible class
+// of endpoint and silently reintroduce this failure.
+const IMPORT_MODEL =
+  process.env.BLUEPRINT_IMPORT_MODEL?.trim() || "anthropic/claude-haiku-4.5";
 const IMPORT_KEYS: (keyof BusinessProfileContent)[] = [
   "agentName",
   "title",
@@ -116,6 +124,33 @@ function parseLineProfile(text: string): Record<string, unknown> {
 }
 
 /**
+ * Last-resort, non-AI extraction. Portal pages are often readable while the
+ * model provider is unavailable. Returning a conservative draft keeps the
+ * onboarding workflow usable and never invents regulated/contact facts.
+ */
+function conservativeProfileFromPage(url: string, text: string): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  const pathName = (() => {
+    try { return decodeURIComponent(new URL(url).pathname).replace(/\/+$/, ""); }
+    catch { return ""; }
+  })();
+  const last = pathName.split("/").filter(Boolean).pop() ?? "";
+  const name = last.replace(/[-_]+/g, " ").trim();
+  if (/^[A-Za-z][A-Za-z .'-]{3,80}$/.test(name) && !/profile|agent|real estate/i.test(name)) {
+    result.agentName = name;
+  }
+  const normalized = text.replace(/\s+/g, " ").trim();
+  const brokerage = normalized.match(/(?:brokerage|office|affiliated with)\s*[:\-]?\s*([A-Z][A-Za-z0-9&' .-]{2,80})/i)?.[1];
+  if (brokerage) result.brokerage = brokerage.trim();
+  const phone = normalized.match(/(?:\+?1[ .-]?)?\(?\d{3}\)?[ .-]\d{3}[ .-]\d{4}/)?.[0];
+  if (phone) result.phone = phone;
+  const email = normalized.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0];
+  if (email) result.email = email;
+  if (Object.keys(result).length === 0) result.bio = normalized.slice(0, 1200);
+  return result;
+}
+
+/**
  * Reading a page and extracting from it is slower than the platform's default
  * function ceiling, and a function killed by the gateway writes no body at
  * all — which surfaces in the browser as "Unexpected end of JSON input", a
@@ -172,12 +207,11 @@ async function importProfile(
   const { id } = await ctx.params;
   const access = await requireSubAccountAdmin(request, id);
   if (access instanceof NextResponse) return access;
-  if (!aiIsConfigured()) {
-    return NextResponse.json(
-      { error: "AI website import is not configured yet." },
-      { status: 503 }
-    );
-  }
+  // Do not reject the request before reading the public page. Production
+  // deployments can briefly lose the provider key (or be rate limited), but
+  // the page reader and deterministic extractor can still produce a safe,
+  // review-only draft. The old early 503 made every link look broken and
+  // prevented the operator from seeing what was actually readable.
   const body = (await request.json().catch(() => null)) as {
     url?: unknown;
     platform?: unknown;
@@ -212,6 +246,7 @@ async function importProfile(
 
   async function extractLineProfile() {
     return callAi({
+      model: IMPORT_MODEL,
       maxTokens: 650,
       temperature: 0,
       timeoutMs: Math.max(
@@ -234,6 +269,7 @@ async function importProfile(
 
   async function extractJsonProfile(timeoutMs: number) {
     return callAi({
+      model: IMPORT_MODEL,
       maxTokens: 800,
       temperature: 0,
       responseFormat: { type: "json_object" },
@@ -269,10 +305,18 @@ async function importProfile(
       `business-profile import: extraction failed (${failure})`,
       error
     );
-    return NextResponse.json(
-      { error: aiFailureMessage(failure), code: AI_FAILURE_CODES[failure] },
-      { status: aiFailureStatus(failure) }
-    );
+    // Keep the operator moving when the provider/key is temporarily
+    // unavailable. This draft contains only facts we can read directly; it
+    // is still review-only and never writes until Save profile is pressed.
+    const fallback = conservativeProfileFromPage(url, markdown);
+    if (Object.keys(fallback).length > 0) {
+      completion = { text: Object.entries(fallback).map(([k, v]) => `${k}=${v}`).join("\n"), promptTokens: 0, completionTokens: 0, totalTokens: 0, model: "local-reader" };
+    } else {
+      return NextResponse.json(
+        { error: aiFailureMessage(failure), code: AI_FAILURE_CODES[failure] },
+        { status: aiFailureStatus(failure) }
+      );
+    }
   }
 
   void recordAiUsage({
@@ -355,20 +399,10 @@ async function importProfile(
   )
     next.brandVoice = extracted.brandVoice as BrandVoice;
   const completeness = businessProfileCompleteness(next);
-  await ref.set(
-    {
-      ...next,
-      subAccountId: id,
-      agencyId: access.agencyId,
-      updatedByUid: access.uid,
-      completeness,
-      importSourceUrl: url,
-      importReviewed: false,
-      ...(snap.exists ? {} : { createdAt: FieldValue.serverTimestamp() }),
-      updatedAt: FieldValue.serverTimestamp(),
-    },
-    { merge: true }
-  );
+  // Deliberately do not write this draft to Firestore. The operator must see
+  // and approve it with "Save profile" first. Previously this endpoint wrote
+  // directly to businessProfile/main, so even an exploratory import could
+  // replace an already-approved 100% profile and its real website.
   return NextResponse.json({
     ok: true,
     profile: next,
