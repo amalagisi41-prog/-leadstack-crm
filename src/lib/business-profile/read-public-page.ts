@@ -30,6 +30,29 @@ const PROFILE_IMPORT_UA =
 /** Text handed to the extraction model. Beyond this is prompt budget burned. */
 const MAX_TEXT = 18_000;
 
+/**
+ * Zillow repeats listing cards before the agent contact and service-area
+ * sections. A simple prefix truncation therefore drops the exact facts the
+ * Blueprint needs. Keep a bounded head and tail for Zillow: the head contains
+ * the summary/bio, while the tail contains contact details and service areas.
+ */
+function extractionText(target: string, text: string): string {
+  let host = "";
+  try {
+    host = new URL(target).hostname.toLowerCase().replace(/^www\./, "");
+  } catch {
+    // The URL is already vetted by the caller; retain the safe generic path.
+  }
+  if (host === "zillow.com" || host.endsWith(".zillow.com")) {
+    const ZILLOW_SEGMENT = 30_000;
+    if (text.length > ZILLOW_SEGMENT * 2) {
+      return `${text.slice(0, ZILLOW_SEGMENT)}\n\n[...listing history omitted...]\n\n${text.slice(-ZILLOW_SEGMENT)}`;
+    }
+    return text;
+  }
+  return text.slice(0, MAX_TEXT);
+}
+
 /** Response body ceiling, before tag stripping. */
 const MAX_BODY = 250_000;
 
@@ -322,8 +345,12 @@ type ReadOutcome =
   | { ok: true; text: string }
   | { ok: false; failure: Attempt };
 
-function fromQuality(quality: PageQuality, text: string): ReadOutcome {
-  if (quality === "readable") return { ok: true, text: text.slice(0, MAX_TEXT) };
+function fromQuality(
+  quality: PageQuality,
+  text: string,
+  target: string,
+): ReadOutcome {
+  if (quality === "readable") return { ok: true, text: extractionText(target, text) };
   return {
     ok: false,
     failure: { reason: quality === "blocked" ? "blocked" : "unreadable" },
@@ -343,7 +370,7 @@ async function readViaFirecrawl(target: string): Promise<string | null> {
   try {
     const { markdown } = await scrapeUrl(target);
     if (classifyPageText(markdown) !== "readable") return null;
-    return markdown.slice(0, MAX_TEXT);
+    return extractionText(target, markdown);
   } catch {
     return null;
   }
@@ -426,7 +453,7 @@ async function readDirect(
 
     const body = (await response.text().catch(() => "")).slice(0, MAX_BODY);
     const text = readableText(body);
-    return fromQuality(classifyPageText(text), text);
+    return fromQuality(classifyPageText(text), text, startUrl);
   }
 
   return { ok: false, failure: { reason: "unreachable" } };
@@ -468,7 +495,7 @@ async function readViaReader(
     return { ok: false, failure: { reason: statusReason(status), status } };
   }
 
-  return fromQuality(classifyPageText(text), text);
+  return fromQuality(classifyPageText(text), text, target);
 }
 
 // ---------------------------------------------------------------------------

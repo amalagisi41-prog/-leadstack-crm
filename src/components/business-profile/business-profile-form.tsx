@@ -333,6 +333,7 @@ export function BusinessProfileForm() {
     setImporting(true);
     try {
       let imported = 0;
+      let finalCompleteness = 0;
       const failures: string[] = [];
       for (const url of urls) {
         const res = await fetch(
@@ -354,7 +355,8 @@ export function BusinessProfileForm() {
         }
         imported += 1;
         setContent({ ...EMPTY_BUSINESS_PROFILE, ...data.profile });
-        setCompleteness(data.completeness ?? 0);
+        finalCompleteness = data.completeness ?? 0;
+        setCompleteness(finalCompleteness);
       }
       if (imported === 0) {
         throw new Error(failures[0] ?? "Could not import those pages.");
@@ -363,9 +365,13 @@ export function BusinessProfileForm() {
         toast.warning(
           `${imported} ${imported === 1 ? "page" : "pages"} imported; ${failures.length} could not be read. Review the draft, then save.`
         );
-      } else {
+      } else if (finalCompleteness === 100) {
         toast.success(
           `${imported} ${imported === 1 ? "page" : "pages"} imported from the public source. Review the verified details, then save to approve.`
+        );
+      } else {
+        toast.warning(
+          `${imported} ${imported === 1 ? "page" : "pages"} read, but only ${finalCompleteness}% of launch essentials were found. Review the missing fields or try another public profile.`
         );
       }
     } catch (error) {

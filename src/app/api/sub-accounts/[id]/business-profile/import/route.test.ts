@@ -406,12 +406,12 @@ describe("POST business-profile/import", () => {
     vi.mocked(readPublicPage).mockResolvedValueOnce(`
       Title: Seamus Costigan - Real Estate Agent in Stamford, CT - Reviews | Zillow
       Report a problem Profile Summary. Overview: Sales Statistics & Listings.
-      Seamus Costigan Marr Caruso Realty Group 5.0 28 reviews Recent Sales
+      Report a problem Report a problem Seamus Costigan Marr Caruso Realty Group 5.0 28 reviews Recent Sales
       14 Sales last 12 months 149 Total sales $239K-$1.9M Price range $740K Average price
       Get to know Seamus Costigan Real Estate Industry
       I’m a high performing and passionate real estate agent & Investor serving clients all throughout Fairfield County and the nearby areas. As a practically lifelong resident of Stamford, CT, originally from Ireland, I learned about real estate around our family owned construction business of 30+ years.
       Specialties Buyer's Agent Listing Agent Commercial Properties Investment Properties New Construction
-      20 Years of experience [Visit agent website](https://newbridge-properties.com/)
+      20 Years of experience [Visit agent website](newbridge-properties.com/)
       Seamus Costigan Marr Caruso Realty Group 5.0 28 reviews 14 sales last 12 months
       [(203)%20550-0531](tel:(203)%20550-0531)
       [sc.newbridge@gmail.com](mailto:sc.newbridge@gmail.com)

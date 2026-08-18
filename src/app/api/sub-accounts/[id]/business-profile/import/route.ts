@@ -176,13 +176,18 @@ function zillowProfileFromPage(
   // Brokerage. Require Zillow's adjacent rating + review label, consider all
   // repeated summaries, and take the shortest clean candidate.
   const brokerage = Array.from(
-    normalized.matchAll(
-      new RegExp(
-        `${namePattern}\\s+([^|[\\]]{2,100}?)\\s+5(?:\\.0)?\\s+(?:\\[?\\d+\\s+reviews?|\\d+\\s+Reviews?)`,
-        "gi",
-      ),
-    ),
-    (match) => match[1].trim(),
+    normalized.matchAll(/5(?:\.0)?\s+(?:\[?\d+\s+reviews?|\d+\s+Reviews?)/gi),
+    (rating) => {
+      // Work backwards from each rating and use the *last* occurrence of the
+      // agent's name. Zillow repeats "Report a problem" and the profile title
+      // ahead of the real summary; a forward match absorbs that UI copy.
+      const before = normalized.slice(Math.max(0, rating.index! - 300), rating.index);
+      const names = Array.from(before.matchAll(new RegExp(namePattern, "gi")));
+      const lastName = names.at(-1);
+      return lastName
+        ? before.slice(lastName.index! + lastName[0].length).trim()
+        : "";
+    },
   )
     .filter(
       (candidate) =>
@@ -208,9 +213,14 @@ function zillowProfileFromPage(
   if (email) result.email = email.trim();
 
   const agentWebsite = decodedText.match(
-    /Visit agent website[^\n\r)]*\((https?:\/\/[^)\s]+)\)/i,
-  )?.[1] ?? normalized.match(/Visit agent website\s+(https?:\/\/[^\s]+)/i)?.[1];
-  if (agentWebsite) result.website = agentWebsite.replace(/[.,;]+$/, "");
+    /Visit agent website[^\n\r)]*\(((?:https?:\/\/)?[A-Z0-9.-]+\.[A-Z]{2,}(?:\/[^)\s]*)?)\)/i,
+  )?.[1] ?? normalized.match(/Visit agent website\s+((?:https?:\/\/)?[A-Z0-9.-]+\.[A-Z]{2,}(?:\/[^\s]*)?)/i)?.[1];
+  if (agentWebsite) {
+    const cleanWebsite = agentWebsite.replace(/[.,;]+$/, "");
+    result.website = /^https?:\/\//i.test(cleanWebsite)
+      ? cleanWebsite
+      : `https://${cleanWebsite}`;
+  }
 
   const priceRange = normalized.match(/\$\d+(?:\.\d+)?[KMB]\s*[-–]\s*\$\d+(?:\.\d+)?[KMB]/i)?.[0];
   if (priceRange) result.priceRanges = priceRange.replace(/\s+/g, "");
