@@ -247,6 +247,24 @@ describe("reading a page end to end", () => {
     expect(text).toMatch(/Service areas \(3\)/);
     expect(text).toMatch(/sc\.newbridge@gmail\.com/);
     expect(text.length).toBeLessThanOrEqual(61_000);
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      `https://r.jina.ai/${ZILLOW_PROFILE}`
+    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("falls back to Zillow's direct response when the rendered reader is unavailable", async () => {
+    fetchMock
+      .mockResolvedValueOnce(new Response("reader unavailable", { status: 503 }))
+      .mockResolvedValueOnce(htmlResponse(BIO));
+
+    await expect(readPublicPage(ZILLOW_PROFILE)).resolves.toMatch(
+      /Jane has helped families/
+    );
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      `https://r.jina.ai/${ZILLOW_PROFILE}`
+    );
+    expect(fetchMock.mock.calls[1][0]).toBe(ZILLOW_PROFILE);
   });
 
   it("falls back to the reader service when the site returns 403", async () => {

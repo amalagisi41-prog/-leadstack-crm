@@ -334,16 +334,17 @@ describe("POST business-profile/import", () => {
     expect(setMock).not.toHaveBeenCalled();
   });
 
-  it("keeps a directory profile as the import source, not the business website", async () => {
+  it("rejects an incomplete Zillow read without changing the saved profile", async () => {
     vi.mocked(readPublicPage).mockResolvedValueOnce("Jane Doe, REALTOR.");
 
     const source = "https://www.zillow.com/profile/jane-doe";
     const res = await POST(makeRequest({ url: source }), ctx);
     const body = await res.json();
 
-    expect(res.status).toBe(200);
-    expect(body.importSourceUrl).toBe(source);
-    expect(body.profile.website).toBe("");
+    expect(res.status).toBe(422);
+    expect(body.code).toBe("SOURCE-INCOMPLETE");
+    expect(body.completeness).toBeLessThan(100);
+    expect(callAi).not.toHaveBeenCalled();
     expect(setMock).not.toHaveBeenCalled();
   });
 

@@ -383,15 +383,32 @@ async function importProfile(
   // stable, labelled facts. If the source reader already has every launch
   // essential, use it directly. This is both more accurate and resilient to
   // provider keys, credits, model routing, timeouts, and malformed output.
-  const sourceFacts = directoryProfileHost(url).endsWith("zillow.com")
-    ? zillowProfileFromPage(url, markdown)
-    : {};
-  const sourceIsComplete =
-    Object.keys(sourceFacts).length > 0 &&
-    businessProfileCompleteness({
-      ...EMPTY_BUSINESS_PROFILE,
-      ...sourceFacts,
-    } as BusinessProfileContent) === 100;
+  const isZillowSource = directoryProfileHost(url).endsWith("zillow.com");
+  const sourceFacts = isZillowSource ? zillowProfileFromPage(url, markdown) : {};
+  const sourceCompleteness =
+    Object.keys(sourceFacts).length > 0
+      ? businessProfileCompleteness({
+          ...EMPTY_BUSINESS_PROFILE,
+          ...sourceFacts,
+        } as BusinessProfileContent)
+      : 0;
+
+  // Zillow extraction is deterministic. Never let an incomplete parse fall through
+  // to variable model output: that previously produced a green response while
+  // partially overwriting a workspace with placeholders or navigation text.
+  if (isZillowSource && sourceCompleteness < 100) {
+    return NextResponse.json(
+      {
+        error:
+          "We read Zillow, but could not verify every launch-essential field. Nothing was changed. Try again, or use another public profile.",
+        code: "SOURCE-INCOMPLETE",
+        completeness: sourceCompleteness,
+      },
+      { status: 422 },
+    );
+  }
+
+  const sourceIsComplete = sourceCompleteness === 100;
 
   async function extractLineProfile() {
     return callAi({

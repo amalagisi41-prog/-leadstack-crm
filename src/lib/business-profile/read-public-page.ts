@@ -511,6 +511,22 @@ export function mostInformative(attempts: readonly Attempt[]): Attempt {
 }
 
 /**
+ * Zillow's useful profile facts are rendered into a very large application
+ * document. A direct fetch can still look "readable" while containing only
+ * navigation, repeated accessibility labels, and the first profile heading.
+ * Prefer the rendered text relay for this host; keep direct fetch as the
+ * fallback so an outage at the relay never makes a public page less usable.
+ */
+function prefersRenderedReader(startUrl: string): boolean {
+  try {
+    const host = new URL(startUrl).hostname.toLowerCase().replace(/^www\./, "");
+    return host === "zillow.com" || host.endsWith(".zillow.com");
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Read a public page as plain text, trying every route we have before giving
  * up, and throwing a PageReadError the operator can act on when none work.
  */
@@ -533,7 +549,26 @@ export async function readPublicPage(
   );
   if (scraped) return scraped;
 
-  if (left() >= MIN_ATTEMPT_MS) {
+  if (prefersRenderedReader(startUrl) && left() >= MIN_ATTEMPT_MS) {
+    // Leave enough wall-clock budget for the direct fallback. Eleven seconds
+    // is ample for the relay in normal operation without letting it consume
+    // the whole serverless invocation.
+    const relayed = await readViaReader(
+      startUrl,
+      Math.min(left() - MIN_ATTEMPT_MS, 11_000)
+    );
+    if (relayed.ok) return relayed.text;
+    attempts.push(relayed.failure);
+
+    if (left() >= MIN_ATTEMPT_MS) {
+      const direct = await readDirect(
+        startUrl,
+        Math.min(left(), DIRECT_TIMEOUT_MS)
+      );
+      if (direct.ok) return direct.text;
+      attempts.push(direct.failure);
+    }
+  } else if (left() >= MIN_ATTEMPT_MS) {
     const direct = await readDirect(
       startUrl,
       Math.min(left(), DIRECT_TIMEOUT_MS)
