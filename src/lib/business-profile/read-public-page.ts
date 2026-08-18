@@ -46,10 +46,11 @@ const MAX_REDIRECTS = 4;
  * returns an empty body — which reaches the operator as a raw
  * "Unexpected end of JSON input" rather than anything about their website.
  *
- * This budget plus the extraction call must stay comfortably inside the
- * route's `maxDuration`. Raise them together or not at all.
+ * Kept deliberately tight: reading is the cheap half, and every second spent
+ * here is a second the extraction model does not get. The route hands the
+ * model whatever this leaves behind.
  */
-export const READ_BUDGET_MS = 24_000;
+export const READ_BUDGET_MS = 16_000;
 
 /** Below this there is no point starting another attempt. */
 const MIN_ATTEMPT_MS = 2_500;

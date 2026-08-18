@@ -10,6 +10,12 @@ import {
   safePublicUrl,
 } from "@/lib/business-profile/read-public-page";
 import { aiIsConfigured, callAi } from "@/lib/comms/ai/openrouter";
+import {
+  AI_FAILURE_CODES,
+  aiFailureMessage,
+  aiFailureStatus,
+  classifyAiError,
+} from "@/lib/comms/ai/ai-failure";
 import { businessProfileCompleteness } from "@/lib/business-profile/compile";
 import {
   BRAND_VOICES,
@@ -59,14 +65,28 @@ function parseObject(text: string): Record<string, unknown> {
  * function ceiling, and a function killed by the gateway writes no body at
  * all — which surfaces in the browser as "Unexpected end of JSON input", a
  * message about our infrastructure shown to an operator who asked about their
- * website. The budgets below are sized to finish inside this.
+ * website. Every budget below is sized to finish inside this.
  *
- *   read (24s, READ_BUDGET_MS) + extract (20s) + Firestore ≈ 50s
+ *   read (READ_BUDGET_MS) + extract (whatever is left) + Firestore ≈ 52s
  */
 export const maxDuration = 60;
 
-/** Leaves headroom under maxDuration for the Firestore read and write. */
-const EXTRACT_TIMEOUT_MS = 20_000;
+/** Wall clock for the whole request, kept under maxDuration. */
+const REQUEST_BUDGET_MS = 52_000;
+
+/** Held back for the Firestore read and write after extraction. */
+const FIRESTORE_RESERVE_MS = 5_000;
+
+/**
+ * Never squeeze the model below this, however long the read took.
+ *
+ * The extraction call had no timeout at all and worked; adding a flat 20s cap
+ * broke it, because a full Blueprint — twenty-odd fields from a page of text —
+ * regularly takes longer than that. A fixed number was the wrong shape: what
+ * the model can have is whatever the request has not already spent, so that is
+ * what it now gets.
+ */
+const MIN_EXTRACT_MS = 15_000;
 
 export async function POST(
   request: Request,
@@ -93,6 +113,7 @@ async function importProfile(
   request: Request,
   ctx: { params: Promise<{ id: string }> }
 ) {
+  const startedAt = Date.now();
   const { id } = await ctx.params;
   const access = await requireSubAccountAdmin(request, id);
   if (access instanceof NextResponse) return access;
@@ -143,7 +164,11 @@ async function importProfile(
       maxTokens: 1_800,
       temperature: 0,
       responseFormat: { type: "json_object" },
-      timeoutMs: EXTRACT_TIMEOUT_MS,
+      // Whatever the read did not spend, less the reserve for Firestore.
+      timeoutMs: Math.max(
+        REQUEST_BUDGET_MS - (Date.now() - startedAt) - FIRESTORE_RESERVE_MS,
+        MIN_EXTRACT_MS
+      ),
       messages: [
         {
           role: "system",
@@ -157,15 +182,18 @@ async function importProfile(
       ],
     });
   } catch (error) {
-    // OpenRouter is down, rate-limiting us, or slower than the budget. The
-    // operator's page was fine, so say that rather than blaming their link.
-    console.error("business-profile import: extraction call failed", error);
+    // The operator's page was fine, so do not blame their link — and name the
+    // actual fault, because "not responding" covered a timeout, a bad key, an
+    // empty balance and an outage equally well, and only one of those is
+    // worth retrying.
+    const failure = classifyAiError(error);
+    console.error(
+      `business-profile import: extraction failed (${failure})`,
+      error
+    );
     return NextResponse.json(
-      {
-        error:
-          "We read your page, but the AI that fills the form is not responding right now. Try again in a minute — or fill your Blueprint in by hand below, which always works.",
-      },
-      { status: 503 }
+      { error: aiFailureMessage(failure), code: AI_FAILURE_CODES[failure] },
+      { status: aiFailureStatus(failure) }
     );
   }
 

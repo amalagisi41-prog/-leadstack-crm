@@ -43,6 +43,29 @@ export interface AiCompletionResult {
   model: string;
 }
 
+/**
+ * A failed completion, carrying enough to tell the kinds apart.
+ *
+ * Callers used to receive a bare Error whose only distinguishing feature was
+ * a string, so "we are out of credit", "the key is wrong" and "the model took
+ * too long" were one undifferentiated failure — and each wants a different
+ * response. `status` is OpenRouter's HTTP status when there was one;
+ * `timedOut` marks our own abort.
+ */
+export class AiError extends Error {
+  readonly status?: number;
+  readonly timedOut: boolean;
+  constructor(
+    message: string,
+    { status, timedOut = false }: { status?: number; timedOut?: boolean } = {}
+  ) {
+    super(message);
+    this.name = "AiError";
+    this.status = status;
+    this.timedOut = timedOut;
+  }
+}
+
 export function aiIsConfigured(): boolean {
   return !!process.env.OPENROUTER_API_KEY;
 }
@@ -107,7 +130,80 @@ export async function callAi({
 
   const chosenModel = model?.trim() || defaultAiModel();
 
-  const res = await fetch(OPENROUTER_URL, {
+  let res: Response;
+  try {
+    res = await postCompletion({
+      apiKey,
+      chosenModel,
+      messages,
+      maxTokens,
+      temperature,
+      responseFormat,
+      timeoutMs,
+    });
+  } catch (error) {
+    // A timeout here is indistinguishable from a network failure to callers
+    // unless it is labelled, and the two want opposite responses: wait and
+    // retry versus give the model longer.
+    const timedOut =
+      error instanceof Error &&
+      (error.name === "TimeoutError" || error.name === "AbortError");
+    throw new AiError(
+      timedOut
+        ? `OpenRouter did not respond within ${timeoutMs}ms`
+        : `OpenRouter request failed: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
+      { timedOut }
+    );
+  }
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new AiError(
+      `OpenRouter ${res.status}: ${body.slice(0, 300) || res.statusText}`,
+      { status: res.status }
+    );
+  }
+
+  const data = (await res.json()) as OpenRouterResponse;
+  if (data.error?.message) {
+    throw new AiError(`OpenRouter: ${data.error.message}`);
+  }
+
+  const text = data.choices?.[0]?.message?.content?.trim();
+  if (!text) {
+    throw new AiError("OpenRouter returned no message content");
+  }
+
+  const usage = data.usage ?? {};
+  return {
+    text,
+    promptTokens: usage.prompt_tokens ?? 0,
+    completionTokens: usage.completion_tokens ?? 0,
+    totalTokens: usage.total_tokens ?? 0,
+    model: data.model ?? chosenModel,
+  };
+}
+
+/** The raw POST, split out so the caller can label a timeout distinctly. */
+async function postCompletion({
+  apiKey,
+  chosenModel,
+  messages,
+  maxTokens,
+  temperature,
+  responseFormat,
+  timeoutMs,
+}: {
+  apiKey: string;
+  chosenModel: string;
+  messages: AiChatMessage[];
+  maxTokens: number;
+  temperature: number;
+  responseFormat?: { type: "json_object" };
+  timeoutMs: number;
+}): Promise<Response> {
+  return fetch(OPENROUTER_URL, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
@@ -128,30 +224,4 @@ export async function callAi({
     // function to live, and then be killed with no response written at all.
     signal: AbortSignal.timeout(timeoutMs),
   });
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(
-      `OpenRouter ${res.status}: ${body.slice(0, 300) || res.statusText}`
-    );
-  }
-
-  const data = (await res.json()) as OpenRouterResponse;
-  if (data.error?.message) {
-    throw new Error(`OpenRouter: ${data.error.message}`);
-  }
-
-  const text = data.choices?.[0]?.message?.content?.trim();
-  if (!text) {
-    throw new Error("OpenRouter returned no message content");
-  }
-
-  const usage = data.usage ?? {};
-  return {
-    text,
-    promptTokens: usage.prompt_tokens ?? 0,
-    completionTokens: usage.completion_tokens ?? 0,
-    totalTokens: usage.total_tokens ?? 0,
-    model: data.model ?? chosenModel,
-  };
 }

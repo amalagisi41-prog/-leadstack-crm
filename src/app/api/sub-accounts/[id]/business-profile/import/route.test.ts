@@ -18,7 +18,13 @@ vi.mock("@/lib/firebase/admin", () => ({
   }),
 }));
 
-vi.mock("@/lib/comms/ai/openrouter", () => ({
+vi.mock("@/lib/comms/ai/openrouter", async () => {
+  const actual =
+    await vi.importActual<typeof import("@/lib/comms/ai/openrouter")>(
+      "@/lib/comms/ai/openrouter"
+    );
+  return {
+  ...actual,
   aiIsConfigured: vi.fn(() => true),
   callAi: vi.fn(async () => ({
     text: '{"agentName":"Jane Doe"}',
@@ -27,7 +33,8 @@ vi.mock("@/lib/comms/ai/openrouter", () => ({
     totalTokens: 0,
     model: "test",
   })),
-}));
+  };
+});
 
 vi.mock("@/lib/business-profile/read-public-page", async () => {
   const actual = await vi.importActual<
@@ -37,7 +44,7 @@ vi.mock("@/lib/business-profile/read-public-page", async () => {
 });
 
 import { POST } from "./route";
-import { callAi } from "@/lib/comms/ai/openrouter";
+import { AiError, callAi } from "@/lib/comms/ai/openrouter";
 import {
   PageReadError,
   readPublicPage,
@@ -108,7 +115,9 @@ describe("POST business-profile/import", () => {
     // which Next.js turns into a 500 with an empty body — and an empty body
     // reaches the browser as "Unexpected end of JSON input".
     vi.mocked(readPublicPage).mockResolvedValueOnce("Jane Doe, REALTOR.");
-    vi.mocked(callAi).mockRejectedValueOnce(new Error("OpenRouter 429: slow down"));
+    vi.mocked(callAi).mockRejectedValueOnce(
+      new AiError("OpenRouter 429: slow down", { status: 429 })
+    );
 
     const res = await POST(
       makeRequest({ url: "https://janedoerealty.com/about" }),
@@ -118,7 +127,8 @@ describe("POST business-profile/import", () => {
 
     expect(res.status).toBe(503);
     expect(body.error).toMatch(/we read your page/i);
-    expect(body.error).toMatch(/fill your Blueprint in by hand/i);
+    expect(body.error).toMatch(/by hand/i);
+    expect(body.code).toBe("AI-BUSY");
     // Their page was fine — do not blame their link for our outage.
     expect(body.error).not.toMatch(/could not read|blocks automated/i);
     expect(body.error).not.toMatch(/openrouter|429/i);
@@ -139,7 +149,7 @@ describe("POST business-profile/import", () => {
       ctx
     );
     expect(res.status).toBe(502);
-    expect((await res.json()).error).toMatch(/fill your Blueprint in by hand/i);
+    expect((await res.json()).error).toMatch(/by hand/i);
   });
 
   it("answers in JSON when something unexpected throws", async () => {
@@ -158,13 +168,60 @@ describe("POST business-profile/import", () => {
     expect(JSON.parse(text).error).toMatch(/Nothing was changed/i);
   });
 
-  it("caps the extraction call so it cannot outlive the function", async () => {
+  it("gives the model the time the read did not spend", async () => {
+    // A flat 20s cap on a call that previously had no timeout is what broke
+    // AI-assisted setup: a full Blueprint regularly takes longer than that.
+    // The budget now adapts, and must stay inside maxDuration (60s).
     vi.mocked(readPublicPage).mockResolvedValueOnce("Jane Doe, REALTOR.");
     await POST(makeRequest({ url: "https://janedoerealty.com/about" }), ctx);
 
     const [args] = vi.mocked(callAi).mock.calls.at(-1)!;
-    expect(args.timeoutMs).toBeGreaterThan(0);
-    expect(args.timeoutMs).toBeLessThan(30_000);
+    expect(args.timeoutMs).toBeGreaterThan(30_000);
+    expect(args.timeoutMs).toBeLessThan(55_000);
+  });
+
+  it("still leaves the model a workable floor after a slow read", async () => {
+    vi.mocked(readPublicPage).mockImplementationOnce(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 60));
+      return "Jane Doe, REALTOR.";
+    });
+    await POST(makeRequest({ url: "https://janedoerealty.com/about" }), ctx);
+
+    const [args] = vi.mocked(callAi).mock.calls.at(-1)!;
+    expect(args.timeoutMs).toBeGreaterThanOrEqual(15_000);
+  });
+
+  it("names the fault instead of calling everything 'not responding'", async () => {
+    vi.mocked(readPublicPage).mockResolvedValueOnce("Jane Doe, REALTOR.");
+    vi.mocked(callAi).mockRejectedValueOnce(
+      new AiError("did not respond in time", { timedOut: true })
+    );
+
+    const res = await POST(
+      makeRequest({ url: "https://janedoerealty.com/about" }),
+      ctx
+    );
+    const body = await res.json();
+
+    expect(body.code).toBe("AI-TIMEOUT");
+    expect(body.error).toMatch(/took longer than we allow/i);
+  });
+
+  it("does not tell them to retry a misconfiguration", async () => {
+    // A wrong key or a spent balance will not fix itself on the third attempt.
+    vi.mocked(readPublicPage).mockResolvedValueOnce("Jane Doe, REALTOR.");
+    vi.mocked(callAi).mockRejectedValueOnce(new AiError("nope", { status: 401 }));
+
+    const res = await POST(
+      makeRequest({ url: "https://janedoerealty.com/about" }),
+      ctx
+    );
+    const body = await res.json();
+
+    expect(res.status).toBe(500);
+    expect(body.code).toBe("AI-AUTH");
+    expect(body.error).not.toMatch(/try again/i);
+    expect(body.error).toMatch(/by hand/i);
   });
 
   it("rejects a private address before any request goes out", async () => {
