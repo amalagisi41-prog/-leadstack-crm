@@ -1,15 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Stamps asset requests with the build they belong to, so a page that has
-  // been open since before a deploy requests its chunks under the old id and
-  // gets a clean, detectable miss rather than a silent 404 part-way through a
-  // client-side navigation. Only set where the platform supplies a commit sha:
-  // there is no sensible value to invent locally, and a fixed one would defeat
-  // the purpose entirely.
-  ...(process.env.VERCEL_GIT_COMMIT_SHA
-    ? { deploymentId: process.env.VERCEL_GIT_COMMIT_SHA }
-    : {}),
+  // `deploymentId` was set here to a git commit sha, to stamp asset requests
+  // with the build they belong to. That is the wrong value: skew protection
+  // keys on the host's own deployment id, not on a commit sha, so the `?dpl=`
+  // it appends names a deployment that does not exist. Removed rather than
+  // corrected — switching skew protection on at the platform sets this option
+  // itself, with the right value, and a hand-written one only fights it.
   images: {
     remotePatterns: [
       // Marketing-page placeholder property photos in the IDX Listings

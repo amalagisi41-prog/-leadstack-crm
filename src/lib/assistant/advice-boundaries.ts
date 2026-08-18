@@ -75,7 +75,14 @@ const RULES: BoundaryRule[] = [
   {
     boundary: "valuation",
     patterns: [
-      /\bwhat (is|are) .{0,30}\b(worth|value)\b/i,
+      // "Worth" is a valuation question whatever follows "what is" — including
+      // a bare address, which no noun list would catch.
+      /\bwhat (is|are)\b.{0,40}\bworth\b/i,
+      // "Value" is not. "What is the value of adding IDX to my site?" is a
+      // product question, and meeting it with an appraisal disclaimer is how
+      // Zack stops being useful — so this one has to name a property.
+      /\bwhat (is|are)\b.{0,30}\b(house|home|property|condo|listing|land|lot|unit|building)\b.{0,20}\bvalue\b/i,
+      /\bvalue of (my|the|this|that|his|her|their) (house|home|property|condo|listing|land|lot|unit|building)\b/i,
       /\bhow much (is|should) .{0,30}\b(worth|list for|sell for|price)\b/i,
       // "how much should I list this house for" — the verb and its preposition
       // are separated by the object, so the contiguous form above misses it.

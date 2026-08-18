@@ -96,6 +96,13 @@ describe("ordinary product questions that must NOT be refused", () => {
     "What is my lead conversion rate?",
     "How do I change my brokerage name?",
     "Set up a newsletter for my past clients",
+    // The regression: "value" was matched anywhere after "what is", so
+    // ordinary questions about what a feature is worth doing came back as an
+    // appraisal disclaimer. Asking what something is *worth* is a valuation
+    // question; asking the *value* of a feature is not.
+    "What is the value of adding IDX to my site?",
+    "What are the values I should put in the SEO fields?",
+    "What is the value of upgrading my plan?",
   ];
 
   for (const message of allowed) {
