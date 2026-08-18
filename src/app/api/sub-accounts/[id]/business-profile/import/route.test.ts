@@ -151,7 +151,12 @@ describe("POST business-profile/import", () => {
         model: "test",
       })
       .mockResolvedValueOnce({
-        text: '```json\n{"agentName":"Jane Doe"}\n```',
+        text: [
+          "agentName=Jane Doe",
+          "brokerage=Example Realty",
+          "services=buyers,sellers,not_a_real_service",
+          "commentary=this must be ignored",
+        ].join("\n"),
         promptTokens: 0,
         completionTokens: 0,
         totalTokens: 0,
@@ -163,8 +168,13 @@ describe("POST business-profile/import", () => {
       ctx
     );
     expect(res.status).toBe(200);
-    expect((await res.json()).profile.agentName).toBe("Jane Doe");
+    const body = await res.json();
+    expect(body.profile.agentName).toBe("Jane Doe");
+    expect(body.profile.brokerage).toBe("Example Realty");
+    expect(body.profile.services).toEqual(["buyers", "sellers"]);
+    expect(body.profile.commentary).toBeUndefined();
     expect(callAi).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(callAi).mock.calls[1][0].responseFormat).toBeUndefined();
   });
 
   it("answers in JSON when both structured-output attempts are invalid", async () => {

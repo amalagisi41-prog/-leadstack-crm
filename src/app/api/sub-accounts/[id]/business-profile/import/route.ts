@@ -61,6 +61,43 @@ function parseObject(text: string): Record<string, unknown> {
   return JSON.parse(text.slice(start, end + 1)) as Record<string, unknown>;
 }
 
+const LINE_IMPORT_KEYS = new Set([
+  ...IMPORT_KEYS,
+  "services",
+  "brandVoice",
+] as string[]);
+
+/**
+ * Free models do not all honour OpenAI JSON mode consistently. A deliberately
+ * boring KEY=VALUE format gives the recovery attempt no brackets, escaping or
+ * schema syntax to get wrong, while the allowlist prevents model commentary
+ * from becoming profile data.
+ */
+function parseLineProfile(text: string): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const rawLine of text.split(/\r?\n/)) {
+    const line = rawLine.replace(/^\s*(?:[-*]|\d+[.)])\s*/, "").trim();
+    const match = line.match(/^([A-Za-z][A-Za-z0-9_]*)\s*[:=]\s*(.*)$/);
+    if (!match) continue;
+    const key = match[1];
+    if (!LINE_IMPORT_KEYS.has(key)) continue;
+    const value = match[2].trim().replace(/^['"]|['"]$/g, "");
+    if (!value || /^(?:null|none|unknown|n\/a|\[\])$/i.test(value)) continue;
+    if (key === "services") {
+      result.services = value
+        .replace(/^\[|\]$/g, "")
+        .split(",")
+        .map((item) => item.trim().replace(/^['"]|['"]$/g, ""))
+        .filter(Boolean);
+    } else {
+      result[key] = value;
+    }
+  }
+  if (Object.keys(result).length === 0)
+    throw new Error("AI did not return line-based profile data.");
+  return result;
+}
+
 /**
  * Reading a page and extracting from it is slower than the platform's default
  * function ceiling, and a function killed by the gateway writes no body at
@@ -181,6 +218,28 @@ async function importProfile(
     });
   }
 
+  async function extractLineProfile() {
+    return callAi({
+      maxTokens: 650,
+      temperature: 0,
+      timeoutMs: Math.max(
+        REQUEST_BUDGET_MS - (Date.now() - startedAt) - FIRESTORE_RESERVE_MS,
+        MIN_EXTRACT_MS
+      ),
+      messages: [
+        {
+          role: "system",
+          content:
+            "Extract only facts explicitly present in the supplied public real-estate profile. Return plain KEY=VALUE lines only. No JSON, markdown, explanation, headings, or guessed facts. Omit unknown values.",
+        },
+        {
+          role: "user",
+          content: `Allowed keys: agentName,title,brokerage,licenseStates,licenseNumber,phone,email,website,languages,clientExperience,idealClientProfile,clientPromise,serviceAreas,priceRanges,specialties,services,brandVoice,businessHours,responsePreference,bio,headshotUrl,logoUrl,testimonials. services must be comma-separated and may only use buyers,sellers,investors,rentals,relocation,luxury,first_time_buyers,commercial. brandVoice may only be professional,luxury,friendly,investor,casual,formal.\n\nSource URL: ${url}\nSource platform: ${String(body?.platform ?? "website")}\n\nWEBSITE TEXT:\n${markdown}`,
+        },
+      ],
+    });
+  }
+
   let completion: Awaited<ReturnType<typeof callAi>>;
   try {
     completion = await extractProfile(
@@ -217,18 +276,17 @@ async function importProfile(
   try {
     extracted = parseObject(completion.text);
   } catch {
-    // The free router can select a different structured-output model on each
-    // request. Occasionally a model wraps or truncates its object despite
-    // JSON mode. Retry once inside this request so the operator does not have
-    // to discover that implementation detail by clicking again.
+    // The free router can select a model that ignores JSON mode. Retry once
+    // with a line protocol that needs no JSON capability, then parse and
+    // allowlist it locally.
     try {
-      completion = await extractProfile(650);
+      completion = await extractLineProfile();
       void recordAiUsage({
         subAccountId: id,
         feature: "blueprint_import",
         completion,
       });
-      extracted = parseObject(completion.text);
+      extracted = parseLineProfile(completion.text);
     } catch (error) {
       console.error(
         "business-profile import: invalid structured output",
