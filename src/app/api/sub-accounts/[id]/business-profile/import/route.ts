@@ -53,14 +53,6 @@ const IMPORT_KEYS: (keyof BusinessProfileContent)[] = [
   "testimonials",
 ];
 
-function parseObject(text: string): Record<string, unknown> {
-  const start = text.indexOf("{");
-  const end = text.lastIndexOf("}");
-  if (start < 0 || end <= start)
-    throw new Error("AI did not return structured profile data.");
-  return JSON.parse(text.slice(start, end + 1)) as Record<string, unknown>;
-}
-
 const LINE_IMPORT_KEYS = new Set([
   ...IMPORT_KEYS,
   "services",
@@ -193,31 +185,6 @@ async function importProfile(
     );
   }
 
-  const extractionMessages = [
-    {
-      role: "system" as const,
-      content:
-        "Extract a factual real-estate business profile from supplied website text. Return one compact JSON object only, with no markdown or commentary. Never guess license numbers, contact details, brokerage, service areas, claims, or testimonials. Use empty strings/arrays when not explicit. services may only contain buyers, sellers, investors, rentals, relocation, luxury, first_time_buyers, commercial. brandVoice may only be professional, luxury, friendly, investor, casual, formal.",
-    },
-    {
-      role: "user" as const,
-      content: `Source URL: ${url}\nSource platform: ${String(body?.platform ?? "website")}\n\nReturn JSON with: agentName,title,brokerage,licenseStates,licenseNumber,phone,email,website,languages,clientExperience,idealClientProfile,clientPromise,serviceAreas,priceRanges,specialties,services,brandVoice,businessHours,responsePreference,bio,headshotUrl,logoUrl,testimonials.\n\nWEBSITE TEXT:\n${markdown}`,
-    },
-  ];
-
-  async function extractProfile(maxTokens: number) {
-    return callAi({
-      maxTokens,
-      temperature: 0,
-      responseFormat: { type: "json_object" },
-      timeoutMs: Math.max(
-        REQUEST_BUDGET_MS - (Date.now() - startedAt) - FIRESTORE_RESERVE_MS,
-        MIN_EXTRACT_MS
-      ),
-      messages: extractionMessages,
-    });
-  }
-
   async function extractLineProfile() {
     return callAi({
       maxTokens: 650,
@@ -242,14 +209,11 @@ async function importProfile(
 
   let completion: Awaited<ReturnType<typeof callAi>>;
   try {
-    completion = await extractProfile(
-      // A complete Business Blueprint is substantially larger than an SMS
-      // reply. JSON mode plus a dedicated output budget prevents the model's
-      // object from being truncated before its closing brace.
-      // The operator reviews the factual draft; optional fields compress well.
-      // Staying below the free-account allowance keeps onboarding functional.
-      800
-    );
+    // Use the low-overhead line protocol first. The former JSON-first flow
+    // could consume the entire serverless request budget before recovery even
+    // started. One compact call gives the provider the full available window
+    // and avoids relying on inconsistent JSON-mode support from free models.
+    completion = await extractLineProfile();
   } catch (error) {
     // The operator's page was fine, so do not blame their link — and name the
     // actual fault, because "not responding" covered a timeout, a bad key, an
@@ -274,32 +238,16 @@ async function importProfile(
 
   let extracted: Record<string, unknown>;
   try {
-    extracted = parseObject(completion.text);
-  } catch {
-    // The free router can select a model that ignores JSON mode. Retry once
-    // with a line protocol that needs no JSON capability, then parse and
-    // allowlist it locally.
-    try {
-      completion = await extractLineProfile();
-      void recordAiUsage({
-        subAccountId: id,
-        feature: "blueprint_import",
-        completion,
-      });
-      extracted = parseLineProfile(completion.text);
-    } catch (error) {
-      console.error(
-        "business-profile import: invalid structured output",
-        error
-      );
-      return NextResponse.json(
-        {
-          error:
-            "We read your page, but could not turn it into profile fields. Try another public website or fill your Blueprint in by hand below.",
-        },
-        { status: 502 }
-      );
-    }
+    extracted = parseLineProfile(completion.text);
+  } catch (error) {
+    console.error("business-profile import: invalid structured output", error);
+    return NextResponse.json(
+      {
+        error:
+          "We read your page, but could not turn it into profile fields. Try another public website or fill your Blueprint in by hand below.",
+      },
+      { status: 502 }
+    );
   }
 
   const db = getAdminDb();

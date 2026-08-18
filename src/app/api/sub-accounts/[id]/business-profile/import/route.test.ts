@@ -72,7 +72,7 @@ function makeRequest(body: unknown): Request {
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(callAi).mockResolvedValue({
-    text: '{"agentName":"Jane Doe"}',
+    text: "agentName=Jane Doe",
     promptTokens: 0,
     completionTokens: 0,
     totalTokens: 0,
@@ -140,28 +140,20 @@ describe("POST business-profile/import", () => {
     expect(body.error).not.toMatch(/openrouter|429/i);
   });
 
-  it("retries once when a model returns something unparseable", async () => {
+  it("parses the low-overhead line protocol and ignores unapproved keys", async () => {
     vi.mocked(readPublicPage).mockResolvedValueOnce("Jane Doe, REALTOR.");
-    vi.mocked(callAi)
-      .mockResolvedValueOnce({
-        text: "I'm afraid I can't.",
-        promptTokens: 0,
-        completionTokens: 0,
-        totalTokens: 0,
-        model: "test",
-      })
-      .mockResolvedValueOnce({
-        text: [
-          "agentName=Jane Doe",
-          "brokerage=Example Realty",
-          "services=buyers,sellers,not_a_real_service",
-          "commentary=this must be ignored",
-        ].join("\n"),
-        promptTokens: 0,
-        completionTokens: 0,
-        totalTokens: 0,
-        model: "free/test",
-      });
+    vi.mocked(callAi).mockResolvedValueOnce({
+      text: [
+        "agentName=Jane Doe",
+        "brokerage=Example Realty",
+        "services=buyers,sellers,not_a_real_service",
+        "commentary=this must be ignored",
+      ].join("\n"),
+      promptTokens: 0,
+      completionTokens: 0,
+      totalTokens: 0,
+      model: "free/test",
+    });
 
     const res = await POST(
       makeRequest({ url: "https://janedoerealty.com/about" }),
@@ -173,11 +165,11 @@ describe("POST business-profile/import", () => {
     expect(body.profile.brokerage).toBe("Example Realty");
     expect(body.profile.services).toEqual(["buyers", "sellers"]);
     expect(body.profile.commentary).toBeUndefined();
-    expect(callAi).toHaveBeenCalledTimes(2);
-    expect(vi.mocked(callAi).mock.calls[1][0].responseFormat).toBeUndefined();
+    expect(callAi).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(callAi).mock.calls[0][0].responseFormat).toBeUndefined();
   });
 
-  it("answers in JSON when both structured-output attempts are invalid", async () => {
+  it("answers in JSON when line-based output is invalid", async () => {
     vi.mocked(readPublicPage).mockResolvedValueOnce("Jane Doe, REALTOR.");
     vi.mocked(callAi).mockResolvedValue({
       text: "I'm afraid I can't.",
@@ -193,7 +185,7 @@ describe("POST business-profile/import", () => {
     );
     expect(res.status).toBe(502);
     expect((await res.json()).error).toMatch(/another public website/i);
-    expect(callAi).toHaveBeenCalledTimes(2);
+    expect(callAi).toHaveBeenCalledTimes(1);
   });
 
   it("answers in JSON when something unexpected throws", async () => {
