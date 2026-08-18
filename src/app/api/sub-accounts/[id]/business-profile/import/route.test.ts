@@ -146,6 +146,8 @@ describe("POST business-profile/import", () => {
       text: [
         "agentName=Jane Doe",
         "brokerage=Example Realty",
+        "phone=Not provided",
+        "idealClientProfile=Not explicitly stated",
         "services=buyers,sellers,not_a_real_service",
         "commentary=this must be ignored",
       ].join("\n"),
@@ -163,6 +165,8 @@ describe("POST business-profile/import", () => {
     const body = await res.json();
     expect(body.profile.agentName).toBe("Jane Doe");
     expect(body.profile.brokerage).toBe("Example Realty");
+    expect(body.profile.phone).toBe("");
+    expect(body.profile.idealClientProfile).toBe("");
     expect(body.profile.services).toEqual(["buyers", "sellers"]);
     expect(body.profile.commentary).toBeUndefined();
     expect(callAi).toHaveBeenCalledTimes(1);

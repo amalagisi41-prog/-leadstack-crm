@@ -59,6 +59,12 @@ const LINE_IMPORT_KEYS = new Set([
   "brandVoice",
 ] as string[]);
 
+function isMissingMarker(value: string): boolean {
+  return /^(?:null|none|unknown|n\/a|\[\]|not (?:provided|available|listed|specified|explicitly stated))$/i.test(
+    value.trim()
+  );
+}
+
 /**
  * Free models do not all honour OpenAI JSON mode consistently. A deliberately
  * boring KEY=VALUE format gives the recovery attempt no brackets, escaping or
@@ -74,7 +80,7 @@ function parseLineProfile(text: string): Record<string, unknown> {
     const key = match[1];
     if (!LINE_IMPORT_KEYS.has(key)) continue;
     const value = match[2].trim().replace(/^['"]|['"]$/g, "");
-    if (!value || /^(?:null|none|unknown|n\/a|\[\])$/i.test(value)) continue;
+    if (!value || isMissingMarker(value)) continue;
     if (key === "services") {
       result.services = value
         .replace(/^\[|\]$/g, "")
@@ -256,6 +262,14 @@ async function importProfile(
   const current = snap.exists
     ? ({ ...EMPTY_BUSINESS_PROFILE, ...snap.data() } as BusinessProfileContent)
     : EMPTY_BUSINESS_PROFILE;
+  // Older/free-model imports may have persisted prose placeholders instead of
+  // omissions. Treat those as empty on the next import so a retry repairs the
+  // draft rather than preserving misleading profile data.
+  for (const key of IMPORT_KEYS) {
+    const value = current[key];
+    if (typeof value === "string" && isMissingMarker(value))
+      (current[key] as string) = "";
+  }
   const next: BusinessProfileContent = { ...current, website: url };
   for (const key of IMPORT_KEYS) {
     const value = extracted[key];
