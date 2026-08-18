@@ -14,6 +14,7 @@ import "server-only";
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const DEFAULT_MODEL = "anthropic/claude-haiku-4-5";
+const DEFAULT_CREDIT_FALLBACK_MODEL = "openrouter/free";
 
 /**
  * Backstop so no caller can hang forever. Generous, because background
@@ -157,6 +158,36 @@ export async function callAi({
       { timedOut }
     );
   }
+
+  // A paid model can be rejected before inference when the account's
+  // remaining balance cannot cover the requested completion. Keep essential
+  // product workflows available by retrying once through OpenRouter's
+  // zero-cost router. OpenRouter filters that router for required features,
+  // including structured JSON output. Operators can pin or disable the
+  // fallback with AI_REPLIES_CREDIT_FALLBACK_MODEL (set it to "off" to
+  // preserve strict paid-model-only behaviour).
+  if (res.status === 402) {
+    const fallbackModel = (
+      process.env.AI_REPLIES_CREDIT_FALLBACK_MODEL ??
+      DEFAULT_CREDIT_FALLBACK_MODEL
+    ).trim();
+    if (
+      fallbackModel &&
+      fallbackModel.toLowerCase() !== "off" &&
+      fallbackModel !== chosenModel
+    ) {
+      res = await postCompletion({
+        apiKey,
+        chosenModel: fallbackModel,
+        messages,
+        maxTokens,
+        temperature,
+        responseFormat,
+        timeoutMs,
+      });
+    }
+  }
+
   if (!res.ok) {
     const body = await res.text().catch(() => "");
     throw new AiError(
