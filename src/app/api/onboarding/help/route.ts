@@ -3,6 +3,7 @@ import "server-only";
 import { NextResponse } from "next/server";
 import { aiIsConfigured, callAi, type AiChatMessage } from "@/lib/comms/ai/openrouter";
 import { ONBOARDING_HELP_KB } from "@/lib/onboarding/help-kb";
+import { recordAiUsage } from "@/lib/comms/ai/usage";
 
 /**
  * POST /api/onboarding/help
@@ -103,6 +104,12 @@ ${ONBOARDING_HELP_KB}
 
   try {
     const result = await callAi({ messages, maxTokens: 500, temperature: 0.3 });
+    // Runs before a workspace is chosen, so it lands on the platform scope.
+    void recordAiUsage({
+      subAccountId: null,
+      feature: "onboarding_help",
+      completion: result,
+    });
     return NextResponse.json({ answer: result.text });
   } catch (err) {
     console.error("[onboarding/help] LLM call failed", err);

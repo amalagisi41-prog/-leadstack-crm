@@ -8,6 +8,7 @@ import {
   WEBSITE_STUDIO_LOCKED_MESSAGE,
 } from "@/lib/website-studio/gate";
 import { BUSINESS_SETUP_KB } from "@/lib/website-studio/business-setup-kb";
+import { recordAiUsage } from "@/lib/comms/ai/usage";
 
 /**
  * POST /api/sub-accounts/[id]/business-setup
@@ -93,6 +94,11 @@ ${BUSINESS_SETUP_KB}
 
   try {
     const result = await callAi({ messages, maxTokens: 550, temperature: 0.3 });
+    void recordAiUsage({
+      subAccountId,
+      feature: "business_setup",
+      completion: result,
+    });
     return NextResponse.json({ answer: result.text });
   } catch (err) {
     console.error("[business-setup] LLM failed", err);

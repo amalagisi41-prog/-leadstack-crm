@@ -22,6 +22,7 @@ import type { AiAgentProfile } from "@/types/ai";
 import type { ResolvedAiAgent } from "@/types/ai";
 import type { BusinessProfileContent } from "@/types/business-profile";
 import type { SubAccountDoc } from "@/types";
+import { recordAiUsage } from "@/lib/comms/ai/usage";
 
 export const dynamic = "force-dynamic";
 
@@ -210,6 +211,11 @@ export async function POST(
         ...historyMessages,
         { role: "user", content: message },
       ],
+    });
+    void recordAiUsage({
+      subAccountId: id,
+      feature: "agent_test",
+      completion,
     });
     return NextResponse.json({
       ok: true,

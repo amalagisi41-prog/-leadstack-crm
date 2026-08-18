@@ -8,6 +8,7 @@ import { upsertAgentProfile } from "@/lib/comms/ai/agent";
 import { compileBusinessProfilePrompt } from "@/lib/business-profile/compile";
 import type { BusinessProfileContent } from "@/types/business-profile";
 import type { SubAccountDoc } from "@/types";
+import { recordAiUsage } from "@/lib/comms/ai/usage";
 
 /**
  * Turn the Business Profile into a ready-to-use AI persona.
@@ -79,6 +80,8 @@ export async function POST(
         },
       ],
     });
+
+    void recordAiUsage({ subAccountId: id, feature: "persona", completion });
 
     const persona = completion.text.trim();
     if (body.apply && persona) {

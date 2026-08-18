@@ -26,6 +26,7 @@ import {
   getCutoverGuidance,
   hostingIsReady,
 } from "@/lib/assistant/cutover-guidance";
+import { recordAiUsage } from "@/lib/comms/ai/usage";
 
 /**
  * POST /api/assistant
@@ -280,6 +281,11 @@ Today's date: ${new Date().toISOString().slice(0, 10)}.`;
       maxTokens: 900,
       temperature: 0.25,
       responseFormat: { type: "json_object" },
+    });
+    void recordAiUsage({
+      subAccountId,
+      feature: "assistant",
+      completion: result,
     });
     const parsed = parseAssistantResponse(result.text);
     if (!parsed) {

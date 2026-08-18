@@ -10,6 +10,7 @@ import {
   safePublicUrl,
 } from "@/lib/business-profile/read-public-page";
 import { aiIsConfigured, callAi } from "@/lib/comms/ai/openrouter";
+import { recordAiUsage } from "@/lib/comms/ai/usage";
 import {
   AI_FAILURE_CODES,
   aiFailureMessage,
@@ -155,7 +156,7 @@ async function importProfile(
     );
   }
 
-  let completion: { text: string };
+  let completion: Awaited<ReturnType<typeof callAi>>;
   try {
     completion = await callAi({
       // A complete Business Blueprint is substantially larger than an SMS
@@ -196,6 +197,12 @@ async function importProfile(
       { status: aiFailureStatus(failure) }
     );
   }
+
+  void recordAiUsage({
+    subAccountId: id,
+    feature: "blueprint_import",
+    completion,
+  });
 
   let extracted: Record<string, unknown>;
   try {

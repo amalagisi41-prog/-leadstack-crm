@@ -41,6 +41,7 @@ import {
   EMPTY_BUSINESS_PROFILE,
   type BusinessProfileContent,
 } from "@/types/business-profile";
+import { recordAiUsage } from "@/lib/comms/ai/usage";
 
 /**
  * POST /api/sub-accounts/[id]/agent-site/designer
@@ -353,6 +354,11 @@ Return STRICT JSON only:
       maxTokens: image ? 900 : 700,
       temperature: 0.5,
     });
+    void recordAiUsage({
+      subAccountId,
+      feature: "website_designer",
+      completion: result,
+    });
     parsed = parseModelJson(result.text);
     if (!parsed) {
       const retry = await callAi({
@@ -367,6 +373,13 @@ Return STRICT JSON only:
         ],
         maxTokens: image ? 900 : 700,
         temperature: 0.2,
+      });
+      // The retry is a second billable call; a run that needs one costs
+      // roughly twice as much, and the report should say so.
+      void recordAiUsage({
+        subAccountId,
+        feature: "website_designer",
+        completion: retry,
       });
       parsed = parseModelJson(retry.text);
     }
