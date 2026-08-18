@@ -460,7 +460,7 @@ The pre-refactor layout had one combined doc per channel. The current model spli
 
 ### LLM gateway — OpenRouter
 
-[src/lib/comms/ai/openrouter.ts](src/lib/comms/ai/openrouter.ts) `callAi()` POSTs to OpenRouter's OpenAI-compatible chat endpoint. One key (`OPENROUTER_API_KEY`) covers every model the gateway exposes — Anthropic, OpenAI, Google, etc. Default is `anthropic/claude-haiku-4-5` (~$0.005-0.02 per SMS exchange); per-channel override lets premium tiers point at Opus 4.7. Returns `{ text, promptTokens, completionTokens, totalTokens, model }`. The deployment-wide default is `AI_REPLIES_DEFAULT_MODEL` (optional env var, falls back to Haiku).
+[src/lib/comms/ai/openrouter.ts](src/lib/comms/ai/openrouter.ts) `callAi()` POSTs to OpenRouter's OpenAI-compatible chat endpoint. One key (`OPENROUTER_API_KEY`) covers every model the gateway exposes — Anthropic, OpenAI, Google, etc. Default is `anthropic/claude-haiku-4.5` (~$0.005-0.02 per SMS exchange); per-channel override lets premium tiers point at Opus 4.7. Returns `{ text, promptTokens, completionTokens, totalTokens, model }`. The deployment-wide default is `AI_REPLIES_DEFAULT_MODEL` (optional env var, falls back to Haiku). Credit rejection fails closed by default; `AI_REPLIES_CREDIT_FALLBACK_MODEL` permits an explicitly reviewed emergency fallback.
 
 ### System prompt — channel-aware safety rails + KB
 
@@ -953,7 +953,8 @@ Without `GITPAGE_API_KEY`, `/api/sub-accounts/[id]/website/[siteId]/build` retur
 | Var | Source |
 |---|---|
 | `OPENROUTER_API_KEY` | [openrouter.ai](https://openrouter.ai) → Keys. One agency-level key covers every model (Anthropic, OpenAI, Google, etc). Required to power the bot replies on Web Chat + SMS channels. |
-| `AI_REPLIES_DEFAULT_MODEL` | Optional. OpenRouter model id used when no per-channel override is set. Defaults to `anthropic/claude-haiku-4-5` (best cost/quality balance for SMS-length replies). Override per channel to use `anthropic/claude-opus-4-7` for premium tiers (~50x cost). |
+| `AI_REPLIES_DEFAULT_MODEL` | Optional. OpenRouter model id used when no per-channel override is set. Defaults to `anthropic/claude-haiku-4.5` (best cost/quality balance for SMS-length replies). Override per channel to use `anthropic/claude-opus-4-7` for premium tiers (~50x cost). |
+| `AI_REPLIES_CREDIT_FALLBACK_MODEL` | Optional emergency fallback after an OpenRouter HTTP 402 response. Defaults to `off`; set only to a reviewed model whose quality and data-handling terms are acceptable. |
 
 Without `OPENROUTER_API_KEY`, the AI Agents settings UI still renders but every channel stays silent: the SMS inbound webhook short-circuits past `maybeRespondWithAi`, the Web Chat `/api/web-chat/message` endpoint returns the fallback "I had trouble reaching the server" reply, and the `/api/sub-accounts/[id]/ai-agent/test` endpoint returns 503.
 
@@ -1259,6 +1260,7 @@ AgentStack uses OpenRouter as the LLM gateway — one key reaches every model (C
 Write to `.env.local`:
 - `OPENROUTER_API_KEY` — paste the key
 - `AI_REPLIES_DEFAULT_MODEL` — optional. Leave blank to use Claude Haiku 4.5 (recommended). Override per channel later if you want to test other models.
+- `AI_REPLIES_CREDIT_FALLBACK_MODEL` — optional emergency fallback after HTTP 402. Leave `off` unless a reviewed fallback is intentionally approved.
 
 Without this, the AI Agents settings page still loads but channels stay silent — every channel toggle is rejected with a friendly "Set the persona first" message that's actually masking the missing key.
 
@@ -1407,7 +1409,7 @@ Then restart `pnpm dev` so the new value is picked up. Now go back to Twilio (Ph
    - Resend (`RESEND_API_KEY`, `EMAIL_FROM`) and Twilio (`TWILIO_*`)
    - QStash (`QSTASH_URL`, `QSTASH_TOKEN`, `QSTASH_CURRENT_SIGNING_KEY`, `QSTASH_NEXT_SIGNING_KEY`) and `AUTOMATIONS_TOKEN_SECRET`
    - gitpage (`GITPAGE_API_KEY`, optionally `GITPAGE_API_URL`)
-   - AI Agents: `OPENROUTER_API_KEY` (required for bot replies) + optional `AI_REPLIES_DEFAULT_MODEL`
+- AI Agents: `OPENROUTER_API_KEY` (required for bot replies) + optional `AI_REPLIES_DEFAULT_MODEL`; `AI_REPLIES_CREDIT_FALLBACK_MODEL` defaults to `off`
    - AI Agents Knowledge Base: optional `FIRECRAWL_API_KEY` + `OPENAI_API_KEY` (powers multi-source ingestion + retrieval — see "Knowledge Base v2 (RAG)"). If enabling this, also deploy the `chunks` vector index (`firebase deploy --only firestore:rules,firestore:indexes`) against the production Firebase project.
    - AI Voice Agent: optional `VAPI_API_KEY` + `VAPI_WEBHOOK_SECRET` (powers the AI Agents → Voice channel). Skip both if you're not enabling voice yet.
 4. For `FIREBASE_ADMIN_PRIVATE_KEY`, paste the full key including the `-----BEGIN/END-----` markers. Vercel handles the newlines automatically.

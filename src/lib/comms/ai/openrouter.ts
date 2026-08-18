@@ -15,11 +15,11 @@ import "server-only";
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const DEFAULT_MODEL = "anthropic/claude-haiku-4.5";
 const LEGACY_HAIKU_MODEL = "anthropic/claude-haiku-4-5";
-// Pin the zero-credit fallback. `openrouter/free` is a router and may select a
-// different model on every request; that made identical Blueprint imports
-// alternate between valid fields, prose, and empty output. This model is free
-// and advertises both response_format and structured_outputs support.
-const DEFAULT_CREDIT_FALLBACK_MODEL = "openai/gpt-oss-20b:free";
+// Fail closed on paid-model credit errors by default. A silent model downgrade
+// changes output quality and may route customer data through providers with
+// different data-handling terms. Operators may opt into a reviewed emergency
+// model with AI_REPLIES_CREDIT_FALLBACK_MODEL.
+const DEFAULT_CREDIT_FALLBACK_MODEL = "off";
 
 /**
  * Backstop so no caller can hang forever. Generous, because background
@@ -179,13 +179,11 @@ export async function callAi({
     );
   }
 
-  // A paid model can be rejected before inference when the account's
-  // remaining balance cannot cover the requested completion. Keep essential
-  // product workflows available by retrying once through OpenRouter's
-  // zero-cost router. OpenRouter filters that router for required features,
-  // including structured JSON output. Operators can pin or disable the
-  // fallback with AI_REPLIES_CREDIT_FALLBACK_MODEL (set it to "off" to
-  // preserve strict paid-model-only behaviour).
+  // A paid model can be rejected before inference when the account's remaining
+  // balance cannot cover the requested completion. Do not silently change
+  // models: structured extraction, tool behavior, and provider data-handling
+  // can differ. An operator may explicitly configure a reviewed emergency
+  // model; "off" keeps the default fail-closed behavior.
   if (res.status === 402) {
     const fallbackModel = (
       process.env.AI_REPLIES_CREDIT_FALLBACK_MODEL ??

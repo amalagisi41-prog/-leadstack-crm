@@ -23,33 +23,28 @@ describe("OpenRouter credit continuity", () => {
     vi.unstubAllGlobals();
   });
 
-  it("retries a credit-rejected paid model through the free router", async () => {
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            error: { code: 402, message: "insufficient credits" },
-          }),
-          { status: 402 }
-        )
+  it("fails closed on a credit-rejected paid model by default", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          error: { code: 402, message: "insufficient credits" },
+        }),
+        { status: 402 }
       )
-      .mockResolvedValueOnce(completion("free/model"));
+    );
     vi.stubGlobal("fetch", fetchMock);
 
-    const result = await callAi({
-      messages: [{ role: "user", content: "Help" }],
-      responseFormat: { type: "json_object" },
-      maxTokens: 800,
-    });
+    await expect(
+      callAi({
+        messages: [{ role: "user", content: "Help" }],
+        responseFormat: { type: "json_object" },
+        maxTokens: 800,
+      })
+    ).rejects.toMatchObject({ status: 402 });
 
-    expect(result.text).toBe('{"answer":"Ready"}');
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(JSON.parse(fetchMock.mock.calls[0][1].body).model).toBe(
       "anthropic/claude-haiku-4.5"
-    );
-    expect(JSON.parse(fetchMock.mock.calls[1][1].body).model).toBe(
-      "openai/gpt-oss-20b:free"
     );
   });
 
@@ -69,21 +64,34 @@ describe("OpenRouter credit continuity", () => {
     );
   });
 
-  it("allows operators to disable the free fallback", async () => {
-    vi.stubEnv("AI_REPLIES_CREDIT_FALLBACK_MODEL", "off");
+  it("uses an operator-approved credit fallback when explicitly configured", async () => {
+    vi.stubEnv(
+      "AI_REPLIES_CREDIT_FALLBACK_MODEL",
+      "openai/gpt-oss-20b:free"
+    );
     const fetchMock = vi
       .fn()
-      .mockResolvedValue(
+      .mockResolvedValueOnce(
         new Response(
-          JSON.stringify({ error: { code: 402, message: "no credit" } }),
+          JSON.stringify({
+            error: { code: 402, message: "insufficient credits" },
+          }),
           { status: 402 }
         )
-      );
+      )
+      .mockResolvedValueOnce(completion("openai/gpt-oss-20b:free"));
     vi.stubGlobal("fetch", fetchMock);
 
-    await expect(
-      callAi({ messages: [{ role: "user", content: "Help" }] })
-    ).rejects.toMatchObject({ status: 402 });
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const result = await callAi({
+      messages: [{ role: "user", content: "Help" }],
+      responseFormat: { type: "json_object" },
+      maxTokens: 800,
+    });
+
+    expect(result.text).toBe('{"answer":"Ready"}');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body).model).toBe(
+      "openai/gpt-oss-20b:free"
+    );
   });
 });
