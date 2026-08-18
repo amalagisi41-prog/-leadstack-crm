@@ -49,7 +49,7 @@ describe("OpenRouter credit continuity", () => {
       "anthropic/claude-haiku-4-5"
     );
     expect(JSON.parse(fetchMock.mock.calls[1][1].body).model).toBe(
-      "openrouter/free"
+      "openai/gpt-oss-20b:free"
     );
   });
 

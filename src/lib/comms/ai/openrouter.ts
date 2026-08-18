@@ -14,7 +14,11 @@ import "server-only";
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const DEFAULT_MODEL = "anthropic/claude-haiku-4-5";
-const DEFAULT_CREDIT_FALLBACK_MODEL = "openrouter/free";
+// Pin the zero-credit fallback. `openrouter/free` is a router and may select a
+// different model on every request; that made identical Blueprint imports
+// alternate between valid fields, prose, and empty output. This model is free
+// and advertises both response_format and structured_outputs support.
+const DEFAULT_CREDIT_FALLBACK_MODEL = "openai/gpt-oss-20b:free";
 
 /**
  * Backstop so no caller can hang forever. Generous, because background

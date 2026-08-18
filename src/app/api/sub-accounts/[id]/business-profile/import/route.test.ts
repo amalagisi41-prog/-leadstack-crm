@@ -173,7 +173,37 @@ describe("POST business-profile/import", () => {
     expect(vi.mocked(callAi).mock.calls[0][0].responseFormat).toBeUndefined();
   });
 
-  it("answers in JSON when line-based output is invalid", async () => {
+  it("retries malformed line output once as structured JSON", async () => {
+    vi.mocked(readPublicPage).mockResolvedValueOnce("Jane Doe, REALTOR.");
+    vi.mocked(callAi)
+      .mockResolvedValueOnce({
+        text: "I'm afraid I can't.",
+        promptTokens: 0,
+        completionTokens: 0,
+        totalTokens: 0,
+        model: "test",
+      })
+      .mockResolvedValueOnce({
+        text: '{"agentName":"Jane Doe"}',
+        promptTokens: 0,
+        completionTokens: 0,
+        totalTokens: 0,
+        model: "test",
+      });
+
+    const res = await POST(
+      makeRequest({ url: "https://janedoerealty.com/about" }),
+      ctx
+    );
+    expect(res.status).toBe(200);
+    expect((await res.json()).profile.agentName).toBe("Jane Doe");
+    expect(callAi).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(callAi).mock.calls[1][0].responseFormat).toEqual({
+      type: "json_object",
+    });
+  });
+
+  it("answers in JSON when both parser attempts are invalid", async () => {
     vi.mocked(readPublicPage).mockResolvedValueOnce("Jane Doe, REALTOR.");
     vi.mocked(callAi).mockResolvedValue({
       text: "I'm afraid I can't.",
@@ -189,7 +219,7 @@ describe("POST business-profile/import", () => {
     );
     expect(res.status).toBe(502);
     expect((await res.json()).error).toMatch(/another public website/i);
-    expect(callAi).toHaveBeenCalledTimes(1);
+    expect(callAi).toHaveBeenCalledTimes(2);
   });
 
   it("answers in JSON when something unexpected throws", async () => {
@@ -290,5 +320,21 @@ describe("POST business-profile/import", () => {
     expect(body.profile.agentName).toBe("Jane Doe");
     expect(body.needsReview).toBe(true);
     expect(setMock).toHaveBeenCalled();
+  });
+
+  it("keeps a directory profile as the import source, not the business website", async () => {
+    vi.mocked(readPublicPage).mockResolvedValueOnce("Jane Doe, REALTOR.");
+
+    const source = "https://www.zillow.com/profile/jane-doe";
+    const res = await POST(makeRequest({ url: source }), ctx);
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.importSourceUrl).toBe(source);
+    expect(body.profile.website).toBe("");
+    expect(setMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({ importSourceUrl: source, website: "" }),
+      { merge: true }
+    );
   });
 });

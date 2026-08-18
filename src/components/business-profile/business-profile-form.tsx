@@ -26,7 +26,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { compileBusinessProfilePrompt } from "@/lib/business-profile/compile";
-import { MediaLibrary, type MediaAsset } from "@/components/media/media-library";
+import {
+  MediaLibrary,
+  type MediaAsset,
+} from "@/components/media/media-library";
 import {
   BRAND_VOICES,
   EMPTY_BUSINESS_PROFILE,
@@ -67,8 +70,27 @@ function Field({
   return (
     <label className="block">
       <span className="mb-1 flex items-center justify-between gap-2">
-        <span className="text-muted-foreground text-xs font-medium">{label}</span>
-        {aiField && onAssist ? <button type="button" disabled={assisting} onClick={(event) => { event.preventDefault(); onAssist(aiField, label); }} className="flex items-center gap-1 text-[11px] font-medium text-pink-600 hover:text-pink-700 disabled:opacity-50">{assisting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}AI assist</button> : null}
+        <span className="text-muted-foreground text-xs font-medium">
+          {label}
+        </span>
+        {aiField && onAssist ? (
+          <button
+            type="button"
+            disabled={assisting}
+            onClick={(event) => {
+              event.preventDefault();
+              onAssist(aiField, label);
+            }}
+            className="flex items-center gap-1 text-[11px] font-medium text-pink-600 hover:text-pink-700 disabled:opacity-50"
+          >
+            {assisting ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <Sparkles className="h-3 w-3" />
+            )}
+            AI assist
+          </button>
+        ) : null}
       </span>
       {children}
       {hint ? (
@@ -113,8 +135,12 @@ export function BusinessProfileForm() {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [importUrl, setImportUrl] = useState("");
   const [importing, setImporting] = useState(false);
-  const [assistingField, setAssistingField] = useState<keyof BusinessProfileContent | null>(null);
-  const [mediaOpen, setMediaOpen] = useState<"logoUrl" | "headshotUrl" | "buyerGuideUrl" | "sellerGuideUrl" | null>(null);
+  const [assistingField, setAssistingField] = useState<
+    keyof BusinessProfileContent | null
+  >(null);
+  const [mediaOpen, setMediaOpen] = useState<
+    "logoUrl" | "headshotUrl" | "buyerGuideUrl" | "sellerGuideUrl" | null
+  >(null);
 
   useEffect(() => {
     let active = true;
@@ -125,6 +151,7 @@ export function BusinessProfileForm() {
         );
         const data = await readJson<{
           profile: BusinessProfileContent;
+          importSourceUrl?: string;
           completeness: number;
         }>(res);
         if (!active) return;
@@ -135,7 +162,7 @@ export function BusinessProfileForm() {
           return;
         }
         setContent({ ...EMPTY_BUSINESS_PROFILE, ...data.profile });
-        setImportUrl(data.profile.website ?? "");
+        setImportUrl(data.importSourceUrl ?? "");
         setCompleteness(data.completeness ?? 0);
       } finally {
         if (active) setLoading(false);
@@ -153,22 +180,47 @@ export function BusinessProfileForm() {
     setContent((c) => ({ ...c, [key]: value }));
   }
 
-  async function assistField(field: keyof BusinessProfileContent, label: string) {
+  async function assistField(
+    field: keyof BusinessProfileContent,
+    label: string
+  ) {
     setAssistingField(field);
     try {
-      const res = await fetch(`/api/sub-accounts/${subAccountId}/business-profile/assist`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ field, label, currentValue: content[field] }) });
+      const res = await fetch(
+        `/api/sub-accounts/${subAccountId}/business-profile/assist`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ field, label, currentValue: content[field] }),
+        }
+      );
       const data = await readJson<{ value?: string }>(res);
-      if (!res.ok || typeof data.value !== "string") throw new Error(data.error ?? "AI assist failed.");
+      if (!res.ok || typeof data.value !== "string")
+        throw new Error(data.error ?? "AI assist failed.");
       set(field, data.value as BusinessProfileContent[typeof field]);
-      toast.success(`${label} drafted from your Business Blueprint. Review before saving.`);
-    } catch (error) { toast.error(error instanceof Error ? error.message : "AI assist failed."); }
-    finally { setAssistingField(null); }
+      toast.success(
+        `${label} drafted from your Business Blueprint. Review before saving.`
+      );
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "AI assist failed.");
+    } finally {
+      setAssistingField(null);
+    }
   }
 
-  const ai = (field: keyof BusinessProfileContent) => ({ aiField: field, onAssist: assistField, assisting: assistingField === field });
+  const ai = (field: keyof BusinessProfileContent) => ({
+    aiField: field,
+    onAssist: assistField,
+    assisting: assistingField === field,
+  });
 
-  function chooseMedia(field: "logoUrl" | "headshotUrl" | "buyerGuideUrl" | "sellerGuideUrl", asset: MediaAsset) {
-    set(field, asset.url); setMediaOpen(null); toast.success(`${asset.name} selected.`);
+  function chooseMedia(
+    field: "logoUrl" | "headshotUrl" | "buyerGuideUrl" | "sellerGuideUrl",
+    asset: MediaAsset
+  ) {
+    set(field, asset.url);
+    setMediaOpen(null);
+    toast.success(`${asset.name} selected.`);
   }
 
   function toggleService(id: (typeof SERVICE_SPECIALTIES)[number]["id"]) {
@@ -278,7 +330,7 @@ export function BusinessProfileForm() {
         );
       } else {
         toast.success(
-          `${imported} ${imported === 1 ? "page" : "pages"} imported with Claude. Review the details, then save to approve.`
+          `${imported} ${imported === 1 ? "page" : "pages"} imported with AI. Review the details, then save to approve.`
         );
       }
     } catch (error) {
@@ -676,7 +728,10 @@ export function BusinessProfileForm() {
         title="7. Qualifying leads"
         desc="What the AI should find out to tell a serious lead from a tire-kicker."
       >
-        <Field label="Qualification questions / criteria" {...ai("qualificationRules")}>
+        <Field
+          label="Qualification questions / criteria"
+          {...ai("qualificationRules")}
+        >
           <textarea
             rows={3}
             className={input}
@@ -705,7 +760,10 @@ export function BusinessProfileForm() {
           onChange={(v) => set("noLegalTaxAdvice", v)}
         />
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Brokerage disclosure (if required)" {...ai("brokerageDisclosure")}>
+          <Field
+            label="Brokerage disclosure (if required)"
+            {...ai("brokerageDisclosure")}
+          >
             <input
               className={input}
               value={content.brokerageDisclosure}
@@ -745,7 +803,16 @@ export function BusinessProfileForm() {
             onChange={(e) => set("headshotUrl", e.target.value)}
             placeholder="https://…/headshot.jpg"
           />
-          <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => setMediaOpen("headshotUrl")}><Upload className="mr-1.5 h-3.5 w-3.5" />Upload or choose from Media Library</Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="mt-2"
+            onClick={() => setMediaOpen("headshotUrl")}
+          >
+            <Upload className="mr-1.5 h-3.5 w-3.5" />
+            Upload or choose from Media Library
+          </Button>
         </Field>
         <Field
           label="Brand logo sheet"
@@ -757,7 +824,16 @@ export function BusinessProfileForm() {
             onChange={(e) => set("logoUrl", e.target.value)}
             placeholder="https://…/logo-sheet.jpg"
           />
-          <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => setMediaOpen("logoUrl")}><Upload className="mr-1.5 h-3.5 w-3.5" />Upload or choose from Media Library</Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="mt-2"
+            onClick={() => setMediaOpen("logoUrl")}
+          >
+            <Upload className="mr-1.5 h-3.5 w-3.5" />
+            Upload or choose from Media Library
+          </Button>
         </Field>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Buyer guide link">
@@ -767,7 +843,16 @@ export function BusinessProfileForm() {
               onChange={(e) => set("buyerGuideUrl", e.target.value)}
               placeholder="https://…/buyer-guide.pdf"
             />
-            <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => setMediaOpen("buyerGuideUrl")}><Upload className="mr-1.5 h-3.5 w-3.5" />Upload or choose</Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="mt-2"
+              onClick={() => setMediaOpen("buyerGuideUrl")}
+            >
+              <Upload className="mr-1.5 h-3.5 w-3.5" />
+              Upload or choose
+            </Button>
           </Field>
           <Field label="Seller guide link">
             <input
@@ -776,7 +861,16 @@ export function BusinessProfileForm() {
               onChange={(e) => set("sellerGuideUrl", e.target.value)}
               placeholder="https://…/seller-guide.pdf"
             />
-            <Button type="button" variant="outline" size="sm" className="mt-2" onClick={() => setMediaOpen("sellerGuideUrl")}><Upload className="mr-1.5 h-3.5 w-3.5" />Upload or choose</Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="mt-2"
+              onClick={() => setMediaOpen("sellerGuideUrl")}
+            >
+              <Upload className="mr-1.5 h-3.5 w-3.5" />
+              Upload or choose
+            </Button>
           </Field>
         </div>
         <Field
@@ -1116,10 +1210,26 @@ export function BusinessProfileForm() {
           })()}
         </DialogContent>
       </Dialog>
-      <Dialog open={mediaOpen !== null} onOpenChange={(open) => { if (!open) setMediaOpen(null); }}>
+      <Dialog
+        open={mediaOpen !== null}
+        onOpenChange={(open) => {
+          if (!open) setMediaOpen(null);
+        }}
+      >
         <DialogContent className="max-h-[85vh] max-w-3xl overflow-y-auto">
-          <DialogHeader><DialogTitle>Choose from your Media Library</DialogTitle><DialogDescription>Upload a new approved asset or select one you already use. The selected file will be linked to this Blueprint field.</DialogDescription></DialogHeader>
-          <MediaLibrary compact onSelect={(asset) => { if (mediaOpen) chooseMedia(mediaOpen, asset); }} />
+          <DialogHeader>
+            <DialogTitle>Choose from your Media Library</DialogTitle>
+            <DialogDescription>
+              Upload a new approved asset or select one you already use. The
+              selected file will be linked to this Blueprint field.
+            </DialogDescription>
+          </DialogHeader>
+          <MediaLibrary
+            compact
+            onSelect={(asset) => {
+              if (mediaOpen) chooseMedia(mediaOpen, asset);
+            }}
+          />
         </DialogContent>
       </Dialog>
     </div>

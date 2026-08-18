@@ -73,23 +73,40 @@ const BOOL_KEYS: (keyof BusinessProfileContent)[] = [
   "noLegalTaxAdvice",
 ];
 
-const EXAMPLE_VALUES: Partial<Record<keyof BusinessProfileContent, string[]>> = {
-  agentName: ["Jane Agent"],
-  brokerage: ["Keller Williams Metro"],
-  licenseStates: ["NJ, NY"],
-  languages: ["English, Spanish"],
-  testimonials: ["“Jane sold our home in 6 days over asking.” — The Rivers family"],
-  scripts: ["Cold-call opener: Hi, this is Jane with Keller Williams. I noticed..."],
-};
+const EXAMPLE_VALUES: Partial<Record<keyof BusinessProfileContent, string[]>> =
+  {
+    agentName: ["Jane Agent"],
+    brokerage: ["Keller Williams Metro"],
+    licenseStates: ["NJ, NY"],
+    languages: ["English, Spanish"],
+    testimonials: [
+      "“Jane sold our home in 6 days over asking.” — The Rivers family",
+    ],
+    scripts: [
+      "Cold-call opener: Hi, this is Jane with Keller Williams. I noticed...",
+    ],
+  };
 
-function withoutExamples(profile: BusinessProfileContent): BusinessProfileContent {
+function withoutExamples(
+  profile: BusinessProfileContent
+): BusinessProfileContent {
   const next = { ...profile };
-  for (const [key, examples] of Object.entries(EXAMPLE_VALUES) as [keyof BusinessProfileContent, string[]][]) {
+  for (const [key, examples] of Object.entries(EXAMPLE_VALUES) as [
+    keyof BusinessProfileContent,
+    string[],
+  ][]) {
     const value = next[key];
-    if (typeof value === "string" && examples.includes(value.trim())) (next[key] as string) = "";
+    if (typeof value === "string" && examples.includes(value.trim()))
+      (next[key] as string) = "";
   }
-  if (/I cannot invent these details|approved business profile provided does not contain/i.test(next.escalationRules)) next.escalationRules = "";
-  if (/No preferred vendors are specified/i.test(next.vendors)) next.vendors = "";
+  if (
+    /I cannot invent these details|approved business profile provided does not contain/i.test(
+      next.escalationRules
+    )
+  )
+    next.escalationRules = "";
+  if (/No preferred vendors are specified/i.test(next.vendors))
+    next.vendors = "";
   return next;
 }
 
@@ -176,16 +193,19 @@ export async function GET(
   if (!snap.exists) {
     return NextResponse.json({
       profile: EMPTY_BUSINESS_PROFILE,
+      importSourceUrl: "",
       completeness: 0,
       exists: false,
     });
   }
   const raw = snap.data() as BusinessProfileContent & {
     completeness?: number;
+    importSourceUrl?: string;
   };
   const data = withoutExamples({ ...EMPTY_BUSINESS_PROFILE, ...raw });
   return NextResponse.json({
     profile: data,
+    importSourceUrl: raw.importSourceUrl ?? "",
     completeness: businessProfileCompleteness(data),
     exists: true,
   });

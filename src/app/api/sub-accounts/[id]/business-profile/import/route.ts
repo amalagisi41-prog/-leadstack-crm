@@ -53,6 +53,14 @@ const IMPORT_KEYS: (keyof BusinessProfileContent)[] = [
   "testimonials",
 ];
 
+function parseObject(text: string): Record<string, unknown> {
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  if (start < 0 || end <= start)
+    throw new Error("AI did not return structured profile data.");
+  return JSON.parse(text.slice(start, end + 1)) as Record<string, unknown>;
+}
+
 const LINE_IMPORT_KEYS = new Set([
   ...IMPORT_KEYS,
   "services",
@@ -63,6 +71,17 @@ function isMissingMarker(value: string): boolean {
   return /^(?:null|none|unknown|n\/a|\[\]|not (?:provided|available|listed|specified|explicitly stated))$/i.test(
     value.trim()
   );
+}
+
+function isDirectoryProfileUrl(value: string): boolean {
+  try {
+    const host = new URL(value).hostname.toLowerCase().replace(/^www\./, "");
+    return ["zillow.com", "realtor.com", "homes.com"].some(
+      (domain) => host === domain || host.endsWith(`.${domain}`)
+    );
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -213,6 +232,26 @@ async function importProfile(
     });
   }
 
+  async function extractJsonProfile(timeoutMs: number) {
+    return callAi({
+      maxTokens: 800,
+      temperature: 0,
+      responseFormat: { type: "json_object" },
+      timeoutMs,
+      messages: [
+        {
+          role: "system",
+          content:
+            "Extract only facts explicitly present in the supplied public real-estate profile. Return one compact JSON object only, with no markdown, explanation, or guessed facts. Omit unknown values.",
+        },
+        {
+          role: "user",
+          content: `Allowed keys: agentName,title,brokerage,licenseStates,licenseNumber,phone,email,website,languages,clientExperience,idealClientProfile,clientPromise,serviceAreas,priceRanges,specialties,services,brandVoice,businessHours,responsePreference,bio,headshotUrl,logoUrl,testimonials. services may only use buyers,sellers,investors,rentals,relocation,luxury,first_time_buyers,commercial. brandVoice may only use professional,luxury,friendly,investor,casual,formal.\n\nSource URL: ${url}\nSource platform: ${String(body?.platform ?? "website")}\n\nWEBSITE TEXT:\n${markdown}`,
+        },
+      ],
+    });
+  }
+
   let completion: Awaited<ReturnType<typeof callAi>>;
   try {
     // Use the low-overhead line protocol first. The former JSON-first flow
@@ -246,14 +285,30 @@ async function importProfile(
   try {
     extracted = parseLineProfile(completion.text);
   } catch (error) {
-    console.error("business-profile import: invalid structured output", error);
-    return NextResponse.json(
-      {
-        error:
-          "We read your page, but could not turn it into profile fields. Try another public website or fill your Blueprint in by hand below.",
-      },
-      { status: 502 }
-    );
+    const remainingMs =
+      REQUEST_BUDGET_MS - (Date.now() - startedAt) - FIRESTORE_RESERVE_MS;
+    try {
+      if (remainingMs < 8_000) throw error;
+      completion = await extractJsonProfile(remainingMs);
+      void recordAiUsage({
+        subAccountId: id,
+        feature: "blueprint_import",
+        completion,
+      });
+      extracted = parseObject(completion.text);
+    } catch (retryError) {
+      console.error(
+        "business-profile import: invalid structured output",
+        retryError
+      );
+      return NextResponse.json(
+        {
+          error:
+            "We read your page, but could not turn it into profile fields. Try another public website or fill your Blueprint in by hand below.",
+        },
+        { status: 502 }
+      );
+    }
   }
 
   const db = getAdminDb();
@@ -270,11 +325,23 @@ async function importProfile(
     if (typeof value === "string" && isMissingMarker(value))
       (current[key] as string) = "";
   }
-  const next: BusinessProfileContent = { ...current, website: url };
+  if (current.website === url || isDirectoryProfileUrl(current.website))
+    current.website = "";
+  const next: BusinessProfileContent = { ...current };
   for (const key of IMPORT_KEYS) {
+    if (key === "website") continue;
     const value = extracted[key];
     if (typeof value === "string" && value.trim())
       (next[key] as string) = value.trim().slice(0, 4000);
+  }
+  if (typeof extracted.website === "string") {
+    const extractedWebsite = safePublicUrl(extracted.website);
+    if (
+      extractedWebsite &&
+      extractedWebsite !== url &&
+      !isDirectoryProfileUrl(extractedWebsite)
+    )
+      next.website = extractedWebsite;
   }
   if (Array.isArray(extracted.services)) {
     next.services = extracted.services.filter(
@@ -307,5 +374,6 @@ async function importProfile(
     profile: next,
     completeness,
     needsReview: true,
+    importSourceUrl: url,
   });
 }
