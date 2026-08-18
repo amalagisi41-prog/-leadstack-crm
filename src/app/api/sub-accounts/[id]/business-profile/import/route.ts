@@ -151,7 +151,11 @@ function zillowProfileFromPage(
   text: string,
 ): Record<string, unknown> {
   const result: Record<string, unknown> = {};
-  const normalized = text.replace(/\s+/g, " ").trim();
+  // Reader markdown preserves link destinations (including percent-encoded
+  // spaces in tel: links). Decode only the harmless encodings Zillow emits
+  // before matching; malformed percent sequences must never abort an import.
+  const decodedText = text.replace(/%20/gi, " ").replace(/%2B/gi, "+");
+  const normalized = decodedText.replace(/\s+/g, " ").trim();
   const pathName = (() => {
     try {
       return decodeURIComponent(new URL(url).pathname).replace(/\/+$/, "");
@@ -166,22 +170,44 @@ function zillowProfileFromPage(
   }
 
   const namePattern = agentName ? escapeRegExp(agentName) : "[A-Z][A-Za-z .'-]+";
-  const brokerage = normalized.match(
-    new RegExp(
-      `${namePattern}\\s+([^|[\\]]{2,100}?)\\s+\\d+(?:\\.\\d+)?(?=\\s|\\[)`,
-      "i",
+  // Zillow repeats the agent name in its document title, navigation and
+  // profile summary. A loose "name ... rating" match swallowed everything
+  // between the title and rating (for example "Report a problem ...") into
+  // Brokerage. Require Zillow's adjacent rating + review label, consider all
+  // repeated summaries, and take the shortest clean candidate.
+  const brokerage = Array.from(
+    normalized.matchAll(
+      new RegExp(
+        `${namePattern}\\s+([^|[\\]]{2,100}?)\\s+5(?:\\.0)?\\s+(?:\\[?\\d+\\s+reviews?|\\d+\\s+Reviews?)`,
+        "gi",
+      ),
     ),
-  )?.[1];
+    (match) => match[1].trim(),
+  )
+    .filter(
+      (candidate) =>
+        candidate.length <= 80 &&
+        !/(?:report a problem|recent sales|profile summary|real estate agent in)/i.test(
+          candidate,
+        ),
+    )
+    .sort((a, b) => a.length - b.length)[0];
   if (brokerage) result.brokerage = brokerage.trim();
 
   if (/Real Estate Agent/i.test(normalized)) result.title = "Real Estate Agent";
 
-  const phone = normalized.match(/(?:\+?1[ .-]?)?\(?\d{3}\)?[ .-]\d{3}[ .-]\d{4}/)?.[0];
+  const phone =
+    decodedText.match(
+      /\[((?:\+?1[ .-]?)?\(?\d{3}\)?[ .-]*\d{3}[ .-]*\d{4})\]\(tel:/i,
+    )?.[1] ??
+    normalized.match(
+      /(?:\+?1[ .-]?)?\(?\d{3}\)?[ .-]+\d{3}[ .-]+\d{4}/,
+    )?.[0];
   if (phone) result.phone = phone.trim();
   const email = normalized.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0];
   if (email) result.email = email.trim();
 
-  const agentWebsite = text.match(
+  const agentWebsite = decodedText.match(
     /Visit agent website[^\n\r)]*\((https?:\/\/[^)\s]+)\)/i,
   )?.[1] ?? normalized.match(/Visit agent website\s+(https?:\/\/[^\s]+)/i)?.[1];
   if (agentWebsite) result.website = agentWebsite.replace(/[.,;]+$/, "");
@@ -189,7 +215,12 @@ function zillowProfileFromPage(
   const priceRange = normalized.match(/\$\d+(?:\.\d+)?[KMB]\s*[-–]\s*\$\d+(?:\.\d+)?[KMB]/i)?.[0];
   if (priceRange) result.priceRanges = priceRange.replace(/\s+/g, "");
 
-  const serviceBlock = normalized.match(
+  // Property cards contain hundreds of city/state pairs. Only inspect the
+  // final labelled Service areas section and stop before Zillow's nearby-city
+  // navigation so sold listings cannot become an agent's service territory.
+  const serviceStart = normalized.toLowerCase().lastIndexOf("service areas");
+  const serviceTail = serviceStart >= 0 ? normalized.slice(serviceStart) : "";
+  const serviceBlock = serviceTail.match(
     /Service areas\s*\(\d+\)\s*(.*?)(?:Nearby cities|Contact\s+[A-Z]|Nearby neighborhoods|$)/i,
   )?.[1] ?? "";
   const serviceAreas = Array.from(

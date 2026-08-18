@@ -400,4 +400,41 @@ describe("POST business-profile/import", () => {
     expect(callAi).not.toHaveBeenCalled();
     expect(setMock).not.toHaveBeenCalled();
   });
+
+  it("ignores Zillow title/navigation noise and reads encoded contact links", async () => {
+    const source = "https://www.zillow.com/profile/Seamus%20Costigan";
+    vi.mocked(readPublicPage).mockResolvedValueOnce(`
+      Title: Seamus Costigan - Real Estate Agent in Stamford, CT - Reviews | Zillow
+      Report a problem Profile Summary. Overview: Sales Statistics & Listings.
+      Seamus Costigan Marr Caruso Realty Group 5.0 28 reviews Recent Sales
+      14 Sales last 12 months 149 Total sales $239K-$1.9M Price range $740K Average price
+      Get to know Seamus Costigan Real Estate Industry
+      I’m a high performing and passionate real estate agent & Investor serving clients all throughout Fairfield County and the nearby areas. As a practically lifelong resident of Stamford, CT, originally from Ireland, I learned about real estate around our family owned construction business of 30+ years.
+      Specialties Buyer's Agent Listing Agent Commercial Properties Investment Properties New Construction
+      20 Years of experience [Visit agent website](https://newbridge-properties.com/)
+      Seamus Costigan Marr Caruso Realty Group 5.0 28 reviews 14 sales last 12 months
+      [(203)%20550-0531](tel:(203)%20550-0531)
+      [sc.newbridge@gmail.com](mailto:sc.newbridge@gmail.com)
+      Service areas (3) [Norwalk, CT](/norwalk-ct/) [Stamford, CT](/stamford-ct/) [Fairfield, CT](/fairfield-ct/)
+      Nearby cities Real Estate in Armonk
+    `);
+
+    const res = await POST(makeRequest({ url: source }), ctx);
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.extractionMode).toBe("source-reader");
+    expect(body.completeness).toBe(100);
+    expect(body.profile).toMatchObject({
+      agentName: "Seamus Costigan",
+      brokerage: "Marr Caruso Realty Group",
+      phone: "(203) 550-0531",
+      email: "sc.newbridge@gmail.com",
+      website: "https://newbridge-properties.com/",
+      serviceAreas: "Norwalk, CT, Stamford, CT, Fairfield, CT",
+    });
+    expect(body.profile.brokerage).not.toMatch(/report a problem/i);
+    expect(callAi).not.toHaveBeenCalled();
+    expect(setMock).not.toHaveBeenCalled();
+  });
 });
