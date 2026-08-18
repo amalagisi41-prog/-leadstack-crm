@@ -205,7 +205,6 @@ export function businessProfileCompleteness(p: BusinessProfileContent): number {
     p.services.length > 0,
     !!p.clientPromise.trim(),
     !!p.website.trim(),
-    p.fairHousing && p.noLegalTaxAdvice,
   ];
   const done = checks.filter(Boolean).length;
   return Math.round((done / checks.length) * 100);

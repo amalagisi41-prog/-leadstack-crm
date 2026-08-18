@@ -25,12 +25,28 @@ import {
  * PATCH — merge a partial content patch, coerce/validate, recompute
  *         completeness. Admin-only. Available to every sub-account (it's the
  *         foundation the whole platform references — not a paid gate).
+ * DELETE — archive the current Blueprint and replace only that document with
+ *          a clean slate. All other sub-account data remains untouched.
  */
 
 const DOC = "main";
 
 const VALID_VOICES = new Set(BRAND_VOICES.map((v) => v.id));
 const VALID_SERVICES = new Set(SERVICE_SPECIALTIES.map((s) => s.id));
+
+// Directory/profile links are valid import sources, but they are not the
+// operator's own business website. Older importer builds accidentally stored
+// them in `website`, which made the Blueprint rehydrate Zillow on every visit.
+function isDirectoryProfileUrl(value: string): boolean {
+  try {
+    const host = new URL(value).hostname.toLowerCase().replace(/^www\./, "");
+    return ["zillow.com", "realtor.com", "homes.com"].some(
+      (domain) => host === domain || host.endsWith(`.${domain}`)
+    );
+  } catch {
+    return false;
+  }
+}
 
 const STRING_KEYS: (keyof BusinessProfileContent)[] = [
   "agentName",
@@ -76,8 +92,13 @@ const BOOL_KEYS: (keyof BusinessProfileContent)[] = [
 const EXAMPLE_VALUES: Partial<Record<keyof BusinessProfileContent, string[]>> =
   {
     agentName: ["Jane Agent"],
+    title: ["Realtor®, Broker Associate"],
     brokerage: ["Keller Williams Metro"],
     licenseStates: ["NJ, NY"],
+    licenseNumber: ["1234567"],
+    phone: ["(555) 123-4567"],
+    email: ["jane@brokerage.com"],
+    website: ["https://janesells.com"],
     languages: ["English, Spanish"],
     testimonials: [
       "“Jane sold our home in 6 days over asking.” — The Rivers family",
@@ -203,9 +224,13 @@ export async function GET(
     importSourceUrl?: string;
   };
   const data = withoutExamples({ ...EMPTY_BUSINESS_PROFILE, ...raw });
+  if (isDirectoryProfileUrl(data.website)) data.website = "";
   return NextResponse.json({
     profile: data,
-    importSourceUrl: raw.importSourceUrl ?? "",
+    // Import links are transient input, not part of the approved business
+    // identity. Old builds persisted them and then refilled the importer on
+    // every visit, which looked like a hard-coded Zillow default.
+    importSourceUrl: "",
     completeness: businessProfileCompleteness(data),
     exists: true,
   });
@@ -234,13 +259,31 @@ export async function PATCH(
   const ref = db.doc(`subAccounts/${id}/businessProfile/${DOC}`);
   const snap = await ref.get();
   const current = snap.exists
-    ? (snap.data() as BusinessProfileContent)
+    ? ({
+        ...EMPTY_BUSINESS_PROFILE,
+        ...snap.data(),
+      } as BusinessProfileContent)
     : EMPTY_BUSINESS_PROFILE;
 
   const next = coerce(current, patch);
   const completeness = businessProfileCompleteness(next);
 
-  await ref.set(
+  const savedAt = FieldValue.serverTimestamp();
+  const batch = db.batch();
+  if (snap.exists) {
+    // Keep an immutable server-side copy before every explicit save. This is
+    // the recovery path that the original single-document implementation was
+    // missing when an import or operator edit replaced approved information.
+    const revision = ref.collection("revisions").doc();
+    batch.set(revision, {
+      ...snap.data(),
+      archivedAt: savedAt,
+      archivedByUid: uid,
+      reason: "before_explicit_save",
+    });
+  }
+  batch.set(
+    ref,
     {
       ...next,
       subAccountId: id,
@@ -248,11 +291,65 @@ export async function PATCH(
       updatedByUid: uid,
       completeness,
       importReviewed: true,
-      ...(snap.exists ? {} : { createdAt: FieldValue.serverTimestamp() }),
-      updatedAt: FieldValue.serverTimestamp(),
+      // Clean up the legacy field that coupled a directory/profile source to
+      // the permanent business website workflow.
+      importSourceUrl: FieldValue.delete(),
+      ...(snap.exists ? {} : { createdAt: savedAt }),
+      updatedAt: savedAt,
     },
     { merge: true }
   );
+  await batch.commit();
 
   return NextResponse.json({ ok: true, profile: next, completeness });
+}
+
+export async function DELETE(
+  request: Request,
+  ctx: { params: Promise<{ id: string }> }
+) {
+  const { id } = await ctx.params;
+  const access = await requireSubAccountAdmin(request, id);
+  if (access instanceof NextResponse) return access;
+  const { uid, agencyId } = access;
+  if (!agencyId) {
+    return NextResponse.json({ error: "Agency not found" }, { status: 400 });
+  }
+
+  const db = getAdminDb();
+  const ref = db.doc(`subAccounts/${id}/businessProfile/${DOC}`);
+  const snap = await ref.get();
+  const resetAt = FieldValue.serverTimestamp();
+  const batch = db.batch();
+
+  if (snap.exists) {
+    const revision = ref.collection("revisions").doc();
+    batch.set(revision, {
+      ...snap.data(),
+      archivedAt: resetAt,
+      archivedByUid: uid,
+      reason: "operator_clean_slate_reset",
+    });
+  }
+
+  // This is intentionally a replacement write. Using merge here would leave
+  // unknown legacy fields behind and would not be a genuine clean slate.
+  batch.set(ref, {
+    ...EMPTY_BUSINESS_PROFILE,
+    subAccountId: id,
+    agencyId,
+    updatedByUid: uid,
+    completeness: 0,
+    importReviewed: true,
+    createdAt: resetAt,
+    updatedAt: resetAt,
+  });
+  await batch.commit();
+
+  return NextResponse.json({
+    ok: true,
+    profile: EMPTY_BUSINESS_PROFILE,
+    importSourceUrl: "",
+    completeness: 0,
+  });
 }
