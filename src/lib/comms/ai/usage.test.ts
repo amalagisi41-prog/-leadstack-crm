@@ -132,7 +132,11 @@ describe("recording usage", () => {
       feature: "assistant",
       completion: HAIKU,
     });
-    expect(setMock.mock.calls[0][1]).toEqual({ merge: true });
+    const [, options] = setMock.mock.calls[0] as unknown as [
+      unknown,
+      { merge: boolean },
+    ];
+    expect(options).toEqual({ merge: true });
   });
 
   it("puts untenanted spend on the platform scope instead of losing it", async () => {
