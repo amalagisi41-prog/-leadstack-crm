@@ -162,7 +162,9 @@ async function importProfile(
       // A complete Business Blueprint is substantially larger than an SMS
       // reply. JSON mode plus a dedicated output budget prevents the model's
       // object from being truncated before its closing brace.
-      maxTokens: 1_800,
+      // The operator reviews the factual draft; optional fields compress well.
+      // Staying below the free-account allowance keeps onboarding functional.
+      maxTokens: 800,
       temperature: 0,
       responseFormat: { type: "json_object" },
       // Whatever the read did not spend, less the reserve for Firestore.
