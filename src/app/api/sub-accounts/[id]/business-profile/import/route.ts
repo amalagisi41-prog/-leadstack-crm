@@ -225,7 +225,7 @@ async function importProfile(
       completion = await extractProfile(650);
       void recordAiUsage({
         subAccountId: id,
-        feature: "blueprint_import_retry",
+        feature: "blueprint_import",
         completion,
       });
       extracted = parseObject(completion.text);
