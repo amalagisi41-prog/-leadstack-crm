@@ -7,14 +7,18 @@ vi.mock("@/lib/auth/require-tenancy", () => ({
   })),
 }));
 
-vi.mock("firebase-admin/firestore", () => ({
-  FieldValue: { serverTimestamp: () => "SERVER_TIMESTAMP" },
-}));
-
 const setMock = vi.fn(async () => undefined);
+let savedProfile: Record<string, unknown> | null = null;
+const getMock = vi.fn(async () => ({
+  exists: savedProfile !== null,
+  data: () => savedProfile,
+}));
 vi.mock("@/lib/firebase/admin", () => ({
   getAdminDb: () => ({
-    doc: () => ({ get: async () => ({ exists: false }), set: setMock }),
+    doc: () => ({
+      get: getMock,
+      set: setMock,
+    }),
   }),
 }));
 
@@ -71,6 +75,7 @@ function makeRequest(body: unknown): Request {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  savedProfile = null;
   vi.mocked(callAi).mockResolvedValue({
     text: "agentName=Jane Doe",
     promptTokens: 0,
@@ -225,7 +230,7 @@ describe("POST business-profile/import", () => {
   it("answers in JSON when something unexpected throws", async () => {
     // The outer guard. Without it Next.js writes no body at all.
     vi.mocked(readPublicPage).mockResolvedValueOnce("Jane Doe, REALTOR.");
-    setMock.mockRejectedValueOnce(new Error("Firestore unavailable"));
+    getMock.mockRejectedValueOnce(new Error("Firestore unavailable"));
 
     const res = await POST(
       makeRequest({ url: "https://janedoerealty.com/about" }),
@@ -305,7 +310,12 @@ describe("POST business-profile/import", () => {
     expect(readPublicPage).not.toHaveBeenCalled();
   });
 
-  it("saves the draft when the page reads cleanly", async () => {
+  it("returns a review draft without mutating the approved profile", async () => {
+    savedProfile = {
+      agentName: "Approved Agent",
+      email: "approved@example.com",
+      website: "https://approved.example.com",
+    };
     vi.mocked(readPublicPage).mockResolvedValueOnce(
       "Jane Doe is a REALTOR in Fairfield County."
     );
@@ -318,8 +328,10 @@ describe("POST business-profile/import", () => {
 
     expect(res.status).toBe(200);
     expect(body.profile.agentName).toBe("Jane Doe");
+    expect(body.profile.email).toBe("approved@example.com");
+    expect(body.profile.website).toBe("https://approved.example.com");
     expect(body.needsReview).toBe(true);
-    expect(setMock).toHaveBeenCalled();
+    expect(setMock).not.toHaveBeenCalled();
   });
 
   it("keeps a directory profile as the import source, not the business website", async () => {
@@ -332,9 +344,60 @@ describe("POST business-profile/import", () => {
     expect(res.status).toBe(200);
     expect(body.importSourceUrl).toBe(source);
     expect(body.profile.website).toBe("");
-    expect(setMock).toHaveBeenLastCalledWith(
-      expect.objectContaining({ importSourceUrl: source, website: "" }),
-      { merge: true }
-    );
+    expect(setMock).not.toHaveBeenCalled();
+  });
+
+  it("builds a complete Zillow review draft without calling AI", async () => {
+    const source = "https://www.zillow.com/profile/Seamus%20Costigan";
+    vi.mocked(readPublicPage).mockResolvedValueOnce(`
+      # Seamus Costigan
+      Marr Caruso Realty Group 5.0 [28 reviews](#reviews)
+      Real Estate Agent in Stamford, CT
+
+      ## Get to know Seamus Costigan
+      Real Estate Industry
+      I’m a high performing and passionate real estate agent & Investor serving clients throughout Fairfield County and nearby areas. As a practically lifelong resident of Stamford, CT, originally from Ireland, I learned about real estate around our family-owned construction business of 30+ years.
+      Specialties Buyer's Agent Listing Agent Commercial Properties Investment Properties New Construction
+      20 Years of experience [Visit agent website](https://newbridge-properties.com/)
+
+      14 Sales last 12 months 149 Total sales $239K-$1.9M Price range $740K Average price
+
+      ## Service areas (3)
+      [Norwalk, CT](/norwalk-ct/) [Stamford, CT](/stamford-ct/) [Fairfield, CT](/fairfield-ct/)
+      ## Contact Seamus Costigan
+      [(203) 550-0531](tel:2035500531)
+      [sc.newbridge@gmail.com](mailto:sc.newbridge@gmail.com)
+    `);
+    vi.mocked(callAi).mockResolvedValueOnce({
+      text: "agentName=Seamus Costigan",
+      promptTokens: 0,
+      completionTokens: 0,
+      totalTokens: 0,
+      model: "test",
+    });
+
+    const res = await POST(makeRequest({ url: source }), ctx);
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.extractionMode).toBe("source-reader");
+    expect(body.completeness).toBe(100);
+    expect(body.profile).toMatchObject({
+      agentName: "Seamus Costigan",
+      title: "Real Estate Agent",
+      brokerage: "Marr Caruso Realty Group",
+      phone: "(203) 550-0531",
+      email: "sc.newbridge@gmail.com",
+      website: "https://newbridge-properties.com/",
+      serviceAreas: "Norwalk, CT, Stamford, CT, Fairfield, CT",
+      priceRanges: "$239K-$1.9M",
+      clientExperience: "20 years of real estate experience",
+      specialties:
+        "Buyer's Agent, Listing Agent, Commercial Properties, Investment Properties, New Construction",
+      services: ["buyers", "sellers", "commercial", "investors"],
+    });
+    expect(body.profile.bio).toMatch(/high performing and passionate/i);
+    expect(callAi).not.toHaveBeenCalled();
+    expect(setMock).not.toHaveBeenCalled();
   });
 });

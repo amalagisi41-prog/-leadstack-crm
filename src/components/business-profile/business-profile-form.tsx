@@ -130,6 +130,7 @@ export function BusinessProfileForm() {
   );
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const [completeness, setCompleteness] = useState(0);
   const [generating, setGenerating] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -284,6 +285,39 @@ export function BusinessProfileForm() {
     }
   }
 
+  async function resetBlueprint() {
+    const confirmed = window.confirm(
+      "Start this Business Blueprint over? The current Blueprint will be archived for recovery. Contacts, conversations, domains, media, and all other workspace data will stay unchanged."
+    );
+    if (!confirmed) return;
+
+    setResetting(true);
+    try {
+      const res = await fetch(
+        `/api/sub-accounts/${subAccountId}/business-profile`,
+        { method: "DELETE" }
+      );
+      const data = await readJson<{
+        profile?: BusinessProfileContent;
+        completeness?: number;
+      }>(res);
+      if (!res.ok || !data.profile)
+        throw new Error(data.error ?? "Couldn't reset the Blueprint.");
+      setContent({ ...EMPTY_BUSINESS_PROFILE, ...data.profile });
+      setImportUrl("");
+      setCompleteness(data.completeness ?? 0);
+      toast.success(
+        "Business Blueprint reset to a clean slate. The previous version was archived."
+      );
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Couldn't reset the Blueprint."
+      );
+    } finally {
+      setResetting(false);
+    }
+  }
+
   async function importPublicProfile() {
     const urls = (importUrl.match(/https?:\/\/[^\s]+/gi) ?? []).map((url) =>
       url.replace(/[),.;]+$/g, "")
@@ -312,6 +346,7 @@ export function BusinessProfileForm() {
         const data = await readJson<{
           profile?: BusinessProfileContent;
           completeness?: number;
+          extractionMode?: "ai" | "source-reader";
         }>(res);
         if (!res.ok || !data.profile) {
           failures.push(data.error ?? `Could not import ${url}.`);
@@ -330,7 +365,7 @@ export function BusinessProfileForm() {
         );
       } else {
         toast.success(
-          `${imported} ${imported === 1 ? "page" : "pages"} imported with AI. Review the details, then save to approve.`
+          `${imported} ${imported === 1 ? "page" : "pages"} imported from the public source. Review the verified details, then save to approve.`
         );
       }
     } catch (error) {
@@ -1156,6 +1191,19 @@ export function BusinessProfileForm() {
             Saved to your private workspace. Used only by your AI tools.
           </p>
           <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              onClick={resetBlueprint}
+              disabled={saving || resetting}
+              className="text-muted-foreground hover:text-destructive"
+            >
+              {resetting ? (
+                <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="mr-1 h-4 w-4" />
+              )}
+              Start over
+            </Button>
             <Button variant="outline" onClick={save} disabled={saving}>
               {saving ? (
                 <Loader2 className="mr-1 h-4 w-4 animate-spin" />

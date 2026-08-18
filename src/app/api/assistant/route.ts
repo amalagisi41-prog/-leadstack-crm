@@ -133,6 +133,10 @@ function productGuideFor(question: string, currentPath: string): string {
       /contact|lead|form|booking|calendar|follow-up|conversation/,
       /other setup paths/i,
     ],
+    [
+      /30\s*\/\s*60\s*\/\s*90|re-?promotion|listing boost|stale listing/,
+      /other setup paths/i,
+    ],
   ];
   for (const [trigger, heading] of topics) {
     if (!trigger.test(signal)) continue;

@@ -46,10 +46,26 @@ describe("OpenRouter credit continuity", () => {
     expect(result.text).toBe('{"answer":"Ready"}');
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(JSON.parse(fetchMock.mock.calls[0][1].body).model).toBe(
-      "anthropic/claude-haiku-4-5"
+      "anthropic/claude-haiku-4.5"
     );
     expect(JSON.parse(fetchMock.mock.calls[1][1].body).model).toBe(
       "openai/gpt-oss-20b:free"
+    );
+  });
+
+  it("repairs the legacy invalid Haiku model id before sending", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(completion("anthropic/claude-haiku-4.5"));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await callAi({
+      model: "anthropic/claude-haiku-4-5",
+      messages: [{ role: "user", content: "Help" }],
+    });
+
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).model).toBe(
+      "anthropic/claude-haiku-4.5"
     );
   });
 

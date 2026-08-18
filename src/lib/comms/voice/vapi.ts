@@ -184,7 +184,7 @@ function buildAssistantBody(input: {
   const defaultModel =
     input.modelOverride?.trim() ||
     process.env.AI_REPLIES_DEFAULT_MODEL?.trim() ||
-    "anthropic/claude-haiku-4-5";
+    "anthropic/claude-haiku-4.5";
 
   return {
     // Vapi caps name at 40 chars; sub-account ids are ~20 chars so a

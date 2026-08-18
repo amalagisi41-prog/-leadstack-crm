@@ -183,7 +183,13 @@ export function WebsiteStudioApp({
         );
         setFoundationReady(ready);
         let loadedSite = data.site;
-        if (loadedSite && ready) {
+        // Blueprint hydration is a design/preview concern, not a publishing
+        // concern.  Requiring domain/hosting readiness here caused Vibe to
+        // render the untouched starter ("Your Name", "Your Area") whenever
+        // setup was incomplete, even when the approved Blueprint was ready.
+        // Keep the foundation as a publish gate, but always hydrate the
+        // private draft so the first preview reflects the user's business.
+        if (loadedSite) {
           const hydrateRes = await fetch(
             `/api/sub-accounts/${subAccountId}/agent-site`,
             {

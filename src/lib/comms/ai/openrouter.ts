@@ -13,7 +13,8 @@ import "server-only";
  */
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
-const DEFAULT_MODEL = "anthropic/claude-haiku-4-5";
+const DEFAULT_MODEL = "anthropic/claude-haiku-4.5";
+const LEGACY_HAIKU_MODEL = "anthropic/claude-haiku-4-5";
 // Pin the zero-credit fallback. `openrouter/free` is a router and may select a
 // different model on every request; that made identical Blueprint imports
 // alternate between valid fields, prose, and empty output. This model is free
@@ -76,7 +77,20 @@ export function aiIsConfigured(): boolean {
 }
 
 export function defaultAiModel(): string {
-  return process.env.AI_REPLIES_DEFAULT_MODEL?.trim() || DEFAULT_MODEL;
+  return normalizeOpenRouterModelId(
+    process.env.AI_REPLIES_DEFAULT_MODEL?.trim() || DEFAULT_MODEL
+  );
+}
+
+/**
+ * Repair the invalid Haiku id previously stored in environment variables and
+ * workspace channel settings. OpenRouter's canonical id uses a decimal point.
+ * Keeping this at the request boundary lets existing tenants self-heal without
+ * a risky bulk data migration.
+ */
+export function normalizeOpenRouterModelId(model: string): string {
+  const trimmed = model.trim();
+  return trimmed === LEGACY_HAIKU_MODEL ? DEFAULT_MODEL : trimmed;
 }
 
 interface OpenRouterChoice {
@@ -133,7 +147,9 @@ export async function callAi({
     );
   }
 
-  const chosenModel = model?.trim() || defaultAiModel();
+  const chosenModel = normalizeOpenRouterModelId(
+    model?.trim() || defaultAiModel()
+  );
 
   let res: Response;
   try {

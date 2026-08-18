@@ -195,7 +195,7 @@ ${groups.join("\n\n")}
 export function businessProfileCompleteness(p: BusinessProfileContent): number {
   // Optional enrichment improves the master prompt over time, but does not
   // block a user from reaching a launch-ready profile.
-  const hasBusinessFacts = Boolean(p.agentName.trim() || p.brokerage.trim() || p.phone.trim() || p.email.trim() || p.serviceAreas.trim() || p.services.length || p.clientPromise.trim() || p.website.trim());
+  const hasBusinessFacts = Boolean(p.agentName.trim() || p.brokerage.trim() || p.phone.trim() || p.email.trim() || p.serviceAreas.trim() || p.services.length || p.bio.trim() || p.priceRanges.trim() || p.website.trim());
   if (!hasBusinessFacts) return 0;
   const checks: boolean[] = [
     !!p.agentName.trim(),
@@ -203,7 +203,7 @@ export function businessProfileCompleteness(p: BusinessProfileContent): number {
     !!(p.phone.trim() || p.email.trim()),
     !!p.serviceAreas.trim(),
     p.services.length > 0,
-    !!p.clientPromise.trim(),
+    !!(p.bio.trim() || p.priceRanges.trim()),
     !!p.website.trim(),
   ];
   const done = checks.filter(Boolean).length;

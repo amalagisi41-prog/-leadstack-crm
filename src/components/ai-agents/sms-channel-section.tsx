@@ -58,12 +58,14 @@ export function SmsChannelSection() {
         setEnabled(channelData.config.enabled);
         setContextCount(channelData.config.contextMessageCount);
         setModelOverride(channelData.config.modelOverride ?? "");
-        setOverrideKeywords(channelData.config.escalationKeywordsOverride !== null);
+        setOverrideKeywords(
+          channelData.config.escalationKeywordsOverride !== null
+        );
         setKeywordsText(
-          (channelData.config.escalationKeywordsOverride ?? []).join(", "),
+          (channelData.config.escalationKeywordsOverride ?? []).join(", ")
         );
         setOverrideEmail(
-          channelData.config.escalationNotifyEmailOverride !== null,
+          channelData.config.escalationNotifyEmailOverride !== null
         );
         setNotifyEmail(channelData.config.escalationNotifyEmailOverride ?? "");
       }
@@ -82,7 +84,7 @@ export function SmsChannelSection() {
 
   const totalTokens = useMemo(
     () => config?.totalTokensUsed ?? 0,
-    [config?.totalTokensUsed],
+    [config?.totalTokensUsed]
   );
 
   if (!isAdmin) return null;
@@ -115,7 +117,7 @@ export function SmsChannelSection() {
             escalationKeywordsOverride: overrideKeywords ? keywords : null,
             escalationNotifyEmailOverride: overrideEmail ? email : null,
           }),
-        },
+        }
       );
       const data = (await res.json()) as {
         ok?: boolean;
@@ -136,16 +138,16 @@ export function SmsChannelSection() {
   }
 
   return (
-    <section className="rounded-2xl border bg-card p-6">
+    <section className="bg-card rounded-2xl border p-6">
       <div className="flex items-start gap-3">
         <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400">
           <MessageSquare className="h-4 w-4" />
         </span>
         <div>
           <h2 className="text-base font-semibold">SMS channel</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Operational settings for the SMS agent. Persona, hours, and
-            default escalation live on the{" "}
+          <p className="text-muted-foreground mt-1 text-sm">
+            Operational settings for the SMS agent. Persona, hours, and default
+            escalation live on the{" "}
             <Link
               href={`/sa/${subAccountId}/ai-agents`}
               className="text-foreground underline-offset-2 hover:underline"
@@ -166,8 +168,8 @@ export function SmsChannelSection() {
 
       {!profileReady && loaded && (
         <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-800 dark:text-amber-400">
-          <strong>Set the agent persona first.</strong> The SMS toggle will
-          be rejected until you save a persona prompt on the{" "}
+          <strong>Set the agent persona first.</strong> The SMS toggle will be
+          rejected until you save a persona prompt on the{" "}
           <Link
             href={`/sa/${subAccountId}/ai-agents`}
             className="underline-offset-2 hover:underline"
@@ -179,15 +181,15 @@ export function SmsChannelSection() {
       )}
 
       {!loaded ? (
-        <p className="mt-6 text-sm text-muted-foreground">Loading…</p>
+        <p className="text-muted-foreground mt-6 text-sm">Loading…</p>
       ) : (
         <form className="mt-6 space-y-5" onSubmit={handleSave}>
-          <label className="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3">
+          <label className="bg-muted/30 flex items-center justify-between gap-3 rounded-lg border p-3">
             <div>
               <p className="text-sm font-medium">Enable SMS auto-replies</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                When on, inbound SMS to this sub-account&apos;s number gets
-                an AI response in real time.
+              <p className="text-muted-foreground mt-0.5 text-xs">
+                When on, inbound SMS to this sub-account&apos;s number gets an
+                AI response in real time.
               </p>
             </div>
             <input
@@ -207,28 +209,28 @@ export function SmsChannelSection() {
                 min={1}
                 max={50}
                 value={contextCount}
-                onChange={(e) =>
-                  setContextCount(Number(e.target.value) || 10)
-                }
+                onChange={(e) => setContextCount(Number(e.target.value) || 10)}
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="sms-model">Model (advanced — blank for default)</Label>
+              <Label htmlFor="sms-model">
+                Model (advanced — blank for default)
+              </Label>
               <Input
                 id="sms-model"
                 value={modelOverride}
                 onChange={(e) => setModelOverride(e.target.value)}
-                placeholder="anthropic/claude-haiku-4-5"
+                placeholder="anthropic/claude-haiku-4.5"
               />
             </div>
           </div>
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-muted-foreground text-[11px]">
             Default model: Claude Haiku 4.5. Override with{" "}
-            <code>anthropic/claude-opus-4-7</code> for premium quality at
-            ~50× the cost. Any OpenRouter model id works.
+            <code>anthropic/claude-opus-4-7</code> for premium quality at ~50×
+            the cost. Any OpenRouter model id works.
           </p>
 
-          <div className="space-y-2 rounded-lg border bg-muted/20 p-3">
+          <div className="bg-muted/20 space-y-2 rounded-lg border p-3">
             <label className="flex items-center gap-2 text-sm font-medium">
               <input
                 type="checkbox"
@@ -245,7 +247,7 @@ export function SmsChannelSection() {
                 placeholder="manager, human, complaint, stop ai"
               />
             ) : (
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-muted-foreground text-[11px]">
                 Using profile defaults:{" "}
                 <code className="text-foreground">
                   {profile?.escalationKeywords.join(", ") || "(none set)"}
@@ -254,7 +256,7 @@ export function SmsChannelSection() {
             )}
           </div>
 
-          <div className="space-y-2 rounded-lg border bg-muted/20 p-3">
+          <div className="bg-muted/20 space-y-2 rounded-lg border p-3">
             <label className="flex items-center gap-2 text-sm font-medium">
               <input
                 type="checkbox"
@@ -272,7 +274,7 @@ export function SmsChannelSection() {
                 placeholder="sms-escalations@example.com"
               />
             ) : (
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-muted-foreground text-[11px]">
                 Using profile default:{" "}
                 <code className="text-foreground">
                   {profile?.escalationNotifyEmail || "(none set)"}
@@ -282,9 +284,9 @@ export function SmsChannelSection() {
           </div>
 
           <div className="flex items-center justify-between pt-2">
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               Lifetime tokens used on SMS:{" "}
-              <span className="font-medium text-foreground">
+              <span className="text-foreground font-medium">
                 {totalTokens.toLocaleString()}
               </span>
             </p>

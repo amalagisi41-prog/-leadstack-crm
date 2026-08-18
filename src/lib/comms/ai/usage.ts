@@ -42,6 +42,7 @@ export type AiFeature =
  * result as an estimate of the balance drawn down, not an invoice.
  */
 const PRICE_PER_MTOK: Record<string, [number, number]> = {
+  "claude-haiku-4.5": [1, 5],
   "claude-haiku-4-5": [1, 5],
   "claude-sonnet-4-6": [3, 15],
   "claude-sonnet-5": [3, 15],
@@ -61,7 +62,7 @@ const PRICE_PER_MTOK: Record<string, [number, number]> = {
  */
 const FALLBACK_PRICE: [number, number] = [5, 25];
 
-/** OpenRouter returns ids like `anthropic/claude-haiku-4-5:beta`. */
+/** OpenRouter returns ids like `anthropic/claude-haiku-4.5:beta`. */
 export function normaliseModelId(model: string): string {
   return model.trim().toLowerCase().split("/").pop()!.split(":")[0];
 }

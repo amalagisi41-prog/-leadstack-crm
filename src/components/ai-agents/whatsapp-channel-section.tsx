@@ -68,13 +68,13 @@ export function WhatsappChannelSection() {
         setContextCount(channelData.config.contextMessageCount);
         setModelOverride(channelData.config.modelOverride ?? "");
         setOverrideKeywords(
-          channelData.config.escalationKeywordsOverride !== null,
+          channelData.config.escalationKeywordsOverride !== null
         );
         setKeywordsText(
-          (channelData.config.escalationKeywordsOverride ?? []).join(", "),
+          (channelData.config.escalationKeywordsOverride ?? []).join(", ")
         );
         setOverrideEmail(
-          channelData.config.escalationNotifyEmailOverride !== null,
+          channelData.config.escalationNotifyEmailOverride !== null
         );
         setNotifyEmail(channelData.config.escalationNotifyEmailOverride ?? "");
       }
@@ -93,7 +93,7 @@ export function WhatsappChannelSection() {
 
   const totalTokens = useMemo(
     () => config?.totalTokensUsed ?? 0,
-    [config?.totalTokensUsed],
+    [config?.totalTokensUsed]
   );
 
   if (!isAdmin) return null;
@@ -104,14 +104,14 @@ export function WhatsappChannelSection() {
   // Agency gate locked state — mirrors the email-domain section's locked card.
   if (!agencyEnabled) {
     return (
-      <section className="rounded-2xl border bg-card p-6">
+      <section className="bg-card rounded-2xl border p-6">
         <div className="flex items-start gap-3">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+          <span className="bg-muted text-muted-foreground flex h-9 w-9 items-center justify-center rounded-lg">
             <Lock className="h-4 w-4" />
           </span>
           <div>
             <h2 className="text-base font-semibold">WhatsApp channel</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="text-muted-foreground mt-1 text-sm">
               WhatsApp is locked for this sub-account. Your agency controls
               whether this feature is available — ask your agency owner to
               enable WhatsApp from the sub-account&apos;s Manage panel.
@@ -147,7 +147,7 @@ export function WhatsappChannelSection() {
             escalationKeywordsOverride: overrideKeywords ? keywords : null,
             escalationNotifyEmailOverride: overrideEmail ? email : null,
           }),
-        },
+        }
       );
       const data = (await res.json()) as {
         ok?: boolean;
@@ -168,14 +168,14 @@ export function WhatsappChannelSection() {
   }
 
   return (
-    <section className="rounded-2xl border bg-card p-6">
+    <section className="bg-card rounded-2xl border p-6">
       <div className="flex items-start gap-3">
         <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-green-500/10 text-green-600 dark:text-green-400">
           <MessagesSquare className="h-4 w-4" />
         </span>
         <div>
           <h2 className="text-base font-semibold">WhatsApp channel</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="text-muted-foreground mt-1 text-sm">
             Operational settings for the WhatsApp agent. Persona, hours, and
             default escalation live on the{" "}
             <Link
@@ -205,8 +205,8 @@ export function WhatsappChannelSection() {
 
       {!profileReady && loaded && (
         <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-800 dark:text-amber-400">
-          <strong>Set the agent persona first.</strong> The WhatsApp toggle
-          will be rejected until you save a persona prompt on the{" "}
+          <strong>Set the agent persona first.</strong> The WhatsApp toggle will
+          be rejected until you save a persona prompt on the{" "}
           <Link
             href={`/sa/${subAccountId}/ai-agents`}
             className="underline-offset-2 hover:underline"
@@ -217,13 +217,13 @@ export function WhatsappChannelSection() {
         </div>
       )}
 
-      <div className="mt-4 rounded-lg border bg-muted/20 p-3 text-xs text-muted-foreground">
+      <div className="bg-muted/20 text-muted-foreground mt-4 rounded-lg border p-3 text-xs">
         The AI replies to inbound messages within WhatsApp&apos;s 24-hour
         window. To start or re-open a conversation outside that window, use an
         approved{" "}
         <Link
           href={`/sa/${subAccountId}/ai-agents/whatsapp/templates`}
-          className="font-medium text-foreground underline-offset-2 hover:underline"
+          className="text-foreground font-medium underline-offset-2 hover:underline"
         >
           message template
         </Link>
@@ -231,15 +231,15 @@ export function WhatsappChannelSection() {
       </div>
 
       {!loaded ? (
-        <p className="mt-6 text-sm text-muted-foreground">Loading…</p>
+        <p className="text-muted-foreground mt-6 text-sm">Loading…</p>
       ) : (
         <form className="mt-6 space-y-5" onSubmit={handleSave}>
-          <label className="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3">
+          <label className="bg-muted/30 flex items-center justify-between gap-3 rounded-lg border p-3">
             <div>
               <p className="text-sm font-medium">
                 Enable WhatsApp auto-replies
               </p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
+              <p className="text-muted-foreground mt-0.5 text-xs">
                 When on, inbound WhatsApp messages to this sub-account&apos;s
                 sender get an AI response in real time.
               </p>
@@ -272,17 +272,17 @@ export function WhatsappChannelSection() {
                 id="wa-model"
                 value={modelOverride}
                 onChange={(e) => setModelOverride(e.target.value)}
-                placeholder="anthropic/claude-haiku-4-5"
+                placeholder="anthropic/claude-haiku-4.5"
               />
             </div>
           </div>
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-muted-foreground text-[11px]">
             Default model: Claude Haiku 4.5. Override with{" "}
             <code>anthropic/claude-opus-4-7</code> for premium quality at ~50×
             the cost. Any OpenRouter model id works.
           </p>
 
-          <div className="space-y-2 rounded-lg border bg-muted/20 p-3">
+          <div className="bg-muted/20 space-y-2 rounded-lg border p-3">
             <label className="flex items-center gap-2 text-sm font-medium">
               <input
                 type="checkbox"
@@ -299,7 +299,7 @@ export function WhatsappChannelSection() {
                 placeholder="manager, human, complaint, stop ai"
               />
             ) : (
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-muted-foreground text-[11px]">
                 Using profile defaults:{" "}
                 <code className="text-foreground">
                   {profile?.escalationKeywords.join(", ") || "(none set)"}
@@ -308,7 +308,7 @@ export function WhatsappChannelSection() {
             )}
           </div>
 
-          <div className="space-y-2 rounded-lg border bg-muted/20 p-3">
+          <div className="bg-muted/20 space-y-2 rounded-lg border p-3">
             <label className="flex items-center gap-2 text-sm font-medium">
               <input
                 type="checkbox"
@@ -326,7 +326,7 @@ export function WhatsappChannelSection() {
                 placeholder="whatsapp-escalations@example.com"
               />
             ) : (
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-muted-foreground text-[11px]">
                 Using profile default:{" "}
                 <code className="text-foreground">
                   {profile?.escalationNotifyEmail || "(none set)"}
@@ -336,9 +336,9 @@ export function WhatsappChannelSection() {
           </div>
 
           <div className="flex items-center justify-between pt-2">
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               Lifetime tokens used on WhatsApp:{" "}
-              <span className="font-medium text-foreground">
+              <span className="text-foreground font-medium">
                 {totalTokens.toLocaleString()}
               </span>
             </p>

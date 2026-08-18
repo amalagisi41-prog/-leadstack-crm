@@ -363,7 +363,7 @@ export function WebChatChannelSection() {
                 id="wc-model"
                 value={modelOverride}
                 onChange={(e) => setModelOverride(e.target.value)}
-                placeholder="anthropic/claude-haiku-4-5"
+                placeholder="anthropic/claude-haiku-4.5"
                 className="font-mono text-xs"
               />
             </div>

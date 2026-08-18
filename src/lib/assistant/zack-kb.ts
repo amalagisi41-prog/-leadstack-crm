@@ -47,6 +47,7 @@ export const ZACK_PRODUCT_KB = `# AgentStack product guide
 - Contacts: use People or Import Contacts for CSV imports and manual contacts.
 - Lead Capture: create a form; submissions can create contacts and enter follow-up.
 - Follow-Up Plans: configure the response sequence connected to a lead source.
+- Listing re-promotion: Zack can prepare a 30/60/90-day plan for an approved listing. Day 30 refreshes positioning and creative, day 60 expands distribution and follow-up, and day 90 prepares a seller-review package with performance evidence and next-step options. Planning is read-only; scheduling or sending requires the operator's explicit approval and the necessary listing, channel, and contact connections.
 - Client Journeys: track opportunities through the real-estate pipeline.
 - Booking: create and share appointment pages.
 - Connections: one place to connect email, phone, calendar, Google Business Profile, lead sources, websites, automation providers, and supported apps.

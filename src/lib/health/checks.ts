@@ -10,12 +10,7 @@ import { getAdminDb } from "@/lib/firebase/admin";
  * status entries the UI can render.
  */
 
-export type HealthStatus =
-  | "ok"
-  | "partial"
-  | "missing"
-  | "error"
-  | "skipped";
+export type HealthStatus = "ok" | "partial" | "missing" | "error" | "skipped";
 
 export interface SubCheck {
   label: string;
@@ -75,7 +70,7 @@ function rollupMessage(status: HealthStatus, label: string): string {
 
 async function withTimeout<T>(
   fn: () => Promise<T>,
-  label: string,
+  label: string
 ): Promise<{ result?: T; error?: string }> {
   try {
     const ctrl = new AbortController();
@@ -241,7 +236,7 @@ async function checkStripe(): Promise<IntegrationHealth> {
             status: "error",
             detail: ping.error,
           }
-        : { label: "Live API ping", status: "ok" },
+        : { label: "Live API ping", status: "ok" }
     );
   } else {
     subChecks.push({
@@ -314,7 +309,7 @@ async function checkResend(): Promise<IntegrationHealth> {
       subChecks.push({ label: "API key valid", status: "ok" });
       if (fromDomain && fromDomain !== "resend.dev") {
         const match = ping.result?.find(
-          (d) => d.name.toLowerCase() === fromDomain.toLowerCase(),
+          (d) => d.name.toLowerCase() === fromDomain.toLowerCase()
         );
         if (!match) {
           subChecks.push({
@@ -368,7 +363,11 @@ async function checkResend(): Promise<IntegrationHealth> {
 // Twilio (SMS) — creds + inbound webhook URL on the from-number
 
 async function checkTwilio(): Promise<IntegrationHealth> {
-  const keys = ["TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN", "TWILIO_FROM_NUMBER"];
+  const keys = [
+    "TWILIO_ACCOUNT_SID",
+    "TWILIO_AUTH_TOKEN",
+    "TWILIO_FROM_NUMBER",
+  ];
   const presence = envPresent(...keys);
   const subChecks: SubCheck[] = keys.map((k) => ({
     label: k,
@@ -390,7 +389,7 @@ async function checkTwilio(): Promise<IntegrationHealth> {
           {
             headers: { Authorization: `Basic ${auth}` },
             signal: ctrl.signal,
-          },
+          }
         );
         if (!r.ok) {
           throw new Error(`Twilio /Accounts returned ${r.status}`);
@@ -422,7 +421,7 @@ async function checkTwilio(): Promise<IntegrationHealth> {
             {
               headers: { Authorization: `Basic ${auth}` },
               signal: ctrl.signal,
-            },
+            }
           );
           if (!r.ok) {
             throw new Error(`Twilio IncomingPhoneNumbers returned ${r.status}`);
@@ -534,8 +533,12 @@ async function checkQstash(): Promise<IntegrationHealth> {
     }, "QStash ping");
     subChecks.push(
       ping.error
-        ? { label: "Token + URL reachable", status: "error", detail: ping.error }
-        : { label: "Token + URL reachable", status: "ok" },
+        ? {
+            label: "Token + URL reachable",
+            status: "error",
+            detail: ping.error,
+          }
+        : { label: "Token + URL reachable", status: "ok" }
     );
   } else {
     subChecks.push({
@@ -637,7 +640,8 @@ async function checkMapbox(): Promise<IntegrationHealth> {
     subChecks.push({
       label: "NEXT_PUBLIC_MAPBOX_TOKEN",
       status: "missing",
-      detail: "Without this the dashboard leads-map card renders a 'not configured' message.",
+      detail:
+        "Without this the dashboard leads-map card renders a 'not configured' message.",
     });
     return {
       id: "mapbox",
@@ -672,7 +676,7 @@ async function checkMapbox(): Promise<IntegrationHealth> {
       // styles:tiles scope (default on new public tokens).
       const r = await fetch(
         `https://api.mapbox.com/styles/v1/mapbox/light-v11?access_token=${encodeURIComponent(token)}`,
-        { signal: ctrl.signal },
+        { signal: ctrl.signal }
       );
       if (r.status === 401) throw new Error("Token rejected (401).");
       if (!r.ok) throw new Error(`Mapbox styles API returned ${r.status}`);
@@ -684,8 +688,12 @@ async function checkMapbox(): Promise<IntegrationHealth> {
 
   subChecks.push(
     ping.error
-      ? { label: "Token valid (live API ping)", status: "error", detail: ping.error }
-      : { label: "Token valid (live API ping)", status: "ok" },
+      ? {
+          label: "Token valid (live API ping)",
+          status: "error",
+          detail: ping.error,
+        }
+      : { label: "Token valid (live API ping)", status: "ok" }
   );
 
   const status = rollup(subChecks);
@@ -743,7 +751,7 @@ async function checkOpenRouter(): Promise<IntegrationHealth> {
             status: "error",
             detail: ping.error,
           }
-        : { label: "API key valid (live ping)", status: "ok" },
+        : { label: "API key valid (live ping)", status: "ok" }
     );
 
     // Optional default-model var. Informational only — null means the
@@ -754,7 +762,7 @@ async function checkOpenRouter(): Promise<IntegrationHealth> {
       status: defaultModel ? "ok" : "skipped",
       detail: defaultModel
         ? defaultModel
-        : "Optional. Defaults to anthropic/claude-haiku-4-5 when unset.",
+        : "Optional. Defaults to anthropic/claude-haiku-4.5 when unset.",
     });
   }
 
@@ -888,7 +896,7 @@ async function checkVapi(): Promise<IntegrationHealth> {
             status: "error",
             detail: ping.error,
           }
-        : { label: "API key valid (live ping)", status: "ok" },
+        : { label: "API key valid (live ping)", status: "ok" }
     );
   } else {
     subChecks.push({
@@ -962,10 +970,12 @@ async function checkMeta(): Promise<IntegrationHealth> {
       const appToken = `${appId}|${appSecret}`;
       const r = await fetch(
         `https://graph.facebook.com/v21.0/${appId}?fields=id&access_token=${encodeURIComponent(appToken)}`,
-        { signal: ctrl.signal },
+        { signal: ctrl.signal }
       );
       if (r.status === 400 || r.status === 401) {
-        throw new Error("Meta rejected the app credentials (invalid app ID/secret).");
+        throw new Error(
+          "Meta rejected the app credentials (invalid app ID/secret)."
+        );
       }
       if (!r.ok) throw new Error(`Meta Graph API returned ${r.status}`);
       return true;
@@ -976,8 +986,12 @@ async function checkMeta(): Promise<IntegrationHealth> {
 
   subChecks.push(
     ping.error
-      ? { label: "App credentials valid (live ping)", status: "error", detail: ping.error }
-      : { label: "App credentials valid (live ping)", status: "ok" },
+      ? {
+          label: "App credentials valid (live ping)",
+          status: "error",
+          detail: ping.error,
+        }
+      : { label: "App credentials valid (live ping)", status: "ok" }
   );
 
   // Verify token gates the inbound webhook GET handshake — without it Meta

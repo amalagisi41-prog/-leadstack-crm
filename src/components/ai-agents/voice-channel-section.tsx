@@ -48,12 +48,32 @@ const VOICE_OPTIONS: Array<{
   voiceId: string;
   label: string;
 }> = [
-  { provider: "11labs", voiceId: "burt", label: "ElevenLabs — Burt (warm, male)" },
-  { provider: "11labs", voiceId: "andrea", label: "ElevenLabs — Andrea (clear, female)" },
-  { provider: "11labs", voiceId: "rohan", label: "ElevenLabs — Rohan (professional, male)" },
-  { provider: "11labs", voiceId: "lily", label: "ElevenLabs — Lily (friendly, female)" },
+  {
+    provider: "11labs",
+    voiceId: "burt",
+    label: "ElevenLabs — Burt (warm, male)",
+  },
+  {
+    provider: "11labs",
+    voiceId: "andrea",
+    label: "ElevenLabs — Andrea (clear, female)",
+  },
+  {
+    provider: "11labs",
+    voiceId: "rohan",
+    label: "ElevenLabs — Rohan (professional, male)",
+  },
+  {
+    provider: "11labs",
+    voiceId: "lily",
+    label: "ElevenLabs — Lily (friendly, female)",
+  },
   { provider: "openai", voiceId: "alloy", label: "OpenAI — Alloy (neutral)" },
-  { provider: "openai", voiceId: "shimmer", label: "OpenAI — Shimmer (bright, female)" },
+  {
+    provider: "openai",
+    voiceId: "shimmer",
+    label: "OpenAI — Shimmer (bright, female)",
+  },
 ];
 
 function voiceKey(provider: string, voiceId: string): string {
@@ -70,13 +90,13 @@ export function VoiceChannelSection() {
   const [enabled, setEnabled] = useState(false);
   const [greeting, setGreeting] = useState(DEFAULT_VOICE_CONFIG.greeting);
   const [selectedVoice, setSelectedVoice] = useState(
-    voiceKey(DEFAULT_VOICE_CONFIG.voiceProvider, DEFAULT_VOICE_CONFIG.voiceId),
+    voiceKey(DEFAULT_VOICE_CONFIG.voiceProvider, DEFAULT_VOICE_CONFIG.voiceId)
   );
   const [maxCallSeconds, setMaxCallSeconds] = useState(
-    DEFAULT_VOICE_CONFIG.maxCallSeconds,
+    DEFAULT_VOICE_CONFIG.maxCallSeconds
   );
   const [numberMode, setNumberMode] = useState<VoiceNumberMode>(
-    DEFAULT_VOICE_CONFIG.numberMode,
+    DEFAULT_VOICE_CONFIG.numberMode
   );
   const [vapiNumberId, setVapiNumberId] = useState("");
   const [modelOverride, setModelOverride] = useState("");
@@ -107,13 +127,13 @@ export function VoiceChannelSection() {
         setEnabled(channelData.config.enabled);
         setModelOverride(channelData.config.modelOverride ?? "");
         setOverrideKeywords(
-          channelData.config.escalationKeywordsOverride !== null,
+          channelData.config.escalationKeywordsOverride !== null
         );
         setKeywordsText(
-          (channelData.config.escalationKeywordsOverride ?? []).join(", "),
+          (channelData.config.escalationKeywordsOverride ?? []).join(", ")
         );
         setOverrideEmail(
-          channelData.config.escalationNotifyEmailOverride !== null,
+          channelData.config.escalationNotifyEmailOverride !== null
         );
         setNotifyEmail(channelData.config.escalationNotifyEmailOverride ?? "");
 
@@ -127,7 +147,7 @@ export function VoiceChannelSection() {
         // vapi-managed — in BYOC mode the id is server-managed and
         // showing it would just confuse them.
         setVapiNumberId(
-          v.numberMode === "vapi-managed" ? v.vapiPhoneNumberId ?? "" : "",
+          v.numberMode === "vapi-managed" ? (v.vapiPhoneNumberId ?? "") : ""
         );
       }
     } catch (err) {
@@ -145,7 +165,7 @@ export function VoiceChannelSection() {
 
   const totalTokens = useMemo(
     () => config?.totalTokensUsed ?? 0,
-    [config?.totalTokensUsed],
+    [config?.totalTokensUsed]
   );
 
   if (!isAdmin) return null;
@@ -196,7 +216,7 @@ export function VoiceChannelSection() {
                   : null,
             },
           }),
-        },
+        }
       );
       const data = (await res.json()) as {
         ok?: boolean;
@@ -211,7 +231,7 @@ export function VoiceChannelSection() {
       toast.success(
         enabled
           ? "Voice channel saved — Vapi assistant synced"
-          : "Voice channel saved",
+          : "Voice channel saved"
       );
     } catch {
       toast.error("Network error — try again");
@@ -221,7 +241,7 @@ export function VoiceChannelSection() {
   }
 
   return (
-    <section className="rounded-2xl border bg-card p-6">
+    <section className="bg-card rounded-2xl border p-6">
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-3">
           <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400">
@@ -229,10 +249,9 @@ export function VoiceChannelSection() {
           </span>
           <div>
             <h2 className="text-base font-semibold">Voice channel</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              AI answers inbound phone calls, qualifies the caller, and
-              books a callback. Persona and KB are shared with SMS + Web
-              Chat —{" "}
+            <p className="text-muted-foreground mt-1 text-sm">
+              AI answers inbound phone calls, qualifies the caller, and books a
+              callback. Persona and KB are shared with SMS + Web Chat —{" "}
               <Link
                 href={`/sa/${subAccountId}/ai-agents`}
                 className="text-foreground underline-offset-2 hover:underline"
@@ -245,7 +264,7 @@ export function VoiceChannelSection() {
         </div>
         <Link
           href={`/sa/${subAccountId}/ai-agents/voice/calls`}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-xs font-medium transition-colors hover:bg-accent"
+          className="border-input bg-background hover:bg-accent inline-flex shrink-0 items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs font-medium transition-colors"
         >
           <Inbox className="h-3.5 w-3.5" />
           Calls
@@ -255,8 +274,8 @@ export function VoiceChannelSection() {
 
       {numberMode === "twilio-byoc" && !dedicatedTwilioConfigured && (
         <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-800 dark:text-amber-400">
-          <strong>Heads up:</strong> BYOC mode attaches to your
-          dedicated Twilio number. Configure one in{" "}
+          <strong>Heads up:</strong> BYOC mode attaches to your dedicated Twilio
+          number. Configure one in{" "}
           <Link
             href={`/sa/${subAccountId}/dashboard/settings`}
             className="underline-offset-2 hover:underline"
@@ -269,8 +288,8 @@ export function VoiceChannelSection() {
 
       {!profileReady && loaded && (
         <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-800 dark:text-amber-400">
-          <strong>Set the agent persona first.</strong> The voice toggle
-          will be rejected until you save a persona prompt on the{" "}
+          <strong>Set the agent persona first.</strong> The voice toggle will be
+          rejected until you save a persona prompt on the{" "}
           <Link
             href={`/sa/${subAccountId}/ai-agents`}
             className="underline-offset-2 hover:underline"
@@ -282,17 +301,16 @@ export function VoiceChannelSection() {
       )}
 
       {!loaded ? (
-        <p className="mt-6 text-sm text-muted-foreground">Loading…</p>
+        <p className="text-muted-foreground mt-6 text-sm">Loading…</p>
       ) : (
         <form className="mt-6 space-y-5" onSubmit={handleSave}>
-          <label className="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 p-3">
+          <label className="bg-muted/30 flex items-center justify-between gap-3 rounded-lg border p-3">
             <div>
               <p className="text-sm font-medium">Enable voice agent</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                When on, inbound calls to the configured number are
-                answered by the AI via Vapi. The agent qualifies the
-                caller, captures their details, and books a human
-                callback if needed.
+              <p className="text-muted-foreground mt-0.5 text-xs">
+                When on, inbound calls to the configured number are answered by
+                the AI via Vapi. The agent qualifies the caller, captures their
+                details, and books a human callback if needed.
               </p>
             </div>
             <input
@@ -303,11 +321,11 @@ export function VoiceChannelSection() {
             />
           </label>
 
-          <fieldset className="space-y-3 rounded-lg border bg-muted/20 p-3">
+          <fieldset className="bg-muted/20 space-y-3 rounded-lg border p-3">
             <legend className="px-1 text-sm font-medium">
               Phone number source
             </legend>
-            <label className="flex cursor-pointer items-start gap-2.5 rounded-md p-1.5 hover:bg-muted/40">
+            <label className="hover:bg-muted/40 flex cursor-pointer items-start gap-2.5 rounded-md p-1.5">
               <input
                 type="radio"
                 name="voice-number-mode"
@@ -317,20 +335,20 @@ export function VoiceChannelSection() {
                 className="mt-1 h-3.5 w-3.5 cursor-pointer"
               />
               <div className="text-xs">
-                <p className="font-medium text-foreground">
+                <p className="text-foreground font-medium">
                   My dedicated Twilio number (BYOC){" "}
-                  <span className="font-normal text-muted-foreground">
+                  <span className="text-muted-foreground font-normal">
                     — production
                   </span>
                 </p>
-                <p className="mt-0.5 text-muted-foreground">
-                  Voice attaches to the same Twilio number this
-                  sub-account uses for SMS. One number, one bill. Needs
-                  Settings → SMS configured.
+                <p className="text-muted-foreground mt-0.5">
+                  Voice attaches to the same Twilio number this sub-account uses
+                  for SMS. One number, one bill. Needs Settings → SMS
+                  configured.
                 </p>
               </div>
             </label>
-            <label className="flex cursor-pointer items-start gap-2.5 rounded-md p-1.5 hover:bg-muted/40">
+            <label className="hover:bg-muted/40 flex cursor-pointer items-start gap-2.5 rounded-md p-1.5">
               <input
                 type="radio"
                 name="voice-number-mode"
@@ -340,17 +358,17 @@ export function VoiceChannelSection() {
                 className="mt-1 h-3.5 w-3.5 cursor-pointer"
               />
               <div className="text-xs">
-                <p className="font-medium text-foreground">
+                <p className="text-foreground font-medium">
                   A number I own in Vapi{" "}
-                  <span className="font-normal text-muted-foreground">
+                  <span className="text-muted-foreground font-normal">
                     — testing / skip Twilio regulatory
                   </span>
                 </p>
-                <p className="mt-0.5 text-muted-foreground">
-                  Skip AU regulatory bundles by attaching to a number
-                  you provisioned directly in your Vapi dashboard.
-                  We&apos;ll bind it to an AgentStack-managed assistant —
-                  any previously-assigned assistant will be replaced.
+                <p className="text-muted-foreground mt-0.5">
+                  Skip AU regulatory bundles by attaching to a number you
+                  provisioned directly in your Vapi dashboard. We&apos;ll bind
+                  it to an AgentStack-managed assistant — any
+                  previously-assigned assistant will be replaced.
                 </p>
               </div>
             </label>
@@ -367,7 +385,7 @@ export function VoiceChannelSection() {
                   placeholder="70740329-cb3b-4f22-bbfa-0527…"
                   maxLength={120}
                 />
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-muted-foreground text-[11px]">
                   Find it under{" "}
                   <a
                     href="https://dashboard.vapi.ai/phone-numbers"
@@ -377,8 +395,8 @@ export function VoiceChannelSection() {
                   >
                     Vapi dashboard → Phone Numbers
                   </a>{" "}
-                  — copy the UUID under the number, not the +1 / +61
-                  number itself.
+                  — copy the UUID under the number, not the +1 / +61 number
+                  itself.
                 </p>
               </div>
             )}
@@ -393,9 +411,9 @@ export function VoiceChannelSection() {
               placeholder={DEFAULT_VOICE_CONFIG.greeting}
               maxLength={400}
             />
-            <p className="text-[11px] text-muted-foreground">
-              The very first sentence Vapi speaks when the call connects.
-              Keep it short and natural — long greetings feel robotic.
+            <p className="text-muted-foreground text-[11px]">
+              The very first sentence Vapi speaks when the call connects. Keep
+              it short and natural — long greetings feel robotic.
             </p>
           </div>
 
@@ -409,7 +427,10 @@ export function VoiceChannelSection() {
                 className={NATIVE_SELECT_CLASSES}
               >
                 {VOICE_OPTIONS.map((v) => (
-                  <option key={voiceKey(v.provider, v.voiceId)} value={voiceKey(v.provider, v.voiceId)}>
+                  <option
+                    key={voiceKey(v.provider, v.voiceId)}
+                    value={voiceKey(v.provider, v.voiceId)}
+                  >
                     {v.label}
                   </option>
                 ))}
@@ -425,7 +446,8 @@ export function VoiceChannelSection() {
                 value={maxCallSeconds}
                 onChange={(e) =>
                   setMaxCallSeconds(
-                    Number(e.target.value) || DEFAULT_VOICE_CONFIG.maxCallSeconds,
+                    Number(e.target.value) ||
+                      DEFAULT_VOICE_CONFIG.maxCallSeconds
                   )
                 }
               />
@@ -433,21 +455,23 @@ export function VoiceChannelSection() {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="voice-model">Model (advanced — blank for default)</Label>
+            <Label htmlFor="voice-model">
+              Model (advanced — blank for default)
+            </Label>
             <Input
               id="voice-model"
               value={modelOverride}
               onChange={(e) => setModelOverride(e.target.value)}
-              placeholder="anthropic/claude-haiku-4-5"
+              placeholder="anthropic/claude-haiku-4.5"
             />
-            <p className="text-[11px] text-muted-foreground">
-              Default: Claude Haiku 4.5 — fast enough for sub-1s voice
-              turns. Sonnet adds latency but reasons better; Opus is
-              overkill for live calls.
+            <p className="text-muted-foreground text-[11px]">
+              Default: Claude Haiku 4.5 — fast enough for sub-1s voice turns.
+              Sonnet adds latency but reasons better; Opus is overkill for live
+              calls.
             </p>
           </div>
 
-          <div className="space-y-2 rounded-lg border bg-muted/20 p-3">
+          <div className="bg-muted/20 space-y-2 rounded-lg border p-3">
             <label className="flex items-center gap-2 text-sm font-medium">
               <input
                 type="checkbox"
@@ -464,7 +488,7 @@ export function VoiceChannelSection() {
                 placeholder="manager, complaint, urgent"
               />
             ) : (
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-muted-foreground text-[11px]">
                 Using profile defaults:{" "}
                 <code className="text-foreground">
                   {profile?.escalationKeywords.join(", ") || "(none set)"}
@@ -473,7 +497,7 @@ export function VoiceChannelSection() {
             )}
           </div>
 
-          <div className="space-y-2 rounded-lg border bg-muted/20 p-3">
+          <div className="bg-muted/20 space-y-2 rounded-lg border p-3">
             <label className="flex items-center gap-2 text-sm font-medium">
               <input
                 type="checkbox"
@@ -491,7 +515,7 @@ export function VoiceChannelSection() {
                 placeholder="voice-callbacks@example.com"
               />
             ) : (
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-muted-foreground text-[11px]">
                 Using profile default:{" "}
                 <code className="text-foreground">
                   {profile?.escalationNotifyEmail || "(none set)"}
@@ -501,8 +525,8 @@ export function VoiceChannelSection() {
           </div>
 
           {(linkedAssistantId || linkedPhoneNumberId) && (
-            <div className="rounded-lg border bg-muted/20 p-3 text-[11px] text-muted-foreground">
-              <p className="font-medium text-foreground">Vapi linkage</p>
+            <div className="bg-muted/20 text-muted-foreground rounded-lg border p-3 text-[11px]">
+              <p className="text-foreground font-medium">Vapi linkage</p>
               {linkedAssistantId && (
                 <p className="mt-1">
                   Assistant:{" "}
@@ -516,17 +540,17 @@ export function VoiceChannelSection() {
                 </p>
               )}
               <p className="mt-2">
-                Saving re-syncs Vapi with the latest persona, KB, and
-                voice settings. Disabling tears down both resources to
-                stop Vapi spend.
+                Saving re-syncs Vapi with the latest persona, KB, and voice
+                settings. Disabling tears down both resources to stop Vapi
+                spend.
               </p>
             </div>
           )}
 
           <div className="flex items-center justify-between pt-2">
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground text-xs">
               Lifetime tokens used on voice:{" "}
-              <span className="font-medium text-foreground">
+              <span className="text-foreground font-medium">
                 {totalTokens.toLocaleString()}
               </span>
             </p>

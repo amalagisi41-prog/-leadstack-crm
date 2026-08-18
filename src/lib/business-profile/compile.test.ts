@@ -137,7 +137,7 @@ describe("businessProfileCompleteness", () => {
       email: "j@x.com",
       serviceAreas: "Maplewood",
       services: ["buyers"],
-      clientPromise: "Same-day response, always.",
+      bio: "Experienced local agent.",
       website: "https://example.com",
     });
     expect(businessProfileCompleteness(full)).toBe(100);

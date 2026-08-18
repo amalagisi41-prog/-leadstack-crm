@@ -128,17 +128,112 @@ function parseLineProfile(text: string): Record<string, unknown> {
  * model provider is unavailable. Returning a conservative draft keeps the
  * onboarding workflow usable and never invents regulated/contact facts.
  */
-function conservativeProfileFromPage(url: string, text: string): Record<string, unknown> {
-  const result: Record<string, unknown> = {};
-  const pathName = (() => {
-    try { return decodeURIComponent(new URL(url).pathname).replace(/\/+$/, ""); }
-    catch { return ""; }
-  })();
-  const last = pathName.split("/").filter(Boolean).pop() ?? "";
-  const name = last.replace(/[-_]+/g, " ").trim();
-  if (/^[A-Za-z][A-Za-z .'-]{3,80}$/.test(name) && !/profile|agent|real estate/i.test(name)) {
-    result.agentName = name;
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function directoryProfileHost(url: string): string {
+  try {
+    return new URL(url).hostname.toLowerCase().replace(/^www\./, "");
+  } catch {
+    return "";
   }
+}
+
+/**
+ * Zillow's reader output is stable, labelled profile text. Extract those
+ * labels directly so a model outage cannot turn a complete public profile
+ * into a misleading name-only "AI import". Every value below must occur in
+ * the source text; no marketing promise, licence, or contact fact is guessed.
+ */
+function zillowProfileFromPage(
+  url: string,
+  text: string,
+): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  const normalized = text.replace(/\s+/g, " ").trim();
+  const pathName = (() => {
+    try {
+      return decodeURIComponent(new URL(url).pathname).replace(/\/+$/, "");
+    } catch {
+      return "";
+    }
+  })();
+  const slug = pathName.split("/").filter(Boolean).pop() ?? "";
+  const agentName = slug.replace(/[-_]+/g, " ").trim();
+  if (/^[A-Za-z][A-Za-z .'-]{3,80}$/.test(agentName)) {
+    result.agentName = agentName;
+  }
+
+  const namePattern = agentName ? escapeRegExp(agentName) : "[A-Z][A-Za-z .'-]+";
+  const brokerage = normalized.match(
+    new RegExp(
+      `${namePattern}\\s+([^|[\\]]{2,100}?)\\s+\\d+(?:\\.\\d+)?(?=\\s|\\[)`,
+      "i",
+    ),
+  )?.[1];
+  if (brokerage) result.brokerage = brokerage.trim();
+
+  if (/Real Estate Agent/i.test(normalized)) result.title = "Real Estate Agent";
+
+  const phone = normalized.match(/(?:\+?1[ .-]?)?\(?\d{3}\)?[ .-]\d{3}[ .-]\d{4}/)?.[0];
+  if (phone) result.phone = phone.trim();
+  const email = normalized.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0];
+  if (email) result.email = email.trim();
+
+  const agentWebsite = text.match(
+    /Visit agent website[^\n\r)]*\((https?:\/\/[^)\s]+)\)/i,
+  )?.[1] ?? normalized.match(/Visit agent website\s+(https?:\/\/[^\s]+)/i)?.[1];
+  if (agentWebsite) result.website = agentWebsite.replace(/[.,;]+$/, "");
+
+  const priceRange = normalized.match(/\$\d+(?:\.\d+)?[KMB]\s*[-–]\s*\$\d+(?:\.\d+)?[KMB]/i)?.[0];
+  if (priceRange) result.priceRanges = priceRange.replace(/\s+/g, "");
+
+  const serviceBlock = normalized.match(
+    /Service areas\s*\(\d+\)\s*(.*?)(?:Nearby cities|Contact\s+[A-Z]|Nearby neighborhoods|$)/i,
+  )?.[1] ?? "";
+  const serviceAreas = Array.from(
+    serviceBlock.matchAll(/\b([A-Z][A-Za-z .'-]+,\s*[A-Z]{2})\b/g),
+    (match) => match[1].trim(),
+  ).filter((value, index, all) => all.indexOf(value) === index);
+  if (serviceAreas.length) result.serviceAreas = serviceAreas.join(", ");
+
+  const specialties = [
+    ["Buyer's Agent", /Buyer'?s Agent/i, "buyers"],
+    ["Listing Agent", /Listing Agent/i, "sellers"],
+    ["Commercial Properties", /Commercial Properties/i, "commercial"],
+    ["Investment Properties", /Investment Properties/i, "investors"],
+    ["New Construction", /New Construction/i, null],
+    ["Relocation", /\bRelocation\b/i, "relocation"],
+    ["Luxury", /\bLuxury\b/i, "luxury"],
+    ["Rentals", /\bRentals?\b/i, "rentals"],
+  ] as const;
+  const foundSpecialties = specialties.filter(([, pattern]) => pattern.test(normalized));
+  if (foundSpecialties.length) {
+    result.specialties = foundSpecialties.map(([label]) => label).join(", ");
+    result.services = foundSpecialties
+      .map(([, , service]) => service)
+      .filter((service) => service !== null) as ServiceSpecialty[];
+  }
+
+  const bio = normalized.match(
+    new RegExp(`Get to know ${namePattern}\\s+(?:Real Estate Industry\\s+)?(.*?)(?:Specialties|\\d+\\s+Years?\\s+of experience)`, "i"),
+  )?.[1];
+  if (bio && bio.length >= 40) result.bio = bio.trim().slice(0, 4000);
+
+  const years = normalized.match(/(\d+)\s+Years?\s+of experience/i)?.[1];
+  if (years) {
+    result.clientExperience = `${years} years of real estate experience`;
+  }
+  return result;
+}
+
+function conservativeProfileFromPage(url: string, text: string): Record<string, unknown> {
+  if (directoryProfileHost(url).endsWith("zillow.com")) {
+    const zillow = zillowProfileFromPage(url, text);
+    if (Object.keys(zillow).length > 0) return zillow;
+  }
+  const result: Record<string, unknown> = {};
   const normalized = text.replace(/\s+/g, " ").trim();
   const brokerage = normalized.match(/(?:brokerage|office|affiliated with)\s*[:\-]?\s*([A-Z][A-Za-z0-9&' .-]{2,80})/i)?.[1];
   if (brokerage) result.brokerage = brokerage.trim();
@@ -146,7 +241,6 @@ function conservativeProfileFromPage(url: string, text: string): Record<string, 
   if (phone) result.phone = phone;
   const email = normalized.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0];
   if (email) result.email = email;
-  if (Object.keys(result).length === 0) result.bio = normalized.slice(0, 1200);
   return result;
 }
 
@@ -244,6 +338,20 @@ async function importProfile(
     );
   }
 
+  // Supported directory pages should not depend on an LLM merely to copy
+  // stable, labelled facts. If the source reader already has every launch
+  // essential, use it directly. This is both more accurate and resilient to
+  // provider keys, credits, model routing, timeouts, and malformed output.
+  const sourceFacts = directoryProfileHost(url).endsWith("zillow.com")
+    ? zillowProfileFromPage(url, markdown)
+    : {};
+  const sourceIsComplete =
+    Object.keys(sourceFacts).length > 0 &&
+    businessProfileCompleteness({
+      ...EMPTY_BUSINESS_PROFILE,
+      ...sourceFacts,
+    } as BusinessProfileContent) === 100;
+
   async function extractLineProfile() {
     return callAi({
       model: IMPORT_MODEL,
@@ -294,7 +402,17 @@ async function importProfile(
     // could consume the entire serverless request budget before recovery even
     // started. One compact call gives the provider the full available window
     // and avoids relying on inconsistent JSON-mode support from free models.
-    completion = await extractLineProfile();
+    completion = sourceIsComplete
+      ? {
+          text: Object.entries(sourceFacts)
+            .map(([key, value]) => `${key}=${value}`)
+            .join("\n"),
+          promptTokens: 0,
+          completionTokens: 0,
+          totalTokens: 0,
+          model: "local-reader",
+        }
+      : await extractLineProfile();
   } catch (error) {
     // The operator's page was fine, so do not blame their link — and name the
     // actual fault, because "not responding" covered a timeout, a bad key, an
@@ -345,14 +463,27 @@ async function importProfile(
         "business-profile import: invalid structured output",
         retryError
       );
-      return NextResponse.json(
-        {
-          error:
-            "We read your page, but could not turn it into profile fields. Try another public website or fill your Blueprint in by hand below.",
-        },
-        { status: 502 }
-      );
+      if (Object.keys(sourceFacts).length > 0) {
+        extracted = sourceFacts;
+      } else {
+        return NextResponse.json(
+          {
+            error:
+              "We read your page, but could not turn it into profile fields. Try another public website or fill your Blueprint in by hand below.",
+          },
+          { status: 502 }
+        );
+      }
     }
+  }
+
+  // Directory pages expose several important facts behind stable, labelled
+  // sections. Merge those source facts even when the AI call technically
+  // succeeds: a provider returning only the agent name must not downgrade a
+  // complete Zillow page to a misleading 14% draft. The labelled source wins
+  // on these fields because every value is traceable to the public page.
+  if (Object.keys(sourceFacts).length > 0) {
+    extracted = { ...extracted, ...sourceFacts };
   }
 
   const db = getAdminDb();
@@ -409,5 +540,9 @@ async function importProfile(
     completeness,
     needsReview: true,
     importSourceUrl: url,
+    extractionMode:
+      completion.model === "local-reader" || Object.keys(sourceFacts).length > 0
+        ? "source-reader"
+        : "ai",
   });
 }
