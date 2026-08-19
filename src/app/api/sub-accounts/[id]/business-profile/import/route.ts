@@ -9,7 +9,11 @@ import {
   safePublicUrl,
   type PageContent,
 } from "@/lib/business-profile/read-public-page";
-import { extractStructuredProfile } from "@/lib/business-profile/structured-profile";
+import {
+  extractStructuredProfile,
+  normalizeEmail,
+  normalizePhone,
+} from "@/lib/business-profile/structured-profile";
 import { callAi } from "@/lib/comms/ai/openrouter";
 import { recordAiUsage } from "@/lib/comms/ai/usage";
 import {
@@ -278,13 +282,97 @@ function conservativeProfileFromPage(url: string, text: string): Record<string, 
   }
   const result: Record<string, unknown> = {};
   const normalized = text.replace(/\s+/g, " ").trim();
+  const slug = (() => {
+    try {
+      const parts = decodeURIComponent(new URL(url).pathname)
+        .split("/")
+        .filter(Boolean);
+      const candidate = parts.at(-1) ?? "";
+      return /^[a-z]+(?:[-_][a-z]+)+$/i.test(candidate)
+        ? candidate.replace(/[-_]+/g, " ")
+        : "";
+    } catch {
+      return "";
+    }
+  })();
+  if (slug) result.agentName = slug.replace(/\b\w/g, (letter) => letter.toUpperCase());
+
+  const title = normalized.match(
+    /\b(Real Estate Agent|Realtor(?:®)?|Broker Associate|Commercial Broker|Real Estate Broker)\b/i,
+  )?.[1];
+  if (title) result.title = title;
   const brokerage = normalized.match(/(?:brokerage|office|affiliated with)\s*[:\-]?\s*([A-Z][A-Za-z0-9&' .-]{2,80})/i)?.[1];
   if (brokerage) result.brokerage = brokerage.trim();
   const phone = normalized.match(/(?:\+?1[ .-]?)?\(?\d{3}\)?[ .-]\d{3}[ .-]\d{4}/)?.[0];
   if (phone) result.phone = phone;
   const email = normalized.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0];
   if (email) result.email = email;
+  const priceRange = normalized.match(/\$\d+(?:\.\d+)?[KMB]?\s*[-–]\s*\$\d+(?:\.\d+)?[KMB]?/i)?.[0];
+  if (priceRange) result.priceRanges = priceRange.replace(/\s+/g, "");
+  const licenseNumber = normalized.match(
+    /\b(?:license|licence|lic)\s*(?:number|no\.?|#)?\s*[:#-]?\s*([A-Z]{0,3}[- ]?\d{4,12})\b/i,
+  )?.[1];
+  if (licenseNumber) result.licenseNumber = licenseNumber.trim();
+  const licenseStates = normalized.match(
+    /\b(?:licensed|licenced)\s+in\s+(?:the\s+)?((?:[A-Z]{2})(?:\s*,\s*[A-Z]{2})*)\b/i,
+  )?.[1];
+  if (licenseStates) result.licenseStates = licenseStates.replace(/\s+/g, " ").trim();
+  const specialties = [
+    ["Buyer's Agent", /Buyer'?s Agent/i, "buyers"],
+    ["Listing Agent", /Listing Agent/i, "sellers"],
+    ["Commercial Properties", /Commercial Properties|Commercial Broker/i, "commercial"],
+    ["Investment Properties", /Investment Properties|Real Estate Investor/i, "investors"],
+    ["New Construction", /New Construction/i, null],
+    ["Relocation", /\bRelocation\b/i, "relocation"],
+    ["Luxury", /\bLuxury\b/i, "luxury"],
+    ["Rentals", /\bRentals?\b/i, "rentals"],
+  ] as const;
+  const foundSpecialties = specialties.filter(([, pattern]) => pattern.test(normalized));
+  if (foundSpecialties.length) {
+    result.specialties = foundSpecialties.map(([label]) => label).join(", ");
+    result.services = foundSpecialties
+      .map(([, , service]) => service)
+      .filter((service) => service !== null) as ServiceSpecialty[];
+  }
   return result;
+}
+
+function sanitizeImportedProfile(
+  values: Record<string, unknown>,
+): Record<string, unknown> {
+  const clean: Record<string, unknown> = {};
+  for (const key of IMPORT_KEYS) {
+    const value = values[key];
+    if (typeof value !== "string") continue;
+    const text = value.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim();
+    if (!text || isMissingMarker(text) || /^(?:source url|website text|allowed keys)\s*:/i.test(text)) continue;
+    if (key === "phone") {
+      const phone = normalizePhone(text);
+      if (phone) clean[key] = phone;
+      continue;
+    }
+    if (key === "email") {
+      const email = normalizeEmail(text);
+      if (email) clean[key] = email;
+      continue;
+    }
+    if (key === "website") {
+      const website = safePublicUrl(text);
+      if (website && !isDirectoryProfileUrl(website)) clean[key] = website;
+      continue;
+    }
+    clean[key] = text.slice(0, 4000);
+  }
+  if (Array.isArray(values.services)) {
+    clean.services = values.services.filter(
+      (item): item is ServiceSpecialty =>
+        typeof item === "string" && SERVICES.has(item as ServiceSpecialty),
+    );
+  }
+  if (typeof values.brandVoice === "string" && VOICES.has(values.brandVoice as BrandVoice)) {
+    clean.brandVoice = values.brandVoice as BrandVoice;
+  }
+  return clean;
 }
 
 /**
@@ -394,9 +482,11 @@ async function importProfile(
   // before the model ever saw the page. Facts from structure are
   // deterministic, so they merge ahead of model output further down.
   const isZillowSource = directoryProfileHost(url).endsWith("zillow.com");
-  const sourceFacts = isZillowSource
+  const textFacts = conservativeProfileFromPage(url, markdown);
+  const declaredFacts = isZillowSource
     ? zillowProfileFromPage(url, markdown)
     : extractStructuredProfile({ raw: page.raw, kind: page.kind, url });
+  const sourceFacts = sanitizeImportedProfile({ ...textFacts, ...declaredFacts });
   const sourceCompleteness =
     Object.keys(sourceFacts).length > 0
       ? businessProfileCompleteness({
@@ -410,8 +500,11 @@ async function importProfile(
   // Return only facts copied from the public source and let the operator fill
   // the gaps. Falling through to the model here would trade a visible missing
   // field for a plausible-sounding hallucination.
-  const sourceIsVerifiedZillowDraft =
-    isZillowSource && Object.keys(sourceFacts).length > 0;
+  const sourceIsVerifiedDraft =
+    Object.keys(declaredFacts).length > 0 ||
+    ["agentName", "brokerage", "phone", "email"].some((key) =>
+      typeof sourceFacts[key] === "string" && Boolean(sourceFacts[key]),
+    );
 
   async function extractLineProfile() {
     return callAi({
@@ -463,7 +556,10 @@ async function importProfile(
     // could consume the entire serverless request budget before recovery even
     // started. One compact call gives the provider the full available window
     // and avoids relying on inconsistent JSON-mode support from free models.
-    completion = sourceIsComplete || sourceIsVerifiedZillowDraft
+    // Schema and explicit source text are already verified facts. Return them
+    // immediately; AI is enrichment only and must never gate basic setup or
+    // replace clean contact/identity values with prose.
+    completion = sourceIsComplete || sourceIsVerifiedDraft
       ? {
           text: Object.entries(sourceFacts)
             .map(([key, value]) => `${key}=${value}`)
@@ -491,7 +587,17 @@ async function importProfile(
       ...conservativeProfileFromPage(url, markdown),
       ...sourceFacts,
     };
-    if (Object.keys(fallback).length > 0) {
+    const hasUsefulFallback = [
+      "agentName",
+      "brokerage",
+      "phone",
+      "email",
+      "serviceAreas",
+      "priceRanges",
+      "specialties",
+      "bio",
+    ].some((key) => typeof fallback[key] === "string" && Boolean(fallback[key]));
+    if (hasUsefulFallback) {
       completion = { text: Object.entries(fallback).map(([k, v]) => `${k}=${v}`).join("\n"), promptTokens: 0, completionTokens: 0, totalTokens: 0, model: "local-reader" };
     } else {
       return NextResponse.json(
@@ -509,7 +615,7 @@ async function importProfile(
 
   let extracted: Record<string, unknown>;
   try {
-    extracted = parseLineProfile(completion.text);
+    extracted = sanitizeImportedProfile(parseLineProfile(completion.text));
   } catch (error) {
     const remainingMs =
       REQUEST_BUDGET_MS - (Date.now() - startedAt) - FIRESTORE_RESERVE_MS;
@@ -521,13 +627,23 @@ async function importProfile(
         feature: "blueprint_import",
         completion,
       });
-      extracted = parseObject(completion.text);
+      extracted = sanitizeImportedProfile(parseObject(completion.text));
     } catch (retryError) {
       console.error(
         "business-profile import: invalid structured output",
         retryError
       );
-      if (Object.keys(sourceFacts).length > 0) {
+      const hasUsefulSourceFacts = [
+        "agentName",
+        "brokerage",
+        "phone",
+        "email",
+        "serviceAreas",
+        "priceRanges",
+        "specialties",
+        "bio",
+      ].some((key) => typeof sourceFacts[key] === "string" && Boolean(sourceFacts[key]));
+      if (hasUsefulSourceFacts) {
         extracted = sourceFacts;
       } else {
         return NextResponse.json(
@@ -547,7 +663,7 @@ async function importProfile(
   // complete Zillow page to a misleading 14% draft. The labelled source wins
   // on these fields because every value is traceable to the public page.
   if (Object.keys(sourceFacts).length > 0) {
-    extracted = { ...extracted, ...sourceFacts };
+    extracted = sanitizeImportedProfile({ ...extracted, ...sourceFacts });
   }
 
   const db = getAdminDb();

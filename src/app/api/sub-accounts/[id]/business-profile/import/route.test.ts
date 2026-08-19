@@ -81,6 +81,8 @@ function makeRequest(body: unknown): Request {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.mocked(readPublicPageContent).mockReset();
+  vi.mocked(callAi).mockReset();
   savedProfile = null;
   vi.mocked(callAi).mockResolvedValue({
     text: "agentName=Jane Doe",
@@ -342,6 +344,7 @@ describe("POST business-profile/import", () => {
     expect(body.profile.email).toBe("sc.newbridge@gmail.com");
     expect(body.profile.website).toBe("https://newbridge-properties.com/");
     expect(body.extractionMode).toBe("source-reader");
+    expect(callAi).not.toHaveBeenCalled();
   });
 
   it("hands the structured facts to the operator even when the AI is down", async () => {
