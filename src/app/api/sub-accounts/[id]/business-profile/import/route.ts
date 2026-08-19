@@ -405,22 +405,13 @@ async function importProfile(
         } as BusinessProfileContent)
       : 0;
 
-  // Zillow extraction is deterministic. Never let an incomplete parse fall through
-  // to variable model output: that previously produced a green response while
-  // partially overwriting a workspace with placeholders or navigation text.
-  if (isZillowSource && sourceCompleteness < 100) {
-    return NextResponse.json(
-      {
-        error:
-          "We read Zillow, but could not verify every launch-essential field. Nothing was changed. Try again, or use another public profile.",
-        code: "SOURCE-INCOMPLETE",
-        completeness: sourceCompleteness,
-      },
-      { status: 422 },
-    );
-  }
-
   const sourceIsComplete = sourceCompleteness === 100;
+  // A partial Zillow read is still useful, but it must remain deterministic.
+  // Return only facts copied from the public source and let the operator fill
+  // the gaps. Falling through to the model here would trade a visible missing
+  // field for a plausible-sounding hallucination.
+  const sourceIsVerifiedZillowDraft =
+    isZillowSource && Object.keys(sourceFacts).length > 0;
 
   async function extractLineProfile() {
     return callAi({
@@ -472,7 +463,7 @@ async function importProfile(
     // could consume the entire serverless request budget before recovery even
     // started. One compact call gives the provider the full available window
     // and avoids relying on inconsistent JSON-mode support from free models.
-    completion = sourceIsComplete
+    completion = sourceIsComplete || sourceIsVerifiedZillowDraft
       ? {
           text: Object.entries(sourceFacts)
             .map(([key, value]) => `${key}=${value}`)
@@ -603,6 +594,19 @@ async function importProfile(
   )
     next.brandVoice = extracted.brandVoice as BrandVoice;
   const completeness = businessProfileCompleteness(next);
+  const missingLaunchFields = [
+    !next.agentName.trim() ? "agentName" : null,
+    !next.brokerage.trim() ? "brokerage" : null,
+    !next.phone.trim() && !next.email.trim()
+      ? "phoneOrEmail"
+      : null,
+    !next.serviceAreas.trim() ? "serviceAreas" : null,
+    next.services.length === 0 ? "services" : null,
+    !next.bio.trim() && !next.priceRanges.trim()
+      ? "bioOrPriceRange"
+      : null,
+    !next.website.trim() ? "website" : null,
+  ].filter((field): field is string => field !== null);
   // Deliberately do not write this draft to Firestore. The operator must see
   // and approve it with "Save profile" first. Previously this endpoint wrote
   // directly to businessProfile/main, so even an exploratory import could
@@ -612,6 +616,8 @@ async function importProfile(
     profile: next,
     completeness,
     needsReview: true,
+    sourceCompleteness,
+    missingLaunchFields,
     importSourceUrl: url,
     extractionMode:
       completion.model === "local-reader" || Object.keys(sourceFacts).length > 0

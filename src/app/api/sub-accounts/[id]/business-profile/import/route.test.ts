@@ -398,16 +398,22 @@ describe("POST business-profile/import", () => {
     expect(setMock).not.toHaveBeenCalled();
   });
 
-  it("rejects an incomplete Zillow read without changing the saved profile", async () => {
+  it("returns an incomplete Zillow read for review without calling AI or saving", async () => {
     vi.mocked(readPublicPageContent).mockResolvedValueOnce(pageOf("Jane Doe, REALTOR."));
 
     const source = "https://www.zillow.com/profile/jane-doe";
     const res = await POST(makeRequest({ url: source }), ctx);
     const body = await res.json();
 
-    expect(res.status).toBe(422);
-    expect(body.code).toBe("SOURCE-INCOMPLETE");
-    expect(body.completeness).toBeLessThan(100);
+    expect(res.status).toBe(200);
+    expect(body.ok).toBe(true);
+    expect(body.needsReview).toBe(true);
+    expect(body.extractionMode).toBe("source-reader");
+    expect(body.sourceCompleteness).toBeLessThan(100);
+    expect(body.profile.agentName).toBe("jane doe");
+    expect(body.missingLaunchFields).toEqual(
+      expect.arrayContaining(["brokerage", "phoneOrEmail", "serviceAreas"]),
+    );
     expect(callAi).not.toHaveBeenCalled();
     expect(setMock).not.toHaveBeenCalled();
   });

@@ -60,6 +60,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
   vi.clearAllMocks();
 });
 
@@ -226,6 +227,26 @@ describe("vetting the URL before the server fetches it", () => {
 });
 
 describe("reading a page end to end", () => {
+  it("authenticates reader requests when JINA_READER_API_KEY is configured", async () => {
+    vi.stubEnv("JINA_READER_API_KEY", "reader-secret");
+    fetchMock.mockResolvedValueOnce(
+      new Response(`Title: Jane Doe\n\n${"Jane sells houses. ".repeat(40)}`, {
+        status: 200,
+      }),
+    );
+
+    await expect(readPublicPage(ZILLOW_PROFILE)).resolves.toMatch(/Jane Doe/);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      `https://r.jina.ai/${ZILLOW_PROFILE}`,
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: "Bearer reader-secret",
+        }),
+      }),
+    );
+  });
+
   it("returns the text when the site answers plainly", async () => {
     fetchMock.mockResolvedValueOnce(htmlResponse(BIO));
     const text = await readPublicPage(PROFILE);
