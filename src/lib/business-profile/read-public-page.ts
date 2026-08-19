@@ -507,28 +507,39 @@ async function readViaReader(
   target: string,
   timeoutMs: number
 ): Promise<ReadOutcome> {
-  let response: Response;
-  try {
-    // Anonymous reader traffic is capped at roughly twenty requests an hour
-    // per IP. A burst of imports — one operator testing, let alone a tenant
-    // base — exhausts that and every portal read dies at this stage with a
-    // 429. A (free) reader key raises the ceiling by orders of magnitude.
-    const readerKey = configuredReaderApiKey().value;
-    response = await fetch(readerUrl(target), {
-      headers: {
-        Accept: "text/plain",
-        "User-Agent": PROFILE_IMPORT_UA,
-        ...(readerKey ? { Authorization: `Bearer ${readerKey}` } : {}),
-      },
-      signal: AbortSignal.timeout(timeoutMs),
-    });
-  } catch (error) {
-    const reason =
-      error instanceof Error && error.name === "TimeoutError"
-        ? "too-slow"
-        : "unreachable";
+  // Anonymous reader traffic is capped at roughly twenty requests an hour
+  // per IP. A burst of imports — one operator testing, let alone a tenant
+  // base — exhausts that and every portal read dies at this stage with a
+  // 429. A (free) reader key raises the ceiling by orders of magnitude.
+  const readerKey = configuredReaderApiKey().value;
+  // A blocked relay can be retried with the supported rendering engine, but
+  // both attempts must share the caller's time budget. Otherwise a portal
+  // that keeps returning 403 can consume the entire serverless invocation.
+  const attemptTimeoutMs = Math.max(MIN_ATTEMPT_MS, Math.floor(timeoutMs / 2));
+  const readAttempt = async (
+    engine?: "cf-browser-rendering",
+  ): Promise<Response | Error> => {
+    try {
+      return await fetch(readerUrl(target), {
+        headers: {
+          Accept: "text/plain",
+          "User-Agent": PROFILE_IMPORT_UA,
+          ...(engine ? { "X-Engine": engine } : {}),
+          ...(readerKey ? { Authorization: `Bearer ${readerKey}` } : {}),
+        },
+          signal: AbortSignal.timeout(attemptTimeoutMs),
+      });
+    } catch (error) {
+      return error instanceof Error ? error : new Error("reader request failed");
+    }
+  };
+
+  let responseOrError = await readAttempt();
+  if (responseOrError instanceof Error) {
+    const reason = responseOrError.name === "TimeoutError" ? "too-slow" : "unreachable";
     return { ok: false, failure: { reason } };
   }
+  let response = responseOrError;
 
   if (!response.ok) {
     return {
@@ -542,6 +553,26 @@ async function readViaReader(
   const relayed = READER_TARGET_STATUS.exec(text);
   if (relayed) {
     const status = Number(relayed[1]);
+    // Jina's Cloudflare rendering engine is an official reader mode for
+    // pages whose default browser relay is denied. It still respects the
+    // target site's access controls; retry only an explicit target block and
+    // only when enough budget remains for a bounded second attempt.
+    if (status === 403 || status === 429 || status === 503) {
+      responseOrError = await readAttempt("cf-browser-rendering");
+      if (
+        !(responseOrError instanceof Error) &&
+        responseOrError &&
+        typeof responseOrError === "object" &&
+        "ok" in responseOrError
+      ) {
+        response = responseOrError as Response;
+        if (response.ok) {
+          const retryText = (await response.text().catch(() => "")).slice(0, MAX_BODY).trim();
+          const retryStatus = READER_TARGET_STATUS.exec(retryText);
+          if (!retryStatus) return fromQuality(classifyPageText(retryText), retryText, target, retryText, "markdown");
+        }
+      }
+    }
     return { ok: false, failure: { reason: statusReason(status), status } };
   }
 

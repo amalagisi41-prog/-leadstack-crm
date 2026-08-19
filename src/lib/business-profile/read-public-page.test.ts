@@ -365,6 +365,32 @@ describe("reading a page end to end", () => {
     expect(error.message).toMatch(/no longer exists/i);
   });
 
+  it("retries a blocked portal through Jina's supported browser renderer", async () => {
+    vi.stubEnv("JINA_READER_API_KEY", "jina_test_key");
+    fetchMock
+      .mockResolvedValueOnce(htmlResponse("Access denied", 403))
+      .mockResolvedValueOnce(
+        new Response("Target URL returned error 403: Forbidden", { status: 200 }),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          `Jane Doe\nMarr Caruso Realty Group\nAgent License: Connecticut RES.0804225\n(203) 550-0531\n${"Jane sells homes across Fairfield County. ".repeat(12)}`,
+          { status: 200 },
+        ),
+      );
+
+    await expect(readPublicPage(PROFILE)).resolves.toMatch(/RES\.0804225/);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fetchMock.mock.calls[2][1]).toEqual(
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: "Bearer jina_test_key",
+          "X-Engine": "cf-browser-rendering",
+        }),
+      }),
+    );
+  });
+
   it("does not spend a second request confirming a dead link", async () => {
     fetchMock.mockResolvedValueOnce(htmlResponse("Not Found", 404));
 

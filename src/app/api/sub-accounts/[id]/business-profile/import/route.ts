@@ -290,7 +290,12 @@ function conservativeProfileFromPage(url: string, text: string): Record<string, 
   const isKnownDirectory = ["homes.com", "loopnet.com", "realtor.com"].some(
     (domain) => host === domain || host.endsWith(`.${domain}`),
   );
-  if (!isKnownDirectory) return {};
+  // First-party brokerage/agent sites are also safe for labelled heuristics:
+  // they commonly publish the same stable contact block as a directory, but
+  // do not use schema.org for a licence number. Keep this list explicit so a
+  // random free-form page can never donate a footer phone or licence.
+  const isKnownAgentSite = host === "artisanhomenetwork.com" || host.endsWith(".artisanhomenetwork.com");
+  if (!isKnownDirectory && !isKnownAgentSite) return {};
   const result: Record<string, unknown> = {};
   const normalized = text.replace(/\s+/g, " ").trim();
   const slug = (() => {
@@ -308,12 +313,25 @@ function conservativeProfileFromPage(url: string, text: string): Record<string, 
   })();
   if (slug) result.agentName = slug.replace(/\b\w/g, (letter) => letter.toUpperCase());
 
+  if (isKnownAgentSite) {
+    const headingName = normalized.match(
+      /\b([A-Z][A-Za-z'’-]+\s+[A-Z][A-Za-z'’-]+)\s+(?:Licensed\s+)?Real Estate Agent\b/i,
+    )?.[1];
+    if (headingName) result.agentName = headingName.trim();
+  }
+
   const title = normalized.match(
     /\b(Real Estate Agent|Realtor(?:®)?|Broker Associate|Commercial Broker|Real Estate Broker)\b/i,
   )?.[1];
   if (title) result.title = title;
   const brokerage = normalized.match(/(?:brokerage|office|affiliated with)\s*[:\-]?\s*([A-Z][A-Za-z0-9&' .-]{2,80})/i)?.[1];
   if (brokerage) result.brokerage = brokerage.trim();
+  if (isKnownAgentSite) {
+    const labelledBrokerage = normalized.match(
+      /\b(?:Real Estate Agent\s*&\s*Investor|Real Estate Agent|Investor)\s+([A-Z][A-Za-z0-9&' .-]{2,80}?)\s+Licen[cs]e\s*:/i,
+    )?.[1];
+    if (labelledBrokerage) result.brokerage = labelledBrokerage.trim();
+  }
   const phone = normalized.match(/(?:\+?1[ .-]?)?\(?\d{3}\)?[ .-]\d{3}[ .-]\d{4}/)?.[0];
   if (phone) result.phone = phone;
   const email = normalized.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0];
@@ -334,6 +352,10 @@ function conservativeProfileFromPage(url: string, text: string): Record<string, 
     const state = licenseState.toUpperCase();
     result.licenseStates =
       state === "CONNECTICUT" ? "CT" : state === "NEW YORK" ? "NY" : state === "NEW JERSEY" ? "NJ" : state;
+  }
+  if (!licenseState && licenseNumber) {
+    const prefix = licenseNumber.match(/^(CT|NY|NJ)[.-]/i)?.[1];
+    if (prefix) result.licenseStates = prefix.toUpperCase();
   }
   const licenseStates = normalized.match(
     /\b(?:licensed|licenced)\s+in\s+(?:the\s+)?((?:[A-Z]{2})(?:\s*,\s*[A-Z]{2})*)\b/i,
