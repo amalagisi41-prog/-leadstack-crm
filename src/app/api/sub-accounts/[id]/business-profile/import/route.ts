@@ -732,6 +732,13 @@ async function importProfile(
   )
     next.brandVoice = extracted.brandVoice as BrandVoice;
   const completeness = businessProfileCompleteness(next);
+  // Keep the source-only draft separate from the approved profile loaded
+  // above. Older builds persisted bad imports; returning `next` alone made
+  // those stale values look freshly verified on every retry.
+  const importedProfile: BusinessProfileContent =
+    Object.keys(sourceFacts).length > 0 || isZillowSource
+      ? ({ ...EMPTY_BUSINESS_PROFILE, ...extracted } as BusinessProfileContent)
+      : EMPTY_BUSINESS_PROFILE;
   const missingLaunchFields = [
     !next.agentName.trim() ? "agentName" : null,
     !next.brokerage.trim() ? "brokerage" : null,
@@ -752,6 +759,7 @@ async function importProfile(
   return NextResponse.json({
     ok: true,
     profile: next,
+    importedProfile,
     completeness,
     needsReview: true,
     sourceCompleteness,

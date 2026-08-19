@@ -337,7 +337,7 @@ export function BusinessProfileForm() {
       const failures: string[] = [];
       // Each source contributes verified facts. Keep the union of those
       // facts instead of letting the last response erase earlier fields.
-      let mergedProfile: BusinessProfileContent = { ...content };
+      let mergedProfile: BusinessProfileContent = { ...EMPTY_BUSINESS_PROFILE };
       const mergeImportedProfile = (
         incoming: BusinessProfileContent
       ): BusinessProfileContent => {
@@ -370,6 +370,7 @@ export function BusinessProfileForm() {
         );
         const data = await readJson<{
           profile?: BusinessProfileContent;
+          importedProfile?: BusinessProfileContent;
           completeness?: number;
           extractionMode?: "ai" | "source-reader";
         }>(res);
@@ -378,7 +379,9 @@ export function BusinessProfileForm() {
           continue;
         }
         imported += 1;
-        mergedProfile = mergeImportedProfile(data.profile);
+        mergedProfile = mergeImportedProfile(
+          data.importedProfile ?? data.profile
+        );
         setContent(mergedProfile);
         finalCompleteness = Math.max(finalCompleteness, data.completeness ?? 0);
         setCompleteness(finalCompleteness);
