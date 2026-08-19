@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { defaultAiModel } from "@/lib/comms/ai/openrouter";
 import { firecrawlIsConfigured } from "@/lib/firecrawl/client";
+import { configuredReaderApiKey } from "@/lib/business-profile/read-public-page";
 
 /**
  * What the deployed runtime actually sees.
@@ -78,7 +79,7 @@ export async function GET(request: Request) {
   if (access instanceof NextResponse) return access;
 
   const key = process.env.OPENROUTER_API_KEY?.trim() ?? "";
-  const readerKey = process.env.JINA_READER_API_KEY?.trim() ?? "";
+  const reader = configuredReaderApiKey();
 
   const environment = {
     openRouterKeySet: key.length > 0,
@@ -92,8 +93,9 @@ export async function GET(request: Request) {
     keyLooksMalformed: key ? !/^sk-or-[A-Za-z0-9._-]+$/.test(key) : null,
     model: defaultAiModel(),
     firecrawlConfigured: firecrawlIsConfigured(),
-    jinaReaderKeySet: readerKey.length > 0,
-    jinaReaderKeyLooksMalformed: readerKey ? !/^jina_[A-Za-z0-9_-]+$/.test(readerKey) : null,
+    jinaReaderKeySet: reader.value.length > 0,
+    jinaReaderKeyLooksMalformed: reader.value ? !/^jina_[A-Za-z0-9_-]+$/.test(reader.value) : null,
+    jinaReaderKeySource: reader.source,
     vercelEnv: process.env.VERCEL_ENV ?? null,
     commit: process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? null,
   };

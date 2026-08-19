@@ -16,6 +16,7 @@ import { firecrawlIsConfigured, scrapeUrl } from "@/lib/firecrawl/client";
 import {
   PageReadError,
   classifyPageText,
+  configuredReaderApiKey,
   mostInformative,
   readFailureMessage,
   readPublicPage,
@@ -77,6 +78,17 @@ describe("the reader-service URL", () => {
   it("keeps the target's own path and query intact", () => {
     const target = "https://example.com/agents/jane?ref=card";
     expect(readerUrl(target)).toBe(`https://r.jina.ai/${target}`);
+  });
+});
+
+describe("reader key migration", () => {
+  it("uses a valid legacy key when the corrected variable is malformed", () => {
+    vi.stubEnv("JINA_READER_API_KEY", "reader-secret");
+    vi.stubEnv("INA_READER_API_KEY", "jina_legacy-valid-key");
+    expect(configuredReaderApiKey()).toEqual({
+      value: "jina_legacy-valid-key",
+      source: "INA_READER_API_KEY",
+    });
   });
 });
 

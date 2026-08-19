@@ -483,6 +483,26 @@ async function readDirect(
 /** The reader service reports the target's status inside its own 200 body. */
 const READER_TARGET_STATUS = /target url returned error (\d{3})/i;
 
+/** Prefer the corrected name, but keep the earlier typo wired for migration. */
+export function configuredReaderApiKey(): {
+  value: string;
+  source: "JINA_READER_API_KEY" | "INA_READER_API_KEY" | null;
+} {
+  const corrected = process.env.JINA_READER_API_KEY?.trim() ?? "";
+  const legacy = process.env.INA_READER_API_KEY?.trim() ?? "";
+  if (/^jina_[A-Za-z0-9_-]+$/.test(corrected)) {
+    return { value: corrected, source: "JINA_READER_API_KEY" };
+  }
+  if (/^jina_[A-Za-z0-9_-]+$/.test(legacy)) {
+    return { value: legacy, source: "INA_READER_API_KEY" };
+  }
+  return corrected
+    ? { value: corrected, source: "JINA_READER_API_KEY" }
+    : legacy
+      ? { value: legacy, source: "INA_READER_API_KEY" }
+      : { value: "", source: null };
+}
+
 async function readViaReader(
   target: string,
   timeoutMs: number
@@ -493,7 +513,7 @@ async function readViaReader(
     // per IP. A burst of imports — one operator testing, let alone a tenant
     // base — exhausts that and every portal read dies at this stage with a
     // 429. A (free) reader key raises the ceiling by orders of magnitude.
-    const readerKey = process.env.JINA_READER_API_KEY?.trim();
+    const readerKey = configuredReaderApiKey().value;
     response = await fetch(readerUrl(target), {
       headers: {
         Accept: "text/plain",
