@@ -130,6 +130,11 @@ function nestedUrl(value: unknown): string {
   return "";
 }
 
+/** Subject entities are often nested under ProfilePage.mainEntity. */
+function subjectNodes(node: JsonLdNode): JsonLdNode[] {
+  return node.mainEntity ? flattenNodes(node.mainEntity) : [];
+}
+
 /** "123 Main St, Stamford, CT" out of a PostalAddress node or plain string. */
 function addressLocality(value: unknown): string {
   if (typeof value === "string") return value.trim();
@@ -249,7 +254,12 @@ export function extractStructuredProfile({
       nodeTypes(n).some((t) => ORG_TYPES.has(t))
     );
     // The page's subject first; org-level contact details as fallback.
-    const subjects: JsonLdNode[] = [...personNodes, ...orgNodes];
+    // Profile directories commonly wrap the actual Person/RealEstateAgent in
+    // a ProfilePage.mainEntity instead of placing it in @graph.
+    const nestedSubjects = nodes.flatMap(subjectNodes).filter((n) =>
+      nodeTypes(n).some((t) => PERSON_TYPES.has(t) || ORG_TYPES.has(t))
+    );
+    const subjects: JsonLdNode[] = [...personNodes, ...orgNodes, ...nestedSubjects];
 
     for (const node of subjects) {
       const isPerson = nodeTypes(node).some((t) => PERSON_TYPES.has(t));
@@ -266,6 +276,7 @@ export function extractStructuredProfile({
         const brokerage = plausibleOrg(
           isPerson
             ? nestedName(node.worksFor) ||
+                nestedName(node.subOrganization) ||
                 nestedName(node.memberOf) ||
                 nestedName(node.affiliation)
             : firstString(node.name)

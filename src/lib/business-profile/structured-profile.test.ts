@@ -44,6 +44,14 @@ const BROKERAGE_HTML = `<html><head>
 
 const SOURCE = "https://www.crexi.com/profile/seamus-costigan-seamusco";
 
+const PROFILE_PAGE_HTML = `<script type="application/ld+json">
+{"@type":"ProfilePage","mainEntity":{"@type":["Person","RealEstateAgent"],"name":"Seamus Costigan","jobTitle":"Real Estate Agent","worksFor":{"@type":"Organization","name":"Marr Caruso Realty Group"},"telephone":"(203) 550-0531","areaServed":[{"@type":"City","name":"Stamford"}],"description":"Seamus serves buyers and sellers throughout Fairfield County with a practical, local approach to real estate."}}
+</script>`;
+
+const SUB_ORGANIZATION_HTML = `<script type="application/ld+json">
+{"@type":"RealEstateAgent","name":"Seamus Costigan","memberOf":{"@type":"Organization","name":"National Association of Realtors"},"subOrganization":{"@type":"Organization","name":"Marr And Caruso Realty Group"}}
+</script>`;
+
 describe("parsing what the page declares", () => {
   it("reads a Person out of an @graph, including nested brokerage", () => {
     const profile = extractStructuredProfile({
@@ -101,6 +109,27 @@ describe("parsing what the page declares", () => {
        <script type='application/ld+json'>{"@type":"Person","name":"Jane Doe"}</script>`
     );
     expect(nodes.length).toBe(2);
+  });
+
+  it("reads an agent nested under ProfilePage.mainEntity", () => {
+    const profile = extractStructuredProfile({
+      raw: PROFILE_PAGE_HTML,
+      kind: "html",
+      url: "https://www.homes.com/real-estate-agents/seamus-costigan/jx0kjz7/",
+    });
+    expect(profile.agentName).toBe("Seamus Costigan");
+    expect(profile.brokerage).toBe("Marr Caruso Realty Group");
+    expect(profile.phone).toBe("(203) 550-0531");
+    expect(profile.serviceAreas).toBe("Stamford");
+  });
+
+  it("prefers a brokerage subOrganization over a professional membership", () => {
+    const profile = extractStructuredProfile({
+      raw: SUB_ORGANIZATION_HTML,
+      kind: "html",
+      url: "https://www.realtor.com/realestateagents/5911496b85620000113b785e",
+    });
+    expect(profile.brokerage).toBe("Marr And Caruso Realty Group");
   });
 });
 
