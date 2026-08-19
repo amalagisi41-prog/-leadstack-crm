@@ -276,10 +276,21 @@ function zillowProfileFromPage(
 }
 
 function conservativeProfileFromPage(url: string, text: string): Record<string, unknown> {
-  if (directoryProfileHost(url).endsWith("zillow.com")) {
+  const host = directoryProfileHost(url);
+  if (host.endsWith("zillow.com")) {
     const zillow = zillowProfileFromPage(url, text);
     if (Object.keys(zillow).length > 0) return zillow;
   }
+  // A free-form website often contains staff directories, footer numbers, or
+  // old licence references unrelated to the person being imported. Broad
+  // regexes over that prose caused the stray phone/licence values seen in
+  // production. Generic sites must declare the agent through JSON-LD (handled
+  // by extractStructuredProfile); only known agent directories get text
+  // heuristics.
+  const isKnownDirectory = ["homes.com", "loopnet.com", "realtor.com"].some(
+    (domain) => host === domain || host.endsWith(`.${domain}`),
+  );
+  if (!isKnownDirectory) return {};
   const result: Record<string, unknown> = {};
   const normalized = text.replace(/\s+/g, " ").trim();
   const slug = (() => {
@@ -309,10 +320,21 @@ function conservativeProfileFromPage(url: string, text: string): Record<string, 
   if (email) result.email = email;
   const priceRange = normalized.match(/\$\d+(?:\.\d+)?[KMB]?\s*[-–]\s*\$\d+(?:\.\d+)?[KMB]?/i)?.[0];
   if (priceRange) result.priceRanges = priceRange.replace(/\s+/g, "");
-  const licenseNumber = normalized.match(
-    /\b(?:license|licence|lic)\s*(?:number|no\.?|#)?\s*[:#-]?\s*([A-Z]{0,3}[- ]?\d{4,12})\b/i,
-  )?.[1];
+  // Directory pages use both "License #1234" and the more useful
+  // "Agent License: Connecticut RES.0804225" form. Keep the state and the
+  // explicitly labelled identifier together; never treat an arbitrary ID or
+  // listing number as a licence.
+  const labelledLicense = normalized.match(
+    /\b(?:agent\s+)?licen[cs]e\s*(?:number|no\.?|#)?\s*[:#-]?\s*(?:(Connecticut|CT|New York|NY|New Jersey|NJ)\s+)?([A-Z]{2,5}[.-]\d{4,12}|\d{4,12})\b/i,
+  );
+  const licenseNumber = labelledLicense?.[2];
   if (licenseNumber) result.licenseNumber = licenseNumber.trim();
+  const licenseState = labelledLicense?.[1];
+  if (licenseState) {
+    const state = licenseState.toUpperCase();
+    result.licenseStates =
+      state === "CONNECTICUT" ? "CT" : state === "NEW YORK" ? "NY" : state === "NEW JERSEY" ? "NJ" : state;
+  }
   const licenseStates = normalized.match(
     /\b(?:licensed|licenced)\s+in\s+(?:the\s+)?((?:[A-Z]{2})(?:\s*,\s*[A-Z]{2})*)\b/i,
   )?.[1];
