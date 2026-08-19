@@ -350,7 +350,7 @@ export function BusinessProfileForm() {
             merged.services = Array.from(
               new Set([
                 ...(merged.services ?? []),
-                ...(Array.isArray(value) ? value : []),
+                ...incoming.services,
               ])
             );
           } else if (typeof value === "string" && value.trim()) {
