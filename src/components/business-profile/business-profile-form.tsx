@@ -335,6 +335,30 @@ export function BusinessProfileForm() {
       let imported = 0;
       let finalCompleteness = 0;
       const failures: string[] = [];
+      // Each source contributes verified facts. Keep the union of those
+      // facts instead of letting the last response erase earlier fields.
+      let mergedProfile: BusinessProfileContent = { ...content };
+      const mergeImportedProfile = (
+        incoming: BusinessProfileContent
+      ): BusinessProfileContent => {
+        const merged = { ...mergedProfile };
+        for (const key of Object.keys(EMPTY_BUSINESS_PROFILE) as Array<
+          keyof BusinessProfileContent
+        >) {
+          const value = incoming[key];
+          if (key === "services") {
+            merged.services = Array.from(
+              new Set([
+                ...(merged.services ?? []),
+                ...(Array.isArray(value) ? value : []),
+              ])
+            );
+          } else if (typeof value === "string" && value.trim()) {
+            (merged[key] as string) = value;
+          }
+        }
+        return merged;
+      };
       for (const url of urls) {
         const res = await fetch(
           `/api/sub-accounts/${subAccountId}/business-profile/import`,
@@ -354,8 +378,9 @@ export function BusinessProfileForm() {
           continue;
         }
         imported += 1;
-        setContent({ ...EMPTY_BUSINESS_PROFILE, ...data.profile });
-        finalCompleteness = data.completeness ?? 0;
+        mergedProfile = mergeImportedProfile(data.profile);
+        setContent(mergedProfile);
+        finalCompleteness = Math.max(finalCompleteness, data.completeness ?? 0);
         setCompleteness(finalCompleteness);
       }
       if (imported === 0) {
