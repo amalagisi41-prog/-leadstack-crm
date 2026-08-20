@@ -50,6 +50,13 @@ export function Navbar({ brand }: { brand: ResolvedBrand }) {
         </nav>
 
         <div className="hidden shrink-0 items-center gap-3 md:flex">
+          <Button
+            render={<Link href="/download" />}
+            variant="outline"
+            size="sm"
+          >
+            Get the app
+          </Button>
           {!loading && (
             <>
               {user ? (
@@ -139,6 +146,15 @@ export function Navbar({ brand }: { brand: ResolvedBrand }) {
                   )}
                 </>
               )}
+              <Button
+                render={<Link href="/download" />}
+                variant="outline"
+                className="w-full"
+                size="sm"
+                onClick={() => setOpen(false)}
+              >
+                Get the app
+              </Button>
             </nav>
           </SheetContent>
         </Sheet>
