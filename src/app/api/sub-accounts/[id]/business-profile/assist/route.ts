@@ -60,6 +60,12 @@ const INDUSTRY_RECOMMENDATIONS: Partial<Record<keyof BusinessProfileContent, str
   qualificationRules:
     "Ask about budget, timeline, financing or pre-approval, property type, and motivation",
   optOutLanguage: "Reply STOP to opt out",
+  buyerProcess:
+    "Start with a discovery call to understand goals, budget, and timeline; set up a tailored search, then schedule showings and guide the buyer through offer, inspection, and closing.",
+  sellerProcess:
+    "Start with a property walkthrough and comparative market analysis; agree on a pricing and marketing plan, prepare the home, launch the listing, review offers, and coordinate closing.",
+  listingCopyStyle:
+    "Warm, specific, and truthful: lead with the strongest feature, name the neighborhood, use concrete details, and avoid clichés or unsupported claims.",
 };
 
 export async function POST(
