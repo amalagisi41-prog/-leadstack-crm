@@ -83,15 +83,19 @@ export function DownloadPanel() {
     <div className="space-y-6">
       <div className="rounded-2xl border bg-white p-6">
         <div className="flex items-start gap-4">
-          <Image
-            src="/icons/icon-192.png"
-            alt=""
+          <span
             aria-hidden="true"
-            width={64}
-            height={64}
-            className="h-16 w-16 shrink-0 object-contain"
-            priority
-          />
+            className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-[#173B7A] p-2 shadow-sm"
+          >
+            <Image
+              src="/icons/logo-light-192.png"
+              alt=""
+              width={64}
+              height={64}
+              className="h-full w-full object-contain"
+              priority
+            />
+          </span>
           <div className="min-w-0">
             <h2 className="text-lg font-semibold text-[#173B7A]">
               {PLATFORM_LABEL[platform]}

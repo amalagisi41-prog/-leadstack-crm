@@ -26,9 +26,8 @@ import { CUSTOM_BRAND, LANDING_VARIANT } from "@/config/landing";
  * prompt outright: dismissing snoozes, on a lengthening ladder, and the
  * sidebar entry plus the download page stay available in between.
  *
- * The icon shown is the same cream tile that gets installed. Previewing one
- * icon and installing a different one is a small lie told at exactly the
- * moment the user is deciding whether to trust the thing.
+ * The preview uses the blue AgentStack tile used by the install/download
+ * surfaces. The installed PWA icon remains controlled by the manifest.
  */
 export function InstallPrompt() {
   const {
@@ -61,15 +60,19 @@ export function InstallPrompt() {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <div className="flex items-center gap-3">
-            <Image
-              src="/icons/icon-192.png"
-              alt=""
+            <span
               aria-hidden="true"
-              width={56}
-              height={56}
-              className="h-14 w-14 shrink-0 object-contain"
-              priority
-            />
+              className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#173B7A] p-2 shadow-sm"
+            >
+              <Image
+                src="/icons/logo-light-192.png"
+                alt=""
+                width={56}
+                height={56}
+                className="h-full w-full object-contain"
+                priority
+              />
+            </span>
             <div className="min-w-0">
               <DialogTitle className="text-left">
                 Put {brandName} on your phone
