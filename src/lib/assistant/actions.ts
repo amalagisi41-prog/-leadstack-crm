@@ -59,7 +59,11 @@ export function sanitizeZackAction(value: unknown): ZackAction | null {
   if (raw.type === "navigate") {
     const path = text(raw.path, 240);
     if (!path || !path.startsWith("/") || path.startsWith("//")) return null;
-    return { type: "navigate", path, label, description };
+    // Lead Capture is the product name, but its canonical dashboard route is
+    // `/forms`. Normalize the legacy/model-invented alias so Zack can never
+    // send an operator to a 404 page.
+    const canonicalPath = path.replace(/\/lead-capture(?=\/|$)/, "/forms");
+    return { type: "navigate", path: canonicalPath, label, description };
   }
 
   if (raw.type === "set_daily_briefing" && typeof raw.enabled === "boolean") {

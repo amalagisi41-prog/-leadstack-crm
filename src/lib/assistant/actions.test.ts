@@ -39,4 +39,15 @@ describe("sanitizeZackAction", () => {
       }),
     ).toBeNull();
   });
+
+  it("canonicalizes the legacy Lead Capture route", () => {
+    expect(
+      sanitizeZackAction({
+        type: "navigate",
+        path: "/sa/demo/lead-capture",
+        label: "Go to Lead Capture",
+        description: "Open Lead Capture",
+      }),
+    ).toMatchObject({ path: "/sa/demo/forms" });
+  });
 });
