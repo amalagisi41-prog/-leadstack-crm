@@ -195,9 +195,17 @@ export function BusinessProfileForm() {
           body: JSON.stringify({ field, label, currentValue: content[field] }),
         }
       );
-      const data = await readJson<{ value?: string }>(res);
-      if (!res.ok || typeof data.value !== "string")
+      const data = await readJson<{
+        value?: string | null;
+        message?: string;
+        error?: string;
+      }>(res);
+      if (!res.ok || (data.value !== null && typeof data.value !== "string"))
         throw new Error(data.error ?? "AI assist failed.");
+      if (data.value === null) {
+        toast.info(data.message ?? `${label} is not in the approved Blueprint yet.`);
+        return;
+      }
       set(field, data.value as BusinessProfileContent[typeof field]);
       toast.success(
         `${label} drafted from your Business Blueprint. Review before saving.`

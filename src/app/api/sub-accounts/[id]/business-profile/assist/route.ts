@@ -84,6 +84,17 @@ export async function POST(
     ...EMPTY_BUSINESS_PROFILE,
     ...(snap.data() ?? {}),
   } as BusinessProfileContent;
+  // A blank field has no approved source to draft from. Do not send the rest
+  // of the Blueprint (especially phone/email) to a model and let it turn the
+  // gap into a request to contact the agent. The UI can show this guidance
+  // without writing it into the Blueprint as stray text.
+  const currentValue = String(body?.currentValue ?? "").trim();
+  if (!currentValue && !String(profile[field] ?? "").trim()) {
+    return NextResponse.json({
+      value: null,
+      message: `No approved ${String(body?.label ?? field).toLowerCase()} information is available in the Business Blueprint yet.`,
+    });
+  }
   const blueprint = compileBusinessProfilePrompt(profile);
   let completion: Awaited<ReturnType<typeof callAi>>;
   try {
@@ -94,11 +105,11 @@ export async function POST(
         {
           role: "system",
           content:
-            "You are Zack inside AgentStack. Draft one accurate Business Blueprint field using only the supplied approved profile facts. Never invent licenses, credentials, statistics, service areas, prices, testimonials, contact details, or compliance claims. Return only the field value, with no label or markdown.",
+            "You are Zack inside AgentStack. Draft one accurate Business Blueprint field using only the supplied approved profile facts. Never invent licenses, credentials, statistics, service areas, prices, testimonials, contact details, or compliance claims. Never reveal phone numbers or email addresses and never tell the user to contact the agent. Return only the field value, with no label or markdown.",
         },
         {
           role: "user",
-          content: `Field: ${String(body?.label ?? field)}\nCurrent value: ${String(body?.currentValue ?? "")}\n\nApproved Business Blueprint:\n${blueprint || "No approved facts yet. Improve only the current value; if it is blank, say what information the user should enter rather than inventing it."}`,
+          content: `Field: ${String(body?.label ?? field)}\nCurrent value: ${currentValue}\n\nApproved Business Blueprint:\n${blueprint || "No approved facts yet."}`,
         },
       ],
     });
