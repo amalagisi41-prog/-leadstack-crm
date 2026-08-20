@@ -65,7 +65,7 @@ export function InstallPrompt() {
               className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-[#173B7A] p-2 shadow-sm"
             >
               <Image
-                src="/icons/logo-light-192.png"
+                src="/icons/logo-dark-192.png"
                 alt=""
                 width={56}
                 height={56}

@@ -88,7 +88,7 @@ export function DownloadPanel() {
             className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-[#173B7A] p-2 shadow-sm"
           >
             <Image
-              src="/icons/logo-light-192.png"
+              src="/icons/logo-dark-192.png"
               alt=""
               width={64}
               height={64}
