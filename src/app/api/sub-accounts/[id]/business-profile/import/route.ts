@@ -530,7 +530,25 @@ async function importProfile(
   const declaredFacts = isZillowSource
     ? zillowProfileFromPage(url, markdown)
     : extractStructuredProfile({ raw: page.raw, kind: page.kind, url });
-  const sourceFacts = sanitizeImportedProfile({ ...textFacts, ...declaredFacts });
+  // On first-party pages, the profile block is authoritative. Their footer or
+  // referral widget may publish a second phone (often a routing number), and
+  // the generic structured extractor can otherwise overwrite the primary
+  // labelled contact with that later declaration. Keep the narrow, host-aware
+  // text fact in front for these pages; directory/schema facts retain their
+  // existing precedence everywhere else.
+  const isFirstPartyAgentSite = (() => {
+    try {
+      const host = new URL(url).hostname.toLowerCase().replace(/^www\./, "");
+      return host === "artisanhomenetwork.com" || host.endsWith(".artisanhomenetwork.com");
+    } catch {
+      return false;
+    }
+  })();
+  const sourceFacts = sanitizeImportedProfile(
+    isFirstPartyAgentSite
+      ? { ...declaredFacts, ...textFacts }
+      : { ...textFacts, ...declaredFacts },
+  );
   const sourceCompleteness =
     Object.keys(sourceFacts).length > 0
       ? businessProfileCompleteness({

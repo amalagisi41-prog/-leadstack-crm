@@ -368,6 +368,25 @@ describe("POST business-profile/import", () => {
     expect(body.profile.phone).toBe("(203) 550-0531");
   });
 
+  it("keeps the first-party profile phone ahead of a referral footer phone", async () => {
+    const source = `Seamus Costigan Licensed Real Estate Agent & Investor Marr & Caruso Realty Group License: CT-0804225 sc.newbridge@gmail.com (203) 550-0531 Marr & Caruso Realty Group (978) 622-2360 ${"Serving Stamford and Fairfield County. ".repeat(8)}`;
+    vi.mocked(readPublicPageContent).mockResolvedValueOnce(pageOf(source));
+
+    const res = await POST(
+      makeRequest({ url: "https://www.artisanhomenetwork.com/agents/seamus" }),
+      ctx,
+    );
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.profile).toMatchObject({
+      agentName: "Seamus Costigan",
+      brokerage: "Marr & Caruso Realty Group",
+      licenseNumber: "CT-0804225",
+      licenseStates: "CT",
+      phone: "(203) 550-0531",
+    });
+  });
+
   it("rejects a private address before any request goes out", async () => {
     const res = await POST(
       makeRequest({ url: "http://169.254.169.254/latest/meta-data/" }),
