@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { collection, onSnapshot } from "firebase/firestore";
@@ -9,6 +9,7 @@ import {
   HelpCircle,
   Loader2,
   Save,
+  Sparkles,
   Trash2,
   Users,
 } from "lucide-react";
@@ -34,6 +35,8 @@ import {
   type BookingPageFormData,
   type BookingPayment,
 } from "@/types/booking";
+import type { BusinessProfileContent } from "@/types/business-profile";
+import { prefillBookingFromBlueprint } from "@/lib/booking/blueprint-prefill";
 
 /**
  * Booking page editor — used for both create (mode="new") and edit
@@ -143,6 +146,31 @@ export function BookingPageEditor({ mode, initial }: Props) {
   const [deleting, setDeleting] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [teamHelpOpen, setTeamHelpOpen] = useState(false);
+
+  const fillFromBlueprint = useCallback(async () => {
+    if (!subAccountId) return;
+    try {
+      const res = await fetch(`/api/sub-accounts/${subAccountId}/business-profile`);
+      const data = (await res.json()) as { profile?: BusinessProfileContent };
+      if (!res.ok || !data.profile) throw new Error("Business Blueprint is not available yet.");
+      const next = prefillBookingFromBlueprint(form, data.profile);
+      setForm(next);
+      toast.success("Booking draft filled from your Business Blueprint. Review and save.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not load the Business Blueprint.");
+    }
+  }, [subAccountId, form]);
+
+  useEffect(() => {
+    function onBlueprintFill(event: Event) {
+      const detail = (event as CustomEvent<{ bookingId?: string }>).detail;
+      const currentId = mode === "new" ? "new" : initial?.slug;
+      if (detail?.bookingId && detail.bookingId !== currentId) return;
+      void fillFromBlueprint();
+    }
+    window.addEventListener("agentstack:populate-booking-from-blueprint", onBlueprintFill);
+    return () => window.removeEventListener("agentstack:populate-booking-from-blueprint", onBlueprintFill);
+  }, [mode, initial?.slug, fillFromBlueprint]);
 
   // Stay in sync if the initial doc refreshes mid-edit (onSnapshot).
   useEffect(() => {
@@ -286,6 +314,10 @@ export function BookingPageEditor({ mode, initial }: Props) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="flex items-center justify-end">
+        <Button type="button" variant="outline" size="sm" onClick={() => void fillFromBlueprint()}>
+          <Sparkles className="mr-1 h-3.5 w-3.5" />
+          Fill from Blueprint
+        </Button>
         <Button
           type="button"
           variant="outline"

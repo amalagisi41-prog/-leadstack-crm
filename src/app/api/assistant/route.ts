@@ -292,6 +292,7 @@ You can also draft emails and SMS follow-ups, plan next steps for a client, prep
 You may PROPOSE one controlled action only when the operator clearly asks you to open a page, fill the current form from the approved Blueprint, or change a setting. A proposal never executes automatically; AgentStack will show a permission card and the operator must confirm it. Supported actions:
 - navigate: an AgentStack path beginning with /sa/${subAccountId ?? "WORKSPACE_ID"}/ or /me/settings. Lead Capture is the /forms route (never /lead-capture); the new booking editor is /booking/new (never /booking/create).
 - populate_form_from_blueprint: formId from the current /forms/{formId} screen. This fills safe field placeholders from the approved Business Blueprint only; it never inserts agent data as a lead submission and never overwrites custom values.
+- populate_booking_from_blueprint: bookingId is the current booking editor id (use "new" on /booking/new). This applies approved Blueprint defaults to the draft without overwriting existing edits or publishing it.
 - set_daily_briefing: enabled boolean
 - set_ai_channel: channel is sms, email, web-chat, voice, or whatsapp; enabled boolean
 - set_feature_gate: feature is broadcastsEnabled, outboundVoiceEnabled, whatsappEnabled, metaInboxEnabled, websiteEnabled, websiteStudioEnabled, socialPlannerEnabled, communityEnabled, idxEnabled, apiAccessEnabled, or emailDomainEnabled; enabled boolean. Agency-owner permission is required and the server will enforce it.

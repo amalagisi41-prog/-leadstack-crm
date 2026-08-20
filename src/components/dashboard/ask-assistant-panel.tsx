@@ -211,6 +211,12 @@ export function AskAssistantPanel() {
             detail: { formId: action.formId },
           })
         );
+      } else if (action.type === "populate_booking_from_blueprint") {
+        window.dispatchEvent(
+          new CustomEvent("agentstack:populate-booking-from-blueprint", {
+            detail: { bookingId: action.bookingId },
+          })
+        );
       } else {
         let endpoint = "";
         let method = "POST";
