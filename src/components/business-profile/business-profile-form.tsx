@@ -356,7 +356,10 @@ export function BusinessProfileForm() {
       const failures: string[] = [];
       // Each source contributes verified facts. Keep the union of those
       // facts instead of letting the last response erase earlier fields.
-      let mergedProfile: BusinessProfileContent = { ...EMPTY_BUSINESS_PROFILE };
+      // Multi-source imports are additive. Start with the current draft so a
+      // retry or a second/third link cannot erase approved facts or selected
+      // media, then fill only fields that are still blank.
+      let mergedProfile: BusinessProfileContent = { ...content, services: [...content.services] };
       const mergeImportedProfile = (
         incoming: BusinessProfileContent
       ): BusinessProfileContent => {
@@ -372,7 +375,11 @@ export function BusinessProfileForm() {
                 ...incoming.services,
               ])
             );
-          } else if (typeof value === "string" && value.trim()) {
+          } else if (
+            typeof value === "string" &&
+            value.trim() &&
+            !String(merged[key] ?? "").trim()
+          ) {
             (merged[key] as string) = value;
           }
         }
