@@ -69,11 +69,6 @@ export async function POST(
   const { id } = await ctx.params;
   const access = await requireSubAccountAdmin(request, id);
   if (access instanceof NextResponse) return access;
-  if (!aiIsConfigured())
-    return NextResponse.json(
-      { error: "AI assist is not configured." },
-      { status: 503 }
-    );
 
   const body = (await request.json().catch(() => null)) as {
     field?: unknown;
@@ -110,7 +105,19 @@ export async function POST(
         message: `No approved ${String(body?.label ?? field).toLowerCase()} information is available in the Business Blueprint yet.`,
       });
     }
+    // Industry-standard workflow fields are deterministic defaults. They
+    // should remain available during an OpenRouter outage or while a rotated
+    // key is propagating; requiring a model here made basic onboarding look
+    // broken even though no AI call was needed.
+    if (!aiIsConfigured()) {
+      return NextResponse.json({ value: recommendation, recommended: true });
+    }
   }
+  if (!aiIsConfigured())
+    return NextResponse.json(
+      { error: "AI assist is not configured." },
+      { status: 503 }
+    );
   const blueprint = compileBusinessProfilePrompt(profile);
   const marketContext = [
     profile.serviceAreas && `Target service areas: ${profile.serviceAreas}`,
