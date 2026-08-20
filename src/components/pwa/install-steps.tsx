@@ -27,15 +27,19 @@ export function InstallSteps({
         <li className="flex gap-2.5">
           <Step n={1} />
           <span>
-            Tap the <Share className="mx-0.5 inline h-4 w-4 align-text-bottom" />{" "}
-            <strong>Share</strong> button — at the bottom of the screen on an
-            iPhone, at the top on an iPad.
+            First open this page in <strong>Safari</strong>. If you are in
+            Brave, Chrome, or another browser, use that browser&apos;s
+            <strong> Open in Safari</strong> option. iOS only shows the install
+            action from Safari.
           </span>
         </li>
         <li className="flex gap-2.5">
           <Step n={2} />
           <span>
-            Scroll down the list and tap{" "}
+            In Safari, tap the{" "}
+            <Share className="mx-0.5 inline h-4 w-4 align-text-bottom" />{" "}
+            <strong>Share</strong> button — at the bottom of the screen on an
+            iPhone, at the top on an iPad. Scroll down and tap{" "}
             <strong>&ldquo;Add to Home Screen&rdquo;</strong>.
           </span>
         </li>

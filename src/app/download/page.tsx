@@ -9,8 +9,8 @@ const brandName =
   LANDING_VARIANT === "custom" ? CUSTOM_BRAND.name : "AgentStack";
 
 export const metadata: Metadata = {
-  title: `Get the ${brandName} app`,
-  description: `Install ${brandName} on your phone, tablet, or desktop. One tap from your home screen — no app store, no download to manage.`,
+  title: `Install ${brandName} on any device`,
+  description: `Install ${brandName} on your phone, tablet, or desktop. Use the browser's install action—no app store or platform-specific download is required.`,
 };
 
 /**
@@ -37,13 +37,15 @@ export default function DownloadPage() {
         <div className="mt-6 flex items-center gap-3">
           <LogoMark size={32} idSuffix="-download" className="h-8 w-8" />
           <h1 className="text-2xl font-bold tracking-tight text-[#173B7A] sm:text-3xl">
-            Get the {brandName} app
+            Install {brandName} on any device
           </h1>
         </div>
         <p className="mt-3 max-w-xl text-sm leading-6 text-[#526078]">
-          There is no app store download and nothing to update. {brandName}{" "}
-          installs straight from your browser in about ten seconds, and lives on
-          your home screen like any other app.
+          {brandName} is a secure web app, so there is no separate iOS, Android,
+          Windows, or Mac file to download. Use the install action for your
+          browser and it will add the same signed-in workspace to your home
+          screen or Dock. On iPhone and iPad, Safari must confirm the final
+          &ldquo;Add to Home Screen&rdquo; tap.
         </p>
 
         <div className="mt-8">

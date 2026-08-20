@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Check, CheckCircle2, Smartphone } from "lucide-react";
+import { Check, CheckCircle2, Copy, Smartphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { InstallSteps } from "@/components/pwa/install-steps";
 import { useAppInstall } from "@/hooks/use-app-install";
@@ -36,6 +36,7 @@ export function DownloadPanel() {
     installed,
   } = useAppInstall();
   const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const brandName =
     LANDING_VARIANT === "custom" ? CUSTOM_BRAND.name : "AgentStack";
@@ -47,6 +48,19 @@ export function DownloadPanel() {
     } finally {
       setBusy(false);
     }
+  }
+
+  async function copyInstallLink() {
+    const url = window.location.href;
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      // Clipboard access can be denied in private or embedded browsers. Keep
+      // the action harmless and let the user use the address bar instead.
+      return;
+    }
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1800);
   }
 
   if (installed) {
@@ -122,6 +136,17 @@ export function DownloadPanel() {
             I&rsquo;ve added it — stop reminding me
           </Button>
         ) : null}
+
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="mt-3 text-[#526078]"
+          onClick={copyInstallLink}
+        >
+          <Copy className="mr-2 h-4 w-4" />
+          {copied ? "Install link copied" : "Copy install link for another device"}
+        </Button>
       </div>
 
       <div className="rounded-2xl border bg-[#F8FAFC] p-6">
