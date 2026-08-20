@@ -49,6 +49,19 @@ const ALLOWED_FIELDS = new Set<keyof BusinessProfileContent>([
   "scripts",
 ]);
 
+/** Safe onboarding defaults: workflow guidance, never regulated identity facts. */
+const INDUSTRY_RECOMMENDATIONS: Partial<Record<keyof BusinessProfileContent, string>> = {
+  businessHours: "Mon–Sat, 9:00 AM–6:00 PM; Sunday by appointment",
+  responsePreference: "Respond within one business hour; text first, then call",
+  handoffRules:
+    "Hand off when the lead is ready to make an offer or asks for legal or contract details",
+  escalationRules:
+    "Escalate when a hot lead requests a same-day showing or a lead is upset",
+  qualificationRules:
+    "Ask about budget, timeline, financing or pre-approval, property type, and motivation",
+  optOutLanguage: "Reply STOP to opt out",
+};
+
 export async function POST(
   request: Request,
   ctx: { params: Promise<{ id: string }> }
@@ -90,6 +103,10 @@ export async function POST(
   // without writing it into the Blueprint as stray text.
   const currentValue = String(body?.currentValue ?? "").trim();
   if (!currentValue && !String(profile[field] ?? "").trim()) {
+    const recommendation = INDUSTRY_RECOMMENDATIONS[field];
+    if (recommendation) {
+      return NextResponse.json({ value: recommendation, recommended: true });
+    }
     return NextResponse.json({
       value: null,
       message: `No approved ${String(body?.label ?? field).toLowerCase()} information is available in the Business Blueprint yet.`,

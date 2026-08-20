@@ -199,6 +199,7 @@ export function BusinessProfileForm() {
         value?: string | null;
         message?: string;
         error?: string;
+        recommended?: boolean;
       }>(res);
       if (!res.ok || (data.value !== null && typeof data.value !== "string"))
         throw new Error(data.error ?? "AI assist failed.");
@@ -208,7 +209,9 @@ export function BusinessProfileForm() {
       }
       set(field, data.value as BusinessProfileContent[typeof field]);
       toast.success(
-        `${label} drafted from your Business Blueprint. Review before saving.`
+        data.recommended
+          ? `${label} filled with a recommended starting point. Review and customize before saving.`
+          : `${label} drafted from your Business Blueprint. Review before saving.`
       );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "AI assist failed.");
