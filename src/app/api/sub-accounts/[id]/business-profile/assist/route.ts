@@ -102,17 +102,22 @@ export async function POST(
   // gap into a request to contact the agent. The UI can show this guidance
   // without writing it into the Blueprint as stray text.
   const currentValue = String(body?.currentValue ?? "").trim();
+  const recommendation = INDUSTRY_RECOMMENDATIONS[field];
   if (!currentValue && !String(profile[field] ?? "").trim()) {
-    const recommendation = INDUSTRY_RECOMMENDATIONS[field];
-    if (recommendation) {
-      return NextResponse.json({ value: recommendation, recommended: true });
+    if (!recommendation) {
+      return NextResponse.json({
+        value: null,
+        message: `No approved ${String(body?.label ?? field).toLowerCase()} information is available in the Business Blueprint yet.`,
+      });
     }
-    return NextResponse.json({
-      value: null,
-      message: `No approved ${String(body?.label ?? field).toLowerCase()} information is available in the Business Blueprint yet.`,
-    });
   }
   const blueprint = compileBusinessProfilePrompt(profile);
+  const marketContext = [
+    profile.serviceAreas && `Target service areas: ${profile.serviceAreas}`,
+    profile.priceRanges && `Typical price range: ${profile.priceRanges}`,
+    profile.specialties && `Specialties: ${profile.specialties}`,
+    profile.bio && `Business background: ${profile.bio.slice(0, 1200)}`,
+  ].filter(Boolean).join("\n");
   let completion: Awaited<ReturnType<typeof callAi>>;
   try {
     completion = await callAi({
@@ -122,11 +127,11 @@ export async function POST(
         {
           role: "system",
           content:
-            "You are Zack inside AgentStack. Draft one accurate Business Blueprint field using only the supplied approved profile facts. Never invent licenses, credentials, statistics, service areas, prices, testimonials, contact details, or compliance claims. Never reveal phone numbers or email addresses and never tell the user to contact the agent. Return only the field value, with no label or markdown.",
+            "You are Zack inside AgentStack. Draft one accurate Business Blueprint field using approved profile facts and, when requested, a practical industry-standard recommendation tailored to the target market. Never invent licenses, credentials, statistics, service areas, prices, testimonials, contact details, or compliance claims. Never claim to have researched or copied a specific competitor or top realtor. Never reveal phone numbers or email addresses and never tell the user to contact the agent. Return only the field value, with no label or markdown.",
         },
         {
           role: "user",
-          content: `Field: ${String(body?.label ?? field)}\nCurrent value: ${currentValue}\n\nApproved Business Blueprint:\n${blueprint || "No approved facts yet."}`,
+          content: `Field: ${String(body?.label ?? field)}\nCurrent value: ${currentValue || "(blank — recommend a strong starting point)"}\n${recommendation ? `\nRecommendation seed: ${recommendation}\nTailor it to the target market below while staying practical and editable.` : ""}\n\nTarget-market context:\n${marketContext || "No target-market details are available yet."}\n\nApproved Business Blueprint:\n${recommendation ? "Use only the target-market context above for this recommendation." : blueprint || "No approved facts yet."}`,
         },
       ],
     });
@@ -136,6 +141,9 @@ export async function POST(
     // JSON parse error rather than anything the operator can act on.
     const failure = classifyAiError(error);
     console.error(`business-profile assist failed (${failure})`, error);
+    if (recommendation) {
+      return NextResponse.json({ value: recommendation, recommended: true });
+    }
     return NextResponse.json(
       { error: aiFailureMessage(failure), code: AI_FAILURE_CODES[failure] },
       { status: aiFailureStatus(failure) }
