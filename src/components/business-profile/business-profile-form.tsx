@@ -230,6 +230,13 @@ export function BusinessProfileForm() {
     field: "logoUrl" | "headshotUrl" | "buyerGuideUrl" | "sellerGuideUrl",
     asset: MediaAsset
   ) {
+    if (
+      (field === "logoUrl" || field === "headshotUrl") &&
+      !asset.contentType.startsWith("image/")
+    ) {
+      toast.error("Choose an image file for this profile field.");
+      return;
+    }
     set(field, asset.url);
     setMediaOpen(null);
     toast.success(`${asset.name} selected.`);
@@ -877,12 +884,33 @@ export function BusinessProfileForm() {
           />
         </Field>
         <Field label="Professional headshot">
-          <input
-            className={input}
-            value={content.headshotUrl}
-            onChange={(e) => set("headshotUrl", e.target.value)}
-            placeholder="https://…/headshot.jpg"
-          />
+          {content.headshotUrl ? (
+            <div className="flex items-center gap-3 rounded-lg border bg-muted/20 p-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={content.headshotUrl}
+                alt="Professional headshot preview"
+                className="h-16 w-16 rounded-md object-cover"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium">Uploaded headshot selected</p>
+                <p className="text-xs text-muted-foreground">Stored in your approved Media Library.</p>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => set("headshotUrl", "")}
+                aria-label="Remove professional headshot"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <p className="rounded-lg border border-dashed p-3 text-xs text-muted-foreground">
+              No headshot uploaded yet. Upload one or choose an approved image from your Media Library.
+            </p>
+          )}
           <Button
             type="button"
             variant="outline"
@@ -898,12 +926,33 @@ export function BusinessProfileForm() {
           label="Brand logo sheet"
           hint="The approved logo reference your AI tools and website workflows should use."
         >
-          <input
-            className={input}
-            value={content.logoUrl}
-            onChange={(e) => set("logoUrl", e.target.value)}
-            placeholder="https://…/logo-sheet.jpg"
-          />
+          {content.logoUrl ? (
+            <div className="flex items-center gap-3 rounded-lg border bg-muted/20 p-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={content.logoUrl}
+                alt="Brand logo preview"
+                className="h-16 w-16 rounded-md object-contain bg-white p-1"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium">Uploaded brand logo selected</p>
+                <p className="text-xs text-muted-foreground">Stored in your approved Media Library.</p>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => set("logoUrl", "")}
+                aria-label="Remove brand logo"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <p className="rounded-lg border border-dashed p-3 text-xs text-muted-foreground">
+              No logo uploaded yet. Upload one or choose an approved image from your Media Library.
+            </p>
+          )}
           <Button
             type="button"
             variant="outline"
@@ -1311,10 +1360,15 @@ export function BusinessProfileForm() {
       >
         <DialogContent className="max-h-[85vh] max-w-3xl overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Choose from your Media Library</DialogTitle>
+            <DialogTitle>
+              {mediaOpen === "headshotUrl" || mediaOpen === "logoUrl"
+                ? "Upload a profile image"
+                : "Choose from your Media Library"}
+            </DialogTitle>
             <DialogDescription>
-              Upload a new approved asset or select one you already use. The
-              selected file will be linked to this Blueprint field.
+              {mediaOpen === "headshotUrl" || mediaOpen === "logoUrl"
+                ? "Upload a new image or select an approved image you already use. PDFs cannot be used for profile images."
+                : "Upload a new approved asset or select one you already use. The selected file will be linked to this Blueprint field."}
             </DialogDescription>
           </DialogHeader>
           <MediaLibrary
