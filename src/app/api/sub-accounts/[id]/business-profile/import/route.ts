@@ -332,7 +332,26 @@ function conservativeProfileFromPage(url: string, text: string): Record<string, 
     )?.[1];
     if (labelledBrokerage) result.brokerage = labelledBrokerage.trim();
   }
-  const phone = normalized.match(/(?:\+?1[ .-]?)?\(?\d{3}\)?[ .-]\d{3}[ .-]\d{4}/)?.[0];
+  // Artisan pages can place a referral footer before the profile card in the
+  // server-rendered stream. Scope the first-party phone search to the agent's
+  // own heading through the bio/section boundary; otherwise `(978) 622-2360`
+  // wins simply because it appeared earlier in the HTML.
+  const phoneText = isKnownAgentSite
+    ? normalized.slice(
+        Math.max(
+          0,
+          typeof result.agentName === "string"
+            ? normalized.indexOf(result.agentName)
+            : normalized.search(/\b[A-Z][A-Za-z'’-]+\s+[A-Z][A-Za-z'’-]+\b/),
+        ),
+        (() => {
+          const end = normalized.search(/\bAbout\s+[A-Z][A-Za-z'’-]+\b|\bAreas of Expertise\b/i);
+          return end > 0 ? end : normalized.length;
+        })(),
+      )
+    : normalized;
+  const phone = phoneText.match(/(?:\+?1[ .-]?)?\(?\d{3}\)?[ .-]\d{3}[ .-]\d{4}/)?.[0]
+    ?? normalized.match(/(?:\+?1[ .-]?)?\(?\d{3}\)?[ .-]\d{3}[ .-]\d{4}/)?.[0];
   if (phone) result.phone = phone;
   const email = normalized.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0];
   if (email) result.email = email;
@@ -345,9 +364,16 @@ function conservativeProfileFromPage(url: string, text: string): Record<string, 
   const labelledLicense = normalized.match(
     /\b(?:agent\s+)?licen[cs]e\s*(?:number|no\.?|#)?\s*[:#-]?\s*(?:(Connecticut|CT|New York|NY|New Jersey|NJ)\s+)?([A-Z]{2,5}[.-]\d{4,12}|\d{4,12})\b/i,
   );
-  const licenseNumber = labelledLicense?.[2];
+  // Keep a direct `License: CT-1234567` match ahead of the broader form.
+  // Some reader renderings put the state prefix immediately next to the
+  // hyphen, which can otherwise be consumed ambiguously by the optional
+  // state group and leave the field blank.
+  const directLicense = normalized.match(
+    /\b(?:agent\s+)?licen[cs]e\s*(?:number|no\.?|#)?\s*:\s*([A-Z]{2,5}[.-]\d{4,12}|\d{4,12})\b/i,
+  )?.[1];
+  const licenseNumber = directLicense ?? labelledLicense?.[2];
   if (licenseNumber) result.licenseNumber = licenseNumber.trim();
-  const licenseState = labelledLicense?.[1];
+  const licenseState = labelledLicense?.[1] ?? licenseNumber?.match(/^(CT|NY|NJ)[.-]/i)?.[1];
   if (licenseState) {
     const state = licenseState.toUpperCase();
     result.licenseStates =

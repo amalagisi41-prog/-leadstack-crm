@@ -26,6 +26,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { compileBusinessProfilePrompt } from "@/lib/business-profile/compile";
+import { openAskAssistant } from "@/components/dashboard/ask-assistant-panel";
 import {
   MediaLibrary,
   type MediaAsset,
@@ -453,6 +454,16 @@ export function BusinessProfileForm() {
     }
   }
 
+  const completionNextSteps = [
+    !content.agentName.trim() ? "Add your name" : null,
+    !content.brokerage.trim() ? "Add your brokerage" : null,
+    !(content.phone.trim() || content.email.trim()) ? "Add a phone or email" : null,
+    !content.serviceAreas.trim() ? "Add your service areas" : null,
+    content.services.length === 0 ? "Choose at least one service" : null,
+    !(content.bio.trim() || content.priceRanges.trim()) ? "Add a short bio or price range" : null,
+    !content.website.trim() ? "Add your website" : null,
+  ].filter((step): step is string => Boolean(step));
+
   if (loading) {
     return (
       <div className="text-muted-foreground flex h-64 items-center justify-center">
@@ -499,6 +510,41 @@ export function BusinessProfileForm() {
           </div>
         </div>
       </div>
+
+      {completeness < 100 ? (
+        <section className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4 dark:border-amber-900 dark:bg-amber-950/20">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold">You’re not stuck — Zack can finish this with you.</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Complete the next item below, or ask Zack for a step-by-step walkthrough. Your draft stays editable and nothing is published until you save it.
+              </p>
+              {completionNextSteps.length > 0 && (
+                <p className="mt-2 text-xs font-medium text-amber-900 dark:text-amber-200">
+                  Next: {completionNextSteps.slice(0, 3).join(" · ")}
+                </p>
+              )}
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              className="shrink-0"
+              onClick={() =>
+                openAskAssistant({
+                  prompt: `I am setting up my Business Blueprint and it is ${completeness}% complete. Walk me through the next missing item one question at a time, then tell me exactly which field to fill in. Do not invent regulated facts such as license numbers or contact details.`,
+                })
+              }
+            >
+              <Sparkles className="mr-1.5 h-4 w-4" /> Ask Zack to guide me
+            </Button>
+          </div>
+        </section>
+      ) : (
+        <section className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 text-sm text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950/20 dark:text-emerald-200">
+          <div className="flex items-center gap-2 font-semibold"><Check className="h-4 w-4" /> Blueprint launch essentials are complete.</div>
+          <p className="mt-1 text-xs">Review your profile, then save it. Zack remains available from the header whenever you want help.</p>
+        </section>
+      )}
 
       <section className="rounded-2xl border border-blue-200 bg-blue-50/60 p-5 dark:border-blue-900 dark:bg-blue-950/20">
         <div className="flex items-start gap-3">
