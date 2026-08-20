@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { toast } from "sonner";
-import { Image as ImageIcon, Save } from "lucide-react";
+import { Image as ImageIcon, Loader2, Save, Upload } from "lucide-react";
 import { useSubAccount } from "@/context/sub-account-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +23,9 @@ export function SubAccountBrandingSection() {
   const { subAccountId, subAccount, isAdmin } = useSubAccount();
   const [logoUrl, setLogoUrl] = useState("");
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Hydrate once when the snapshot resolves. Don't reset on subsequent
   // ticks so the operator's in-flight edits aren't blown away by their
@@ -66,6 +68,54 @@ export function SubAccountBrandingSection() {
     }
   }
 
+  async function handleUpload(file: File) {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please choose an image file for the logo.");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const uploadRes = await fetch(`/api/sub-accounts/${subAccountId}/media`, {
+        method: "POST",
+        body: formData,
+      });
+      const uploadData = (await uploadRes.json().catch(() => ({}))) as {
+        asset?: { url?: string };
+        error?: string;
+      };
+      const uploadedUrl = uploadData.asset?.url?.trim();
+      if (!uploadRes.ok || !uploadedUrl) {
+        throw new Error(uploadData.error ?? "Couldn't upload logo.");
+      }
+
+      const brandingRes = await fetch(
+        `/api/sub-accounts/${subAccountId}/branding`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ logoUrl: uploadedUrl }),
+        },
+      );
+      const brandingData = (await brandingRes.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+      };
+      if (!brandingRes.ok || !brandingData.ok) {
+        throw new Error(brandingData.error ?? "Couldn't save uploaded logo.");
+      }
+
+      setLogoUrl(uploadedUrl);
+      toast.success("Logo uploaded and saved.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Couldn't upload logo.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
   const previewValid = logoUrl.trim() && URL_RE.test(logoUrl.trim());
   const businessName = subAccount?.name ?? "Your client";
 
@@ -88,19 +138,47 @@ export function SubAccountBrandingSection() {
 
       <div className="space-y-1.5">
         <Label htmlFor="sa-logo-url">Logo URL</Label>
-        <Input
-          id="sa-logo-url"
-          type="url"
-          value={logoUrl}
-          onChange={(e) => setLogoUrl(e.target.value)}
-          placeholder={`https://yourcdn.com/${
-            businessName.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "logo"
-          }.png`}
-        />
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Input
+            id="sa-logo-url"
+            type="url"
+            value={logoUrl}
+            onChange={(e) => setLogoUrl(e.target.value)}
+            placeholder={`https://yourcdn.com/${
+              businessName.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "logo"
+            }.png`}
+            className="sm:flex-1"
+          />
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.currentTarget.value = "";
+              if (file) void handleUpload(file);
+            }}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading || saving || !hydrated}
+            className="shrink-0"
+          >
+            {uploading ? (
+              <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Upload className="mr-1 h-3.5 w-3.5" />
+            )}
+            {uploading ? "Uploading…" : "Upload logo"}
+          </Button>
+        </div>
         <p className="text-[11px] text-muted-foreground">
-          Public https URL pointing at {businessName}&apos;s logo (PNG with
-          transparent background works best). Renders at 32&ndash;40px
-          tall. Leave blank to fall back to &ldquo;{businessName}&rdquo; in text.
+          Upload an image to the approved Media Library, or paste a public
+          https URL. PNG with a transparent background works best. Renders at
+          32&ndash;40px tall. Leave blank to fall back to &ldquo;{businessName}&rdquo; in text.
         </p>
       </div>
 
@@ -134,7 +212,7 @@ export function SubAccountBrandingSection() {
       </div>
 
       <div className="flex justify-end">
-        <Button type="submit" disabled={saving || !hydrated}>
+        <Button type="submit" disabled={saving || uploading || !hydrated}>
           <Save className="mr-1 h-3.5 w-3.5" />
           {saving ? "Saving…" : "Save"}
         </Button>
