@@ -205,6 +205,12 @@ export function AskAssistantPanel() {
       if (action.type === "navigate") {
         router.push(action.path);
         setOpen(false);
+      } else if (action.type === "populate_form_from_blueprint") {
+        window.dispatchEvent(
+          new CustomEvent("agentstack:populate-form-from-blueprint", {
+            detail: { formId: action.formId },
+          })
+        );
       } else {
         let endpoint = "";
         let method = "POST";

@@ -50,4 +50,26 @@ describe("sanitizeZackAction", () => {
       }),
     ).toMatchObject({ path: "/sa/demo/forms" });
   });
+
+  it("accepts only a safe Blueprint form-fill action", () => {
+    expect(
+      sanitizeZackAction({
+        type: "populate_form_from_blueprint",
+        formId: "Il5nfo7n3eYDmBjQAYUO",
+        label: "Fill from Blueprint",
+        description: "Fill safe form hints from the approved Blueprint.",
+      }),
+    ).toMatchObject({
+      type: "populate_form_from_blueprint",
+      formId: "Il5nfo7n3eYDmBjQAYUO",
+    });
+    expect(
+      sanitizeZackAction({
+        type: "populate_form_from_blueprint",
+        formId: "../../danger",
+        label: "Fill",
+        description: "Bad path",
+      }),
+    ).toBeNull();
+  });
 });

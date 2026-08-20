@@ -30,6 +30,7 @@ interface ZackActionBase {
 
 export type ZackAction =
   | (ZackActionBase & { type: "navigate"; path: string })
+  | (ZackActionBase & { type: "populate_form_from_blueprint"; formId: string })
   | (ZackActionBase & { type: "set_daily_briefing"; enabled: boolean })
   | (ZackActionBase & {
       type: "set_ai_channel";
@@ -62,8 +63,16 @@ export function sanitizeZackAction(value: unknown): ZackAction | null {
     // Lead Capture is the product name, but its canonical dashboard route is
     // `/forms`. Normalize the legacy/model-invented alias so Zack can never
     // send an operator to a 404 page.
-    const canonicalPath = path.replace(/\/lead-capture(?=\/|$)/, "/forms");
+    const canonicalPath = path
+      .replace(/\/lead-capture(?=\/|$)/, "/forms")
+      .replace(/\/booking\/create(?=\/|$)/, "/booking/new");
     return { type: "navigate", path: canonicalPath, label, description };
+  }
+
+  if (raw.type === "populate_form_from_blueprint") {
+    const formId = text(raw.formId, 120);
+    if (!formId || !/^[A-Za-z0-9_-]+$/.test(formId)) return null;
+    return { type: raw.type, formId, label, description };
   }
 
   if (raw.type === "set_daily_briefing" && typeof raw.enabled === "boolean") {

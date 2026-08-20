@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { toast } from "sonner";
@@ -16,6 +16,7 @@ import {
   ListChecks,
   Phone as PhoneIcon,
   Plus,
+  Sparkles,
   ShieldCheck,
   TextCursor,
   Trash2,
@@ -45,6 +46,7 @@ import {
   type FormSettings,
   type LeadForm,
 } from "@/types/forms";
+import { prefillFormFields } from "@/lib/forms/blueprint-prefill";
 
 /**
  * Headless HTML snippet — gives the developer a copy-pasteable unstyled
@@ -300,6 +302,29 @@ export default function FormBuilderPage() {
     return () => unsub();
   }, [id, user, authLoading]);
 
+  const fillFromBlueprint = useCallback(async () => {
+    if (!form || !subAccount?.id) return;
+    try {
+      const response = await fetch(`/api/sub-accounts/${subAccount.id}/business-profile`);
+      const data = (await response.json()) as { profile?: Parameters<typeof prefillFormFields>[1] };
+      if (!response.ok || !data.profile) throw new Error("Blueprint unavailable");
+      const fields = prefillFormFields(form.fields, data.profile);
+      await updateForm(form.id, { fields });
+      toast.success("Form hints filled from your Business Blueprint.");
+    } catch {
+      toast.error("Couldn't read the Business Blueprint. Try again.");
+    }
+  }, [form, subAccount?.id]);
+
+  useEffect(() => {
+    function onBlueprintFill(event: Event) {
+      const detail = (event as CustomEvent<{ formId?: string }>).detail;
+      if (detail?.formId === id) void fillFromBlueprint();
+    }
+    window.addEventListener("agentstack:populate-form-from-blueprint", onBlueprintFill);
+    return () => window.removeEventListener("agentstack:populate-form-from-blueprint", onBlueprintFill);
+  }, [id, fillFromBlueprint]);
+
   if (loading) return <BuilderSkeleton />;
   if (!form) return <NotFound />;
 
@@ -480,6 +505,10 @@ export default function FormBuilderPage() {
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
+            <Button size="sm" variant="outline" onClick={() => void fillFromBlueprint()}>
+              <Sparkles className="mr-1 h-3.5 w-3.5" />
+              Fill from Blueprint
+            </Button>
           </div>
           <div className="space-y-1.5">
             {form.fields.map((f, i) => {
