@@ -768,8 +768,6 @@ async function importProfile(
     if (typeof value === "string" && isMissingMarker(value))
       (current[key] as string) = "";
   }
-  if (current.website === url || isDirectoryProfileUrl(current.website))
-    current.website = "";
   const next: BusinessProfileContent = { ...current };
   for (const key of IMPORT_KEYS) {
     if (key === "website") continue;
@@ -782,14 +780,20 @@ async function importProfile(
     if (
       extractedWebsite &&
       extractedWebsite !== url &&
-      !isDirectoryProfileUrl(extractedWebsite)
+      !isDirectoryProfileUrl(extractedWebsite) &&
+      !next.website.trim()
     )
       next.website = extractedWebsite;
   }
   if (Array.isArray(extracted.services)) {
-    next.services = extracted.services.filter(
-      (item): item is ServiceSpecialty =>
-        typeof item === "string" && SERVICES.has(item as ServiceSpecialty)
+    next.services = Array.from(
+      new Set([
+        ...next.services,
+        ...extracted.services.filter(
+          (item): item is ServiceSpecialty =>
+            typeof item === "string" && SERVICES.has(item as ServiceSpecialty)
+        ),
+      ])
     );
   }
   if (
