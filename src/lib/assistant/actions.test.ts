@@ -51,6 +51,17 @@ describe("sanitizeZackAction", () => {
     ).toMatchObject({ path: "/sa/demo/forms" });
   });
 
+  it("canonicalizes the legacy booking creation route", () => {
+    expect(
+      sanitizeZackAction({
+        type: "navigate",
+        path: "/sa/demo/booking/create",
+        label: "Create booking page",
+        description: "Open the booking editor.",
+      }),
+    ).toMatchObject({ path: "/sa/demo/booking/new" });
+  });
+
   it("accepts only a safe Blueprint form-fill action", () => {
     expect(
       sanitizeZackAction({
