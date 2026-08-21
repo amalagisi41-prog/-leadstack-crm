@@ -87,14 +87,17 @@ export default function SettingsPage() {
   }, []);
 
   useEffect(() => {
-    if (
-      settingsTab !== "messaging" ||
-      window.location.hash !== "#business-email"
-    )
-      return;
+    if (settingsTab !== "messaging") return;
+    const hashTarget =
+      window.location.hash === "#business-email"
+        ? "business-email"
+        : window.location.hash === "#google-reviews"
+          ? "google-reviews"
+          : null;
+    if (!hashTarget) return;
     const frame = window.requestAnimationFrame(() => {
       document
-        .getElementById("business-email")
+        .getElementById(hashTarget)
         ?.scrollIntoView({ behavior: "auto", block: "start" });
     });
     return () => window.cancelAnimationFrame(frame);
@@ -400,7 +403,9 @@ export default function SettingsPage() {
           <SubAccountEmailDomainSection />
 
           {/* Google reviews — SMS / WhatsApp review-request sends. */}
-          <SubAccountGoogleReviewSection />
+          <div id="google-reviews">
+            <SubAccountGoogleReviewSection />
+          </div>
 
           {/* Daily briefing — once-a-day summary email, self-serve toggle. */}
           <SubAccountDailyBriefingSection />

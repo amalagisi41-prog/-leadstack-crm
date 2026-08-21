@@ -15,6 +15,7 @@ import {
   Phone,
   Search,
   Sparkles,
+  Star,
   Upload,
   Globe2,
   Workflow,
@@ -137,6 +138,7 @@ export function ConnectYourBusiness() {
 
     const settingsHref = saPath("/dashboard/settings");
     const businessEmailHref = `${settingsHref}?tab=messaging#business-email`;
+    const googleReviewsHref = `${settingsHref}?tab=messaging#google-reviews`;
     const contactsHref = saPath("/contacts");
     const formsHref = saPath("/forms");
     const aiAgentsHref = saPath("/ai-agents/web-chat");
@@ -357,8 +359,19 @@ export function ConnectYourBusiness() {
         title: "Google Business Profile",
         blurb: "Save your public profile link, then manage reviews and updates from Google Business Profile.",
         status: "not_connected",
-        actionLabel: "Add profile link",
-        actionHref: saPath("/business-profile"),
+        actionLabel: "Manage profile",
+        actionHref: saPath("/ai-agents/google-business"),
+      },
+      {
+        key: "google-reviews",
+        icon: Star,
+        iconTone: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
+        title: "Google reviews",
+        blurb:
+          "Save your Google review link and configure review requests without losing the connection during onboarding.",
+        status: "not_connected",
+        actionLabel: "Configure reviews",
+        actionHref: googleReviewsHref,
       },
     ];
   }, [subAccount, saPath, webChatEnabled]);

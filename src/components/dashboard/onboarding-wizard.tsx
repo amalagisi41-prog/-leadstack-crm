@@ -394,6 +394,33 @@ function StepBuild({
         </button>
       </div>
 
+      <div className="mt-6 rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-900/50 dark:bg-blue-950/20">
+        <p className="text-sm font-medium">Connect Google before Blueprint (optional)</p>
+        <p className="text-muted-foreground mt-1 text-sm">
+          Keep your Google Business Profile, customer reviews, and Workspace/Gmail tools available throughout setup.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            render={<Link href={saPath("/ai-agents/google-business")} />}
+          >
+            Google profile &amp; reviews
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            render={
+              <Link
+                href={`${saPath("/dashboard/settings")}?tab=messaging#business-email`}
+              />
+            }
+          >
+            Workspace &amp; Gmail
+          </Button>
+        </div>
+      </div>
+
       <TeachingNote>
         AgentStack never asks for provider passwords. Sign in with the domain,
         host, or CRM directly; then return to approve the connection or
