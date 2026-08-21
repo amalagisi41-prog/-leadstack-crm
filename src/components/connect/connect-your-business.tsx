@@ -136,6 +136,7 @@ export function ConnectYourBusiness() {
     if (!subAccount) return [];
 
     const settingsHref = saPath("/dashboard/settings");
+    const businessEmailHref = `${settingsHref}?tab=messaging#business-email`;
     const contactsHref = saPath("/contacts");
     const formsHref = saPath("/forms");
     const aiAgentsHref = saPath("/ai-agents/web-chat");
@@ -205,7 +206,7 @@ export function ConnectYourBusiness() {
           ? "connected"
           : "not_connected",
         actionLabel: subAccount.apiAccessEnabledByAgency ? "Manage" : "Set up",
-        actionHref: settingsHref,
+        actionHref: businessEmailHref,
       },
       {
         key: "email",

@@ -46,7 +46,7 @@ interface DnsRecord {
 function CopyValue({ value }: { value: string }) {
   return (
     <div className="flex items-center gap-2">
-      <code className="flex-1 break-all rounded bg-background px-2 py-1 text-[11px]">
+      <code className="bg-background flex-1 rounded px-2 py-1 text-[11px] break-all">
         {value}
       </code>
       <Button
@@ -96,14 +96,20 @@ function StatusBadge({ status }: { status: string }) {
 function ReplyToBanner({
   subAccountId,
   action,
-  onSaved,
+  initialValue = "",
 }: {
   subAccountId: string;
   action: string;
-  onSaved: () => void;
+  initialValue?: string;
 }) {
-  const [value, setValue] = useState("");
+  const [value, setValue] = useState(initialValue);
+  const [editing, setEditing] = useState(!initialValue.trim());
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setValue(initialValue);
+    setEditing(!initialValue.trim());
+  }, [initialValue]);
 
   async function save(event: FormEvent) {
     event.preventDefault();
@@ -114,15 +120,34 @@ function ReplyToBanner({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ replyToEmail: value }),
       });
-      const data = (await res.json().catch(() => ({}))) as { error?: string };
-      if (!res.ok) throw new Error(data.error ?? "Could not save.");
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+      };
+      if (!res.ok || data.ok === false) {
+        throw new Error(data.error ?? "Could not save.");
+      }
       toast.success("Reply-To address saved.");
-      onSaved();
+      setEditing(false);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not save.");
     } finally {
       setSaving(false);
     }
+  }
+
+  if (!editing && value.trim()) {
+    return (
+      <div className="bg-emerald-500/5 text-emerald-700 dark:text-emerald-400 flex items-center gap-3 rounded-lg border border-emerald-500/30 p-4 text-sm">
+        <CheckCircle2 className="h-4 w-4 shrink-0" />
+        <p className="min-w-0 flex-1">
+          Replies will go to <span className="font-medium">{value.trim()}</span>.
+        </p>
+        <Button type="button" size="sm" variant="outline" onClick={() => setEditing(true)}>
+          Change Reply-To
+        </Button>
+      </div>
+    );
   }
 
   return (
@@ -136,13 +161,16 @@ function ReplyToBanner({
           inbox by default — replies to it will bounce unless Reply-To routes
           them elsewhere. Set one here, then {action}.
         </p>
-        <form onSubmit={save} className="mt-3 flex flex-wrap items-center gap-2">
+        <form
+          onSubmit={save}
+          className="mt-3 flex flex-wrap items-center gap-2"
+        >
           <Input
             type="email"
             value={value}
             onChange={(e) => setValue(e.target.value)}
             placeholder="you@yourbrokerage.com"
-            className="h-9 w-full max-w-xs bg-background"
+            className="bg-background h-9 w-full max-w-xs"
             required
           />
           <Button type="submit" size="sm" disabled={saving || !value.trim()}>
@@ -226,7 +254,7 @@ export function SubAccountEmailDomainSection() {
     try {
       const res = await fetch(
         `/api/sub-accounts/${subAccountId}/resend/verify`,
-        { method: "POST" },
+        { method: "POST" }
       );
       const data = (await res.json().catch(() => ({}))) as {
         ok?: boolean;
@@ -242,7 +270,7 @@ export function SubAccountEmailDomainSection() {
         toast.success("Domain verified. This sub-account now sends from it.");
       } else {
         toast.info(
-          "Not verified yet — DNS can take a few minutes to propagate. Try again shortly.",
+          "Not verified yet — DNS can take a few minutes to propagate. Try again shortly."
         );
       }
     } catch (err) {
@@ -255,7 +283,7 @@ export function SubAccountEmailDomainSection() {
   async function handleRemove() {
     if (
       !confirm(
-        "Remove this sending domain? Email for this sub-account reverts to the shared sender. The domain is deleted from Resend — re-adding it later requires verifying DNS again.",
+        "Remove this sending domain? Email for this sub-account reverts to the shared sender. The domain is deleted from Resend — re-adding it later requires verifying DNS again."
       )
     ) {
       return;
@@ -285,27 +313,38 @@ export function SubAccountEmailDomainSection() {
   }
 
   return (
-    <section className="rounded-2xl border bg-card p-6">
+    <section id="business-email" className="bg-card rounded-2xl border p-6">
       <header className="mb-4 flex items-start gap-3">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
           <Mail className="h-4 w-4" />
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="text-base font-semibold">Email sending domain</h2>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            Send this sub-account&apos;s email from its own domain instead of
-            the shared sender. Add a subdomain, drop in the DNS records, and
-            verify. Off by default — until verified, email uses the shared
-            deployment sender.
+          <h2 className="text-base font-semibold">Business email</h2>
+          <p className="text-muted-foreground mt-0.5 text-sm">
+            Choose your business email settings and, optionally, verify a
+            sending domain. Until verified, email uses the shared deployment
+            sender.
           </p>
         </div>
       </header>
 
+      <ReplyToBanner
+        subAccountId={subAccountId}
+        action={
+          gateOpen
+            ? cfg
+              ? "verify your domain"
+              : "add your domain"
+            : "finish your business email setup"
+        }
+        initialValue={subAccount?.replyToEmail ?? ""}
+      />
+
       {!gateOpen ? (
-        <div className="flex items-start gap-3 rounded-lg border border-dashed bg-muted/30 p-4 text-sm">
-          <Lock className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+        <div className="bg-muted/30 flex items-start gap-3 rounded-lg border border-dashed p-4 text-sm">
+          <Lock className="text-muted-foreground mt-0.5 h-4 w-4 shrink-0" />
           <div className="text-muted-foreground">
-            <p className="font-medium text-foreground">
+            <p className="text-foreground font-medium">
               Disabled by your agency
             </p>
             <p className="mt-1">
@@ -315,12 +354,10 @@ export function SubAccountEmailDomainSection() {
             </p>
           </div>
         </div>
-      ) : !cfg && needsReplyTo ? (
-        <ReplyToBanner subAccountId={subAccountId} action="add your domain" onSaved={() => window.location.reload()} />
       ) : !cfg ? (
         <form onSubmit={handleAdd} className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="sm:col-span-2 space-y-1.5">
+            <div className="space-y-1.5 sm:col-span-2">
               <Label htmlFor="resend-domain">Sending subdomain</Label>
               <Input
                 id="resend-domain"
@@ -330,7 +367,7 @@ export function SubAccountEmailDomainSection() {
                 autoComplete="off"
                 spellCheck={false}
               />
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-muted-foreground text-[11px]">
                 Use a subdomain (e.g. <code>mail.acme.com</code>), not your root
                 domain — it keeps your main domain&apos;s reputation isolated.
               </p>
@@ -355,7 +392,7 @@ export function SubAccountEmailDomainSection() {
                 autoComplete="off"
                 spellCheck={false}
               />
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-muted-foreground text-[11px]">
                 The part before the @. Defaults to <code>hello</code>.
               </p>
             </div>
@@ -375,13 +412,10 @@ export function SubAccountEmailDomainSection() {
         </form>
       ) : (
         <div className="space-y-4">
-          {needsReplyTo && (
-            <ReplyToBanner subAccountId={subAccountId} action="verify your domain" onSaved={() => window.location.reload()} />
-          )}
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-background p-3">
+          <div className="bg-background flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3">
             <div className="min-w-0">
               <p className="truncate text-sm font-medium">{cfg.emailFrom}</p>
-              <p className="text-xs text-muted-foreground">{cfg.domainName}</p>
+              <p className="text-muted-foreground text-xs">{cfg.domainName}</p>
             </div>
             <StatusBadge status={cfg.status} />
           </div>
@@ -410,10 +444,10 @@ export function SubAccountEmailDomainSection() {
                   {records.map((r, i) => (
                     <div
                       key={`${r.type}-${r.name}-${i}`}
-                      className="space-y-2 rounded-lg border bg-muted/30 p-3"
+                      className="bg-muted/30 space-y-2 rounded-lg border p-3"
                     >
-                      <div className="flex items-center gap-2 text-xs font-medium text-foreground">
-                        <span className="rounded bg-background px-1.5 py-0.5 uppercase tracking-wide">
+                      <div className="text-foreground flex items-center gap-2 text-xs font-medium">
+                        <span className="bg-background rounded px-1.5 py-0.5 tracking-wide uppercase">
                           {r.type}
                         </span>
                         {r.record && (
@@ -428,11 +462,13 @@ export function SubAccountEmailDomainSection() {
                         )}
                       </div>
                       <div className="space-y-1">
-                        <p className="text-[11px] text-muted-foreground">Name</p>
+                        <p className="text-muted-foreground text-[11px]">
+                          Name
+                        </p>
                         <CopyValue value={r.name} />
                       </div>
                       <div className="space-y-1">
-                        <p className="text-[11px] text-muted-foreground">
+                        <p className="text-muted-foreground text-[11px]">
                           Value
                         </p>
                         <CopyValue value={r.value} />
@@ -463,7 +499,7 @@ export function SubAccountEmailDomainSection() {
               <Button
                 type="button"
                 size="sm"
-                disabled={verifying || needsReplyTo}
+                disabled={verifying}
                 onClick={handleVerify}
               >
                 {verifying ? (

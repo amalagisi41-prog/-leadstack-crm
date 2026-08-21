@@ -54,6 +54,9 @@ export async function GET(
   ]);
 
   const sub = subSnap.data() ?? {};
+  const replyToEmail =
+    typeof sub.replyToEmail === "string" ? sub.replyToEmail.trim() : "";
+  const hasTrustedReplyTo = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(replyToEmail);
   const profile = (profileSnap.data() ??
     {}) as Partial<BusinessProfileContent> & {
     completeness?: number;
@@ -132,7 +135,8 @@ export async function GET(
     hasLeadForm: !formsSnap.empty,
     hasBookingPage: !bookingSnap.empty,
     webChatEnabled: chatSnap.exists && chatSnap.data()?.enabled === true,
-    businessEmailVerified: sub.resendConfig?.status === "verified",
+        businessEmailVerified:
+          hasTrustedReplyTo || sub.resendConfig?.status === "verified",
   });
 
   return NextResponse.json({

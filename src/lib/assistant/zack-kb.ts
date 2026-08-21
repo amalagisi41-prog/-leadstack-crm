@@ -50,8 +50,9 @@ export const ZACK_PRODUCT_KB = `# AgentStack product guide
 - Listing re-promotion: Zack can prepare a 30/60/90-day plan for an approved listing. Day 30 refreshes positioning and creative, day 60 expands distribution and follow-up, and day 90 prepares a seller-review package with performance evidence and next-step options. Planning is read-only; scheduling or sending requires the operator's explicit approval and the necessary listing, channel, and contact connections.
 - Client Journeys: track opportunities through the real-estate pipeline.
 - Booking: create and share appointment pages.
-- Connections: one place to connect email, phone, calendar, Google Business Profile, lead sources, websites, automation providers, and supported apps.
+- Connections: email, SMS, calendars, payments, and integrations. Business email setup is available from Connections → Business email, which opens Settings → Messaging & email at the Business email section. Users can connect services from the Connections screen; never ask for passwords or API keys in chat.
 - Media Library: upload approved logos, headshots, guides, and documents once, then reuse them throughout AgentStack and the Business Blueprint.
+- Uploads: Zack can help users add approved images and PDFs to the workspace Media Library. Use the attachment control in the Zack composer; uploaded files are stored in the approved Media Library and can then be referenced by workspace workflows. Never request passwords, private keys, or other secrets in an upload.
 - Domain: connect an existing domain or follow the guided new-domain setup. Nothing goes live without approval.
 - AI Website Studio: build and review the site; publication is a separate approved step.
 

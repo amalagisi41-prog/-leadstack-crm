@@ -369,7 +369,7 @@ describe("POST business-profile/import", () => {
   });
 
   it("keeps the first-party profile phone ahead of a referral footer phone", async () => {
-    const source = `Seamus Costigan Licensed Real Estate Agent & Investor Marr & Caruso Realty Group License: CT-0804225 sc.newbridge@gmail.com (203) 550-0531 Marr & Caruso Realty Group (978) 622-2360 ${"Serving Stamford and Fairfield County. ".repeat(8)}`;
+    const source = `Marr & Caruso Realty Group (978) 622-2360 footer referral Seamus Costigan Licensed Real Estate Agent & Investor Marr & Caruso Realty Group License: CT-0804225 sc.newbridge@gmail.com (203) 550-0531 About Seamus ${"Serving Stamford and Fairfield County. ".repeat(8)}`;
     vi.mocked(readPublicPageContent).mockResolvedValueOnce(pageOf(source));
 
     const res = await POST(

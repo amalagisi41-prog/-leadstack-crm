@@ -1,16 +1,25 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+} from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Bot,
   Check,
   Eye,
   EyeOff,
+  ImageIcon,
   Loader2,
+  Paperclip,
   Send,
   ShieldCheck,
   Sparkles,
+  Upload,
   X,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
@@ -79,6 +88,12 @@ interface Msg {
   action?: ZackAction | null;
 }
 
+interface MediaAttachment {
+  id?: string;
+  name: string;
+  url: string;
+}
+
 export function AskAssistantPanel() {
   const pathname = usePathname();
   const router = useRouter();
@@ -88,11 +103,15 @@ export function AskAssistantPanel() {
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState(false);
   const [screenContextAllowed, setScreenContextAllowed] = useState(false);
+  const [attachment, setAttachment] = useState<MediaAttachment | null>(null);
+  const [uploadingAttachment, setUploadingAttachment] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [actionState, setActionState] = useState<
     Record<number, "running" | "done" | "error">
   >({});
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const attachmentInputRef = useRef<HTMLInputElement>(null);
 
   const firstName = (user?.displayName ?? "").split(" ")[0] || "";
   const subAccountId = pathname?.match(/^\/sa\/([^/]+)/)?.[1] ?? null;
@@ -131,18 +150,37 @@ export function AskAssistantPanel() {
   const askRef = useRef<(q: string) => void>(() => {});
 
   const ask = useCallback(
-    async (question: string) => {
+    async (
+      question: string,
+      attachedFile: MediaAttachment | null = attachment
+    ) => {
       const q = question.trim();
-      if (!q || thinking) return;
+      if ((!q && !attachedFile) || thinking) return;
+      const prompt = [
+        q || "Please use the uploaded file for the current task.",
+        attachedFile
+          ? `[Approved Media Library attachment: ${attachedFile.name} — ${attachedFile.url}]`
+          : "",
+      ]
+        .filter(Boolean)
+        .join("\n\n");
       setInput("");
-      setMessages((m) => [...m, { role: "user", content: q }]);
+      setAttachment(null);
+      setUploadError(null);
+      setMessages((m) => [
+        ...m,
+        {
+          role: "user",
+          content: `${q || "Use this uploaded file."}${attachedFile ? `\n\nAttached: ${attachedFile.name}` : ""}`,
+        },
+      ]);
       setThinking(true);
       try {
         const res = await fetch("/api/assistant", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            question: q,
+            question: prompt,
             history: messages.slice(-10),
             subAccountId,
             mode: isStudio ? "studio" : "crm",
@@ -181,6 +219,7 @@ export function AskAssistantPanel() {
       }
     },
     [
+      attachment,
       messages,
       thinking,
       subAccountId,
@@ -194,6 +233,42 @@ export function AskAssistantPanel() {
   useEffect(() => {
     askRef.current = (q: string) => void ask(q);
   }, [ask]);
+
+  async function handleAttachmentChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || !subAccountId) return;
+    setUploadError(null);
+    setUploadingAttachment(true);
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      const res = await fetch(`/api/sub-accounts/${subAccountId}/media`, {
+        method: "POST",
+        body,
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        asset?: { id?: string; name?: string; url?: string };
+        error?: string;
+      };
+      if (!res.ok || !data.asset?.url) {
+        throw new Error(data.error ?? "Upload failed.");
+      }
+      setAttachment({
+        id: data.asset.id,
+        name: data.asset.name ?? file.name,
+        url: data.asset.url,
+      });
+    } catch (error) {
+      setUploadError(
+        error instanceof Error
+          ? error.message
+          : "Upload failed. Please try again."
+      );
+    } finally {
+      setUploadingAttachment(false);
+    }
+  }
 
   async function approveAction(action: ZackAction, messageIndex: number) {
     if (!subAccountId && action.type !== "navigate") {
@@ -395,36 +470,101 @@ export function AskAssistantPanel() {
         </div>
 
         {/* composer */}
-        <form
-          className="flex shrink-0 items-end gap-2 border-t p-3"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void ask(input);
-          }}
-        >
-          <textarea
-            ref={inputRef}
-            rows={1}
-            value={input}
-            placeholder={`Ask ${ASSISTANT_NAME}…`}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                void ask(input);
-              }
+        <div className="shrink-0 border-t p-3">
+          {attachment ? (
+            <div className="bg-muted mb-2 flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-xs">
+              <span className="truncate">Attached: {attachment.name}</span>
+              <button
+                type="button"
+                className="text-muted-foreground hover:text-foreground shrink-0"
+                onClick={() => setAttachment(null)}
+              >
+                Remove
+              </button>
+            </div>
+          ) : null}
+          {uploadError ? (
+            <p className="mb-2 text-xs text-red-600">{uploadError}</p>
+          ) : null}
+            <input
+              ref={attachmentInputRef}
+              hidden
+              type="file"
+              accept="image/*,.pdf"
+              onChange={(event) => void handleAttachmentChange(event)}
+            />
+            <div className="mb-2 flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="bg-muted/60 hover:bg-muted flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-colors"
+                onClick={() =>
+                  subAccountId && router.push(`/sa/${subAccountId}/media`)
+                }
+              >
+                <ImageIcon className="h-3.5 w-3.5" />
+                Open Media Library
+              </button>
+              <button
+                type="button"
+                className="bg-muted/60 hover:bg-muted flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-colors disabled:opacity-40"
+                onClick={() => attachmentInputRef.current?.click()}
+                disabled={uploadingAttachment || thinking}
+              >
+                <Upload className="h-3.5 w-3.5" />
+                Upload approved media
+              </button>
+            </div>
+            <p className="text-muted-foreground mb-2 text-[11px]">
+              Upload an image or PDF to the approved Media Library; Zack can use it in this task.
+            </p>
+            <form
+            className="flex items-end gap-2 p-0"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void ask(input);
             }}
-            className="bg-muted/60 placeholder:text-muted-foreground/60 max-h-32 min-h-[44px] flex-1 resize-none rounded-full border px-4 py-2.5 text-sm outline-none focus:border-rose-500/50 focus:ring-1 focus:ring-rose-500/30"
-          />
-          <button
-            type="submit"
-            disabled={!input.trim() || thinking}
-            aria-label="Send"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-rose-600 text-white transition-opacity hover:opacity-90 disabled:opacity-40"
           >
-            <Send className="h-4 w-4" />
-          </button>
-        </form>
+            <button
+              type="button"
+              aria-label="Upload file to Media Library"
+              className="bg-muted/60 hover:bg-muted flex h-11 w-11 shrink-0 items-center justify-center rounded-full border transition-colors disabled:opacity-40"
+              onClick={() => attachmentInputRef.current?.click()}
+              disabled={uploadingAttachment || thinking}
+            >
+              {uploadingAttachment ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Paperclip className="h-4 w-4" />
+              )}
+            </button>
+            <textarea
+              ref={inputRef}
+              rows={1}
+              value={input}
+              placeholder={`Ask ${ASSISTANT_NAME}…`}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  void ask(input);
+                }
+              }}
+              className="bg-muted/60 placeholder:text-muted-foreground/60 max-h-32 min-h-[44px] flex-1 resize-none rounded-full border px-4 py-2.5 text-sm outline-none focus:border-rose-500/50 focus:ring-1 focus:ring-rose-500/30"
+            />
+            <button
+              type="submit"
+              disabled={
+                (!input.trim() && !attachment) ||
+                thinking ||
+                uploadingAttachment
+              }
+              aria-label="Send"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-rose-600 text-white transition-opacity hover:opacity-90 disabled:opacity-40"
+            >
+              <Send className="h-4 w-4" />
+            </button>
+          </form>
+        </div>
       </aside>
     </>
   );

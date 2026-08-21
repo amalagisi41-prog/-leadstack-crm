@@ -86,6 +86,20 @@ export default function SettingsPage() {
     }
   }, []);
 
+  useEffect(() => {
+    if (
+      settingsTab !== "messaging" ||
+      window.location.hash !== "#business-email"
+    )
+      return;
+    const frame = window.requestAnimationFrame(() => {
+      document
+        .getElementById("business-email")
+        ?.scrollIntoView({ behavior: "auto", block: "start" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [settingsTab]);
+
   function changeSettingsTab(tab: string) {
     setSettingsTab(tab);
     const url = new URL(window.location.href);
@@ -210,12 +224,26 @@ export default function SettingsPage() {
           </Link>
           .
         </p>
+        <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-blue-200 bg-blue-50/60 p-4 text-sm dark:border-blue-900 dark:bg-blue-950/30">
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold">Business email</p>
+            <p className="text-muted-foreground">
+              Choose where replies go and configure your sending domain.
+            </p>
+          </div>
+          <Link
+            className="bg-primary text-primary-foreground rounded-md px-3 py-2 font-medium"
+            href={`/sa/${subAccountId}/dashboard/settings?tab=messaging#business-email`}
+          >
+            Open business email setup
+          </Link>
+        </div>
       </div>
 
       <Tabs value={settingsTab} onValueChange={changeSettingsTab}>
         <TabsList>
           <TabsTrigger value="admin">Admin</TabsTrigger>
-          <TabsTrigger value="messaging">Messaging</TabsTrigger>
+          <TabsTrigger value="messaging">Messaging &amp; email</TabsTrigger>
           <TabsTrigger value="api">API</TabsTrigger>
           <TabsTrigger value="custom-fields">Custom Fields</TabsTrigger>
           <TabsTrigger value="import">Importer</TabsTrigger>
