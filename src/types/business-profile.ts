@@ -135,6 +135,7 @@ export interface BusinessProfileContent {
   logoUrl: string;
   buyerGuideUrl: string;
   sellerGuideUrl: string;
+  googleBusinessProfileUrl: string;
   testimonials: string;
   vendors: string; // preferred lenders/attorneys/inspectors/photographers
 
@@ -199,6 +200,7 @@ export const EMPTY_BUSINESS_PROFILE: BusinessProfileContent = {
   logoUrl: DEFAULT_AGENTSTACK_LOGO_SHEET_URL,
   buyerGuideUrl: "",
   sellerGuideUrl: "",
+  googleBusinessProfileUrl: "",
   testimonials: "",
   vendors: "",
   buyerProcess: "",

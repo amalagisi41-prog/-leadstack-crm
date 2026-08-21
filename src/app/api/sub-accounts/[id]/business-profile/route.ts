@@ -76,6 +76,7 @@ const STRING_KEYS: (keyof BusinessProfileContent)[] = [
   "logoUrl",
   "buyerGuideUrl",
   "sellerGuideUrl",
+  "googleBusinessProfileUrl",
   "testimonials",
   "vendors",
   "buyerProcess",

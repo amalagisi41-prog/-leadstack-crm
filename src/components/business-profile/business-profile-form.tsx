@@ -840,6 +840,33 @@ export function BusinessProfileForm() {
           </Field>
         </div>
         <Field
+          label="Google Business Profile"
+          hint="Optional: save your public profile link so Zack and your website workflows can reference it."
+        >
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <input
+              className={`${input} flex-1`}
+              type="url"
+              value={content.googleBusinessProfileUrl}
+              onChange={(event) => set("googleBusinessProfileUrl", event.target.value)}
+              placeholder="https://g.page/your-business"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              render={
+                <a
+                  href="https://business.google.com/"
+                  target="_blank"
+                  rel="noreferrer"
+                />
+              }
+            >
+              Open Google Business Profile
+            </Button>
+          </div>
+        </Field>
+        <Field
           label="Hand off to a human when…"
           hint="When should the AI stop and get you involved?"
           {...ai("handoffRules")}

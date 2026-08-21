@@ -353,11 +353,12 @@ export function ConnectYourBusiness() {
       {
         key: "gbp",
         icon: Sparkles,
-        iconTone: "bg-muted text-muted-foreground",
+        iconTone: "bg-blue-100 text-blue-700",
         title: "Google Business Profile",
-        blurb: "Reply to reviews and post updates without leaving AgentStack.",
-        status: "coming_soon",
-        actionLabel: "Coming soon",
+        blurb: "Save your public profile link, then manage reviews and updates from Google Business Profile.",
+        status: "not_connected",
+        actionLabel: "Add profile link",
+        actionHref: saPath("/business-profile"),
       },
     ];
   }, [subAccount, saPath, webChatEnabled]);

@@ -357,6 +357,30 @@ export default function SiteHealthPage() {
           ))}
         </div>
       </section>
+      <section className="bg-card rounded-2xl border p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">
+              Optional setup
+            </p>
+            <h2 className="mt-1 text-lg font-semibold">Connect your Google Business Profile</h2>
+            <p className="text-muted-foreground mt-1 text-sm">
+              Save your public GBP link in the Blueprint so Zack and your website workflows can reference it.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button render={<Link href={saPath("/business-profile")} />}>Open Blueprint</Button>
+            <Button
+              variant="outline"
+              render={
+                <a href="https://business.google.com/" target="_blank" rel="noreferrer" />
+              }
+            >
+              Open Google Business Profile
+            </Button>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
