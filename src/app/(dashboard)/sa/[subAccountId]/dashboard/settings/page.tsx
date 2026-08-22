@@ -24,6 +24,7 @@ import { SubAccountSmsSection } from "@/components/settings/sub-account-sms-sect
 import { SubAccountA2pSection } from "@/components/settings/sub-account-a2p-section";
 import { SubAccountMetaSection } from "@/components/settings/sub-account-meta-section";
 import { SubAccountEmailDomainSection } from "@/components/settings/sub-account-email-domain-section";
+import { EmailSetupWizardDialog } from "@/components/settings/email-setup-wizard-dialog";
 import { SubAccountPayPalSection } from "@/components/settings/sub-account-paypal-section";
 import { SubAccountGoogleReviewSection } from "@/components/settings/sub-account-google-review-section";
 import { SubAccountDailyBriefingSection } from "@/components/settings/sub-account-daily-briefing-section";
@@ -73,6 +74,7 @@ export default function SettingsPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [deals, setDeals] = useState<Deal[]>([]);
   const [settingsTab, setSettingsTab] = useState("admin");
+  const [emailSetupOpen, setEmailSetupOpen] = useState(false);
 
   useEffect(() => {
     const requestedTab = new URLSearchParams(window.location.search).get("tab");
@@ -234,12 +236,12 @@ export default function SettingsPage() {
               Choose where replies go and configure your sending domain.
             </p>
           </div>
-          <Link
-            className="bg-primary text-primary-foreground rounded-md px-3 py-2 font-medium"
-            href={`/sa/${subAccountId}/dashboard/settings?tab=messaging#business-email`}
+          <Button
+            onClick={() => setEmailSetupOpen(true)}
+            className="bg-primary text-primary-foreground"
           >
             Open business email setup
-          </Link>
+          </Button>
         </div>
       </div>
 
@@ -423,6 +425,11 @@ export default function SettingsPage() {
           <SubAccountWebhooksSection />
         </TabsContent>
       </Tabs>
+
+      <EmailSetupWizardDialog
+        open={emailSetupOpen}
+        onOpenChange={setEmailSetupOpen}
+      />
     </div>
   );
 }
