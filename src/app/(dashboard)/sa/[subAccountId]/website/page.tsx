@@ -13,6 +13,7 @@ import {
 } from "@/hooks/use-gitpage-status";
 import { Button } from "@/components/ui/button";
 import { WebsiteBuilder } from "@/components/website/website-builder";
+import { WebsiteImportDialog } from "@/components/website/website-import-dialog";
 import { MAX_WEBSITES_PER_SUBACCOUNT } from "@/lib/website/limits";
 import type { SiteLinks } from "@/lib/public-site/site-links";
 import type { WebsiteDoc } from "@/types/website";
@@ -165,22 +166,26 @@ export default function WebsitePage() {
         <div className="rounded-2xl border bg-card p-8 text-center">
           <p className="text-sm font-medium">No websites yet</p>
           <p className="mx-auto mt-1 max-w-sm text-xs text-muted-foreground">
-            Add your first site to get started. You can build up to{" "}
-            {MAX_WEBSITES_PER_SUBACCOUNT} per client.
+            Import your existing website or create a new one from scratch. You
+            can build up to {MAX_WEBSITES_PER_SUBACCOUNT} per client.
           </p>
-          <Button
-            type="button"
-            className="mt-4"
-            onClick={handleAdd}
-            disabled={creating || gateBlocked}
-          >
-            {creating ? (
-              <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-            ) : (
-              <Plus className="mr-1 h-4 w-4" />
-            )}
-            Add website
-          </Button>
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row justify-center">
+            <Button
+              type="button"
+              onClick={handleAdd}
+              disabled={creating || gateBlocked}
+            >
+              {creating ? (
+                <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+              ) : (
+                <Plus className="mr-1 h-4 w-4" />
+              )}
+              Create new site
+            </Button>
+            <WebsiteImportDialog
+              subAccountId={subAccountId}
+            />
+          </div>
         </div>
       ) : (
         <div className="space-y-4">
@@ -199,21 +204,28 @@ export default function WebsitePage() {
               {orderedSites.length} of {MAX_WEBSITES_PER_SUBACCOUNT} websites
               used.
             </p>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleAdd}
-              disabled={creating || atCap || gateBlocked}
-              title={atCap ? "Remove a website to add another." : undefined}
-            >
-              {creating ? (
-                <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-              ) : (
-                <Plus className="mr-1 h-4 w-4" />
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleAdd}
+                disabled={creating || atCap || gateBlocked}
+                title={atCap ? "Remove a website to add another." : undefined}
+              >
+                {creating ? (
+                  <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                ) : (
+                  <Plus className="mr-1 h-4 w-4" />
+                )}
+                {atCap ? "Limit reached" : "Add website"}
+              </Button>
+              {!atCap && (
+                <WebsiteImportDialog
+                  subAccountId={subAccountId}
+                />
               )}
-              {atCap ? "Limit reached" : "Add website"}
-            </Button>
+            </div>
           </div>
         </div>
       )}
