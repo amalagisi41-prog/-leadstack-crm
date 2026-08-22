@@ -50,6 +50,7 @@ export function GoogleOAuthImport({
     null
   );
   const [connected, setConnected] = useState(isConnected);
+  const [importedSuccessfully, setImportedSuccessfully] = useState(false);
 
   // Handle OAuth callback
   useEffect(() => {
@@ -146,8 +147,13 @@ export function GoogleOAuthImport({
     if (previewData?.profile) {
       onProfileImported(previewData.profile);
       setPreviewOpen(false);
-      toast.success("Google Business Profile imported. Review before saving.");
+      setImportedSuccessfully(true);
+      toast.success("Google Business Profile imported. Review the fields below.");
     }
+  }
+
+  function handleClearImportStatus() {
+    setImportedSuccessfully(false);
   }
 
   function handleDisconnect() {
@@ -222,6 +228,86 @@ export function GoogleOAuthImport({
           )}
         </div>
       </div>
+
+      {/* Post-Import Guidance */}
+      {importedSuccessfully && previewData?.profile && (
+        <div className="mt-4 rounded-lg border border-green-200 bg-green-50/40 p-4 dark:border-green-900 dark:bg-green-950/30">
+          <div className="flex items-start gap-3">
+            <Check className="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
+            <div className="flex-1">
+              <h4 className="font-semibold text-green-900 dark:text-green-100">
+                Successfully imported from Google Business Profile
+              </h4>
+              <p className="mt-2 text-sm text-green-800 dark:text-green-200">
+                We've pre-filled your Blueprint with the following information from your Google Business Profile:
+              </p>
+
+              {/* Imported fields list */}
+              <ul className="mt-3 space-y-1 text-sm text-green-800 dark:text-green-200">
+                {previewData.profile.agentName && (
+                  <li className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-green-600 dark:bg-green-400" />
+                    Your name: <span className="font-medium">{previewData.profile.agentName}</span>
+                  </li>
+                )}
+                {previewData.profile.phone && (
+                  <li className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-green-600 dark:bg-green-400" />
+                    Phone: <span className="font-medium">{previewData.profile.phone}</span>
+                  </li>
+                )}
+                {previewData.profile.email && (
+                  <li className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-green-600 dark:bg-green-400" />
+                    Email: <span className="font-medium">{previewData.profile.email}</span>
+                  </li>
+                )}
+                {previewData.profile.brokerage && (
+                  <li className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-green-600 dark:bg-green-400" />
+                    Brokerage: <span className="font-medium">{previewData.profile.brokerage}</span>
+                  </li>
+                )}
+                {previewData.profile.website && (
+                  <li className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-green-600 dark:bg-green-400" />
+                    Website: <span className="font-medium">{previewData.profile.website}</span>
+                  </li>
+                )}
+                {previewData.profile.serviceAreas && (
+                  <li className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-green-600 dark:bg-green-400" />
+                    Service areas: <span className="font-medium">{previewData.profile.serviceAreas}</span>
+                  </li>
+                )}
+                {previewData.profile.bio && (
+                  <li className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-green-600 dark:bg-green-400" />
+                    Bio: <span className="font-medium">{previewData.profile.bio}</span>
+                  </li>
+                )}
+              </ul>
+
+              <div className="mt-4 rounded-lg bg-white/50 p-3 dark:bg-green-950/50">
+                <p className="text-sm font-medium text-green-900 dark:text-green-100">
+                  Next step: Review the imported data above and add any missing information, then click the <span className="font-semibold">Save Blueprint</span> button to complete your setup.
+                </p>
+              </div>
+
+              <div className="mt-3">
+                <Button
+                  type="button"
+                  onClick={handleClearImportStatus}
+                  variant="outline"
+                  size="sm"
+                >
+                  Got it, let me review
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Preview Dialog */}
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
