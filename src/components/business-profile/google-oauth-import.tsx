@@ -134,7 +134,7 @@ export function GoogleOAuthImport({
         );
       } else {
         const errorCode = data.code;
-        let errorMessage = data.error || "Couldn't import from Google this time";
+        const errorMessage = data.error || "Couldn't import from Google this time";
 
         // Suggest next steps based on error, but don't block
         if (errorCode === "NO_GOOGLE_PROFILE") {
