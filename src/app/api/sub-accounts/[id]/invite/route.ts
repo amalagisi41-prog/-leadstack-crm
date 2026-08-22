@@ -166,7 +166,7 @@ export async function POST(
           inviteUrl,
         }),
         subAccountId,
-        googleWorkspaceConfig: (sub as any)?.googleWorkspaceConfig,
+        googleWorkspaceConfig: sub?.googleWorkspaceConfig,
       });
       mailed = true;
     } catch (err) {

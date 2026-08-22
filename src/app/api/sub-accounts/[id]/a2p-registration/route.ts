@@ -5,6 +5,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { requireSubAccountAdmin } from "@/lib/auth/require-tenancy";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { emailIsConfigured, sendEmail } from "@/lib/comms/resend";
+import type { GoogleWorkspaceConfig } from "@/types/tenancy";
 import type { A2pCarrierStatus, A2pRegistration, SubAccountDoc } from "@/types";
 
 const VALID_STATUSES: A2pCarrierStatus[] = [
@@ -113,7 +114,7 @@ async function maybeSendStatusEmail(input: {
   note: string | null;
   to: string | null;
   subAccountId?: string;
-  googleWorkspaceConfig?: any;
+  googleWorkspaceConfig?: GoogleWorkspaceConfig | null;
 }) {
   if (!input.to || !emailIsConfigured()) return;
 

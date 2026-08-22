@@ -2,6 +2,7 @@ import "server-only";
 
 import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
+import type { GoogleWorkspaceConfig } from "@/types/tenancy";
 
 import { getAdminDb } from "@/lib/firebase/admin";
 import { emailIsConfigured, sendEmail, tenantFrom } from "@/lib/comms/resend";
@@ -628,7 +629,7 @@ interface SendWithIcs {
   from?: string;
   icsAttachment?: { filename: string; content: string };
   subAccountId?: string;
-  googleWorkspaceConfig?: any;
+  googleWorkspaceConfig?: GoogleWorkspaceConfig | null;
 }
 
 function buildIcsAttachment(params: {

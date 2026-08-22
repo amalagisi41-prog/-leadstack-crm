@@ -2,6 +2,7 @@ import "server-only";
 
 import { emailIsConfigured, sendEmail } from "@/lib/comms/resend";
 import { CUSTOM_BRAND } from "@/config/landing";
+import type { GoogleWorkspaceConfig } from "@/types/tenancy";
 
 /**
  * One-shot reminder sent ~24h after a new-agency Stripe checkout completes
@@ -21,7 +22,7 @@ export async function sendClaimReminderEmail({
   to: string;
   claimUrl: string;
   subAccountId?: string;
-  googleWorkspaceConfig?: any;
+  googleWorkspaceConfig?: GoogleWorkspaceConfig;
 }): Promise<string | null> {
   if (!emailIsConfigured()) {
     console.warn("[claim-reminder] email not configured — skipping");

@@ -1,6 +1,7 @@
 import "server-only";
 
 import { emailIsConfigured, sendEmail } from "@/lib/comms/resend";
+import type { GoogleWorkspaceConfig } from "@/types/tenancy";
 
 /**
  * One-off reminder email nudging an existing AgentStack buyer to redeem
@@ -30,7 +31,7 @@ export async function sendGitpageReminderEmail({
   code: string;
   personalized?: boolean;
   subAccountId?: string;
-  googleWorkspaceConfig?: any;
+  googleWorkspaceConfig?: GoogleWorkspaceConfig;
 }): Promise<string | null> {
   if (!emailIsConfigured()) {
     console.warn("[gitpage/reminder] email not configured — skipping");

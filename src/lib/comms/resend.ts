@@ -94,7 +94,7 @@ export async function sendEmail({
     const expiresAt = googleWorkspaceConfig!.expiresAt;
 
     // Refresh the token if it's expired or about to expire
-    if (expiresAt && isAccessTokenExpired(expiresAt) && subAccountId) {
+    if (expiresAt && isAccessTokenExpired(expiresAt instanceof Date ? expiresAt.getTime() : expiresAt) && subAccountId) {
       try {
         const refreshed = await refreshGoogleAccessToken(
           subAccountId,
