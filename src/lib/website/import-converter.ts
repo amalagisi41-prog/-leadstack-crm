@@ -126,7 +126,7 @@ export function convertToWebsiteConfig(
     contact_details: importedData.contactEmail || "contact@example.com",
     cta_link: "https://example.com/contact",
     include_faq: true,
-    custom_colors: null,
+    custom_colors: "",
     pages: {
       index: true,
       services: true,
@@ -153,7 +153,7 @@ export function convertToWebsiteConfig(
       google_review_count: "",
       opening_hours: "",
     },
-    video_link: null,
+    video_link: "",
   };
 }
 

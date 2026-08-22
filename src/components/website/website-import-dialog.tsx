@@ -73,12 +73,14 @@ export function WebsiteImportDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Download className="w-4 h-4 mr-2" />
-          Import existing site
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button variant="outline" size="sm">
+            <Download className="w-4 h-4 mr-2" />
+            Import existing site
+          </Button>
+        }
+      />
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
