@@ -7,7 +7,6 @@ import {
   CheckCircle2,
   Copy,
   Loader2,
-  Mail,
   X,
 } from "lucide-react";
 import { useSubAccount } from "@/context/sub-account-context";
@@ -75,7 +74,6 @@ export function EmailSetupWizardDialog({
     subAccount?.replyToEmail ?? ""
   );
   const [replyToSaving, setReplyToSaving] = useState(false);
-  const [replyToDone, setReplyToDone] = useState(hasReplyTo);
 
   const [domainName, setDomainName] = useState("");
   const [fromName, setFromName] = useState("");
@@ -84,21 +82,6 @@ export function EmailSetupWizardDialog({
 
   const [records, setRecords] = useState<DnsRecord[]>([]);
   const [verifying, setVerifying] = useState(false);
-
-  useEffect(() => {
-    if (!open) return;
-    setReplyToDone(hasReplyTo);
-    if (hasReplyTo && !cfg) setStep("domain");
-    else if (cfg && cfg.status !== "verified") {
-      // Load DNS records
-      loadRecords();
-      setStep("dns-records");
-    } else if (cfg && cfg.status === "verified") {
-      setStep("complete");
-    } else {
-      setStep("reply-to");
-    }
-  }, [open, hasReplyTo, cfg]);
 
   const loadRecords = useCallback(async () => {
     try {
@@ -111,6 +94,20 @@ export function EmailSetupWizardDialog({
       /* non-fatal */
     }
   }, [subAccountId]);
+
+  useEffect(() => {
+    if (!open) return;
+    if (hasReplyTo && !cfg) setStep("domain");
+    else if (cfg && cfg.status !== "verified") {
+      // Load DNS records
+      loadRecords();
+      setStep("dns-records");
+    } else if (cfg && cfg.status === "verified") {
+      setStep("complete");
+    } else {
+      setStep("reply-to");
+    }
+  }, [open, hasReplyTo, cfg, loadRecords]);
 
   async function handleReplyToSave(e: FormEvent) {
     e.preventDefault();
@@ -128,7 +125,6 @@ export function EmailSetupWizardDialog({
       if (!res.ok || data.ok === false) {
         throw new Error(data.error ?? "Could not save.");
       }
-      setReplyToDone(true);
       toast.success("Reply-To address saved");
       // Auto-advance if gate is open
       if (gateOpen) {
@@ -420,7 +416,7 @@ export function EmailSetupWizardDialog({
                   </p>
                   <p className="text-xs text-blue-600 dark:text-blue-300">
                     DNS changes typically propagate within 5-15 minutes, but can
-                    sometimes take up to 48 hours. Click Verify when you've added
+                    sometimes take up to 48 hours. Click Verify when you&apos;ve added
                     the records.
                   </p>
                 </div>
@@ -463,7 +459,7 @@ export function EmailSetupWizardDialog({
                 </div>
 
                 <div className="bg-muted/30 rounded-lg border p-3 text-xs space-y-2">
-                  <p className="font-medium">What's next?</p>
+                  <p className="font-medium">What&apos;s next?</p>
                   <ul className="space-y-1 text-left text-muted-foreground">
                     <li>✓ Send emails from your domain</li>
                     <li>✓ Build automations with replies</li>
