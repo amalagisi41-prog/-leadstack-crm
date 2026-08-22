@@ -104,10 +104,7 @@ export function convertToWebsiteConfig(
   userDomain?: string
 ): WebsiteConfig {
   // Extract domain or business name
-  let businessName = importedData.businessName || importedData.title || "My Business";
-  if (userDomain && !businessName.includes("My Business")) {
-    // Keep the extracted name, don't override
-  }
+  const businessName = importedData.businessName || importedData.title || "My Business";
 
   return {
     site_type: "LocalSite",

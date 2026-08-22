@@ -86,8 +86,8 @@ export function WebsiteImportDialog({
             Import your website
           </DialogTitle>
           <DialogDescription>
-            Paste your domain (e.g., example.com or https://example.com). We'll
-            scrape your site's content and convert it to a Vibe Builder template
+            Paste your domain (e.g., example.com or https://example.com). We&apos;ll
+            scrape your site&apos;s content and convert it to a Vibe Builder template
             you can customize.
           </DialogDescription>
         </DialogHeader>
@@ -103,7 +103,7 @@ export function WebsiteImportDialog({
             }}
           />
           <p className="text-xs text-muted-foreground">
-            We use Firecrawl to scrape your site's main content. Public pages
+            We use Firecrawl to scrape your site&apos;s main content. Public pages
             only. May take 30 seconds.
           </p>
         </div>
