@@ -20,6 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ProfileStrengthTracker } from "./profile-strength-tracker";
 import type { BusinessProfileContent } from "@/types/business-profile";
 
 interface GoogleProfileImport {
@@ -58,9 +59,13 @@ export function GoogleOAuthImport({
     const error = searchParams.get("error");
 
     if (error) {
-      toast.error(
-        `Google authorization failed: ${error}. Try again or use another import method.`
-      );
+      const errorMessages: Record<string, string> = {
+        access_denied: "You denied permission to access your Business Profile.",
+        consent_required: "Permission request was cancelled.",
+        invalid_scope: "This Google account doesn't have a Business Profile connected.",
+      };
+      const message = errorMessages[error] || error;
+      toast.error(`Google import skipped: ${message}. You can still complete your profile manually.`);
       router.replace(window.location.pathname);
       return;
     }
@@ -128,9 +133,23 @@ export function GoogleOAuthImport({
           `Google Business Profile connected (${data.completeness}% complete)`
         );
       } else {
-        throw new Error(
-          data.error || "Failed to extract profile from Google"
-        );
+        const errorCode = data.code;
+        let errorMessage = data.error || "Couldn't import from Google this time";
+
+        // Suggest next steps based on error, but don't block
+        if (errorCode === "NO_GOOGLE_PROFILE") {
+          toast.info("No Business Profile found. You can create one at google.com/business or fill in your info manually.");
+        } else if (errorCode === "GOOGLE_PROFILE_FETCH_FAILED") {
+          toast.info("Couldn't fetch your profile. You can fill in your info manually or try again later.");
+        } else {
+          toast.error(errorMessage);
+        }
+
+        // Don't throw - let user continue
+        setConnected(false);
+        setIsLoading(false);
+        router.replace(window.location.pathname);
+        return;
       }
     } catch (error) {
       const message =
@@ -165,6 +184,20 @@ export function GoogleOAuthImport({
 
   return (
     <>
+      {/* Profile Strength Goal */}
+      <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50/40 p-3 dark:border-blue-900 dark:bg-blue-950/30">
+        <div className="flex gap-3">
+          <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
+          <div className="flex-1 text-xs text-blue-800 dark:text-blue-200">
+            <p className="font-medium mb-2">Your goal: 100% profile strength</p>
+            <p>Import your Google Business Profile to auto-fill verified information. This gets you closer to a complete profile that attracts more leads.</p>
+            <p className="mt-2 text-[11px] text-blue-700 dark:text-blue-300">
+              💡 <strong>Tip:</strong> A verified Google Business Profile imports the most complete data, but you can start with an unverified profile and upgrade anytime.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Google OAuth Button */}
       <div className="rounded-lg border border-blue-200 bg-blue-50/40 p-4 dark:border-blue-900 dark:bg-blue-950/30">
         <div className="flex items-start justify-between gap-3">
@@ -182,11 +215,19 @@ export function GoogleOAuthImport({
               )}
             </div>
             <p className="text-muted-foreground mt-1 text-xs">
-              Sign in with your Google account to securely import your Business
-              Profile data. AgentStack reads what you&apos;ve already verified on
-              Google and prefills your Blueprint.
+              Connect your Google Business Profile to instantly import your business info—phone, email,
+              hours, service areas, and more. Verified profiles import complete data; unverified profiles
+              import what&apos;s available. Either way, you can edit and add missing details as you go.
             </p>
           </div>
+        </div>
+
+        <div className="mt-4 space-y-2 rounded bg-green-900/10 p-2 dark:bg-green-950/20">
+          <p className="text-xs font-medium text-green-900 dark:text-green-200">⚡ Auto-fill from Google</p>
+          <p className="text-xs text-green-800 dark:text-green-300">
+            We&apos;ll pull your business name, phone, email, hours, service areas, and more from Google.
+            Review everything before saving—edit any field right here in AgentStack.
+          </p>
         </div>
 
         <div className="mt-3 flex flex-wrap gap-2">
@@ -323,21 +364,13 @@ export function GoogleOAuthImport({
 
           {previewData && (
             <div className="space-y-4">
-              {/* Completeness indicator */}
-              <div className="rounded-lg border bg-muted/50 p-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground font-medium">
-                    Profile completeness
-                  </span>
-                  <span className="font-semibold">{previewData.completeness}%</span>
-                </div>
-                <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
-                  <div
-                    className="h-full bg-blue-500 transition-all"
-                    style={{ width: `${previewData.completeness}%` }}
-                  />
-                </div>
-              </div>
+              {/* Profile Strength Tracker */}
+              {previewData.profile && (
+                <ProfileStrengthTracker
+                  profile={previewData.profile}
+                  completeness={previewData.completeness || 0}
+                />
+              )}
 
               {/* Profile fields */}
               <div className="space-y-3">
