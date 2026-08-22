@@ -58,9 +58,13 @@ export function GoogleOAuthImport({
     const error = searchParams.get("error");
 
     if (error) {
-      toast.error(
-        `Google authorization failed: ${error}. Try again or use another import method.`
-      );
+      const errorMessages: Record<string, string> = {
+        access_denied: "You denied access. Verify your profile and try again.",
+        consent_required: "Profile verification required. Visit https://www.google.com/business/ to verify your Business Profile.",
+        invalid_scope: "This account doesn't have access to a Business Profile. Ensure you're using the account that owns the profile.",
+      };
+      const message = errorMessages[error] || error;
+      toast.error(`Google authorization failed: ${message}`);
       router.replace(window.location.pathname);
       return;
     }
@@ -128,9 +132,17 @@ export function GoogleOAuthImport({
           `Google Business Profile connected (${data.completeness}% complete)`
         );
       } else {
-        throw new Error(
-          data.error || "Failed to extract profile from Google"
-        );
+        const errorCode = data.code;
+        let errorMessage = data.error || "Failed to extract profile from Google";
+
+        // Provide helpful guidance based on the error code
+        if (errorCode === "NO_GOOGLE_PROFILE") {
+          errorMessage += " Visit https://www.google.com/business/ to create and verify your Business Profile.";
+        } else if (errorCode === "GOOGLE_PROFILE_FETCH_FAILED") {
+          errorMessage += " Please ensure your Business Profile is verified and has active information.";
+        }
+
+        throw new Error(errorMessage);
       }
     } catch (error) {
       const message =
@@ -165,6 +177,22 @@ export function GoogleOAuthImport({
 
   return (
     <>
+      {/* Google Compliance Requirements */}
+      <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50/40 p-3 dark:border-amber-900 dark:bg-amber-950/30">
+        <div className="flex gap-3">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+          <div className="flex-1 text-xs text-amber-800 dark:text-amber-200">
+            <p className="font-medium mb-2">Before you connect:</p>
+            <ul className="space-y-1 ml-4 list-disc">
+              <li>You must be the owner or manager of your Google Business Profile</li>
+              <li>Your profile must be <strong>verified by Google</strong> (see <a href="https://support.google.com/business/answer/9676228" target="_blank" rel="noopener noreferrer" className="underline hover:text-amber-900 dark:hover:text-amber-100">verification guide</a>)</li>
+              <li>Your Business Profile must have a published/active status</li>
+              <li>All information imported from Google is already verified and will override your draft entries</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
       {/* Google OAuth Button */}
       <div className="rounded-lg border border-blue-200 bg-blue-50/40 p-4 dark:border-blue-900 dark:bg-blue-950/30">
         <div className="flex items-start justify-between gap-3">
@@ -182,11 +210,19 @@ export function GoogleOAuthImport({
               )}
             </div>
             <p className="text-muted-foreground mt-1 text-xs">
-              Sign in with your Google account to securely import your Business
-              Profile data. AgentStack reads what you&apos;ve already verified on
-              Google and prefills your Blueprint.
+              Sign in with your verified Google Business Profile to securely import your
+              profile data. AgentStack imports only information you&apos;ve verified with Google,
+              ensuring data accuracy and compliance with Google&apos;s Business Profile standards.
             </p>
           </div>
+        </div>
+
+        <div className="mt-4 space-y-2 rounded bg-blue-900/10 p-2 dark:bg-blue-950/20">
+          <p className="text-xs font-medium text-blue-900 dark:text-blue-200">✓ Google-verified data</p>
+          <p className="text-xs text-blue-800 dark:text-blue-300">
+            All information imported is verified by Google and meets their Business Profile standards.
+            This ensures accuracy and regulatory compliance for your business listing.
+          </p>
         </div>
 
         <div className="mt-3 flex flex-wrap gap-2">
