@@ -381,6 +381,8 @@ export async function sendOnboardingLifecycleEmail({
     subject,
     text,
     html,
+    subAccountId: subAccount.id,
+    googleWorkspaceConfig: subAccount.googleWorkspaceConfig,
   });
 
   return {

@@ -165,6 +165,8 @@ export async function POST(
           roleLabel,
           inviteUrl,
         }),
+        subAccountId,
+        googleWorkspaceConfig: sub?.googleWorkspaceConfig,
       });
       mailed = true;
     } catch (err) {

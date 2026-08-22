@@ -2,6 +2,7 @@ import "server-only";
 
 import { emailIsConfigured, sendEmail } from "@/lib/comms/resend";
 import { CUSTOM_BRAND } from "@/config/landing";
+import type { GoogleWorkspaceConfig } from "@/types/tenancy";
 
 /**
  * One-shot reminder sent ~24h after a new-agency Stripe checkout completes
@@ -15,9 +16,13 @@ import { CUSTOM_BRAND } from "@/config/landing";
 export async function sendClaimReminderEmail({
   to,
   claimUrl,
+  subAccountId,
+  googleWorkspaceConfig,
 }: {
   to: string;
   claimUrl: string;
+  subAccountId?: string;
+  googleWorkspaceConfig?: GoogleWorkspaceConfig;
 }): Promise<string | null> {
   if (!emailIsConfigured()) {
     console.warn("[claim-reminder] email not configured — skipping");
@@ -52,6 +57,6 @@ If you've already finished setting up, please ignore this email.
     </div>
   `;
 
-  const result = await sendEmail({ to, subject, text, html });
+  const result = await sendEmail({ to, subject, text, html, subAccountId, googleWorkspaceConfig });
   return result.id;
 }

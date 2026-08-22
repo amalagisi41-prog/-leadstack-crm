@@ -8,6 +8,7 @@ import {
   Copy,
   Loader2,
   X,
+  Cloud,
 } from "lucide-react";
 import { useSubAccount } from "@/context/sub-account-context";
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,8 @@ interface DnsRecord {
   status?: string;
 }
 
-type Step = "reply-to" | "domain" | "dns-records" | "verify" | "complete";
+type EmailProvider = "resend" | "google";
+type Step = "reply-to" | "provider-select" | "domain" | "dns-records" | "verify" | "google-connect" | "complete";
 
 function CopyValue({ value }: { value: string }) {
   return (
@@ -49,6 +51,7 @@ function CopyValue({ value }: { value: string }) {
 }
 
 function StepIndicator({ current, total }: { current: number; total: number }) {
+  if (total === 0) return null;
   return (
     <div className="text-muted-foreground text-xs font-medium">
       Step {current} of {total}
@@ -68,8 +71,10 @@ export function EmailSetupWizardDialog({
   const cfg = subAccount?.resendConfig ?? null;
   const hasReplyTo = !!subAccount?.replyToEmail?.trim();
   const gateOpen = subAccount?.emailDomainEnabledByAgency === true;
+  const googleConfig = subAccount?.googleWorkspaceConfig ?? null;
 
   const [step, setStep] = useState<Step>("reply-to");
+  const [provider, setProvider] = useState<EmailProvider | null>(null);
   const [replyToEmail, setReplyToEmail] = useState(
     subAccount?.replyToEmail ?? ""
   );
@@ -82,6 +87,8 @@ export function EmailSetupWizardDialog({
 
   const [records, setRecords] = useState<DnsRecord[]>([]);
   const [verifying, setVerifying] = useState(false);
+
+  const [googleConnecting, setGoogleConnecting] = useState(false);
 
   const loadRecords = useCallback(async () => {
     try {
@@ -97,17 +104,22 @@ export function EmailSetupWizardDialog({
 
   useEffect(() => {
     if (!open) return;
-    if (hasReplyTo && !cfg) setStep("domain");
-    else if (cfg && cfg.status !== "verified") {
-      // Load DNS records
-      loadRecords();
-      setStep("dns-records");
-    } else if (cfg && cfg.status === "verified") {
+
+    // Detect existing configuration
+    if (cfg && cfg.status === "verified") {
+      setProvider("resend");
       setStep("complete");
+    } else if (googleConfig && googleConfig.status === "connected") {
+      setProvider("google");
+      setStep("complete");
+    } else if (hasReplyTo && !cfg && !googleConfig) {
+      if (gateOpen) {
+        setStep("provider-select");
+      }
     } else {
       setStep("reply-to");
     }
-  }, [open, hasReplyTo, cfg, loadRecords]);
+  }, [open, hasReplyTo, cfg, gateOpen, googleConfig]);
 
   async function handleReplyToSave(e: FormEvent) {
     e.preventDefault();
@@ -128,7 +140,7 @@ export function EmailSetupWizardDialog({
       toast.success("Reply-To address saved");
       // Auto-advance if gate is open
       if (gateOpen) {
-        setStep("domain");
+        setStep("provider-select");
       }
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not save.");
@@ -200,7 +212,36 @@ export function EmailSetupWizardDialog({
     }
   }
 
+  async function handleGoogleConnect() {
+    setGoogleConnecting(true);
+    try {
+      const res = await fetch(
+        `/api/sub-accounts/${subAccountId}/email/google-oauth`,
+        { method: "POST" }
+      );
+      const data = (await res.json().catch(() => ({}))) as {
+        authUrl?: string;
+        error?: string;
+      };
+      if (!res.ok || !data.authUrl) {
+        throw new Error(data.error ?? "Failed to initiate Google OAuth.");
+      }
+      // Redirect to Google OAuth
+      window.location.href = data.authUrl;
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to connect Google.");
+      setGoogleConnecting(false);
+    }
+  }
+
   if (!open) return null;
+
+  const getHeaderDescription = () => {
+    if (step === "reply-to") return "Set your reply-to address first";
+    if (step === "provider-select") return "Choose how you want to send emails";
+    if (provider === "google") return "Quick setup via Google Workspace";
+    return "Configure your custom domain";
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -210,7 +251,7 @@ export function EmailSetupWizardDialog({
           <div>
             <h2 className="text-lg font-semibold">Set Up Business Email</h2>
             <p className="text-muted-foreground mt-0.5 text-sm">
-              Send from your own domain in 3 quick steps
+              {getHeaderDescription()}
             </p>
           </div>
           <Button
@@ -271,10 +312,68 @@ export function EmailSetupWizardDialog({
             </>
           )}
 
-          {/* Step 2: Domain */}
+          {/* Step 2: Provider Selection */}
+          {step === "provider-select" && (
+            <>
+              <StepIndicator current={2} total={0} />
+              <div className="space-y-4">
+                <div className="flex items-start gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                  <div className="text-xs text-emerald-700 dark:text-emerald-400">
+                    <p className="font-medium">Reply-To saved</p>
+                    <p className="mt-0.5">Replies will go to {replyToEmail}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="font-medium">Choose your email provider</h3>
+                  <p className="text-muted-foreground mt-1 text-sm">
+                    Pick the quickest option for your team
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  {/* Resend Option */}
+                  <button
+                    onClick={() => {
+                      setProvider("resend");
+                      setStep("domain");
+                    }}
+                    className="w-full text-left p-4 border rounded-lg hover:border-primary hover:bg-primary/5 transition-colors"
+                  >
+                    <div className="font-medium text-sm">Resend Custom Domain</div>
+                    <p className="text-muted-foreground text-xs mt-1">
+                      Add your own domain via DNS records. Full control, professional setup.
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-2">~3 steps · 5-15 min setup</p>
+                  </button>
+
+                  {/* Google Workspace Option */}
+                  <button
+                    onClick={() => {
+                      setProvider("google");
+                      setStep("google-connect");
+                    }}
+                    className="w-full text-left p-4 border rounded-lg hover:border-primary hover:bg-primary/5 transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Cloud className="h-4 w-4" />
+                      <span className="font-medium text-sm">Google Workspace</span>
+                    </div>
+                    <p className="text-muted-foreground text-xs mt-1">
+                      Quick OAuth setup if you use Google Workspace. Email from your Workspace domain.
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-2">Quick · 1 click to authorize</p>
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Step 3: Domain (Resend Path) */}
           {step === "domain" && (
             <>
-              <StepIndicator current={2} total={3} />
+              <StepIndicator current={3} total={5} />
               <div className="space-y-4">
                 <div className="flex items-start gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3">
                   <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
@@ -364,10 +463,10 @@ export function EmailSetupWizardDialog({
             </>
           )}
 
-          {/* Step 3: DNS Records */}
+          {/* Step 4: DNS Records */}
           {step === "dns-records" && cfg && (
             <>
-              <StepIndicator current={3} total={3} />
+              <StepIndicator current={4} total={5} />
               <div className="space-y-4">
                 <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
                   <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
@@ -440,8 +539,69 @@ export function EmailSetupWizardDialog({
             </>
           )}
 
+          {/* Step 2: Google Workspace Connect (Google Path) */}
+          {step === "google-connect" && (
+            <>
+              <StepIndicator current={2} total={3} />
+              <div className="space-y-4">
+                <div className="flex items-start gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                  <div className="text-xs text-emerald-700 dark:text-emerald-400">
+                    <p className="font-medium">Reply-To saved</p>
+                    <p className="mt-0.5">Replies will go to {replyToEmail}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="font-medium">Connect your Google Workspace</h3>
+                  <p className="text-muted-foreground mt-1 text-sm">
+                    Authorize AgentStack to send emails from your Google Workspace account.
+                  </p>
+                </div>
+
+                <div className="rounded-lg border border-blue-500/30 bg-blue-500/5 p-3 space-y-2">
+                  <p className="text-xs font-medium text-blue-700 dark:text-blue-400">
+                    What happens next
+                  </p>
+                  <ul className="text-xs text-blue-600 dark:text-blue-300 space-y-1 list-disc list-inside">
+                    <li>You&apos;ll be redirected to Google to authorize</li>
+                    <li>We&apos;ll store your authorization securely</li>
+                    <li>Your emails will send from your Workspace domain</li>
+                  </ul>
+                </div>
+
+                <Button
+                  onClick={handleGoogleConnect}
+                  disabled={googleConnecting}
+                  className="w-full"
+                >
+                  {googleConnecting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Connecting…
+                    </>
+                  ) : (
+                    <>
+                      <Cloud className="mr-2 h-4 w-4" />
+                      Connect with Google
+                    </>
+                  )}
+                </Button>
+
+                <Button
+                  variant="outline"
+                  onClick={() => setStep("provider-select")}
+                  disabled={googleConnecting}
+                  className="w-full"
+                >
+                  Back
+                </Button>
+              </div>
+            </>
+          )}
+
           {/* Complete */}
-          {step === "complete" && cfg && cfg.status === "verified" && (
+          {step === "complete" && ((cfg && cfg.status === "verified") || (googleConfig && googleConfig.status === "connected")) && (
             <>
               <div className="text-center space-y-4">
                 <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-emerald-500/10">
@@ -453,7 +613,9 @@ export function EmailSetupWizardDialog({
                     Your sub-account now sends from
                     <br />
                     <span className="text-foreground font-medium">
-                      {cfg.emailFrom}
+                      {provider === "google" && googleConfig
+                        ? googleConfig.senderEmail
+                        : cfg?.emailFrom ?? "your domain"}
                     </span>
                   </p>
                 </div>

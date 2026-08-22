@@ -77,7 +77,35 @@ export default function SettingsPage() {
   const [emailSetupOpen, setEmailSetupOpen] = useState(false);
 
   useEffect(() => {
-    const requestedTab = new URLSearchParams(window.location.search).get("tab");
+    const params = new URLSearchParams(window.location.search);
+    const emailOAuthStatus = params.get("email_oauth");
+    const emailOAuthError = params.get("email_oauth_error");
+
+    if (emailOAuthStatus === "success") {
+      setEmailSetupOpen(true);
+      toast.success("Google Workspace connected successfully!");
+      // Clean up the URL
+      const url = new URL(window.location.href);
+      url.searchParams.delete("email_oauth");
+      window.history.replaceState(null, "", url);
+    } else if (emailOAuthError) {
+      const errorMessages: Record<string, string> = {
+        missing_params: "Missing OAuth parameters",
+        invalid_state: "Invalid OAuth state",
+        unauthorized: "You don't have permission to access this resource",
+        token_exchange_failed: "Failed to exchange authorization code",
+        userinfo_failed: "Failed to fetch user information",
+        server_error: "Server error occurred",
+      };
+      const errorMsg = errorMessages[emailOAuthError] || emailOAuthError;
+      toast.error(`OAuth failed: ${errorMsg}`);
+      // Clean up the URL
+      const url = new URL(window.location.href);
+      url.searchParams.delete("email_oauth_error");
+      window.history.replaceState(null, "", url);
+    }
+
+    const requestedTab = params.get("tab");
     if (
       requestedTab &&
       ["admin", "messaging", "api", "custom-fields", "import"].includes(

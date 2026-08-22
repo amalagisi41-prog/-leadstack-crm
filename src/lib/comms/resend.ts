@@ -2,7 +2,13 @@ import "server-only";
 
 import { Resend } from "resend";
 
-import type { ResendConfig } from "@/types/tenancy";
+import type { GoogleWorkspaceConfig, ResendConfig } from "@/types/tenancy";
+import {
+  sendEmailViaGoogleWorkspace,
+  googleWorkspaceIsConfigured,
+  isAccessTokenExpired,
+  refreshGoogleAccessToken,
+} from "./google-workspace";
 
 let _client: Resend | null = null;
 
@@ -55,6 +61,8 @@ export async function sendEmail({
   html,
   replyTo,
   from,
+  googleWorkspaceConfig,
+  subAccountId,
 }: {
   to: string;
   subject: string;
@@ -70,7 +78,52 @@ export async function sendEmail({
    * EMAIL_FROM shared sender.
    */
   from?: string;
+  /**
+   * Optional Google Workspace config. When provided and properly configured,
+   * sends via Gmail API instead of Resend.
+   */
+  googleWorkspaceConfig?: GoogleWorkspaceConfig | null;
+  /**
+   * Optional sub-account ID. Required when using Google Workspace to handle token refresh.
+   */
+  subAccountId?: string;
 }): Promise<{ id: string }> {
+  // Route to Google Workspace if configured
+  if (googleWorkspaceIsConfigured(googleWorkspaceConfig)) {
+    let accessToken = googleWorkspaceConfig!.accessToken;
+    const expiresAt = googleWorkspaceConfig!.expiresAt;
+
+    // Refresh the token if it's expired or about to expire
+    if (expiresAt && isAccessTokenExpired(expiresAt instanceof Date ? expiresAt.getTime() : expiresAt) && subAccountId) {
+      try {
+        const refreshed = await refreshGoogleAccessToken(
+          subAccountId,
+          googleWorkspaceConfig!,
+        );
+        accessToken = refreshed.accessToken;
+      } catch (error) {
+        // Log the refresh error but attempt to send with the current token anyway
+        // The Gmail API might still accept it, or we'll get a clear auth error to display
+        console.warn(
+          `[sendEmail] Token refresh failed for sub-account ${subAccountId}:`,
+          error,
+        );
+      }
+    }
+
+    return sendEmailViaGoogleWorkspace({
+      accessToken,
+      senderEmail: googleWorkspaceConfig!.senderEmail,
+      senderName: googleWorkspaceConfig!.senderName,
+      to,
+      subject,
+      text,
+      html,
+      replyTo,
+    });
+  }
+
+  // Fall back to Resend
   const resolvedFrom = from ?? process.env.EMAIL_FROM;
   if (!resolvedFrom) {
     throw new Error(

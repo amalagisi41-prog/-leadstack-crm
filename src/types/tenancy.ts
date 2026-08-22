@@ -107,6 +107,17 @@ export interface SubAccountDoc {
    */
   resendConfig: ResendConfig | null;
   /**
+   * Per-sub-account Google Workspace (Gmail) email sending configuration.
+   * Set via OAuth flow at `/api/sub-accounts/[id]/email/google-oauth` and
+   * callback at `/api/email/google-oauth-callback`. Null/undefined = not
+   * connected. When present with `status === "connected"`, email sent on
+   * behalf of this sub-account goes from the stored senderEmail via Google
+   * Workspace. Orthogonal to `resendConfig` — a sub-account can have both
+   * configured, but only one is used for sending at a time (determined by
+   * the order in `tenantFrom()` or per-send route logic).
+   */
+  googleWorkspaceConfig: GoogleWorkspaceConfig | null;
+  /**
    * Agency-controlled gate for the dedicated email sending domain feature.
    * Only the agency owner can flip this (PATCH /api/agency/sub-accounts/[id]/
    * feature-gates). When `false`, sub-account admins CAN'T register or verify
@@ -659,6 +670,32 @@ export interface ResendConfig {
   status: "pending" | "verified" | "failed";
   /** Last time we successfully polled Resend and confirmed the domain status. */
   lastValidatedAt: Date | null;
+}
+
+/**
+ * Per-sub-account Google Workspace (Gmail) email sending configuration.
+ * Set via OAuth flow at `/api/sub-accounts/[id]/email/google-oauth` and
+ * callback at `/api/email/google-oauth-callback`. Null/undefined = not
+ * connected. When status === "connected", outbound email sent on behalf of
+ * this sub-account goes from the stored senderEmail via Google Workspace.
+ */
+export interface GoogleWorkspaceConfig {
+  /** Always "connected" when this config exists (status is implicit in presence). */
+  status: "connected";
+  /** Email address this sub-account sends from (e.g. "noreply@company.com"). */
+  senderEmail: string;
+  /** Display name for the From header (e.g. "Company Support"). */
+  senderName: string;
+  /** Google OAuth access token (valid for ~1 hour, requires refresh). */
+  accessToken: string;
+  /** Google OAuth refresh token (long-lived, used to get new access tokens). */
+  refreshToken: string | null;
+  /** When the access token expires (ISO timestamp). */
+  expiresAt: Date;
+  /** When this configuration was first connected. */
+  connectedAt: Date;
+  /** UID of the sub-account admin who connected this. */
+  connectedByUid: string;
 }
 
 export interface BookingConfig {

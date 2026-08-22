@@ -173,6 +173,8 @@ export async function POST(request: Request) {
       html: rendered.html,
       replyTo: sub.replyToEmail ?? undefined,
       from: tenantFrom(sub),
+      googleWorkspaceConfig: sub?.googleWorkspaceConfig,
+      subAccountId: event.subAccountId,
     });
   } catch (err) {
     console.warn("[events/reminder] send failed", err);

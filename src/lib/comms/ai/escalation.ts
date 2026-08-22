@@ -93,6 +93,8 @@ ${link}
       text,
       html,
       from: tenantFrom(subAccount),
+      googleWorkspaceConfig: subAccount?.googleWorkspaceConfig,
+      subAccountId: params.subAccountId,
     });
     return result.id;
   } catch (err) {

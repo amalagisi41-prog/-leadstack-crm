@@ -67,6 +67,8 @@ export async function POST(request: Request) {
       text: body,
       replyTo,
       from: tenantFrom(subAccount),
+      googleWorkspaceConfig: subAccount?.googleWorkspaceConfig,
+      subAccountId: contact.subAccountId,
     });
     messageId = result.id;
   } catch (err) {
