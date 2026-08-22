@@ -172,10 +172,12 @@ export async function POST(
   }
 
   // Generate a random state for CSRF protection
-  // In production, this should be stored in session/cookie
-  const state = Math.random().toString(36).substring(2, 15);
+  // We encode the sub-account ID in the state so the callback knows where to redirect
+  const randomState = Math.random().toString(36).substring(2, 15);
+  const state = `${id}:${randomState}`;
 
-  const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/sub-accounts/${id}/business-profile/import-google`;
+  // Use the static OAuth callback route (no dynamic [id] in the path)
+  const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/oauth/google/callback`;
 
   const authUrl = buildGoogleOAuthUrl(GOOGLE_CLIENT_ID, redirectUri, state);
 

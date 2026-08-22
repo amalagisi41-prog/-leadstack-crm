@@ -55,8 +55,9 @@ export function GoogleOAuthImport({
 
   // Handle OAuth callback
   useEffect(() => {
-    const code = searchParams.get("code");
-    const error = searchParams.get("error");
+    const code = searchParams.get("oauth_code");
+    const error = searchParams.get("oauth_error");
+    const errorMessage = searchParams.get("error_message");
 
     if (error) {
       const errorMessages: Record<string, string> = {
@@ -64,7 +65,7 @@ export function GoogleOAuthImport({
         consent_required: "Permission request was cancelled.",
         invalid_scope: "This Google account doesn't have a Business Profile connected.",
       };
-      const message = errorMessages[error] || error;
+      const message = errorMessage || errorMessages[error] || error;
       toast.error(`Google import skipped: ${message}. You can still complete your profile manually.`);
       router.replace(window.location.pathname);
       return;
@@ -110,7 +111,7 @@ export function GoogleOAuthImport({
     try {
       setIsLoading(true);
       const response = await fetch(
-        `/api/sub-accounts/${subAccountId}/business-profile/import-google?code=${code}&state=${code}`,
+        `/api/sub-accounts/${subAccountId}/business-profile/import-google?code=${encodeURIComponent(code)}`,
         {
           method: "GET",
         }
