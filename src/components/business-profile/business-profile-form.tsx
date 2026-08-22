@@ -38,6 +38,7 @@ import {
   type BusinessProfileContent,
 } from "@/types/business-profile";
 import { readJson } from "@/lib/http/read-json";
+import { GoogleOAuthImport } from "@/components/business-profile/google-oauth-import";
 
 const MAX_LIST_ITEMS = 30;
 
@@ -471,6 +472,15 @@ export function BusinessProfileForm() {
     !content.website.trim() ? "Add your website" : null,
   ].filter((step): step is string => Boolean(step));
 
+  function handleGoogleProfileImported(
+    importedProfile: Partial<BusinessProfileContent>
+  ) {
+    setContent({ ...EMPTY_BUSINESS_PROFILE, ...importedProfile });
+    toast.success(
+      "Google Business Profile data imported. Review and save when ready."
+    );
+  }
+
   if (loading) {
     return (
       <div className="text-muted-foreground flex h-64 items-center justify-center">
@@ -595,6 +605,9 @@ export function BusinessProfileForm() {
           </div>
         </div>
       </section>
+
+      {/* Google OAuth Import */}
+      <GoogleOAuthImport onProfileImported={handleGoogleProfileImported} />
 
       {/* 1. Agent profile */}
       <Section title="1. About you" desc="Who you are and how leads reach you.">
