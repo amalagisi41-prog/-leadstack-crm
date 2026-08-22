@@ -68,7 +68,8 @@ export function GoogleOAuthImport({
     if (code) {
       handleOAuthCallback(code);
     }
-  }, [searchParams, router, onProfileImported]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, router]);
 
   async function initiateOAuthFlow() {
     try {
@@ -239,7 +240,7 @@ export function GoogleOAuthImport({
                 Successfully imported from Google Business Profile
               </h4>
               <p className="mt-2 text-sm text-green-800 dark:text-green-200">
-                We've pre-filled your Blueprint with the following information from your Google Business Profile:
+                We&apos;ve pre-filled your Blueprint with the following information from your Google Business Profile:
               </p>
 
               {/* Imported fields list */}
