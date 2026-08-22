@@ -20,18 +20,13 @@ const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_OAUTH_CLIENT_SECRET?.trim();
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = params.id;
+  const { id } = await params;
 
   // Check the user has permission to manage this sub-account
-  const auth = await requireSubAccountAdmin(id);
-  if (!auth.ok) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: auth.status || 403 }
-    );
-  }
+  const auth = await requireSubAccountAdmin(request, id);
+  if (auth instanceof NextResponse) return auth;
 
   // Handle the OAuth callback
   const searchParams = request.nextUrl.searchParams;
@@ -115,7 +110,7 @@ export async function GET(
       serviceAreas: profile.serviceAreas,
       businessHours: profile.businessHours,
       bio: profile.bio,
-      headshotUrl: profile.headshotUrl,
+      headshotUrl: profile.headshotUrl || "",
     });
 
     // Return the extracted profile
@@ -131,7 +126,7 @@ export async function GET(
         serviceAreas: profile.serviceAreas,
         businessHours: profile.businessHours,
         bio: profile.bio,
-        headshotUrl: profile.headshotUrl,
+        headshotUrl: profile.headshotUrl || "",
       },
       completeness,
       source: "google",
@@ -157,18 +152,13 @@ export async function GET(
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const id = params.id;
+  const { id } = await params;
 
   // Check the user has permission to manage this sub-account
-  const auth = await requireSubAccountAdmin(id);
-  if (!auth.ok) {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: auth.status || 403 }
-    );
-  }
+  const auth = await requireSubAccountAdmin(request, id);
+  if (auth instanceof NextResponse) return auth;
 
   if (!GOOGLE_CLIENT_ID) {
     return NextResponse.json(
