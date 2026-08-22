@@ -133,6 +133,7 @@ const execSendEmail: NodeExecutor = async (ctx) => {
       html,
       replyTo: ctx.subAccount?.replyToEmail ?? undefined,
       from: tenantFrom(ctx.subAccount),
+      googleWorkspaceConfig: ctx.subAccount?.googleWorkspaceConfig,
     });
     return { result: { kind: "next" }, log: "ok" };
   } catch (err) {

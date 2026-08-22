@@ -190,6 +190,7 @@ export async function POST(
       html: email.html,
       replyTo: access.email || undefined,
       from: tenantFrom(sub),
+      googleWorkspaceConfig: sub?.googleWorkspaceConfig,
     });
   } catch (err) {
     console.error("[quotes/send] Resend send failed", err);

@@ -218,6 +218,7 @@ export async function POST(request: Request) {
       html,
       replyTo: subAccount?.replyToEmail ?? undefined,
       from: tenantFrom(subAccount),
+      googleWorkspaceConfig: subAccount?.googleWorkspaceConfig,
     });
     resendMessageId = result.id;
   } catch (err) {

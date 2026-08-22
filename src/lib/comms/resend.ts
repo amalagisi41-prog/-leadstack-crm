@@ -2,7 +2,8 @@ import "server-only";
 
 import { Resend } from "resend";
 
-import type { ResendConfig } from "@/types/tenancy";
+import type { GoogleWorkspaceConfig, ResendConfig } from "@/types/tenancy";
+import { sendEmailViaGoogleWorkspace, googleWorkspaceIsConfigured } from "./google-workspace";
 
 let _client: Resend | null = null;
 
@@ -55,6 +56,7 @@ export async function sendEmail({
   html,
   replyTo,
   from,
+  googleWorkspaceConfig,
 }: {
   to: string;
   subject: string;
@@ -70,7 +72,27 @@ export async function sendEmail({
    * EMAIL_FROM shared sender.
    */
   from?: string;
+  /**
+   * Optional Google Workspace config. When provided and properly configured,
+   * sends via Gmail API instead of Resend.
+   */
+  googleWorkspaceConfig?: GoogleWorkspaceConfig | null;
 }): Promise<{ id: string }> {
+  // Route to Google Workspace if configured
+  if (googleWorkspaceIsConfigured(googleWorkspaceConfig)) {
+    return sendEmailViaGoogleWorkspace({
+      accessToken: googleWorkspaceConfig!.accessToken,
+      senderEmail: googleWorkspaceConfig!.senderEmail,
+      senderName: googleWorkspaceConfig!.senderName,
+      to,
+      subject,
+      text,
+      html,
+      replyTo,
+    });
+  }
+
+  // Fall back to Resend
   const resolvedFrom = from ?? process.env.EMAIL_FROM;
   if (!resolvedFrom) {
     throw new Error(
