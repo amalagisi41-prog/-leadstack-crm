@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
   // Redirect back to the business profile page with the authorization code
   // The client component will detect this and exchange the code for tokens
   const redirectUrl = new URL(
-    `/sa/${subAccountId}/dashboard`,
+    `/sa/${subAccountId}/business-profile`,
     request.nextUrl.origin
   );
   redirectUrl.searchParams.set("oauth_code", code);
