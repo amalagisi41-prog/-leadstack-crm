@@ -21,28 +21,19 @@ export default function AiAgentsGoogleBusinessPage() {
         </p>
       </div>
       <div className="bg-card rounded-2xl border p-6">
-        <h2 className="font-semibold">Choose what to manage</h2>
+        <h2 className="font-semibold">Manage your Google connections</h2>
         <p className="text-muted-foreground mt-2 text-sm">
-          Keep your public profile link and review-request settings in sync with your verified Google account. Nothing here replaces your Google login or guesses business details.
+          Set up your Google Business Profile connection and configure review requests, Gmail settings, and more from within AgentStack.
         </p>
         <div className="mt-5 flex flex-wrap gap-3">
-          <Button render={<a href="https://business.google.com/" target="_blank" rel="noreferrer" />}>
-            Open Google Business Profile <ExternalLink className="ml-2 h-4 w-4" />
-          </Button>
-          <Button variant="outline" render={<Link href={saPath("/business-profile")} />}>
-            Edit Business Blueprint
+          <Button render={<Link href={saPath("/business-profile")} />}>
+            Set up Business Profile
           </Button>
           <Button variant="outline" render={<Link href={reviewsHref} />}>
             Configure Google reviews
           </Button>
-          <Button variant="ghost" render={<Link href={emailHref} />}>
+          <Button variant="outline" render={<Link href={emailHref} />}>
             Workspace &amp; Gmail
-          </Button>
-          <Button
-            variant="ghost"
-            render={<a href="https://ads.google.com/" target="_blank" rel="noreferrer" />}
-          >
-            Google Ads <ExternalLink className="ml-2 h-4 w-4" />
           </Button>
         </div>
       </div>
