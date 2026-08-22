@@ -126,8 +126,8 @@ export function convertToWebsiteConfig(
     contact_details: importedData.contactEmail || "contact@example.com",
     cta_link: "https://example.com/contact",
     include_faq: true,
-    custom_colors: "",
-    pages: {
+    video_link: "",
+    local_page_selections: {
       index: true,
       services: true,
       contact: true,
@@ -153,7 +153,16 @@ export function convertToWebsiteConfig(
       google_review_count: "",
       opening_hours: "",
     },
-    video_link: "",
+    design_color_palette: "Default",
+    custom_colors: "",
+    design_typography: "Default",
+    design_layout: "Default",
+    design_components: "Default",
+    design_interactions: "Default",
+    design_buttons: "Default",
+    design_contact_form: "Default",
+    design_icons: "Default",
+    astra_theme: false,
   };
 }
 
