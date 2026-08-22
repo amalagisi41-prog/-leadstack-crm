@@ -357,37 +357,6 @@ export default function SiteHealthPage() {
           ))}
         </div>
       </section>
-      <section className="bg-card rounded-2xl border p-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-muted-foreground text-xs font-semibold uppercase tracking-wide">
-              Optional setup
-            </p>
-        <h2 className="mt-1 text-lg font-semibold">Manage your Google connections</h2>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Manage Google Business Profile, reviews, Workspace/Gmail, and Ads from one guided hub. Zack can help you finish the AgentStack settings without sending you back to a completed Blueprint.
-        </p>
-      </div>
-      <div className="flex flex-wrap gap-2">
-      <Button render={<Link href={saPath("/ai-agents/google-business")} />}>Manage Google connections</Button>
-      <Button variant="outline" render={<Link href={saPath("/business-profile")} />}>Edit Blueprint</Button>
-      <Button
-        variant="outline"
-        render={
-                <a href="https://business.google.com/" target="_blank" rel="noreferrer" />
-              }
-      >
-        Open Google Business Profile
-      </Button>
-      <Button
-        variant="outline"
-        render={<a href="https://ads.google.com/" target="_blank" rel="noreferrer" />}
-      >
-        Open Google Ads
-      </Button>
-    </div>
-        </div>
-      </section>
     </div>
   );
 }
