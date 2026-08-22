@@ -2,10 +2,90 @@ import "server-only";
 
 import { google } from "googleapis";
 import type { GoogleWorkspaceConfig } from "@/types/tenancy";
+import { getAdminDb } from "@/lib/firebase/admin";
+
+/**
+ * Check if the access token is expired or about to expire (within 5 minutes).
+ */
+export function isAccessTokenExpired(expiresAt: number): boolean {
+  const fiveMinutesFromNow = Date.now() + 5 * 60 * 1000;
+  return expiresAt < fiveMinutesFromNow;
+}
+
+/**
+ * Refresh the access token using the refresh token.
+ * Updates the stored config in Firestore and returns the new credentials.
+ */
+export async function refreshGoogleAccessToken(
+  subAccountId: string,
+  config: GoogleWorkspaceConfig,
+): Promise<{
+  accessToken: string;
+  expiresAt: number;
+}> {
+  if (!config.refreshToken) {
+    throw new Error(
+      "Cannot refresh access token: no refresh token stored. User must reconnect.",
+    );
+  }
+
+  const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
+
+  if (!clientId || !clientSecret) {
+    throw new Error(
+      "Google OAuth credentials not configured on this deployment",
+    );
+  }
+
+  try {
+    const response = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        client_id: clientId,
+        client_secret: clientSecret,
+        grant_type: "refresh_token",
+        refresh_token: config.refreshToken,
+      }).toString(),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(
+        `Token refresh failed: ${response.status} ${error}`,
+      );
+    }
+
+    const data = (await response.json()) as {
+      access_token: string;
+      expires_in: number;
+    };
+
+    const newExpiresAt = Date.now() + data.expires_in * 1000;
+
+    // Update the stored config with the new access token and expiration
+    const db = getAdminDb();
+    await db
+      .doc(`subAccounts/${subAccountId}`)
+      .update({
+        "googleWorkspaceConfig.accessToken": data.access_token,
+        "googleWorkspaceConfig.expiresAt": newExpiresAt,
+      });
+
+    return {
+      accessToken: data.access_token,
+      expiresAt: newExpiresAt,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to refresh Google access token: ${message}`);
+  }
+}
 
 /**
  * Send an email via Google Workspace (Gmail API) using stored OAuth credentials.
- * Requires valid, non-expired access token.
+ * Automatically refreshes the access token if it's expired or about to expire.
  */
 export async function sendEmailViaGoogleWorkspace({
   accessToken,

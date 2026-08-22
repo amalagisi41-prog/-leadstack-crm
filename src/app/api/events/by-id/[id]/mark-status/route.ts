@@ -284,6 +284,8 @@ async function runStatusSideEffects(
         html: rendered.html,
         replyTo: sub.replyToEmail ?? undefined,
         from: tenantFrom(sub),
+        googleWorkspaceConfig: sub?.googleWorkspaceConfig,
+        subAccountId: event.subAccountId,
       });
       return { emailSent: true };
     } catch (err) {

@@ -159,6 +159,8 @@ export async function createIdxInquiryFollowUp(
           subject,
           text,
           from: tenantFrom(subAccount),
+          subAccountId: input.subAccountId,
+          googleWorkspaceConfig: subAccount?.googleWorkspaceConfig,
         });
         emailSent = true;
       }

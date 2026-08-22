@@ -353,6 +353,8 @@ async function runRescheduleSideEffects(args: {
         html: rendered.html,
         replyTo: sub.replyToEmail ?? undefined,
         from: tenantFrom(sub),
+        googleWorkspaceConfig: sub?.googleWorkspaceConfig,
+        subAccountId: event.subAccountId,
       });
       return;
     }

@@ -134,6 +134,7 @@ const execSendEmail: NodeExecutor = async (ctx) => {
       replyTo: ctx.subAccount?.replyToEmail ?? undefined,
       from: tenantFrom(ctx.subAccount),
       googleWorkspaceConfig: ctx.subAccount?.googleWorkspaceConfig,
+      subAccountId: ctx.subAccountId,
     });
     return { result: { kind: "next" }, log: "ok" };
   } catch (err) {
@@ -382,6 +383,7 @@ const execNotify: NodeExecutor = async (ctx) => {
       text,
       html,
       from: tenantFrom(ctx.subAccount),
+      subAccountId: ctx.subAccountId,
     });
     return { result: { kind: "next" }, log: "ok" };
   } catch (err) {
@@ -770,7 +772,13 @@ export async function runStep(runId: string, nodeId: string): Promise<void> {
         // Same posture as the AI channels: an escalation keyword means the
         // automated sequence stops entirely and a human takes over — it
         // does NOT continue to the next scripted step.
-        await completeEscalatedRun(runRef, wf, owner, outcome.matchedKeyword);
+        await completeEscalatedRun(
+          runRef,
+          wf,
+          owner,
+          outcome.matchedKeyword,
+          run.subAccountId
+        );
         return;
       }
 
@@ -946,7 +954,8 @@ async function completeEscalatedRun(
   runRef: FirebaseFirestore.DocumentReference,
   wf: WorkflowDoc,
   owner: { displayName: string; email: string },
-  matchedKeyword: string
+  matchedKeyword: string,
+  subAccountId: string
 ): Promise<void> {
   await runRef.update({
     status: "exited",
@@ -959,6 +968,7 @@ async function completeEscalatedRun(
         to: owner.email,
         subject: `Workflow "${wf.name}" paused — escalation keyword "${matchedKeyword}"`,
         text: `The workflow "${wf.name}" stopped automated sending for a lead because their message matched the escalation keyword "${matchedKeyword}". No further automated steps will run for this contact — please follow up directly.`,
+        subAccountId,
       });
     } catch (err) {
       console.warn("[workflows] escalation notification failed", err);

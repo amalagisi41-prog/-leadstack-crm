@@ -203,6 +203,8 @@ export async function createCaptureFollowUp(
           text,
           html,
           from: tenantFrom(subAccount),
+          googleWorkspaceConfig: subAccount?.googleWorkspaceConfig,
+          subAccountId: input.subAccountId,
         });
         emailSent = true;
       }

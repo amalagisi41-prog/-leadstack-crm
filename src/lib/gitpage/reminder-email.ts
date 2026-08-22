@@ -23,10 +23,14 @@ export async function sendGitpageReminderEmail({
    *  fallback code (drops the "single-use / tied to you / don't share"
    *  line, which would be untrue for a shared code). */
   personalized = true,
+  subAccountId,
+  googleWorkspaceConfig,
 }: {
   to: string;
   code: string;
   personalized?: boolean;
+  subAccountId?: string;
+  googleWorkspaceConfig?: any;
 }): Promise<string | null> {
   if (!emailIsConfigured()) {
     console.warn("[gitpage/reminder] email not configured — skipping");
@@ -59,7 +63,7 @@ P.S. If you've already redeemed your code, please ignore this email.`;
 
   const html = renderHtml(code, applyLine);
 
-  const { id } = await sendEmail({ to, subject, text, html });
+  const { id } = await sendEmail({ to, subject, text, html, subAccountId, googleWorkspaceConfig });
   return id;
 }
 

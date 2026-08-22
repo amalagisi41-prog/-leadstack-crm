@@ -15,9 +15,13 @@ import { CUSTOM_BRAND } from "@/config/landing";
 export async function sendClaimReminderEmail({
   to,
   claimUrl,
+  subAccountId,
+  googleWorkspaceConfig,
 }: {
   to: string;
   claimUrl: string;
+  subAccountId?: string;
+  googleWorkspaceConfig?: any;
 }): Promise<string | null> {
   if (!emailIsConfigured()) {
     console.warn("[claim-reminder] email not configured — skipping");
@@ -52,6 +56,6 @@ If you've already finished setting up, please ignore this email.
     </div>
   `;
 
-  const result = await sendEmail({ to, subject, text, html });
+  const result = await sendEmail({ to, subject, text, html, subAccountId, googleWorkspaceConfig });
   return result.id;
 }

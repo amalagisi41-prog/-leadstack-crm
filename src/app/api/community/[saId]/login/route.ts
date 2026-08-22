@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getCommunityGate } from "@/lib/community/gate";
 import { signMemberMagicLinkToken } from "@/lib/community/member-auth";
 import { emailIsConfigured, sendEmail } from "@/lib/comms/resend";
+import { getAdminDb } from "@/lib/firebase/admin";
 
 export const dynamic = "force-dynamic";
 
@@ -46,6 +47,10 @@ export async function POST(
       const token = signMemberMagicLinkToken(saId, email, joinGroupId);
       const link = `${appUrl}/api/community/${saId}/login/verify?token=${encodeURIComponent(token)}`;
 
+      const db = getAdminDb();
+      const subSnap = await db.doc(`subAccounts/${saId}`).get();
+      const sub = subSnap.data();
+
       await sendEmail({
         to: email,
         subject: "Your sign-in link",
@@ -67,6 +72,8 @@ If you didn't request this, you can safely ignore it.
   </p>
   <p style="margin:24px 0 0;font-size:12px;color:#909090;">If you didn't request this, you can safely ignore it.</p>
 </body></html>`,
+        subAccountId: saId,
+        googleWorkspaceConfig: sub?.googleWorkspaceConfig,
       });
     }
   } catch (err) {

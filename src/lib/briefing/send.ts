@@ -164,7 +164,7 @@ export async function sendDailyBriefingForSubAccount(
     let sentCount = 0;
     for (const to of recipients) {
       try {
-        await sendEmail({ to, subject, text, html, from: tenantFrom(sub) });
+        await sendEmail({ to, subject, text, html, from: tenantFrom(sub), subAccountId, googleWorkspaceConfig: sub?.googleWorkspaceConfig });
         sentCount += 1;
       } catch (err) {
         console.warn("[briefing] send failed", subAccountId, to, err);

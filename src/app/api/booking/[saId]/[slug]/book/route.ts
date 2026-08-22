@@ -521,6 +521,8 @@ export async function POST(
         replyTo: sub.replyToEmail ?? undefined,
         from: tenantFrom(sub),
         icsAttachment: attachments,
+        subAccountId: saId,
+        googleWorkspaceConfig: sub?.googleWorkspaceConfig,
       });
     } catch (err) {
       console.warn("[booking/book] confirmation send failed", err);
@@ -625,6 +627,8 @@ interface SendWithIcs {
   replyTo?: string;
   from?: string;
   icsAttachment?: { filename: string; content: string };
+  subAccountId?: string;
+  googleWorkspaceConfig?: any;
 }
 
 function buildIcsAttachment(params: {
@@ -670,6 +674,8 @@ async function sendEmailWithIcs(input: SendWithIcs): Promise<void> {
       html: input.html,
       replyTo: input.replyTo,
       from: input.from,
+      googleWorkspaceConfig: input.googleWorkspaceConfig,
+      subAccountId: input.subAccountId,
     });
     return;
   }

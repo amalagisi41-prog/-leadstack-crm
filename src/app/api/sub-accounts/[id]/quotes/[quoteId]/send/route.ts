@@ -191,6 +191,7 @@ export async function POST(
       replyTo: access.email || undefined,
       from: tenantFrom(sub),
       googleWorkspaceConfig: sub?.googleWorkspaceConfig,
+      subAccountId,
     });
   } catch (err) {
     console.error("[quotes/send] Resend send failed", err);

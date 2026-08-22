@@ -255,6 +255,8 @@ async function runMarkPaidSideEffects(args: {
         html: rendered.html,
         replyTo: sub.replyToEmail ?? undefined,
         from: tenantFrom(sub),
+        googleWorkspaceConfig: sub?.googleWorkspaceConfig,
+        subAccountId: event.subAccountId,
       });
     } catch (err2) {
       console.warn("[events/mark-paid] confirmation send failed", err2);

@@ -159,6 +159,8 @@ async function runSideEffects(event: CalendarEvent): Promise<void> {
             html: rendered.html,
             replyTo: sub.replyToEmail ?? undefined,
             from: tenantFrom(sub),
+            googleWorkspaceConfig: sub?.googleWorkspaceConfig,
+            subAccountId: event.subAccountId,
           });
         } catch (err) {
           console.warn("[events/cancel] confirmation send failed", err);

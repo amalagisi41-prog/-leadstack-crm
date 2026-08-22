@@ -164,6 +164,8 @@ async function runExpireSideEffects(event: CalendarEvent): Promise<void> {
             html: rendered.html,
             replyTo: sub.replyToEmail ?? undefined,
             from: tenantFrom(sub),
+            googleWorkspaceConfig: sub?.googleWorkspaceConfig,
+            subAccountId: event.subAccountId,
           });
         } catch (err) {
           console.warn("[events/payment/expire] notify send failed", err);

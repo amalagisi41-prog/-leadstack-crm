@@ -112,6 +112,8 @@ async function maybeSendStatusEmail(input: {
   status: A2pCarrierStatus;
   note: string | null;
   to: string | null;
+  subAccountId?: string;
+  googleWorkspaceConfig?: any;
 }) {
   if (!input.to || !emailIsConfigured()) return;
 
@@ -126,7 +128,7 @@ async function maybeSendStatusEmail(input: {
     input.note ? `<p><strong>Note:</strong> ${input.note}</p>` : ""
   }<p>You can review it anytime inside AgentStack under <strong>Settings → Messaging → A2P registration</strong>.</p>`;
 
-  await sendEmail({ to: input.to, subject, text, html });
+  await sendEmail({ to: input.to, subject, text, html, subAccountId: input.subAccountId, googleWorkspaceConfig: input.googleWorkspaceConfig });
 }
 
 export async function PATCH(
@@ -183,6 +185,8 @@ export async function PATCH(
         status: next.status,
         note: next.lastStatusNote,
         to: next.updateEmail || next.supportEmail || null,
+        subAccountId,
+        googleWorkspaceConfig: sub?.googleWorkspaceConfig,
       });
     } catch (err) {
       console.warn("[a2p-registration] status email failed", err);
