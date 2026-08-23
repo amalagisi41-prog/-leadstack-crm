@@ -79,6 +79,15 @@ const HOST_DASHBOARD_URLS: Record<BusinessSourcePlatform, string> = {
   vercel: "https://vercel.com/dashboard",
   gohighlevel: "https://app.gohighlevel.com/",
   kvcore: "https://www.kvcore.com/",
+  followupboss: "https://app.followupboss.com/",
+  lofty: "https://www.lofty.com/login",
+  chime: "https://chime.aws/",
+  nextjs: "https://vercel.com/dashboard",
+  make: "https://us1.make.com/",
+  vibe: "https://www.joinvibe.com/",
+  zillow: "https://www.zillow.com/",
+  realtor: "https://www.realtor.com/",
+  homes: "https://www.homes.com/",
   other: "https://www.google.com/search?q=web+hosting+login",
 };
 
