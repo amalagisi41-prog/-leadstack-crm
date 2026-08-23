@@ -1,13 +1,18 @@
 import "server-only";
 
 import { NextRequest, NextResponse } from "next/server";
+import crypto from "node:crypto";
 import { requireSubAccountAdmin } from "@/lib/auth/require-tenancy";
 import {
   buildGoogleOAuthUrl,
   exchangeGoogleOAuthCode,
   fetchGoogleBusinessProfile,
-  verifyGoogleOAuthState,
 } from "@/lib/business-profile/google-business";
+import {
+  signGoogleOAuthState,
+  verifyGoogleOAuthState,
+} from "@/lib/comms/google-oauth-state";
+import { googleBusinessRedirectUri } from "@/lib/business-profile/google-redirect";
 import { businessProfileCompleteness } from "@/lib/business-profile/compile";
 import { EMPTY_BUSINESS_PROFILE } from "@/types/business-profile";
 
@@ -52,10 +57,15 @@ export async function GET(
     );
   }
 
-  // Verify state to prevent CSRF
-  // In production, state should be validated against session/cookie
-  // For now, we'll verify it's a non-empty string
-  if (!verifyGoogleOAuthState(state, state)) {
+  // Verify the HMAC-signed state, and confirm it names THIS sub-account.
+  //
+  // The previous check was `verifyGoogleOAuthState(state, state)` — the same
+  // string passed as both arguments, which reduced to "is it non-empty" and
+  // accepted anything. Combined with an unauthenticated callback that trusted
+  // the sub-account id parsed out of that state, an attacker could have had
+  // their own Google Business Profile imported into someone else's workspace.
+  const verified = verifyGoogleOAuthState(state);
+  if (!verified || verified.subAccountId !== id) {
     return NextResponse.json(
       { error: "Invalid state parameter — CSRF check failed" },
       { status: 400 }
@@ -75,8 +85,10 @@ export async function GET(
   }
 
   try {
-    // Exchange code for access token
-    const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/sub-accounts/${id}/business-profile/import-google`;
+    // Must be the SAME redirect_uri the authorization URL was built with, or
+    // Google rejects the exchange with redirect_uri_mismatch. Shared constant
+    // so the two can no longer drift apart.
+    const redirectUri = googleBusinessRedirectUri();
 
     const tokens = await exchangeGoogleOAuthCode(
       code,
@@ -171,18 +183,16 @@ export async function POST(
     );
   }
 
-  // Generate a random state for CSRF protection
-  // We encode the sub-account ID in the state so the callback knows where to redirect
-  const randomState = Math.random().toString(36).substring(2, 15);
-  const state = `${id}:${randomState}`;
+  // HMAC-signed state carrying the sub-account id. Previously this was
+  // `${id}:${Math.random()...}` — neither cryptographically random nor signed,
+  // so anyone could hand-craft a state naming any sub-account.
+  const state = signGoogleOAuthState(id, crypto.randomBytes(16).toString("hex"));
 
-  // Use the static OAuth callback route (no dynamic [id] in the path)
-  const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/oauth/google/callback`;
+  // Static callback route (no dynamic [id] in the path) so it can actually be
+  // registered in the Google Cloud console.
+  const redirectUri = googleBusinessRedirectUri();
 
   const authUrl = buildGoogleOAuthUrl(GOOGLE_CLIENT_ID, redirectUri, state);
 
-  return NextResponse.json({
-    authUrl,
-    state, // Client should store this in session
-  });
+  return NextResponse.json({ authUrl, state });
 }

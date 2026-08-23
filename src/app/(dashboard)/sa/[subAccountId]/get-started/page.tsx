@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSubAccount } from "@/context/sub-account-context";
+import { Button } from "@/components/ui/button";
 import {
   OnboardingWizard,
   type OnboardingWizardStepKey,
@@ -25,6 +27,8 @@ export default function GetStartedPage() {
   const [foundationComplete, setFoundationComplete] = useState<boolean | null>(
     null
   );
+  /** True when this member lacks admin rights and so cannot run setup at all. */
+  const [adminOnly, setAdminOnly] = useState(false);
   const requestedStep = searchParams.get("step");
   const isGhlJourney =
     searchParams.get("source") === "ghl" || searchParams.has("ghl");
@@ -98,6 +102,15 @@ export default function GetStartedPage() {
     let active = true;
     void fetch(`/api/sub-accounts/${subAccountId}/onboarding-foundation`)
       .then(async (response) => {
+        // A 403 means this member isn't a sub-account admin. The foundation
+        // endpoint is admin-only for both GET and PATCH, so showing them the
+        // foundation screen trapped them permanently: the save always 403s,
+        // onComplete never fires, and the dashboard redirects them straight
+        // back here on every visit. They could never reach the CRM at all.
+        if (response.status === 403) {
+          if (active) setAdminOnly(true);
+          return;
+        }
         const data = (await response.json()) as {
           foundation?: { completed?: boolean };
         };
@@ -110,6 +123,27 @@ export default function GetStartedPage() {
       active = false;
     };
   }, [loading, subAccount, subAccountId]);
+
+  // A collaborator can't run setup, but they must still be able to use the
+  // workspace. Give them a real way out instead of a screen they can never
+  // complete.
+  if (adminOnly) {
+    return (
+      <div className="mx-auto max-w-lg space-y-4 rounded-2xl border bg-card p-8 text-center">
+        <h1 className="text-lg font-semibold">
+          Setup is handled by your workspace admin
+        </h1>
+        <p className="text-muted-foreground text-sm">
+          Your account is set up as a collaborator, so the first-run setup steps
+          aren&apos;t yours to complete. Everything else in {subAccount?.name ?? "this workspace"} is
+          ready for you now.
+        </p>
+        <Button render={<Link href={saPath("/dashboard")} />}>
+          Go to my dashboard
+        </Button>
+      </div>
+    );
+  }
 
   if (
     isGhlJourney ||

@@ -48,7 +48,7 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { subAccount, subAccountId, agencyId, saPath } = useSubAccount();
+  const { subAccount, subAccountId, agencyId, saPath, isAdmin } = useSubAccount();
   const { ready: filterReady, filter: territoryFilter } =
     useEffectiveTerritoryFilter();
 
@@ -72,10 +72,14 @@ export default function DashboardPage() {
   );
 
   useEffect(() => {
-    if (subAccount && !wizardDone) {
+    // Only admins can complete setup — the onboarding-foundation endpoint is
+    // admin-only for both read and write. Redirecting a collaborator here sent
+    // them to a screen they could never finish, and this redirect fired again
+    // on every visit, so they could never reach the CRM at all.
+    if (subAccount && !wizardDone && isAdmin) {
       router.replace(saPath("/get-started"));
     }
-  }, [subAccount, wizardDone, router, saPath]);
+  }, [subAccount, wizardDone, isAdmin, router, saPath]);
 
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [deals, setDeals] = useState<Deal[]>([]);
@@ -554,7 +558,7 @@ export default function DashboardPage() {
     warmDeals.length,
   ]);
 
-  if (subAccount && !wizardDone) {
+  if (subAccount && !wizardDone && isAdmin) {
     return (
       <div className="text-muted-foreground flex h-64 items-center justify-center text-sm">
         Taking you to setup&hellip;

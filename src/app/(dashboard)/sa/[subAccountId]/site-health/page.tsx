@@ -151,12 +151,24 @@ export default function SiteHealthPage() {
   }
 
   if (error || !result) {
+    // This is the destination of the post-setup welcome banner, so it is
+    // frequently the first screen a brand-new operator sees. "Refresh the page"
+    // with nothing to click is a dead end at the worst possible moment — give
+    // them the reason, a real retry, and a way back to work.
     return (
-      <div className="rounded-2xl border p-8 text-center">
+      <div className="mx-auto max-w-lg space-y-4 rounded-2xl border p-8 text-center">
         <p className="font-semibold">We could not check your site right now.</p>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Refresh the page to try again.
+        <p className="text-muted-foreground text-sm">
+          {error
+            ? error
+            : "The check didn't come back. This is usually temporary — your site itself is unaffected."}
         </p>
+        <div className="flex flex-wrap justify-center gap-2">
+          <Button onClick={() => void load()}>Try again</Button>
+          <Button variant="outline" render={<Link href={saPath("/dashboard")} />}>
+            Back to Today
+          </Button>
+        </div>
       </div>
     );
   }

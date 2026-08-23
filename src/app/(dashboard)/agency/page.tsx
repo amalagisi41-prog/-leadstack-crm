@@ -58,6 +58,7 @@ function AgencyHomeContent() {
     membershipsLoaded,
   } = useAuth();
   const router = useRouter();
+  const workspaceErrorParam = useSearchParams().get("error");
   const [filter, setFilter] = useState("");
   const [repairingSession, setRepairingSession] = useState(false);
   const [repairFailed, setRepairFailed] = useState(false);
@@ -96,13 +97,30 @@ function AgencyHomeContent() {
     document.title = `Agency · ${agency.name}`;
   }, [agency.name]);
 
+  // The sub-account provider redirects here with `?error=` when it cannot read
+  // the workspace doc — most often because firestore.rules were never deployed
+  // on a fresh install, which is the very first thing a new buyer hits. Both
+  // auto-redirects below must stand down in that case: otherwise this page
+  // sends them straight back to the workspace that just failed, the provider
+  // bounces them here again, and the two pages flicker forever with the
+  // explanation stuck behind a redirect that always wins.
+  const hasWorkspaceError = Boolean(workspaceErrorParam);
+
   useEffect(() => {
-    if (loading || !user || !membershipsLoaded) return;
+    if (loading || !user || !membershipsLoaded || hasWorkspaceError) return;
     if (agencyRole === "owner") return;
     const firstMembership = memberships[0];
     if (!firstMembership) return;
     router.replace(`/sa/${firstMembership.subAccountId}/dashboard`);
-  }, [agencyRole, loading, memberships, membershipsLoaded, router, user]);
+  }, [
+    agencyRole,
+    hasWorkspaceError,
+    loading,
+    memberships,
+    membershipsLoaded,
+    router,
+    user,
+  ]);
 
   // Solo mode: an owner whose agency hasn't graduated to multi-account mode
   // (the default — see AgencyDoc.multiAccountModeEnabled) has no use for the
@@ -111,6 +129,7 @@ function AgencyHomeContent() {
   // use the create-one flow below.
   useEffect(() => {
     if (loading || !user || !membershipsLoaded || !isOwner) return;
+    if (hasWorkspaceError) return; // see note above — don't re-enter the loop
     if (agency.loading) return;
     if (agency.multiAccountModeEnabled) return;
     const firstMembership = memberships[0];
@@ -121,6 +140,7 @@ function AgencyHomeContent() {
     user,
     membershipsLoaded,
     isOwner,
+    hasWorkspaceError,
     agency.loading,
     agency.multiAccountModeEnabled,
     memberships,
@@ -352,7 +372,19 @@ function AgencyHomeContent() {
 export default function AgencyHomePage() {
   return (
     <div className="mx-auto max-w-5xl">
-      <AgencyHomeContent />
+      {/* AgencyHomeContent reads `?error=` (see the redirect-loop note inside)
+          via useSearchParams, which opts the page out of static prerendering
+          unless it sits behind a Suspense boundary. */}
+      <Suspense
+        fallback={
+          <div className="space-y-6">
+            <div className="bg-muted h-8 w-48 animate-pulse rounded" />
+            <div className="bg-muted/50 h-32 animate-pulse rounded-2xl" />
+          </div>
+        }
+      >
+        <AgencyHomeContent />
+      </Suspense>
     </div>
   );
 }

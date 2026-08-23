@@ -175,8 +175,10 @@ export function OnboardingFoundation({
 
   async function continueToSetup() {
     if (domainPoint === "not_sure") {
+      // The explainer panel above answers this in place; point at it rather
+      // than telling them to go and know the answer.
       toast.error(
-        "Choose whether you need a new domain or already own one before continuing."
+        "Pick one of the two options above — 'I already have one' or 'I need a new one'."
       );
       return;
     }
@@ -314,6 +316,43 @@ export function OnboardingFoundation({
             </button>
           ))}
         </div>
+
+        {/* "Help me choose" used to be a trap: the least-confident user picked
+            the option written for them, pressed the only forward button on the
+            page, and got a red toast telling them to already know the answer.
+            Answer the question here instead of refusing to continue. */}
+        {domainPoint === "not_sure" ? (
+          <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50/60 p-4 text-sm dark:border-blue-900 dark:bg-blue-950/30">
+            <p className="font-medium">A domain is your web address.</p>
+            <p className="text-muted-foreground mt-1">
+              It&apos;s the part people type to reach you — like{" "}
+              <span className="font-medium">yourname.com</span>. If you already
+              hand one out on your business card or email signature, you own one.
+              If you&apos;ve never bought one, you need a new one — we&apos;ll
+              walk you through it and it usually costs about $12 a year.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setDomainPoint("have_domain");
+                  setHostingPoint("transfer_existing");
+                }}
+                className="rounded-lg border border-blue-500 bg-white px-3 py-2 text-sm font-medium text-blue-700 dark:bg-transparent dark:text-blue-300"
+              >
+                I already have one
+              </button>
+              <button
+                type="button"
+                onClick={() => setDomainPoint("need_domain")}
+                className="rounded-lg border border-blue-500 bg-white px-3 py-2 text-sm font-medium text-blue-700 dark:bg-transparent dark:text-blue-300"
+              >
+                I need a new one
+              </button>
+            </div>
+          </div>
+        ) : null}
+
         <div className="mt-4 flex flex-wrap gap-2">
           {domainPoint === "need_domain" ? (
             <Button

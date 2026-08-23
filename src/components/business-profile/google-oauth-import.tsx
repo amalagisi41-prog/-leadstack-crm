@@ -71,8 +71,18 @@ export function GoogleOAuthImport({
       return;
     }
 
-    if (code) {
-      handleOAuthCallback(code);
+    // Both values are required. Forwarding only `code` was why every import
+    // failed with "Missing OAuth code or state parameter" — the exchange
+    // endpoint requires the state so it can verify the signature and confirm
+    // the request names this sub-account.
+    const state = searchParams.get("oauth_state");
+    if (code && state) {
+      handleOAuthCallback(code, state);
+    } else if (code && !state) {
+      toast.error(
+        "That Google connection link was incomplete. Start the import again."
+      );
+      router.replace(window.location.pathname);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, router]);
@@ -107,11 +117,11 @@ export function GoogleOAuthImport({
     }
   }
 
-  async function handleOAuthCallback(code: string) {
+  async function handleOAuthCallback(code: string, state: string) {
     try {
       setIsLoading(true);
       const response = await fetch(
-        `/api/sub-accounts/${subAccountId}/business-profile/import-google?code=${encodeURIComponent(code)}`,
+        `/api/sub-accounts/${subAccountId}/business-profile/import-google?code=${encodeURIComponent(code)}&state=${encodeURIComponent(state)}`,
         {
           method: "GET",
         }

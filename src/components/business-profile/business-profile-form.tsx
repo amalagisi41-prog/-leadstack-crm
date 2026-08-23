@@ -167,6 +167,16 @@ export function BusinessProfileForm() {
         setContent({ ...EMPTY_BUSINESS_PROFILE, ...data.profile });
         setImportUrl(data.importSourceUrl ?? "");
         setCompleteness(data.completeness ?? 0);
+      } catch {
+        // Without this catch, a thrown fetch or parse rejected an un-awaited
+        // IIFE: no toast, no error state, and `finally` still cleared the
+        // spinner. The operator saw a blank Blueprint, assumed nothing had
+        // been saved, retyped it, and overwrote real data on save. Say so.
+        if (active) {
+          toast.error(
+            "We couldn't load your Business Blueprint. Reload before editing — saving now could overwrite what's already there."
+          );
+        }
       } finally {
         if (active) setLoading(false);
       }

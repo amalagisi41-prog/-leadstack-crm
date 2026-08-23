@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
   Building2,
   Link2,
@@ -128,19 +129,35 @@ const FUNNEL_RECOMMENDATIONS = [
 
 /* ---------- persist helper ---------- */
 
+/**
+ * Returns true when the save actually landed.
+ *
+ * This used to end in `.catch(() => {})`, which made a failed save
+ * indistinguishable from a successful one. That mattered most at the finish
+ * line: if the final PATCH failed, `onboardingWizardCompletedAt` was never
+ * written, so the dashboard's gate stayed false and immediately redirected
+ * back here — restarting the operator at "Step 1 of 6" with no explanation,
+ * every time they tried. Silence is the wrong default for the one write the
+ * whole flow depends on.
+ */
 async function persistSteps(
   subAccountId: string,
   steps: string[],
   opts: { wizardCompleted?: boolean } = {},
-) {
-  await fetch(`/api/sub-accounts/${subAccountId}/onboarding`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      steps,
-      ...(opts.wizardCompleted ? { wizardCompleted: true } : {}),
-    }),
-  }).catch(() => {});
+): Promise<boolean> {
+  try {
+    const res = await fetch(`/api/sub-accounts/${subAccountId}/onboarding`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        steps,
+        ...(opts.wizardCompleted ? { wizardCompleted: true } : {}),
+      }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
 }
 
 /* ---------- main component ---------- */
@@ -204,7 +221,21 @@ export function OnboardingWizard({
     // condition was unsatisfiable no matter how diligently they worked
     // through it. Those three stay outstanding on the checklist — they are
     // genuinely not done — they just no longer bar the door.
-    await persistSteps(subAccountId, done, { wizardCompleted: true });
+    const saved = await persistSteps(subAccountId, done, {
+      wizardCompleted: true,
+    });
+
+    // Navigating on a failed save is what created the restart loop: the
+    // dashboard would bounce them back here and the wizard would reopen at
+    // step 1. Keep them on this step, say what happened, and let them retry.
+    if (!saved) {
+      setFinishing(false);
+      toast.error(
+        "We couldn't save your setup just now. Check your connection and press Finish again — nothing you entered has been lost."
+      );
+      return;
+    }
+
     router.replace(saPath("/dashboard?welcome=1"));
     router.refresh();
   }, [completed, finishing, router, saPath, subAccountId]);

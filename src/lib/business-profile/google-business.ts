@@ -291,9 +291,17 @@ function formatBusinessHours(
  * Verify the OAuth state parameter to prevent CSRF attacks.
  * The state token should be a random string stored in the session.
  */
-export function verifyGoogleOAuthState(
-  sentState: string,
-  expectedState: string
-): boolean {
-  return sentState === expectedState && sentState.length > 0;
-}
+/**
+ * REMOVED — this was not a CSRF check.
+ *
+ * The previous implementation took `(sentState, expectedState)` and returned
+ * `sentState === expectedState && sentState.length > 0`. Its only caller passed
+ * the SAME string for both arguments, so it reduced to "is this non-empty" and
+ * returned true for any attacker-supplied value. Its own comment admitted it
+ * ("For now, we'll verify it's a non-empty string").
+ *
+ * Use `verifyGoogleOAuthState` from `@/lib/comms/google-oauth-state` instead —
+ * that one HMAC-signs the state with AUTOMATIONS_TOKEN_SECRET and compares with
+ * timingSafeEqual, matching the Meta flow. Note the two functions shared a name,
+ * which is how a real verifier and a no-op ended up coexisting.
+ */
