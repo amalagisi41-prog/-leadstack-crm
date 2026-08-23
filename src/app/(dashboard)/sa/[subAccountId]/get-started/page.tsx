@@ -35,14 +35,14 @@ export default function GetStartedPage() {
     )
       ? (requestedStep as OnboardingWizardStepKey)
       : null;
-  const setupIsComplete = [
-    "build",
-    "connect",
-    "capture",
-    "respond",
-    "nurture",
-    "close",
-  ].every((step) => subAccount?.onboardingStepsCompleted?.includes(step));
+  // Someone who has already finished the wizard should not be dropped back
+  // into it when they navigate here directly.
+  //
+  // This previously looked for the method keys "build"/"connect"/… inside
+  // `onboardingStepsCompleted`, which could never match: the onboarding PATCH
+  // route filters writes against ONBOARDING_STEP_IDS (the nine granular ids),
+  // so those six keys were silently dropped and never persisted by anything.
+  const setupIsComplete = Boolean(subAccount?.onboardingWizardCompletedAt);
 
   // Idempotent migration for workspaces created before the Solo entitlement
   // entitlement baseline shipped. The endpoint is agency-owner-only; invited

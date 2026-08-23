@@ -178,6 +178,25 @@ service cloud.firestore {
       // Mutations are server-only (creation, archive, settings).
       allow write: if false;
 
+      // ---------- integration secrets: NO client access, ever ----------
+      // OAuth tokens and API credentials for this sub-account's third-party
+      // integrations. The parent document above is readable by every ACTIVE
+      // member including the lowest `collaborator` role, and Firestore has no
+      // field-level read rules — so anything stored there is readable by
+      // anyone who can read the document at all.
+      //
+      // A Google refresh token does not expire on its own and grants ongoing
+      // send-as access to the operator's real mailbox, so it cannot live on
+      // the parent. It lives here, reachable only by the Admin SDK via
+      // lib/comms/sub-account-secrets.ts.
+      //
+      // The trailing catch-all at the bottom of this file would already deny
+      // these, but state it explicitly: this is a rule someone must not
+      // "helpfully" relax later without understanding what it protects.
+      match /secrets/{secretId} {
+        allow read, write: if false;
+      }
+
       match /subAccountMembers/{uid} {
         // Read access:
         //   - A member may read THEIR OWN row. Collaborators need this to

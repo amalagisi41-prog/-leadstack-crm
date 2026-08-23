@@ -54,42 +54,126 @@ const HOSTINGER_NEW_URL =
  * Hosts an agent is realistically already on. Values map to
  * BusinessSourcePlatform so the choice persists on the foundation record.
  */
-const EXISTING_HOSTS: Array<{ id: BusinessSourcePlatform; label: string }> = [
-  { id: "wordpress", label: "WordPress.com" },
-  { id: "bluehost", label: "Bluehost" },
-  { id: "godaddy", label: "GoDaddy" },
-  { id: "wix", label: "Wix" },
-  { id: "squarespace", label: "Squarespace" },
-  { id: "vercel", label: "Vercel / Netlify" },
-  { id: "gohighlevel", label: "GoHighLevel" },
-  { id: "kvcore", label: "kvCORE" },
-  { id: "other", label: "Another host" },
-];
-
 /**
- * Dashboard/admin URLs for each hosting provider.
- * Used to launch the host's control panel directly from AgentStack.
+ * Every platform a business can arrive from, with the name we show the
+ * operator and the URL that opens that platform's dashboard.
+ *
+ * ONE record, not two. The label list and the URL map used to be separate,
+ * and they drifted: the URL map covered all 18 platforms while the label
+ * list covered 9, so half the platforms rendered a button reading "Launch
+ * your current host" instead of naming where it went. Keeping both on one
+ * record makes that class of drift impossible — adding a platform to
+ * `BusinessSourcePlatform` fails the build here until both halves exist.
+ *
+ * `dashboardUrl: null` means we have no dashboard to send them to and the
+ * Launch button is not rendered.
+ *
+ * `pickable` marks the platforms offered in the "who hosts your site?"
+ * picker. The others can still arrive as a `sourcePlatform` from onboarding
+ * (where the question is which platform the BUSINESS runs on, not who hosts
+ * the site) — they need a label for the button even though they are not
+ * hosting choices.
  */
-const HOST_DASHBOARD_URLS: Record<BusinessSourcePlatform, string> = {
-  wordpress: "https://wordpress.com/",
-  bluehost: "https://www.bluehost.com/cpl/login",
-  godaddy: "https://www.godaddy.com/",
-  wix: "https://www.wix.com/",
-  squarespace: "https://www.squarespace.com/",
-  vercel: "https://vercel.com/dashboard",
-  gohighlevel: "https://app.gohighlevel.com/",
-  kvcore: "https://www.kvcore.com/",
-  followupboss: "https://app.followupboss.com/",
-  lofty: "https://www.lofty.com/login",
-  chime: "https://chime.aws/",
-  nextjs: "https://vercel.com/dashboard",
-  make: "https://us1.make.com/",
-  vibe: "https://www.joinvibe.com/",
-  zillow: "https://www.zillow.com/",
-  realtor: "https://www.realtor.com/",
-  homes: "https://www.homes.com/",
-  other: "https://www.google.com/search?q=web+hosting+login",
+const HOST_PLATFORMS: Record<
+  BusinessSourcePlatform,
+  { label: string; dashboardUrl: string | null; pickable: boolean }
+> = {
+  wordpress: {
+    label: "WordPress.com",
+    dashboardUrl: "https://wordpress.com/home",
+    pickable: true,
+  },
+  bluehost: {
+    label: "Bluehost",
+    dashboardUrl: "https://www.bluehost.com/my-account/login",
+    pickable: true,
+  },
+  godaddy: {
+    label: "GoDaddy",
+    dashboardUrl: "https://sso.godaddy.com/",
+    pickable: true,
+  },
+  wix: {
+    label: "Wix",
+    dashboardUrl: "https://manage.wix.com/",
+    pickable: true,
+  },
+  squarespace: {
+    label: "Squarespace",
+    dashboardUrl: "https://account.squarespace.com/",
+    pickable: true,
+  },
+  vercel: {
+    label: "Vercel / Netlify",
+    dashboardUrl: "https://vercel.com/dashboard",
+    pickable: true,
+  },
+  gohighlevel: {
+    label: "GoHighLevel",
+    dashboardUrl: "https://app.gohighlevel.com/",
+    pickable: true,
+  },
+  kvcore: {
+    label: "kvCORE",
+    dashboardUrl: "https://app.kvcore.com/",
+    pickable: true,
+  },
+  followupboss: {
+    label: "Follow Up Boss",
+    dashboardUrl: "https://app.followupboss.com/",
+    pickable: false,
+  },
+  lofty: {
+    label: "Lofty",
+    dashboardUrl: "https://www.lofty.com/login",
+    pickable: false,
+  },
+  chime: {
+    // Chime Technologies — the real-estate CRM/IDX platform — rebranded to
+    // Lofty, so this points at the Lofty login. It previously pointed at
+    // https://chime.aws/, which is Amazon's video-conferencing product and
+    // has nothing to do with either real estate or website hosting.
+    label: "Chime (now Lofty)",
+    dashboardUrl: "https://www.lofty.com/login",
+    pickable: false,
+  },
+  nextjs: {
+    label: "Next.js on Vercel",
+    dashboardUrl: "https://vercel.com/dashboard",
+    pickable: false,
+  },
+  make: {
+    // Region-agnostic entry point. Hardcoding us1 sent every EU tenant
+    // (eu1/eu2) to a workspace they cannot log into.
+    label: "Make",
+    dashboardUrl: "https://www.make.com/en/login",
+    pickable: false,
+  },
+  vibe: {
+    label: "Vibe",
+    dashboardUrl: null,
+    pickable: false,
+  },
+  // Portal listings, not website hosts. An agent's site is never "hosted" on
+  // Zillow, so there is no hosting dashboard to launch — sending them to the
+  // consumer homepage was worse than showing nothing.
+  zillow: { label: "Zillow", dashboardUrl: null, pickable: false },
+  realtor: { label: "Realtor.com", dashboardUrl: null, pickable: false },
+  homes: { label: "Homes.com", dashboardUrl: null, pickable: false },
+  other: {
+    label: "Another host",
+    // We genuinely do not know where to send them, and a Launch button that
+    // opens a web search is a dead end dressed up as an action.
+    dashboardUrl: null,
+    pickable: true,
+  },
 };
+
+const EXISTING_HOSTS: Array<{ id: BusinessSourcePlatform; label: string }> = (
+  Object.keys(HOST_PLATFORMS) as BusinessSourcePlatform[]
+)
+  .filter((id) => HOST_PLATFORMS[id].pickable)
+  .map((id) => ({ id, label: HOST_PLATFORMS[id].label }));
 
 const SITUATIONS: Array<{
   id: Situation;
@@ -291,15 +375,14 @@ export function DomainConnect() {
   const hostingConnected = Boolean(
     foundation.hostingStartingPoint && foundation.hostingSetupConfirmed
   );
-  const hostLabel =
-    EXISTING_HOSTS.find((host) => host.id === foundation.sourcePlatform)
-      ?.label ?? "your current host";
-
-  const hostDashboardUrl =
-    foundation.sourcePlatform &&
-    foundation.sourcePlatform in HOST_DASHBOARD_URLS
-      ? HOST_DASHBOARD_URLS[foundation.sourcePlatform]
-      : null;
+  // Every platform has a label now, so the button names its destination
+  // instead of falling back to "your current host". The fallback remains only
+  // for a sourcePlatform that has not been set at all.
+  const hostPlatform = foundation.sourcePlatform
+    ? HOST_PLATFORMS[foundation.sourcePlatform]
+    : undefined;
+  const hostLabel = hostPlatform?.label ?? "your current host";
+  const hostDashboardUrl = hostPlatform?.dashboardUrl ?? null;
 
   // Staying on the current host means there is no cutover: the domain
   // already points where it should. Leaving step 3 "locked" forever implied

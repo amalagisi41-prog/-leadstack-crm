@@ -128,11 +128,18 @@ const FUNNEL_RECOMMENDATIONS = [
 
 /* ---------- persist helper ---------- */
 
-async function persistSteps(subAccountId: string, steps: string[]) {
+async function persistSteps(
+  subAccountId: string,
+  steps: string[],
+  opts: { wizardCompleted?: boolean } = {},
+) {
   await fetch(`/api/sub-accounts/${subAccountId}/onboarding`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ steps }),
+    body: JSON.stringify({
+      steps,
+      ...(opts.wizardCompleted ? { wizardCompleted: true } : {}),
+    }),
   }).catch(() => {});
 }
 
@@ -190,7 +197,14 @@ export function OnboardingWizard({
     // told they were finished — and the checklist agreed, claiming they had
     // imported contacts and connected a phone number they had never touched.
     const done = ONBOARDING_STEP_IDS.filter((id) => completed.has(id));
-    await persistSteps(subAccountId, done);
+    // Record that the wizard itself was finished, separately from which
+    // checklist items got done. Without this the dashboard bounced the
+    // operator straight back here: it gated on all nine checklist ids, and
+    // this wizard has no step for `contacts`, `sms`, or `booking`, so the
+    // condition was unsatisfiable no matter how diligently they worked
+    // through it. Those three stay outstanding on the checklist — they are
+    // genuinely not done — they just no longer bar the door.
+    await persistSteps(subAccountId, done, { wizardCompleted: true });
     router.replace(saPath("/dashboard?welcome=1"));
     router.refresh();
   }, [completed, finishing, router, saPath, subAccountId]);

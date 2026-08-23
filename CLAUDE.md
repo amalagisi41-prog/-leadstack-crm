@@ -876,6 +876,20 @@ Each sub-account can hold **up to `MAX_WEBSITES_PER_SUBACCOUNT` (5)** website do
 - **Rate limit**: gitpage caps at 30 builds/hour/agency. v1 doesn't add a client-side cap; gitpage returns 429 with `resetAt` when exceeded.
 - **Heartbeat / subscription gate**: [src/lib/gitpage/heartbeat.ts](src/lib/gitpage/heartbeat.ts) `sendHeartbeat()` POSTs anonymous deployment metadata (instanceId from `system/heartbeat`, owner email, version, sub-account count, builds-last-day, platform) to `POST /api/v1/agentstack/heartbeat`. The response includes `gitpageStatus.agency: boolean` which gets cached at `system/gitpageStatus`. The website-builder UI reads that doc via `onSnapshot` and renders an "activate" banner when `agency === false`. Fired once per cold start via [instrumentation.ts](instrumentation.ts) and once daily via QStash → [/api/cron/gitpage-heartbeat](src/app/api/cron/gitpage-heartbeat/route.ts) (signature-verified). Disable with `GITPAGE_TELEMETRY=off`. To set up the daily schedule: in Upstash QStash dashboard create a schedule pointing at `${NEXT_PUBLIC_APP_URL}/api/cron/gitpage-heartbeat` with cron `0 3 * * *`.
 
+### Website import (scrape an existing site into a draft)
+
+Operators with an existing website can seed a new site from it instead of retyping everything. `POST /api/sub-accounts/[id]/website/import` takes `{ domain }`, scrapes the page with Firecrawl (`scrapeUrl`), converts the markdown to a `WebsiteConfig` via [src/lib/website/import-converter.ts](src/lib/website/import-converter.ts), and creates a `draft` website doc. UI is [website-import-dialog.tsx](src/components/website/website-import-dialog.tsx) on the Website page. Requires `FIRECRAWL_API_KEY` (503 without it) and counts against the same `MAX_WEBSITES_PER_SUBACCOUNT` cap (409 when full).
+
+**The converter never invents a value.** Anything the scrape can't determine is left **empty**, not filled with a plausible placeholder. This is load-bearing: the operator's next click after an import is *Build site*, so a placeholder like `contact@example.com` reaches a published customer website. `validateWebsiteConfig()` already treats those empty fields as errors, so an incomplete import is blocked from building by the existing validation path and the builder form names the missing fields — matching the "say what is missing by name / never mark work complete that the user did not do" standard below.
+
+In practice a scrape can rarely fill `business_street` / `business_city`, so most imports land needing those two before Build unlocks. That is the intended outcome, not a gap to paper over.
+
+Other converter contracts worth preserving:
+- Length caps match `validateWebsiteConfig()` (heading + hero 80, features + benefits 60), not gitpage's raw maximums. Emitting a 500-char hero that then fails our own validation helps nobody.
+- Email extraction skips platform, `no-reply`, and image-filename matches rather than taking the first regex hit, which used to grab a webmaster or Squarespace address.
+- `normalizeImportUrl()` rejects non-http schemes, `localhost`, IP literals, `.internal` / `.local`, and bare dotless hostnames. Firecrawl does the fetching, so this is defence in depth rather than the only SSRF control.
+- The route maps Firecrawl failures to honest statuses: **429 → 429** with `Retry-After` (Firecrawl's cap is 30 scrapes/hour/agency; a rate limit surfaced as a generic failure told operators their site had failed when they only needed to wait), 4xx → 422 "couldn't read that website", 503 → 503. A bad address is a 400, not a 502.
+
 ## Commands
 - `pnpm dev` — dev server (Turbopack)
 - `pnpm build` — production build
@@ -985,6 +999,27 @@ Without these, the AI Agents → Voice settings page still renders but the Enabl
 Voice attaches to the sub-account's **existing dedicated Twilio number** via Vapi BYOC (bring-your-own-carrier) — one number serves SMS + Voice with one bill. Configure Twilio under Settings → SMS first; the Voice settings page surfaces an amber banner until that's done. `NEXT_PUBLIC_APP_URL` must be set and publicly reachable (Vapi POSTs the LLM webhook on every voice turn) — locally that means cloudflared/ngrok per the Phase 3.5 tunnel guide.
 
 Cost footprint: Vapi bills per-minute (model + STT + TTS bundled, roughly 7-15¢/min at Haiku + ElevenLabs); OpenRouter bills per-token on top via our existing `OPENROUTER_API_KEY`. Each turn token cost is logged into the channel's `totalTokensUsed` counter the same way SMS/Web Chat tracks usage.
+
+### Optional — Google Workspace (per-sub-account Gmail sending)
+
+Lets a sub-account send its outbound email from its **own Google Workspace / Gmail mailbox** instead of the shared Resend sender, via OAuth. When connected, `sendEmail()` routes that sub-account's mail through the Gmail API — booking confirmations, quotes, invites, broadcasts, community magic-links, everything.
+
+| Var | Source |
+|---|---|
+| `GOOGLE_OAUTH_CLIENT_ID` | [console.cloud.google.com](https://console.cloud.google.com) → APIs & Services → Credentials → OAuth 2.0 Client ID (Web application). |
+| `GOOGLE_OAUTH_CLIENT_SECRET` | Same credential. |
+
+Register the redirect URI `${NEXT_PUBLIC_APP_URL}/api/email/google-oauth-callback` on that OAuth client, and enable the **Gmail API** on the project. Scopes requested: `gmail.send`, `userinfo.profile`, `userinfo.email`. The connect flow's CSRF `state` is HMAC-signed with the existing `AUTOMATIONS_TOKEN_SECRET` — no additional secret.
+
+Without these two vars the email setup wizard still renders, but the Google option returns 503 and sub-accounts fall back to Resend (shared sender, or their own verified sending domain when the agency gate allows it).
+
+**Token storage — read this before touching the config shape.** `subAccounts/{id}` is readable by every ACTIVE member of the sub-account, down to the `collaborator` role, and Firestore has no field-level read rules. OAuth tokens therefore do **not** live on that document. They live in the server-only secrets subcollection at `subAccounts/{id}/secrets/googleWorkspace` (`allow read, write: if false`), reached only through [src/lib/comms/sub-account-secrets.ts](src/lib/comms/sub-account-secrets.ts). Only the public half — `status`, `senderEmail`, `senderName`, `connectedAt`, `connectedByUid` — stays on the parent doc so the settings UI can render the connected state.
+
+`GoogleWorkspaceConfig` still declares `accessToken` / `refreshToken` / `expiresAt` as optional and deprecated, solely so `loadGoogleWorkspaceSecrets()` can lazily migrate connections made before the move; that migration deletes them from the parent document on first read. Never write them. To send, call `resolveGoogleAccessToken(subAccountId)`, which refreshes when the stored token is inside its 5-minute expiry window and throws `GoogleWorkspaceReconnectRequired` when the connection is dead.
+
+**`auth` must be an OAuth2 client, never a token string.** `google.gmail({ version: "v1", auth })` accepts a string and treats it as an **API key** — appended as `?key=<value>` with no Authorization header. Passing a raw access token there makes every send fail with 401 and writes the token into the request URL. It type-checks and it builds; the only thing that catches it is [google-workspace.test.ts](src/lib/comms/google-workspace.test.ts), which asserts the Bearer header. Do not "simplify" that wiring.
+
+**Still open (deliberate):** `twilioConfig.authToken` sits on the same member-readable parent document with the same exposure. It is read directly by ~14 call sites including the Twilio + WhatsApp inbound webhooks (which use it for signature verification), so migrating it means converting all of them in lockstep. That belongs in its own change — see the FOLLOW-UP note at the bottom of `sub-account-secrets.ts`.
 
 ### Optional — Meta (Facebook/Instagram inbox + Social Planner)
 One Meta app powers BOTH the FB Messenger / IG DM inbox AND the Social Planner (they share one connection). All optional — leave unset and both features stay off.

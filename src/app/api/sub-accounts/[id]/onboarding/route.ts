@@ -54,7 +54,7 @@ export async function PATCH(
   const access = await requireSubAccountMember(request, subAccountId);
   if (access instanceof NextResponse) return access;
 
-  let body: { steps?: unknown };
+  let body: { steps?: unknown; wizardCompleted?: unknown };
   try {
     body = await request.json();
   } catch {
@@ -73,6 +73,16 @@ export async function PATCH(
     onboardingStepsCompleted: steps,
     updatedAt: FieldValue.serverTimestamp(),
   };
+
+  // The wizard reports its own completion separately from the checklist.
+  // Three of the nine checklist ids (`contacts`, `sms`, `booking`) have no
+  // wizard step, so "finished the wizard" and "checklist is complete" are
+  // different facts and must be stored as different fields — see the note on
+  // SubAccountDoc.onboardingWizardCompletedAt. Only ever set, never cleared:
+  // having been walked through setup is not something that becomes untrue.
+  if (body.wizardCompleted === true) {
+    update.onboardingWizardCompletedAt = FieldValue.serverTimestamp();
+  }
   if (isOnboardingComplete(steps)) {
     update["onboardingLifecycleEmails.completedAt"] =
       FieldValue.serverTimestamp();
