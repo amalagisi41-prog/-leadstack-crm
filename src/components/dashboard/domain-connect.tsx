@@ -66,6 +66,31 @@ const EXISTING_HOSTS: Array<{ id: BusinessSourcePlatform; label: string }> = [
   { id: "other", label: "Another host" },
 ];
 
+/**
+ * Dashboard/admin URLs for each hosting provider.
+ * Used to launch the host's control panel directly from AgentStack.
+ */
+const HOST_DASHBOARD_URLS: Record<BusinessSourcePlatform, string> = {
+  wordpress: "https://wordpress.com/",
+  bluehost: "https://www.bluehost.com/cpl/login",
+  godaddy: "https://www.godaddy.com/",
+  wix: "https://www.wix.com/",
+  squarespace: "https://www.squarespace.com/",
+  vercel: "https://vercel.com/dashboard",
+  gohighlevel: "https://app.gohighlevel.com/",
+  kvcore: "https://www.kvcore.com/",
+  followupboss: "https://app.followupboss.com/",
+  lofty: "https://www.lofty.com/login",
+  chime: "https://chime.aws/",
+  nextjs: "https://vercel.com/dashboard",
+  make: "https://us1.make.com/",
+  vibe: "https://www.joinvibe.com/",
+  zillow: "https://www.zillow.com/",
+  realtor: "https://www.realtor.com/",
+  homes: "https://www.homes.com/",
+  other: "https://www.google.com/search?q=web+hosting+login",
+};
+
 const SITUATIONS: Array<{
   id: Situation;
   title: string;
@@ -269,6 +294,13 @@ export function DomainConnect() {
   const hostLabel =
     EXISTING_HOSTS.find((host) => host.id === foundation.sourcePlatform)
       ?.label ?? "your current host";
+
+  const hostDashboardUrl =
+    foundation.sourcePlatform &&
+    foundation.sourcePlatform in HOST_DASHBOARD_URLS
+      ? HOST_DASHBOARD_URLS[foundation.sourcePlatform]
+      : null;
+
   // Staying on the current host means there is no cutover: the domain
   // already points where it should. Leaving step 3 "locked" forever implied
   // unfinished work that will never exist.
@@ -797,12 +829,31 @@ export function DomainConnect() {
               ) : null}
 
               {hostingConnected ? (
-                <p className="mt-4 flex items-center gap-2 text-sm font-medium text-emerald-700">
-                  <CheckCircle2 className="h-4 w-4" />
-                  {foundation.hostingStartingPoint === "agentstack_managed"
-                    ? "Hosted by AgentStack."
-                    : `Connected to ${hostLabel}.`}
-                </p>
+                <div className="mt-4 space-y-3">
+                  <p className="flex items-center gap-2 text-sm font-medium text-emerald-700">
+                    <CheckCircle2 className="h-4 w-4" />
+                    {foundation.hostingStartingPoint === "agentstack_managed"
+                      ? "Hosted by AgentStack."
+                      : `Connected to ${hostLabel}.`}
+                  </p>
+                  {foundation.hostingStartingPoint === "keep_existing" &&
+                    hostDashboardUrl ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      render={
+                        <a
+                          href={hostDashboardUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        />
+                      }
+                    >
+                      Launch {hostLabel}
+                      <ExternalLink className="ml-2 h-4 w-4" />
+                    </Button>
+                  ) : null}
+                </div>
               ) : null}
             </>
           )}
