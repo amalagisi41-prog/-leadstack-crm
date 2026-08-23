@@ -21,6 +21,26 @@ function coerceAgencyRole(value: unknown): AgencyRole | null {
 }
 
 /**
+ * A role only counts when the row it came from is still active.
+ *
+ * Removing a member does NOT delete their row — it sets `status: "removed"`
+ * (see /api/sub-accounts/[id]/members/[uid]). Reading `.role` without checking
+ * `.status` therefore treats a removed agency owner as a current one, and the
+ * value returned here is minted straight into the `agencyRole` custom claim by
+ * /api/auth/refresh-claims. That claim is what `requireAgencyOwner()` and the
+ * `isAgencyOwner()` Firestore rule trust — so a removed owner regained full
+ * agency control simply by signing in again.
+ *
+ * Rows written before `status` existed are treated as active, matching how the
+ * rest of the codebase reads legacy membership rows.
+ */
+function activeAgencyRole(data: Record<string, unknown> | undefined): AgencyRole | null {
+  if (!data) return null;
+  if (data.status !== undefined && data.status !== "active") return null;
+  return coerceAgencyRole(data.role);
+}
+
+/**
  * Resolve the user's home agency from the canonical user doc, then recover it
  * from the denormalized membership index if that pointer went stale or missing.
  *
@@ -50,7 +70,7 @@ export async function resolveAgencyAccess(uid: string, db = getAdminDb()) {
         const data = doc.data() ?? {};
         return {
           agencyId: cleanId(data.agencyId) ?? cleanId(doc.id),
-          role: coerceAgencyRole(data.role),
+          role: activeAgencyRole(data),
           name: typeof data.name === "string" ? data.name : "",
         };
       });
@@ -75,7 +95,7 @@ export async function resolveAgencyAccess(uid: string, db = getAdminDb()) {
       .get();
 
     if (agencyMemberSnap.exists) {
-      agencyRole = coerceAgencyRole(agencyMemberSnap.data()?.role);
+      agencyRole = activeAgencyRole(agencyMemberSnap.data());
     }
 
     if (!agencyRole) {
