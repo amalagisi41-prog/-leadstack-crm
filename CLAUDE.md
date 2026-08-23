@@ -876,6 +876,20 @@ Each sub-account can hold **up to `MAX_WEBSITES_PER_SUBACCOUNT` (5)** website do
 - **Rate limit**: gitpage caps at 30 builds/hour/agency. v1 doesn't add a client-side cap; gitpage returns 429 with `resetAt` when exceeded.
 - **Heartbeat / subscription gate**: [src/lib/gitpage/heartbeat.ts](src/lib/gitpage/heartbeat.ts) `sendHeartbeat()` POSTs anonymous deployment metadata (instanceId from `system/heartbeat`, owner email, version, sub-account count, builds-last-day, platform) to `POST /api/v1/agentstack/heartbeat`. The response includes `gitpageStatus.agency: boolean` which gets cached at `system/gitpageStatus`. The website-builder UI reads that doc via `onSnapshot` and renders an "activate" banner when `agency === false`. Fired once per cold start via [instrumentation.ts](instrumentation.ts) and once daily via QStash → [/api/cron/gitpage-heartbeat](src/app/api/cron/gitpage-heartbeat/route.ts) (signature-verified). Disable with `GITPAGE_TELEMETRY=off`. To set up the daily schedule: in Upstash QStash dashboard create a schedule pointing at `${NEXT_PUBLIC_APP_URL}/api/cron/gitpage-heartbeat` with cron `0 3 * * *`.
 
+### Website import (scrape an existing site into a draft)
+
+Operators with an existing website can seed a new site from it instead of retyping everything. `POST /api/sub-accounts/[id]/website/import` takes `{ domain }`, scrapes the page with Firecrawl (`scrapeUrl`), converts the markdown to a `WebsiteConfig` via [src/lib/website/import-converter.ts](src/lib/website/import-converter.ts), and creates a `draft` website doc. UI is [website-import-dialog.tsx](src/components/website/website-import-dialog.tsx) on the Website page. Requires `FIRECRAWL_API_KEY` (503 without it) and counts against the same `MAX_WEBSITES_PER_SUBACCOUNT` cap (409 when full).
+
+**The converter never invents a value.** Anything the scrape can't determine is left **empty**, not filled with a plausible placeholder. This is load-bearing: the operator's next click after an import is *Build site*, so a placeholder like `contact@example.com` reaches a published customer website. `validateWebsiteConfig()` already treats those empty fields as errors, so an incomplete import is blocked from building by the existing validation path and the builder form names the missing fields — matching the "say what is missing by name / never mark work complete that the user did not do" standard below.
+
+In practice a scrape can rarely fill `business_street` / `business_city`, so most imports land needing those two before Build unlocks. That is the intended outcome, not a gap to paper over.
+
+Other converter contracts worth preserving:
+- Length caps match `validateWebsiteConfig()` (heading + hero 80, features + benefits 60), not gitpage's raw maximums. Emitting a 500-char hero that then fails our own validation helps nobody.
+- Email extraction skips platform, `no-reply`, and image-filename matches rather than taking the first regex hit, which used to grab a webmaster or Squarespace address.
+- `normalizeImportUrl()` rejects non-http schemes, `localhost`, IP literals, `.internal` / `.local`, and bare dotless hostnames. Firecrawl does the fetching, so this is defence in depth rather than the only SSRF control.
+- The route maps Firecrawl failures to honest statuses: **429 → 429** with `Retry-After` (Firecrawl's cap is 30 scrapes/hour/agency; a rate limit surfaced as a generic failure told operators their site had failed when they only needed to wait), 4xx → 422 "couldn't read that website", 503 → 503. A bad address is a 400, not a 502.
+
 ## Commands
 - `pnpm dev` — dev server (Turbopack)
 - `pnpm build` — production build

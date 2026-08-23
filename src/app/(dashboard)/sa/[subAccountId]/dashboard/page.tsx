@@ -52,15 +52,30 @@ export default function DashboardPage() {
   const { ready: filterReady, filter: territoryFilter } =
     useEffectiveTerritoryFilter();
 
-  const onboardingDone = isOnboardingComplete(
+  // Gate the first-run redirect on "has this operator been through the
+  // wizard", NOT on "is every checklist item done". Those are different
+  // questions, and gating on the latter deadlocked the flow: the wizard has
+  // no step for `contacts`, `sms`, or `booking`, so isOnboardingComplete()
+  // could never become true and a fully-completed wizard still bounced the
+  // operator back to /get-started on every dashboard visit.
+  //
+  // The remaining checklist items are surfaced on the dashboard itself
+  // (setup progress below), so they stay visible as outstanding work rather
+  // than silently disappearing.
+  const wizardDone = Boolean(subAccount?.onboardingWizardCompletedAt);
+
+  // Separate question: is every checklist item actually done? Drives the
+  // setup-progress card, which is how the items the wizard doesn't cover
+  // (`contacts`, `sms`, `booking`) stay visible as outstanding work.
+  const checklistComplete = isOnboardingComplete(
     subAccount?.onboardingStepsCompleted
   );
 
   useEffect(() => {
-    if (subAccount && !onboardingDone) {
+    if (subAccount && !wizardDone) {
       router.replace(saPath("/get-started"));
     }
-  }, [subAccount, onboardingDone, router, saPath]);
+  }, [subAccount, wizardDone, router, saPath]);
 
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [deals, setDeals] = useState<Deal[]>([]);
@@ -539,7 +554,7 @@ export default function DashboardPage() {
     warmDeals.length,
   ]);
 
-  if (subAccount && !onboardingDone) {
+  if (subAccount && !wizardDone) {
     return (
       <div className="text-muted-foreground flex h-64 items-center justify-center text-sm">
         Taking you to setup&hellip;
@@ -600,7 +615,7 @@ export default function DashboardPage() {
         <LoadingState />
       ) : (
         <>
-          {!onboardingDone && (
+          {!checklistComplete && (
             <SetupProgressCard
               progress={onboardingProgress}
               nextStep={nextOnboardingStep}
