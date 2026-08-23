@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { getAdminAuth } from "@/lib/firebase/admin";
+import { verifyGoogleOAuthState } from "@/lib/comms/google-oauth-state";
+import { writeGoogleWorkspaceSecrets } from "@/lib/comms/sub-account-secrets";
 
 interface TokenResponse {
   access_token: string;
@@ -36,17 +38,17 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Decode state
-    let stateData: { subAccountId: string; nonce: string };
-    try {
-      stateData = JSON.parse(Buffer.from(state, "base64").toString());
-    } catch {
+    // Verify the HMAC-signed state. Rejects any `state` we did not mint,
+    // which is what stops an attacker from attaching their own Google account
+    // to someone else's sub-account.
+    const verified = verifyGoogleOAuthState(state);
+    if (!verified) {
       return NextResponse.redirect(
         new URL("/sa?email_oauth_error=invalid_state", request.nextUrl.origin)
       );
     }
 
-    const { subAccountId } = stateData;
+    const { subAccountId } = verified;
 
     // Verify user is authenticated and has access
     const cookieStore = await cookies();
@@ -83,8 +85,14 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const membership = membershipDoc.data() as { role?: string };
-    if (membership.role !== "admin") {
+    // Role AND status. Removal sets the membership row's status to "removed"
+    // rather than deleting it, so checking only `role` would let a removed
+    // admin still complete a connect.
+    const membership = membershipDoc.data() as {
+      role?: string;
+      status?: string;
+    };
+    if (membership.role !== "admin" || membership.status !== "active") {
       return NextResponse.redirect(
         new URL("/sa?email_oauth_error=unauthorized", request.nextUrl.origin)
       );
@@ -135,16 +143,24 @@ export async function GET(request: NextRequest) {
 
     const userInfo = (await userInfoResponse.json()) as UserInfoResponse;
 
-    // Store the configuration
+    // Store the SECRETS in the server-only subcollection. They must not go on
+    // the sub-account document — that document is readable by every active
+    // member including collaborators, and a Google refresh token grants
+    // ongoing send-as access to the operator's real mailbox.
+    await writeGoogleWorkspaceSecrets(subAccountId, {
+      accessToken: tokens.access_token,
+      refreshToken: tokens.refresh_token || null,
+      expiresAt: Date.now() + tokens.expires_in * 1000,
+    });
+
+    // Store only the PUBLIC half on the sub-account document, so the settings
+    // UI can render the connected state without a privileged read.
     const subAccountRef = db.collection("subAccounts").doc(subAccountId);
     await subAccountRef.update({
       googleWorkspaceConfig: {
         status: "connected",
         senderEmail: userInfo.email,
         senderName: userInfo.name,
-        accessToken: tokens.access_token,
-        refreshToken: tokens.refresh_token || null,
-        expiresAt: new Date(Date.now() + tokens.expires_in * 1000),
         connectedAt: new Date(),
         connectedByUid: decodedToken.uid,
       },

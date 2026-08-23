@@ -986,6 +986,27 @@ Voice attaches to the sub-account's **existing dedicated Twilio number** via Vap
 
 Cost footprint: Vapi bills per-minute (model + STT + TTS bundled, roughly 7-15¢/min at Haiku + ElevenLabs); OpenRouter bills per-token on top via our existing `OPENROUTER_API_KEY`. Each turn token cost is logged into the channel's `totalTokensUsed` counter the same way SMS/Web Chat tracks usage.
 
+### Optional — Google Workspace (per-sub-account Gmail sending)
+
+Lets a sub-account send its outbound email from its **own Google Workspace / Gmail mailbox** instead of the shared Resend sender, via OAuth. When connected, `sendEmail()` routes that sub-account's mail through the Gmail API — booking confirmations, quotes, invites, broadcasts, community magic-links, everything.
+
+| Var | Source |
+|---|---|
+| `GOOGLE_OAUTH_CLIENT_ID` | [console.cloud.google.com](https://console.cloud.google.com) → APIs & Services → Credentials → OAuth 2.0 Client ID (Web application). |
+| `GOOGLE_OAUTH_CLIENT_SECRET` | Same credential. |
+
+Register the redirect URI `${NEXT_PUBLIC_APP_URL}/api/email/google-oauth-callback` on that OAuth client, and enable the **Gmail API** on the project. Scopes requested: `gmail.send`, `userinfo.profile`, `userinfo.email`. The connect flow's CSRF `state` is HMAC-signed with the existing `AUTOMATIONS_TOKEN_SECRET` — no additional secret.
+
+Without these two vars the email setup wizard still renders, but the Google option returns 503 and sub-accounts fall back to Resend (shared sender, or their own verified sending domain when the agency gate allows it).
+
+**Token storage — read this before touching the config shape.** `subAccounts/{id}` is readable by every ACTIVE member of the sub-account, down to the `collaborator` role, and Firestore has no field-level read rules. OAuth tokens therefore do **not** live on that document. They live in the server-only secrets subcollection at `subAccounts/{id}/secrets/googleWorkspace` (`allow read, write: if false`), reached only through [src/lib/comms/sub-account-secrets.ts](src/lib/comms/sub-account-secrets.ts). Only the public half — `status`, `senderEmail`, `senderName`, `connectedAt`, `connectedByUid` — stays on the parent doc so the settings UI can render the connected state.
+
+`GoogleWorkspaceConfig` still declares `accessToken` / `refreshToken` / `expiresAt` as optional and deprecated, solely so `loadGoogleWorkspaceSecrets()` can lazily migrate connections made before the move; that migration deletes them from the parent document on first read. Never write them. To send, call `resolveGoogleAccessToken(subAccountId)`, which refreshes when the stored token is inside its 5-minute expiry window and throws `GoogleWorkspaceReconnectRequired` when the connection is dead.
+
+**`auth` must be an OAuth2 client, never a token string.** `google.gmail({ version: "v1", auth })` accepts a string and treats it as an **API key** — appended as `?key=<value>` with no Authorization header. Passing a raw access token there makes every send fail with 401 and writes the token into the request URL. It type-checks and it builds; the only thing that catches it is [google-workspace.test.ts](src/lib/comms/google-workspace.test.ts), which asserts the Bearer header. Do not "simplify" that wiring.
+
+**Still open (deliberate):** `twilioConfig.authToken` sits on the same member-readable parent document with the same exposure. It is read directly by ~14 call sites including the Twilio + WhatsApp inbound webhooks (which use it for signature verification), so migrating it means converting all of them in lockstep. That belongs in its own change — see the FOLLOW-UP note at the bottom of `sub-account-secrets.ts`.
+
 ### Optional — Meta (Facebook/Instagram inbox + Social Planner)
 One Meta app powers BOTH the FB Messenger / IG DM inbox AND the Social Planner (they share one connection). All optional — leave unset and both features stay off.
 

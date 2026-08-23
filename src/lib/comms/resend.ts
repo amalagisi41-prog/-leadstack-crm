@@ -6,8 +6,7 @@ import type { GoogleWorkspaceConfig, ResendConfig } from "@/types/tenancy";
 import {
   sendEmailViaGoogleWorkspace,
   googleWorkspaceIsConfigured,
-  isAccessTokenExpired,
-  refreshGoogleAccessToken,
+  resolveGoogleAccessToken,
 } from "./google-workspace";
 
 let _client: Resend | null = null;
@@ -90,26 +89,18 @@ export async function sendEmail({
 }): Promise<{ id: string }> {
   // Route to Google Workspace if configured
   if (googleWorkspaceIsConfigured(googleWorkspaceConfig)) {
-    let accessToken = googleWorkspaceConfig!.accessToken;
-    const expiresAt = googleWorkspaceConfig!.expiresAt;
-
-    // Refresh the token if it's expired or about to expire
-    if (expiresAt && isAccessTokenExpired(expiresAt instanceof Date ? expiresAt.getTime() : expiresAt) && subAccountId) {
-      try {
-        const refreshed = await refreshGoogleAccessToken(
-          subAccountId,
-          googleWorkspaceConfig!,
-        );
-        accessToken = refreshed.accessToken;
-      } catch (error) {
-        // Log the refresh error but attempt to send with the current token anyway
-        // The Gmail API might still accept it, or we'll get a clear auth error to display
-        console.warn(
-          `[sendEmail] Token refresh failed for sub-account ${subAccountId}:`,
-          error,
-        );
-      }
+    // The tokens live in a server-only secrets subcollection keyed by
+    // sub-account, so this path cannot work without knowing which
+    // sub-account is sending. Previously the refresh step was silently
+    // skipped when `subAccountId` was omitted, which meant a caller that
+    // forgot it got an expired token forever. Fail loudly instead.
+    if (!subAccountId) {
+      throw new Error(
+        "sendEmail: subAccountId is required when a sub-account has Google Workspace connected.",
+      );
     }
+
+    const accessToken = await resolveGoogleAccessToken(subAccountId);
 
     return sendEmailViaGoogleWorkspace({
       accessToken,

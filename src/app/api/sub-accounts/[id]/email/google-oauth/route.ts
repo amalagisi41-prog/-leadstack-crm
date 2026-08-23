@@ -1,8 +1,10 @@
 import "server-only";
 
 import { NextResponse } from "next/server";
+import crypto from "node:crypto";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { requireSubAccountAdmin } from "@/lib/auth/require-tenancy";
+import { signGoogleOAuthState } from "@/lib/comms/google-oauth-state";
 import type { SubAccountDoc } from "@/types";
 
 export async function POST(
@@ -63,12 +65,16 @@ export async function POST(
     ].join(" "),
     access_type: "offline",
     prompt: "consent",
-    state: Buffer.from(
-      JSON.stringify({
-        subAccountId,
-        nonce: Math.random().toString(36).slice(2),
-      })
-    ).toString("base64"),
+    // HMAC-signed so the callback can trust that `state` came from this route
+    // and names this sub-account. The previous version was unsigned base64
+    // with a Math.random() nonce the callback never checked, which left the
+    // connect flow open to CSRF — an attacker could get an admin to attach
+    // the attacker's Google account to the victim's sub-account. Mirrors the
+    // Meta connect flow (lib/comms/meta.ts::signMetaState).
+    state: signGoogleOAuthState(
+      subAccountId,
+      crypto.randomBytes(16).toString("hex"),
+    ),
   });
 
   const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?${searchParams}`;

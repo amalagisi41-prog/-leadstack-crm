@@ -392,6 +392,30 @@ export interface SubAccountDoc {
    */
   onboardingStepsCompleted?: string[];
   /**
+   * When the operator finished the first-run wizard (/get-started).
+   *
+   * This is a SEPARATE signal from `onboardingStepsCompleted` and it is what
+   * gates the dashboard redirect. The two are not the same question:
+   *
+   *   - "Has the operator been walked through setup?"  → this field
+   *   - "Is every checklist item done?"                → onboardingStepsCompleted
+   *
+   * Conflating them deadlocked the first-run flow. The dashboard used to
+   * redirect until all NINE ids in ONBOARDING_STEP_IDS were present, but the
+   * wizard only ever marks six of them (`contacts`, `sms`, and `booking` have
+   * no wizard step), so the condition could never be satisfied — a user who
+   * completed the entire wizard was bounced straight back to it, forever. The
+   * /get-started page had a third, also-unsatisfiable definition: it looked
+   * for the method keys "build"/"connect"/…, which the onboarding PATCH route
+   * silently drops because they are not in ONBOARDING_STEP_IDS.
+   *
+   * Recording the wizard's completion explicitly keeps the checklist honest —
+   * `contacts` / `sms` / `booking` stay genuinely outstanding and keep showing
+   * as work to do — while letting someone who has been through the wizard
+   * actually reach their dashboard. Absent = never finished the wizard.
+   */
+  onboardingWizardCompletedAt?: Date | null;
+  /**
    * The custom domain the sub-account wants to front their published website
    * (e.g. "janedoe-homes.com"). Bare host, no scheme. Saved during the domain
    * setup step; the actual DNS + Vercel domain hookup is an ops step the
@@ -686,12 +710,27 @@ export interface GoogleWorkspaceConfig {
   senderEmail: string;
   /** Display name for the From header (e.g. "Company Support"). */
   senderName: string;
-  /** Google OAuth access token (valid for ~1 hour, requires refresh). */
-  accessToken: string;
-  /** Google OAuth refresh token (long-lived, used to get new access tokens). */
-  refreshToken: string | null;
-  /** When the access token expires (ISO timestamp). */
-  expiresAt: Date;
+  /**
+   * @deprecated MOVED. OAuth tokens are no longer stored on this document.
+   *
+   * `subAccounts/{id}` is readable by every active member of the sub-account,
+   * including collaborators, and Firestore has no field-level read rules — so
+   * a refresh token stored here was readable by anyone who could read the
+   * document at all. Tokens now live in the server-only secrets subcollection
+   * at `subAccounts/{id}/secrets/googleWorkspace` (`allow read, write: if
+   * false`), reached only via lib/comms/sub-account-secrets.ts.
+   *
+   * These three fields remain declared as OPTIONAL solely so the lazy
+   * migration in `loadGoogleWorkspaceSecrets()` can read connections made
+   * before the move. That migration deletes them from the parent document on
+   * first read. Never write them, and never read them for sending — use
+   * `resolveGoogleAccessToken(subAccountId)`.
+   */
+  accessToken?: string;
+  /** @deprecated See `accessToken` above. */
+  refreshToken?: string | null;
+  /** @deprecated See `accessToken` above. */
+  expiresAt?: Date;
   /** When this configuration was first connected. */
   connectedAt: Date;
   /** UID of the sub-account admin who connected this. */
