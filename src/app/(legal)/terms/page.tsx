@@ -22,15 +22,7 @@ export default function TermsPage() {
   );
 
   return (
-    <LegalDocument
-      title="AgentStack Terms of Service"
-      intro={
-        <>
-          <strong>Operational draft, not legal advice.</strong> Obtain counsel
-          review before publication.
-        </>
-      }
-    >
+    <LegalDocument title="AgentStack Terms of Service">
       <p>
         These Terms are an agreement between <strong>{name}</strong>, doing
         business as AgentStack (&ldquo;AgentStack,&rdquo; &ldquo;we,&rdquo;

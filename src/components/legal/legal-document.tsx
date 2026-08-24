@@ -39,8 +39,13 @@ export function LegalDocument({
   children,
 }: {
   title: string;
-  /** Note under the heading, e.g. the draft disclaimer. */
-  intro: React.ReactNode;
+  /**
+   * Optional note under the heading — a draft/review disclaimer, or any
+   * other caveat that belongs above the document body. Omit once a document
+   * has cleared counsel review; there is nothing to warn a reader about at
+   * that point, so no box renders instead of an empty one.
+   */
+  intro?: React.ReactNode;
   config?: LegalEntityConfig;
   children: React.ReactNode;
 }) {
@@ -84,9 +89,11 @@ export function LegalDocument({
           </div>
         ) : null}
 
-        <div className="not-prose rounded-lg border border-amber-500/40 bg-amber-500/10 p-4 text-sm">
-          {intro}
-        </div>
+        {intro ? (
+          <div className="not-prose rounded-lg border border-amber-500/40 bg-amber-500/10 p-4 text-sm">
+            {intro}
+          </div>
+        ) : null}
 
         {children}
 
