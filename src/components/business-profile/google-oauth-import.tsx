@@ -43,7 +43,7 @@ export function GoogleOAuthImport({
 }: GoogleOAuthImportProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { subAccountId } = useSubAccount();
+  const { subAccountId, isAdmin } = useSubAccount();
 
   const [isLoading, setIsLoading] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -148,11 +148,35 @@ export function GoogleOAuthImport({
         const errorCode = data.code;
         const errorMessage = data.error || "Couldn't import from Google this time";
 
+        // The friendly copy below is deliberately vague — an agent doesn't
+        // need to read about Google Cloud approval gates to carry on filling
+        // in their Blueprint. But the server builds a genuinely diagnostic
+        // message for these failures (Google's real `error.status`, plus what
+        // to do about it), and discarding it entirely left nobody able to see
+        // why the import fails — including whoever has to fix it.
+        //
+        // So: everyone gets the reassuring headline; admins additionally get
+        // the technical detail as the toast description, and it always goes to
+        // the browser console so the next person to debug this doesn't have to
+        // go digging through server logs to find what we already knew.
+        const detail = (headline: string) => {
+          if (errorMessage && errorMessage !== headline) {
+            console.warn("[business-profile/import-google]", errorMessage);
+          }
+          return isAdmin && errorMessage !== headline
+            ? { description: errorMessage }
+            : undefined;
+        };
+
         // Suggest next steps based on error, but don't block
         if (errorCode === "NO_GOOGLE_PROFILE") {
-          toast.info("No Business Profile found. You can create one at google.com/business or fill in your info manually.");
+          const headline =
+            "No Business Profile found. You can create one at google.com/business or fill in your info manually.";
+          toast.info(headline, detail(headline));
         } else if (errorCode === "GOOGLE_PROFILE_FETCH_FAILED") {
-          toast.info("Couldn't fetch your profile. You can fill in your info manually or try again later.");
+          const headline =
+            "Couldn't fetch your profile. You can fill in your info manually or try again later.";
+          toast.info(headline, detail(headline));
         } else {
           toast.error(errorMessage);
         }
