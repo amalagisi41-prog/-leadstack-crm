@@ -1021,6 +1021,14 @@ Without these two vars the email setup wizard still renders, but the Google opti
 
 **Still open (deliberate):** `twilioConfig.authToken` sits on the same member-readable parent document with the same exposure. It is read directly by ~14 call sites including the Twilio + WhatsApp inbound webhooks (which use it for signature verification), so migrating it means converting all of them in lockstep. That belongs in its own change — see the FOLLOW-UP note at the bottom of `sub-account-secrets.ts`.
 
+### Optional — Google Business Profile import (Business Blueprint)
+
+Lets an operator import their Business Profile (name, phone, email, hours, service areas, bio) into their Business Blueprint via Google OAuth instead of typing it all by hand. Reuses the **same** `GOOGLE_OAUTH_CLIENT_ID` / `GOOGLE_OAUTH_CLIENT_SECRET` as Gmail sending above — no separate credential. The callback is the shared, static `/api/oauth/google/callback` (see [src/lib/business-profile/google-redirect.ts](src/lib/business-profile/google-redirect.ts) — register exactly this path as an Authorized redirect URI, distinct from the Gmail flow's `/api/email/google-oauth-callback`). Requested scope: `business.manage` (plus `userinfo.email`/`userinfo.profile`). State is HMAC-signed the same way as the Gmail flow (`lib/comms/google-oauth-state.ts`) — the callback is unauthenticated by necessity (Google redirects the browser there), so the signed state is what stops one sub-account's import from being hijacked into another's.
+
+**This needs one extra manual step beyond enabling the API in Cloud Console.** The Business Profile APIs (`mybusinessaccountmanagement.googleapis.com`, `mybusinessbusinessinformation.googleapis.com`) are gated behind Google's own manual access-request review — separate from "enable the API" and separate from OAuth consent screen verification. A project that hasn't been through that review returns a **403 "Forbidden" on every call**, even with a valid access token and correctly-granted `business.manage` scope. Submit the request at https://developers.google.com/my-business/content/prereqs and wait for Google's approval (can take a few days) before this will work. Until then, the import button will consistently fail — that's expected, not a misconfiguration, and the error message explains it (see `describeGoogleBusinessApiError()` in [src/lib/business-profile/google-business.ts](src/lib/business-profile/google-business.ts)).
+
+Every operator-facing failure path (no profile found, API call failed, OAuth denied) degrades to "fill in your Blueprint manually" — this import is a convenience, never a blocker to finishing the Blueprint.
+
 ### Optional — Meta (Facebook/Instagram inbox + Social Planner)
 One Meta app powers BOTH the FB Messenger / IG DM inbox AND the Social Planner (they share one connection). All optional — leave unset and both features stay off.
 
