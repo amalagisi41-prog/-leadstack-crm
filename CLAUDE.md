@@ -1025,7 +1025,21 @@ Two things to preserve when touching these:
 - **Never spread a config object back onto the parent.** `lib/idx/sync.ts` writes sync status by merging the config back; it destructures `accessKey` out explicitly, because spreading is exactly how a migrated credential gets silently re-inlined.
 - **`connected` is a public marker, not decoration.** The GHL and IDX settings UI used to derive "connected" from the presence of the credential itself. That test stops working the moment the credential moves, so the migration stamps `connected: true` in the same write that strips the inline copy, and the readers accept either.
 
-**Still open (deliberate):** `twilioConfig.authToken` sits on the same member-readable parent document with the same exposure. It is read directly by ~14 call sites including the Twilio + WhatsApp inbound webhooks (which use it for signature verification), so migrating it means converting all of them in lockstep. That belongs in its own change — see the FOLLOW-UP note at the bottom of `sub-account-secrets.ts`.
+**Still open (deliberate):** `twilioConfig.authToken` sits on the same member-readable parent document with the same exposure. It is read directly by 6 call sites including the Twilio + WhatsApp inbound webhooks (which use it for signature verification), so migrating it means converting all of them in lockstep. That belongs in its own change — see the FOLLOW-UP note at the bottom of `sub-account-secrets.ts`.
+
+### Optional — Vercel API (automatic custom-domain registration)
+
+Lets "Connect Domain" actually finish the job instead of stopping at DNS. Pointing DNS at Vercel's shared edge network is **not** the same as Vercel routing that specific hostname to this project — Vercel refuses traffic for any domain it hasn't been explicitly told to expect, serving its own "Domain not configured" page instead. Before this existed, `POST /api/sub-accounts/[id]/domain/verify` reported `"live"` the instant DNS matched, which confirmed exactly that broken state as correct — the failure mode the "no guessing" standard below exists to catch ("absence of evidence is never evidence of success").
+
+| Var | Source |
+|---|---|
+| `VERCEL_TOKEN` | [vercel.com/account/tokens](https://vercel.com/account/tokens) → Create Token. |
+| `VERCEL_PROJECT_ID` | Project Settings → General → Project ID. |
+| `VERCEL_TEAM_ID` | Only if this project lives under a Vercel team rather than a personal account. Same Settings page. |
+
+[src/lib/domains/vercel-api.ts](src/lib/domains/vercel-api.ts) wraps the three calls this needs: `addDomainToVercelProject()` (POST to the project's Domains API — called when an admin saves a domain via `PATCH /api/sub-accounts/[id]/domain`, and again as a self-heal inside `verify` if the domain was saved before this feature existed or the first attempt failed transiently), `getVercelDomainStatus()` (is it attached to *this* project, and has Vercel's own DNS check passed), and `removeDomainFromVercelProject()` (best-effort cleanup on disconnect).
+
+Without these two required vars, `vercelApiConfigured()` is false and everything degrades cleanly rather than silently: `domain` PATCH still saves the value (not every buyer is on Vercel — the guide also documents Netlify), and `verify` falls back to DNS-only checking — but now says so. A DNS match without Vercel configured returns `state: "live"` with a `detail` that explicitly flags it as DNS-only and tells the agent to confirm the domain is added in their Vercel project themselves. A DNS match WITH Vercel configured, where Vercel hasn't attached or verified the domain, downgrades to `state: "unknown"` (never a false `"live"`) with a caveat and a next step. The response also carries `platformConfigured: boolean` so the UI can tell the two cases apart. No Firestore schema change — the honesty lives entirely in the response, since `customDomainState` already had an `"unknown"` value for exactly this "can't confirm" case.
 
 ### Optional — Google Business Profile import (Business Blueprint)
 
