@@ -331,6 +331,40 @@ export function DomainConnect() {
   const [transfer, setTransfer] = useState<WebsiteTransferDoc | null>(null);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [verifying, setVerifying] = useState(false);
+  const [verifyResult, setVerifyResult] = useState<{
+    state: "live" | "points_elsewhere" | "no_records" | "unknown";
+    detail: string;
+    found?: { aRecords: string[]; cnames: string[] };
+  } | null>(null);
+
+  /**
+   * Asks the server what the public internet actually reports for this
+   * domain. Nothing here infers a result from what the agent told us — that
+   * inference is what previously confirmed broken setups as correct.
+   */
+  async function verifyDomain() {
+    setVerifying(true);
+    try {
+      const res = await fetch(
+        `/api/sub-accounts/${subAccountId}/domain/verify`,
+        { method: "POST" }
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error ?? "Could not check your domain.");
+        return;
+      }
+      setVerifyResult(data);
+      if (data.state === "live") toast.success(data.detail);
+    } catch {
+      toast.error(
+        "Could not reach the domain checker. Check your connection and try again."
+      );
+    } finally {
+      setVerifying(false);
+    }
+  }
   // Hosting was previously unreachable: the status card read "Not started"
   // with no control to change it, so the flow dead-ended after the domain.
   const [foundation, setFoundation] = useState<OnboardingFoundation>(
@@ -995,10 +1029,73 @@ export function DomainConnect() {
                   // as evidence of success. When the agent had picked the wrong
                   // host from the list, this cheerfully confirmed a setup that
                   // was in fact wrong.
-                  `Based on your answer that you're staying on ${hostLabel}, there's no cutover to make — your domain keeps pointing wherever it points today. We haven't checked your DNS records to confirm that. If your site isn't loading, or you're not sure ${hostLabel} is really your host, ask Zack to check it with you.`
+                  `Based on your answer that you're staying on ${hostLabel}, there's no cutover to make — your domain keeps pointing wherever it points today. Use Check my domain below to confirm that against your live DNS rather than taking our word for it.`
                 : "The last step connects the domain to the host. AgentStack never edits nameservers or email DNS for you — Zack walks you through the exact records to add at your registrar."
             }
           />
+
+          {/* The real check. Available on both paths — an agent staying on
+              their current host still deserves to confirm it, and that is
+              exactly the case where a wrong dropdown answer used to be
+              confirmed as correct. */}
+          {domainSaved ? (
+            <div className="mt-4 rounded-xl border bg-white p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium">Check my domain</p>
+                  <p className="text-muted-foreground mt-0.5 text-xs">
+                    Looks up your live DNS and tells you where it actually
+                    points right now.
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void verifyDomain()}
+                  disabled={verifying}
+                >
+                  {verifying ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <ShieldCheck className="mr-2 h-4 w-4" />
+                  )}
+                  {verifying ? "Checking…" : "Check my domain"}
+                </Button>
+              </div>
+
+              {verifyResult ? (
+                <div className="mt-3 border-t pt-3">
+                  <p
+                    className={`text-sm font-medium ${
+                      verifyResult.state === "live"
+                        ? "text-emerald-700"
+                        : verifyResult.state === "unknown"
+                          ? "text-muted-foreground"
+                          : "text-amber-700"
+                    }`}
+                  >
+                    {verifyResult.detail}
+                  </p>
+                  {/* Show the evidence rather than only a verdict, so the
+                      agent can judge it — and so a wrong answer is visible
+                      instead of authoritative. */}
+                  {verifyResult.found &&
+                  (verifyResult.found.aRecords.length > 0 ||
+                    verifyResult.found.cnames.length > 0) ? (
+                    <p className="text-muted-foreground mt-1 font-mono text-[11px]">
+                      Found:{" "}
+                      {[
+                        ...verifyResult.found.cnames.map(
+                          (v) => `CNAME → ${v}`
+                        ),
+                        ...verifyResult.found.aRecords.map((v) => `A → ${v}`),
+                      ].join("  ·  ")}
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
 
           {!dnsNotNeeded ? (
             <ul className="mt-4 space-y-2">

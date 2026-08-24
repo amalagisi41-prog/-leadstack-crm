@@ -338,11 +338,15 @@ describe("Website & Domain — step 3 names what is missing", () => {
     // answer is wrong the old copy confirmed a broken setup as correct.
     expect(screen.getByText(/Based on your answer/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/haven't checked your DNS records/i)
-    ).toBeInTheDocument();
-    expect(
       screen.queryByText(/already points where it should/i)
     ).not.toBeInTheDocument();
+
+    // And offer a real check rather than leaving the agent to trust it. This
+    // is available on the staying-put path specifically, because that is the
+    // case where a wrong host answer used to be confirmed as correct.
+    expect(
+      screen.getByRole("button", { name: /check my domain/i })
+    ).toBeInTheDocument();
     expect(
       screen.queryByText(/record values stay hidden/i)
     ).not.toBeInTheDocument();

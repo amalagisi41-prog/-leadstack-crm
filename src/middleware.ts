@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { authMiddleware } from "next-firebase-auth-edge/lib/next/middleware";
+import { isCustomDomainHost, normalizeHost } from "@/lib/domains/app-hosts";
 
 const PUBLIC_PATHS = [
   "/",
@@ -244,6 +245,35 @@ function isPublicPath(pathname: string): boolean {
 }
 
 export default function middleware(request: NextRequest) {
+  // ---- Custom domains -----------------------------------------------------
+  // A request arriving on a host that is not ours belongs to a customer who
+  // connected their own domain. Serve their published website instead of the
+  // app, by rewriting to the by-domain resolver.
+  //
+  // This runs FIRST and returns immediately: a visitor to an agent's public
+  // website is not signing into anything, and must never be handed a login
+  // redirect or have a session cookie touched.
+  //
+  // The classification is deliberately conservative (see lib/domains/
+  // app-hosts.ts). Anything not positively identifiable as a customer domain —
+  // including the case where this deployment has no NEXT_PUBLIC_APP_URL and so
+  // cannot name itself — is treated as ours and left alone. Failing that way
+  // means custom domains don't route; failing the other way would rewrite the
+  // dashboard into the public site renderer and take the whole app down.
+  const host = request.headers.get("host");
+  if (isCustomDomainHost(host)) {
+    // API routes still belong to the app even on a custom host: the published
+    // site's own forms, chat widget and IDX calls post to /api/*, and those
+    // must reach the real handlers rather than the site renderer.
+    if (!request.nextUrl.pathname.startsWith("/api/")) {
+      const url = request.nextUrl.clone();
+      url.pathname = `/agent/by-domain/${encodeURIComponent(
+        normalizeHost(host),
+      )}`;
+      return NextResponse.rewrite(url);
+    }
+  }
+
   // Skip auth middleware if Firebase is not configured
   if (
     !process.env.NEXT_PUBLIC_FIREBASE_API_KEY ||
