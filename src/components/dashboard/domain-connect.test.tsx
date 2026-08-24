@@ -172,8 +172,21 @@ describe("Website & Domain — step 2 is reachable", () => {
     await userEvent.click(screen.getByText("Keep my current host"));
 
     const picker = screen.getByLabelText(/who hosts it today/i);
-    expect(within(picker).getByText("WordPress.com")).toBeInTheDocument();
+    expect(
+      within(picker).getByText(/WordPress\.com \(hosted by WordPress\)/i)
+    ).toBeInTheDocument();
     expect(within(picker).getByText("GoHighLevel")).toBeInTheDocument();
+
+    // Hostinger is the migration and new-site partner this product promotes,
+    // so an agent who took that recommendation has to be able to say so.
+    expect(within(picker).getByText("Hostinger")).toBeInTheDocument();
+
+    // "My site runs WordPress" and "WordPress.com hosts my site" are different
+    // answers. Offering only the latter sent self-hosted WordPress agents to
+    // wordpress.com instead of their real control panel.
+    expect(
+      within(picker).getByText("WordPress on another host")
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /connect this host/i })
     ).toBeInTheDocument();
@@ -315,8 +328,21 @@ describe("Website & Domain — step 3 names what is missing", () => {
 
     // Leaving this step "locked" forever implied unfinished work that will
     // never exist — there is no cutover when the host is not changing.
-    expect(screen.getByText("DNS — nothing to change")).toBeInTheDocument();
+    expect(
+      screen.getByText("DNS — no change needed for this path")
+    ).toBeInTheDocument();
     expect(screen.queryByText("Locked")).not.toBeInTheDocument();
+
+    // But do not claim to have verified DNS we never looked up. This state is
+    // derived from the agent's own answer about their host, and when that
+    // answer is wrong the old copy confirmed a broken setup as correct.
+    expect(screen.getByText(/Based on your answer/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/haven't checked your DNS records/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/already points where it should/i)
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByText(/record values stay hidden/i)
     ).not.toBeInTheDocument();
