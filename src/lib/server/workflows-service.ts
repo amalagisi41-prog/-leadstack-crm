@@ -113,7 +113,14 @@ export async function updateWorkflowServerSide(opts: {
     updatedAt: FieldValue.serverTimestamp(),
   };
   if (patch.name !== undefined) write.name = patch.name.trim() || "Untitled workflow";
-  if (patch.status !== undefined) write.status = patch.status;
+  if (patch.status !== undefined) {
+    write.status = patch.status;
+    // `pausedReason` explains a SYSTEM pause (see WorkflowDoc). The moment the
+    // operator moves the workflow off paused, that explanation is stale — and a
+    // stale one is worse than none, because the next time they pause it by hand
+    // the list would show them a reason they didn't cause and can't act on.
+    if (patch.status !== "paused") write.pausedReason = null;
+  }
   if (patch.trigger !== undefined) write.trigger = patch.trigger;
   if (patch.nodes !== undefined) write.nodes = patch.nodes;
   if (patch.startNodeId !== undefined) write.startNodeId = patch.startNodeId;

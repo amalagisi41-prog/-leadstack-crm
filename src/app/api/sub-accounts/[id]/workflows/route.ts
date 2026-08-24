@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireSubAccountMember } from "@/lib/auth/require-tenancy";
+import { qstashIsConfigured } from "@/lib/automations/qstash";
 import {
   createWorkflowServerSide,
   listWorkflows,
@@ -17,7 +18,18 @@ export async function GET(
   if (access instanceof NextResponse) return access;
 
   const workflows = await listWorkflows(subAccountId);
-  return NextResponse.json({ workflows });
+  // Whether this deployment can actually RUN a workflow, right now.
+  //
+  // Every workflow executes by scheduling its first node through QStash. With
+  // QStash absent the engine enrolls the contact, increments the counter, and
+  // marks the run failed — so an "Active" row is not merely inactive, it is
+  // actively misleading. Sending the live answer with the list lets the UI say
+  // so on every existing workspace without a data migration, and lets the
+  // answer correct itself the moment the keys are added.
+  return NextResponse.json({
+    workflows,
+    automaticSendingConfigured: qstashIsConfigured(),
+  });
 }
 
 /** POST — create a draft workflow, returns its id. */
