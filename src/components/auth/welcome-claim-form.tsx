@@ -125,7 +125,7 @@ export function WelcomeClaimForm() {
       void sendVerificationEmail(credential.user).catch((err) =>
         console.warn("sendVerificationEmail failed", err),
       );
-      void sendWelcomeEmail(email, displayName || email.split("@")[0]).catch((err) =>
+      void sendWelcomeEmail(credential.user).catch((err) =>
         console.warn("sendWelcomeEmail failed", err),
       );
 
