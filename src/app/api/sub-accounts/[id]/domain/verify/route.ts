@@ -7,6 +7,11 @@ import { requireSubAccountAdmin } from "@/lib/auth/require-tenancy";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { normalizePublicUrl } from "@/lib/net/public-url";
 import { appHost, normalizeHost } from "@/lib/domains/app-hosts";
+import {
+  addDomainToVercelProject,
+  getVercelDomainStatus,
+  vercelApiConfigured,
+} from "@/lib/domains/vercel-api";
 
 /**
  * POST /api/sub-accounts/[id]/domain/verify
@@ -136,6 +141,36 @@ export async function POST(
     }. Update it to point at ${target}, then check again.`;
   }
 
+  // DNS pointing at Vercel's shared edge is NOT the same as Vercel routing
+  // this specific hostname to THIS project — Vercel refuses traffic for any
+  // domain it hasn't been told to expect, serving its own "Domain not
+  // configured" page instead. Reporting "live" on DNS alone confirmed that
+  // broken state as correct. See lib/domains/vercel-api.ts for the full
+  // rationale.
+  const platformConfigured = vercelApiConfigured();
+  if (state === "live" && platformConfigured) {
+    let vercelStatus = await getVercelDomainStatus(domain);
+    if (!vercelStatus?.attached) {
+      // Self-heal: the domain may have been saved before this check
+      // existed, or the registration attempt at save time failed
+      // transiently. One retry here costs nothing and fixes the common
+      // case without making the agent do anything.
+      await addDomainToVercelProject(domain);
+      vercelStatus = await getVercelDomainStatus(domain);
+    }
+    if (vercelStatus?.attached && vercelStatus.verified) {
+      detail = `${domain} is pointing at this deployment and is registered with Vercel.`;
+    } else if (vercelStatus?.attached) {
+      state = "unknown";
+      detail = `${domain}'s DNS points here, but Vercel hasn't finished verifying the domain yet. This can take a few minutes after a DNS change — check again shortly.`;
+    } else {
+      state = "unknown";
+      detail = `${domain}'s DNS points here, but we couldn't register it on your Vercel project automatically. Add ${domain} in your Vercel project's Settings → Domains, then check again.`;
+    }
+  } else if (state === "live" && !platformConfigured) {
+    detail = `${domain}'s DNS points at this deployment. This deployment doesn't have Vercel API access configured, so we can't confirm the domain is actually registered on your hosting project — if it isn't, visitors will see a "domain not configured" error even though DNS is correct. Add ${domain} in your Vercel project's Settings → Domains if you haven't already.`;
+  }
+
   await db.doc(`subAccounts/${id}`).update({
     customDomainState: state,
     customDomainCheckedAt: FieldValue.serverTimestamp(),
@@ -147,6 +182,11 @@ export async function POST(
     domain,
     target,
     detail,
+    // Whether this deployment can actually check (and self-register) the
+    // domain on Vercel's side, as opposed to DNS alone. The UI uses this to
+    // know whether a "live" verdict is backed by platform confirmation or
+    // is DNS-only — see the caveat folded into `detail` above when false.
+    platformConfigured,
     // Returned so the UI can show the agent the evidence rather than asking
     // them to trust a verdict.
     found: { aRecords: apex, cnames },
