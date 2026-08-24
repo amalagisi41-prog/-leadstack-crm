@@ -79,8 +79,35 @@ const HOST_PLATFORMS: Record<
   { label: string; dashboardUrl: string | null; pickable: boolean }
 > = {
   wordpress: {
-    label: "WordPress.com",
+    label: "WordPress.com (hosted by WordPress)",
     dashboardUrl: "https://wordpress.com/home",
+    pickable: true,
+  },
+  wordpress_selfhosted: {
+    // The agent's site runs WordPress, but somebody else hosts it. We don't
+    // know who, so we can't send them anywhere — and saying nothing is far
+    // better than sending them to wordpress.com, which is not their host.
+    label: "WordPress on another host",
+    dashboardUrl: null,
+    pickable: true,
+  },
+  hostinger: {
+    // Hostinger is the migration and new-site partner promoted throughout
+    // this product, yet it was missing from the list of hosts you could
+    // actually select. An agent who took AgentStack's own recommendation
+    // had no way to say so afterwards.
+    label: "Hostinger",
+    dashboardUrl: "https://hpanel.hostinger.com/websites",
+    pickable: true,
+  },
+  siteground: {
+    label: "SiteGround",
+    dashboardUrl: "https://login.siteground.com/",
+    pickable: true,
+  },
+  namecheap: {
+    label: "Namecheap",
+    dashboardUrl: "https://ap.www.namecheap.com/",
     pickable: true,
   },
   bluehost: {
@@ -954,10 +981,21 @@ export function DomainConnect() {
                   ? "active"
                   : "locked"
             }
-            title={dnsNotNeeded ? "DNS — nothing to change" : "Point DNS"}
+            title={
+              dnsNotNeeded ? "DNS — no change needed for this path" : "Point DNS"
+            }
             description={
               dnsNotNeeded
-                ? `You're staying on ${hostLabel}, so your domain already points where it should. There is no cutover and no DNS change to make. Ask Zack if you ever want to move it.`
+                ? // Say what this is based on, and do not claim to have checked
+                  // something we never checked. This state is derived purely
+                  // from the host the agent TOLD us they're staying on — no DNS
+                  // lookup happens here. The previous copy asserted "your domain
+                  // already points where it should", which is the product
+                  // standard's exact prohibition: absence of evidence presented
+                  // as evidence of success. When the agent had picked the wrong
+                  // host from the list, this cheerfully confirmed a setup that
+                  // was in fact wrong.
+                  `Based on your answer that you're staying on ${hostLabel}, there's no cutover to make — your domain keeps pointing wherever it points today. We haven't checked your DNS records to confirm that. If your site isn't loading, or you're not sure ${hostLabel} is really your host, ask Zack to check it with you.`
                 : "The last step connects the domain to the host. AgentStack never edits nameservers or email DNS for you — Zack walks you through the exact records to add at your registrar."
             }
           />
