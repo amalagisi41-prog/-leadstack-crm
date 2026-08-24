@@ -3,16 +3,22 @@
  *
  * Four values appear across the Privacy Policy, Terms of Service, and
  * Licensing notice, and all four are legally load-bearing: the entity that is
- * party to the agreement, the address service is sent to, the law and venue
- * that govern a dispute, and the date the terms took effect. None of them
+ * party to the agreement, the law and venue that govern a dispute, the date
+ * the terms took effect, and the email address for notices. None of them
  * existed anywhere in this repository, so they are configuration rather than
  * literals — and deliberately NOT given fallback values.
  *
  * A wrong default here is worse than a blank. A policy naming the wrong
- * entity or the wrong venue can be unenforceable, and an invented mailing
- * address misdirects legal service. So an unset field renders as a visible
- * gap and the page carries a "not ready to publish" banner, rather than
- * quietly shipping a plausible-looking placeholder.
+ * entity or the wrong venue can be unenforceable. So an unset required field
+ * renders as a visible gap and the page carries a "not ready to publish"
+ * banner, rather than quietly shipping a plausible-looking placeholder.
+ *
+ * `mailingAddress` is the one field that is deliberately NOT required. The
+ * operator chose not to publish a physical address (email-only notices) —
+ * that is a legitimate operating choice, not an oversight, so leaving it
+ * unset must never trip the "not ready to publish" banner or render a red
+ * gap marker. When set, it still appears in the Contact section; when unset,
+ * the Contact section simply omits the line rather than flagging it missing.
  *
  * Set these in the environment (all are NEXT_PUBLIC_ because they render in
  * the document body, and none is a secret — they belong on a published page).
@@ -21,7 +27,11 @@
 export interface LegalEntityConfig {
   /** Registered entity name, e.g. "Example Holdings LLC". */
   legalName: string;
-  /** Full postal address for notices, single line or comma separated. */
+  /**
+   * Optional full postal address for notices, single line or comma
+   * separated. Not in REQUIRED_LEGAL_FIELDS by design — an operator who
+   * chooses email-only notices leaves this blank on purpose.
+   */
   mailingAddress: string;
   /** Governing law, e.g. "Connecticut". */
   governingState: string;
@@ -44,9 +54,7 @@ const read = (value: string | undefined) => (value ?? "").trim();
  */
 export const LEGAL_ENTITY: LegalEntityConfig = {
   legalName: read(process.env.NEXT_PUBLIC_LEGAL_COMPANY_NAME) || "AgentStack",
-  mailingAddress:
-    read(process.env.NEXT_PUBLIC_LEGAL_MAILING_ADDRESS) ||
-    "184 High Ridge Road, Stamford, CT 06905",
+  mailingAddress: read(process.env.NEXT_PUBLIC_LEGAL_MAILING_ADDRESS) || "",
   governingState:
     read(process.env.NEXT_PUBLIC_LEGAL_GOVERNING_STATE) || "Connecticut",
   governingVenue:
@@ -71,12 +79,6 @@ export const REQUIRED_LEGAL_FIELDS: Array<{
     label: "Legal company name",
     envVar: "NEXT_PUBLIC_LEGAL_COMPANY_NAME",
     example: "Example Holdings LLC",
-  },
-  {
-    key: "mailingAddress",
-    label: "Mailing address",
-    envVar: "NEXT_PUBLIC_LEGAL_MAILING_ADDRESS",
-    example: "123 Main Street, Suite 100, Stamford, CT 06901",
   },
   {
     key: "governingState",

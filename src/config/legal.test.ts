@@ -9,13 +9,17 @@ import {
 
 /**
  * These four values are legally load-bearing: the entity that is party to the
- * agreement, the address legal notice is sent to, the law and venue governing
- * a dispute, and the date the terms took effect. A policy that names the wrong
- * entity or cites no venue can be unenforceable, and an invented address
- * misdirects service of process.
+ * agreement, the law and venue governing a dispute, the date the terms took
+ * effect, and (implicitly, via contactEmail) how notice reaches the company.
+ * A policy that names the wrong entity or cites no venue can be
+ * unenforceable.
+ *
+ * Mailing address is deliberately NOT one of the four — an operator who
+ * chooses email-only notices leaves it blank on purpose, and that must never
+ * read as a gap.
  *
  * So the failure mode guarded here is a *silent* one — a blank that reads as
- * finished prose. Every unset field has to surface as a gap.
+ * finished prose. Every unset required field has to surface as a gap.
  */
 
 const blank: LegalEntityConfig = {
@@ -31,12 +35,24 @@ describe("legal configuration gaps", () => {
   it("reports every required field when nothing is set", () => {
     expect(legalConfigGaps(blank).map((g) => g.key)).toEqual([
       "legalName",
-      "mailingAddress",
       "governingState",
       "governingVenue",
       "effectiveDate",
     ]);
     expect(isLegalConfigComplete(blank)).toBe(false);
+  });
+
+  it("never treats a blank mailing address as a gap", () => {
+    // The operator's explicit choice: email-only notices, no public address.
+    const emailOnly: LegalEntityConfig = {
+      ...blank,
+      legalName: "AgentStack",
+      governingState: "Connecticut",
+      governingVenue: "Fairfield County, Connecticut",
+      effectiveDate: "August 16, 2026",
+    };
+    expect(legalConfigGaps(emailOnly)).toEqual([]);
+    expect(isLegalConfigComplete(emailOnly)).toBe(true);
   });
 
   it("treats whitespace as unset, not as a value", () => {
@@ -53,10 +69,10 @@ describe("legal configuration gaps", () => {
     expect(legalConfigGaps(partial).map((g) => g.key)).not.toContain(
       "legalName"
     );
-    expect(legalConfigGaps(partial)).toHaveLength(4);
+    expect(legalConfigGaps(partial)).toHaveLength(3);
   });
 
-  it("is complete only when all five are present", () => {
+  it("is complete only when all four required fields are present", () => {
     const full: LegalEntityConfig = {
       legalName: "AgentStack",
       mailingAddress: "184 High Ridge Road, Stamford, CT 06905",
