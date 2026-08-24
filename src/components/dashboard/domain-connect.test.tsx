@@ -83,6 +83,20 @@ async function renderLoaded() {
   );
 }
 
+/**
+ * Renders, then expands the walkthrough if the fixture is already fully set
+ * up. Once domain, host and DNS are all done this screen collapses to a single
+ * "Open my host" row — plumbing is done once and thereafter only opened — so
+ * tests that assert step CONTENT have to ask for the steps back.
+ */
+async function renderExpanded() {
+  await renderLoaded();
+  const change = screen.queryByRole("button", {
+    name: /change domain or hosting/i,
+  });
+  if (change) await userEvent.click(change);
+}
+
 beforeEach(() => {
   vi.unstubAllGlobals();
   openAskAssistant.mockClear();
@@ -94,7 +108,7 @@ describe("Website & Domain — the three steps are always visible", () => {
     customDomain = "example-realty.test";
     mockApi();
     await renderLoaded();
-    await userEvent.click(screen.getByText("I have a website"));
+    await userEvent.click(screen.getByText("I have one — keep it where it is"));
 
     expect(screen.getByText("Connect your domain")).toBeInTheDocument();
     expect(screen.getByText("Connect your host")).toBeInTheDocument();
@@ -116,7 +130,7 @@ describe("Website & Domain — step 2 is reachable", () => {
   it("locks hosting until a domain is actually saved", async () => {
     mockApi();
     await renderLoaded();
-    await userEvent.click(screen.getByText("I have a website"));
+    await userEvent.click(screen.getByText("I have one — keep it where it is"));
 
     // Both hosting and DNS are out of reach until the domain is saved.
     expect(screen.getAllByText("Locked")).toHaveLength(2);
@@ -128,7 +142,7 @@ describe("Website & Domain — step 2 is reachable", () => {
   it("does not unlock on typing, only on a persisted domain", async () => {
     mockApi();
     await renderLoaded();
-    await userEvent.click(screen.getByText("I have a website"));
+    await userEvent.click(screen.getByText("I have one — keep it where it is"));
     await userEvent.type(
       screen.getByLabelText(/domain you own/i),
       "example-realty.test"
@@ -139,23 +153,76 @@ describe("Website & Domain — step 2 is reachable", () => {
     ).toBeInTheDocument();
   });
 
-  it("offers keep-or-transfer for an agent who already has a site", async () => {
+  it("shows only the path the agent chose — keep does not re-offer move", async () => {
+    // Keep-or-move used to be a second question inside "I have a website", so
+    // an agent who had already decided was asked again one screen later. It's
+    // now a top-level door, and each door shows only its own path: re-offering
+    // the option they just declined is how a decision quietly gets reopened.
     customDomain = "example-realty.test";
     mockApi();
     await renderLoaded();
-    await userEvent.click(screen.getByText("I have a website"));
+    await userEvent.click(screen.getByText("I have one — keep it where it is"));
 
     expect(screen.getByText("Keep my current host")).toBeInTheDocument();
-    expect(screen.getByText("Move my site to a new host")).toBeInTheDocument();
-    // Nothing to transfer when there is no existing site.
+    expect(
+      screen.queryByText("Move my site to a new host")
+    ).not.toBeInTheDocument();
     expect(screen.queryByText("Host with AgentStack")).not.toBeInTheDocument();
+  });
+
+  it("shows only the move path when the agent chose to move", async () => {
+    customDomain = "example-realty.test";
+    mockApi();
+    await renderLoaded();
+    await userEvent.click(
+      screen.getByText("I have one — move it somewhere better")
+    );
+
+    expect(screen.getByText("Move my site to a new host")).toBeInTheDocument();
+    expect(
+      screen.queryByText("Keep my current host")
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps the CRM migration off the website question", async () => {
+    // Two different axes. Asking both in one row of choices meant an agent
+    // moving from GoHighLevel who ALSO has a website had to pick one and lose
+    // the other.
+    customDomain = "example-realty.test";
+    mockApi();
+    await renderLoaded();
+
+    expect(
+      screen.getByText("I'm moving from another CRM")
+    ).toBeInTheDocument();
+  });
+
+  it("offers real host signup links to an agent with no host yet", async () => {
+    // "Who hosts it today?" assumed the answer was somebody. For an agent who
+    // has never had a website there was nothing to choose and nowhere to go.
+    customDomain = "example-realty.test";
+    mockApi();
+    await renderLoaded();
+    await userEvent.click(screen.getByText("I have one — keep it where it is"));
+    await userEvent.click(screen.getByText("Keep my current host"));
+
+    const disclosure = screen.getByText(/don't have a host yet/i);
+    expect(disclosure).toBeInTheDocument();
+    await userEvent.click(disclosure);
+
+    const hostinger = screen.getByRole("button", { name: /open hostinger/i });
+    const bluehost = screen.getByRole("button", { name: /open bluehost/i });
+    // The links have to actually go somewhere — a named button with no href is
+    // the same dead end in nicer clothing.
+    expect(hostinger).toHaveAttribute("href", expect.stringContaining("http"));
+    expect(bluehost).toHaveAttribute("href", expect.stringContaining("http"));
   });
 
   it("offers AgentStack hosting for an agent building their first site", async () => {
     customDomain = "yournamehomes.com";
     mockApi();
     await renderLoaded();
-    await userEvent.click(screen.getByText("I need a website"));
+    await userEvent.click(screen.getByText("I don't have a website"));
 
     expect(screen.getByText("Host with AgentStack")).toBeInTheDocument();
     expect(screen.getByText("I already have hosting")).toBeInTheDocument();
@@ -168,7 +235,7 @@ describe("Website & Domain — step 2 is reachable", () => {
     customDomain = "example-realty.test";
     mockApi();
     await renderLoaded();
-    await userEvent.click(screen.getByText("I have a website"));
+    await userEvent.click(screen.getByText("I have one — keep it where it is"));
     await userEvent.click(screen.getByText("Keep my current host"));
 
     const picker = screen.getByLabelText(/who hosts it today/i);
@@ -196,7 +263,9 @@ describe("Website & Domain — step 2 is reachable", () => {
     customDomain = "example-realty.test";
     mockApi();
     await renderLoaded();
-    await userEvent.click(screen.getByText("I have a website"));
+    await userEvent.click(
+      screen.getByText("I have one — move it somewhere better")
+    );
     await userEvent.click(screen.getByText("Move my site to a new host"));
 
     expect(
@@ -224,7 +293,7 @@ describe("Website & Domain — saving hosting", () => {
       },
     });
     await renderLoaded();
-    await userEvent.click(screen.getByText("I have a website"));
+    await userEvent.click(screen.getByText("I have one — keep it where it is"));
     await userEvent.click(screen.getByText("Keep my current host"));
     await userEvent.selectOptions(
       screen.getByLabelText(/who hosts it today/i),
@@ -259,7 +328,9 @@ describe("Website & Domain — saving hosting", () => {
     customDomain = "example-realty.test";
     const { calls } = mockApi();
     await renderLoaded();
-    await userEvent.click(screen.getByText("I have a website"));
+    await userEvent.click(
+      screen.getByText("I have one — move it somewhere better")
+    );
     await userEvent.click(screen.getByText("Move my site to a new host"));
     await userEvent.click(
       screen.getByRole("button", { name: /save this path/i })
@@ -283,14 +354,17 @@ describe("Website & Domain — saving hosting", () => {
     customDomain = "example-realty.test";
     mockApi();
     await renderLoaded();
-    await userEvent.click(screen.getByText("I have a website"));
+    await userEvent.click(screen.getByText("I have one — keep it where it is"));
     await userEvent.click(screen.getByText("Keep my current host"));
     await userEvent.click(
       screen.getByRole("button", { name: /connect this host/i })
     );
 
+    // Keeping the existing host means there is no cutover left, so the whole
+    // walkthrough collapses to the confirmation. That collapse IS the
+    // confirmation — it has to name the host, not just disappear.
     expect(
-      await screen.findByText(/connected to WordPress\.com/i)
+      await screen.findByText(/Hosted by WordPress\.com/i)
     ).toBeInTheDocument();
   });
 });
@@ -300,7 +374,7 @@ describe("Website & Domain — step 3 names what is missing", () => {
     customDomain = "example-realty.test";
     mockApi();
     await renderLoaded();
-    await userEvent.click(screen.getByText("I have a website"));
+    await userEvent.click(screen.getByText("I have one — keep it where it is"));
 
     expect(screen.getByText("Domain saved")).toBeInTheDocument();
     expect(screen.getByText("Host connected")).toBeInTheDocument();
@@ -323,8 +397,8 @@ describe("Website & Domain — step 3 names what is missing", () => {
         profileImported: false,
       },
     });
-    await renderLoaded();
-    await userEvent.click(screen.getByText("I have a website"));
+    await renderExpanded();
+    await userEvent.click(screen.getByText("I have one — keep it where it is"));
 
     // Leaving this step "locked" forever implied unfinished work that will
     // never exist — there is no cutover when the host is not changing.
@@ -369,7 +443,7 @@ describe("Website & Domain — step 3 names what is missing", () => {
       },
     });
     await renderLoaded();
-    await userEvent.click(screen.getByText("I have a website"));
+    await userEvent.click(screen.getByText("I have one — keep it where it is"));
 
     const dnsButton = screen.getByRole("button", {
       name: /ask Zack about nameservers & DNS/i,
@@ -405,8 +479,8 @@ describe("Website & Domain — step 3 names what is missing", () => {
         profileImported: false,
       },
     });
-    await renderLoaded();
-    await userEvent.click(screen.getByText("I have a website"));
+    await renderExpanded();
+    await userEvent.click(screen.getByText("I have one — keep it where it is"));
     await userEvent.click(
       screen.getByRole("button", { name: /ask Zack about nameservers & DNS/i })
     );
@@ -426,7 +500,7 @@ describe("Website & Domain — step 3 names what is missing", () => {
       },
     });
     await renderLoaded();
-    await userEvent.click(screen.getByText("I have a website"));
+    await userEvent.click(screen.getByText("I have one — keep it where it is"));
 
     expect(
       screen.getByRole("button", { name: /get my DNS records from Zack/i })
@@ -451,7 +525,7 @@ describe("Website & Domain — status summary", () => {
         profileImported: false,
       },
     });
-    await renderLoaded();
+    await renderExpanded();
 
     expect(screen.getAllByText("Bluehost").length).toBeGreaterThan(0);
     expect(screen.getByText("example-realty.test")).toBeInTheDocument();
