@@ -1,6 +1,10 @@
 import "server-only";
 
 import { NextResponse } from "next/server";
+import {
+  deleteGhlImportSecrets,
+  writeGhlImportSecrets,
+} from "@/lib/comms/sub-account-secrets";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { requireSubAccountAdmin } from "@/lib/auth/require-tenancy";
@@ -63,9 +67,10 @@ export async function POST(
   if (!(await ref.get()).exists) {
     return NextResponse.json({ error: "Sub-account not found" }, { status: 404 });
   }
+  await writeGhlImportSecrets(subAccountId, { token, refreshToken: null });
   await ref.update({
     ghlImportConfig: {
-      token,
+      connected: true,
       locationId,
       connectedByUid: access.uid,
       connectedAt: FieldValue.serverTimestamp(),
@@ -94,5 +99,8 @@ export async function DELETE(
     ghlImportConfig: FieldValue.delete(),
     updatedAt: FieldValue.serverTimestamp(),
   });
+  // Removing the config alone would leave a live GoHighLevel token behind in
+  // the secrets subcollection with nothing in the UI pointing at it.
+  await deleteGhlImportSecrets(subAccountId);
   return NextResponse.json({ ok: true });
 }

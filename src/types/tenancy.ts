@@ -455,8 +455,22 @@ export interface SubAccountDoc {
 }
 
 export interface GhlImportConfig {
-  /** GHL Private Integration Token (pit-...). Server-only — never sent to the browser. */
-  token: string;
+  /**
+   * @deprecated Never write this. The token lives in the server-only secrets
+   * subcollection — `subAccounts/{id}/secrets/ghlImport` — reached through
+   * `lib/comms/sub-account-secrets.ts::loadGhlImportSecrets()`. Retained only
+   * so that loader can lazily migrate pre-existing connections; the migration
+   * deletes it from this document on first read.
+   */
+  token?: string;
+  /** @deprecated Same as `token`. Lives in the secrets subcollection. */
+  refreshToken?: string;
+  /**
+   * True once a token has been stored. Public marker, safe on this
+   * member-readable document — it replaces the old "is `token` present?" test,
+   * which stops working the moment the token moves out of here.
+   */
+  connected?: boolean;
   /** The GHL sub-account (location) id this token is scoped to. */
   locationId: string;
   connectedByUid: string | null;
@@ -466,8 +480,20 @@ export interface GhlImportConfig {
 
 export interface IdxConfig {
   enabled: boolean;
-  /** IDX Broker Platinum API access key. Server-only — never sent to the browser. */
-  accessKey: string;
+  /**
+   * @deprecated Never write this. The access key lives in the server-only
+   * secrets subcollection — `subAccounts/{id}/secrets/idx` — reached through
+   * `lib/comms/sub-account-secrets.ts::loadIdxSecrets()`. Retained only so that
+   * loader can lazily migrate pre-existing connections; the migration deletes
+   * it from this document on first read.
+   */
+  accessKey?: string;
+  /**
+   * True once an access key has been stored. Public marker, safe on this
+   * member-readable document — it replaces the old "is `accessKey` present?"
+   * test, which stops working once the key moves out of here.
+   */
+  connected?: boolean;
   /** Which of the account's approved MLSs to search. Null until the operator picks one. */
   mlsId: string | null;
   /** "Listings provided by <MLS name>" attribution line shown on public pages. */
@@ -607,11 +633,17 @@ export interface MetaConfig {
   /** Page display name, shown in the settings card. */
   pageName: string;
   /**
-   * Long-lived Page access token used to send/receive on Messenger + IG DM and
-   * to (un)subscribe the page to our webhook. Stored in Firestore like
-   * `TwilioConfig.authToken`; never displayed back to the operator.
+   * @deprecated Never write this. The token lives in the server-only secrets
+   * subcollection — `subAccounts/{id}/secrets/meta` — reached through
+   * `lib/comms/sub-account-secrets.ts::loadMetaSecrets()`.
+   *
+   * This document is readable by every active member down to `collaborator`,
+   * and Firestore has no field-level read rules, so a token stored here is
+   * readable by anyone who can read the document at all. The field is retained
+   * only so `loadMetaSecrets()` can lazily migrate connections made before the
+   * move; that migration deletes it from this document on first read.
    */
-  pageAccessToken: string;
+  pageAccessToken?: string;
   /** Linked Instagram business account id — inbound IG events route by this. Null if the Page has no IG account. */
   instagramBusinessAccountId: string | null;
   /** Linked IG @handle, shown in the settings card. Null when no IG account. */

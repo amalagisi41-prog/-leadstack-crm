@@ -1,6 +1,10 @@
 import "server-only";
 
 import { NextResponse } from "next/server";
+import {
+  deleteIdxSecrets,
+  writeIdxSecrets,
+} from "@/lib/comms/sub-account-secrets";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { requireSubAccountAdmin } from "@/lib/auth/require-tenancy";
@@ -69,9 +73,13 @@ export async function POST(
   const mlsId = body.mlsId?.trim() || null;
 
   const existing = subSnap.data()?.idxConfig as IdxConfig | null | undefined;
+  // Credential first. A crash between the two writes then leaves an unreferenced
+  // secret rather than a config claiming a connection with no key behind it.
+  await writeIdxSecrets(subAccountId, { accessKey });
+
   const cfg: IdxConfig = {
     enabled: true,
-    accessKey,
+    connected: true,
     mlsId,
     displayName: existing?.displayName ?? null,
     lastSyncAt: existing?.lastSyncAt ?? null,
@@ -102,6 +110,8 @@ export async function DELETE(
       { idxConfig: null, updatedAt: FieldValue.serverTimestamp() },
       { merge: true },
     );
+  // Otherwise the IDX Broker key outlives the connection that justified it.
+  await deleteIdxSecrets(subAccountId);
 
   return NextResponse.json({ ok: true });
 }

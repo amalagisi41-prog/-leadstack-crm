@@ -31,7 +31,12 @@ export function SubAccountIdxSection() {
   const { subAccountId, subAccount, isAdmin } = useSubAccount();
   const gateOpen = subAccount?.idxEnabledByAgency === true;
   const cfg = subAccount?.idxConfig ?? null;
-  const connected = !!cfg?.accessKey;
+  // `connected` is the public marker; `accessKey` is the legacy inline copy on
+  // a workspace whose credential has not been migrated to the secrets
+  // subcollection yet. Either proves a connection — reading only the marker
+  // would show every un-migrated workspace as disconnected, and reading only
+  // the key would show every migrated one that way instead.
+  const connected = cfg?.connected === true || !!cfg?.accessKey;
   const syncPassed = cfg?.lastSyncStatus === "success" && (cfg?.listingCount ?? 0) > 0;
 
   const [accessKey, setAccessKey] = useState("");

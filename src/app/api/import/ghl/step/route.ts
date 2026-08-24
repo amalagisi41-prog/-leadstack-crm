@@ -25,6 +25,7 @@ import {
   type GhlPhase,
 } from "@/lib/import/ghl/transform";
 import { emptyTotals, type ImportEntity, type ImportJob } from "@/types/import";
+import { loadGhlImportSecrets } from "@/lib/comms/sub-account-secrets";
 import type { GhlImportConfig } from "@/types";
 
 export const dynamic = "force-dynamic";
@@ -117,7 +118,8 @@ export async function POST(request: Request) {
   // Token from the stored connection (never carried in the QStash message).
   const subSnap = await db.doc(`subAccounts/${subAccountId}`).get();
   const cfg = subSnap.data()?.ghlImportConfig as GhlImportConfig | null | undefined;
-  if (!cfg?.token || !cfg.locationId) {
+  const ghlSecrets = await loadGhlImportSecrets(subAccountId);
+  if (!ghlSecrets || !cfg?.locationId) {
     await finishJob(db, jobRef, "failed");
     return NextResponse.json({ ok: true, stopped: "disconnected" });
   }
@@ -140,26 +142,26 @@ export async function POST(request: Request) {
     let next: GhlCursor = null;
 
     if (entity === "contacts") {
-      const page = await listContactsPage(cfg.token, cfg.locationId, cursor);
+      const page = await listContactsPage(ghlSecrets.token, cfg.locationId, cursor);
       const records = page.items.map((c) => ghlContactToChunk(c, mapping));
       await writeAndRecord(db, jobRef, "contacts", { ...base }, records);
       next = page.next;
     } else if (entity === "opportunities") {
-      const page = await listOpportunitiesPage(cfg.token, cfg.locationId, cursor);
+      const page = await listOpportunitiesPage(ghlSecrets.token, cfg.locationId, cursor);
       const records = page.items.map((o) => ghlOpportunityToChunk(o, mapping));
       await writeAndRecord(db, jobRef, "deals", { ...base }, records);
       next = page.next;
     } else {
       // notes: page contacts small, fetch each contact's notes, write together.
       const page = await listContactsPage(
-        cfg.token,
+        ghlSecrets.token,
         cfg.locationId,
         cursor,
         NOTES_CONTACT_PAGE,
       );
       const noteRecords: unknown[] = [];
       for (const c of page.items) {
-        const notes = await listContactNotes(cfg.token, c.id);
+        const notes = await listContactNotes(ghlSecrets.token, c.id);
         for (const n of notes) noteRecords.push(ghlNoteToChunk(n));
       }
       await writeAndRecord(db, jobRef, "notes", { ...base }, noteRecords);

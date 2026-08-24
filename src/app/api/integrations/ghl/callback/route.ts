@@ -1,5 +1,6 @@
 import "server-only";
 
+import { writeGhlImportSecrets } from "@/lib/comms/sub-account-secrets";
 import { FieldValue } from "firebase-admin/firestore";
 import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase/admin";
@@ -65,10 +66,14 @@ export async function GET(request: Request) {
     const redirectUri = `${appBase(request)}/api/integrations/business-transfer/callback`;
     const token = await exchangeGhlCode(code, redirectUri);
     await validateGhlAccess(token.accessToken, token.locationId!);
+    // Credentials first, then the public half — see writeGhlImportSecrets.
+    await writeGhlImportSecrets(id, {
+      token: token.accessToken,
+      refreshToken: token.refreshToken,
+    });
     await db.doc(`subAccounts/${id}`).update({
       ghlImportConfig: {
-        token: token.accessToken,
-        refreshToken: token.refreshToken,
+        connected: true,
         locationId: token.locationId,
         companyId: token.companyId ?? null,
         scope: token.scope ?? "",

@@ -13,6 +13,7 @@ import {
   verifyMetaState,
 } from "@/lib/comms/meta";
 import { deriveMetaCapabilities } from "@/lib/comms/meta-capabilities";
+import { writeMetaSecrets } from "@/lib/comms/sub-account-secrets";
 import type { SubAccountDoc } from "@/types";
 
 /**
@@ -108,12 +109,16 @@ export async function GET(
       );
     }
 
+    // The token goes to the server-only secrets subcollection BEFORE the
+    // parent write, so a crash between the two never leaves a connection that
+    // looks live but has no credential behind it.
+    await writeMetaSecrets(id, { pageAccessToken: page.accessToken });
+
     await db.doc(`subAccounts/${id}`).update({
       metaConfig: {
         connected: true,
         pageId: page.id,
         pageName: page.name,
-        pageAccessToken: page.accessToken,
         instagramBusinessAccountId: page.instagramBusinessAccountId,
         instagramUsername: page.instagramUsername,
         capabilities,

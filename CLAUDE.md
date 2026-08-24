@@ -1019,6 +1019,12 @@ Without these two vars the email setup wizard still renders, but the Google opti
 
 **`auth` must be an OAuth2 client, never a token string.** `google.gmail({ version: "v1", auth })` accepts a string and treats it as an **API key** — appended as `?key=<value>` with no Authorization header. Passing a raw access token there makes every send fail with 401 and writes the token into the request URL. It type-checks and it builds; the only thing that catches it is [google-workspace.test.ts](src/lib/comms/google-workspace.test.ts), which asserts the Bearer header. Do not "simplify" that wiring.
 
+**The same module now holds three more.** `metaConfig.pageAccessToken`, `ghlImportConfig.token` / `refreshToken`, and `idxConfig.accessKey` were all sitting on the member-readable parent document with the identical exposure. They now live at `subAccounts/{id}/secrets/{meta,ghlImport,idx}` behind `loadMetaSecrets()` / `loadGhlImportSecrets()` / `loadIdxSecrets()`, each with the same lazy migration that deletes the inline copy on first read.
+
+Two things to preserve when touching these:
+- **Never spread a config object back onto the parent.** `lib/idx/sync.ts` writes sync status by merging the config back; it destructures `accessKey` out explicitly, because spreading is exactly how a migrated credential gets silently re-inlined.
+- **`connected` is a public marker, not decoration.** The GHL and IDX settings UI used to derive "connected" from the presence of the credential itself. That test stops working the moment the credential moves, so the migration stamps `connected: true` in the same write that strips the inline copy, and the readers accept either.
+
 **Still open (deliberate):** `twilioConfig.authToken` sits on the same member-readable parent document with the same exposure. It is read directly by ~14 call sites including the Twilio + WhatsApp inbound webhooks (which use it for signature verification), so migrating it means converting all of them in lockstep. That belongs in its own change — see the FOLLOW-UP note at the bottom of `sub-account-secrets.ts`.
 
 ### Optional — Google Business Profile import (Business Blueprint)
@@ -1702,7 +1708,9 @@ One-click import from GoHighLevel using a Private Integration Token. The import 
 
 ### Credentials storage
 
-The GHL token is stored on `SubAccountDoc.ghlImportConfig.token` (admin-write). It's an admin-level credential (not a public API key) — Firestore rules block member reads of this field. After import completion, operators should revoke the token in GHL.
+The GHL token lives in the server-only secrets subcollection at `subAccounts/{id}/secrets/ghlImport`, reached through `lib/comms/sub-account-secrets.ts::loadGhlImportSecrets()`. Only the public half — `connected`, `locationId`, `authMethod`, `connectedAt` — stays on `SubAccountDoc.ghlImportConfig` so the settings UI can render the connected state.
+
+It was previously stored inline on that parent document, described here as protected because "Firestore rules block member reads of this field". **That was wrong: Firestore has no field-level read rules.** The parent doc is readable by every active member down to `collaborator`, so the token was readable by all of them. `loadGhlImportSecrets()` lazily migrates pre-existing connections and deletes the inline copy on first read. After import completion, operators should still revoke the token in GHL.
 
 ## Affiliate Program
 
