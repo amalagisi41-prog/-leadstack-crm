@@ -18,16 +18,7 @@ export const metadata: Metadata = {
  */
 export default function PrivacyPage() {
   return (
-    <LegalDocument
-      title="AgentStack Privacy Policy"
-      intro={
-        <>
-          <strong>Operational draft, not legal advice.</strong> Have counsel
-          confirm this matches AgentStack&apos;s actual vendors, retention,
-          security, and jurisdictions before relying on it.
-        </>
-      }
-    >
+    <LegalDocument title="AgentStack Privacy Policy">
       <p>
         AgentStack is operated by{" "}
         <strong>
