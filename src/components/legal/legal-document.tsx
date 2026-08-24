@@ -103,11 +103,12 @@ export function LegalDocument({
             <LegalValue value={config.legalName} field="LEGAL COMPANY NAME" />
           </strong>
           <br />
-          <LegalValue
-            value={config.mailingAddress}
-            field="MAILING ADDRESS"
-          />
-          <br />
+          {config.mailingAddress ? (
+            <>
+              {config.mailingAddress}
+              <br />
+            </>
+          ) : null}
           Email:{" "}
           <a href={`mailto:${config.contactEmail}`}>{config.contactEmail}</a>
         </p>
