@@ -126,6 +126,17 @@ export interface WorkflowDoc {
    */
   templateKey?: string | null;
   templateVersion?: number | null;
+  /**
+   * Why this workflow is paused, when it was paused by the system rather than
+   * by the operator. Absent for operator-paused and for active workflows.
+   *
+   * Currently set only at provisioning, when the seeded Method Templates are
+   * paused because QStash isn't configured on the deployment and they would
+   * otherwise enroll contacts and silently send nothing. The workflows list
+   * shows this so the state reads as "not running, here's why" rather than an
+   * unexplained pause the operator is left to guess at.
+   */
+  pausedReason?: string | null;
   createdAt: Timestamp | FieldValue | null;
   updatedAt: Timestamp | FieldValue | null;
 }

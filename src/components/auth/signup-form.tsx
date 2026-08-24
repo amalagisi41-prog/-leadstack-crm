@@ -103,7 +103,7 @@ export function SignupForm({
         console.warn("sendVerificationEmail failed", err),
       );
 
-      void sendWelcomeEmail(email, email.split("@")[0]).catch((err) =>
+      void sendWelcomeEmail(credential.user).catch((err) =>
         console.warn("sendWelcomeEmail failed", err),
       );
 

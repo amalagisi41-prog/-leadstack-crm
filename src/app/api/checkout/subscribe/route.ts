@@ -70,6 +70,29 @@ export async function POST(request: Request) {
         ADD_ON_KEYS.includes(k as AddOnKey)
       )
     : [];
+  // Fail loudly on an add-on this deployment can't actually sell.
+  //
+  // This used to `.filter(Boolean)` the unset ones away, which meant a buyer
+  // who selected IDX went through checkout believing they had bought it, was
+  // never charged for it, and never got the gate — because the webhook derives
+  // the entitlement from the actual Stripe line items. Silent, and it costs
+  // money in the one flow where the customer is trying to give you some.
+  //
+  // The base plan already has this guard six lines up; the add-ons didn't.
+  const unconfiguredAddOns = addOnKeys.filter((key) => !addOnPriceId(key));
+  if (unconfiguredAddOns.length > 0) {
+    return NextResponse.json(
+      {
+        error: `These add-ons aren't configured on this deployment yet: ${unconfiguredAddOns.join(
+          ", "
+        )}. Remove them and try again, or contact support.`,
+        code: "ADDON_NOT_CONFIGURED",
+        addOnKeys: unconfiguredAddOns,
+      },
+      { status: 503 }
+    );
+  }
+
   const addOnPriceIds = addOnKeys
     .map((key) => addOnPriceId(key))
     .filter((id): id is string => !!id);

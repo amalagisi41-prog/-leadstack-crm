@@ -144,6 +144,13 @@ export function BusinessProfileForm() {
   const [mediaOpen, setMediaOpen] = useState<
     "logoUrl" | "headshotUrl" | "buyerGuideUrl" | "sellerGuideUrl" | null
   >(null);
+  /**
+   * The initial load failed, so `content` is still EMPTY_BUSINESS_PROFILE
+   * rather than what's actually stored. Saving from this state PATCHes every
+   * field as "" and wipes a real profile. Warning about it was not enough —
+   * the button stayed armed and the destructive action stayed one click away.
+   */
+  const [loadFailed, setLoadFailed] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -173,6 +180,7 @@ export function BusinessProfileForm() {
         // spinner. The operator saw a blank Blueprint, assumed nothing had
         // been saved, retyped it, and overwrote real data on save. Say so.
         if (active) {
+          setLoadFailed(true);
           toast.error(
             "We couldn't load your Business Blueprint. Reload before editing — saving now could overwrite what's already there."
           );
@@ -292,6 +300,17 @@ export function BusinessProfileForm() {
   }
 
   async function save(): Promise<boolean> {
+    // Guard here rather than only on the buttons: there are three ways to
+    // reach this (Save profile, Save & Continue, and the wizard hand-off),
+    // and a blanking save is not something to leave to whether every call
+    // site remembered to check.
+    if (loadFailed) {
+      toast.error(
+        "Your Blueprint didn't load, so saving now would erase what's already stored. Reload the page first."
+      );
+      return false;
+    }
+
     setSaving(true);
     try {
       const res = await fetch(
@@ -1401,7 +1420,11 @@ export function BusinessProfileForm() {
               )}
               Start over
             </Button>
-            <Button variant="outline" onClick={save} disabled={saving}>
+            <Button
+              variant="outline"
+              onClick={save}
+              disabled={saving || loadFailed}
+            >
               {saving ? (
                 <Loader2 className="mr-1 h-4 w-4 animate-spin" />
               ) : (
@@ -1415,7 +1438,7 @@ export function BusinessProfileForm() {
                   const ok = await save();
                   if (ok) router.push(saPath("/get-started"));
                 }}
-                disabled={saving}
+                disabled={saving || loadFailed}
               >
                 {saving ? (
                   <Loader2 className="mr-1 h-4 w-4 animate-spin" />
