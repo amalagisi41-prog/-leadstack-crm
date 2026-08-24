@@ -5,6 +5,7 @@ import { getAdminDb } from "@/lib/firebase/admin";
 import { getAdminAuth } from "@/lib/firebase/admin";
 import { getStripeServer } from "@/lib/stripe/server";
 import { sendFoundersWelcomeEmail } from "@/lib/stripe/welcome-email";
+import { sendClaimLinkEmail } from "@/lib/stripe/claim-reminder-email";
 import { gateFieldForPriceId } from "@/lib/stripe/catalog";
 import { LANDING_VARIANT } from "@/config/landing";
 import { ensureAffiliateAccount } from "@/lib/affiliate/account";
@@ -488,10 +489,39 @@ async function handleNewAgencyCheckout(session: Stripe.Checkout.Session) {
     throw err;
   }
 
-  // Best-effort: a buyer who paid but hasn't come back to /welcome yet gets
-  // one reminder with a fresh (re-extended) claim link — see
-  // /api/checkout/claim-reminder/step. Scheduling failure must never break
-  // the purchase flow itself.
+  // Put the claim link in the buyer's inbox NOW.
+  //
+  // Until this existed, the link lived in exactly one place: the Stripe
+  // `success_url`. A buyer who paid and closed the tab had no way back into
+  // the workspace they had just bought — the only recovery was the ~24h QStash
+  // reminder below, which needs QStash configured. Without it they were simply
+  // stranded, and the token expires after 7 days regardless.
+  //
+  // Best-effort by construction. `sendClaimLinkEmail` swallows its own errors
+  // and returns null, because this runs inside a Stripe webhook: throwing here
+  // would return a non-2xx, Stripe would retry the event, and the retry would
+  // hit the duplicate-purchase early-return above and skip the email anyway.
+  // The purchase is already safely recorded either way.
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/+$/, "");
+  if (baseUrl) {
+    const claimUrl = `${baseUrl}/welcome?session_id=${encodeURIComponent(
+      sessionId,
+    )}&t=${encodeURIComponent(claimToken)}`;
+    const messageId = await sendClaimLinkEmail({ to: email, claimUrl });
+    if (!messageId) {
+      console.error(
+        `[new-agency] could not email the claim link for ${sessionId} — buyer must use the Stripe redirect or the reminder`,
+      );
+    }
+  } else {
+    console.error(
+      `[new-agency] NEXT_PUBLIC_APP_URL is not set — cannot email a claim link for ${sessionId}`,
+    );
+  }
+
+  // Still schedule the reminder. This is not redundant: it catches buyers who
+  // got the email above, meant to come back, and didn't. Scheduling failure
+  // must never break the purchase flow itself.
   if (qstashIsConfigured()) {
     try {
       await publishCallback({
