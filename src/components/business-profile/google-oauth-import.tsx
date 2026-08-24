@@ -127,13 +127,14 @@ export function GoogleOAuthImport({
         }
       );
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(
-          error.error || "Failed to fetch Google Business Profile"
-        );
-      }
-
+      // Every failure path on this route (400/404/502/503) returns a JSON
+      // body with `code` so the branches below can suggest next steps. That
+      // branching used to be dead code: this function threw straight off
+      // `!response.ok` before ever reading `data.code`, so every failure —
+      // including the routine "no profile yet" and "API call failed" cases —
+      // surfaced as the raw, unfriendly server error message instead of the
+      // guidance meant for it. Parse the body regardless of status; only the
+      // parse itself (a genuinely malformed response) should throw.
       const data: GoogleProfileImport = await response.json();
 
       if (data.success && data.profile) {

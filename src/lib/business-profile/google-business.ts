@@ -140,6 +140,55 @@ export async function exchangeGoogleOAuthCode(
 }
 
 /**
+ * Turn a failed Business Profile API response into a message that actually
+ * explains what happened, instead of the bare HTTP reason phrase.
+ *
+ * `response.statusText` for a 403 is just the string "Forbidden" — no matter
+ * what Google's real reason was. That was the entire error message shown to
+ * operators, which sent them looking for a scope or credentials bug when the
+ * real (and far more common) cause is that this Google Cloud project was
+ * never approved for the Business Profile APIs: unlike Gmail or most Google
+ * APIs, "My Business Account Management" and "My Business Business
+ * Information" gate real traffic behind a manual access-request review
+ * (https://developers.google.com/my-business/content/prereqs) that is
+ * separate from enabling the API in Cloud Console and separate from the
+ * OAuth consent screen. A project that hasn't been through that review
+ * returns exactly this: a valid token, correct `business.manage` scope,
+ * consent successfully granted — and a 403 on every call.
+ */
+async function describeGoogleBusinessApiError(
+  response: Response,
+  step: "accounts" | "locations"
+): Promise<string> {
+  let reason = response.statusText || `HTTP ${response.status}`;
+  try {
+    const body = (await response.json()) as {
+      error?: { message?: string; status?: string };
+    };
+    if (body.error?.message) {
+      reason = body.error.status
+        ? `${body.error.message} (${body.error.status})`
+        : body.error.message;
+    }
+  } catch {
+    // Body wasn't JSON (or was empty) — fall back to the status line above.
+  }
+
+  const base = `Failed to fetch Google ${step}: ${reason}`;
+  if (response.status === 403) {
+    return (
+      `${base}. This usually means the Google Cloud project behind this ` +
+      `deployment's OAuth client hasn't been approved for the Business ` +
+      `Profile APIs yet — that approval is a separate, manual step from ` +
+      `enabling the API or granting OAuth consent. Submit the access ` +
+      `request at https://developers.google.com/my-business/content/prereqs ` +
+      `and try again once Google approves it.`
+    );
+  }
+  return base;
+}
+
+/**
  * List the user's Google Business Profiles.
  * Returns their primary (first) location's profile data.
  */
@@ -156,7 +205,7 @@ export async function fetchGoogleBusinessProfile(
 
   if (!accountsResponse.ok) {
     throw new Error(
-      `Failed to fetch Google accounts: ${accountsResponse.statusText}`
+      await describeGoogleBusinessApiError(accountsResponse, "accounts")
     );
   }
 
@@ -180,7 +229,7 @@ export async function fetchGoogleBusinessProfile(
 
   if (!locationsResponse.ok) {
     throw new Error(
-      `Failed to fetch Google locations: ${locationsResponse.statusText}`
+      await describeGoogleBusinessApiError(locationsResponse, "locations")
     );
   }
 
