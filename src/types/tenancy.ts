@@ -424,6 +424,30 @@ export interface SubAccountDoc {
    */
   customDomain?: string | null;
   /**
+   * What the last DNS check actually found for `customDomain`, from
+   * POST /api/sub-accounts/[id]/domain/verify.
+   *
+   *   live             — points at this deployment; the site is reachable
+   *   points_elsewhere — resolves, but somewhere that isn't us
+   *   no_records       — no A or CNAME yet (or DNS hasn't propagated)
+   *   unknown          — we could not determine it, and say so
+   *
+   * "unknown" is a first-class outcome on purpose. The DNS step used to tell
+   * agents their domain "already points where it should" based only on which
+   * host they'd picked from a dropdown, which confirmed broken setups as
+   * correct. A check that cannot confirm something must not report success.
+   *
+   * Absent = never checked. Not the same as failing.
+   */
+  customDomainState?:
+    | "live"
+    | "points_elsewhere"
+    | "no_records"
+    | "unknown"
+    | null;
+  /** When the check above last ran. Absent = never. */
+  customDomainCheckedAt?: Date | null;
+  /**
    * GHL migration connection (Phase 4). Holds the Private Integration Token +
    * location id used to pull the account's data. The token is a secret stored
    * like `twilioConfig.authToken` — server-only, never returned to the client.

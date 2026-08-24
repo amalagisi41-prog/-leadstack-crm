@@ -30,7 +30,22 @@ import {
   type OnboardingFoundation,
 } from "@/types/onboarding-foundation";
 
-type Situation = "existing" | "new" | "switching";
+/**
+ * The three website situations an agent can be in, plus the CRM migration.
+ *
+ * The first three are ONE question — "what's the situation with your website?"
+ * — and every agent is in exactly one of them. `switching` is deliberately not
+ * a peer: it answers a different question (which CRM are you leaving?), and
+ * mixing the two axes into one row of choices is a large part of why this
+ * screen read as convoluted. It now sits below the three doors as its own
+ * thing.
+ *
+ * `migrate` was previously buried as a sub-choice inside `existing` — an agent
+ * had to pick "I have a website", then discover a second keep-or-move
+ * question. Moving it up means the agent answers once and only sees the path
+ * they chose.
+ */
+type Situation = "existing" | "migrate" | "new" | "switching";
 
 const HOSTINGER_TRANSFER_URL =
   process.env.NEXT_PUBLIC_HOSTINGER_TRANSFER_URL ??
@@ -49,6 +64,51 @@ const TARGET_NAMESERVERS = resolveTargetNameservers(
 const HOSTINGER_NEW_URL =
   process.env.NEXT_PUBLIC_HOSTINGER_NEW_SITE_URL ??
   "https://www.hostinger.com/";
+
+/**
+ * Where to send an agent who has no host at all.
+ *
+ * The picker below asks "who hosts it today?" and assumed the answer was
+ * always somebody. An agent who has never had a website — the exact person the
+ * "I don't have a website" door is for — had nothing to choose and nowhere to
+ * go. Naming real providers with real signup links is the difference between
+ * a decision they can make and a form they abandon.
+ *
+ * Hostinger leads because it is this product's migration and new-site partner
+ * (see HOSTINGER_NEW_URL) and the one path where AgentStack can actually help
+ * afterwards. The others are here so the list is honest rather than a funnel.
+ */
+const HOST_SIGNUP_OPTIONS: Array<{
+  id: BusinessSourcePlatform;
+  label: string;
+  url: string;
+  note: string;
+}> = [
+  {
+    id: "hostinger",
+    label: "Hostinger",
+    url: HOSTINGER_NEW_URL,
+    note: "Our recommended host — free migration and the setup we can help with most.",
+  },
+  {
+    id: "bluehost",
+    label: "Bluehost",
+    url: "https://www.bluehost.com/",
+    note: "Long-established, WordPress-focused.",
+  },
+  {
+    id: "siteground",
+    label: "SiteGround",
+    url: "https://www.siteground.com/",
+    note: "Strong performance and support reputation.",
+  },
+  {
+    id: "godaddy",
+    label: "GoDaddy",
+    url: "https://www.godaddy.com/hosting",
+    note: "Convenient if you already registered your domain there.",
+  },
+];
 
 /**
  * Hosts an agent is realistically already on. Values map to
@@ -209,24 +269,41 @@ const SITUATIONS: Array<{
   icon: typeof Globe;
 }> = [
   {
-    id: "existing",
-    title: "I have a website",
-    description: "Keep it live while we track the hosting and transfer steps.",
-    icon: Globe,
-  },
-  {
     id: "new",
-    title: "I need a website",
-    description: "Choose the domain path, then build in Website Studio.",
+    title: "I don't have a website",
+    description:
+      "We'll get you a domain, set up hosting, and publish a site built from your Business Blueprint.",
     icon: PlusCircle,
   },
   {
-    id: "switching",
-    title: "I’m switching CRMs",
-    description: "Use a guided migration path for your current platform.",
-    icon: Building2,
+    id: "existing",
+    title: "I have one — keep it where it is",
+    description:
+      "Nothing moves. Tell us who hosts it and we'll connect it, check your DNS, and give you one-click access to your host.",
+    icon: Globe,
+  },
+  {
+    id: "migrate",
+    title: "I have one — move it somewhere better",
+    description:
+      "Your current site stays live the whole time. We'll track the move through to a verified finish.",
+    icon: Server,
   },
 ];
+
+/**
+ * The CRM migration. Kept off the row above on purpose: "what's the situation
+ * with your website?" and "which CRM are you leaving?" are different
+ * questions, and answering them in one control is what made this screen feel
+ * like it was asking several things at once.
+ */
+const CRM_SWITCH_SITUATION = {
+  id: "switching" as const,
+  title: "I'm moving from another CRM",
+  description:
+    "Bring your contacts and deals across from GoHighLevel, kvCORE, Follow Up Boss and others.",
+  icon: Building2,
+};
 
 function StatusCard({
   label,
@@ -331,6 +408,40 @@ export function DomainConnect() {
   const [transfer, setTransfer] = useState<WebsiteTransferDoc | null>(null);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [verifying, setVerifying] = useState(false);
+  const [verifyResult, setVerifyResult] = useState<{
+    state: "live" | "points_elsewhere" | "no_records" | "unknown";
+    detail: string;
+    found?: { aRecords: string[]; cnames: string[] };
+  } | null>(null);
+
+  /**
+   * Asks the server what the public internet actually reports for this
+   * domain. Nothing here infers a result from what the agent told us — that
+   * inference is what previously confirmed broken setups as correct.
+   */
+  async function verifyDomain() {
+    setVerifying(true);
+    try {
+      const res = await fetch(
+        `/api/sub-accounts/${subAccountId}/domain/verify`,
+        { method: "POST" }
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error ?? "Could not check your domain.");
+        return;
+      }
+      setVerifyResult(data);
+      if (data.state === "live") toast.success(data.detail);
+    } catch {
+      toast.error(
+        "Could not reach the domain checker. Check your connection and try again."
+      );
+    } finally {
+      setVerifying(false);
+    }
+  }
   // Hosting was previously unreachable: the status card read "Not started"
   // with no control to change it, so the flow dead-ended after the domain.
   const [foundation, setFoundation] = useState<OnboardingFoundation>(
@@ -442,20 +553,33 @@ export function DomainConnect() {
               "Point AgentStack at the hosting account you already pay for.",
           },
         ]
-      : [
-          {
-            id: "keep_existing",
-            title: "Keep my current host",
-            description:
-              "Your site, IDX widgets, embeds, and keys stay exactly where they are.",
-          },
-          {
-            id: "transfer_existing",
-            title: "Move my site to a new host",
-            description:
-              "Hostinger migrates the existing site for free, then you finish setup here.",
-          },
-        ];
+      : situation === "migrate"
+        ? // The agent already chose to move. Don't re-ask whether they want to
+          // stay — offering the path they just declined is how a decision made
+          // at the top gets quietly reopened three screens later.
+          [
+            {
+              id: "transfer_existing",
+              title: "Move my site to a new host",
+              description:
+                "Hostinger migrates the existing site for free, then you finish setup here.",
+            },
+            {
+              id: "agentstack_managed",
+              title: "Rebuild it with AgentStack instead",
+              description:
+                "Start fresh in Website Studio rather than moving the old site. Your current site stays live until you publish.",
+            },
+          ]
+        : // situation === "existing": staying put. Same reasoning in reverse.
+          [
+            {
+              id: "keep_existing",
+              title: "Keep my current host",
+              description:
+                "Your site, IDX widgets, embeds, and keys stay exactly where they are.",
+            },
+          ];
 
   /**
    * Persist the hosting choice on the onboarding foundation.
@@ -618,6 +742,95 @@ export function DomainConnect() {
     }
   }
 
+  /**
+   * Setup is finished: a domain is saved and a host is connected.
+   *
+   * Once that is true, this screen has nothing left to ask. Plumbing is done
+   * once and thereafter only OPENED — so collapse the whole walkthrough to a
+   * single row with the one action that still matters, and keep the steps
+   * available behind a disclosure for the rare time something changes.
+   */
+  // All three steps, not two. Collapsing on domain + host alone hid step 3
+  // from agents who still had a DNS cutover to do — exactly the outstanding
+  // work this screen exists to surface. `dnsNotNeeded` covers the staying-put
+  // path where there is genuinely no cutover; `hostingReady` covers the
+  // migration path once the provider has finished.
+  const setupComplete =
+    domainSaved && hostingConnected && (dnsNotNeeded || hostingReady) && !loading;
+  const [showStepsAnyway, setShowStepsAnyway] = useState(false);
+
+  if (setupComplete && !showStepsAnyway) {
+    return (
+      <div className="mx-auto max-w-5xl space-y-5">
+        <section className="overflow-hidden rounded-2xl border bg-white shadow-sm">
+          <div className="bg-gradient-to-r from-[#173b7a] to-[#315f9d] p-6 text-white">
+            <p className="text-xs font-semibold tracking-[0.18em] text-pink-200 uppercase">
+              Website &amp; Domain
+            </p>
+            <h1 className="mt-2 text-2xl font-bold">
+              {savedDomain || "Your domain"} is connected.
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm text-white/85">
+              Hosted by {hostLabel}. Nothing here needs your attention unless
+              you&apos;re changing something.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 p-5">
+            {hostDashboardUrl ? (
+              <Button
+                render={
+                  <a
+                    href={hostDashboardUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  />
+                }
+              >
+                Open {hostLabel}
+                <ExternalLink className="ml-2 h-4 w-4" />
+              </Button>
+            ) : null}
+            <Button
+              variant="outline"
+              onClick={() => void verifyDomain()}
+              disabled={verifying}
+            >
+              {verifying ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <ShieldCheck className="mr-2 h-4 w-4" />
+              )}
+              Check my domain
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setShowStepsAnyway(true)}
+            >
+              Change domain or hosting
+            </Button>
+          </div>
+
+          {verifyResult ? (
+            <div className="border-t px-5 py-4">
+              <p
+                className={`text-sm font-medium ${
+                  verifyResult.state === "live"
+                    ? "text-emerald-700"
+                    : verifyResult.state === "unknown"
+                      ? "text-muted-foreground"
+                      : "text-amber-700"
+                }`}
+              >
+                {verifyResult.detail}
+              </p>
+            </div>
+          ) : null}
+        </section>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-5xl space-y-5">
       <section className="overflow-hidden rounded-2xl border bg-white shadow-sm">
@@ -658,6 +871,32 @@ export function DomainConnect() {
             );
           })}
         </div>
+
+        {/* A different question, and so a different control. Mixing "which CRM
+            are you leaving?" into the row above meant the agent was choosing
+            along two axes at once — and an agent moving from GoHighLevel who
+            also has a website had to pick one and lose the other. */}
+        <div className="border-t px-5 py-4">
+          <button
+            type="button"
+            onClick={() => setSituation(CRM_SWITCH_SITUATION.id)}
+            className={`flex w-full flex-wrap items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
+              situation === CRM_SWITCH_SITUATION.id
+                ? "border-blue-500 bg-blue-50 ring-2 ring-blue-500/15"
+                : "hover:border-blue-300 hover:bg-slate-50"
+            }`}
+          >
+            <CRM_SWITCH_SITUATION.icon className="h-4 w-4 shrink-0 text-blue-700" />
+            <span>
+              <span className="text-sm font-medium">
+                {CRM_SWITCH_SITUATION.title}
+              </span>
+              <span className="text-muted-foreground block text-xs leading-5">
+                {CRM_SWITCH_SITUATION.description}
+              </span>
+            </span>
+          </button>
+        </div>
       </section>
 
       <section className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950">
@@ -678,7 +917,9 @@ export function DomainConnect() {
         <div className="text-muted-foreground flex h-32 items-center justify-center rounded-2xl border">
           <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading saved setup…
         </div>
-      ) : situation === "existing" || situation === "switching" ? (
+      ) : situation === "existing" ||
+        situation === "migrate" ||
+        situation === "switching" ? (
         <section className="rounded-2xl border bg-white p-6">
           <StepHeader
             step={1}
@@ -879,6 +1120,54 @@ export function DomainConnect() {
                     ) : null}
                     Connect this host
                   </Button>
+
+                  {/* The question above assumes the answer is somebody. For an
+                      agent who has never had a website — the exact person the
+                      "I don't have a website" door is for — it wasn't, and
+                      there was nowhere to go. Name real providers with real
+                      links so the dead end becomes a decision. */}
+                  <details className="mt-4 border-t pt-3">
+                    <summary className="cursor-pointer text-xs font-medium">
+                      I don&apos;t have a host yet
+                    </summary>
+                    <p className="text-muted-foreground mt-2 text-xs leading-5">
+                      Hosting is the service that keeps your website online —
+                      usually a few dollars a month. Open one of these, create
+                      an account, then come back and pick it from the list
+                      above.
+                    </p>
+                    <ul className="mt-3 space-y-2">
+                      {HOST_SIGNUP_OPTIONS.map((option) => (
+                        <li
+                          key={option.id}
+                          className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-white px-3 py-2"
+                        >
+                          <span>
+                            <span className="text-sm font-medium">
+                              {option.label}
+                            </span>
+                            <span className="text-muted-foreground block text-[11px] leading-4">
+                              {option.note}
+                            </span>
+                          </span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            render={
+                              <a
+                                href={option.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              />
+                            }
+                          >
+                            Open {option.label}
+                            <ExternalLink className="ml-2 h-3.5 w-3.5" />
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
                 </div>
               ) : null}
 
@@ -995,10 +1284,73 @@ export function DomainConnect() {
                   // as evidence of success. When the agent had picked the wrong
                   // host from the list, this cheerfully confirmed a setup that
                   // was in fact wrong.
-                  `Based on your answer that you're staying on ${hostLabel}, there's no cutover to make — your domain keeps pointing wherever it points today. We haven't checked your DNS records to confirm that. If your site isn't loading, or you're not sure ${hostLabel} is really your host, ask Zack to check it with you.`
+                  `Based on your answer that you're staying on ${hostLabel}, there's no cutover to make — your domain keeps pointing wherever it points today. Use Check my domain below to confirm that against your live DNS rather than taking our word for it.`
                 : "The last step connects the domain to the host. AgentStack never edits nameservers or email DNS for you — Zack walks you through the exact records to add at your registrar."
             }
           />
+
+          {/* The real check. Available on both paths — an agent staying on
+              their current host still deserves to confirm it, and that is
+              exactly the case where a wrong dropdown answer used to be
+              confirmed as correct. */}
+          {domainSaved ? (
+            <div className="mt-4 rounded-xl border bg-white p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium">Check my domain</p>
+                  <p className="text-muted-foreground mt-0.5 text-xs">
+                    Looks up your live DNS and tells you where it actually
+                    points right now.
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => void verifyDomain()}
+                  disabled={verifying}
+                >
+                  {verifying ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <ShieldCheck className="mr-2 h-4 w-4" />
+                  )}
+                  {verifying ? "Checking…" : "Check my domain"}
+                </Button>
+              </div>
+
+              {verifyResult ? (
+                <div className="mt-3 border-t pt-3">
+                  <p
+                    className={`text-sm font-medium ${
+                      verifyResult.state === "live"
+                        ? "text-emerald-700"
+                        : verifyResult.state === "unknown"
+                          ? "text-muted-foreground"
+                          : "text-amber-700"
+                    }`}
+                  >
+                    {verifyResult.detail}
+                  </p>
+                  {/* Show the evidence rather than only a verdict, so the
+                      agent can judge it — and so a wrong answer is visible
+                      instead of authoritative. */}
+                  {verifyResult.found &&
+                  (verifyResult.found.aRecords.length > 0 ||
+                    verifyResult.found.cnames.length > 0) ? (
+                    <p className="text-muted-foreground mt-1 font-mono text-[11px]">
+                      Found:{" "}
+                      {[
+                        ...verifyResult.found.cnames.map(
+                          (v) => `CNAME → ${v}`
+                        ),
+                        ...verifyResult.found.aRecords.map((v) => `A → ${v}`),
+                      ].join("  ·  ")}
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
 
           {!dnsNotNeeded ? (
             <ul className="mt-4 space-y-2">
