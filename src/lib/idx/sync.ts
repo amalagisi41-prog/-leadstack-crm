@@ -6,6 +6,7 @@ import {
   fetchIdxListings,
   type IdxBrokerRawListing,
 } from "@/lib/idx/broker-client";
+import { loadIdxSecrets } from "@/lib/comms/sub-account-secrets";
 import type { IdxConfig } from "@/types";
 import type { IdxListingDoc } from "@/types/idx";
 
@@ -105,7 +106,8 @@ export async function syncIdxListings(subAccountId: string): Promise<SyncResult>
     return { ok: false, listingCount: 0, error: "IDX Listings is disabled by the agency." };
   }
   const cfg = sub.idxConfig as IdxConfig | null | undefined;
-  if (!cfg?.enabled || !cfg.accessKey) {
+  const idxSecrets = cfg?.enabled ? await loadIdxSecrets(subAccountId) : null;
+  if (!cfg?.enabled || !idxSecrets) {
     return { ok: false, listingCount: 0, error: "IDX Broker isn't connected." };
   }
   if (!cfg.mlsId) {
@@ -116,13 +118,17 @@ export async function syncIdxListings(subAccountId: string): Promise<SyncResult>
     };
   }
 
+  // `accessKey` is destructured out, not merely absent: spreading the config
+  // back onto the parent document is precisely how a migrated credential would
+  // get silently re-inlined onto a member-readable doc.
+  const { accessKey: _accessKey, ...publicCfg } = cfg;
   await subRef.set(
-    { idxConfig: { ...cfg, lastSyncStatus: "syncing" } },
+    { idxConfig: { ...publicCfg, connected: true, lastSyncStatus: "syncing" } },
     { merge: true },
   );
 
   try {
-    const raw = await fetchIdxListings(cfg.accessKey, cfg.mlsId);
+    const raw = await fetchIdxListings(idxSecrets.accessKey, cfg.mlsId);
     const listingsCol = db.collection(`subAccounts/${subAccountId}/idxListings`);
     const normalized = raw
       .map((r) => normalizeListing(r, subAccountId, cfg.mlsId as string))

@@ -11,6 +11,7 @@ import {
 import { createContactServerSide } from "@/lib/server/contacts-service";
 import { upsertConversationForMessage } from "@/lib/server/conversations-service";
 import type { ConversationChannel } from "@/types/conversations";
+import { loadMetaSecrets } from "@/lib/comms/sub-account-secrets";
 import type { SubAccountDoc } from "@/types";
 
 export const dynamic = "force-dynamic";
@@ -85,7 +86,8 @@ async function resolveRoute(
     );
     return null;
   }
-  const token = sa.metaConfig?.pageAccessToken;
+  const secrets = await loadMetaSecrets(snap.docs[0].id);
+  const token = secrets?.pageAccessToken;
   if (!token) return null;
 
   return {

@@ -17,7 +17,11 @@ export async function GET(
   const config = snap.data()?.ghlImportConfig as GhlImportConfig | undefined;
   return NextResponse.json({
     ok: true,
-    connected: Boolean(config?.token && config.locationId),
+    // `config.connected` is the public marker; `config.token` is the legacy
+    // inline copy on docs that have not been migrated yet. Either proves a
+    // connection — reading only the marker would report every un-migrated
+    // workspace as disconnected.
+    connected: Boolean((config?.connected || config?.token) && config?.locationId),
     locationId: config?.locationId ?? null,
   });
 }

@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { FieldValue, type Timestamp } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { requireContactAccessible, requireUid } from "@/lib/comms/route-auth";
+import { loadMetaSecrets } from "@/lib/comms/sub-account-secrets";
 import { sendMetaMessage } from "@/lib/comms/meta";
 import { upsertConversationForMessage } from "@/lib/server/conversations-service";
 import type { ActivityType } from "@/types/contacts";
@@ -83,7 +84,8 @@ export async function POST(request: Request) {
   }
 
   const cfg = subAccount?.metaConfig ?? null;
-  if (!cfg?.connected || !cfg.pageAccessToken) {
+  const metaSecrets = cfg?.connected ? await loadMetaSecrets(contact.subAccountId) : null;
+  if (!cfg?.connected || !metaSecrets) {
     return NextResponse.json(
       {
         error:
@@ -144,7 +146,7 @@ export async function POST(request: Request) {
       fromNodeId,
       recipientId: contact.metaUserId,
       text: body,
-      pageAccessToken: cfg.pageAccessToken,
+      pageAccessToken: metaSecrets.pageAccessToken,
     });
   } catch (err) {
     const message =

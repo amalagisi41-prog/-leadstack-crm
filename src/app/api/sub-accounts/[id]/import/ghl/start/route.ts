@@ -47,7 +47,10 @@ export async function POST(
   const sub = subSnap.data() ?? {};
   const agencyId = (sub.agencyId as string | undefined) ?? null;
   const cfg = sub.ghlImportConfig as GhlImportConfig | null | undefined;
-  if (!cfg?.token || !cfg.locationId) {
+  // The marker, or the legacy inline token on a doc that has not been
+  // migrated yet. This route never uses the credential — the QStash drain
+  // loads it — so it deliberately does not read one.
+  if (!(cfg?.connected || cfg?.token) || !cfg?.locationId) {
     return NextResponse.json(
       { error: "Connect a GoHighLevel token before starting an import." },
       { status: 400 },

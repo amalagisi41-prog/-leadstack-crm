@@ -5,6 +5,10 @@ import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { requireSubAccountAdmin } from "@/lib/auth/require-tenancy";
 import { unsubscribePageFromWebhook } from "@/lib/comms/meta";
+import {
+  deleteMetaSecrets,
+  loadMetaSecrets,
+} from "@/lib/comms/sub-account-secrets";
 import type { SubAccountDoc } from "@/types";
 
 /**
@@ -30,9 +34,10 @@ export async function DELETE(
   const sa = snap.exists ? (snap.data() as SubAccountDoc) : null;
   const cfg = sa?.metaConfig ?? null;
 
-  if (cfg?.pageId && cfg.pageAccessToken) {
+  const secrets = cfg?.pageId ? await loadMetaSecrets(id) : null;
+  if (cfg?.pageId && secrets) {
     try {
-      await unsubscribePageFromWebhook(cfg.pageId, cfg.pageAccessToken);
+      await unsubscribePageFromWebhook(cfg.pageId, secrets.pageAccessToken);
     } catch (err) {
       console.warn(`[meta/disconnect] unsubscribe failed sa=${id}`, err);
     }
@@ -42,6 +47,9 @@ export async function DELETE(
     metaConfig: null,
     updatedAt: FieldValue.serverTimestamp(),
   });
+  // Clearing metaConfig alone would strand the token in the secrets
+  // subcollection: invisible in the UI, still valid at Meta, still ours.
+  await deleteMetaSecrets(id);
 
   return NextResponse.json({ ok: true });
 }
