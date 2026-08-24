@@ -48,6 +48,9 @@ next-env.d.ts
 # internal release notes + release script — never publish to any remote
 PUBLISH.md
 publish.ps1
+
+# scratch output for delivering patches/exports to the user — not source
+/outputs/
 test-published.ps1
 back-to-main.ps1
 
