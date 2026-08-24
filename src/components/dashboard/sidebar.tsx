@@ -316,9 +316,29 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           if ((e.target as HTMLElement).closest("a")) onNavigate?.();
         }}
       >
-        {/* Agency-level links — Solo mode hides these until the agency has
-            graduated to multi-account mode (see AgencyDoc.multiAccountModeEnabled) */}
-        {agencyRole === "owner" && agency.multiAccountModeEnabled && (
+        {/* Agency-level links.
+         *
+         * Shown to every owner, deliberately NOT gated on
+         * `multiAccountModeEnabled` any more.
+         *
+         * That gate created a closed loop. Nothing writes the field at
+         * provisioning — it is set only when an owner creates a SECOND
+         * sub-account, and the only route to that page is
+         * /agency/sub-accounts/new, which is linked exclusively from this
+         * hidden nav. So for every new customer it was `undefined`, the nav
+         * never appeared, and the page that would have set it was unreachable.
+         *
+         * The consequence reached well past this menu: the feature-gates
+         * Manage dialog lives inside that nav, and the locked states for
+         * Public API, Webhooks, Broadcasts, WhatsApp, Meta inbox, Outbound
+         * Voice, Community and the email domain all read "ask your agency
+         * administrator". For a solo buyer the administrator IS them — sent to
+         * a door that did not exist.
+         *
+         * Solo mode still shapes the experience elsewhere: /agency itself
+         * redirects a solo owner straight into their one workspace, so this
+         * costs a solo owner nothing beyond having the entrance visible. */}
+        {agencyRole === "owner" && (
           <div className="mb-4">
             <p className="mb-1.5 px-2 text-[10px] font-semibold tracking-wider text-white/70 uppercase">
               Agency
