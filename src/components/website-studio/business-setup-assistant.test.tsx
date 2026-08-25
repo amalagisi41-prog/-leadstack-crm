@@ -10,8 +10,10 @@ import type { OnboardingFoundation } from "@/types/onboarding-foundation";
  * The bug these cover: once the foundation was saved the whole section
  * collapsed into a banner reading "there is nothing to repeat here; return to
  * Vibe Builder" — with no link to Vibe Builder, no record of what had been
- * saved, no way to change it, and no route to the DNS step. It told the user
- * to leave and gave them no door.
+ * saved, and no route to Domain settings. It told the user to leave and gave
+ * them no door. Editing domain/hosting now happens in exactly one place —
+ * the standalone Domain page — so this screen only reports status and links
+ * out; it no longer has its own inline edit form.
  */
 
 const toastError = vi.fn();
@@ -94,12 +96,12 @@ describe("completed foundation — the screen must not dead-end", () => {
     ).toHaveAttribute("href", "/sa/sub-1/website-studio/vibe");
   });
 
-  it("offers a route to the DNS step the walkthrough otherwise skipped", async () => {
+  it("offers a route to Domain settings the walkthrough otherwise skipped", async () => {
     mockApi();
     await renderComplete();
 
     expect(
-      screen.getByRole("button", { name: /domain, hosting & DNS steps/i })
+      screen.getByRole("button", { name: /manage domain & hosting/i })
     ).toHaveAttribute("href", "/sa/sub-1/domain");
   });
 
@@ -107,10 +109,9 @@ describe("completed foundation — the screen must not dead-end", () => {
     mockApi();
     await renderComplete();
 
-    expect(await screen.findByText("example-realty.test")).toBeInTheDocument();
-    expect(
-      screen.getByText("AgentStack managed hosting")
-    ).toBeInTheDocument();
+    const summary = await screen.findByText(/managed from Domain settings/i);
+    expect(summary).toHaveTextContent("example-realty.test");
+    expect(summary).toHaveTextContent("AgentStack managed hosting");
   });
 
   it("names a saved migration path in plain language", async () => {
@@ -118,65 +119,19 @@ describe("completed foundation — the screen must not dead-end", () => {
     await renderComplete();
 
     expect(
-      await screen.findByText("Migrating to a new host")
-    ).toBeInTheDocument();
+      await screen.findByText(/managed from Domain settings/i)
+    ).toHaveTextContent("Migrating to a new host");
   });
 
   it("says so plainly when a field is not saved", async () => {
     mockApi({ ...SAVED, domainName: "", hostingStartingPoint: null });
     await renderComplete();
 
-    await waitFor(() =>
-      expect(screen.getAllByText("Not saved yet")).toHaveLength(2)
+    const summary = await waitFor(() =>
+      screen.getByText(/managed from Domain settings/i)
     );
-  });
-});
-
-describe("completed foundation — changing a saved choice", () => {
-  it("reopens the setup form, honoring 'you can change providers later'", async () => {
-    mockApi();
-    await renderComplete();
-
-    await userEvent.click(
-      screen.getByRole("button", { name: /change domain or hosting/i })
-    );
-
-    expect(
-      screen.getByText(/choose your domain and hosting before building/i)
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /save changes/i })
-    ).toBeInTheDocument();
-  });
-
-  it("can back out of the reopened form without saving", async () => {
-    const { calls } = mockApi();
-    await renderComplete();
-
-    await userEvent.click(
-      screen.getByRole("button", { name: /change domain or hosting/i })
-    );
-    await userEvent.click(screen.getByRole("button", { name: /cancel/i }));
-
-    expect(
-      await screen.findByText("Website foundation is complete")
-    ).toBeInTheDocument();
-    expect(calls.some((c) => c.method === "PATCH")).toBe(false);
-  });
-
-  it("keeps the saved values populated when reopened", async () => {
-    mockApi();
-    await renderComplete();
-
-    await userEvent.click(
-      screen.getByRole("button", { name: /change domain or hosting/i })
-    );
-
-    // Re-editing must not start from a blank form and silently drop the
-    // domain when saved again.
-    expect(
-      screen.getByDisplayValue("example-realty.test")
-    ).toBeInTheDocument();
+    expect(summary).toHaveTextContent("Domain not saved yet");
+    expect(summary).toHaveTextContent("Hosting not saved yet");
   });
 });
 
