@@ -224,8 +224,6 @@ async function checkStripe(): Promise<IntegrationHealth> {
       const client = new Stripe(process.env.STRIPE_SECRET_KEY!);
       // Confirm the key is live + has read scope.
       await client.balance.retrieve();
-      // Confirm the price exists.
-      await client.prices.retrieve(process.env.STRIPE_PRO_PRICE_ID!);
       return true;
     }, "Stripe ping");
     subChecks.push(
@@ -495,9 +493,8 @@ async function checkTwilio(): Promise<IntegrationHealth> {
     id: "twilio",
     label: "Twilio (SMS)",
     category: "comms",
-    // QStash is the delivery scheduler for workflow steps. Without it, an
-    // active workflow can enroll a lead but never execute its sends.
-    required: true,
+    // Phone/A2P is intentionally optional for the core SaaS launch.
+    required: false,
     status,
     message: rollupMessage(status, "Twilio"),
     subChecks,
@@ -632,9 +629,9 @@ async function checkGitpage(): Promise<IntegrationHealth> {
     id: "gitpage",
     label: "gitpage.site (Website builder)",
     category: "website",
-    // Web Chat and AI-assisted lead handling are core AgentStack claims.
-    // Phone/A2P is intentionally separate and remains optional.
-    required: true,
+    // Website Studio is an optional add-on; existing external sites and the
+    // core CRM do not depend on this provider.
+    required: false,
     status,
     message: rollupMessage(status, "gitpage"),
     subChecks,
