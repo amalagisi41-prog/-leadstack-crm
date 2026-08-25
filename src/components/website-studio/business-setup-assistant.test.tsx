@@ -5,7 +5,7 @@ import { BusinessSetupAssistant } from "./business-setup-assistant";
 import type { OnboardingFoundation } from "@/types/onboarding-foundation";
 
 /**
- * The Website & Domain tab.
+ * Website Studio's "Setup Assistant" tab.
  *
  * The bug these cover: once the foundation was saved the whole section
  * collapsed into a banner reading "there is nothing to repeat here; return to

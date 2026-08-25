@@ -453,7 +453,7 @@ export function WebsiteStudioApp({
         onClick={() => setView("setup")}
         className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${view === "setup" ? "bg-[#1a2f50] text-white" : "text-muted-foreground hover:text-foreground"}`}
       >
-        Website &amp; Domain
+        Setup Assistant
       </button>
       <button
         type="button"
