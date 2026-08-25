@@ -448,13 +448,13 @@ export function WebsiteStudioApp({
       >
         Vibe Builder
       </a>
-      <button
-        type="button"
-        onClick={() => setView("setup")}
-        className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${view === "setup" ? "bg-[#1a2f50] text-white" : "text-muted-foreground hover:text-foreground"}`}
-      >
-        Setup Assistant
-      </button>
+      {/* Domain/hosting setup + the setup-assistant chat are reachable from
+          the empty-state cards below and the "Finish domain & hosting"
+          banner inside Vibe Builder — deliberately NOT a persistent tab
+          here. A tab labeled around "domain" sitting next to the sidebar's
+          own "Domain" nav item is exactly the two-destinations-same-name
+          confusion this screen used to cause; dropping it from the tab row
+          removes the second destination instead of renaming it again. */}
       <button
         type="button"
         onClick={() => setView("seo")}
