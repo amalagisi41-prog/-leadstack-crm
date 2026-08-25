@@ -46,34 +46,6 @@ const platforms: { value: BusinessSourcePlatform; label: string }[] = [
   { value: "other", label: "Another platform" },
 ];
 
-const FOUNDATION_LINKS = [
-  {
-    label: "Buy a domain",
-    detail: "Search a short .com name",
-    href: "https://www.namecheap.com/domains/",
-  },
-  {
-    label: "Open GoDaddy",
-    detail: "Manage or transfer a GoDaddy domain",
-    href: "https://dcc.godaddy.com/domains",
-  },
-  {
-    label: "Open Bluehost",
-    detail: "Manage WordPress and hosting",
-    href: "https://my.bluehost.com/hosting/app",
-  },
-  {
-    label: "Open WordPress",
-    detail: "Export your existing website",
-    href: "https://wordpress.com/me/purchases",
-  },
-  {
-    label: "Open Vercel",
-    detail: "Manage modern website hosting",
-    href: "https://vercel.com/dashboard",
-  },
-];
-
 export function OnboardingFoundation({
   subAccountId,
   saPath,
@@ -94,7 +66,7 @@ export function OnboardingFoundation({
   const [domainPoint, setDomainPoint] =
     useState<DomainStartingPoint>("need_domain");
   const [hostingPoint, setHostingPoint] =
-    useState<HostingStartingPoint>("agentstack_managed");
+    useState<HostingStartingPoint>("keep_existing");
   const [importing, setImporting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [profileImported, setProfileImported] = useState(false);
@@ -183,7 +155,7 @@ export function OnboardingFoundation({
       return;
     }
     if (!hostingPoint) {
-      toast.error("Choose how your website will be hosted.");
+      toast.error("Record the external host that serves your website.");
       return;
     }
     setSaving(true);
@@ -243,7 +215,7 @@ export function OnboardingFoundation({
           Start with your digital foundation.
         </h1>
         <p className="mt-2 max-w-2xl text-sm text-blue-100/90">
-          Choose your domain and hosting first. AgentStack then builds visibly
+          Bring your domain and external host first. AgentStack then builds visibly
           alongside you while Zack carries each approved answer into your
           Business Blueprint. No DNS or marketing-software experience needed.
         </p>
@@ -432,7 +404,8 @@ export function OnboardingFoundation({
               <p className="mt-2 rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs leading-5 text-[#173b7a]">
                 Your public website stays live while the provider transfer is
                 tracked. AgentStack does not proxy that site into the editor;
-                Website Studio previews only the site AgentStack hosts.
+                Website Studio prepares content for your external host; AgentStack
+                does not provide hosting.
               </p>
             </div>
           </div>
@@ -595,84 +568,30 @@ export function OnboardingFoundation({
             <p className="text-xs font-semibold tracking-widest text-pink-500 uppercase">
               Foundation · Step 2
             </p>
-            <h2 className="mt-1 font-semibold">
-              Choose how AgentStack hosts the build
-            </h2>
+            <h2 className="mt-1 font-semibold">Record your external host</h2>
             <p className="text-muted-foreground mt-1 text-sm">
-              Use managed hosting for the simplest setup, transfer an existing
-              site, or keep your current host while AgentStack connects it.
+              AgentStack does not provide, sell, or transfer website hosting.
+              Keep your domain and website with your external provider while
+              AgentStack helps with content, SEO, and business workflows.
             </p>
           </div>
         </div>
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
-          {(
-            [
-              ["agentstack_managed", "Managed by AgentStack"],
-              ["transfer_existing", "Transfer my hosting"],
-              ["keep_existing", "Keep my current host"],
-            ] as const
-          ).map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => setHostingPoint(value)}
-              className={`rounded-xl border px-4 py-3 text-left text-sm ${hostingPoint === value ? "border-blue-500 bg-blue-50 font-medium dark:bg-blue-950/30" : "bg-background"}`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
         <div className="bg-muted/20 mt-4 rounded-xl border p-4">
-          <p className="text-sm font-semibold">Open the exact provider step</p>
-          <p className="text-muted-foreground mt-1 text-xs">
-            Sign in with the provider directly. AgentStack never asks for or
-            stores a provider password.
+          <p className="text-sm font-semibold">Use your provider&apos;s dashboard</p>
+          <p className="text-muted-foreground mt-1 text-xs leading-5">
+            Choose <strong>Keep my current host</strong> in the domain setup
+            after you have confirmed where your website is served. AgentStack
+            does not open hosting accounts or provide a hosting destination.
           </p>
-          <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {FOUNDATION_LINKS.filter(
-              (link) =>
-                hostingPoint !== "agentstack_managed" ||
-                link.label === "Open Vercel"
-            ).map((link) => (
-              <a
-                key={link.label}
-                href={link.href}
-                target="_blank"
-                rel="noreferrer"
-                className="bg-background flex items-center justify-between rounded-lg border p-3 text-sm transition hover:border-blue-400"
-              >
-                <span>
-                  <span className="block font-medium">{link.label}</span>
-                  <span className="text-muted-foreground block text-[11px]">
-                    {link.detail}
-                  </span>
-                </span>
-                <ArrowUpRight className="text-muted-foreground h-4 w-4" />
-              </a>
-            ))}
-          </div>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              render={<a href={saPath("/domain")} />}
-            >
-              <ExternalLink className="mr-2 h-4 w-4" />
-              Open AgentStack domain setup
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              render={<a href={saPath("/website-studio")} />}
-            >
-              Open managed Website Studio
-            </Button>
-          </div>
+          <Button
+            className="mt-3"
+            type="button"
+            variant="outline"
+            onClick={() => setHostingPoint("keep_existing")}
+          >
+            Keep my current host
+          </Button>
         </div>
-        <p className="text-muted-foreground mt-4 text-xs">
-          Nothing is transferred or published without approval. Managed hosting
-          is prepared while you continue using AgentStack.
-        </p>
       </section>
 
       <section className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
@@ -681,8 +600,8 @@ export function OnboardingFoundation({
             <div>
               <p className="font-semibold">Website Studio</p>
               <p className="text-muted-foreground mt-1 text-xs">
-                Build and preview the AgentStack-hosted site without leaving
-                your workspace.
+                Build and preview your site content without leaving your
+                workspace; your external host remains in control of delivery.
               </p>
             </div>
             <Button

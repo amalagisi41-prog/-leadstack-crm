@@ -140,7 +140,7 @@ const FEATURES: Feature[] = [
     tone: "emerald",
     href: "/website-studio",
     description:
-      "Create an AgentStack-hosted real-estate website with ready-made starting points, direct section controls, Zack-assisted copy, and a private preview before publishing.",
+      "Create real-estate website content with ready-made starting points, direct section controls, Zack-assisted copy, and a private preview for your existing host.",
   },
   {
     icon: BarChart3,

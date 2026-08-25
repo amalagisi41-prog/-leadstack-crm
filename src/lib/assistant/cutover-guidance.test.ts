@@ -1,25 +1,25 @@
 import { describe, expect, it } from "vitest";
 import { getCutoverGuidance, hostingIsReady } from "./cutover-guidance";
 
-describe("hosting cutover guidance", () => {
-  it("keeps DNS locked while managed hosting is only requested", () => {
+describe("external-host guidance", () => {
+  it("keeps the current external site and DNS when legacy hosting state exists", () => {
     const transfer = {
       status: "transfer_requested" as const,
       hostingStatus: "requested" as const,
       hostingUrl: null,
     };
     expect(hostingIsReady(transfer)).toBe(false);
-    expect(getCutoverGuidance(transfer)).toContain("not verified yet");
-    expect(getCutoverGuidance(transfer)).toContain("nameservers unchanged");
+    expect(getCutoverGuidance(transfer)).toContain("does not provide hosting");
+    expect(getCutoverGuidance(transfer)).toContain("external provider");
   });
 
-  it("unlocks guidance only with ready status and a verified URL", () => {
+  it("does not unlock a hosting cutover even when legacy state says ready", () => {
     const transfer = {
       status: "hosting_ready" as const,
       hostingStatus: "ready" as const,
       hostingUrl: "https://private.example.com",
     };
     expect(hostingIsReady(transfer)).toBe(true);
-    expect(getCutoverGuidance(transfer)).toContain("hosting is ready");
+    expect(getCutoverGuidance(transfer)).toContain("does not provide hosting");
   });
 });

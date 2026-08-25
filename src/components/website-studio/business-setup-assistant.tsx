@@ -13,7 +13,6 @@ import {
   LockKeyhole,
   Server,
   ShieldCheck,
-  ArrowRight,
   Network,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -58,17 +57,17 @@ const TOPICS = [
 
 /** Plain-language name for each saved hosting path. */
 const HOSTING_LABELS: Record<HostingStartingPoint, string> = {
-  agentstack_managed: "AgentStack managed hosting",
-  transfer_existing: "Migrating to a new host",
+  agentstack_managed: "External host required",
+  transfer_existing: "External host required",
   keep_existing: "Staying on your current host",
 };
 
 const HOSTS = [
   {
-    name: "AgentStack Managed",
-    initials: "AS",
-    detail: "Simplest setup for non-technical users",
-    value: "agentstack_managed" as const,
+    name: "My external host",
+    initials: "EX",
+    detail: "Your domain and website stay with your provider",
+    value: "keep_existing" as const,
     href: "",
     color: "bg-[#1f4f91]",
   },
@@ -101,9 +100,6 @@ export function BusinessSetupAssistant({
   const [domainConfirmed, setDomainConfirmed] = useState(false);
   const [hostingConfirmed, setHostingConfirmed] = useState(false);
   const [savingFoundation, setSavingFoundation] = useState(false);
-  const [hostingerMode, setHostingerMode] = useState<
-    "migration" | "new-site" | null
-  >(null);
   // A completed foundation used to collapse into a banner with no controls at
   // all. Reopening the form is what keeps "you can change providers later"
   // from being a promise the screen cannot keep.
@@ -288,7 +284,7 @@ export function BusinessSetupAssistant({
             </Button>
             <Button variant="outline" render={<a href={saPath("/domain")} />}>
               <Network className="mr-2 h-4 w-4" />
-              Manage domain &amp; hosting
+              Manage domain &amp; external host
             </Button>
           </div>
         </section>
@@ -299,12 +295,11 @@ export function BusinessSetupAssistant({
               Website foundation · required first
             </p>
             <h2 className="mt-2 text-xl font-bold">
-              Choose your domain and hosting before building.
+              Confirm your domain and external host before building.
             </h2>
             <p className="mt-2 max-w-3xl text-sm text-blue-100">
-              Request a new domain or connect one you own, then use
-              AgentStack-managed hosting. Setup and private credentials remain
-              inside AgentStack.
+              Connect a domain you own and confirm the external provider that
+              serves it. AgentStack does not provide website hosting.
             </p>
           </div>
 
@@ -312,7 +307,7 @@ export function BusinessSetupAssistant({
             <div className="grid gap-2 sm:grid-cols-3">
               {[
                 ["1", "Domain", domainConfirmed],
-                ["2", "Hosting", hostingConfirmed],
+                ["2", "External host", hostingConfirmed],
                 ["3", "Build website", domainConfirmed && hostingConfirmed],
               ].map(([number, label, done]) => (
                 <div
@@ -368,20 +363,19 @@ export function BusinessSetupAssistant({
                 >
                   <span className="font-semibold">I need a domain</span>
                   <span className="text-muted-foreground mt-1 block text-xs">
-                    Request registration inside AgentStack
+                    Register it with your registrar, then connect it here
                   </span>
                 </button>
               </div>
               {domainPoint === "need_domain" ? (
                 <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50 p-4">
                   <p className="text-sm font-semibold text-blue-950">
-                    AgentStack-managed domain registration
+                    Use your own domain registrar
                   </p>
                   <p className="mt-1 text-xs text-blue-900/75">
-                    Enter the domain you want below. AgentStack saves the
-                    request and keeps registration, DNS, SSL, and hosting in one
-                    guided workflow—no provider dashboard or password is
-                    required here.
+                    Register the domain with the provider you choose, then
+                    enter it below. AgentStack does not sell domains or provide
+                    DNS, SSL, or hosting.
                   </p>
                 </div>
               ) : null}
@@ -494,8 +488,8 @@ export function BusinessSetupAssistant({
               <p className="bg-muted/50 text-muted-foreground mt-3 flex items-start gap-2 rounded-lg p-3 text-xs">
                 <LockKeyhole className="mt-0.5 h-4 w-4 shrink-0" />
                 Secret keys are stored server-side and are never displayed in
-                the website editor. Any domain or hosting charge must be
-                confirmed inside AgentStack before it is submitted.
+                the website editor. AgentStack does not collect domain or
+                hosting charges.
               </p>
               {hostingPoint ? (
                 <label className="mt-3 flex cursor-pointer items-start gap-3 rounded-xl border p-4 text-sm">
@@ -512,8 +506,7 @@ export function BusinessSetupAssistant({
                       I finished this hosting step
                     </strong>
                     <span className="text-muted-foreground text-xs">
-                      I selected managed hosting or completed the provider
-                      sign-in.
+                      I confirmed the external provider that serves my site.
                     </span>
                   </span>
                 </label>
@@ -565,93 +558,15 @@ export function BusinessSetupAssistant({
         </section>
       )}
 
-      <section className="overflow-hidden rounded-2xl border border-violet-200 bg-gradient-to-r from-violet-50 via-white to-fuchsia-50">
-        <div className="grid gap-5 p-5 lg:grid-cols-[1fr_auto] lg:items-center">
-          <div>
-            <p className="text-xs font-bold tracking-[0.16em] text-violet-700 uppercase">
-              Optional migration &amp; hosting provider
-            </p>
-            <h2 className="mt-2 text-lg font-semibold text-violet-950">
-              Hostinger website migration and new-site hosting
-            </h2>
-            <p className="mt-1 max-w-3xl text-sm text-violet-900/75">
-              Use Hostinger when you prefer its managed hosting. Hostinger
-              advertises website migration with eligible hosting plans, while
-              your current site remains available during the migration.
-            </p>
-            <p className="text-muted-foreground mt-2 text-xs">
-              Choose the path here. AgentStack keeps the setup checklist and
-              your saved website details on this screen.
-            </p>
-          </div>
-          <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
-            <Button
-              type="button"
-              variant={hostingerMode === "migration" ? "default" : "outline"}
-              onClick={() => {
-                setHostingerMode("migration");
-                setHostingPoint("transfer_existing");
-              }}
-            >
-              Migrate an existing site
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-            <Button
-              type="button"
-              variant={hostingerMode === "new-site" ? "default" : "outline"}
-              onClick={() => {
-                setHostingerMode("new-site");
-                setHostingPoint("transfer_existing");
-              }}
-            >
-              Host a new website
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-        {hostingerMode ? (
-          <div className="border-t border-violet-200 bg-white/70 p-5">
-            <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
-              <div>
-                <p className="text-sm font-semibold text-violet-950">
-                  {hostingerMode === "migration"
-                    ? "Existing-site migration selected"
-                    : "New Hostinger site selected"}
-                </p>
-                <p className="text-muted-foreground mt-1 text-xs">
-                  {hostingerMode === "migration"
-                    ? "AgentStack will use the domain and current-site URL already saved above and keep the live site unchanged during preparation."
-                    : "AgentStack will use the domain saved above and prepare the new-site hosting handoff without leaving this workspace."}
-                </p>
-              </div>
-              {/* This previously flipped a local checkbox and announced
-                  "saved" without writing anything — a reload lost the choice.
-                  It now persists through the same foundation PATCH as every
-                  other path, and reports honestly when the domain step is
-                  still outstanding. */}
-              <Button
-                type="button"
-                disabled={savingFoundation}
-                onClick={() =>
-                  void saveFoundation({
-                    hostingStartingPoint: "transfer_existing",
-                    hostingSetupConfirmed: true,
-                  })
-                }
-              >
-                {savingFoundation ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : null}
-                Save this hosting path
-              </Button>
-            </div>
-            <p className="mt-3 text-xs text-amber-800">
-              No DNS or provider account changes happen here. AgentStack will
-              show the required authorization or checkout only when the saved
-              site is ready for that step.
-            </p>
-          </div>
-        ) : null}
+      <section className="rounded-2xl border border-blue-200 bg-blue-50 p-5">
+        <p className="text-sm font-semibold text-blue-950">
+          Bring your own website host
+        </p>
+        <p className="mt-1 text-xs leading-5 text-blue-900/80">
+          AgentStack does not sell, provide, or transfer website hosting. Your
+          domain and website remain with your existing provider while this
+          assistant helps with content, SEO, and business operations.
+        </p>
       </section>
 
       <div className="mx-auto max-w-2xl">

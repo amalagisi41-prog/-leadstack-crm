@@ -18,10 +18,6 @@ import { toast } from "sonner";
 import { useSubAccount } from "@/context/sub-account-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { openAskAssistant } from "@/components/dashboard/ask-assistant-panel";
-import { DnsCutoverWizard } from "@/components/dashboard/dns-cutover-wizard";
-import { resolveTargetNameservers } from "@/lib/dns/records";
-import { deriveHostingReadiness } from "@/lib/site-health/hosting-readiness";
 import type { WebsiteTransferDoc } from "@/types/website-transfer";
 import {
   EMPTY_ONBOARDING_FOUNDATION,
@@ -46,69 +42,6 @@ import {
  * they chose.
  */
 type Situation = "existing" | "migrate" | "new" | "switching";
-
-const HOSTINGER_TRANSFER_URL =
-  process.env.NEXT_PUBLIC_HOSTINGER_TRANSFER_URL ??
-  "https://www.hostinger.com/";
-/**
- * Nameservers the guided cutover tells agents to set — only when this
- * deployment actually runs DNS and has been configured with its own pair.
- * Unset resolves to none, and the cutover guide keeps the domain where it is
- * rather than sending agents to a nameserver pair that would not answer for
- * their domain.
- */
-const TARGET_NAMESERVERS = resolveTargetNameservers(
-  process.env.NEXT_PUBLIC_TARGET_NAMESERVERS
-);
-
-const HOSTINGER_NEW_URL =
-  process.env.NEXT_PUBLIC_HOSTINGER_NEW_SITE_URL ??
-  "https://www.hostinger.com/";
-
-/**
- * Where to send an agent who has no host at all.
- *
- * The picker below asks "who hosts it today?" and assumed the answer was
- * always somebody. An agent who has never had a website — the exact person the
- * "I don't have a website" door is for — had nothing to choose and nowhere to
- * go. Naming real providers with real signup links is the difference between
- * a decision they can make and a form they abandon.
- *
- * Hostinger leads because it is this product's migration and new-site partner
- * (see HOSTINGER_NEW_URL) and the one path where AgentStack can actually help
- * afterwards. The others are here so the list is honest rather than a funnel.
- */
-const HOST_SIGNUP_OPTIONS: Array<{
-  id: BusinessSourcePlatform;
-  label: string;
-  url: string;
-  note: string;
-}> = [
-  {
-    id: "hostinger",
-    label: "Hostinger",
-    url: HOSTINGER_NEW_URL,
-    note: "Our recommended host — free migration and the setup we can help with most.",
-  },
-  {
-    id: "bluehost",
-    label: "Bluehost",
-    url: "https://www.bluehost.com/",
-    note: "Long-established, WordPress-focused.",
-  },
-  {
-    id: "siteground",
-    label: "SiteGround",
-    url: "https://www.siteground.com/",
-    note: "Strong performance and support reputation.",
-  },
-  {
-    id: "godaddy",
-    label: "GoDaddy",
-    url: "https://www.godaddy.com/hosting",
-    note: "Convenient if you already registered your domain there.",
-  },
-];
 
 /**
  * Hosts an agent is realistically already on. Values map to
@@ -272,7 +205,7 @@ const SITUATIONS: Array<{
     id: "new",
     title: "I don't have a website",
     description:
-      "We'll get you a domain, set up hosting, and publish a site built from your Business Blueprint.",
+      "Bring a domain and external host; AgentStack helps you prepare the site content and business setup.",
     icon: PlusCircle,
   },
   {
@@ -284,7 +217,7 @@ const SITUATIONS: Array<{
   },
   {
     id: "migrate",
-    title: "I have one — move it somewhere better",
+    title: "I have one — review it without moving",
     description:
       "Your current site stays live the whole time. We'll track the move through to a verified finish.",
     icon: Server,
@@ -405,7 +338,7 @@ export function DomainConnect() {
   );
   const [currentSite, setCurrentSite] = useState("");
   const [sourcePlatform, setSourcePlatform] = useState("gohighlevel");
-  const [transfer, setTransfer] = useState<WebsiteTransferDoc | null>(null);
+  const [, setTransfer] = useState<WebsiteTransferDoc | null>(null);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [verifying, setVerifying] = useState(false);
@@ -453,7 +386,6 @@ export function DomainConnect() {
   const [existingHost, setExistingHost] =
     useState<BusinessSourcePlatform>("wordpress");
   const [savingHosting, setSavingHosting] = useState(false);
-  const [agentSitePublished, setAgentSitePublished] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -473,13 +405,6 @@ export function DomainConnect() {
         }
       })
       .catch(() => undefined);
-    fetch(`/api/sub-accounts/${subAccountId}/agent-site`)
-      .then((response) => response.json())
-      .then((data: { site?: { status?: string } | null }) => {
-        if (!active) return;
-        setAgentSitePublished(data.site?.status === "published");
-      })
-      .catch(() => undefined);
     fetch(`/api/sub-accounts/${subAccountId}/website-transfer`)
       .then((response) => response.json())
       .then((data: { transfer?: WebsiteTransferDoc | null }) => {
@@ -496,19 +421,6 @@ export function DomainConnect() {
     };
   }, [subAccountId, subAccount?.customDomain]);
 
-  // Derived from observable state rather than `transfer.hostingStatus`,
-  // which no code path ever set to "ready" — leaving the DNS gate permanently
-  // shut and support as the only way through.
-  const readiness = deriveHostingReadiness({
-    hostingStartingPoint: foundation.hostingStartingPoint,
-    agentSitePublished,
-    siteVerifiedLive: Boolean(
-      transfer?.hostingUrl?.startsWith("https://")
-    ),
-    legacyHostingStatus: transfer?.hostingStatus,
-    legacyHostingUrl: transfer?.hostingUrl,
-  });
-  const hostingReady = readiness.ready;
   const domainSaved = Boolean(savedDomain.trim());
   const hostingConnected = Boolean(
     foundation.hostingStartingPoint && foundation.hostingSetupConfirmed
@@ -522,64 +434,20 @@ export function DomainConnect() {
   const hostLabel = hostPlatform?.label ?? "your current host";
   const hostDashboardUrl = hostPlatform?.dashboardUrl ?? null;
 
-  // Staying on the current host means there is no cutover: the domain
-  // already points where it should. Leaving step 3 "locked" forever implied
-  // unfinished work that will never exist.
-  const dnsNotNeeded =
-    readiness.notApplicable && foundation.hostingSetupConfirmed === true;
-
-  /**
-   * Only the choices that make sense for the selected situation. An agent
-   * building their first site has nothing to transfer, and an agent with a
-   * live site should not be offered a path that silently abandons it.
-   */
+  // AgentStack records and verifies an external host; it does not sell,
+  // provide, transfer, or host customer websites.
   const hostingOptions: Array<{
     id: HostingStartingPoint;
     title: string;
     description: string;
-  }> =
-    situation === "new"
-      ? [
-          {
-            id: "agentstack_managed",
-            title: "Host with AgentStack",
-            description:
-              "We host and renew SSL for the site you build in Website Studio. Nothing else to buy.",
-          },
-          {
-            id: "keep_existing",
-            title: "I already have hosting",
-            description:
-              "Point AgentStack at the hosting account you already pay for.",
-          },
-        ]
-      : situation === "migrate"
-        ? // The agent already chose to move. Don't re-ask whether they want to
-          // stay — offering the path they just declined is how a decision made
-          // at the top gets quietly reopened three screens later.
-          [
-            {
-              id: "transfer_existing",
-              title: "Move my site to a new host",
-              description:
-                "Hostinger migrates the existing site for free, then you finish setup here.",
-            },
-            {
-              id: "agentstack_managed",
-              title: "Rebuild it with AgentStack instead",
-              description:
-                "Start fresh in Website Studio rather than moving the old site. Your current site stays live until you publish.",
-            },
-          ]
-        : // situation === "existing": staying put. Same reasoning in reverse.
-          [
-            {
-              id: "keep_existing",
-              title: "Keep my current host",
-              description:
-                "Your site, IDX widgets, embeds, and keys stay exactly where they are.",
-            },
-          ];
+  }> = [
+    {
+      id: "keep_existing",
+      title: "Use my external host",
+      description:
+        "Keep your website with the hosting provider you already use. AgentStack only records the provider and checks DNS.",
+    },
+  ];
 
   /**
    * Persist the hosting choice on the onboarding foundation.
@@ -609,10 +477,7 @@ export function DomainConnect() {
         domainName: savedDomain.trim() || foundation.domainName || "",
         domainSetupConfirmed: domainSaved || foundation.domainSetupConfirmed,
         hostingStartingPoint: choice,
-        // "Move my site" is a handoff to the provider, so it is only confirmed
-        // once the transfer record reports the hosted site is live.
-        hostingSetupConfirmed:
-          choice === "transfer_existing" ? hostingReady : true,
+        hostingSetupConfirmed: choice === "keep_existing",
       };
       const response = await fetch(
         `/api/sub-accounts/${subAccountId}/onboarding-foundation`,
@@ -631,11 +496,7 @@ export function DomainConnect() {
       }
       setFoundation(data.foundation ?? next);
       setHostChoice(choice);
-      toast.success(
-        choice === "transfer_existing"
-          ? "Transfer path saved. Finish the move with your provider."
-          : "Hosting connected."
-      );
+      toast.success("External host connected.");
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Could not save hosting."
@@ -706,42 +567,6 @@ export function DomainConnect() {
     }
   }
 
-  async function continueToTransfer() {
-    if (!transfer) {
-      toast.error("Save the current website address first.");
-      return;
-    }
-    setSaving(true);
-    try {
-      const response = await fetch(
-        `/api/sub-accounts/${subAccountId}/website-transfer`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "request_hosting" }),
-        }
-      );
-      const data = (await response.json().catch(() => ({}))) as {
-        transfer?: WebsiteTransferDoc;
-        error?: string;
-      };
-      if (!response.ok || !data.transfer) {
-        throw new Error(data.error ?? "Could not start the hosting step.");
-      }
-      setTransfer(data.transfer);
-      // Opened in a new tab rather than navigating away: the agent keeps their
-      // place in the three-step flow and comes back to step 3 when the
-      // provider is done.
-      window.open(HOSTINGER_TRANSFER_URL, "_blank", "noopener,noreferrer");
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Could not start the transfer."
-      );
-    } finally {
-      setSaving(false);
-    }
-  }
-
   /**
    * Setup is finished: a domain is saved and a host is connected.
    *
@@ -750,13 +575,7 @@ export function DomainConnect() {
    * single row with the one action that still matters, and keep the steps
    * available behind a disclosure for the rare time something changes.
    */
-  // All three steps, not two. Collapsing on domain + host alone hid step 3
-  // from agents who still had a DNS cutover to do — exactly the outstanding
-  // work this screen exists to surface. `dnsNotNeeded` covers the staying-put
-  // path where there is genuinely no cutover; `hostingReady` covers the
-  // migration path once the provider has finished.
-  const setupComplete =
-    domainSaved && hostingConnected && (dnsNotNeeded || hostingReady) && !loading;
+  const setupComplete = domainSaved && hostingConnected && !loading;
   const [showStepsAnyway, setShowStepsAnyway] = useState(false);
 
   if (setupComplete && !showStepsAnyway) {
@@ -807,7 +626,7 @@ export function DomainConnect() {
               variant="outline"
               onClick={() => setShowStepsAnyway(true)}
             >
-              Change domain or hosting
+              Change domain or external host
             </Button>
           </div>
 
@@ -842,9 +661,9 @@ export function DomainConnect() {
             Tell us where you’re starting
           </h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-blue-100">
-            Three steps: connect your domain, connect your host, then point
-            DNS. AgentStack saves your progress, keeps the current website
-            live, and unlocks DNS only after the hosted site is verified.
+            Two steps: connect your domain and record your external host.
+            AgentStack keeps the current website live and can check DNS, but
+            does not provide hosting or change where your site is served.
           </p>
         </div>
         <div className="grid gap-3 p-5 md:grid-cols-3">
@@ -905,9 +724,9 @@ export function DomainConnect() {
           <div>
             <p className="font-semibold">The public website stays untouched.</p>
             <p className="mt-1 text-xs leading-5">
-              AgentStack does not proxy third-party sites, replace nameservers,
-              alter email DNS, or publish automatically. We preview only the
-              AgentStack-hosted site you are building.
+              AgentStack does not host websites, proxy third-party sites,
+              replace nameservers, alter email DNS, or publish automatically.
+              We only record your external host and verify your domain.
             </p>
           </div>
         </div>
@@ -1012,19 +831,6 @@ export function DomainConnect() {
             <Button render={<a href={saPath("/website-studio/vibe")} />}>
               Open Website Studio <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
-            <Button
-              variant="outline"
-              render={
-                <a
-                  href={HOSTINGER_NEW_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                />
-              }
-            >
-              Register a domain at Hostinger
-              <ExternalLink className="ml-2 h-4 w-4" />
-            </Button>
           </div>
         </section>
       ) : (
@@ -1036,13 +842,8 @@ export function DomainConnect() {
         </section>
       )}
 
-      {/*
-        Step 2 used to be a dead end: the status card said "Hosting — Not
-        started" and the only control anywhere was an unlabeled Hostinger
-        link, so an agent who already had a host had nothing to click. The
-        three hosting choices below map onto HostingStartingPoint, which the
-        onboarding foundation has always accepted.
-      */}
+      {/* AgentStack records an external host only. It does not offer hosting,
+          hosting transfers, or a managed DNS cutover. */}
       {situation && !loading ? (
         <section className="rounded-2xl border bg-white p-6">
           <StepHeader
@@ -1051,7 +852,7 @@ export function DomainConnect() {
               hostingConnected ? "done" : domainSaved ? "active" : "locked"
             }
             title="Connect your host"
-            description="Tell us where this website is served from. Nothing moves or changes at your current host — this only records the path so DNS can be checked against it later."
+            description="Tell us which external provider serves this website. AgentStack does not provide or transfer hosting; it only records the provider and checks DNS."
           />
 
           {!domainSaved ? (
@@ -1121,109 +922,6 @@ export function DomainConnect() {
                     Connect this host
                   </Button>
 
-                  {/* The question above assumes the answer is somebody. For an
-                      agent who has never had a website — the exact person the
-                      "I don't have a website" door is for — it wasn't, and
-                      there was nowhere to go. Name real providers with real
-                      links so the dead end becomes a decision. */}
-                  <details className="mt-4 border-t pt-3">
-                    <summary className="cursor-pointer text-xs font-medium">
-                      I don&apos;t have a host yet
-                    </summary>
-                    <p className="text-muted-foreground mt-2 text-xs leading-5">
-                      Hosting is the service that keeps your website online —
-                      usually a few dollars a month. Open one of these, create
-                      an account, then come back and pick it from the list
-                      above.
-                    </p>
-                    <ul className="mt-3 space-y-2">
-                      {HOST_SIGNUP_OPTIONS.map((option) => (
-                        <li
-                          key={option.id}
-                          className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-white px-3 py-2"
-                        >
-                          <span>
-                            <span className="text-sm font-medium">
-                              {option.label}
-                            </span>
-                            <span className="text-muted-foreground block text-[11px] leading-4">
-                              {option.note}
-                            </span>
-                          </span>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            render={
-                              <a
-                                href={option.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                              />
-                            }
-                          >
-                            Open {option.label}
-                            <ExternalLink className="ml-2 h-3.5 w-3.5" />
-                          </Button>
-                        </li>
-                      ))}
-                    </ul>
-                  </details>
-                </div>
-              ) : null}
-
-              {hostChoice === "agentstack_managed" ? (
-                <div className="mt-4 rounded-xl border bg-slate-50 p-4">
-                  <p className="text-sm leading-6">
-                    AgentStack hosts the site you build in Website Studio,
-                    including SSL. You keep the domain at your registrar and
-                    point it here in step 3.
-                  </p>
-                  <Button
-                    className="mt-3"
-                    onClick={() => saveHosting("agentstack_managed")}
-                    disabled={savingHosting}
-                  >
-                    {savingHosting ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : null}
-                    Host with AgentStack
-                  </Button>
-                </div>
-              ) : null}
-
-              {hostChoice === "transfer_existing" ? (
-                <div className="mt-4 rounded-xl border border-blue-200 bg-blue-50 p-4">
-                  <p className="text-sm font-semibold">
-                    Hostinger — free website transfer
-                  </p>
-                  <p className="mt-1 text-xs leading-5 text-blue-900">
-                    Hostinger moves your existing site for you, then you finish
-                    here. This step opens Hostinger in a new tab because
-                    providers do not all support embedding — your progress is
-                    saved before you go.
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <Button
-                      onClick={() => saveHosting("transfer_existing")}
-                      disabled={savingHosting}
-                      variant="outline"
-                    >
-                      {savingHosting ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : null}
-                      Save this path
-                    </Button>
-                    <Button onClick={continueToTransfer} disabled={saving}>
-                      Start the transfer at Hostinger
-                      <ExternalLink className="ml-2 h-4 w-4" />
-                    </Button>
-                  </div>
-                  {!transfer ? (
-                    <p className="mt-2 text-xs text-blue-900">
-                      Save your current website address in step 1 before
-                      starting the transfer.
-                    </p>
-                  ) : null}
                 </div>
               ) : null}
 
@@ -1231,9 +929,7 @@ export function DomainConnect() {
                 <div className="mt-4 space-y-3">
                   <p className="flex items-center gap-2 text-sm font-medium text-emerald-700">
                     <CheckCircle2 className="h-4 w-4" />
-                    {foundation.hostingStartingPoint === "agentstack_managed"
-                      ? "Hosted by AgentStack."
-                      : `Connected to ${hostLabel}.`}
+                    {`Connected to ${hostLabel}.`}
                   </p>
                   {foundation.hostingStartingPoint === "keep_existing" &&
                     hostDashboardUrl ? (
@@ -1263,30 +959,9 @@ export function DomainConnect() {
         <section className="rounded-2xl border bg-white p-6">
           <StepHeader
             step={3}
-            state={
-              dnsNotNeeded
-                ? "done"
-                : hostingReady || hostingConnected
-                  ? "active"
-                  : "locked"
-            }
-            title={
-              dnsNotNeeded ? "DNS — no change needed for this path" : "Point DNS"
-            }
-            description={
-              dnsNotNeeded
-                ? // Say what this is based on, and do not claim to have checked
-                  // something we never checked. This state is derived purely
-                  // from the host the agent TOLD us they're staying on — no DNS
-                  // lookup happens here. The previous copy asserted "your domain
-                  // already points where it should", which is the product
-                  // standard's exact prohibition: absence of evidence presented
-                  // as evidence of success. When the agent had picked the wrong
-                  // host from the list, this cheerfully confirmed a setup that
-                  // was in fact wrong.
-                  `Based on your answer that you're staying on ${hostLabel}, there's no cutover to make — your domain keeps pointing wherever it points today. Use Check my domain below to confirm that against your live DNS rather than taking our word for it.`
-                : "The last step connects the domain to the host. AgentStack never edits nameservers or email DNS for you — Zack walks you through the exact records to add at your registrar."
-            }
+            state={verifyResult?.state === "live" ? "done" : domainSaved ? "active" : "locked"}
+            title="Verify your domain"
+            description={`AgentStack does not host websites or provide DNS cutover instructions. Your domain stays with your registrar and ${hostLabel} remains responsible for hosting.`}
           />
 
           {/* The real check. Available on both paths — an agent staying on
@@ -1352,54 +1027,10 @@ export function DomainConnect() {
             </div>
           ) : null}
 
-          {!dnsNotNeeded ? (
-            <ul className="mt-4 space-y-2">
-              <Requirement met={domainSaved} label="Domain saved" />
-              <Requirement met={hostingConnected} label="Host connected" />
-              <Requirement
-                met={hostingReady}
-                label="Hosted site verified over HTTPS (required before record values are shown)"
-              />
-            </ul>
-          ) : null}
-
-          {/* The guided cutover only appears once there is a host to point
-              at. It reads the domain's live records and locks the nameserver
-              step until the email ones have been re-created. */}
-          {!dnsNotNeeded && hostingConnected ? (
-            <div className="mt-5">
-              <DnsCutoverWizard
-                subAccountId={subAccountId}
-                targetNameservers={TARGET_NAMESERVERS}
-              />
-            </div>
-          ) : null}
-
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Button
-              variant={hostingReady ? "default" : "outline"}
-              disabled={!hostingConnected}
-              onClick={() =>
-                openAskAssistant({
-                  prompt: hostingReady
-                    ? `Walk me through pointing ${savedDomain || "my domain"} at my verified AgentStack site. Give me the exact DNS records to add at my registrar, one at a time, and tell me what to check after each one.`
-                    : `My domain is ${savedDomain || "not saved yet"} and my host is ${hostLabel}. Explain what nameservers and DNS records I will need, what order to do them in, and what I have to finish before it is safe to change anything. Do not give me record values until my hosted site is verified.`,
-                })
-              }
-            >
-              {hostingReady
-                ? "Get my DNS records from Zack"
-                : "Ask Zack about nameservers & DNS"}
-            </Button>
-          </div>
-
-          {!hostingReady && !dnsNotNeeded ? (
-            <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-950">
-              {hostingConnected
-                ? readiness.reason
-                : "Finish step 2 to unlock DNS guidance."}
-            </p>
-          ) : null}
+          <ul className="mt-4 space-y-2">
+            <Requirement met={domainSaved} label="Domain saved" />
+            <Requirement met={hostingConnected} label="External host recorded" />
+          </ul>
         </section>
       ) : null}
 
@@ -1411,30 +1042,14 @@ export function DomainConnect() {
             complete={domainSaved}
           />
           <StatusCard
-            label="2 · Hosting"
-            value={
-              hostingReady
-                ? "Verified"
-                : hostingConnected
-                  ? foundation.hostingStartingPoint === "agentstack_managed"
-                    ? "AgentStack"
-                    : hostLabel
-                  : transfer?.hostingStatus === "requested"
-                    ? "Transfer started"
-                    : "Not started"
-            }
-            complete={hostingConnected || hostingReady}
+            label="2 · External host"
+            value={hostingConnected ? hostLabel : "Not recorded"}
+            complete={hostingConnected}
           />
           <StatusCard
-            label="3 · DNS"
-            value={
-              hostingReady
-                ? "Ready for review"
-                : hostingConnected
-                  ? "Waiting on verification"
-                  : "Safely locked"
-            }
-            complete={hostingReady}
+            label="3 · Domain check"
+            value={verifyResult?.state === "live" ? "Verified" : domainSaved ? "Check available" : "Locked"}
+            complete={verifyResult?.state === "live"}
           />
         </div>
       </section>

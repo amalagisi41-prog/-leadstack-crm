@@ -169,14 +169,14 @@ export function ConnectYourBusiness() {
         key: "domain-hosting",
         icon: Globe2,
         iconTone: "bg-cyan-500/10 text-cyan-700 dark:text-cyan-400",
-        title: "Domain & managed hosting",
+        title: "Domain & external host",
         detail: subAccount.customDomain ?? undefined,
         blurb:
-          "Have AgentStack reproduce your existing site design and code, review it privately, then follow the exact domain and hosting cutover steps.",
+          "Have AgentStack review your existing site and content while your domain and hosting remain with your current provider.",
         status: subAccount.customDomain ? "connected" : "not_connected",
         actionLabel: subAccount.customDomain
-          ? "Continue replacement"
-          : "Start replacement",
+          ? "Manage domain"
+          : "Connect domain",
         actionHref: domainHref,
       },
       {

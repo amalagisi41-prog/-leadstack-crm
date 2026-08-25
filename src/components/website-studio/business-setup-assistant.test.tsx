@@ -1,23 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { BusinessSetupAssistant } from "./business-setup-assistant";
 import type { OnboardingFoundation } from "@/types/onboarding-foundation";
-
-/**
- * Website Studio's "Setup Assistant" tab.
- *
- * The bug these cover: once the foundation was saved the whole section
- * collapsed into a banner reading "there is nothing to repeat here; return to
- * Vibe Builder" — with no link to Vibe Builder, no record of what had been
- * saved, and no route to Domain settings. It told the user to leave and gave
- * them no door. Editing domain/hosting now happens in exactly one place —
- * the standalone Domain page — so this screen only reports status and links
- * out; it no longer has its own inline edit form.
- */
-
-const toastError = vi.fn();
-const toastSuccess = vi.fn();
 
 vi.mock("@/context/sub-account-context", () => ({
   useSubAccount: () => ({
@@ -31,10 +16,7 @@ vi.mock("@/hooks/use-agency", () => ({
 }));
 
 vi.mock("sonner", () => ({
-  toast: {
-    error: (...args: unknown[]) => toastError(...args),
-    success: (...args: unknown[]) => toastSuccess(...args),
-  },
+  toast: { error: vi.fn(), success: vi.fn() },
 }));
 
 const SAVED: OnboardingFoundation = {
@@ -43,7 +25,7 @@ const SAVED: OnboardingFoundation = {
   sourcePlatform: null,
   sourceUrl: "",
   domainStartingPoint: "have_domain",
-  hostingStartingPoint: "agentstack_managed",
+  hostingStartingPoint: "keep_existing",
   domainName: "example-realty.test",
   domainSetupConfirmed: true,
   hostingSetupConfirmed: true,
@@ -51,140 +33,59 @@ const SAVED: OnboardingFoundation = {
 };
 
 function mockApi(foundation: OnboardingFoundation | null = SAVED) {
-  const calls: Array<{ url: string; method: string; body: unknown }> = [];
-  const fetchMock = vi.fn(
-    async (url: string, init?: { method?: string; body?: string }) => {
-      calls.push({
-        url,
-        method: init?.method ?? "GET",
-        body: init?.body ? JSON.parse(init.body) : undefined,
-      });
-      return {
-        ok: true,
-        json: async () => ({
-          foundation: init?.body ? JSON.parse(init.body) : foundation,
-        }),
-      };
-    }
-  );
+  const fetchMock = vi.fn(async (url: string, init?: { method?: string; body?: string }) => ({
+    ok: true,
+    json: async () => ({
+      foundation: url.includes("onboarding-foundation") && init?.body
+        ? JSON.parse(init.body)
+        : foundation,
+    }),
+  }));
   vi.stubGlobal("fetch", fetchMock);
-  return { calls };
+  return fetchMock;
 }
 
-async function renderComplete() {
-  render(<BusinessSetupAssistant foundationComplete />);
-  await screen.findByText("Website foundation is complete");
-}
+beforeEach(() => vi.unstubAllGlobals());
 
-beforeEach(() => {
-  vi.unstubAllGlobals();
-  toastError.mockClear();
-  toastSuccess.mockClear();
-});
-
-describe("completed foundation — the screen must not dead-end", () => {
-  // The shared Button renders an anchor carrying role="button", which
-  // overrides the implicit link role — hence getByRole("button") plus an
-  // href assertion rather than getByRole("link").
-  it("links to Vibe Builder instead of only naming it", async () => {
+describe("external-host-only setup assistant", () => {
+  it("reports the saved external host and links to Domain settings", async () => {
     mockApi();
-    await renderComplete();
+    render(<BusinessSetupAssistant foundationComplete />);
 
-    // The old copy said "return to Vibe Builder" with nothing to click.
+    expect(await screen.findByText("Website foundation is complete")).toBeInTheDocument();
+    expect(screen.getByText(/managed from Domain settings/i)).toHaveTextContent(
+      "example-realty.test"
+    );
+    expect(screen.getByText(/managed from Domain settings/i)).toHaveTextContent(
+      "Staying on your current host"
+    );
     expect(
-      screen.getByRole("button", { name: /continue in vibe builder/i })
-    ).toHaveAttribute("href", "/sa/sub-1/website-studio/vibe");
-  });
-
-  it("offers a route to Domain settings the walkthrough otherwise skipped", async () => {
-    mockApi();
-    await renderComplete();
-
-    expect(
-      screen.getByRole("button", { name: /manage domain & hosting/i })
+      screen.getByRole("button", { name: /manage domain & external host/i })
     ).toHaveAttribute("href", "/sa/sub-1/domain");
   });
 
-  it("shows what was actually saved rather than asserting it", async () => {
-    mockApi();
-    await renderComplete();
-
-    const summary = await screen.findByText(/managed from Domain settings/i);
-    expect(summary).toHaveTextContent("example-realty.test");
-    expect(summary).toHaveTextContent("AgentStack managed hosting");
-  });
-
-  it("names a saved migration path in plain language", async () => {
-    mockApi({ ...SAVED, hostingStartingPoint: "transfer_existing" });
-    await renderComplete();
+  it("offers only an external host and never AgentStack hosting", async () => {
+    mockApi(null);
+    render(<BusinessSetupAssistant />);
 
     expect(
-      await screen.findByText(/managed from Domain settings/i)
-    ).toHaveTextContent("Migrating to a new host");
+      await screen.findByText(/confirm your domain and external host/i)
+    ).toBeInTheDocument();
+    expect(screen.getByText("My external host")).toBeInTheDocument();
+    expect(screen.queryByText(/AgentStack Managed/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Hostinger website migration/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /host a new website/i })).not.toBeInTheDocument();
+    expect(screen.getByText(/does not provide website hosting/i)).toBeInTheDocument();
   });
 
-  it("says so plainly when a field is not saved", async () => {
-    mockApi({ ...SAVED, domainName: "", hostingStartingPoint: null });
-    await renderComplete();
-
-    const summary = await waitFor(() =>
-      screen.getByText(/managed from Domain settings/i)
-    );
-    expect(summary).toHaveTextContent("Domain not saved yet");
-    expect(summary).toHaveTextContent("Hosting not saved yet");
-  });
-});
-
-describe("Hostinger path — saving must actually save", () => {
-  it("persists the choice through the foundation PATCH", async () => {
-    const { calls } = mockApi();
+  it("uses external-host language for the confirmation step", async () => {
+    mockApi(null);
     render(<BusinessSetupAssistant />);
-    await screen.findByText(/choose your domain and hosting before building/i);
 
-    await userEvent.click(
-      screen.getByRole("button", { name: /migrate an existing site/i })
-    );
-    await userEvent.click(
-      screen.getByRole("button", { name: /save this hosting path/i })
-    );
+    await screen.findByText(/confirm your domain and external host/i);
+    await userEvent.click(screen.getByText("My external host"));
 
-    const patch = await waitFor(() => {
-      const call = calls.find((c) => c.method === "PATCH");
-      expect(call).toBeDefined();
-      return call!;
-    });
-
-    // Previously this only flipped a local checkbox and announced success —
-    // a reload lost the choice entirely.
-    expect(patch.body).toMatchObject({
-      hostingStartingPoint: "transfer_existing",
-      hostingSetupConfirmed: true,
-      domainName: "example-realty.test",
-    });
-  });
-
-  it("reports honestly when the domain step is still outstanding", async () => {
-    const { calls } = mockApi({
-      ...SAVED,
-      domainName: "",
-      domainSetupConfirmed: false,
-      hostingStartingPoint: null,
-      hostingSetupConfirmed: false,
-    });
-    render(<BusinessSetupAssistant />);
-    await screen.findByText(/choose your domain and hosting before building/i);
-
-    await userEvent.click(
-      screen.getByRole("button", { name: /host a new website/i })
-    );
-    await userEvent.click(
-      screen.getByRole("button", { name: /save this hosting path/i })
-    );
-
-    expect(toastError).toHaveBeenCalledWith(
-      "Complete and confirm the domain and hosting steps first."
-    );
-    expect(toastSuccess).not.toHaveBeenCalled();
-    expect(calls.some((c) => c.method === "PATCH")).toBe(false);
+    expect(screen.getByText(/confirmed the external provider that serves my site/i)).toBeInTheDocument();
+    expect(screen.queryByText(/managed hosting/i)).not.toBeInTheDocument();
   });
 });

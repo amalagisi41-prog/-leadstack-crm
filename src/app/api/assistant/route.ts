@@ -24,7 +24,6 @@ import {
 import type { WebsiteTransferDoc } from "@/types/website-transfer";
 import {
   getCutoverGuidance,
-  hostingIsReady,
 } from "@/lib/assistant/cutover-guidance";
 import { recordAiUsage } from "@/lib/comms/ai/usage";
 
@@ -150,15 +149,13 @@ function productGuideFor(question: string, currentPath: string): string {
 function websiteTransferContext(value: unknown): string {
   if (!value || typeof value !== "object") return "";
   const transfer = value as Partial<WebsiteTransferDoc>;
-  return `\n\n--- WEBSITE & HOSTING CONTEXT ---
+  return `\n\n--- WEBSITE & EXTERNAL HOST CONTEXT ---
 Current website: ${transfer.sourceUrl ?? "not saved"}
-Migration status: ${transfer.status ?? "unknown"}
-Migration provider: ${transfer.provider ?? "not selected"}
-Managed hosting status: ${transfer.hostingStatus ?? "not_requested"}
-Verified hosting URL: ${transfer.hostingUrl?.trim() || "not available"}
-DNS cutover: ${hostingIsReady(transfer) ? "unlocked" : "LOCKED — do not change DNS records or nameservers"}
-AgentStack does not proxy or preview third-party websites. It previews only AgentStack-hosted output. Keep the current public site and DNS unchanged until the hosted destination, SSL, forms, IDX, analytics, and rollback target are verified. End with one next action.
---- END WEBSITE & HOSTING CONTEXT ---`;
+External host/source provider: ${transfer.provider ?? "not recorded"}
+Legacy migration status: ${transfer.status ?? "unknown"}
+AgentStack hosting: unavailable — do not offer or imply AgentStack hosting, transfer, domain registration, or DNS cutover.
+AgentStack can help prepare content and verify the live domain. Keep the current public site, DNS, email records, and nameservers with the external provider. End with one next action.
+--- END WEBSITE & EXTERNAL HOST CONTEXT ---`;
 }
 
 export async function POST(request: Request) {
@@ -299,7 +296,7 @@ You may PROPOSE one controlled action only when the operator clearly asks you to
 
 Never propose actions for billing, purchases, deletion, publishing, sending communications, credentials, member access, or source-page imports. Explain those steps instead. If the operator asks you to fill the current form and screen access is Off, tell them to turn on “Allow Zack to use this screen”; do not ask for a screenshot. You may still explain the Blueprint fill action and the visible “Fill from Business Blueprint” fallback.
 
-HOSTING AND DNS SAFETY: Saved website-transfer state overrides generic route assumptions and chat history. Never say a replacement is hosted, live, SSL-verified, or ready for DNS unless Managed hosting status is ready AND Verified hosting URL is present. While DNS cutover is LOCKED, the only correct operator action is to leave DNS records and nameservers unchanged and wait inside AgentStack for the verified records to appear.
+HOSTING AND DNS SAFETY: AgentStack does not provide, sell, register, transfer, or replace website hosting. Never offer AgentStack hosting, a hosting migration, domain registration, replacement nameservers, DNS target records, or a checkout path for hosting. The only correct operator action is to keep the live site and DNS with the external provider and use the domain check to verify it.
 
 Return ONLY a JSON object in this exact shape:
 {"answer":"Your concise response","action":null}

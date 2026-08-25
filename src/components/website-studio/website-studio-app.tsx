@@ -421,8 +421,8 @@ export function WebsiteStudioApp({
       <div>
         <p className="font-semibold">Vibe Website Studio</p>
         <p className="text-muted-foreground text-xs">
-          Design and preview the AgentStack-hosted site. Nothing publishes until
-          you approve it.
+          Design and preview site content for your existing host. Nothing
+          publishes until you approve it.
         </p>
       </div>
       <Button
@@ -568,11 +568,11 @@ export function WebsiteStudioApp({
           >
             <Lock className="h-5 w-5 text-blue-700" />
             <h2 className="mt-3 font-semibold text-blue-950">
-              Domain, hosting &amp; private keys
+              Domain, external host &amp; private keys
             </h2>
             <p className="mt-1 text-sm text-blue-900/75">
-              Use AgentStack-managed setup without leaving the platform or
-              exposing provider passwords in the builder.
+              Keep your domain and hosting with your provider while AgentStack
+              guides setup without exposing provider passwords in the builder.
             </p>
             <span className="mt-3 inline-flex text-sm font-semibold text-blue-700">
               Open secure setup →
