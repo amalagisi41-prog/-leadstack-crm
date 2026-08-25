@@ -14,7 +14,6 @@ import {
   Server,
   ShieldCheck,
   ArrowRight,
-  Settings2,
   Network,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -265,53 +264,31 @@ export function BusinessSetupAssistant({
                 Website foundation is complete
               </p>
               <p className="mt-1 text-sm text-emerald-900/75">
-                Here is what is saved. You can change any of it, or carry on to
-                the next step.
+                <span className="font-semibold">
+                  {domainName.trim() || "Domain not saved yet"}
+                </span>
+                {" · "}
+                {hostingPoint ? HOSTING_LABELS[hostingPoint] : "Hosting not saved yet"}
+                {" — managed from Domain settings."}
               </p>
-
-              <dl className="mt-4 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-xl border border-emerald-200 bg-white p-3">
-                  <dt className="text-[11px] font-semibold tracking-wide text-emerald-900/60 uppercase">
-                    Domain
-                  </dt>
-                  <dd className="mt-1 truncate text-sm font-semibold text-emerald-950">
-                    {domainName.trim() || "Not saved yet"}
-                  </dd>
-                </div>
-                <div className="rounded-xl border border-emerald-200 bg-white p-3">
-                  <dt className="text-[11px] font-semibold tracking-wide text-emerald-900/60 uppercase">
-                    Hosting
-                  </dt>
-                  <dd className="mt-1 truncate text-sm font-semibold text-emerald-950">
-                    {hostingPoint
-                      ? HOSTING_LABELS[hostingPoint]
-                      : "Not saved yet"}
-                  </dd>
-                </div>
-              </dl>
             </div>
           </div>
 
+          {/* Domain and hosting have exactly one home: the standalone Domain
+              page (live DNS check, the full connect/migrate flow, Hostinger
+              transfer). This card used to duplicate that surface with its own
+              summary + its own "Change domain or hosting" control, so an
+              operator could edit the same foundation from two places that
+              didn't always agree. Now this strip only reports status and
+              hands off — editing happens in exactly one place. */}
           <div className="flex flex-wrap gap-2 border-t border-emerald-200 bg-white/60 p-4">
             <Button render={<a href={saPath("/website-studio/vibe")} />}>
               <Sparkles className="mr-2 h-4 w-4" />
               Continue in Vibe Builder
             </Button>
-            {/* The DNS step lives on the domain page; without this link the
-                walkthrough simply ended before its last step. */}
-            <Button
-              variant="outline"
-              render={<a href={saPath("/domain")} />}
-            >
+            <Button variant="outline" render={<a href={saPath("/domain")} />}>
               <Network className="mr-2 h-4 w-4" />
-              Domain, hosting &amp; DNS steps
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setEditingFoundation(true)}
-            >
-              <Settings2 className="mr-2 h-4 w-4" />
-              Change domain or hosting
+              Manage domain &amp; hosting
             </Button>
           </div>
         </section>
