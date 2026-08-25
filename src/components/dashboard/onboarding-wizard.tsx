@@ -513,8 +513,8 @@ function StepConnect({
         <ConnectOptionCard
           icon={<Phone className="h-5 w-5 text-emerald-500" />}
           title="Connect your phone"
-          description="Link a dedicated Twilio number so you can send and receive SMS — and your AI can reply on your behalf."
-          href={saPath("/dashboard/settings?tab=sms")}
+          description="Link a dedicated Twilio number so you can send and receive SMS — and your AI can reply on your behalf. Then register for A2P 10DLC right below it so carriers actually deliver your texts."
+          href={saPath("/dashboard/settings?tab=messaging")}
           cta="SMS Settings"
         />
         <ConnectOptionCard
@@ -544,7 +544,11 @@ function StepConnect({
         Export your contacts as a CSV and upload here. The importer handles
         duplicate detection automatically. Connecting your phone number is what
         powers AI SMS responses — your agent can start answering leads the
-        moment you flip the switch.
+        moment you flip the switch. One thing carriers require before texts
+        deliver reliably: A2P 10DLC registration. It&apos;s a self-service
+        form — business details, sample messages, submission tracking —
+        sitting right below your Twilio setup in SMS Settings. Do it as soon
+        as your number is connected; carrier review can take several days.
       </TeachingNote>
     </StepShell>
   );
