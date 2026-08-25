@@ -89,9 +89,9 @@ export const ONBOARDING_STEPS: readonly OnboardingStepMeta[] = [
     id: "sms",
     title: "Text and call leads without leaving the CRM",
     description:
-      "Link your dedicated Twilio number so you can send and receive SMS directly in the CRM — and the AI can reply on your behalf.",
+      "Link your dedicated Twilio number so you can send and receive SMS directly in the CRM — and the AI can reply on your behalf. Then register for A2P 10DLC right below it so carriers actually deliver your texts.",
     cta: "Open SMS Settings",
-    href: "/dashboard/settings?tab=sms",
+    href: "/dashboard/settings?tab=messaging",
     videoMinutes: 3,
   },
   {

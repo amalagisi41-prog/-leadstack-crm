@@ -137,7 +137,7 @@ export function buildMigrationIndependenceTasks(
       title: "Port your phone number to your own account",
       detail: `A number still living inside ${from} can be released when you cancel — and a released number cannot be recovered.`,
       complete: inputs.ownsPhoneNumber,
-      href: "/dashboard/settings?tab=sms",
+      href: "/dashboard/settings?tab=messaging",
       action: "Set up SMS",
     },
     {
