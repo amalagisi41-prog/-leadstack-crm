@@ -124,8 +124,14 @@ export function Header({ onMenuClick, onOpenSearch }: HeaderProps) {
   // Email defaults to masked in the dropdown header so screenshares don't
   // leak the operator's address. Per-session toggle.
   const [emailShown, setEmailShown] = useState(false);
-  const isMac =
-    typeof navigator !== "undefined" && /Mac/.test(navigator.platform);
+  // Browser platform is not available during SSR. Reading it directly during
+  // render makes the server print "Ctrl K" while a Mac hydrates "⌘ K", which
+  // produces a hydration mismatch on every dashboard page. Resolve it after
+  // hydration so the first client render is byte-for-byte identical.
+  const [isMac, setIsMac] = useState(false);
+  useEffect(() => {
+    setIsMac(/Mac/.test(navigator.platform));
+  }, []);
 
   async function handleSignOut() {
     await signOutUser();

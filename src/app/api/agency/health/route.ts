@@ -61,15 +61,29 @@ export async function GET(request: Request) {
     !refresh &&
     Date.now() - cached.cachedAt < CACHE_TTL_MS
   ) {
+    const launchBlockers = cached.results.filter(
+      (result) => result.required && result.status !== "ok",
+    );
     return NextResponse.json({
       results: cached.results,
       cachedAt: cached.cachedAt,
       fresh: false,
+      launchReady: launchBlockers.length === 0,
+      launchBlockers: launchBlockers.map((result) => result.id),
     });
   }
 
   const results = await runHealthChecks();
+  const launchBlockers = results.filter(
+    (result) => result.required && result.status !== "ok",
+  );
   const cachedAt = Date.now();
   cache.set(auth.agencyId, { results, cachedAt });
-  return NextResponse.json({ results, cachedAt, fresh: true });
+  return NextResponse.json({
+    results,
+    cachedAt,
+    fresh: true,
+    launchReady: launchBlockers.length === 0,
+    launchBlockers: launchBlockers.map((result) => result.id),
+  });
 }

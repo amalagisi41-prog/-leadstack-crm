@@ -211,7 +211,6 @@ async function checkStripe(): Promise<IntegrationHealth> {
     "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY",
     "STRIPE_SECRET_KEY",
     "STRIPE_WEBHOOK_SECRET",
-    "STRIPE_PRO_PRICE_ID",
   ];
   const presence = envPresent(...keys);
   const subChecks: SubCheck[] = keys.map((k) => ({
@@ -251,7 +250,10 @@ async function checkStripe(): Promise<IntegrationHealth> {
     id: "stripe",
     label: "Stripe (Billing)",
     category: "billing",
-    required: false,
+    // AgentStack cannot collect subscription revenue or activate workspaces
+    // without Stripe. A missing optional add-on price is handled separately
+    // by the add-on catalog and must not make the base SaaS look broken.
+    required: true,
     status,
     message: rollupMessage(status, "Stripe"),
     subChecks,
@@ -352,7 +354,10 @@ async function checkResend(): Promise<IntegrationHealth> {
     id: "resend",
     label: "Resend (Email)",
     category: "comms",
-    required: false,
+    // Email is part of the advertised lead-response and account lifecycle
+    // experience. A deployment without a verified sender cannot launch the
+    // core SaaS promise, even though SMS remains optional.
+    required: true,
     status,
     message: rollupMessage(status, "Resend"),
     subChecks,
@@ -490,7 +495,9 @@ async function checkTwilio(): Promise<IntegrationHealth> {
     id: "twilio",
     label: "Twilio (SMS)",
     category: "comms",
-    required: false,
+    // QStash is the delivery scheduler for workflow steps. Without it, an
+    // active workflow can enroll a lead but never execute its sends.
+    required: true,
     status,
     message: rollupMessage(status, "Twilio"),
     subChecks,
@@ -553,7 +560,9 @@ async function checkQstash(): Promise<IntegrationHealth> {
     id: "qstash",
     label: "Upstash QStash",
     category: "automations",
-    required: false,
+    // QStash is the delivery scheduler for workflow steps. Without it, an
+    // active workflow can enroll a lead but never execute its sends.
+    required: true,
     status,
     message: rollupMessage(status, "QStash"),
     subChecks,
@@ -575,7 +584,8 @@ async function checkAutomationsSecret(): Promise<IntegrationHealth> {
     id: "automations-secret",
     label: "Automations token secret",
     category: "automations",
-    required: false,
+    // Unsubscribe tokens are required for compliant email automation.
+    required: true,
     status: ok ? "ok" : "missing",
     message: ok
       ? "Unsubscribe HMAC secret configured."
@@ -622,7 +632,9 @@ async function checkGitpage(): Promise<IntegrationHealth> {
     id: "gitpage",
     label: "gitpage.site (Website builder)",
     category: "website",
-    required: false,
+    // Web Chat and AI-assisted lead handling are core AgentStack claims.
+    // Phone/A2P is intentionally separate and remains optional.
+    required: true,
     status,
     message: rollupMessage(status, "gitpage"),
     subChecks,
@@ -771,7 +783,9 @@ async function checkOpenRouter(): Promise<IntegrationHealth> {
     id: "openrouter",
     label: "OpenRouter (AI Agents)",
     category: "ai-agents",
-    required: false,
+    // Web Chat and AI-assisted lead handling are core AgentStack claims.
+    // Phone/A2P is intentionally separate and remains optional.
+    required: true,
     status,
     message: rollupMessage(status, "OpenRouter"),
     subChecks,

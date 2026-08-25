@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils";
 import {
   ONBOARDING_STEPS,
   ONBOARDING_STEP_IDS,
+  OPTIONAL_ONBOARDING_STEP_IDS,
 } from "@/lib/onboarding/steps";
 import { computeOnboardingState } from "@/lib/onboarding/state-machine";
 import { AGENTSTACK_METHOD_NAME } from "@/config/landing";
@@ -513,8 +514,8 @@ function StepConnect({
         <ConnectOptionCard
           icon={<Phone className="h-5 w-5 text-emerald-500" />}
           title="Connect your phone"
-          description="Link a dedicated Twilio number so you can send and receive SMS — and your AI can reply on your behalf. Then register for A2P 10DLC right below it so carriers actually deliver your texts."
-          href={saPath("/dashboard/settings?tab=messaging")}
+          description="Link a dedicated Twilio number so you can send and receive SMS — and your AI can reply on your behalf."
+          href={saPath(SUB_ACCOUNT_ROUTES.messagingSettings)}
           cta="SMS Settings"
         />
         <ConnectOptionCard
@@ -864,15 +865,23 @@ function StepClose({
     completed.has(id)
   ).length;
   const totalCount = ONBOARDING_STEP_IDS.length;
-  const remaining = ONBOARDING_STEPS.filter((step) => !completed.has(step.id));
+  const remaining = ONBOARDING_STEPS.filter(
+    (step) => !completed.has(step.id),
+  );
+  const requiredRemaining = remaining.filter(
+    (step) => !OPTIONAL_ONBOARDING_STEP_IDS.includes(step.id),
+  );
+  const optionalRemaining = remaining.filter((step) =>
+    OPTIONAL_ONBOARDING_STEP_IDS.includes(step.id),
+  );
 
   return (
     <StepShell
       icon={<Star className="h-6 w-6 text-amber-500" />}
       eyebrow="Step 6: Start your first working day"
       title={
-        remaining.length === 0
-          ? "Setup is finished. Here is what happens next."
+        requiredRemaining.length === 0
+          ? "Your workspace is ready. Here is what happens next."
           : "Almost there — here is what is still missing."
       }
       subtitle={`${AGENTSTACK_METHOD_NAME} is now configured. Enter Today to see one recommended action, confirm your website foundation, and test the lead-to-appointment workflow before inviting real leads.`}
@@ -900,18 +909,51 @@ function StepClose({
         connecting a phone number) are never completed by this wizard at all,
         so for most agents this list is never empty.
       */}
-      {remaining.length > 0 ? (
+      {requiredRemaining.length > 0 ? (
         <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-5">
           <p className="text-sm font-semibold text-amber-950">
-            {remaining.length} {remaining.length === 1 ? "step" : "steps"} still
-            to do
+            {requiredRemaining.length} {requiredRemaining.length === 1 ? "step" : "steps"} still to do
           </p>
           <p className="mt-1 text-xs leading-5 text-amber-900/80">
             None of these are done yet. Each one takes a few minutes — start
             wherever you like.
           </p>
           <div className="mt-4 space-y-2">
-            {remaining.map((step) => (
+            {requiredRemaining.map((step) => (
+              <div
+                key={step.id}
+                className="flex flex-col gap-3 rounded-xl border bg-white p-3 sm:flex-row sm:items-center"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium">{step.title}</p>
+                  <p className="text-muted-foreground mt-0.5 text-xs leading-5">
+                    {step.description}
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  render={<Link href={saPath(step.href)} />}
+                >
+                  {step.cta} <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {optionalRemaining.length > 0 ? (
+        <div className="mb-6 rounded-2xl border border-blue-200 bg-blue-50/70 p-5">
+          <p className="text-sm font-semibold text-blue-950">
+            Optional setup — revisit anytime
+          </p>
+          <p className="mt-1 text-xs leading-5 text-blue-900/80">
+            These items need your own phone approval or personal AI preferences.
+            They do not block access to your workspace.
+          </p>
+          <div className="mt-4 space-y-2">
+            {optionalRemaining.map((step) => (
               <div
                 key={step.id}
                 className="flex flex-col gap-3 rounded-xl border bg-white p-3 sm:flex-row sm:items-center"

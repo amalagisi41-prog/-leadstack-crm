@@ -17,6 +17,8 @@ import type { HealthStatus, IntegrationHealth, SubCheck } from "@/lib/health/che
 export function StatusTab() {
   const [results, setResults] = useState<IntegrationHealth[] | null>(null);
   const [cachedAt, setCachedAt] = useState<number | null>(null);
+  const [launchReady, setLaunchReady] = useState<boolean | null>(null);
+  const [launchBlockers, setLaunchBlockers] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -38,9 +40,13 @@ export function StatusTab() {
       const body = (await res.json()) as {
         results: IntegrationHealth[];
         cachedAt: number;
+        launchReady?: boolean;
+        launchBlockers?: string[];
       };
       setResults(body.results);
       setCachedAt(body.cachedAt);
+      setLaunchReady(body.launchReady ?? null);
+      setLaunchBlockers(body.launchBlockers ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
@@ -143,6 +149,20 @@ export function StatusTab() {
           )}
           Refresh
         </Button>
+
+        {launchReady !== null && (
+          <div
+            className={
+              launchReady
+                ? "w-full rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800"
+                : "w-full rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-800"
+            }
+          >
+            {launchReady
+              ? "Green light: core SaaS launch gates are healthy."
+              : `Launch blocked: ${launchBlockers.length} required integration${launchBlockers.length === 1 ? "" : "s"} need attention.`}
+          </div>
+        )}
 
         {/* Colour key — the dot semantics are correct but not self-evident, so
             spell them out (esp. that gray = optional/off, not broken). */}

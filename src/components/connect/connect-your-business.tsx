@@ -251,10 +251,11 @@ export function ConnectYourBusiness() {
         icon: MessageSquare,
         iconTone: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400",
         title: "Chat widget",
-        detail: webChatEnabled ? "Live on your site" : undefined,
-        blurb: "An AI-answered chat bubble for your website.",
-        status: webChatEnabled ? "connected" : "not_connected",
-        actionLabel: webChatEnabled ? "Manage" : "Connect",
+        detail: webChatEnabled ? "Configured — verify install" : undefined,
+        blurb:
+          "An AI-answered chat bubble for your website. After enabling it, paste the snippet into the existing site and verify it here.",
+        status: webChatEnabled ? "needs_attention" : "not_connected",
+        actionLabel: webChatEnabled ? "Verify install" : "Connect",
         actionHref: aiAgentsHref,
       },
       {

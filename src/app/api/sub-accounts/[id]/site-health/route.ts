@@ -134,7 +134,13 @@ export async function GET(
       : undefined,
     hasLeadForm: !formsSnap.empty,
     hasBookingPage: !bookingSnap.empty,
-    webChatEnabled: chatSnap.exists && chatSnap.data()?.enabled === true,
+    // A channel toggle only proves that AgentStack is configured. For an
+    // externally hosted site, Site Health must also prove that the widget tag
+    // is present before reporting the chat launch item as done.
+    webChatEnabled:
+      chatSnap.exists &&
+      chatSnap.data()?.enabled === true &&
+      (publishedAgentSite || verification?.agentStackWidgetInstalled === true),
         businessEmailVerified:
           hasTrustedReplyTo || sub.resendConfig?.status === "verified",
   });

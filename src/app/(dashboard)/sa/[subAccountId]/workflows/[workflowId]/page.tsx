@@ -8,6 +8,7 @@ import {
   subAccountTwilioIsConfigured,
   subAccountWhatsappIsConfigured,
 } from "@/lib/comms/twilio";
+import { qstashIsConfigured } from "@/lib/automations/qstash";
 import type { SubAccountDoc } from "@/types";
 
 export const dynamic = "force-dynamic";
@@ -54,6 +55,7 @@ export default async function WorkflowBuilderPage({
   const whatsappTemplate = !approvedWhatsapp.empty;
 
   const readiness: BuilderReadiness = {
+    schedulerReady: qstashIsConfigured(),
     emailReady: emailAgency,
     smsReady: smsSub || smsAgency,
     whatsappReady: whatsappGate && whatsappSender && whatsappTemplate,

@@ -35,6 +35,8 @@ export interface SiteVerificationRecord {
   servedByLabel?: string | null;
   /** What the scan observed, shown to the agent before they cancel anything. */
   evidence?: string[];
+  /** Whether the saved external site contains this workspace's widget tag. */
+  agentStackWidgetInstalled?: boolean;
 }
 
 /**

@@ -539,11 +539,11 @@ export function OnboardingFoundation({
                 </div>
               ) : (
                 <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
-                  <input
-                    type="url"
+                  <textarea
                     value={sourceUrl}
                     onChange={(event) => setSourceUrl(event.target.value)}
-                    placeholder="Paste one or more website or public profile links"
+                    placeholder="Paste your existing website and Google Business Profile link (one URL per line)"
+                    rows={3}
                     className="bg-background rounded-lg border px-3 py-2 text-sm"
                   />
                   <Button

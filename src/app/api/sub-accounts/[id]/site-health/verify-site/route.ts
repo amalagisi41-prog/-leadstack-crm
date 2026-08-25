@@ -140,6 +140,9 @@ export async function POST(
         headers[key.toLowerCase()] = value;
       });
       const body = await readCappedBody(response);
+      const agentStackWidgetInstalled =
+        body.includes("agentstackcrm.app/widget.js") &&
+        body.includes("data-sa=");
       const detection = detectHostingPlatform({
         finalHost: current.hostname,
         headers,
@@ -155,6 +158,7 @@ export async function POST(
         servedByPlatform: detection.platform,
         servedByLabel: detection.label,
         evidence: detection.evidence,
+        agentStackWidgetInstalled,
       };
     }
   } catch {

@@ -128,6 +128,8 @@ export interface ReadinessDetail {
 
 /** Which send-integrations can actually run, so doomed steps get flagged. */
 export interface BuilderReadiness {
+  /** QStash callback delivery is required for every live workflow run. */
+  schedulerReady: boolean;
   emailReady: boolean;
   smsReady: boolean;
   whatsappReady: boolean;
@@ -139,6 +141,7 @@ export type { WhatsappTemplateOption };
 // Provided once at the top of the builder so the recursive step chain can read
 // it without prop-drilling through Chain/Branch.
 const ReadinessContext = createContext<BuilderReadiness>({
+  schedulerReady: true,
   emailReady: true,
   smsReady: true,
   whatsappReady: true,
@@ -152,6 +155,33 @@ const ReadinessContext = createContext<BuilderReadiness>({
     whatsappTemplate: false,
   },
 });
+
+function unreadyRequirements(
+  steps: BuilderStep[],
+  readiness: BuilderReadiness,
+): NodeRequirement[] {
+  const found = new Set<NodeRequirement>();
+  const visit = (list: BuilderStep[]) => {
+    for (const step of list) {
+      const requirement = NODE_REQUIREMENT[step.type];
+      const unmet =
+        requirement === "email"
+          ? !readiness.emailReady
+          : requirement === "sms"
+            ? !readiness.smsReady
+            : requirement === "whatsapp"
+              ? !readiness.whatsappReady
+              : false;
+      if (requirement && unmet) found.add(requirement);
+      if (step.type === "if_else") {
+        visit(step.whenTrue ?? []);
+        visit(step.whenFalse ?? []);
+      }
+    }
+  };
+  visit(steps);
+  return [...found];
+}
 
 export function WorkflowBuilder({
   saId,
@@ -200,6 +230,21 @@ export function WorkflowBuilder({
       toast.error("Add at least one step before activating.");
       return;
     }
+    if (effective === "active") {
+      if (!readiness.schedulerReady) {
+        toast.error(
+          "Automation delivery is not configured on this deployment. Ask the agency owner to configure QStash before activating workflows.",
+        );
+        return;
+      }
+      const missing = unreadyRequirements(steps, readiness);
+      if (missing.length > 0) {
+        toast.error(
+          `Connect ${missing.join(" and ")} before activating this workflow.`,
+        );
+        return;
+      }
+    }
     setSaving(true);
     try {
       const { nodes, startNodeId } = flattenTree(steps);
@@ -231,6 +276,17 @@ export function WorkflowBuilder({
   return (
     <ReadinessContext.Provider value={readiness}>
       <div className="mx-auto max-w-2xl space-y-4 pb-24">
+        {(!readiness.schedulerReady ||
+          unreadyRequirements(steps, readiness).length > 0) && (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-950 dark:border-red-900/60 dark:bg-red-950/20 dark:text-red-100">
+            <p className="font-semibold">This workflow cannot run yet.</p>
+            <p className="mt-1 text-xs leading-5 text-red-900/80 dark:text-red-100/80">
+              {!readiness.schedulerReady
+                ? "Automation delivery is not configured on this deployment. Ask the agency owner to configure QStash."
+                : "One or more send steps need a configured email, SMS, or WhatsApp connection."}
+            </p>
+          </div>
+        )}
         <div className="flex items-center justify-between gap-3">
           <Link
             href={`/sa/${saId}/workflows`}

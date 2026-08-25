@@ -89,9 +89,9 @@ export const ONBOARDING_STEPS: readonly OnboardingStepMeta[] = [
     id: "sms",
     title: "Text and call leads without leaving the CRM",
     description:
-      "Link your dedicated Twilio number so you can send and receive SMS directly in the CRM — and the AI can reply on your behalf. Then register for A2P 10DLC right below it so carriers actually deliver your texts.",
+      "Link your dedicated Twilio number so you can send and receive SMS directly in the CRM — and the AI can reply on your behalf.",
     cta: "Open SMS Settings",
-    href: "/dashboard/settings?tab=messaging",
+    href: SUB_ACCOUNT_ROUTES.messagingSettings,
     videoMinutes: 3,
   },
   {
@@ -153,6 +153,22 @@ export const ONBOARDING_STEPS: readonly OnboardingStepMeta[] = [
 export const ONBOARDING_STEP_IDS: readonly OnboardingStepId[] =
   ONBOARDING_STEPS.map((s) => s.id);
 
+/**
+ * These integrations need their own credentials or carrier approval and must
+ * never prevent a new Solo customer from entering the workspace. They remain
+ * visible in the checklist and can be completed later from their canonical
+ * settings pages.
+ */
+export const OPTIONAL_ONBOARDING_STEP_IDS: readonly OnboardingStepId[] = [
+  "sms",
+  "ai",
+] as const;
+
+export const REQUIRED_ONBOARDING_STEP_IDS: readonly OnboardingStepId[] =
+  ONBOARDING_STEP_IDS.filter(
+    (id) => !OPTIONAL_ONBOARDING_STEP_IDS.includes(id),
+  );
+
 export const ONBOARDING_METHOD_STEPS: readonly OnboardingMethodStepMeta[] = [
   {
     id: "build",
@@ -206,6 +222,15 @@ export function isOnboardingComplete(
   if (!completed) return false;
   const set = new Set(completed);
   return ONBOARDING_STEP_IDS.every((id) => set.has(id));
+}
+
+/** True once the workspace can be used without phone approval or AI tuning. */
+export function isOnboardingLaunchReady(
+  completed: readonly string[] | null | undefined,
+): boolean {
+  if (!completed) return false;
+  const set = new Set(completed);
+  return REQUIRED_ONBOARDING_STEP_IDS.every((id) => set.has(id));
 }
 
 /** Per-step walkthrough video URLs, keyed by step id. */

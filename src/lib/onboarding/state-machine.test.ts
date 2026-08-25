@@ -3,7 +3,12 @@ import {
   WIZARD_STEP_STEP_IDS,
   computeOnboardingState,
 } from "./state-machine";
-import { ONBOARDING_STEPS, ONBOARDING_STEP_IDS } from "./steps";
+import {
+  isOnboardingLaunchReady,
+  ONBOARDING_STEPS,
+  ONBOARDING_STEP_IDS,
+  REQUIRED_ONBOARDING_STEP_IDS,
+} from "./steps";
 
 /**
  * The guided path from 0% to 100%, walked the way a first-time agent walks
@@ -153,6 +158,14 @@ describe("situation: agent who leaves and comes back", () => {
     expect(state.nextRecommendedAction?.href).toBe("/workflows");
   });
 
+  it("sends phone setup to the Messaging settings tab", () => {
+    const state = computeOnboardingState(clickThrough([0, 1, 2, 3, 4, 5]));
+    expect(state.nextRecommendedAction).toBeNull();
+    expect(ONBOARDING_STEPS.find((step) => step.id === "sms")?.href).toBe(
+      "/dashboard/settings?tab=messaging",
+    );
+  });
+
   it("treats a missing record as a fresh start rather than crashing", () => {
     for (const input of [null, undefined, []]) {
       const state = computeOnboardingState(input);
@@ -165,6 +178,22 @@ describe("situation: agent who leaves and comes back", () => {
     const state = computeOnboardingState(["domain", "not_a_real_step"]);
     expect(state.completedCount).toBe(1);
     expect(state.completedStepIds).toEqual(["domain"]);
+  });
+});
+
+describe("launch readiness", () => {
+  it("does not block a workspace on SMS/A2P or AI persona setup", () => {
+    expect(isOnboardingLaunchReady(REQUIRED_ONBOARDING_STEP_IDS)).toBe(true);
+    expect(isOnboardingLaunchReady(["domain", "business_profile"])).toBe(
+      false,
+    );
+  });
+
+  it("still requires the operational launch baseline", () => {
+    const missingBooking = REQUIRED_ONBOARDING_STEP_IDS.filter(
+      (id) => id !== "booking",
+    );
+    expect(isOnboardingLaunchReady(missingBooking)).toBe(false);
   });
 });
 
