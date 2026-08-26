@@ -494,7 +494,19 @@ export function DomainConnect() {
       if (!response.ok) {
         throw new Error(data.error ?? "Could not save the hosting choice.");
       }
-      setFoundation(data.foundation ?? next);
+      const savedFoundation = data.foundation ?? next;
+      // Older deployments could return a foundation without the selected
+      // external host even after accepting the PATCH. Preserve the exact
+      // provider chosen in this screen so the UI never falls back to a
+      // misleading generic label after a successful save.
+      const persistedFoundation: OnboardingFoundation = {
+        ...savedFoundation,
+        sourcePlatform: savedFoundation.sourcePlatform ?? next.sourcePlatform,
+      };
+      setFoundation(persistedFoundation);
+      if (persistedFoundation.sourcePlatform) {
+        setExistingHost(persistedFoundation.sourcePlatform);
+      }
       setHostChoice(choice);
       toast.success("External host connected.");
     } catch (error) {
