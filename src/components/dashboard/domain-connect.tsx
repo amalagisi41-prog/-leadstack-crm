@@ -459,13 +459,20 @@ export function DomainConnect() {
   async function saveHosting(choice: HostingStartingPoint) {
     setSavingHosting(true);
     try {
+      const selectedExternalHost =
+        typeof document !== "undefined"
+          ? (document.getElementById("existing-host") as HTMLSelectElement | null)
+              ?.value
+          : null;
+      const externalHost =
+        (selectedExternalHost as BusinessSourcePlatform | null) ?? existingHost;
       const next: OnboardingFoundation = {
         ...foundation,
         completed: true,
         mode: foundation.mode ?? (situation === "new" ? "fresh" : "transfer"),
         sourcePlatform:
           choice === "keep_existing"
-            ? existingHost
+            ? externalHost
             : (foundation.sourcePlatform ??
               (situation === "switching"
                 ? (sourcePlatform as BusinessSourcePlatform)
