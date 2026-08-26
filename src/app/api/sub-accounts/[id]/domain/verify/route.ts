@@ -6,18 +6,13 @@ import { FieldValue } from "firebase-admin/firestore";
 import { requireSubAccountAdmin } from "@/lib/auth/require-tenancy";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { normalizePublicUrl } from "@/lib/net/public-url";
-import { appHost, normalizeHost } from "@/lib/domains/app-hosts";
-import {
-  addDomainToVercelProject,
-  getVercelDomainStatus,
-  vercelApiConfigured,
-} from "@/lib/domains/vercel-api";
+import { normalizeHost } from "@/lib/domains/app-hosts";
 
 /**
  * POST /api/sub-accounts/[id]/domain/verify
  *
- * Checks whether the saved custom domain actually points at this deployment,
- * and records the answer.
+ * Checks whether the saved custom domain has public DNS records, and records
+ * the answer. AgentStack does not host the site or perform DNS cutover.
  *
  * WHY THIS EXISTS
  * ---------------
@@ -81,94 +76,31 @@ export async function POST(
   }
   const domain = normalizeHost(parsed.hostname).replace(/^www\./, "");
 
-  const target = appHost();
-  if (!target) {
-    // Without knowing our own hostname there is nothing to compare against.
-    // Say so plainly instead of returning a verdict we cannot support.
-    return NextResponse.json(
-      {
-        state: "unknown" as DomainVerifyState,
-        domain,
-        detail:
-          "This deployment doesn't know its own address (NEXT_PUBLIC_APP_URL isn't set), so we can't check where your domain points.",
-      },
-      { status: 200 },
-    );
-  }
-
   const resolver = new Resolver({ timeout: LOOKUP_TIMEOUT_MS, tries: 2 });
   resolver.setServers(PUBLIC_RESOLVERS);
 
-  const [apex, cname, wwwCname, targetIps] = await Promise.all([
+  const [apex, cname, wwwCname] = await Promise.all([
     safely(resolver.resolve4(domain), [] as string[]),
     safely(resolver.resolveCname(domain), [] as string[]),
     safely(resolver.resolveCname(`www.${domain}`), [] as string[]),
-    safely(resolver.resolve4(target), [] as string[]),
   ]);
 
   const cnames = [...cname, ...wwwCname].map((v) =>
     normalizeHost(v).replace(/\.$/, ""),
   );
 
-  // Two ways a domain can correctly point here: a CNAME naming our host, or
-  // A records matching the addresses our own host resolves to.
-  const cnameMatches = cnames.some(
-    (value) => value === target || value.endsWith(".vercel-dns.com"),
-  );
-  const aMatches =
-    apex.length > 0 &&
-    targetIps.length > 0 &&
-    apex.some((ip) => targetIps.includes(ip));
-
   let state: DomainVerifyState;
   let detail: string;
 
-  if (cnameMatches || aMatches) {
+  if (apex.length > 0 || cnames.length > 0) {
     state = "live";
-    detail = `${domain} is pointing at this deployment.`;
+    detail = `${domain} has live DNS records. No DNS change is needed in AgentStack; continue with your business setup.`;
   } else if (apex.length === 0 && cnames.length === 0) {
     state = "no_records";
     detail = `${domain} has no A or CNAME records yet. If you've just changed them, DNS can take up to an hour to update.`;
-  } else if (targetIps.length === 0) {
-    // We could read THEIR records but not ours, so we cannot compare. This is
-    // the case that most deserves "unknown" rather than a confident verdict.
-    state = "unknown";
-    detail = `${domain} has DNS records, but we couldn't resolve this deployment's own address to compare them against. Try again shortly.`;
   } else {
-    state = "points_elsewhere";
-    detail = `${domain} currently points somewhere else${
-      cnames.length ? ` (${cnames[0]})` : ""
-    }. Update it to point at ${target}, then check again.`;
-  }
-
-  // DNS pointing at Vercel's shared edge is NOT the same as Vercel routing
-  // this specific hostname to THIS project — Vercel refuses traffic for any
-  // domain it hasn't been told to expect, serving its own "Domain not
-  // configured" page instead. Reporting "live" on DNS alone confirmed that
-  // broken state as correct. See lib/domains/vercel-api.ts for the full
-  // rationale.
-  const platformConfigured = vercelApiConfigured();
-  if (state === "live" && platformConfigured) {
-    let vercelStatus = await getVercelDomainStatus(domain);
-    if (!vercelStatus?.attached) {
-      // Self-heal: the domain may have been saved before this check
-      // existed, or the registration attempt at save time failed
-      // transiently. One retry here costs nothing and fixes the common
-      // case without making the agent do anything.
-      await addDomainToVercelProject(domain);
-      vercelStatus = await getVercelDomainStatus(domain);
-    }
-    if (vercelStatus?.attached && vercelStatus.verified) {
-      detail = `${domain} is pointing at this deployment and is registered with Vercel.`;
-    } else if (vercelStatus?.attached) {
-      state = "unknown";
-      detail = `${domain}'s DNS points here, but Vercel hasn't finished verifying the domain yet. This can take a few minutes after a DNS change — check again shortly.`;
-    } else {
-      state = "unknown";
-      detail = `${domain}'s DNS points here, but we couldn't register it on your Vercel project automatically. Add ${domain} in your Vercel project's Settings → Domains, then check again.`;
-    }
-  } else if (state === "live" && !platformConfigured) {
-    detail = `${domain}'s DNS points at this deployment. This deployment doesn't have Vercel API access configured, so we can't confirm the domain is actually registered on your hosting project — if it isn't, visitors will see a "domain not configured" error even though DNS is correct. Add ${domain} in your Vercel project's Settings → Domains if you haven't already.`;
+    state = "unknown";
+    detail = `${domain} has DNS records, but the result could not be classified. Try again shortly.`;
   }
 
   await db.doc(`subAccounts/${id}`).update({
@@ -180,13 +112,7 @@ export async function POST(
   return NextResponse.json({
     state,
     domain,
-    target,
     detail,
-    // Whether this deployment can actually check (and self-register) the
-    // domain on Vercel's side, as opposed to DNS alone. The UI uses this to
-    // know whether a "live" verdict is backed by platform confirmation or
-    // is DNS-only — see the caveat folded into `detail` above when false.
-    platformConfigured,
     // Returned so the UI can show the agent the evidence rather than asking
     // them to trust a verdict.
     found: { aRecords: apex, cnames },

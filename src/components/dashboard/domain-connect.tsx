@@ -1041,6 +1041,16 @@ export function DomainConnect() {
                       ].join("  ·  ")}
                     </p>
                   ) : null}
+                  {verifyResult.state === "live" ? (
+                    <Button
+                      className="mt-3"
+                      size="sm"
+                      render={<a href={saPath("/business-profile")} />}
+                    >
+                      Continue to Business Blueprint
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  ) : null}
                 </div>
               ) : null}
             </div>
