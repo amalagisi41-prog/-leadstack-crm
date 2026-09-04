@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Cloudflare's build container has a tight Node heap limit. This keeps
+  // Webpack's peak memory lower during production builds.
+  experimental: {
+    webpackMemoryOptimizations: true,
+  },
   // `deploymentId` was set here to a git commit sha, to stamp asset requests
   // with the build they belong to. That is the wrong value: skew protection
   // keys on the host's own deployment id, not on a commit sha, so the `?dpl=`
