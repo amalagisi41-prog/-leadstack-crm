@@ -20,6 +20,8 @@ import type { FunnelContent } from "@/types/funnel";
 interface FunnelRendererProps {
   content: FunnelContent;
   businessName?: string;
+  logoUrl?: string | null;
+  accentColor?: string | null;
   /** Live target. When set, the form actually submits + creates a contact. */
   submit?: { subAccountId: string; slug: string };
   /** Preview mode — form is inert (submitting just shows the thank-you). */
@@ -29,6 +31,8 @@ interface FunnelRendererProps {
 export function FunnelRenderer({
   content,
   businessName,
+  logoUrl,
+  accentColor,
   submit,
   preview,
 }: FunnelRendererProps) {
@@ -84,11 +88,15 @@ export function FunnelRenderer({
     <div className={`min-h-full w-full ${pageBg} px-4 py-12 sm:py-16`}>
       <div className="mx-auto max-w-xl">
         {businessName ? (
-          <p
-            className={`mb-6 text-center text-sm font-semibold uppercase tracking-wide ${accent}`}
-          >
-            {businessName}
-          </p>
+          <div className="mb-6 flex items-center justify-center gap-2 text-center">
+            {logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={logoUrl} alt="" className="h-7 w-auto max-w-40 object-contain" />
+            ) : null}
+            <p className={`text-sm font-semibold uppercase tracking-wide ${accent}`} style={accentColor ? { color: accentColor } : undefined}>
+              {businessName}
+            </p>
+          </div>
         ) : null}
 
         {content.imageUrl ? (

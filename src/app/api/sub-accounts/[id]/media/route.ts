@@ -64,7 +64,11 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
       url = `${origin}/api/sub-accounts/${id}/media/${ref.id}?token=${token}`;
     }
 
-    const asset = { name: cleanName, url, token, storagePath, contentType: file.type, size: file.size, uploadedByUid: access.uid, createdAt: FieldValue.serverTimestamp() };
+    const brandAsset = form?.get("brandAsset") === "true";
+    const publicUrl = brandAsset
+      ? `${new URL(request.url).origin}/api/sub-accounts/${id}/media/${ref.id}`
+      : null;
+    const asset = { name: cleanName, url, publicUrl, brandAsset, token, storagePath, contentType: file.type, size: file.size, uploadedByUid: access.uid, createdAt: FieldValue.serverTimestamp() };
     await ref.set(asset);
     return NextResponse.json({ asset: { id: ref.id, ...asset, createdAt: new Date().toISOString() } }, { status: 201 });
   } catch (error) {

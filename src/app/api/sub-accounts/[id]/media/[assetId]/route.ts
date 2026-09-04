@@ -2,6 +2,7 @@ import "server-only";
 
 import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase/admin";
+import { getStorage } from "firebase-admin/storage";
 
 export async function GET(
   request: Request,
@@ -9,13 +10,24 @@ export async function GET(
 ) {
   const { id, assetId } = await ctx.params;
   const token = new URL(request.url).searchParams.get("token");
-  if (!token) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const ref = getAdminDb().doc(`subAccounts/${id}/mediaAssets/${assetId}`);
   const assetSnap = await ref.get();
   const asset = assetSnap.data();
-  if (!assetSnap.exists || asset?.token !== token || !String(asset?.storagePath ?? "").startsWith("firestore:")) {
+  if (!assetSnap.exists || (!asset?.brandAsset && asset?.token !== token)) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  if (!String(asset?.storagePath ?? "").startsWith("firestore:")) {
+    const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
+    if (!bucketName) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    const [body] = await getStorage().bucket(bucketName).file(String(asset.storagePath)).download();
+    return new NextResponse(new Uint8Array(body), {
+      headers: {
+        "Content-Type": String(asset.contentType ?? "application/octet-stream"),
+        "Cache-Control": "public, max-age=31536000, immutable",
+      },
+    });
   }
 
   const chunks = await ref.collection("chunks").orderBy("index", "asc").get();
@@ -25,7 +37,7 @@ export async function GET(
     headers: {
       "Content-Type": String(asset.contentType ?? "application/octet-stream"),
       "Content-Length": String(body.length),
-      "Cache-Control": "private, max-age=3600",
+      "Cache-Control": asset.brandAsset ? "public, max-age=31536000, immutable" : "private, max-age=3600",
       "Content-Disposition": `inline; filename="${String(asset.name ?? "media").replace(/["\r\n]/g, "")}"`,
     },
   });
