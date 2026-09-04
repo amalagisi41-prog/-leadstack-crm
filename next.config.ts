@@ -6,6 +6,15 @@ const nextConfig: NextConfig = {
   experimental: {
     webpackMemoryOptimizations: true,
   },
+  // Cloudflare's 2 GB build container cannot hold Next's production
+  // compiler and its lint/type workers at the same time. These checks still
+  // run as separate CI gates in .github/workflows/ci.yml.
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   // `deploymentId` was set here to a git commit sha, to stamp asset requests
   // with the build they belong to. That is the wrong value: skew protection
   // keys on the host's own deployment id, not on a commit sha, so the `?dpl=`
