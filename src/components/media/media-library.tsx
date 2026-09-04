@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { useSubAccount } from "@/context/sub-account-context";
 import { Button } from "@/components/ui/button";
 
-export interface MediaAsset { id: string; name: string; url: string; contentType: string; size: number; createdAt: string | null }
+export interface MediaAsset { id: string; name: string; url: string; publicUrl?: string | null; brandAsset?: boolean; contentType: string; size: number; createdAt: string | null }
 
 export function MediaLibrary({ compact = false, onSelect }: { compact?: boolean; onSelect?: (asset: MediaAsset) => void }) {
   const { subAccountId } = useSubAccount();

@@ -276,10 +276,14 @@ export function OnboardingWizard({
               const isActive = idx === currentStep;
               const isDone = idx < currentStep;
               return (
-                <div
+                <button
+                  type="button"
+                  onClick={() => setCurrentStep(idx as WizardStep)}
+                  aria-current={isActive ? "step" : undefined}
                   key={step.id}
+                  title={isDone ? `Review ${step.label}` : `Open ${step.label}`}
                   className={cn(
-                    "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors",
+                    "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm transition-colors",
                     isActive &&
                       "bg-blue-50 font-medium text-blue-700 dark:bg-blue-950/40 dark:text-blue-300",
                     isDone && "text-muted-foreground",
@@ -301,7 +305,7 @@ export function OnboardingWizard({
                     </div>
                   )}
                   <span className="leading-tight">{step.label}</span>
-                </div>
+                </button>
               );
             })}
           </aside>

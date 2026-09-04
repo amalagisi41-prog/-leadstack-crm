@@ -7,6 +7,7 @@ import { useSubAccount } from "@/context/sub-account-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { MediaLibrary, type MediaAsset } from "@/components/media/media-library";
 
 /**
  * Sub-account branding settings. v1 supports a single field — logo URL —
@@ -80,15 +81,16 @@ export function SubAccountBrandingSection() {
     try {
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("brandAsset", "true");
       const uploadRes = await fetch(`/api/sub-accounts/${subAccountId}/media`, {
         method: "POST",
         body: formData,
       });
       const uploadData = (await uploadRes.json().catch(() => ({}))) as {
-        asset?: { url?: string };
+        asset?: { url?: string; publicUrl?: string | null };
         error?: string;
       };
-      const uploadedUrl = uploadData.asset?.url?.trim();
+      const uploadedUrl = (uploadData.asset?.publicUrl ?? uploadData.asset?.url)?.trim();
       if (!uploadRes.ok || !uploadedUrl) {
         throw new Error(uploadData.error ?? "Couldn't upload logo.");
       }
@@ -182,6 +184,10 @@ export function SubAccountBrandingSection() {
           https URL. PNG with a transparent background works best. Renders at
           32&ndash;40px tall. Leave blank to fall back to &ldquo;{businessName}&rdquo; in text.
         </p>
+        <MediaLibrary
+          compact
+          onSelect={(asset: MediaAsset) => setLogoUrl(asset.publicUrl ?? asset.url)}
+        />
       </div>
 
       <div className="space-y-1.5">

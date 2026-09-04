@@ -17,7 +17,7 @@ export const dynamic = "force-dynamic";
 async function loadFunnel(
   subAccountId: string,
   slug: string,
-): Promise<{ funnel: FunnelDoc; businessName: string } | null> {
+): Promise<{ funnel: FunnelDoc; businessName: string; logoUrl: string | null; accentColor: string | null } | null> {
   const db = getAdminDb();
   const snap = await db
     .collection(`subAccounts/${subAccountId}/funnels`)
@@ -29,8 +29,9 @@ async function loadFunnel(
   if (funnel.status !== "published") return null;
 
   const subSnap = await db.doc(`subAccounts/${subAccountId}`).get();
-  const businessName = (subSnap.data()?.name as string) ?? "";
-  return { funnel, businessName };
+  const subData = subSnap.data() ?? {};
+  const businessName = (subData.name as string) ?? "";
+  return { funnel, businessName, logoUrl: (subData.logoUrl as string | null) ?? null, accentColor: (subData.accentColor as string | null) ?? null };
 }
 
 export default async function PublicFunnelPage({
@@ -46,6 +47,8 @@ export default async function PublicFunnelPage({
     <FunnelRenderer
       content={loaded.funnel.content}
       businessName={loaded.businessName || undefined}
+      logoUrl={loaded.logoUrl}
+      accentColor={loaded.accentColor}
       submit={{ subAccountId, slug }}
     />
   );
@@ -59,8 +62,9 @@ export async function generateMetadata({
   const { subAccountId, slug } = await params;
   const loaded = await loadFunnel(subAccountId, slug);
   if (!loaded) return { title: "Not found" };
+  const workspace = loaded.businessName || "Workspace";
   return {
-    title: loaded.funnel.content.headline || loaded.funnel.name,
+    title: `${loaded.funnel.content.headline || loaded.funnel.name} · ${workspace}`,
     description: loaded.funnel.content.subhead || undefined,
   };
 }

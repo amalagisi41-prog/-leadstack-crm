@@ -132,7 +132,7 @@ export function BulkCallDialog({
   const preview = useMemo(() => {
     let matching: Contact[];
     if (filterKind === "tag") {
-      if (!filterTag) return { recipients: 0, skipped: 0, matching: 0 };
+      if (!filterTag) return { recipients: 0, skipped: 0, noConsent: 0, matching: 0 };
       matching = contacts.filter((c) => (c.tags ?? []).includes(filterTag));
     } else if (filterKind === "pipeline_stage") {
       matching = contacts.filter((c) => c.pipelineStage === filterStage);
@@ -145,10 +145,16 @@ export function BulkCallDialog({
         : null;
     let recipients = 0;
     let skipped = 0;
+    let noConsent = 0;
     let suppressed = 0;
     for (const c of matching) {
       if (c.voiceOptedOut === true) {
         skipped += 1;
+        continue;
+      }
+      if (c.smsConsent?.consented !== true && c.consent !== true) {
+        skipped += 1;
+        noConsent += 1;
         continue;
       }
       const parsed = c.phone ? parsePhoneNumberFromString(c.phone) : null;
@@ -173,7 +179,7 @@ export function BulkCallDialog({
       }
       recipients += 1;
     }
-    return { recipients, skipped, suppressed, matching: matching.length };
+    return { recipients, skipped, noConsent, suppressed, matching: matching.length };
   }, [
     contacts,
     filterKind,
@@ -416,9 +422,12 @@ export function BulkCallDialog({
               </span>
             </div>
             <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
-              <span>Skipped (opted out / no valid phone)</span>
+              <span>Skipped (no consent / opted out / no valid phone)</span>
               <span className="font-mono">{preview.skipped}</span>
             </div>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              {preview.noConsent} skipped: no text-message consent on file.
+            </p>
             <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
               <span>Suppressed (tag / recently called)</span>
               <span className="font-mono">{preview.suppressed}</span>
@@ -443,9 +452,8 @@ export function BulkCallDialog({
               className="mt-0.5 h-4 w-4 cursor-pointer"
             />
             <span>
-              I confirm every contact in this audience has consented to receive
-              calls, and that calling them complies with the rules where they
-              are.
+              I confirm the included contacts have consent on file and that
+              calling them complies with the rules where they are.
             </span>
           </label>
 

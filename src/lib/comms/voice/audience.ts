@@ -9,6 +9,7 @@ import type { Contact } from "@/types/contacts";
 /** Reasons a contact can be dropped before dialling. */
 export type VoiceAudienceSkipReason =
   | "opted_out"
+  | "no_consent"
   | "no_phone"
   | "recently_called"
   | "suppressed_tag"
@@ -87,6 +88,10 @@ export async function resolveVoiceAudience(
     }
     if (contact.voiceOptedOut === true) {
       skipped.push({ contact, reason: "opted_out" });
+      continue;
+    }
+    if (contact.smsConsent?.consented !== true && contact.consent !== true) {
+      skipped.push({ contact, reason: "no_consent" });
       continue;
     }
     const parsed = contact.phone

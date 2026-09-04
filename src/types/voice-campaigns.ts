@@ -105,6 +105,7 @@ export interface VoiceCampaignDoc {
  */
 export type VoiceCampaignSkipReason =
   | "opted_out"
+  | "no_consent"
   | "no_phone"
   | "country_blocked"
   | "daily_cap"

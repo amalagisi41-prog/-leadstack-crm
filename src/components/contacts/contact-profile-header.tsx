@@ -402,7 +402,7 @@ export function ContactProfileHeader({ contact }: { contact: Contact }) {
             {hasSmsConsent ? (
               <div className="space-y-1">
                 <Badge variant="outline" className="border-emerald-500/40 text-emerald-700">Consent on file</Badge>
-                <p className="text-xs text-muted-foreground">Captured {formatContactDate(contact.smsConsent?.consentedAt ?? null)} · Source form {contact.smsConsent?.sourceFormId ?? "not recorded"}</p>
+                <p className="text-xs text-muted-foreground">Captured {formatContactDate(contact.smsConsent?.consentedAt ?? null)} · Source {contact.smsConsent?.sourceFormName ? `${contact.smsConsent.sourceFormName} (${contact.smsConsent.sourceFormId ?? "API"})` : contact.smsConsent?.sourceFormId ? `form ${contact.smsConsent.sourceFormId}` : "not recorded"}</p>
                 <p className="text-xs text-muted-foreground">{contact.smsConsent?.textShown ?? contact.consentText ?? ""}</p>
               </div>
             ) : <Badge variant="outline" className="border-amber-500/40 text-amber-700">No consent on file</Badge>}

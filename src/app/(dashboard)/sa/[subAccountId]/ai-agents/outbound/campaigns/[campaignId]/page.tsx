@@ -367,6 +367,7 @@ function audienceLabel(filter: BroadcastAudienceFilter): string {
 
 const SKIP_LABELS: Record<VoiceCampaignSkipReason, string> = {
   opted_out: "Opted out",
+  no_consent: "No text-message consent on file",
   no_phone: "No phone",
   country_blocked: "Country blocked",
   daily_cap: "Daily cap hit",
