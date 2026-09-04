@@ -37,6 +37,7 @@ import {
   UploadCloud,
   HeartPulse,
   Images,
+  GitBranch,
 } from "lucide-react";
 import { getFirebaseDb } from "@/lib/firebase/client";
 import { signOutUser } from "@/lib/firebase/auth";
