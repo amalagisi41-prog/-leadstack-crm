@@ -265,6 +265,7 @@ const DEFAULTS_BY_TYPE: Record<
   company: { label: "Company", placeholder: "Acme Inc.", mapsTo: "company" },
   textarea: { label: "Message", placeholder: "", mapsTo: "notes" },
   select: { label: "Dropdown", placeholder: "", mapsTo: null },
+  hidden: { label: "Hidden field", placeholder: "", mapsTo: null },
   sms_consent: { label: "SMS consent", placeholder: "", mapsTo: null },
 };
 

@@ -84,6 +84,10 @@ export interface Contact {
   // checks these before sending and logs `automation_step_skipped`.
   emailOptedOut: boolean;
   smsOptedOut: boolean;
+  /** API/form-ingest consent proof fields retained alongside smsConsent. */
+  consent?: boolean;
+  consentText?: string | null;
+  consentAt?: string | null;
   /**
    * A2P 10DLC proof-of-consent audit record, written when a contact opts in
    * to SMS via a form's `sms_consent` field. Carriers / The Campaign Registry

@@ -26,6 +26,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { TimezoneSelect } from "@/components/ui/timezone-select";
 import { cn } from "@/lib/utils";
 import type { SubAccountDoc } from "@/types";
 
@@ -57,6 +60,8 @@ interface Props {
 
 export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props) {
   const initialEmail = subAccount?.emailDomainEnabledByAgency === true;
+  const initialName = subAccount?.name ?? "";
+  const initialTimezone = subAccount?.timezone ?? "America/New_York";
   const initialApi = subAccount?.apiAccessEnabledByAgency === true;
   const initialBroadcasts = subAccount?.broadcastsEnabledByAgency === true;
   const initialOutbound = subAccount?.outboundVoiceEnabledByAgency === true;
@@ -79,6 +84,8 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
   const initialIdxHidden = subAccount?.idxHiddenWhenDisabled === true;
   const hasLiveDomain = !!subAccount?.resendConfig;
   const [emailDomainEnabled, setEmailDomainEnabled] = useState(initialEmail);
+  const [name, setName] = useState(initialName);
+  const [timezone, setTimezone] = useState(initialTimezone);
   const [apiAccessEnabled, setApiAccessEnabled] = useState(initialApi);
   const [broadcastsEnabled, setBroadcastsEnabled] = useState(initialBroadcasts);
   const [outboundVoiceEnabled, setOutboundVoiceEnabled] =
@@ -129,6 +136,8 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
   useEffect(() => {
     if (open) {
       setEmailDomainEnabled(initialEmail);
+      setName(initialName);
+      setTimezone(initialTimezone);
       setApiAccessEnabled(initialApi);
       setBroadcastsEnabled(initialBroadcasts);
       setOutboundVoiceEnabled(initialOutbound);
@@ -147,6 +156,8 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
   }, [
     open,
     initialEmail,
+    initialName,
+    initialTimezone,
     initialApi,
     initialBroadcasts,
     initialOutbound,
@@ -169,6 +180,7 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
   const willTearDown =
     initialEmail && !emailDomainEnabled && hasLiveDomain;
   const emailDirty = emailDomainEnabled !== initialEmail;
+  const identityDirty = name.trim() !== initialName || timezone !== initialTimezone;
   const apiDirty = apiAccessEnabled !== initialApi;
   const broadcastsDirty = broadcastsEnabled !== initialBroadcasts;
   const outboundDirty = outboundVoiceEnabled !== initialOutbound;
@@ -186,6 +198,7 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
   const idxHiddenDirty = idxHidden !== initialIdxHidden;
   const dirty =
     emailDirty ||
+    identityDirty ||
     apiDirty ||
     broadcastsDirty ||
     outboundDirty ||
@@ -209,6 +222,10 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
 
   async function handleSave() {
     if (!subAccount) return;
+    if (!name.trim()) {
+      toast.error("Sub-account name is required.");
+      return;
+    }
     setSaving(true);
     try {
       // Only send the fields the agency owner actually changed. Keeps the
@@ -270,9 +287,19 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
       if (!res.ok || !data.ok) {
         throw new Error(data.error ?? "Failed to save.");
       }
+      if (identityDirty) {
+        const identityRes = await fetch(`/api/agency/sub-accounts/${subAccount.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: name.trim(), timezone }),
+        });
+        const identityData = (await identityRes.json().catch(() => ({}))) as { error?: string };
+        if (!identityRes.ok) throw new Error(identityData.error ?? "Failed to save workspace identity.");
+      }
       // Build the toast message from whatever the agency owner actually
       // changed. Single message covers both toggles flipped at once.
       const parts: string[] = [];
+      if (identityDirty) parts.push("Workspace name and timezone updated.");
       if (emailDirty) {
         parts.push(
           emailDomainEnabled
@@ -381,6 +408,18 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
             can&apos;t flip these — that&apos;s the point.
           </DialogDescription>
         </DialogHeader>
+
+        <section className="grid gap-4 rounded-xl border bg-muted/20 p-4 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="managed-sub-account-name">Workspace name</Label>
+            <Input id="managed-sub-account-name" value={name} onChange={(e) => setName(e.target.value)} disabled={saving} required />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="managed-sub-account-timezone">Timezone</Label>
+            <TimezoneSelect id="managed-sub-account-timezone" value={timezone} onChange={setTimezone} />
+          </div>
+          <p className="text-xs text-muted-foreground sm:col-span-2">Used on lead-facing pages and for local business hours, reminders, and escalation windows.</p>
+        </section>
 
         <div className="space-y-3">
           <GateToggle

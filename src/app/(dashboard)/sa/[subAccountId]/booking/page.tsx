@@ -96,12 +96,9 @@ export default function BookingListPage() {
         <div className="min-w-0">
           <h1 className="text-2xl font-bold tracking-tight">Booking</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Public booking pages your leads can use to grab a slot. Share
-            the link in emails, on your site, or in the
-            <code className="mx-1 rounded bg-muted px-1.5 py-0.5 text-[11px]">
-              {"{{bookingLink}}"}
-            </code>
-            template merge tag.
+            Public booking pages your leads can use to grab a slot. Share the
+            link in emails, on your site, or through the booking-link merge tag
+            in your message templates.
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">

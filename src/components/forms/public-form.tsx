@@ -121,11 +121,16 @@ export function PublicForm({ form }: PublicFormProps) {
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>
       {form.fields.map((f) =>
-        f.type === "sms_consent" ? (
+        f.type === "hidden" ? (
+          <input key={f.id} type="hidden" name={f.id} value={values[f.id] ?? ""} />
+        ) : f.type === "sms_consent" ? (
           <div key={f.id} className="space-y-1.5">
             <label className="flex cursor-pointer items-start gap-2 text-sm leading-snug text-muted-foreground">
               <input
                 type="checkbox"
+                id={f.id}
+                name={f.id}
+                value="true"
                 checked={values[f.id] === "true"}
                 onChange={(e) => setValue(f.id, e.target.checked ? "true" : "")}
                 className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer"

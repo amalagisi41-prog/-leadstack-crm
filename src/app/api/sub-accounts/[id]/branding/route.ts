@@ -24,6 +24,8 @@ const URL_RE = /^https?:\/\/.+/i;
 
 interface PatchBody {
   logoUrl?: string | null;
+  accentColor?: string | null;
+  faviconUrl?: string | null;
 }
 
 export async function PATCH(
@@ -56,6 +58,16 @@ export async function PATCH(
       }
       updates.logoUrl = trimmed.slice(0, 2_000);
     }
+  }
+  for (const key of ["accentColor", "faviconUrl"] as const) {
+    if (!(key in body)) continue;
+    const value = body[key];
+    if (value === null || value === "") updates[key] = null;
+    else if (typeof value !== "string" || (key === "accentColor" && !/^#[0-9a-f]{6}$/i.test(value.trim()))) {
+      return NextResponse.json({ error: key === "accentColor" ? "Accent must be a six-digit hex color." : "Favicon URL must be a valid URL." }, { status: 400 });
+    } else if (key === "faviconUrl" && !URL_RE.test(value.trim())) {
+      return NextResponse.json({ error: "Favicon URL must start with http:// or https://." }, { status: 400 });
+    } else updates[key] = value.trim();
   }
 
   if (Object.keys(updates).length === 0) {

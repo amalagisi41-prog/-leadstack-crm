@@ -49,7 +49,10 @@ export async function OPTIONS() {
 }
 
 interface SubmitBody {
-  values?: Record<string, string>;
+  values?: Record<string, string | boolean>;
+  consent?: boolean;
+  consentText?: string;
+  consentAt?: string;
 }
 
 function applyCors(res: NextResponse): NextResponse {
@@ -59,7 +62,7 @@ function applyCors(res: NextResponse): NextResponse {
 
 function mapValuesToContact(
   fields: FormField[],
-  values: Record<string, string>
+  values: Record<string, string | boolean>
 ): { name: string; email: string; phone: string; company: string } {
   const out = { name: "", email: "", phone: "", company: "" };
   for (const f of fields) {
@@ -101,6 +104,17 @@ export const POST = withApiAuth<{ formId: string }>(
         : {};
 
     const fields = (form.fields ?? []) as FormField[];
+    const consentField = fields.find((f) => f.type === "sms_consent");
+    const consent = submitBody.consent === true || values[consentField?.id ?? ""] === true || values[consentField?.id ?? ""] === "true";
+    if (submitBody.consentAt && (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?(?:Z|[+-]\d{2}:\d{2})$/.test(submitBody.consentAt) || Number.isNaN(Date.parse(submitBody.consentAt)))) {
+      return applyCors(apiError(ctx, "invalid_request", "invalid_consent_at", "consentAt must be a valid ISO 8601 timestamp."));
+    }
+    if (consentField && consent && (!submitBody.consentAt || typeof submitBody.consentText !== "string")) {
+      return applyCors(apiError(ctx, "invalid_request", "missing_consent_text", "consentText is required when consent is true."));
+    }
+    if (consentField && consent && submitBody.consentText !== consentField.consentText) {
+      return applyCors(apiError(ctx, "invalid_request", "consent_text_mismatch", "consentText must match the form's disclosure exactly."));
+    }
     const mapped = mapValuesToContact(fields, values);
 
     if (!mapped.name && !mapped.email && !mapped.phone) {
@@ -129,7 +143,19 @@ export const POST = withApiAuth<{ formId: string }>(
       territoryId: GLOBAL_TERRITORY_ID,
       attribution: null,
       emailOptedOut: false,
-      smsOptedOut: false,
+      smsOptedOut: consentField ? !consent : false,
+      smsConsent: consentField
+        ? {
+            consented: consent,
+            textShown: submitBody.consentText ?? consentField.consentText ?? "",
+            consentedAt: consent ? FieldValue.serverTimestamp() : null,
+            sourceUrl: null,
+            ip: null,
+          }
+        : null,
+      consent,
+      consentText: consentField?.consentText ?? null,
+      consentAt: consent ? submitBody.consentAt : null,
       countryCode: null,
       country: null,
       city: null,

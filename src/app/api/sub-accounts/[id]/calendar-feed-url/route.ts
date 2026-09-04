@@ -36,7 +36,7 @@ export async function GET(
     return NextResponse.json(
       {
         error:
-          "Couldn't mint a calendar feed URL. Check that AUTOMATIONS_TOKEN_SECRET is configured on this deployment.",
+          "We couldn't create your calendar feed right now. Please try again, or contact support if the problem continues.",
         detail: message,
       },
       { status: 500 },

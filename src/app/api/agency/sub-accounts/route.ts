@@ -134,7 +134,13 @@ export async function POST(request: Request) {
       { status: 400 },
     );
   }
-  const timezone = body.timezone?.trim() || "UTC";
+  const timezone = body.timezone?.trim();
+  if (!timezone || timezone === "UTC") {
+    return NextResponse.json(
+      { error: "Timezone is required and must be the creating user's local timezone, not UTC." },
+      { status: 400 },
+    );
+  }
   const contactCheck = normalizeAccountContact(body.accountContact);
   if (!contactCheck.ok) {
     return NextResponse.json({ error: contactCheck.error }, { status: 400 });
@@ -259,6 +265,7 @@ export async function POST(request: Request) {
   try {
     await applySnapshot(subAccountId, agencyId, uid, "solo_agent", {
       businessName: name,
+      timezone,
     });
     snapshotApplied = true;
   } catch (err) {

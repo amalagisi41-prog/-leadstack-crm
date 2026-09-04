@@ -158,8 +158,7 @@ export default function DashboardPage() {
     hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
   const nowMs = now.getTime();
 
-  const displayName =
-    user?.displayName?.trim() || user?.email?.split("@")[0] || "there";
+  const displayName = user?.displayName?.trim() || user?.email?.split("@")[0] || null;
 
   const workspaceName = subAccount?.name?.trim() || "your workspace";
 
@@ -539,7 +538,7 @@ export default function DashboardPage() {
       },
       {
         id: "stalled-journeys",
-        label: "Stalled client journeys",
+        label: "Stalled deals",
         description: "Deals that have gone quiet for too long",
         count: stalledDeals.length,
         href: saPath("/pipeline"),
@@ -594,7 +593,7 @@ export default function DashboardPage() {
             {today}
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">
-            {greeting}, {displayName}
+            {displayName ? `${greeting}, ${displayName}` : <span className="inline-block h-7 w-56 animate-pulse rounded bg-muted" aria-label="Loading greeting" />}
           </h1>
           <p className="text-muted-foreground max-w-2xl text-sm">
             {workspaceName === "your workspace"

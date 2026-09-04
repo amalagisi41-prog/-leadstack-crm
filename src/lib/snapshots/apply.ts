@@ -19,7 +19,7 @@ export async function applySnapshot(
   agencyId: string,
   createdByUid: string,
   snapshotId: SnapshotId,
-  options?: { businessName?: string },
+  options?: { businessName?: string; timezone?: string },
 ): Promise<{ snapshotId: SnapshotId; templates: number; workflows: number }> {
   const def = SNAPSHOTS[snapshotId] ?? SNAPSHOTS.solo_agent;
   const db = getAdminDb();
@@ -62,7 +62,7 @@ export async function applySnapshot(
       ...(businessName ? { businessName } : {}),
       hoursStart: 8,
       hoursEnd: 20,
-      timezone: "America/New_York",
+      timezone: options?.timezone || "America/New_York",
       escalationKeywords: ["speak to someone", "call me now", "urgent", "complaint"],
       escalationNotifyEmail: null,
       websiteUrl: null,

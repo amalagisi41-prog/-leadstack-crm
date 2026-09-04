@@ -78,7 +78,7 @@ export async function evaluateTimeTriggersForSubAccount(
     if (!subSnap.exists) return result;
     const sub = subSnap.data() as SubAccountDoc;
     if (sub.automationsPaused === true) return result;
-    const timezone = sub.sendWindow?.timezone || "UTC";
+    const timezone = sub.sendWindow?.timezone || sub.timezone || "America/New_York";
 
     const workflowsSnap = await db
       .collection("workflows")

@@ -8,6 +8,7 @@ export type FormFieldType =
   | "company"
   | "textarea"
   | "select"
+  | "hidden"
   // A2P 10DLC SMS opt-in consent checkbox. Renders an unchecked checkbox with
   // a compliance disclosure (the `consentText`). When checked, the submit
   // route records an audit trail on the contact + clears `smsOptedOut`; when
@@ -119,7 +120,7 @@ export type FormTemplate =
   | "recruiting"
   | "referral";
 
-export function defaultFormFields(): FormField[] {
+export function defaultFormFields(businessName?: string): FormField[] {
   return [
     {
       id: "name",
@@ -149,13 +150,41 @@ export function defaultFormFields(): FormField[] {
       mapsTo: "phone",
     },
     {
-      id: "company",
-      type: "company",
-      label: "Company",
-      placeholder: "Acme Inc.",
+      id: "buyer_or_seller",
+      type: "select",
+      label: "I’m looking to",
+      placeholder: "",
+      required: true,
+      options: ["Buy a home", "Sell a home", "Invest in property"],
+      mapsTo: null,
+    },
+    {
+      id: "timeframe",
+      type: "select",
+      label: "Timeframe",
+      placeholder: "",
+      required: true,
+      options: ["Immediately", "Within 3 months", "3–6 months", "Just exploring"],
+      mapsTo: null,
+    },
+    {
+      id: "price_range",
+      type: "select",
+      label: "Price range",
+      placeholder: "",
+      required: false,
+      options: ["Under $300,000", "$300,000–$500,000", "$500,000–$1,000,000", "Over $1,000,000"],
+      mapsTo: null,
+    },
+    {
+      id: "sms_consent",
+      type: "sms_consent",
+      label: "SMS consent",
+      placeholder: "",
       required: false,
       options: [],
-      mapsTo: "company",
+      mapsTo: null,
+      consentText: defaultSmsConsentText(businessName),
     },
   ];
 }

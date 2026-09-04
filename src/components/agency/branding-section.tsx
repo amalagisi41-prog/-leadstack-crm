@@ -104,8 +104,8 @@ export function BrandingSection() {
           <h2 className="text-sm font-semibold">Branding</h2>
           <p className="text-xs text-muted-foreground">
             What clients see in the sidebar, browser tab, AND the public
-            landing page when LANDING_VARIANT is &ldquo;custom&rdquo;. Blank
-            fields fall back to the defaults in src/config/landing.ts.
+            landing page when custom branding is enabled. Blank fields use the
+            standard workspace defaults.
           </p>
         </div>
       </div>

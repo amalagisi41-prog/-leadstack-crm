@@ -1,10 +1,22 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { getAdminDb } from "@/lib/firebase/admin";
 import type { LeadForm } from "@/types/forms";
 import { PublicForm } from "@/components/forms/public-form";
 import { appearanceStyle, resolveAppearance } from "@/lib/forms/appearance";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({ params }: { params: Promise<{ formId: string }> }): Promise<Metadata> {
+  const { formId } = await params;
+  const db = getAdminDb();
+  const formSnap = await db.collection("forms").doc(formId).get();
+  if (!formSnap.exists) return { title: "Lead form" };
+  const form = formSnap.data() as { name?: string; subAccountId?: string };
+  const subSnap = form.subAccountId ? await db.collection("subAccounts").doc(form.subAccountId).get() : null;
+  const workspace = (subSnap?.data()?.name as string | undefined) ?? "Workspace";
+  return { title: `${form.name ?? "Lead form"} · ${workspace}` };
+}
 
 export default async function PublicFormPage({
   params,
@@ -21,8 +33,11 @@ export default async function PublicFormPage({
   if (!snap.exists) notFound();
   const data = snap.data() as Omit<LeadForm, "id">;
   const form: LeadForm = { id: snap.id, ...data };
+  const subSnap = await db.collection("subAccounts").doc(form.subAccountId).get();
+  const subAccount = subSnap.exists ? (subSnap.data() as { name?: string; logoUrl?: string | null; accentColor?: string | null }) : null;
 
   const appearance = resolveAppearance(sp, form.settings);
+  if (!sp.accent && subAccount?.accentColor) appearance.accent = subAccount.accentColor;
 
   if (!form.enabled) {
     return (
@@ -48,8 +63,10 @@ export default async function PublicFormPage({
       <div className="w-full max-w-lg">
         {!appearance.hideChrome && (
           <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
-            <span className="inline-block h-4 w-4 rounded-sm bg-gradient-to-br from-indigo-500 via-violet-500 to-pink-500" />
-            <span className="font-medium text-foreground">AgentStack</span>
+            {subAccount?.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={subAccount.logoUrl} alt="" className="h-5 w-auto max-w-32 object-contain" />
+            ) : <span className="font-medium text-foreground">{subAccount?.name ?? ""}</span>}
           </div>
         )}
         <div className="rounded-2xl border bg-card p-6 shadow-sm sm:p-8">
@@ -69,7 +86,7 @@ export default async function PublicFormPage({
         </div>
         {!appearance.hideChrome && (
           <p className="mt-4 text-center text-[11px] text-muted-foreground">
-            Powered by AgentStack
+            {subAccount?.name ?? ""}
           </p>
         )}
       </div>

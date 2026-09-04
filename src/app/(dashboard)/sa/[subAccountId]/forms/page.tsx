@@ -37,7 +37,7 @@ import { realtorFormRecipes } from "@/lib/forms/realtor-recipes";
 
 export default function FormsPage() {
   const { user, loading: authLoading } = useAuth();
-  const { subAccountId, agencyId, saPath } = useSubAccount();
+  const { subAccountId, agencyId, saPath, subAccount } = useSubAccount();
   const [forms, setForms] = useState<LeadForm[]>([]);
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
@@ -62,7 +62,9 @@ export default function FormsPage() {
       const id = await createForm(
         { agencyId, subAccountId },
         user.uid,
-        newName.trim()
+        newName.trim(),
+        "blank",
+        subAccount?.name,
       );
       toast.success("Form created");
       setCreateOpen(false);

@@ -22,6 +22,7 @@ const URL_RE = /^https?:\/\/.+/i;
 export function SubAccountBrandingSection() {
   const { subAccountId, subAccount, isAdmin } = useSubAccount();
   const [logoUrl, setLogoUrl] = useState("");
+  const [accentColor, setAccentColor] = useState("#7c3aed");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [hydrated, setHydrated] = useState(false);
@@ -33,6 +34,7 @@ export function SubAccountBrandingSection() {
   useEffect(() => {
     if (!hydrated && subAccount) {
       setLogoUrl(subAccount.logoUrl ?? "");
+      setAccentColor(subAccount.accentColor ?? "#7c3aed");
       setHydrated(true);
     }
   }, [hydrated, subAccount]);
@@ -51,7 +53,7 @@ export function SubAccountBrandingSection() {
       const res = await fetch(`/api/sub-accounts/${subAccountId}/branding`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ logoUrl: trimmed || null }),
+        body: JSON.stringify({ logoUrl: trimmed || null, accentColor }),
       });
       const data = (await res.json().catch(() => ({}))) as {
         ok?: boolean;
@@ -180,6 +182,11 @@ export function SubAccountBrandingSection() {
           https URL. PNG with a transparent background works best. Renders at
           32&ndash;40px tall. Leave blank to fall back to &ldquo;{businessName}&rdquo; in text.
         </p>
+      </div>
+
+      <div className="space-y-1.5">
+        <Label htmlFor="sa-accent-color">Lead-facing accent color</Label>
+        <Input id="sa-accent-color" type="color" value={accentColor} onChange={(e) => setAccentColor(e.target.value)} className="h-10 w-20 p-1" />
       </div>
 
       {/* Live preview — what the recipient will see on a quote/invoice header. */}

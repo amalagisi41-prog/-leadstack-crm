@@ -361,6 +361,10 @@ export interface SubAccountDoc {
    * sub-account name shows alone.
    */
   logoUrl: string | null;
+  /** Accent used by lead-facing forms, funnels, and confirmation states. */
+  accentColor?: string | null;
+  /** Optional lead-facing favicon URL. */
+  faviconUrl?: string | null;
   /**
    * Opt-in territory scoping. When true, collaborators only see deals
    * and contacts whose `territoryId` is in their `assignedTerritoryIds`.

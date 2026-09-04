@@ -80,12 +80,13 @@ export async function createForm(
   scope: TenantScope,
   createdByUid: string,
   name: string,
-  template: FormTemplate = "blank"
+  template: FormTemplate = "blank",
+  businessName?: string,
 ): Promise<string> {
   const recipe = getRealtorFormRecipe(template);
   const fields =
     recipe?.fields ??
-    (template === "contact" ? contactFormFields() : defaultFormFields());
+    (template === "contact" ? contactFormFields() : defaultFormFields(businessName));
   const settings =
     recipe?.settings ??
     (template === "contact" ? contactFormSettings() : defaultFormSettings());
