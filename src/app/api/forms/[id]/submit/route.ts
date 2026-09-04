@@ -21,6 +21,8 @@ import type { Contact, ContactAttribution } from "@/types/contacts";
 type SubmitBody = {
   values: Record<string, string>;
   attribution?: Partial<ContactAttribution>;
+  website?: string;
+  formStartedAt?: number;
 };
 
 const ATTRIBUTION_KEYS: (keyof ContactAttribution)[] = [
@@ -140,6 +142,21 @@ async function handleSubmit(
 
   if (!body || typeof body.values !== "object") {
     return jsonWithCors({ error: "Missing values" }, { status: 400 });
+  }
+
+  // Cheap, privacy-preserving bot checks for the public endpoint. The field
+  // is intentionally invisible to people but attractive to generic bots;
+  // the timestamp catches instant scripted posts without requiring cookies.
+  if (typeof body.website === "string" && body.website.trim()) {
+    return jsonWithCors({ error: "Unable to process this submission." }, { status: 400 });
+  }
+  if (
+    typeof body.formStartedAt !== "number" ||
+    !Number.isFinite(body.formStartedAt) ||
+    Date.now() - body.formStartedAt < 1_200 ||
+    Date.now() - body.formStartedAt > 24 * 60 * 60 * 1000
+  ) {
+    return jsonWithCors({ error: "Please take a moment and try again." }, { status: 400 });
   }
 
   const db = getAdminDb();
@@ -323,6 +340,7 @@ async function handleSubmit(
                 ? FieldValue.serverTimestamp()
                 : null,
               sourceUrl: attribution?.landingPage ?? null,
+              sourceFormId: id,
               ip: ip ?? null,
             },
           }

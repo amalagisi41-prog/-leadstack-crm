@@ -103,6 +103,7 @@ export interface Contact {
     consentedAt: Timestamp | FieldValue | null;
     /** Page the form was submitted from (from attribution.landingPage). */
     sourceUrl: string | null;
+    sourceFormId?: string | null;
     ip: string | null;
   } | null;
   /**

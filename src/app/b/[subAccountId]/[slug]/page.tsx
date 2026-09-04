@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { PublicBookingView } from "@/components/booking/public-booking-view";
 import { getSubAccountSiteLinks } from "@/lib/public-site/site-links";
@@ -7,6 +8,20 @@ import type { BookingPage } from "@/types/booking";
 import type { SubAccountDoc } from "@/types";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { subAccountId, slug } = await params;
+  const db = getAdminDb();
+  const [pageSnap, subSnap] = await Promise.all([
+    db.doc(`subAccounts/${subAccountId}/bookingPages/${slug}`).get(),
+    db.doc(`subAccounts/${subAccountId}`).get(),
+  ]);
+  if (!pageSnap.exists || !subSnap.exists) return { title: "Booking" };
+  const page = pageSnap.data() as { name?: string; status?: string };
+  const sub = subSnap.data() as { name?: string };
+  if (page.status !== "published") return { title: "Booking" };
+  return { title: `${page.name ?? "Booking"} · ${sub.name ?? "Workspace"}` };
+}
 
 /**
  * Public booking page — what visitors land on. Server-rendered via the

@@ -53,6 +53,13 @@ export async function POST(request: Request) {
   const contact = await requireContactAccessible(auth.uid, contactId);
   if (contact instanceof NextResponse) return contact;
 
+  if (contact.smsConsent?.consented !== true && contact.consent !== true) {
+    return NextResponse.json(
+      { error: "This contact has no text-message consent on file. Ask them to opt in through a consent form before sending SMS." },
+      { status: 403 },
+    );
+  }
+
   if (!contact.phone) {
     return NextResponse.json(
       { error: "This contact has no phone number." },

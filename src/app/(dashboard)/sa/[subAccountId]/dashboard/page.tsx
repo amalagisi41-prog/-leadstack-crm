@@ -352,7 +352,7 @@ export default function DashboardPage() {
         },
         secondary: {
           label: "Message",
-          href: saPath(`/contacts/${freshLead.id}`),
+          href: saPath(`/conversations/${freshLead.id}`),
         },
         tertiary: {
           label: "Schedule",
@@ -385,7 +385,9 @@ export default function DashboardPage() {
         },
         secondary: {
           label: "Message",
-          href: contact ? saPath(`/contacts/${contact.id}`) : saPath("/tasks"),
+          href: contact
+            ? saPath(`/conversations/${contact.id}`)
+            : saPath("/tasks"),
         },
         tertiary: {
           label: "Schedule",
@@ -417,7 +419,7 @@ export default function DashboardPage() {
         secondary: {
           label: "Message",
           href: contact
-            ? saPath(`/contacts/${contact.id}`)
+            ? saPath(`/conversations/${contact.id}`)
             : saPath("/pipeline"),
         },
         tertiary: {

@@ -101,6 +101,14 @@ export function ContactsTable({ contacts, search, territories = [] }: Props) {
         enableSorting: false,
         cell: ({ row }) => <SourceBadge source={row.original.source} />,
       },
+      {
+        accessorKey: "smsConsent",
+        header: "SMS consent",
+        enableSorting: false,
+        cell: ({ row }) => row.original.smsConsent?.consented === true || row.original.consent === true ? (
+          <span className="text-xs font-medium text-emerald-700">On file</span>
+        ) : <span className="text-xs text-amber-700">None</span>,
+      },
       ...(showTerritoryCol
         ? [
             {

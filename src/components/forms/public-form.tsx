@@ -31,6 +31,8 @@ export function PublicForm({ form }: PublicFormProps) {
   } | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
   const attributionRef = useRef<ContactAttribution | null>(null);
+  const formStartedAtRef = useRef(Date.now());
+  const [website, setWebsite] = useState("");
 
   // Snapshot attribution on mount — before the user navigates, refreshes, or
   // the URL is rewritten by a redirect after submission.
@@ -74,6 +76,8 @@ export function PublicForm({ form }: PublicFormProps) {
         body: JSON.stringify({
           values,
           attribution: attributionRef.current,
+          website,
+          formStartedAt: formStartedAtRef.current,
         }),
       });
       const data = (await res.json()) as {
@@ -120,6 +124,17 @@ export function PublicForm({ form }: PublicFormProps) {
 
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>
+      <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
+        <label htmlFor={`${form.id}-website`}>Website</label>
+        <input
+          id={`${form.id}-website`}
+          name="website"
+          tabIndex={-1}
+          autoComplete="off"
+          value={website}
+          onChange={(e) => setWebsite(e.target.value)}
+        />
+      </div>
       {form.fields.map((f) =>
         f.type === "hidden" ? (
           <input key={f.id} type="hidden" name={f.id} value={values[f.id] ?? ""} />

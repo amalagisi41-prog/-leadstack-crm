@@ -226,6 +226,31 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
       toast.error("Sub-account name is required.");
       return;
     }
+    // A no-op save must not issue an empty PATCH: the API intentionally
+    // rejects empty payloads, and closing here guarantees no state change.
+    if (!dirty) {
+      onOpenChange(false);
+      return;
+    }
+    const changes: string[] = [];
+    if (identityDirty) changes.push(`workspace identity → ${name.trim()} (${timezone})`);
+    if (emailDirty) changes.push(`dedicated email domain ${emailDomainEnabled ? "on" : "off"}`);
+    if (apiDirty) changes.push(`API access ${apiAccessEnabled ? "on" : "off"}`);
+    if (broadcastsDirty) changes.push(`broadcasts ${broadcastsEnabled ? "on" : "off"}`);
+    if (outboundDirty) changes.push(`outbound calling ${outboundVoiceEnabled ? "on" : "off"}`);
+    if (whatsappDirty) changes.push(`WhatsApp ${whatsappEnabled ? "on" : "off"}`);
+    if (metaInboxDirty) changes.push(`Meta inbox ${metaInboxEnabled ? "on" : "off"}`);
+    if (websiteDirty) changes.push(`website builder ${websiteEnabled ? "on" : "off"}`);
+    if (websiteStudioDirty) changes.push(`website studio ${websiteStudioEnabled ? "on" : "off"}`);
+    if (socialDirty) changes.push(`social planner ${socialPlannerEnabled ? "on" : "off"}`);
+    if (communityDirty) changes.push(`community ${communityEnabled ? "on" : "off"}`);
+    if (idxDirty) changes.push(`IDX listings ${idxEnabled ? "on" : "off"}`);
+    if (broadcastsHiddenDirty || websiteHiddenDirty || socialHiddenDirty || communityHiddenDirty || idxHiddenDirty) {
+      changes.push("sidebar visibility overrides");
+    }
+    if (!window.confirm(`Save these changes?\n\n${changes.map((change) => `• ${change}`).join("\n")}`)) {
+      return;
+    }
     setSaving(true);
     try {
       // Only send the fields the agency owner actually changed. Keeps the

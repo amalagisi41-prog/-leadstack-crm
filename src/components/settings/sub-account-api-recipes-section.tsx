@@ -421,7 +421,7 @@ function WebsiteFormGuide({
           land, ask your developer (or post in your support channel) to
           fetch-POST with{" "}
           <Code>Content-Type: application/json</Code> and the body shape{" "}
-          <Code>{`{ "values": { "field_id": "value" } }`}</Code>.
+          <Code>{`{ "values": { "field_id": "value" }, "consent": true, "consentText": "exact disclosure", "consentAt": "2026-09-04T14:00:00Z" }`}</Code>.
         </p>
       </Step>
 

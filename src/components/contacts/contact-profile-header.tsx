@@ -68,6 +68,8 @@ export function ContactProfileHeader({ contact }: { contact: Contact }) {
   // voice. Remaining gates (channel toggle, provisioning, compliance)
   // surface as errors inside the dialog.
   const outboundAvailable = subAccount?.outboundVoiceEnabledByAgency === true;
+  const hasSmsConsent = contact.smsConsent?.consented === true || contact.consent === true;
+  const consentReason = "No text-message consent is on file for this contact.";
   // Manual Google review request — only shown once the sub-account has a
   // review link configured (Settings → Google reviews).
   const reviewConfigured = !!subAccount?.googleReviewConfig?.reviewUrl;
@@ -298,8 +300,8 @@ export function ContactProfileHeader({ contact }: { contact: Contact }) {
               variant="outline"
               size="sm"
               onClick={() => setSmsOpen(true)}
-              disabled={!contact.phone}
-              title={!contact.phone ? "No phone on this contact" : "Send SMS"}
+              disabled={!contact.phone || !hasSmsConsent}
+              title={!contact.phone ? "No phone on this contact" : !hasSmsConsent ? consentReason : "Send SMS"}
             >
               <MessageSquare className="mr-1 h-3.5 w-3.5" />
               SMS
@@ -309,10 +311,12 @@ export function ContactProfileHeader({ contact }: { contact: Contact }) {
                 variant="outline"
                 size="sm"
                 onClick={() => setCallOpen(true)}
-                disabled={!contact.phone}
+                disabled={!contact.phone || !hasSmsConsent}
                 title={
                   !contact.phone
                     ? "No phone on this contact"
+                    : !hasSmsConsent
+                      ? consentReason
                     : "Call with AI"
                 }
               >
@@ -393,6 +397,15 @@ export function ContactProfileHeader({ contact }: { contact: Contact }) {
             label="Source"
           >
             <SourceBadge source={contact.source} />
+          </Row>
+          <Row icon={<MessageSquare className="h-4 w-4 text-muted-foreground" />} label="SMS consent">
+            {hasSmsConsent ? (
+              <div className="space-y-1">
+                <Badge variant="outline" className="border-emerald-500/40 text-emerald-700">Consent on file</Badge>
+                <p className="text-xs text-muted-foreground">Captured {formatContactDate(contact.smsConsent?.consentedAt ?? null)} · Source form {contact.smsConsent?.sourceFormId ?? "not recorded"}</p>
+                <p className="text-xs text-muted-foreground">{contact.smsConsent?.textShown ?? contact.consentText ?? ""}</p>
+              </div>
+            ) : <Badge variant="outline" className="border-amber-500/40 text-amber-700">No consent on file</Badge>}
           </Row>
           <Row
             icon={<Tag className="h-4 w-4 text-muted-foreground" />}

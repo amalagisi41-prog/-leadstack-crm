@@ -9,6 +9,7 @@ import {
   Home,
   Sparkles,
   Users,
+  GitBranch,
   Calendar,
   CalendarClock,
   CheckSquare,

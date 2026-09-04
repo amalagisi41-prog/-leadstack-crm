@@ -97,7 +97,20 @@ export async function checkOutboundCompliance(input: {
     };
   }
 
-  // 3. Consent — Phase 1 requires a per-call operator acknowledgment
+  // 3. Stored consent plus a per-call operator acknowledgment. The stored
+  // consent gate prevents a caller from treating an unchecked acknowledgment
+  // as permission for a contact who never opted in through a form.
+  if (
+    contact.smsConsent?.consented !== true &&
+    contact.consent !== true
+  ) {
+    return {
+      allowed: false,
+      code: "no_consent",
+      reason: "This contact has no consent on file for calls.",
+      e164,
+    };
+  }
   if (consentAck !== true) {
     return {
       allowed: false,
