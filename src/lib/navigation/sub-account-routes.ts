@@ -29,6 +29,7 @@ export const SUB_ACCOUNT_ROUTES = {
   siteHealth: "/site-health",
   getStarted: "/get-started",
   messagingSettings: "/dashboard/settings?tab=messaging",
+  marketingCampaigns: "/marketing/campaigns",
 } as const;
 
 export type SubAccountRouteKey = keyof typeof SUB_ACCOUNT_ROUTES;

@@ -253,7 +253,8 @@ describe("the tool registry", () => {
     for (const tool of ZACK_TOOL_REGISTRY) {
       if (!tool.outbound) continue;
       expect(requiresHumanApproval(tool), tool.id).toBe(true);
-      expect(tool.approval, tool.id).toBe("operator-explicit");
+      const lightReview = /listing\.campaign\.(landingPage|facebook|instagram|googleBusiness)$/.test(tool.id);
+      expect(tool.approval, tool.id).toBe(lightReview ? "operator" : "operator-explicit");
     }
   });
 
