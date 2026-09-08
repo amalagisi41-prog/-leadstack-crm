@@ -63,8 +63,9 @@ export async function POST(
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
+  const existing = subSnap.data()?.idxConfig as IdxConfig | null | undefined;
   const accessKey = (body.accessKey ?? "").trim();
-  if (!accessKey) {
+  if (!accessKey && !existing?.connected) {
     return NextResponse.json(
       { error: "IDX Broker access key is required." },
       { status: 400 },
@@ -72,10 +73,11 @@ export async function POST(
   }
   const mlsId = body.mlsId?.trim() || null;
 
-  const existing = subSnap.data()?.idxConfig as IdxConfig | null | undefined;
   // Credential first. A crash between the two writes then leaves an unreferenced
   // secret rather than a config claiming a connection with no key behind it.
-  await writeIdxSecrets(subAccountId, { accessKey });
+  if (accessKey) {
+    await writeIdxSecrets(subAccountId, { accessKey });
+  }
 
   const cfg: IdxConfig = {
     enabled: true,

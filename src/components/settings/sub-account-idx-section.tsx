@@ -96,7 +96,7 @@ export function SubAccountIdxSection() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          accessKey: accessKey.trim(),
+          accessKey: accessKey.trim() || undefined,
           mlsId: mlsId.trim() || null,
         }),
       });
@@ -108,7 +108,11 @@ export function SubAccountIdxSection() {
         throw new Error(data.error ?? "Failed to save IDX Broker connection.");
       }
       setAccessKey("");
-      toast.success("IDX Broker connected. Click \"Sync now\" to pull listings.");
+      toast.success(
+        connected
+          ? "MLS ID saved. Click \"Sync now\" to pull listings."
+          : "IDX Broker connected. Click \"Sync now\" to pull listings.",
+      );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to save.");
     } finally {
@@ -244,6 +248,27 @@ export function SubAccountIdxSection() {
               </dd>
             </div>
           </dl>
+          <form onSubmit={handleSave} className="mt-4 rounded-lg border bg-background p-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="idx-connected-mls-id">MLS ID</Label>
+              <Input
+                id="idx-connected-mls-id"
+                value={mlsId}
+                onChange={(e) => setMlsId(e.target.value)}
+                placeholder="Enter the approved MLS ID from IDX Broker"
+                autoComplete="off"
+                spellCheck={false}
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Required when your IDX Broker account has more than one approved MLS. Find it in IDX Broker under Account → API Access.
+              </p>
+            </div>
+            <div className="mt-3 flex justify-end">
+              <Button type="submit" size="sm" variant="outline" disabled={saving}>
+                {saving ? "Saving…" : "Save MLS ID"}
+              </Button>
+            </div>
+          </form>
           {cfg?.lastSyncStatus === "failed" && cfg?.lastSyncError && (
             <p className="mt-3 rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">
               Last sync failed: {cfg.lastSyncError}
