@@ -113,8 +113,31 @@ const COMPONENTS = [
   },
 ] as const;
 
-export const REALTOR_COMPONENT_REGISTRY: readonly RealtorComponentDefinition[] =
-  COMPONENTS.map((component) => ({
+/** A campaign-specific Puck template; it consumes a ContentBrief, not prose. */
+export const SINGLE_PROPERTY_TEMPLATE = {
+  kind: "template" as const,
+  id: "single-property",
+  section: "listings" as const,
+  label: "Single Property",
+  description: "Facts-only property page sourced from a synced IDX listing.",
+  category: "property" as const,
+  required: false,
+  dependencies: ["react", "@puckeditor/core@0.23.0"] as const,
+  accessibilityStatus: "reviewed" as const,
+  provenance: "AgentStack internal" as const,
+  license: "Proprietary application code" as const,
+  version: "1.0.0",
+  reviewer: "AgentStack product engineering",
+  approvedUse: "Campaign landing pages generated from ContentBrief.",
+};
+
+type RegisteredRealtorComponent = RealtorComponentDefinition & {
+  kind?: "template";
+  id?: string;
+};
+
+export const REALTOR_COMPONENT_REGISTRY: readonly RegisteredRealtorComponent[] = [
+  ...COMPONENTS.map((component) => ({
     ...component,
     version: "1.0.0",
     reviewer: "AgentStack product engineering",
@@ -122,20 +145,10 @@ export const REALTOR_COMPONENT_REGISTRY: readonly RealtorComponentDefinition[] =
     accessibilityStatus: "reviewed" as const,
     approvedUse:
       "AgentStack-hosted real-estate websites rendered through the shared site renderer.",
-  }));
+  })),
+  SINGLE_PROPERTY_TEMPLATE,
+] as const;
 
 export const REALTOR_COMPONENT_BY_SECTION = Object.fromEntries(
   REALTOR_COMPONENT_REGISTRY.map((component) => [component.section, component])
-) as Record<AgentSiteSectionType, RealtorComponentDefinition>;
-
-/** A campaign-specific Puck template; it consumes a ContentBrief, not prose. */
-export const SINGLE_PROPERTY_TEMPLATE = {
-  id: "single-property",
-  label: "Single Property",
-  description: "Facts-only property page sourced from a synced IDX listing.",
-  provenance: "AgentStack internal" as const,
-  license: "Proprietary application code" as const,
-  version: "1.0.0",
-  reviewer: "AgentStack product engineering",
-  approvedUse: "Campaign landing pages generated from ContentBrief.",
-};
+) as unknown as Record<AgentSiteSectionType, RealtorComponentDefinition>;

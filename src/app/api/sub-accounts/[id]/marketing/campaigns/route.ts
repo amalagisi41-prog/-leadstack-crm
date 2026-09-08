@@ -8,6 +8,7 @@ import { buildContentBrief } from "@/lib/marketing/content-brief";
 import type { CampaignBriefDoc } from "@/types/marketing-campaigns";
 import type { IdxListingDoc } from "@/types/idx";
 import type { SubAccountDoc } from "@/types";
+import { buildManualListing, isIdxCampaignEnabled } from "@/lib/marketing/campaign-route-helpers";
 
 export async function GET(request: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
@@ -28,7 +29,7 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
   const subSnap = await db.doc(`subAccounts/${id}`).get();
   if (!subSnap.exists) return NextResponse.json({ error: "Sub-account not found" }, { status: 404 });
   const sub = subSnap.data() as SubAccountDoc;
-  if (sub.idxEnabledByAgency !== true || !sub.idxConfig?.enabled) {
+  if (!isIdxCampaignEnabled(sub)) {
     return NextResponse.json({ error: "IDX Listings is not enabled for this sub-account." }, { status: 403 });
   }
   let body: Record<string, unknown>;
@@ -42,20 +43,9 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
     if (match.empty) return NextResponse.json({ error: "No synced IDX listing matched that MLS number." }, { status: 404 });
     listing = { id: match.docs[0].id, ...(match.docs[0].data() as Omit<IdxListingDoc, "id">) };
   } else {
-    const text = (key: string) => typeof body[key] === "string" ? String(body[key]).trim() : "";
-    const number = (key: string) => typeof body[key] === "number" && Number.isFinite(body[key]) ? Number(body[key]) : 0;
-    const photos = Array.isArray(body.photos) ? body.photos.filter((p): p is string => typeof p === "string" && /^https:\/\//i.test(p)) : [];
-    if (!text("address") || !text("city") || !text("state")) {
-      return NextResponse.json({ error: "MLS number or address, city, and state are required." }, { status: 400 });
-    }
-    listing = {
-      id: `manual-${Date.now()}`, subAccountId: id, mlsId: "manual", status: "active",
-      price: number("price"), address: text("address"), city: text("city"), state: text("state"), zip: text("zip"),
-      beds: number("beds"), baths: number("baths"), sqft: number("sqft") || null, yearBuilt: number("yearBuilt") || null,
-      propertyType: text("propertyType") || "home", photos, remarks: text("remarks"), listingAgentName: null,
-      listingOfficeName: null, disclaimer: text("disclaimer") || null, lat: null, lng: null, raw: {},
-      syncedAt: FieldValue.serverTimestamp(),
-    };
+    const manual = buildManualListing(body, id);
+    if (typeof manual === "string") return NextResponse.json({ error: manual }, { status: 400 });
+    listing = manual;
   }
   const brief = buildContentBrief(listing);
   const ref = db.collection(`subAccounts/${id}/campaignBriefs`).doc(listing.id);

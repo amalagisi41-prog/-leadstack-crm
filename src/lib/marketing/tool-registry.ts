@@ -110,12 +110,12 @@ const TOOLS: readonly ZackTool[] = [
     audited: true,
   },
   ...([
-    ["landingPage", "Create a single-property landing page", "operator-explicit", "recallable", ["fair-housing", "seller-position", "mls-attribution", "no-invented-facts"]],
-    ["facebook", "Draft a Facebook listing post", "operator-explicit", "recallable", ["fair-housing", "seller-position", "mls-attribution", "no-invented-facts"]],
-    ["instagram", "Draft an Instagram listing post", "operator-explicit", "recallable", ["fair-housing", "seller-position", "mls-attribution", "no-invented-facts"]],
+    ["landingPage", "Create a single-property landing page", "operator", "recallable", ["fair-housing", "seller-position", "mls-attribution", "no-invented-facts"]],
+    ["facebook", "Draft a Facebook listing post", "operator", "recallable", ["fair-housing", "seller-position", "mls-attribution", "no-invented-facts"]],
+    ["instagram", "Draft an Instagram listing post", "operator", "recallable", ["fair-housing", "seller-position", "mls-attribution", "no-invented-facts"]],
     ["email", "Prepare a listing email", "operator-explicit", "permanent", ["fair-housing", "seller-position", "mls-attribution", "no-invented-facts", "send-guardrails"]],
     ["sms", "Prepare a listing SMS", "operator-explicit", "permanent", ["fair-housing", "seller-position", "mls-attribution", "no-invented-facts", "send-guardrails"]],
-    ["googleBusiness", "Draft a Google Business listing post", "operator-explicit", "recallable", ["fair-housing", "seller-position", "mls-attribution", "no-invented-facts"]],
+    ["googleBusiness", "Draft a Google Business listing post", "operator", "recallable", ["fair-housing", "seller-position", "mls-attribution", "no-invented-facts"]],
   ] as const).map(([id, label, approval, reversibility, screens]) => ({
     id: `listing.campaign.${id}`,
     label,
