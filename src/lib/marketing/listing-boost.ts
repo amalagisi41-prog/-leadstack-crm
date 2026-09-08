@@ -90,6 +90,21 @@ export interface DistressFinding {
   phrase: string;
 }
 
+/** Pick one feature from normalized listing facts; never infer from remarks. */
+export function strongestVerifiableFeature(
+  listing: Pick<IdxListingDoc, "sqft" | "beds" | "baths" | "yearBuilt" | "propertyType" | "city">,
+): string {
+  if (listing.sqft && listing.sqft > 0)
+    return `${listing.sqft.toLocaleString()} square feet of living space`;
+  if (listing.beds > 0 && listing.baths > 0)
+    return `${listing.beds} bedrooms and ${listing.baths} bathrooms`;
+  if (listing.yearBuilt && listing.yearBuilt > 0)
+    return `a ${listing.yearBuilt} build in ${listing.city}`;
+  if (listing.propertyType)
+    return `${listing.propertyType} living in ${listing.city}`;
+  return `a home in ${listing.city}`;
+}
+
 /** Screen listing copy for language that weakens the seller's position. */
 export function findDistressLanguage(copy: string): DistressFinding[] {
   const lower = (copy || "").toLowerCase();

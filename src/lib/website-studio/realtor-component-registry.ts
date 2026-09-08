@@ -127,3 +127,15 @@ export const REALTOR_COMPONENT_REGISTRY: readonly RealtorComponentDefinition[] =
 export const REALTOR_COMPONENT_BY_SECTION = Object.fromEntries(
   REALTOR_COMPONENT_REGISTRY.map((component) => [component.section, component])
 ) as Record<AgentSiteSectionType, RealtorComponentDefinition>;
+
+/** A campaign-specific Puck template; it consumes a ContentBrief, not prose. */
+export const SINGLE_PROPERTY_TEMPLATE = {
+  id: "single-property",
+  label: "Single Property",
+  description: "Facts-only property page sourced from a synced IDX listing.",
+  provenance: "AgentStack internal" as const,
+  license: "Proprietary application code" as const,
+  version: "1.0.0",
+  reviewer: "AgentStack product engineering",
+  approvedUse: "Campaign landing pages generated from ContentBrief.",
+};
