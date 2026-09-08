@@ -320,6 +320,44 @@ export function SubAccountIdxSection() {
         </div>
       ) : (
         <form onSubmit={handleSave} className="space-y-4">
+          <div className="rounded-lg border border-blue-500/30 bg-blue-500/5 p-4">
+            <h3 className="text-sm font-semibold">Guided IDX setup</h3>
+            <ol className="mt-2 space-y-2 text-xs text-muted-foreground">
+              <li>
+                <span className="font-medium text-foreground">1. Get your IDX Broker account.</span>{" "}
+                <a
+                  href="https://signup.idxbroker.com/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 text-primary underline underline-offset-2"
+                >
+                  Sign up
+                  <ExternalLink className="h-3 w-3" />
+                </a>{" "}
+                or{" "}
+                <a
+                  href="https://middleware.idxbroker.com/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 text-primary underline underline-offset-2"
+                >
+                  sign in
+                  <ExternalLink className="h-3 w-3" />
+                </a>.
+              </li>
+              <li>
+                <span className="font-medium text-foreground">2. Copy your access key.</span>{" "}
+                In IDX Broker, open Account → API Access and copy the Platinum key.
+              </li>
+              <li>
+                <span className="font-medium text-foreground">3. Connect and test.</span>{" "}
+                Paste the key below, connect, then click Sync now to confirm your listings are flowing.
+              </li>
+            </ol>
+            <p className="mt-3 text-[11px] text-muted-foreground">
+              AgentStack never needs your IDX Broker password. Your API key is used only to connect the authorized feed.
+            </p>
+          </div>
           <div className="space-y-1.5">
             <Label htmlFor="idx-access-key">IDX Broker access key</Label>
             <Input

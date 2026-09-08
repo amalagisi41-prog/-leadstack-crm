@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { CheckCircle2, Loader2, Sparkles } from "lucide-react";
+import { CheckCircle2, ExternalLink, Loader2, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useSubAccount } from "@/context/sub-account-context";
 import { Button } from "@/components/ui/button";
@@ -125,6 +125,28 @@ export function SubAccountAddOnsSection() {
               <div className="min-w-0">
                 <p className="text-sm font-medium">{label.name}</p>
                 <p className="text-xs text-muted-foreground">{label.price}</p>
+                {key === "idx" && (
+                  <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs">
+                    <a
+                      href="https://signup.idxbroker.com/"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 text-primary underline underline-offset-2"
+                    >
+                      Sign up with IDX Broker
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                    <a
+                      href="https://middleware.idxbroker.com/"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 text-primary underline underline-offset-2"
+                    >
+                      Sign in to IDX Broker
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </div>
+                )}
               </div>
               {active ? (
                 isOwner ? (
