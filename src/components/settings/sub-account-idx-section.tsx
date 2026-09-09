@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import {
   CheckCircle2,
@@ -41,6 +41,8 @@ export function SubAccountIdxSection() {
 
   const [accessKey, setAccessKey] = useState("");
   const [mlsId, setMlsId] = useState(cfg?.mlsId ?? "");
+  const [approvedMlsIds, setApprovedMlsIds] = useState<string[]>([]);
+  const [loadingMlsIds, setLoadingMlsIds] = useState(false);
   const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
@@ -52,6 +54,30 @@ export function SubAccountIdxSection() {
         : (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "");
     return `${base}/idx/${subAccountId}`;
   }, [subAccountId]);
+
+  useEffect(() => {
+    if (!connected) return;
+    let cancelled = false;
+    setLoadingMlsIds(true);
+    void fetch(`/api/sub-accounts/${subAccountId}/idx/config`)
+      .then(async (res) => (await res.json().catch(() => ({}))) as { approvedMlsIds?: string[]; configuredMlsId?: string | null })
+      .then((data) => {
+        if (cancelled) return;
+        const ids = data.approvedMlsIds ?? [];
+        setApprovedMlsIds(ids);
+        const configured = data.configuredMlsId && ids.includes(data.configuredMlsId) ? data.configuredMlsId : ids.length === 1 ? ids[0] : "";
+        if (configured) setMlsId(configured);
+      })
+      .catch(() => {
+        if (!cancelled) setApprovedMlsIds([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingMlsIds(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [connected, subAccountId]);
 
   if (!isAdmin) return null;
 
@@ -103,10 +129,14 @@ export function SubAccountIdxSection() {
       const data = (await res.json().catch(() => ({}))) as {
         ok?: boolean;
         error?: string;
+        mlsId?: string | null;
+        approvedMlsIds?: string[];
       };
       if (!res.ok || !data.ok) {
         throw new Error(data.error ?? "Failed to save IDX Broker connection.");
       }
+      if (data.approvedMlsIds) setApprovedMlsIds(data.approvedMlsIds);
+      if (data.mlsId) setMlsId(data.mlsId);
       setAccessKey("");
       toast.success(
         connected
@@ -251,16 +281,30 @@ export function SubAccountIdxSection() {
           <form onSubmit={handleSave} className="mt-4 rounded-lg border bg-background p-3">
             <div className="space-y-1.5">
               <Label htmlFor="idx-connected-mls-id">MLS ID</Label>
-              <Input
-                id="idx-connected-mls-id"
-                value={mlsId}
-                onChange={(e) => setMlsId(e.target.value)}
-                placeholder="Enter the approved MLS ID from IDX Broker"
-                autoComplete="off"
-                spellCheck={false}
-              />
+              {approvedMlsIds.length > 0 ? (
+                <select
+                  id="idx-connected-mls-id"
+                  value={approvedMlsIds.includes(mlsId) ? mlsId : ""}
+                  onChange={(e) => setMlsId(e.target.value)}
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
+                  disabled={loadingMlsIds}
+                >
+                  <option value="">Choose an approved MLS feed</option>
+                  {approvedMlsIds.map((id) => <option key={id} value={id}>{id}</option>)}
+                </select>
+              ) : (
+                <Input
+                  id="idx-connected-mls-id"
+                  value={mlsId}
+                  onChange={(e) => setMlsId(e.target.value)}
+                  placeholder={loadingMlsIds ? "Loading approved MLS feeds…" : "Enter the approved MLS feed ID"}
+                  autoComplete="off"
+                  spellCheck={false}
+                  disabled={loadingMlsIds}
+                />
+              )}
               <p className="text-[11px] text-muted-foreground">
-                Required when your IDX Broker account has more than one approved MLS. Find it in IDX Broker under Account → API Access.
+                Choose the approved MLS feed, not your personal agent or membership ID. AgentStack checks this against IDX Broker before saving.
               </p>
             </div>
             <div className="mt-3 flex justify-end">

@@ -3,11 +3,13 @@ import "server-only";
 import { NextResponse } from "next/server";
 import {
   deleteIdxSecrets,
+  loadIdxSecrets,
   writeIdxSecrets,
 } from "@/lib/comms/sub-account-secrets";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { requireSubAccountAdmin } from "@/lib/auth/require-tenancy";
+import { fetchApprovedMlsIds } from "@/lib/idx/broker-client";
 import type { IdxConfig } from "@/types";
 
 /**
@@ -27,6 +29,39 @@ import type { IdxConfig } from "@/types";
 interface PostBody {
   accessKey?: string;
   mlsId?: string | null;
+}
+
+export async function GET(
+  request: Request,
+  ctx: { params: Promise<{ id: string }> },
+) {
+  const { id: subAccountId } = await ctx.params;
+  const access = await requireSubAccountAdmin(request, subAccountId);
+  if (access instanceof NextResponse) return access;
+
+  const subSnap = await getAdminDb().doc(`subAccounts/${subAccountId}`).get();
+  if (!subSnap.exists) {
+    return NextResponse.json({ error: "Sub-account not found" }, { status: 404 });
+  }
+  if (subSnap.data()?.idxEnabledByAgency !== true) {
+    return NextResponse.json({ error: "IDX Listings is disabled for this sub-account." }, { status: 403 });
+  }
+
+  const cfg = subSnap.data()?.idxConfig as IdxConfig | null | undefined;
+  const secrets = await loadIdxSecrets(subAccountId);
+  if (!cfg?.connected || !secrets) {
+    return NextResponse.json({ ok: true, approvedMlsIds: [], configuredMlsId: null });
+  }
+
+  try {
+    const approvedMlsIds = await fetchApprovedMlsIds(secrets.accessKey);
+    return NextResponse.json({ ok: true, approvedMlsIds, configuredMlsId: cfg.mlsId ?? null });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Could not load approved MLS feeds." },
+      { status: 502 },
+    );
+  }
 }
 
 export async function POST(
@@ -71,7 +106,28 @@ export async function POST(
       { status: 400 },
     );
   }
-  const mlsId = body.mlsId?.trim() || null;
+  const secrets = accessKey ? { accessKey } : await loadIdxSecrets(subAccountId);
+  if (!secrets?.accessKey) {
+    return NextResponse.json({ error: "IDX Broker access key is unavailable. Reconnect IDX Broker." }, { status: 400 });
+  }
+
+  let approvedMlsIds: string[];
+  try {
+    approvedMlsIds = await fetchApprovedMlsIds(secrets.accessKey);
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Could not verify the IDX Broker account." },
+      { status: 502 },
+    );
+  }
+  const requestedMlsId = body.mlsId?.trim() || null;
+  if (requestedMlsId && !approvedMlsIds.includes(requestedMlsId)) {
+    return NextResponse.json(
+      { error: "That is not an approved MLS feed ID for this IDX Broker account. Choose an approved feed from the list.", approvedMlsIds },
+      { status: 400 },
+    );
+  }
+  const mlsId = requestedMlsId ?? (approvedMlsIds.length === 1 ? approvedMlsIds[0] : null);
 
   // Credential first. A crash between the two writes then leaves an unreferenced
   // secret rather than a config claiming a connection with no key behind it.
@@ -95,7 +151,7 @@ export async function POST(
     { merge: true },
   );
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, approvedMlsIds, mlsId });
 }
 
 export async function DELETE(
