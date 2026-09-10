@@ -69,12 +69,22 @@ export async function fetchApprovedMlsIds(
       res.status,
     );
   }
-  const data = (await res.json().catch(() => null)) as Record<
-    string,
-    unknown
-  > | null;
+  const data = (await res.json().catch(() => null)) as unknown;
   if (!data) return [];
-  return Object.keys(data);
+  if (Array.isArray(data)) {
+    return data
+      .map((value) => String(value).trim())
+      .filter((value) => value.length > 0);
+  }
+  if (typeof data !== "object") return [];
+
+  const entries = Object.entries(data);
+  // IDX Broker has returned both `{ "22904": "SmartMLS" }` and
+  // `["22904"]`-shaped payloads across API versions. Never expose an array
+  // index such as `"0"` as an MLS ID when the response is index-keyed.
+  return entries.every(([key]) => /^\d+$/.test(key))
+    ? entries.map(([, value]) => String(value).trim()).filter(Boolean)
+    : entries.map(([key]) => key);
 }
 
 /**

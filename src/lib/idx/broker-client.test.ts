@@ -1,9 +1,22 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fetchIdxListings } from "./broker-client";
+import { fetchApprovedMlsIds, fetchIdxListings } from "./broker-client";
 
 describe("IDX Broker featured listings client", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+  });
+
+  it("returns MLS IDs rather than array indexes from approved-MLS responses", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify(["22904"]), { status: 200 }),
+      ),
+    );
+
+    await expect(fetchApprovedMlsIds("test-access-key")).resolves.toEqual([
+      "22904",
+    ]);
   });
 
   it("requests the official featured-listings endpoint and ignores response metadata", async () => {
