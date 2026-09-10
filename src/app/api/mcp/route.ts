@@ -110,3 +110,29 @@ export async function POST(request: Request) {
     return response(id, { isError: true, content: [{ type: "text", text: error instanceof Error ? error.message : "Tool failed." }] });
   }
 }
+
+/**
+ * Streamable HTTP requires the MCP endpoint to accept GET as well as POST.
+ * AgentStack is stateless, so authenticated GETs expose a short-lived SSE
+ * heartbeat rather than holding a server-to-client notification channel.
+ * An unauthenticated browser visit gets a useful health response instead of
+ * an opaque 405 page.
+ */
+export function GET(request: Request) {
+  const resourceMetadata = `${new URL(request.url).origin}/.well-known/oauth-protected-resource`;
+  if (!request.headers.get("authorization")) {
+    return NextResponse.json({
+      name: "agentstack",
+      transport: "MCP Streamable HTTP",
+      endpoint: new URL(request.url).origin + "/api/mcp",
+      authentication: resourceMetadata,
+      message: "Send MCP JSON-RPC requests with POST after completing OAuth.",
+    });
+  }
+  return new NextResponse(": AgentStack MCP stream ready\n\n", {
+    headers: {
+      "content-type": "text/event-stream",
+      "cache-control": "no-cache",
+    },
+  });
+}
