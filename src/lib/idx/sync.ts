@@ -128,7 +128,7 @@ export async function syncIdxListings(subAccountId: string): Promise<SyncResult>
   );
 
   try {
-    const raw = await fetchIdxListings(idxSecrets.accessKey, cfg.mlsId);
+    const raw = await fetchIdxListings(idxSecrets.accessKey);
     const listingsCol = db.collection(`subAccounts/${subAccountId}/idxListings`);
     const normalized = raw
       .map((r) => normalizeListing(r, subAccountId, cfg.mlsId as string))

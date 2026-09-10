@@ -4,15 +4,11 @@ import "server-only";
  * Thin client for the IDX Broker Platinum API. Each realtor brings their own
  * IDX Broker account + access key — we never provision or resell accounts.
  *
- * IMPORTANT — needs live-account verification: the exact search endpoint
- * path, its parameters, and the shape of a listing record can vary by IDX
- * Broker account tier and by which fields the underlying MLS approves for
- * IDX display. The auth header shape below (`accesskey` + `outputtype:
- * json`) and base URL are IDX Broker's documented convention; the search
- * endpoint + field names should be confirmed/adjusted against a real,
- * connected account before relying on this in production. `rawFields` on
- * each returned listing preserves whatever IDX Broker actually sent so nulls
- * in the normalized shape are recoverable without a re-sync.
+ * This client intentionally uses IDX Broker's featured-listings API. IDX
+ * Broker does not expose MLS-wide listing search through this API; featured
+ * listings are the supported listing-data exception for the agents on the
+ * connected account. `raw` on each normalized listing preserves the source
+ * response so fields outside our normalized shape remain recoverable.
  */
 
 const BASE_URL = "https://api.idxbroker.com";
@@ -82,29 +78,32 @@ export async function fetchApprovedMlsIds(
 }
 
 /**
- * Fetches one page of active listings for the given MLS. IDX Broker's own
+ * Fetches the connected account's featured listings. IDX Broker's own
  * per-account rate limits mean this should only ever be called from the
  * scheduled sync job or an explicit "Sync now" click — never per public
  * visitor request.
  */
 export async function fetchIdxListings(
   accessKey: string,
-  mlsId: string,
 ): Promise<IdxBrokerRawListing[]> {
-  const res = await fetch(`${BASE_URL}/mls/search/${mlsId}`, {
+  const res = await fetch(`${BASE_URL}/clients/featured`, {
     headers: authHeaders(accessKey),
   });
-  if (res.status === 204) return []; // IDX Broker's "no results" response
+  if (res.status === 204) return [];
   if (!res.ok) {
     throw new IdxBrokerError(
-      `IDX Broker search failed (HTTP ${res.status}).`,
+      `IDX Broker featured listings request failed (HTTP ${res.status}).`,
       res.status,
     );
   }
   const data = (await res.json().catch(() => null)) as
-    | IdxBrokerRawListing[]
-    | Record<string, IdxBrokerRawListing>
+    | Record<string, IdxBrokerRawListing | unknown>
     | null;
   if (!data) return [];
-  return Array.isArray(data) ? data : Object.values(data);
+  return Object.values(data).filter(
+    (value): value is IdxBrokerRawListing =>
+      typeof value === "object" &&
+      value !== null &&
+      "listingID" in value,
+  );
 }
