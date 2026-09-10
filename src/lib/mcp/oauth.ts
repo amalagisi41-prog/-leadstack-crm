@@ -144,3 +144,9 @@ export async function readSessionCaller(): Promise<{ uid: string; email: string 
   const decoded = await getAdminAuth().verifySessionCookie(sessionCookie, true).catch(() => null);
   return decoded?.uid ? { uid: decoded.uid, email: decoded.email ?? "" } : null;
 }
+
+export async function readRequestCaller(request: Request): Promise<{ uid: string; email: string } | null> {
+  const uid = request.headers.get("x-user-uid");
+  if (uid) return { uid, email: request.headers.get("x-user-email") ?? "" };
+  return readSessionCaller();
+}

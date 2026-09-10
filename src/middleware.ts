@@ -278,10 +278,16 @@ export default function middleware(request: NextRequest) {
     }
   }
 
+  // OAuth authorization must pass through Firebase edge auth so the route
+  // receives the verified x-user-uid header. Other MCP endpoints authenticate
+  // themselves with discovery metadata, registration, or bearer tokens.
+  const isMcpAuthorization = request.nextUrl.pathname === "/api/mcp/authorize";
+
   // Skip auth middleware if Firebase is not configured
   if (
-    !process.env.NEXT_PUBLIC_FIREBASE_API_KEY ||
-    !process.env.FIREBASE_ADMIN_PROJECT_ID
+    !isMcpAuthorization &&
+    (!process.env.NEXT_PUBLIC_FIREBASE_API_KEY ||
+      !process.env.FIREBASE_ADMIN_PROJECT_ID)
   ) {
     return NextResponse.next();
   }
@@ -289,7 +295,7 @@ export default function middleware(request: NextRequest) {
   return authMiddleware(request, {
     loginPath: "/api/login",
     logoutPath: "/api/logout",
-    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+    apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ?? "",
     cookieName: "__session",
     cookieSignatureKeys: [
       process.env.COOKIE_SECRET_CURRENT ?? "",
