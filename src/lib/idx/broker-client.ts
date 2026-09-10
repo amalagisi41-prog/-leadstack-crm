@@ -52,6 +52,21 @@ export interface IdxBrokerRawListing {
   [key: string]: unknown;
 }
 
+function toMlsId(value: unknown): string | null {
+  if (typeof value === "string" || typeof value === "number") {
+    const id = String(value).trim();
+    return id.length > 0 ? id : null;
+  }
+  if (!value || typeof value !== "object") return null;
+
+  const record = value as Record<string, unknown>;
+  for (const key of ["mlsId", "mlsID", "id", "value"]) {
+    const id = toMlsId(record[key]);
+    if (id) return id;
+  }
+  return null;
+}
+
 /**
  * Verifies the access key can reach the account and returns the MLSs it's
  * approved to search — used both as a lightweight connection check and to
@@ -72,9 +87,7 @@ export async function fetchApprovedMlsIds(
   const data = (await res.json().catch(() => null)) as unknown;
   if (!data) return [];
   if (Array.isArray(data)) {
-    return data
-      .map((value) => String(value).trim())
-      .filter((value) => value.length > 0);
+    return data.map(toMlsId).filter((value): value is string => value !== null);
   }
   if (typeof data !== "object") return [];
 
@@ -82,9 +95,13 @@ export async function fetchApprovedMlsIds(
   // IDX Broker has returned both `{ "22904": "SmartMLS" }` and
   // `["22904"]`-shaped payloads across API versions. Never expose an array
   // index such as `"0"` as an MLS ID when the response is index-keyed.
-  return entries.every(([key]) => /^\d+$/.test(key))
-    ? entries.map(([, value]) => String(value).trim()).filter(Boolean)
-    : entries.map(([key]) => key);
+  if (entries.every(([key]) => /^\d+$/.test(key))) {
+    const indexedIds = entries
+      .map(([, value]) => toMlsId(value))
+      .filter((value): value is string => value !== null);
+    if (indexedIds.length === entries.length) return indexedIds;
+  }
+  return entries.map(([key]) => key);
 }
 
 /**

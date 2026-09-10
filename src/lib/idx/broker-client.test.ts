@@ -19,6 +19,21 @@ describe("IDX Broker featured listings client", () => {
     ]);
   });
 
+  it("extracts the ID from structured approved-MLS records", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify([{ id: 22904, name: "SmartMLS" }]), {
+          status: 200,
+        }),
+      ),
+    );
+
+    await expect(fetchApprovedMlsIds("test-access-key")).resolves.toEqual([
+      "22904",
+    ]);
+  });
+
   it("requests the official featured-listings endpoint and ignores response metadata", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(
