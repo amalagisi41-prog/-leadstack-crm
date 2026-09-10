@@ -8,8 +8,8 @@ import { buildContentBrief } from "@/lib/marketing/content-brief";
 import type { CampaignBriefDoc } from "@/types/marketing-campaigns";
 import type { IdxListingDoc } from "@/types/idx";
 import type { SubAccountDoc } from "@/types";
-import { buildManualListing, isIdxCampaignEnabled, listingMatchesIdentifier } from "@/lib/marketing/campaign-route-helpers";
-import { syncIdxListings } from "@/lib/idx/sync";
+import { buildManualListing, isIdxCampaignEnabled } from "@/lib/marketing/campaign-route-helpers";
+import { findCampaignListing } from "@/lib/marketing/campaign-listing";
 
 export async function GET(request: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
@@ -40,23 +40,7 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
   const mlsId = typeof body.mlsId === "string" ? body.mlsId.trim() : "";
   let listing: IdxListingDoc | null = null;
   if (mlsId) {
-    const listingsCol = db.collection(`subAccounts/${id}/idxListings`);
-    const direct = await listingsCol.doc(mlsId).get();
-    if (direct.exists) {
-      listing = { id: direct.id, ...(direct.data() as Omit<IdxListingDoc, "id">) };
-    } else {
-      const cached = await listingsCol.get();
-      const found = cached.docs.find((doc) => listingMatchesIdentifier({ id: doc.id, ...(doc.data() as Omit<IdxListingDoc, "id">) }, mlsId));
-      if (found) listing = { id: found.id, ...(found.data() as Omit<IdxListingDoc, "id">) };
-    }
-    if (!listing) {
-      const sync = await syncIdxListings(id);
-      if (sync.ok) {
-        const refreshed = await listingsCol.get();
-        const found = refreshed.docs.find((doc) => listingMatchesIdentifier({ id: doc.id, ...(doc.data() as Omit<IdxListingDoc, "id">) }, mlsId));
-        if (found) listing = { id: found.id, ...(found.data() as Omit<IdxListingDoc, "id">) };
-      }
-    }
+    listing = await findCampaignListing(db, id, mlsId);
     if (!listing) return NextResponse.json({ error: "No matching featured listing was returned by your connected IDX Broker account. Try Sync now, confirm this property is one of your featured/agent listings, or use guided manual entry." }, { status: 404 });
   } else {
     const manual = buildManualListing(body, id);
