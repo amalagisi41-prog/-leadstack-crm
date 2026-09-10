@@ -185,6 +185,10 @@ const PUBLIC_PATHS = [
   // Firestore rules). Adding the prefix here means the Firebase-edge
   // middleware doesn't try to redirect API-key callers to /login.
   "/api/v1",
+  // MCP remote clients authenticate with OAuth bearer tokens; the MCP route
+  // validates those tokens itself and must not be redirected to /login.
+  "/api/mcp",
+  "/.well-known",
   // Outbound-webhook delivery worker. QStash callback only — signature-
   // verified inside the route via `verifyQStashSignature`. Mirrors the
   // existing /api/broadcasts/email/step + /api/workflows/step paths.

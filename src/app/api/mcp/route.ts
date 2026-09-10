@@ -5,6 +5,7 @@ import { getAdminDb } from "@/lib/firebase/admin";
 import { requireSubAccountAdmin, requireSubAccountMember } from "@/lib/auth/require-tenancy";
 import { buildContentBrief } from "@/lib/marketing/content-brief";
 import { findCampaignListing } from "@/lib/marketing/campaign-listing";
+import { readAccessToken } from "@/lib/mcp/oauth";
 import type { SubAccountDoc } from "@/types";
 
 type JsonRpcRequest = {
@@ -81,7 +82,16 @@ async function executeTool(request: Request, name: string, args: Record<string, 
 }
 
 export async function POST(request: Request) {
-  if (!request.headers.get("x-user-uid")) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  const resourceMetadata = `${new URL(request.url).origin}/.well-known/oauth-protected-resource`;
+  const bearer = request.headers.get("authorization")?.match(/^Bearer\s+(.+)$/i)?.[1];
+  const tokenCaller = bearer ? readAccessToken(bearer) : null;
+  if (bearer && !tokenCaller) {
+    return NextResponse.json({ error: "Invalid access token" }, { status: 401, headers: { "WWW-Authenticate": `Bearer resource_metadata="${resourceMetadata}"` } });
+  }
+  const authenticatedRequest = tokenCaller
+    ? new Request(request, { headers: new Headers({ ...Object.fromEntries(request.headers), "x-user-uid": tokenCaller.uid, "x-user-email": tokenCaller.email }) })
+    : request;
+  if (!authenticatedRequest.headers.get("x-user-uid")) return NextResponse.json({ error: "Not authenticated" }, { status: 401, headers: { "WWW-Authenticate": `Bearer resource_metadata="${resourceMetadata}"` } });
   let body: JsonRpcRequest;
   try { body = (await request.json()) as JsonRpcRequest; } catch { return errorResponse(null, -32700, "Parse error"); }
   const id = body.id;
@@ -95,7 +105,7 @@ export async function POST(request: Request) {
   const args = params.arguments && typeof params.arguments === "object" ? params.arguments as Record<string, unknown> : {};
   if (!TOOLS.some((tool) => tool.name === name)) return errorResponse(id, -32602, "Unknown tool");
   try {
-    return response(id, await executeTool(request, name, args));
+    return response(id, await executeTool(authenticatedRequest, name, args));
   } catch (error) {
     return response(id, { isError: true, content: [{ type: "text", text: error instanceof Error ? error.message : "Tool failed." }] });
   }
