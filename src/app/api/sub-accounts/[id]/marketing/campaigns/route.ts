@@ -8,7 +8,8 @@ import { buildContentBrief } from "@/lib/marketing/content-brief";
 import type { CampaignBriefDoc } from "@/types/marketing-campaigns";
 import type { IdxListingDoc } from "@/types/idx";
 import type { SubAccountDoc } from "@/types";
-import { buildManualListing, isIdxCampaignEnabled } from "@/lib/marketing/campaign-route-helpers";
+import { buildManualListing, isIdxCampaignEnabled, listingMatchesIdentifier } from "@/lib/marketing/campaign-route-helpers";
+import { syncIdxListings } from "@/lib/idx/sync";
 
 export async function GET(request: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
@@ -39,9 +40,24 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
   const mlsId = typeof body.mlsId === "string" ? body.mlsId.trim() : "";
   let listing: IdxListingDoc | null = null;
   if (mlsId) {
-    const match = await db.collection(`subAccounts/${id}/idxListings`).where("mlsId", "==", mlsId).limit(1).get();
-    if (match.empty) return NextResponse.json({ error: "No synced IDX listing matched that MLS number." }, { status: 404 });
-    listing = { id: match.docs[0].id, ...(match.docs[0].data() as Omit<IdxListingDoc, "id">) };
+    const listingsCol = db.collection(`subAccounts/${id}/idxListings`);
+    const direct = await listingsCol.doc(mlsId).get();
+    if (direct.exists) {
+      listing = { id: direct.id, ...(direct.data() as Omit<IdxListingDoc, "id">) };
+    } else {
+      const cached = await listingsCol.get();
+      const found = cached.docs.find((doc) => listingMatchesIdentifier({ id: doc.id, ...(doc.data() as Omit<IdxListingDoc, "id">) }, mlsId));
+      if (found) listing = { id: found.id, ...(found.data() as Omit<IdxListingDoc, "id">) };
+    }
+    if (!listing) {
+      const sync = await syncIdxListings(id);
+      if (sync.ok) {
+        const refreshed = await listingsCol.get();
+        const found = refreshed.docs.find((doc) => listingMatchesIdentifier({ id: doc.id, ...(doc.data() as Omit<IdxListingDoc, "id">) }, mlsId));
+        if (found) listing = { id: found.id, ...(found.data() as Omit<IdxListingDoc, "id">) };
+      }
+    }
+    if (!listing) return NextResponse.json({ error: "No matching featured listing was returned by your connected IDX Broker account. Try Sync now, confirm this property is one of your featured/agent listings, or use guided manual entry." }, { status: 404 });
   } else {
     const manual = buildManualListing(body, id);
     if (typeof manual === "string") return NextResponse.json({ error: manual }, { status: 400 });

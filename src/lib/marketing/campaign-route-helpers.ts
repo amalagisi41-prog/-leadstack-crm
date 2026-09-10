@@ -18,3 +18,13 @@ export function buildManualListing(body: Record<string, unknown>, subAccountId: 
 export function blockedCampaignChannels(brief: ContentBrief, wanted: CampaignChannel[]) {
   return brief.channels.filter((channel) => wanted.includes(channel.channel)).filter((channel) => channel.status !== "ready" || channel.findings.length > 0);
 }
+
+/** Match only identifiers preserved from the official IDX response. */
+export function listingMatchesIdentifier(listing: IdxListingDoc, identifier: string): boolean {
+  const wanted = identifier.trim().toLowerCase();
+  if (!wanted) return false;
+  if (listing.id.toLowerCase() === wanted) return true;
+  const raw = listing.raw;
+  return [raw.listingID, raw.mlsNumber, raw.mlsID, raw.mlsId, raw.mlsListingID, raw.mlsListingId]
+    .some((value) => (typeof value === "string" || typeof value === "number") && String(value).trim().toLowerCase() === wanted);
+}
