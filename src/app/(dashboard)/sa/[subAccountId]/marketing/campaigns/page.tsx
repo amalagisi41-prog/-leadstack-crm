@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ChangeEvent } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import {
   AlertTriangle,
@@ -53,6 +53,7 @@ export default function MarketingCampaignsPage() {
   const [syncing, setSyncing] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const [listingFile, setListingFile] = useState<File | null>(null);
   const [landingPageUrl, setLandingPageUrl] = useState<string | null>(null);
   const [approvedChannels, setApprovedChannels] = useState<string[]>([]);
   const [listing, setListing] = useState<IdxListingDoc | null>(null);
@@ -169,8 +170,7 @@ export default function MarketingCampaignsPage() {
     }
   }
 
-  async function importListing(event: ChangeEvent<HTMLInputElement>) {
-    const listingFile = event.target.files?.[0];
+  async function importListing() {
     if (!listingFile) return;
     setUploading(true);
     try {
@@ -222,7 +222,7 @@ export default function MarketingCampaignsPage() {
       );
     } finally {
       setUploading(false);
-      event.target.value = "";
+      setListingFile(null);
     }
   }
 
@@ -306,7 +306,9 @@ export default function MarketingCampaignsPage() {
                     type="file"
                     className="sr-only"
                     accept=".pdf,.csv,.xlsx,.xls,.json,.txt,.html"
-                    onChange={importListing}
+                    onChange={(event) =>
+                      setListingFile(event.target.files?.[0] ?? null)
+                    }
                     disabled={!isAdmin || uploading}
                   />
                 </label>
@@ -326,7 +328,22 @@ export default function MarketingCampaignsPage() {
                     disabled={!isAdmin || uploading}
                   />
                 </label>
+                <Button
+                  type="button"
+                  onClick={importListing}
+                  disabled={!isAdmin || uploading || !listingFile}
+                >
+                  {uploading ? "Importing…" : "Import listing + photos"}
+                </Button>
               </div>
+              {(listingFile || photoFiles.length > 0) && (
+                <p className="text-muted-foreground mt-2 text-xs">
+                  {listingFile ? listingFile.name : "No listing file selected"}
+                  {photoFiles.length > 0
+                    ? ` · ${photoFiles.length} photo${photoFiles.length === 1 ? "" : "s"} ready`
+                    : " · Add photos before importing"}
+                </p>
+              )}
             </div>
           </div>
         </div>
