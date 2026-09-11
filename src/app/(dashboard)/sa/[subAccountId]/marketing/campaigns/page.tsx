@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { AlertTriangle, Search, Sparkles } from "lucide-react";
+import { AlertTriangle, RefreshCw, Search, Sparkles } from "lucide-react";
 import { useSubAccount } from "@/context/sub-account-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,7 @@ export default function MarketingCampaignsPage() {
   const [brief, setBrief] = useState<CampaignBriefDoc | null>(null);
   const [loading, setLoading] = useState(false);
   const [approving, setApproving] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [landingPageUrl, setLandingPageUrl] = useState<string | null>(null);
 
   async function createBrief() {
@@ -47,11 +48,22 @@ export default function MarketingCampaignsPage() {
     finally { setApproving(false); }
   }
 
+  async function syncListings() {
+    setSyncing(true);
+    try {
+      const res = await fetch(`/api/sub-accounts/${subAccountId}/idx/sync`, { method: "POST" });
+      const data = await res.json() as { ok?: boolean; error?: string; listingCount?: number };
+      if (!res.ok || !data.ok) throw new Error(data.error ?? "Could not sync IDX listings.");
+      toast.success(`IDX listings synced${typeof data.listingCount === "number" ? ` (${data.listingCount} active)` : ""}.`);
+    } catch (error) { toast.error(error instanceof Error ? error.message : "Could not sync IDX listings."); }
+    finally { setSyncing(false); }
+  }
+
   return <div className="space-y-6">
     <div><h1 className="text-2xl font-semibold">MLS Campaign Panel</h1><p className="mt-1 text-sm text-muted-foreground">Build reviewable, facts-only campaign drafts from the licensed IDX feed.</p></div>
     <div className="rounded-2xl border bg-card p-5">
-      <div className="flex flex-wrap items-end gap-3"><div className="min-w-64 flex-1 space-y-1.5"><Label htmlFor="campaign-mls">MLS number</Label><Input id="campaign-mls" value={mlsId} onChange={(e) => setMlsId(e.target.value)} placeholder="Search synced IDX listings by MLS#" disabled={manual} /></div><Button onClick={createBrief} disabled={!isAdmin || loading || (!manual && !mlsId.trim())}>{loading ? "Building…" : <><Search className="mr-1 h-4 w-4" /> Find listing</>}</Button></div>
-      <p className="mt-3 text-xs text-muted-foreground">Enter a listing number from your connected IDX Broker account. AgentStack will refresh your official featured-listing feed automatically, then build the campaign drafts for you.</p>
+      <div className="flex flex-wrap items-end gap-3"><div className="min-w-64 flex-1 space-y-1.5"><Label htmlFor="campaign-mls">IDX Broker listing number</Label><Input id="campaign-mls" value={mlsId} onChange={(e) => setMlsId(e.target.value)} placeholder="Search synced featured/agent listings" disabled={manual} /></div><Button onClick={createBrief} disabled={!isAdmin || loading || (!manual && !mlsId.trim())}>{loading ? "Building…" : <><Search className="mr-1 h-4 w-4" /> Find listing</>}</Button><Button type="button" variant="outline" onClick={syncListings} disabled={!isAdmin || syncing}>{syncing ? <><RefreshCw className="mr-1 h-4 w-4 animate-spin" /> Syncing…</> : <><RefreshCw className="mr-1 h-4 w-4" /> Sync now</>}</Button></div>
+      <p className="mt-3 text-xs text-muted-foreground">Enter the listing number returned by your connected IDX Broker featured/agent-listings feed. This integration cannot search the entire MLS.</p>
       <button type="button" className="mt-2 text-xs underline" onClick={() => setManual((v) => !v)}>{manual ? "Use synced IDX listing" : "Use guided manual entry"}</button>
       {manual && <div className="mt-4 grid gap-3 sm:grid-cols-2">{([['address','Address'],['city','City'],['state','State'],['zip','ZIP'],['price','Price'],['beds','Beds'],['baths','Baths'],['sqft','Square feet'],['propertyType','Property type']] as const).map(([key,label]) => <div key={key} className="space-y-1"><Label htmlFor={`manual-${key}`}>{label}</Label><Input id={`manual-${key}`} value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })} /></div>)}<div className="space-y-1 sm:col-span-2"><Label htmlFor="manual-remarks">Remarks</Label><Textarea id="manual-remarks" value={form.remarks} onChange={(e) => setForm({ ...form, remarks: e.target.value })} /></div><div className="space-y-1 sm:col-span-2"><Label htmlFor="manual-photos">Photo URLs (one per line)</Label><Textarea id="manual-photos" value={form.photos} onChange={(e) => setForm({ ...form, photos: e.target.value })} /></div><div className="space-y-1 sm:col-span-2"><Label htmlFor="manual-disclaimer">MLS disclaimer (verbatim)</Label><Textarea id="manual-disclaimer" value={form.disclaimer} onChange={(e) => setForm({ ...form, disclaimer: e.target.value })} /></div></div>}
     </div>
