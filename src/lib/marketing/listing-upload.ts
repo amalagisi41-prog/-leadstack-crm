@@ -1,8 +1,27 @@
 import "server-only";
 
-import { PDFParse } from "pdf-parse";
 import * as XLSX from "xlsx";
 import type { IdxListingDoc } from "@/types/idx";
+
+// pdfjs-dist expects this browser geometry global while loading. Text parsing
+// does not render paths, so a small pure-JS 2D matrix is sufficient and keeps
+// the server bundle free of platform-specific native canvas binaries.
+if (typeof globalThis.DOMMatrix === "undefined") {
+  class ServerDomMatrix {
+    a = 1; b = 0; c = 0; d = 1; e = 0; f = 0;
+    constructor(init?: number[] | { a?: number; b?: number; c?: number; d?: number; e?: number; f?: number }) {
+      if (Array.isArray(init)) [this.a, this.b, this.c, this.d, this.e, this.f] = init;
+      else if (init) Object.assign(this, init);
+    }
+    multiplySelf(other: ServerDomMatrix) { const [a, b, c, d, e, f] = [this.a, this.b, this.c, this.d, this.e, this.f]; this.a = a * other.a + c * other.b; this.b = b * other.a + d * other.b; this.c = a * other.c + c * other.d; this.d = b * other.c + d * other.d; this.e = a * other.e + c * other.f + e; this.f = b * other.e + d * other.f + f; return this; }
+    preMultiplySelf(other: ServerDomMatrix) { return new ServerDomMatrix(other).multiplySelf(this).copyTo(this); }
+    translate(x: number, y: number) { return new ServerDomMatrix(this).multiplySelf(new ServerDomMatrix([1, 0, 0, 1, x, y])); }
+    scale(x: number, y = x) { return new ServerDomMatrix(this).multiplySelf(new ServerDomMatrix([x, 0, 0, y, 0, 0])); }
+    invertSelf() { const determinant = this.a * this.d - this.b * this.c; if (!determinant) return this; const { a, b, c, d, e, f } = this; this.a = d / determinant; this.b = -b / determinant; this.c = -c / determinant; this.d = a / determinant; this.e = (c * f - d * e) / determinant; this.f = (b * e - a * f) / determinant; return this; }
+    copyTo(target: ServerDomMatrix) { Object.assign(target, this); return target; }
+  }
+  globalThis.DOMMatrix = ServerDomMatrix as unknown as typeof globalThis.DOMMatrix;
+}
 
 type Cell = string | number | boolean | null;
 
@@ -57,18 +76,19 @@ function parseText(textContent: string, extension: string): Record<string, unkno
   return [{ rawText: textContent }];
 }
 
-function rowsFromFile(buffer: Buffer, extension: string): Promise<Record<string, unknown>[]> {
+async function rowsFromFile(buffer: Buffer, extension: string): Promise<Record<string, unknown>[]> {
   if ([".xlsx", ".xls"].includes(extension)) {
     const workbook = XLSX.read(buffer, { type: "buffer" });
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    return Promise.resolve(XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: "" }));
+    return XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: "" });
   }
   if (extension === ".pdf") {
+    const { PDFParse } = await import("pdf-parse");
     const parser = new PDFParse({ data: buffer });
     return parser.getText().then((result) => parser.destroy().then(() => [{ rawText: result.text }]))
       .catch(async (error) => { await parser.destroy(); throw error; });
   }
-  return Promise.resolve(parseText(buffer.toString("utf8"), extension));
+  return parseText(buffer.toString("utf8"), extension);
 }
 
 function listingFromRow(row: Record<string, unknown>, subAccountId: string, sourceId: string, photos: string[]): IdxListingDoc | string {
