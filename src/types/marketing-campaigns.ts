@@ -44,6 +44,17 @@ export interface ContentBrief {
   daysOnMarket: number | null;
   dataGaps: string[];
   channels: ChannelDraft[];
+  lseo: LseoStrategy;
+}
+
+export interface LseoStrategy {
+  score: number;
+  searchTitle: string;
+  metaDescription: string;
+  primaryQuery: string;
+  localSignals: string[];
+  recommendations: string[];
+  blockers: string[];
 }
 
 export interface CampaignBriefDoc {

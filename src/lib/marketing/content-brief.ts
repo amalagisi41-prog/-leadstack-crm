@@ -5,7 +5,7 @@ import {
   strongestVerifiableFeature,
 } from "./listing-boost";
 import { getTool } from "./tool-registry";
-import type { CampaignChannel, ChannelDraft, ContentBrief } from "@/types/marketing-campaigns";
+import type { CampaignChannel, ChannelDraft, ContentBrief, LseoStrategy } from "@/types/marketing-campaigns";
 
 const CHANNEL_TOOL: Record<CampaignChannel, string> = {
   landingPage: "listing.campaign.landingPage",
@@ -49,6 +49,30 @@ function draftFor(channel: CampaignChannel, copy: string): ChannelDraft {
   };
 }
 
+function buildLseoStrategy(listing: IdxListingDoc, strongestFeature: string, dataGaps: string[]): LseoStrategy {
+  const location = `${listing.city}, ${listing.state}`;
+  const searchTitle = `${listing.address} | ${listing.city}, ${listing.state} home for sale`.slice(0, 60);
+  const metaDescription = `${listing.propertyType} at ${listing.address} in ${location}: ${listing.beds} beds, ${listing.baths} baths, and ${strongestFeature}. View verified details.`.slice(0, 155);
+  const blockers: string[] = [];
+  if (!listing.disclaimer) blockers.push("Add the exact MLS/IDX disclaimer before publishing.");
+  if (listing.photos.length === 0) blockers.push("Add at least one authorized property photo before publishing the landing page.");
+  const score = Math.max(0, 100 - blockers.length * 20 - dataGaps.length * 5);
+  return {
+    score,
+    searchTitle,
+    metaDescription,
+    primaryQuery: `${listing.city} ${listing.state} ${listing.propertyType} for sale`,
+    localSignals: [`Consistent address: ${listing.address}, ${location} ${listing.zip}`],
+    recommendations: [
+      "Use one clear property intent per landing page and keep the address consistent across channels.",
+      "Link the landing page from the agent site and relevant local content; avoid duplicate near-identical pages.",
+      "Keep price, status, photos, attribution, and disclaimer synchronized with the authorized source.",
+      ...(dataGaps.length ? [`Fill verified data gaps where available: ${dataGaps.join(", ")}.`] : []),
+    ],
+    blockers,
+  };
+}
+
 export function buildContentBrief(listing: IdxListingDoc, now = new Date()): ContentBrief {
   const eligibility = assessBoostEligibility(listing, now);
   const strongestFeature = strongestVerifiableFeature(listing);
@@ -88,5 +112,6 @@ export function buildContentBrief(listing: IdxListingDoc, now = new Date()): Con
     daysOnMarket: eligibility.daysOnMarket,
     dataGaps,
     channels: channels.map((channel) => draftFor(channel, channelCopyFor(channel, listing, strongestFeature))),
+    lseo: buildLseoStrategy(listing, strongestFeature, dataGaps),
   };
 }
