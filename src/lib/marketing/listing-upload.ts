@@ -134,11 +134,20 @@ async function rowsFromFile(buffer: Buffer, extension: string): Promise<Record<s
 function listingFromRow(row: Record<string, unknown>, subAccountId: string, sourceId: string, photos: string[]): IdxListingDoc | string {
   const rawText = text(row.rawText);
   const combined = `${Object.values(row).map(text).join(" ")} ${rawText}`;
+  const sourceField = (pattern: RegExp): string => rawText.match(pattern)?.[1]?.trim() ?? "";
+  const sourcePrice = sourceField(/(?:^|\n)\s*[^\n$]+\s+\$([\d,]+)/i);
+  const sourceListingId = sourceField(/(?:^|\n)\s*Listing ID\s*:\s*([^\n]+)/i);
+  const sourceBeds = sourceField(/(?:^|\n)\s*(?:Active\s+)?(\d+)\s*\n\s*Beds\b/i);
+  const sourceBaths = sourceField(/(?:^|\n)\s*(\d+(?:\/\d+)?)\s*\n\s*Baths\b/i).split("/")[0] ?? "";
+  const sourceSqft = sourceField(/(?:^|\n)\s*([\d,]+)\s*\n\s*SqFt\b/i);
+  const sourceYearBuilt = sourceField(/Year Built \/ Source:\s*(\d{4})/i);
+  const sourceAgent = sourceField(/(?:^|\n)\s*List Agent\s*:\s*([^\n]+)/i).replace(/\s*\([^)]*\)\s*$/, "");
+  const sourceOffice = sourceField(/(?:^|\n)\s*List Office\s*:\s*([^\n]+)/i).replace(/\s*\([^)]*\)\s*$/, "");
   const address = text(first(row, ["address", "street", "streetaddress"])) || (combined.match(/\d+\s+[A-Za-z0-9 .'-]+(?:Road|Rd|Street|St|Avenue|Ave|Drive|Dr|Lane|Ln|Court|Ct|Way|Boulevard|Blvd)\b/i)?.[0] ?? "");
   const city = text(first(row, ["city", "cityname"])) || (combined.match(/,\s*([A-Za-z .'-]+),\s*[A-Z]{2}\s+\d{5}/)?.[1] ?? "");
   const state = text(first(row, ["state", "statecode"])) || (combined.match(/,\s*([A-Z]{2})\s+\d{5}/)?.[1] ?? "");
   if (!address || !city || !state) return "The upload needs at least address, city, and state fields.";
-  const listingId = text(first(row, ["mlsnumber", "mlsid", "mls", "listingid", "listingnumber"])) || sourceId;
+  const listingId = text(first(row, ["mlsnumber", "mlsid", "mls", "listingid", "listingnumber"])) || sourceListingId || sourceId;
   const inlinePhotos = [...combined.matchAll(PHOTO_URL_RE)].map((match) => match[0]);
   const uniquePhotos = [...new Set([...photos, ...inlinePhotos])].slice(0, 50);
   return {
@@ -146,20 +155,20 @@ function listingFromRow(row: Record<string, unknown>, subAccountId: string, sour
     subAccountId,
     mlsId: listingId,
     status: "active",
-    price: number(first(row, ["price", "listprice", "listingprice"])),
+    price: number(first(row, ["price", "listprice", "listingprice"])) || number(sourcePrice),
     address,
     city,
     state,
     zip: text(first(row, ["zip", "zipcode", "postalcode"])) || (combined.match(/\b\d{5}(?:-\d{4})?\b/)?.[0] ?? ""),
-    beds: number(first(row, ["beds", "bedrooms"])),
-    baths: number(first(row, ["baths", "bathrooms", "totalbaths"])),
-    sqft: number(first(row, ["sqft", "squarefeet", "livingarea"])) || null,
-    yearBuilt: number(first(row, ["yearbuilt", "built"])) || null,
+    beds: number(first(row, ["beds", "bedrooms"])) || number(sourceBeds),
+    baths: number(first(row, ["baths", "bathrooms", "totalbaths"])) || number(sourceBaths),
+    sqft: number(first(row, ["sqft", "squarefeet", "livingarea"])) || number(sourceSqft) || null,
+    yearBuilt: number(first(row, ["yearbuilt", "built"])) || number(sourceYearBuilt) || null,
     propertyType: text(first(row, ["propertytype", "proptype", "type"])) || "home",
     photos: uniquePhotos,
     remarks: text(first(row, ["remarks", "description", "publicremarks"])) || rawText,
-    listingAgentName: text(first(row, ["listingagent", "listingagentname", "agent"])) || null,
-    listingOfficeName: text(first(row, ["office", "officename", "brokerage"])) || null,
+    listingAgentName: text(first(row, ["listingagent", "listingagentname", "agent"])) || sourceAgent || null,
+    listingOfficeName: text(first(row, ["office", "officename", "brokerage"])) || sourceOffice || null,
     disclaimer: text(first(row, ["disclaimer", "mlsdisclaimer", "attribution"])) || null,
     lat: null,
     lng: null,
