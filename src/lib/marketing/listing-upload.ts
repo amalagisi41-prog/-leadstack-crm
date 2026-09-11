@@ -76,6 +76,39 @@ function parseText(textContent: string, extension: string): Record<string, unkno
   return [{ rawText: textContent }];
 }
 
+function parseSmartMlsPdf(textContent: string): Record<string, unknown> {
+  const normalized = textContent.replace(/\u00a0/g, " ").replace(/\t+/g, " ");
+  const lineValue = (label: string): string => {
+    const match = normalized.match(new RegExp(`^${label}\\s*:?\\s*([^\\n]+)`, "im"));
+    return match?.[1]?.trim() ?? "";
+  };
+  const firstLine = normalized.split("\n")[0]?.trim() ?? "";
+  const header = normalized.match(/^(.*?)\s+\$([\d,]+)/m);
+  const overview = normalized.match(/Overview\s*([\s\S]*?)(?:\nPrivate Remarks|\nProperty Information)/i)?.[1]?.trim() ?? "";
+  const yearBuilt = normalized.match(/Year Built \/ Source:\s*(\d{4})/i)?.[1] ?? "";
+  const beds = normalized.match(/(?:Active\s*)?(\d+)\s*\n?Beds/i)?.[1] ?? "";
+  const baths = normalized.match(/\n(\d+(?:\/\d+)?)\s*\n?Baths/i)?.[1]?.split("/")[0] ?? "";
+  const sqft = normalized.match(/([\d,]+)\s*\n?SqFt/i)?.[1] ?? "";
+  const acres = normalized.match(/([\d.]+)\s*\n?Acres/i)?.[1] ?? "";
+  return {
+    rawText: textContent,
+    address: firstLine.replace(/\s+\$[\d,]+\s*$/, "").trim(),
+    price: header?.[2] ?? "",
+    status: normalized.match(/\n(Active|Pending|Closed|Coming Soon)\s+/i)?.[1] ?? "",
+    beds,
+    baths,
+    sqft,
+    acres,
+    listingId: lineValue("Listing ID"),
+    yearBuilt,
+    propertyType: normalized.match(/^(Single Family[^\n]*)/im)?.[1] ?? "",
+    remarks: overview,
+    listingAgentName: lineValue("List Agent").replace(/\s*\([^)]*\)\s*$/, ""),
+    listingOfficeName: lineValue("List Office").replace(/\s*\([^)]*\)\s*$/, ""),
+    disclaimer: normalized.match(/Information contained in this SmartMLS listing[\s\S]*?All Rights Reserved\./i)?.[0] ?? "",
+  };
+}
+
 async function rowsFromFile(buffer: Buffer, extension: string): Promise<Record<string, unknown>[]> {
   if ([".xlsx", ".xls"].includes(extension)) {
     const workbook = XLSX.read(buffer, { type: "buffer" });
@@ -92,7 +125,7 @@ async function rowsFromFile(buffer: Buffer, extension: string): Promise<Record<s
     // generated file is not present.
     PDFParse.setWorker(getData());
     const parser = new PDFParse({ data: buffer });
-    return parser.getText().then((result) => parser.destroy().then(() => [{ rawText: result.text }]))
+    return parser.getText().then((result) => parser.destroy().then(() => [parseSmartMlsPdf(result.text)]))
       .catch(async (error) => { await parser.destroy(); throw error; });
   }
   return parseText(buffer.toString("utf8"), extension);
