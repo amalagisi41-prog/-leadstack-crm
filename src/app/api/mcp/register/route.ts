@@ -7,7 +7,7 @@ export async function POST(request: Request) {
     if (!Array.isArray(body.redirect_uris) || body.redirect_uris.some((uri) => typeof uri !== "string")) {
       return NextResponse.json({ error: "invalid_client_metadata" }, { status: 400 });
     }
-    return NextResponse.json(registerClient({
+    return NextResponse.json(await registerClient({
       redirectUris: body.redirect_uris,
       clientName: typeof body.client_name === "string" ? body.client_name : undefined,
     }), { status: 201 });

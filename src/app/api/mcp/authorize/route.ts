@@ -11,7 +11,7 @@ export async function GET(request: Request) {
   const redirectUri = url.searchParams.get("redirect_uri") ?? "";
   const codeChallenge = url.searchParams.get("code_challenge") ?? "";
   const state = url.searchParams.get("state") ?? "";
-  const client = readClient(clientId);
+  const client = await readClient(clientId);
   if (!client || !client.redirect_uris.includes(redirectUri) || !codeChallenge) return bad("Invalid OAuth authorization request.");
   const caller = await readRequestCaller(request);
   if (!caller) return NextResponse.redirect(new URL(`/login?returnTo=${encodeURIComponent(url.pathname + url.search)}`, url));
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   const redirectUri = String(form.get("redirect_uri") ?? "");
   const codeChallenge = String(form.get("code_challenge") ?? "");
   const state = String(form.get("state") ?? "");
-  const client = readClient(clientId);
+  const client = await readClient(clientId);
   const caller = await readRequestCaller(request);
   if (!client || !client.redirect_uris.includes(redirectUri) || !caller || !codeChallenge) return bad("Invalid OAuth authorization request.");
   const code = await createAuthorizationCode({ clientId, redirectUri, codeChallenge, uid: caller.uid, email: caller.email });

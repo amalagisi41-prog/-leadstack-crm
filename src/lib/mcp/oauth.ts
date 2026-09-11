@@ -37,6 +37,10 @@ function sign(payload: SignedPayload): string {
   return `${encoded}.${mac}`;
 }
 
+function clientStorageKey(clientId: string): string {
+  return createHash("sha256").update(clientId).digest("hex");
+}
+
 function verify<T extends SignedPayload>(value: string, type: T["type"]): T | null {
   const [encoded, suppliedMac] = value.split(".");
   if (!encoded || !suppliedMac) return null;
@@ -55,7 +59,7 @@ export type RegisteredClient = {
   client_name?: string;
 };
 
-export function registerClient(input: { redirectUris: string[]; clientName?: string }): RegisteredClient {
+export async function registerClient(input: { redirectUris: string[]; clientName?: string }): Promise<RegisteredClient> {
   const redirectUris = input.redirectUris.filter((uri) => {
     try {
       const url = new URL(uri);
@@ -71,13 +75,29 @@ export function registerClient(input: { redirectUris: string[]; clientName?: str
     redirectUris,
     clientName: input.clientName,
   };
-  return { client_id: sign(payload), redirect_uris: redirectUris, client_name: input.clientName };
+  const clientId = sign(payload);
+  await getAdminDb().doc(`mcpOauthClients/${clientStorageKey(clientId)}`).set({
+    clientId,
+    redirectUris,
+    clientName: input.clientName ?? null,
+    createdAt: Date.now(),
+  });
+  return { client_id: clientId, redirect_uris: redirectUris, client_name: input.clientName };
 }
 
-export function readClient(clientId: string): RegisteredClient | null {
+export async function readClient(clientId: string): Promise<RegisteredClient | null> {
   const payload = verify<SignedPayload & { redirectUris: string[]; clientName?: string }>(clientId, "client");
-  if (!payload || !Array.isArray(payload.redirectUris)) return null;
-  return { client_id: clientId, redirect_uris: payload.redirectUris, client_name: payload.clientName };
+  if (payload && Array.isArray(payload.redirectUris)) {
+    return { client_id: clientId, redirect_uris: payload.redirectUris, client_name: payload.clientName };
+  }
+  const snapshot = await getAdminDb().doc(`mcpOauthClients/${clientStorageKey(clientId)}`).get();
+  const data = snapshot.data();
+  if (!snapshot.exists || data?.clientId !== clientId || !Array.isArray(data.redirectUris)) return null;
+  return {
+    client_id: clientId,
+    redirect_uris: data.redirectUris.filter((uri: unknown): uri is string => typeof uri === "string"),
+    client_name: typeof data.clientName === "string" ? data.clientName : undefined,
+  };
 }
 
 export async function createAuthorizationCode(input: {
