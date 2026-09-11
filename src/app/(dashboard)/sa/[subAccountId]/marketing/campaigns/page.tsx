@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ChangeEvent } from "react";
 import { toast } from "sonner";
-import { AlertTriangle, RefreshCw, Search, Sparkles } from "lucide-react";
+import { AlertTriangle, FileUp, RefreshCw, Search, Sparkles } from "lucide-react";
 import { useSubAccount } from "@/context/sub-account-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,8 @@ export default function MarketingCampaignsPage() {
   const [loading, setLoading] = useState(false);
   const [approving, setApproving] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [landingPageUrl, setLandingPageUrl] = useState<string | null>(null);
 
   async function createBrief() {
@@ -59,14 +61,34 @@ export default function MarketingCampaignsPage() {
     finally { setSyncing(false); }
   }
 
+  async function importListing(event: ChangeEvent<HTMLInputElement>) {
+    const listingFile = event.target.files?.[0];
+    if (!listingFile) return;
+    setUploading(true);
+    try {
+      const body = new FormData();
+      body.set("listingFile", listingFile);
+      photoFiles.forEach((file) => body.append("photos", file));
+      const res = await fetch(`/api/sub-accounts/${subAccountId}/marketing/listing-upload`, { method: "POST", body });
+      const data = await res.json() as { ok?: boolean; error?: string; listing?: IdxListingShape };
+      if (!res.ok || !data.ok || !data.listing) throw new Error(data.error ?? "Could not import listing.");
+      setMlsId(data.listing.id);
+      toast.success(`Imported ${data.listing.address}. Click Build campaign to continue.`);
+    } catch (error) { toast.error(error instanceof Error ? error.message : "Could not import listing."); }
+    finally { setUploading(false); event.target.value = ""; }
+  }
+
   return <div className="space-y-6">
     <div><h1 className="text-2xl font-semibold">MLS Campaign Panel</h1><p className="mt-1 text-sm text-muted-foreground">Build reviewable, facts-only campaign drafts from the licensed IDX feed.</p></div>
     <div className="rounded-2xl border bg-card p-5">
       <div className="flex flex-wrap items-end gap-3"><div className="min-w-64 flex-1 space-y-1.5"><Label htmlFor="campaign-mls">IDX Broker listing number</Label><Input id="campaign-mls" value={mlsId} onChange={(e) => setMlsId(e.target.value)} placeholder="Search synced featured/agent listings" disabled={manual} /></div><Button onClick={createBrief} disabled={!isAdmin || loading || (!manual && !mlsId.trim())}>{loading ? "Building…" : <><Search className="mr-1 h-4 w-4" /> Find listing</>}</Button><Button type="button" variant="outline" onClick={syncListings} disabled={!isAdmin || syncing}>{syncing ? <><RefreshCw className="mr-1 h-4 w-4 animate-spin" /> Syncing…</> : <><RefreshCw className="mr-1 h-4 w-4" /> Sync now</>}</Button></div>
       <p className="mt-3 text-xs text-muted-foreground">Enter the listing number returned by your connected IDX Broker featured/agent-listings feed. This integration cannot search the entire MLS.</p>
       <button type="button" className="mt-2 text-xs underline" onClick={() => setManual((v) => !v)}>{manual ? "Use synced IDX listing" : "Use guided manual entry"}</button>
+      <div className="mt-4 rounded-xl border border-dashed p-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-sm font-medium">Import listing details and photos</p><p className="text-xs text-muted-foreground">Upload a PDF, CSV, XLSX, JSON, TXT, or HTML export, plus up to 20 JPG, PNG, WebP, or GIF photos.</p><div className="mt-2 flex flex-wrap gap-2"><label className="inline-flex cursor-pointer items-center rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted"><FileUp className="mr-2 h-4 w-4" />{uploading ? "Importing…" : "Choose listing file"}<input type="file" className="sr-only" accept=".pdf,.csv,.xlsx,.xls,.json,.txt,.html" onChange={importListing} disabled={!isAdmin || uploading} /></label><label className="inline-flex cursor-pointer items-center rounded-md border px-3 py-2 text-sm font-medium hover:bg-muted"><FileUp className="mr-2 h-4 w-4" />{photoFiles.length ? `${photoFiles.length} photos selected` : "Choose photos"}<input type="file" className="sr-only" accept="image/jpeg,image/png,image/webp,image/gif" multiple onChange={(event) => setPhotoFiles(Array.from(event.target.files ?? []))} disabled={!isAdmin || uploading} /></label></div></div></div></div>
       {manual && <div className="mt-4 grid gap-3 sm:grid-cols-2">{([['address','Address'],['city','City'],['state','State'],['zip','ZIP'],['price','Price'],['beds','Beds'],['baths','Baths'],['sqft','Square feet'],['propertyType','Property type']] as const).map(([key,label]) => <div key={key} className="space-y-1"><Label htmlFor={`manual-${key}`}>{label}</Label><Input id={`manual-${key}`} value={form[key]} onChange={(e) => setForm({ ...form, [key]: e.target.value })} /></div>)}<div className="space-y-1 sm:col-span-2"><Label htmlFor="manual-remarks">Remarks</Label><Textarea id="manual-remarks" value={form.remarks} onChange={(e) => setForm({ ...form, remarks: e.target.value })} /></div><div className="space-y-1 sm:col-span-2"><Label htmlFor="manual-photos">Photo URLs (one per line)</Label><Textarea id="manual-photos" value={form.photos} onChange={(e) => setForm({ ...form, photos: e.target.value })} /></div><div className="space-y-1 sm:col-span-2"><Label htmlFor="manual-disclaimer">MLS disclaimer (verbatim)</Label><Textarea id="manual-disclaimer" value={form.disclaimer} onChange={(e) => setForm({ ...form, disclaimer: e.target.value })} /></div></div>}
     </div>
     {brief && <div className="space-y-4"><div className="rounded-2xl border bg-card p-5"><div className="flex items-start gap-3"><Sparkles className="mt-0.5 h-5 w-5 text-primary" /><div><h2 className="font-semibold">{brief.brief.title}</h2><p className="mt-1 text-sm text-muted-foreground">{brief.brief.description}</p><p className="mt-2 text-xs">Boost schedule: {brief.brief.boostTier ?? "not eligible yet"}{brief.brief.daysOnMarket == null ? " · days on market unavailable" : ` · ${brief.brief.daysOnMarket} days on market`}</p></div></div>{brief.brief.dataGaps.length > 0 && <p className="mt-4 text-xs text-amber-700">Data gaps (not invented): {brief.brief.dataGaps.join(", ")}</p>}<div className="mt-4 flex flex-wrap items-center gap-3"><Button onClick={approveReadyDrafts} disabled={!isAdmin || approving}>{approving ? "Approving…" : "Approve ready drafts"}</Button>{landingPageUrl && <a className="text-sm underline" href={landingPageUrl} target="_blank" rel="noreferrer">View approved landing page</a>}</div></div><div className="grid gap-3 md:grid-cols-2">{brief.brief.channels.map((draft) => <div key={draft.channel} className="rounded-xl border bg-card p-4"><div className="flex items-center justify-between"><h3 className="font-medium capitalize">{draft.channel}</h3><span className="text-xs text-muted-foreground">{draft.approval}</span></div><p className="mt-2 text-sm">{draft.body}</p>{draft.findings.length > 0 && <p className="mt-2 flex gap-1 text-xs text-amber-700"><AlertTriangle className="h-4 w-4 shrink-0" /> Review: {draft.findings.join(", ")}</p>}<p className="mt-2 text-[11px] text-muted-foreground">Status: {draft.status} · audited approval required</p></div>)}</div></div>}
   </div>;
 }
+
+type IdxListingShape = { id: string; address: string };

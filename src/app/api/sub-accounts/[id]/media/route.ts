@@ -16,8 +16,12 @@ export async function GET(request: Request, ctx: { params: Promise<{ id: string 
     const { id } = await ctx.params;
     const access = await requireSubAccountAdmin(request, id);
     if (access instanceof NextResponse) return access;
-    const snap = await getAdminDb().collection(`subAccounts/${id}/mediaAssets`).orderBy("createdAt", "desc").limit(100).get();
-    return NextResponse.json({ assets: snap.docs.map((doc) => ({ id: doc.id, ...doc.data(), createdAt: doc.data().createdAt?.toDate?.()?.toISOString?.() ?? null })) });
+    const propertyId = new URL(request.url).searchParams.get("propertyId")?.trim() ?? "";
+    const snap = await getAdminDb().collection(`subAccounts/${id}/mediaAssets`).orderBy("createdAt", "desc").limit(500).get();
+    const assets = snap.docs
+      .map((doc) => ({ id: doc.id, ...doc.data(), createdAt: doc.data().createdAt?.toDate?.()?.toISOString?.() ?? null }))
+      .filter((asset) => !propertyId || (asset as Record<string, unknown>).propertyId === propertyId);
+    return NextResponse.json({ assets });
   } catch (error) {
     console.error("Media GET error:", error);
     return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to load media assets" }, { status: 500 });
