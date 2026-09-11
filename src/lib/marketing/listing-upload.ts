@@ -83,7 +83,14 @@ async function rowsFromFile(buffer: Buffer, extension: string): Promise<Record<s
     return XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: "" });
   }
   if (extension === ".pdf") {
-    const { PDFParse } = await import("pdf-parse");
+    const [{ PDFParse }, { getData }] = await Promise.all([
+      import("pdf-parse"),
+      import("pdf-parse/worker"),
+    ]);
+    // Use pdf-parse's embedded worker payload. This avoids PDF.js resolving
+    // `./pdf.worker.mjs` relative to a Next/Vercel server chunk, where that
+    // generated file is not present.
+    PDFParse.setWorker(getData());
     const parser = new PDFParse({ data: buffer });
     return parser.getText().then((result) => parser.destroy().then(() => [{ rawText: result.text }]))
       .catch(async (error) => { await parser.destroy(); throw error; });

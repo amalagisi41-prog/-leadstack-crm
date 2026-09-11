@@ -3,6 +3,10 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   typescript: { ignoreBuildErrors: true },
   eslint: { ignoreDuringBuilds: true },
+  // pdf-parse's Node worker includes a platform-native canvas dependency.
+  // Keep these packages external so Vercel resolves the correct Linux build
+  // at runtime instead of attempting to parse a native binary during webpack.
+  serverExternalPackages: ["pdf-parse", "@napi-rs/canvas"],
   // `deploymentId` was set here to a git commit sha, to stamp asset requests
   // with the build they belong to. That is the wrong value: skew protection
   // keys on the host's own deployment id, not on a commit sha, so the `?dpl=`
