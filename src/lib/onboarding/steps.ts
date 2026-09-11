@@ -20,6 +20,7 @@ import { SUB_ACCOUNT_ROUTES } from "@/lib/navigation/sub-account-routes";
 
 export type OnboardingStepId =
   | "business_profile"
+  | "lseo"
   | "contacts"
   | "sms"
   | "form"
@@ -83,6 +84,15 @@ export const ONBOARDING_STEPS: readonly OnboardingStepMeta[] = [
       "Upload a CSV from your old CRM or add your first contacts manually. Your entire database lives here.",
     cta: "Go to People",
     href: "/contacts?import=1",
+    videoMinutes: 4,
+  },
+  {
+    id: "lseo",
+    title: "Build a compliant local search campaign",
+    description:
+      "Upload a listing or connect IDX, then get guided local SERP recommendations and review-ready campaign drafts across your channels. Nothing publishes without your approval.",
+    cta: "Open Campaign Launch Assist",
+    href: SUB_ACCOUNT_ROUTES.marketingCampaigns,
     videoMinutes: 4,
   },
   {
@@ -162,6 +172,7 @@ export const ONBOARDING_STEP_IDS: readonly OnboardingStepId[] =
 export const OPTIONAL_ONBOARDING_STEP_IDS: readonly OnboardingStepId[] = [
   "sms",
   "ai",
+  "lseo",
 ] as const;
 
 export const REQUIRED_ONBOARDING_STEP_IDS: readonly OnboardingStepId[] =

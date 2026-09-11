@@ -51,7 +51,7 @@ describe("the wizard maps to the work it actually shows", () => {
     // The wizard only links out for these two, so clicking Next never
     // completes them. Placing them last means an unfinished agent resumes on
     // the screen that names them.
-    expect(WIZARD_STEP_STEP_IDS[5]).toEqual(["contacts", "sms", "booking"]);
+    expect(WIZARD_STEP_STEP_IDS[5]).toEqual(["contacts", "sms", "booking", "lseo"]);
   });
 });
 

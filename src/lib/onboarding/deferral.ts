@@ -46,6 +46,13 @@ const DEFERRALS: Record<OnboardingStepId, Omit<StepDeferral, "id">> = {
     blockingReason:
       "Your website, your emails, and everything Zack writes come from these details. Without them there is nothing specific to build from, and what you get back is a template with your name on it.",
   },
+  lseo: {
+    deferral: "deferrable",
+    cost: "You will not have a guided listing campaign or local-search readiness review yet.",
+    returnWhen: "Come back when you have a listing, listing export, or authorized IDX feed to promote.",
+    skipLabel: "Build campaigns later",
+    blockingReason: "",
+  },
   domain: {
     deferral: "deferrable",
     cost:

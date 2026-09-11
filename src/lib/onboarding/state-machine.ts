@@ -25,7 +25,7 @@ export const WIZARD_STEP_STEP_IDS: readonly (readonly OnboardingStepId[])[] = [
   // booking are real tasks this wizard only links out to, so clicking through
   // never marks them. Listing them here means an agent who has not done them
   // resumes on the final screen, which names each and links to it.
-  ["contacts", "sms", "booking"],
+  ["contacts", "sms", "booking", "lseo"],
 ];
 
 export interface OnboardingRecommendedAction {
