@@ -13,6 +13,7 @@ export const runtime = "nodejs";
 
 const MAX_SOURCE_BYTES = 15 * 1024 * 1024;
 const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
+const MAX_MULTIPART_BYTES = 4 * 1024 * 1024;
 const CHUNK_BYTES = 700 * 1024;
 const SOURCE_TYPES = new Set([
   "application/pdf", "text/csv", "application/json", "text/plain", "text/html",
@@ -62,6 +63,7 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
     const photoFiles = form.getAll("photos").filter((value): value is File => value instanceof File);
     if (photoFiles.length > 20) return NextResponse.json({ error: "Upload up to 20 listing photos at a time." }, { status: 400 });
     if (photoFiles.some((file) => !PHOTO_TYPES.has(file.type) || file.size > MAX_PHOTO_BYTES)) return NextResponse.json({ error: "Photos must be JPG, PNG, WebP, or GIF files under 10 MB each." }, { status: 400 });
+    if (source.size + photoFiles.reduce((total, file) => total + file.size, 0) > MAX_MULTIPART_BYTES) return NextResponse.json({ error: "Keep the combined listing export and photos under 4 MB for this upload. Use a smaller export or fewer/compressed photos." }, { status: 413 });
 
     const sourceId = `import-${Date.now()}-${randomUUID().slice(0, 8)}`;
     const listing = await parseListingUpload({ buffer: Buffer.from(await source.arrayBuffer()), filename: source.name, subAccountId: id, sourceId, photos: [] });
