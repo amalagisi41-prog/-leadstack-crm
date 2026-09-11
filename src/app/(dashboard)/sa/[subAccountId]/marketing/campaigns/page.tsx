@@ -54,6 +54,7 @@ export default function MarketingCampaignsPage() {
   const [uploading, setUploading] = useState(false);
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [landingPageUrl, setLandingPageUrl] = useState<string | null>(null);
+  const [approvedChannels, setApprovedChannels] = useState<string[]>([]);
   const [listing, setListing] = useState<IdxListingDoc | null>(null);
   const [editing, setEditing] = useState(false);
 
@@ -125,10 +126,12 @@ export default function MarketingCampaignsPage() {
         ok?: boolean;
         error?: string;
         landingPageUrl?: string | null;
+        approvedChannels?: string[];
       }>(res);
       if (!res.ok || !data.ok)
         throw new Error(data.error ?? "Could not approve campaign drafts.");
       setLandingPageUrl(data.landingPageUrl ?? null);
+      setApprovedChannels(data.approvedChannels ?? []);
       toast.success("Ready campaign drafts approved.");
     } catch (error) {
       toast.error(
@@ -498,6 +501,32 @@ export default function MarketingCampaignsPage() {
               </div>
             )}
           </div>
+          {brief.brief.images.length > 0 && (
+            <div className="bg-card rounded-2xl border p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="font-semibold">Listing photos</h2>
+                  <p className="text-muted-foreground text-xs">
+                    Uploaded photos are attached to this property and available
+                    for the visual layouts.
+                  </p>
+                </div>
+                <span className="text-muted-foreground text-xs">
+                  {brief.brief.images.length} photos
+                </span>
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {brief.brief.images.map((image, index) => (
+                  <img
+                    key={`${image}-${index}`}
+                    src={image}
+                    alt={`${brief.brief.address} photo ${index + 1}`}
+                    className="aspect-[4/3] w-full rounded-lg border object-cover"
+                  />
+                ))}
+              </div>
+            </div>
+          )}
           <div className="grid gap-3 md:grid-cols-2">
             {brief.brief.channels.map((draft) => (
               <div
@@ -523,6 +552,61 @@ export default function MarketingCampaignsPage() {
               </div>
             ))}
           </div>
+          {approvedChannels.length > 0 && (
+            <div className="bg-card rounded-2xl border p-5">
+              <div>
+                <h2 className="font-semibold">
+                  Visual layouts ready for publishing
+                </h2>
+                <p className="text-muted-foreground mt-1 text-xs">
+                  Each approved channel is paired with listing photography, its
+                  caption, and extracted hashtags.
+                </p>
+              </div>
+              <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {brief.brief.channels
+                  .filter((draft) => approvedChannels.includes(draft.channel))
+                  .map((draft, index) => {
+                    const hashtags = draft.body.match(/#[A-Za-z0-9_-]+/g) ?? [];
+                    const image =
+                      brief.brief.images[index % brief.brief.images.length];
+                    return (
+                      <div
+                        key={`visual-${draft.channel}`}
+                        className="bg-background overflow-hidden rounded-xl border"
+                      >
+                        {image && (
+                          <img
+                            src={image}
+                            alt={`${draft.channel} visual for ${brief.brief.address}`}
+                            className="aspect-[4/3] w-full object-cover"
+                          />
+                        )}
+                        <div className="p-4">
+                          <div className="flex items-center justify-between">
+                            <h3 className="font-medium capitalize">
+                              {draft.channel}
+                            </h3>
+                            <span className="text-xs text-green-700">
+                              Approved
+                            </span>
+                          </div>
+                          <p className="mt-2 text-sm">{draft.body}</p>
+                          <p className="text-muted-foreground mt-3 text-xs">
+                            <span className="text-foreground font-medium">
+                              Hashtags:
+                            </span>{" "}
+                            {hashtags.length
+                              ? hashtags.join(" ")
+                              : "None required for this channel"}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
