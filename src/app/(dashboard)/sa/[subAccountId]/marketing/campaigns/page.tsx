@@ -10,6 +10,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import type { CampaignBriefDoc } from "@/types/marketing-campaigns";
 
+async function readApiJson<T>(res: Response): Promise<T> {
+  const contentType = res.headers.get("content-type") ?? "";
+  if (!contentType.toLowerCase().includes("application/json")) {
+    throw new Error(`The server returned an unexpected response (HTTP ${res.status}). Try a smaller export or retry in a moment.`);
+  }
+  return await res.json() as T;
+}
+
 export default function MarketingCampaignsPage() {
   const { subAccountId, isAdmin } = useSubAccount();
   const [mlsId, setMlsId] = useState("");
@@ -28,7 +36,7 @@ export default function MarketingCampaignsPage() {
     try {
       const payload = manual ? { ...form, mlsId: "", photos: form.photos.split(/\s*,\s*|\n/).filter(Boolean), price: Number(form.price), beds: Number(form.beds), baths: Number(form.baths), sqft: Number(form.sqft) } : { mlsId: identifier };
       const res = await fetch(`/api/sub-accounts/${subAccountId}/marketing/campaigns`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-      const data = await res.json() as { ok?: boolean; error?: string; brief?: CampaignBriefDoc };
+      const data = await readApiJson<{ ok?: boolean; error?: string; brief?: CampaignBriefDoc }>(res);
       if (!res.ok || !data.ok || !data.brief) throw new Error(data.error ?? "Could not build campaign brief.");
       setBrief(data.brief);
       toast.success("Six-channel campaign draft built for review.");
@@ -42,7 +50,7 @@ export default function MarketingCampaignsPage() {
     try {
       const channels = brief.brief.channels.filter((draft) => draft.status === "ready" && draft.findings.length === 0).map((draft) => draft.channel);
       const res = await fetch(`/api/sub-accounts/${subAccountId}/marketing/campaigns/${brief.listingId}/approve`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ channels }) });
-      const data = await res.json() as { ok?: boolean; error?: string; landingPageUrl?: string | null };
+      const data = await readApiJson<{ ok?: boolean; error?: string; landingPageUrl?: string | null }>(res);
       if (!res.ok || !data.ok) throw new Error(data.error ?? "Could not approve campaign drafts.");
       setLandingPageUrl(data.landingPageUrl ?? null);
       toast.success("Ready campaign drafts approved.");
@@ -54,7 +62,7 @@ export default function MarketingCampaignsPage() {
     setSyncing(true);
     try {
       const res = await fetch(`/api/sub-accounts/${subAccountId}/idx/sync`, { method: "POST" });
-      const data = await res.json() as { ok?: boolean; error?: string; listingCount?: number };
+      const data = await readApiJson<{ ok?: boolean; error?: string; listingCount?: number }>(res);
       if (!res.ok || !data.ok) throw new Error(data.error ?? "Could not sync IDX listings.");
       toast.success(`IDX listings synced${typeof data.listingCount === "number" ? ` (${data.listingCount} active)` : ""}.`);
     } catch (error) { toast.error(error instanceof Error ? error.message : "Could not sync IDX listings."); }
@@ -70,7 +78,7 @@ export default function MarketingCampaignsPage() {
       body.set("listingFile", listingFile);
       photoFiles.forEach((file) => body.append("photos", file));
       const res = await fetch(`/api/sub-accounts/${subAccountId}/marketing/listing-upload`, { method: "POST", body });
-      const data = await res.json() as { ok?: boolean; error?: string; listing?: IdxListingShape };
+      const data = await readApiJson<{ ok?: boolean; error?: string; listing?: IdxListingShape }>(res);
       if (!res.ok || !data.ok || !data.listing) throw new Error(data.error ?? "Could not import listing.");
       setMlsId(data.listing.id);
       await createBrief(data.listing.id);

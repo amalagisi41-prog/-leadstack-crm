@@ -70,12 +70,12 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
       saveAsset(id, listing.id, source, "source"),
       Promise.all(photoFiles.map((file) => saveAsset(id, listing.id, file, "property-photo"))),
     ]);
-    listing.photos = photoUrls;
+    listing.photos = [...new Set([...listing.photos, ...photoUrls])].slice(0, 50);
     const db = getAdminDb();
     const listingRef = db.doc(`subAccounts/${id}/idxListings/${listing.id}`);
     await listingRef.set({ ...listing, raw: { ...listing.raw, importedFrom: source.name, mediaFolder: `media/${id}/properties/${listing.id}` }, syncedAt: FieldValue.serverTimestamp() } satisfies Omit<IdxListingDoc, "syncedAt"> & { syncedAt: FieldValue }, { merge: true });
     await db.collection(`subAccounts/${id}/listingImports`).doc(sourceId).set({ sourceName: source.name, sourceType: source.type, sourceUrl, listingId: listing.id, mediaFolder: `media/${id}/properties/${listing.id}`, photoCount: photoUrls.length, importedByUid: access.uid, createdAt: FieldValue.serverTimestamp() });
-    return NextResponse.json({ ok: true, listing: { ...listing, id: listing.id, photos: photoUrls }, sourceName: source.name, photoCount: photoUrls.length }, { status: 201 });
+    return NextResponse.json({ ok: true, listing: { ...listing, id: listing.id, photos: listing.photos }, sourceName: source.name, photoCount: photoUrls.length }, { status: 201 });
   } catch (error) {
     console.error("Listing upload error:", error);
     return NextResponse.json({ error: error instanceof Error ? error.message : "Listing import failed." }, { status: 500 });
