@@ -175,6 +175,7 @@ export function ConnectYourBusiness() {
     if (!subAccount) return [];
 
     const settingsHref = saPath("/dashboard/settings");
+    const mlsFeedHref = `${settingsHref}#mls-feed`;
     const businessEmailHref = `${settingsHref}?tab=messaging#business-email`;
     const googleReviewsHref = `${settingsHref}?tab=messaging#google-reviews`;
     const contactsHref = saPath("/contacts");
@@ -352,26 +353,27 @@ export function ConnectYourBusiness() {
         actionHref: formsHref,
       },
       {
-        key: "idx",
+        key: "mls-feed",
         icon: Building,
         iconTone: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-        title: "IDX Broker",
+        title: "SmartMLS & MLS feed",
         detail: idxNeedsAttention
-          ? "Add your access key"
+          ? "Choose your approved feed"
           : idxConfigured
-            ? "Connected"
+            ? (subAccount.idxConfig?.mlsId ? `MLS ${subAccount.idxConfig.mlsId} connected` : "Connected — choose MLS")
             : undefined,
         detailTone: idxNeedsAttention
           ? "text-amber-600 dark:text-amber-400"
           : undefined,
-        blurb: "Show live MLS listings on your site and capture buyer leads.",
+        blurb:
+          "Connect your authorized SmartMLS or other MLS feed through IDX Broker, then sync listings into Properties. AgentStack never asks for your MLS password.",
         status: idxNeedsAttention
           ? "needs_attention"
           : idxConfigured
             ? "connected"
             : "not_connected",
-        actionLabel: idxConfigured ? "Manage" : "Connect",
-        actionHref: idxHref,
+        actionLabel: idxConfigured ? "Manage MLS feed" : "Connect SmartMLS",
+        actionHref: mlsFeedHref,
       },
       {
         key: "gbp",

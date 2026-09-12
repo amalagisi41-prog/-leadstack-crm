@@ -206,17 +206,18 @@ export function SubAccountIdxSection() {
   }
 
   return (
-    <section className="rounded-2xl border bg-card p-6">
+    <section id="mls-feed" className="scroll-mt-6 rounded-2xl border bg-card p-6">
       <header className="mb-4 flex items-start gap-3">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400">
           <Home className="h-4 w-4" />
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="text-base font-semibold">IDX Listings</h2>
+          <h2 className="text-base font-semibold">SmartMLS &amp; MLS feed</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            Paste your IDX Broker Platinum API access key (Account → API
-            Access in your IDX Broker dashboard). Listings sync automatically
-            every 6 hours — use &quot;Sync now&quot; to pull immediately.
+            Connect an authorized MLS feed through your IDX Broker Platinum API
+            key. If SmartMLS is included in your IDX Broker account, choose it
+            after connecting. Listings sync every 6 hours; use &quot;Sync now&quot; to
+            pull immediately.
           </p>
         </div>
       </header>
@@ -225,10 +226,10 @@ export function SubAccountIdxSection() {
         {[
           {
             number: 1,
-            title: "Credentials",
+            title: "Authorized feed",
             body: connected
               ? "Your access key is saved. Update it any time if the account changes."
-              : "Paste your IDX Broker Platinum key and optional MLS id to connect the feed.",
+              : "Use the IDX Broker API key approved for your MLS. AgentStack never stores your SmartMLS username or password.",
             done: connected,
           },
           {
@@ -304,7 +305,7 @@ export function SubAccountIdxSection() {
                 />
               )}
               <p className="text-[11px] text-muted-foreground">
-                Choose the approved MLS feed, not your personal agent or membership ID. AgentStack checks this against IDX Broker before saving.
+                Choose SmartMLS if it appears in the approved list—do not enter your personal SmartMLS agent or membership ID. AgentStack checks the selection against IDX Broker before saving.
               </p>
             </div>
             <div className="mt-3 flex justify-end">
@@ -390,10 +391,14 @@ export function SubAccountIdxSection() {
       ) : (
         <form onSubmit={handleSave} className="space-y-4">
           <div className="rounded-lg border border-blue-500/30 bg-blue-500/5 p-4">
-            <h3 className="text-sm font-semibold">Guided IDX setup</h3>
+            <h3 className="text-sm font-semibold">Guided SmartMLS / IDX setup</h3>
             <ol className="mt-2 space-y-2 text-xs text-muted-foreground">
               <li>
-                <span className="font-medium text-foreground">1. Get your IDX Broker account.</span>{" "}
+                <span className="font-medium text-foreground">1. Confirm your authorized MLS feed.</span>{" "}
+                Ask your broker or IDX Broker which MLS feeds are enabled for your account; for Connecticut, this may be SmartMLS. You do not need to share your SmartMLS sign-in with AgentStack.
+              </li>
+              <li>
+                <span className="font-medium text-foreground">2. Get your IDX Broker account.</span>{" "}
                 <a
                   href="https://signup.idxbroker.com/"
                   target="_blank"
@@ -415,12 +420,12 @@ export function SubAccountIdxSection() {
                 </a>.
               </li>
               <li>
-                <span className="font-medium text-foreground">2. Copy your access key.</span>{" "}
+                <span className="font-medium text-foreground">3. Copy your access key.</span>{" "}
                 In IDX Broker, open Account → API Access and copy the Platinum key.
               </li>
               <li>
-                <span className="font-medium text-foreground">3. Connect and test.</span>{" "}
-                Paste the key below, connect, then click Sync now to confirm your listings are flowing.
+                <span className="font-medium text-foreground">4. Connect and test.</span>{" "}
+                Paste the key below, choose SmartMLS if it is offered, then click Sync now to confirm your listings are flowing.
               </li>
             </ol>
             <p className="mt-3 text-[11px] text-muted-foreground">
