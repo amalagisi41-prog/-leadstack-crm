@@ -4,7 +4,11 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   AlertTriangle,
+  Archive,
+  Calendar,
+  CheckCircle2,
   FileUp,
+  Link2,
   RefreshCw,
   Search,
   Sparkles,
@@ -14,8 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import type { CampaignBriefDoc } from "@/types/marketing-campaigns";
-import type { CampaignChannel } from "@/types/marketing-campaigns";
+import type { CampaignBriefDoc, CampaignChannel, CampaignWorkflowStep } from "@/types/marketing-campaigns";
 import type { IdxListingDoc, ListingMarketingStatus } from "@/types/idx";
 
 const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
@@ -67,12 +70,20 @@ export default function MarketingCampaignsPage() {
   const [editingBody, setEditingBody] = useState("");
   const [savingDraft, setSavingDraft] = useState(false);
   const [channelAvailability, setChannelAvailability] = useState<Record<CampaignChannel, { configured: boolean; publishable: boolean }> | null>(null);
+  const [workflowStep, setWorkflowStep] = useState<CampaignWorkflowStep>("create");
+  const [schedulePlan, setSchedulePlan] = useState<Partial<Record<CampaignChannel, string | null>>>({});
+  const [zillow, setZillow] = useState({ profileUrl: "", listingUrl: "" });
+  const [savingZillow, setSavingZillow] = useState(false);
 
   useEffect(() => {
     if (!subAccountId) return;
     fetch(`/api/sub-accounts/${subAccountId}/marketing/campaigns`)
       .then((res) => readApiJson<{ briefs?: Array<CampaignBriefDoc & { listing?: IdxListingDoc | null }>; channelAvailability?: Record<CampaignChannel, { configured: boolean; publishable: boolean }> }>(res))
       .then((data) => { setSavedBriefs(data.briefs ?? []); setChannelAvailability(data.channelAvailability ?? null); })
+      .catch(() => undefined);
+    fetch(`/api/sub-accounts/${subAccountId}/marketing/sources`)
+      .then((res) => readApiJson<{ zillow?: { profileUrl?: string | null; listingUrl?: string | null } }>(res))
+      .then((data) => setZillow({ profileUrl: data.zillow?.profileUrl ?? "", listingUrl: data.zillow?.listingUrl ?? "" }))
       .catch(() => undefined);
   }, [subAccountId]);
 
@@ -82,6 +93,28 @@ export default function MarketingCampaignsPage() {
     setMlsId(saved.listing?.address ?? saved.listingId);
     setApprovedChannels(saved.approvedChannels);
     setLandingPageUrl(saved.approvedChannels.includes("landingPage") ? `/campaign/${subAccountId}/${saved.listingId}` : null);
+    setWorkflowStep(saved.workflowStep ?? (saved.approvedChannels.length ? "optimize" : "create"));
+    setSchedulePlan(saved.schedulePlan ?? {});
+  }
+
+  async function saveZillowLinks() {
+    setSavingZillow(true);
+    try {
+      const res = await fetch(`/api/sub-accounts/${subAccountId}/marketing/sources`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(zillow) });
+      const data = await readApiJson<{ ok?: boolean; error?: string }>(res);
+      if (!res.ok || !data.ok) throw new Error(data.error ?? "Could not save Zillow links.");
+      toast.success("Zillow source links saved.");
+    } catch (error) { toast.error(error instanceof Error ? error.message : "Could not save Zillow links."); }
+    finally { setSavingZillow(false); }
+  }
+
+  async function setWorkflow(next: CampaignWorkflowStep) {
+    if (!brief) return;
+    const res = await fetch(`/api/sub-accounts/${subAccountId}/marketing/campaigns/${brief.listingId}/workflow`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ step: next, schedulePlan }) });
+    const data = await readApiJson<{ ok?: boolean; error?: string }>(res);
+    if (!res.ok || !data.ok) throw new Error(data.error ?? "Could not update campaign workflow.");
+    setWorkflowStep(next);
+    toast.success(next === "archive" ? "Campaign archived." : `Campaign moved to ${next}.`);
   }
 
   async function saveChannelDraft(channel: string) {
@@ -326,6 +359,36 @@ export default function MarketingCampaignsPage() {
         </p>
       </div>
       <div className="bg-card rounded-2xl border p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="font-semibold">Property marketing workflow</h2>
+            <p className="text-muted-foreground mt-1 text-xs">One property, one source of truth, one approval trail.</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {(["create", "optimize", "schedule", "archive"] as CampaignWorkflowStep[]).map((step, index) => (
+              <button key={step} type="button" className={`rounded-full border px-3 py-1.5 text-xs ${workflowStep === step ? "bg-primary text-primary-foreground" : "bg-background"}`} onClick={() => brief && setWorkflow(step).catch((error) => toast.error(error instanceof Error ? error.message : "Could not update campaign workflow."))} disabled={!brief || !isAdmin}>
+                {index + 1}. {step[0].toUpperCase() + step.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
+        {workflowStep === "archive" && brief && <p className="mt-3 flex items-center gap-2 text-xs text-emerald-700"><Archive className="h-4 w-4" /> Archived safely. The property folder, drafts, approvals, and schedule remain available.</p>}
+      </div>
+      <div className="bg-card rounded-2xl border p-5">
+        <div className="flex items-start gap-3">
+          <Link2 className="text-primary mt-0.5 h-5 w-5" />
+          <div className="min-w-0 flex-1">
+            <h2 className="font-semibold">Listing sources</h2>
+            <p className="text-muted-foreground mt-1 text-xs">MLS/official broker data stays authoritative. Zillow is a linked source for identity and distribution—not a replacement for MLS facts.</p>
+            <div className="mt-3 grid gap-3 md:grid-cols-2">
+              <div className="rounded-lg border p-3"><p className="text-xs font-medium">Import from URL</p><Input className="mt-2" value={zillow.listingUrl} onChange={(e) => setZillow({ ...zillow, listingUrl: e.target.value })} placeholder="https://www.zillow.com/..." aria-label="Zillow listing URL" /></div>
+              <div className="rounded-lg border p-3"><p className="text-xs font-medium">Link profile</p><Input className="mt-2" value={zillow.profileUrl} onChange={(e) => setZillow({ ...zillow, profileUrl: e.target.value })} placeholder="https://www.zillow.com/profile/..." aria-label="Zillow profile URL" /></div>
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-3"><Button type="button" size="sm" variant="outline" onClick={saveZillowLinks} disabled={!isAdmin || savingZillow}>{savingZillow ? "Saving…" : "Save Zillow links"}</Button><span className="text-muted-foreground text-[11px]">For full details, use Upload export or the connected MLS/IDX feed.</span></div>
+          </div>
+        </div>
+      </div>
+      <div className="bg-card rounded-2xl border p-5">
         <div className="flex flex-wrap items-end gap-3">
           <div className="min-w-64 flex-1 space-y-1.5">
             <Label htmlFor="campaign-mls">
@@ -398,6 +461,16 @@ export default function MarketingCampaignsPage() {
               ))}
             </div>
             <p className="text-muted-foreground mt-2 text-[11px]">Connect or update channels in Connections and Business Profile. AgentStack keeps every draft here even when a channel is not yet connected.</p>
+          </div>
+        )}
+        {brief && workflowStep === "schedule" && (
+          <div className="mt-4 rounded-xl border bg-muted/30 p-3">
+            <div className="flex items-center gap-2"><Calendar className="h-4 w-4" /><p className="text-xs font-medium">Set campaign calendar</p></div>
+            <p className="text-muted-foreground mt-1 text-[11px]">Choose dates for connected social channels. Drafts remain saved when a channel is not connected.</p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+              {brief.brief.channels.filter((draft) => ["facebook", "instagram", "linkedin", "tiktok", "googleBusiness"].includes(draft.channel)).map((draft) => <label key={draft.channel} className="text-xs capitalize">{draft.channel}<Input className="mt-1" type="datetime-local" value={schedulePlan[draft.channel] ?? ""} onChange={(e) => setSchedulePlan({ ...schedulePlan, [draft.channel]: e.target.value || null })} /></label>)}
+            </div>
+            <Button className="mt-3" size="sm" onClick={() => setWorkflow("schedule").catch((error) => toast.error(error instanceof Error ? error.message : "Could not save calendar."))} disabled={!isAdmin}>Save campaign calendar</Button>
           </div>
         )}
         <button

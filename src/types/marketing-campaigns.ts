@@ -13,6 +13,7 @@ export type CampaignChannel =
   | "tiktok";
 
 export type CampaignDraftStatus = "draft" | "needs-review" | "ready" | "approved";
+export type CampaignWorkflowStep = "create" | "optimize" | "schedule" | "archive";
 
 export interface ChannelDraft {
   channel: CampaignChannel;
@@ -69,6 +70,9 @@ export interface CampaignBriefDoc {
   approvedChannels: CampaignChannel[];
   createdAt: Timestamp | FieldValue | null;
   updatedAt: Timestamp | FieldValue | null;
+  workflowStep?: CampaignWorkflowStep;
+  archivedAt?: Timestamp | FieldValue | null;
+  schedulePlan?: Partial<Record<CampaignChannel, string | null>>;
 }
 
 export interface CampaignApprovalAuditDoc {
