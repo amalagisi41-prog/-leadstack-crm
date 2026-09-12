@@ -345,9 +345,9 @@ export default function MarketingCampaignsPage() {
                 20 JPG, PNG, WebP, or GIF photos. Combined upload limit: 4 MB.
               </p>
               <p className="text-muted-foreground mt-1 text-xs">
-                New listings use the existing WordPress{" "}
-                <code>single-cpg_listing.php</code> template; the optional
-                brochure follows <code>single-1076-westover.php</code>.
+                All listings use the shared WordPress{" "}
+                <code>single-cpg_listing.php</code> template, including the
+                optional brochure.
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
                 <label className="hover:bg-muted inline-flex cursor-pointer items-center rounded-md border px-3 py-2 text-sm font-medium">
@@ -389,7 +389,7 @@ export default function MarketingCampaignsPage() {
               </div>
               <label className="mt-3 flex items-center gap-2 text-xs">
                 <input type="checkbox" checked={generateBrochure} onChange={(event) => setGenerateBrochure(event.target.checked)} disabled={!isAdmin || uploading} />
-                Generate a one-page brochure using the 1076 Westover Road template
+                Generate a one-page brochure using the shared listing template
               </label>
               {brochureUrl && <a className="mt-2 inline-block text-xs underline" href={brochureUrl} target="_blank" rel="noreferrer">Open property brochure</a>}
               {(listingFile || photoFiles.length > 0) && (

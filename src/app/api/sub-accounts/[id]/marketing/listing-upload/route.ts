@@ -9,8 +9,7 @@ import { getAdminDb } from "@/lib/firebase/admin";
 import { parseListingUpload } from "@/lib/marketing/listing-upload";
 import type { IdxListingDoc } from "@/types/idx";
 import {
-  PROPERTY_BROCHURE_TEMPLATE,
-  PROPERTY_BROCHURE_TEMPLATE_FILE,
+  PROPERTY_SHARED_TEMPLATE,
   PROPERTY_LISTING_TEMPLATE_FILE,
   type PropertyMediaPackageDoc,
 } from "@/types/property-media";
@@ -95,10 +94,10 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
     const brochureUrl = shouldGenerateBrochure
       ? `${process.env.NEXT_PUBLIC_APP_URL ?? new URL(request.url).origin}/campaign/${id}/${listing.id}/brochure`
       : null;
-    const mediaPackage: PropertyMediaPackageDoc = { listingId: listing.id, subAccountId: id, templateId: PROPERTY_BROCHURE_TEMPLATE, listingTemplateFile: PROPERTY_LISTING_TEMPLATE_FILE, brochureTemplateFile: PROPERTY_BROCHURE_TEMPLATE_FILE, activeFolder, archiveFolder, activeVersionId: versionId, brochureUrl, photoCount: photoUrls.length, sourceName: source.name, createdByUid: access.uid, createdAt: previous.exists ? (previous.data()?.createdAt ?? null) : FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() };
+    const mediaPackage: PropertyMediaPackageDoc = { listingId: listing.id, subAccountId: id, templateId: PROPERTY_SHARED_TEMPLATE, listingTemplateFile: PROPERTY_LISTING_TEMPLATE_FILE, brochureTemplateFile: PROPERTY_LISTING_TEMPLATE_FILE, activeFolder, archiveFolder, activeVersionId: versionId, brochureUrl, photoCount: photoUrls.length, sourceName: source.name, createdByUid: access.uid, createdAt: previous.exists ? (previous.data()?.createdAt ?? null) : FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() };
     await packageRef.set(mediaPackage, { merge: true });
     await packageRef.collection("versions").doc(versionId).set({ ...mediaPackage, versionId, createdAt: FieldValue.serverTimestamp() });
-    await db.collection(`subAccounts/${id}/listingImports`).doc(sourceId).set({ sourceName: source.name, sourceType: source.type, sourceUrl, listingId: listing.id, mediaFolder: activeFolder, archiveFolder, templateId: PROPERTY_BROCHURE_TEMPLATE, listingTemplateFile: PROPERTY_LISTING_TEMPLATE_FILE, brochureTemplateFile: PROPERTY_BROCHURE_TEMPLATE_FILE, photoCount: photoUrls.length, importedByUid: access.uid, createdAt: FieldValue.serverTimestamp() });
+    await db.collection(`subAccounts/${id}/listingImports`).doc(sourceId).set({ sourceName: source.name, sourceType: source.type, sourceUrl, listingId: listing.id, mediaFolder: activeFolder, archiveFolder, templateId: PROPERTY_SHARED_TEMPLATE, listingTemplateFile: PROPERTY_LISTING_TEMPLATE_FILE, brochureTemplateFile: PROPERTY_LISTING_TEMPLATE_FILE, photoCount: photoUrls.length, importedByUid: access.uid, createdAt: FieldValue.serverTimestamp() });
     return NextResponse.json({ ok: true, listing: { ...listing, id: listing.id, photos: listing.photos }, sourceName: source.name, photoCount: photoUrls.length, mediaPackage: { brochureUrl } }, { status: 201 });
   } catch (error) {
     console.error("Listing upload error:", error);
