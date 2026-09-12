@@ -94,7 +94,7 @@ export async function POST(
         {
           code: "IDX_LISTING_NOT_IN_FEED",
           error:
-            "This property is not in the connected IDX Broker featured/agent-listings feed. Use Sync now if the feed is stale, or use guided manual entry/import for this listing.",
+            "This property was not found in the connected IDX Broker featured/agent-listings feed. A SmartMLS MLS number may differ from the IDX listing ID. Use Sync now if the feed is stale, or use guided manual entry/import for this listing.",
         },
         { status: 404 }
       );

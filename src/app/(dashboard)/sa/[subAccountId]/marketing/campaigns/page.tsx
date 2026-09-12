@@ -329,7 +329,7 @@ export default function MarketingCampaignsPage() {
         <div className="flex flex-wrap items-end gap-3">
           <div className="min-w-64 flex-1 space-y-1.5">
             <Label htmlFor="campaign-mls">
-              IDX listing number or property address
+              IDX listing ID or property address
             </Label>
             <Input
               id="campaign-mls"
@@ -369,9 +369,10 @@ export default function MarketingCampaignsPage() {
           </Button>
         </div>
         <p className="text-muted-foreground mt-3 text-xs">
-          Search by the IDX listing number or address returned by your
-          connected IDX Broker featured/agent-listings feed. This integration
-          cannot search the entire MLS.
+          Search by the IDX listing ID or address returned by your connected
+          IDX Broker featured/agent-listings feed. A SmartMLS MLS number may
+          differ from the IDX listing ID, and this integration cannot search
+          the entire MLS.
         </p>
         {savedBriefs.length > 0 && (
           <div className="mt-4 rounded-xl border bg-muted/30 p-3">

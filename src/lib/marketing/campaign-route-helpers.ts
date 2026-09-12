@@ -86,6 +86,11 @@ export function listingMatchesIdentifier(
     raw.mlsId,
     raw.mlsListingID,
     raw.mlsListingId,
+    raw.mls,
+    raw.mlsNumberId,
+    raw.listingNumber,
+    raw.listing_number,
+    raw.listingNo,
   ].some(
     (value) =>
       (typeof value === "string" || typeof value === "number") &&
@@ -100,6 +105,15 @@ function normalizeListingSearchText(value: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, " ")
     .trim()
+    .replace(/\s+/g, " ")
+    // IDX and MLS exports commonly abbreviate street suffixes differently.
+    .replace(/\b(avenue|ave)\b/g, "avenue")
+    .replace(/\b(street|st)\b/g, "street")
+    .replace(/\b(road|rd)\b/g, "road")
+    .replace(/\b(drive|dr)\b/g, "drive")
+    .replace(/\b(lane|ln)\b/g, "lane")
+    .replace(/\b(boulevard|blvd)\b/g, "boulevard")
+    .replace(/\b(place|pl)\b/g, "place")
     .replace(/\s+/g, " ");
 }
 
