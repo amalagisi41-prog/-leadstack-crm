@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import Link from "next/link";
 import { toast } from "sonner";
 import { Image as ImageIcon, Loader2, Save, Upload } from "lucide-react";
 import { useSubAccount } from "@/context/sub-account-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MediaLibrary, type MediaAsset } from "@/components/media/media-library";
 
 /**
  * Sub-account branding settings. v1 supports a single field — logo URL —
@@ -184,10 +184,13 @@ export function SubAccountBrandingSection() {
           https URL. PNG with a transparent background works best. Renders at
           32&ndash;40px tall. Leave blank to fall back to &ldquo;{businessName}&rdquo; in text.
         </p>
-        <MediaLibrary
-          compact
-          onSelect={(asset: MediaAsset) => setLogoUrl(asset.publicUrl ?? asset.url)}
-        />
+        <p className="text-[11px] text-muted-foreground">
+          Property photos and listing media are managed in the dedicated{" "}
+          <Link className="underline" href={`/sa/${subAccountId}/media`}>
+            Media Library
+          </Link>
+          , not in workspace settings.
+        </p>
       </div>
 
       <div className="space-y-1.5">
