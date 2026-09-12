@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   AlertTriangle,
@@ -61,6 +61,44 @@ export default function MarketingCampaignsPage() {
   const [generateBrochure, setGenerateBrochure] = useState(false);
   const [brochureUrl, setBrochureUrl] = useState<string | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [savedBriefs, setSavedBriefs] = useState<Array<CampaignBriefDoc & { listing?: IdxListingDoc | null }>>([]);
+  const [editingChannel, setEditingChannel] = useState<string | null>(null);
+  const [editingBody, setEditingBody] = useState("");
+  const [savingDraft, setSavingDraft] = useState(false);
+
+  useEffect(() => {
+    if (!subAccountId) return;
+    fetch(`/api/sub-accounts/${subAccountId}/marketing/campaigns`)
+      .then((res) => readApiJson<{ briefs?: Array<CampaignBriefDoc & { listing?: IdxListingDoc | null }> }>(res))
+      .then((data) => setSavedBriefs(data.briefs ?? []))
+      .catch(() => undefined);
+  }, [subAccountId]);
+
+  function openSavedBrief(saved: CampaignBriefDoc & { listing?: IdxListingDoc | null }) {
+    setBrief(saved);
+    setListing(saved.listing ?? null);
+    setMlsId(saved.listing?.address ?? saved.listingId);
+    setApprovedChannels(saved.approvedChannels);
+    setLandingPageUrl(saved.approvedChannels.includes("landingPage") ? `/campaign/${subAccountId}/${saved.listingId}` : null);
+  }
+
+  async function saveChannelDraft(channel: string) {
+    if (!brief || !editingBody.trim()) return;
+    setSavingDraft(true);
+    try {
+      const res = await fetch(`/api/sub-accounts/${subAccountId}/marketing/campaigns/${brief.listingId}/drafts`, {
+        method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ channel, body: editingBody }),
+      });
+      const data = await readApiJson<{ ok?: boolean; error?: string }>(res);
+      if (!res.ok || !data.ok) throw new Error(data.error ?? "Could not save draft.");
+      await createBrief(brief.listingId);
+      setApprovedChannels([]);
+      setEditingChannel(null);
+      toast.success("Draft saved for review.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not save draft.");
+    } finally { setSavingDraft(false); }
+  }
 
   async function updateListingStatus(status: ListingMarketingStatus) {
     if (!listing) return;
@@ -327,6 +365,18 @@ export default function MarketingCampaignsPage() {
           connected IDX Broker featured/agent-listings feed. This integration
           cannot search the entire MLS.
         </p>
+        {savedBriefs.length > 0 && (
+          <div className="mt-4 rounded-xl border bg-muted/30 p-3">
+            <p className="text-xs font-medium">Saved property campaigns</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {savedBriefs.map((saved) => (
+                <Button key={saved.id} type="button" size="sm" variant={brief?.listingId === saved.listingId ? "default" : "outline"} onClick={() => openSavedBrief(saved)}>
+                  {saved.listing?.address ?? saved.listingId}
+                </Button>
+              ))}
+            </div>
+          </div>
+        )}
         <button
           type="button"
           className="mt-2 text-xs underline"
@@ -643,7 +693,20 @@ export default function MarketingCampaignsPage() {
                     {draft.approval}
                   </span>
                 </div>
-                <p className="mt-2 text-sm">{draft.body}</p>
+                {editingChannel === draft.channel ? (
+                  <div className="mt-2 space-y-2">
+                    <Textarea value={editingBody} onChange={(event) => setEditingBody(event.target.value)} rows={5} />
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => saveChannelDraft(draft.channel)} disabled={savingDraft}>{savingDraft ? "Saving…" : "Save draft"}</Button>
+                      <Button size="sm" variant="outline" onClick={() => setEditingChannel(null)}>Cancel</Button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <p className="mt-2 whitespace-pre-wrap text-sm">{draft.body}</p>
+                    <Button size="sm" variant="ghost" className="mt-2 px-0 text-xs" onClick={() => { setEditingChannel(draft.channel); setEditingBody(draft.body); }}>Edit draft</Button>
+                  </>
+                )}
                 {draft.findings.length > 0 && (
                   <p className="mt-2 flex gap-1 text-xs text-amber-700">
                     <AlertTriangle className="h-4 w-4 shrink-0" /> Review:{" "}

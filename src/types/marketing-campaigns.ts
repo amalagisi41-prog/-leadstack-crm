@@ -8,7 +8,9 @@ export type CampaignChannel =
   | "instagram"
   | "email"
   | "sms"
-  | "googleBusiness";
+  | "googleBusiness"
+  | "linkedin"
+  | "tiktok";
 
 export type CampaignDraftStatus = "draft" | "needs-review" | "ready" | "approved";
 

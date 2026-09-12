@@ -27,9 +27,18 @@ export async function GET(
   const snap = await getAdminDb()
     .collection(`subAccounts/${id}/campaignBriefs`)
     .get();
+  const db = getAdminDb();
+  const briefs = await Promise.all(snap.docs.map(async (doc) => {
+    const listingSnap = await db.doc(`subAccounts/${id}/idxListings/${doc.id}`).get();
+    return {
+      id: doc.id,
+      ...doc.data(),
+      listing: listingSnap.exists ? { id: listingSnap.id, ...listingSnap.data() } : null,
+    };
+  }));
   return NextResponse.json({
     ok: true,
-    briefs: snap.docs.map((doc) => ({ id: doc.id, ...doc.data() })),
+    briefs,
   });
 }
 

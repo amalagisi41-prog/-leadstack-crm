@@ -19,6 +19,8 @@ const CHANNEL_TOOL: Record<CampaignChannel, string> = {
   email: "listing.campaign.email",
   sms: "listing.campaign.sms",
   googleBusiness: "listing.campaign.googleBusiness",
+  linkedin: "listing.campaign.linkedin",
+  tiktok: "listing.campaign.tiktok",
 };
 
 export function listingMarketingStatus(
@@ -80,6 +82,10 @@ export function channelCopyFor(
       return `${status}: ${address}, ${location}: ${listing.beds} bd, ${listing.baths} ba, ${strongestFeature}, $${listing.price.toLocaleString()}. Reply STOP to opt out.`;
     case "googleBusiness":
       return `${status}: ${listing.city} real estate listing: ${address}, ${listing.state}. ${listing.propertyType} with ${listing.beds} bedrooms, ${listing.baths} bathrooms, and ${strongestFeature}. Listed at $${listing.price.toLocaleString()}.`;
+    case "linkedin":
+      return `${status}: ${listing.propertyType} opportunity in ${location}. ${address} offers ${listing.beds} bedrooms, ${listing.baths} bathrooms, and ${strongestFeature}. Listed at $${listing.price.toLocaleString()}. Contact us for verified details.`;
+    case "tiktok":
+      return `${status}: ${address}, ${location} ✨ ${listing.beds} bd · ${listing.baths} ba · $${listing.price.toLocaleString()}. ${strongestFeature}. #${listing.city.replace(/[^a-z0-9]/gi, "")}RealEstate #HomeTour`;
   }
 }
 
@@ -155,6 +161,8 @@ export function buildContentBrief(
     "email",
     "sms",
     "googleBusiness",
+    "linkedin",
+    "tiktok",
   ];
   const dataGaps: string[] = [];
   if (listing.raw.schoolZone == null) dataGaps.push("school zone");

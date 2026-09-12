@@ -13,7 +13,7 @@ describe("content brief channel copy", () => {
   it("builds differentiated, facts-only copy for every channel", () => {
     const brief = buildContentBrief(listing, new Date("2026-09-08T00:00:00Z"));
     const bodies = brief.channels.map((channel) => channel.body);
-    expect(new Set(bodies).size).toBe(6);
+    expect(new Set(bodies).size).toBe(8);
     expect(brief.channels.find((c) => c.channel === "sms")?.body).toContain("Reply STOP to opt out.");
     expect(brief.channels.find((c) => c.channel === "email")?.body).toContain("Subject:");
     expect(brief.channels.find((c) => c.channel === "googleBusiness")?.body).toContain("Stamford real estate listing");
