@@ -137,9 +137,11 @@ function listingFromRow(row: Record<string, unknown>, subAccountId: string, sour
   const sourceField = (pattern: RegExp): string => rawText.match(pattern)?.[1]?.trim() ?? "";
   const sourcePrice = sourceField(/(?:^|\n)\s*[^\n$]+\s+\$([\d,]+)/i);
   const sourceListingId = sourceField(/(?:^|\n)\s*Listing ID\s*:\s*([^\n]+)/i);
-  const sourceBeds = sourceField(/(?:^|\n)\s*(?:Active\s+)?(\d+)\s*\n\s*Beds\b/i);
-  const sourceBaths = sourceField(/(?:^|\n)\s*(\d+(?:\/\d+)?)\s*\n\s*Baths\b/i).split("/")[0] ?? "";
-  const sourceSqft = sourceField(/(?:^|\n)\s*([\d,]+)\s*\n\s*SqFt\b/i);
+  // SmartMLS copy/paste can put labels on the same line, while reports often
+  // put them on separate lines. Support both without inventing missing facts.
+  const sourceBeds = sourceField(/(?:^|\n)\s*(?:Active\s+)?(\d+)\s*(?:\n\s*)?Beds\b/i);
+  const sourceBaths = sourceField(/(?:^|\n)\s*(\d+(?:\/\d+)?)\s*(?:\n\s*)?Baths\b/i).split("/")[0] ?? "";
+  const sourceSqft = sourceField(/(?:^|\n)\s*([\d,]+)\s*(?:\n\s*)?SqFt\b/i);
   const sourceYearBuilt = sourceField(/Year Built \/ Source:\s*(\d{4})/i);
   const sourceAgent = sourceField(/(?:^|\n)\s*List Agent\s*:\s*([^\n]+)/i).replace(/\s*\([^)]*\)\s*$/, "");
   const sourceOffice = sourceField(/(?:^|\n)\s*List Office\s*:\s*([^\n]+)/i).replace(/\s*\([^)]*\)\s*$/, "");
@@ -164,7 +166,7 @@ function listingFromRow(row: Record<string, unknown>, subAccountId: string, sour
     baths: number(first(row, ["baths", "bathrooms", "totalbaths"])) || number(sourceBaths),
     sqft: number(first(row, ["sqft", "squarefeet", "livingarea"])) || number(sourceSqft) || null,
     yearBuilt: number(first(row, ["yearbuilt", "built"])) || number(sourceYearBuilt) || null,
-    propertyType: text(first(row, ["propertytype", "proptype", "type"])) || "home",
+    propertyType: text(first(row, ["propertytype", "proptype", "type"])) || (rawText.match(/\b(?:Single Family|Condominium|Multi[ -]?Family|Apartment|Townhouse)[^\n]*?(?:Rental|For Sale)?\b/i)?.[0] ?? "home"),
     photos: uniquePhotos,
     remarks: text(first(row, ["remarks", "description", "publicremarks"])) || rawText,
     listingAgentName: text(first(row, ["listingagent", "listingagentname", "agent"])) || sourceAgent || null,

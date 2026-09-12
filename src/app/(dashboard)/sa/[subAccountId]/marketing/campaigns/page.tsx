@@ -75,6 +75,7 @@ export default function MarketingCampaignsPage() {
   const [schedulePlan, setSchedulePlan] = useState<Partial<Record<CampaignChannel, string | null>>>({});
   const [zillow, setZillow] = useState({ profileUrl: "", listingUrl: "" });
   const [savingZillow, setSavingZillow] = useState(false);
+  const [pastedMlsDetails, setPastedMlsDetails] = useState("");
   const propertyFolders = useMemo(() => {
     const folders = new Map<string, Array<CampaignBriefDoc & { listing?: IdxListingDoc | null }>>();
     for (const saved of savedBriefs) {
@@ -190,8 +191,9 @@ export default function MarketingCampaignsPage() {
   async function createBrief(identifier = mlsId) {
     setLoading(true);
     try {
+      const useManual = editing || (!identifier.trim() && manual);
       const payload =
-        manual || editing
+        useManual
           ? {
               ...form,
               mlsId: "",
@@ -228,7 +230,8 @@ export default function MarketingCampaignsPage() {
       setBrief(data.brief);
       if (data.listing) setListing(data.listing);
       setEditing(false);
-      toast.success("Six-channel campaign draft built for review.");
+      setWorkflowStep("optimize");
+      toast.success("Property campaign draft built for review.");
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -304,12 +307,12 @@ export default function MarketingCampaignsPage() {
     }
   }
 
-  async function importListing() {
-    if (!listingFile) return;
+  async function importListing(source = listingFile) {
+    if (!source) return;
     setUploading(true);
     try {
       const totalBytes =
-        listingFile.size +
+        source.size +
         photoFiles.reduce((total, file) => total + file.size, 0);
       if (totalBytes > MAX_UPLOAD_BYTES) {
         throw new Error(
@@ -317,7 +320,7 @@ export default function MarketingCampaignsPage() {
         );
       }
       const body = new FormData();
-      body.set("listingFile", listingFile);
+      body.set("listingFile", source);
       photoFiles.forEach((file) => body.append("photos", file));
       body.set("generateBrochure", String(generateBrochure));
       const res = await fetch(
@@ -363,6 +366,12 @@ export default function MarketingCampaignsPage() {
     }
   }
 
+  async function importPastedMlsDetails() {
+    if (!pastedMlsDetails.trim()) return;
+    const source = new File([pastedMlsDetails], "smartmls-listing.txt", { type: "text/plain" });
+    await importListing(source);
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -393,12 +402,12 @@ export default function MarketingCampaignsPage() {
           <Link2 className="text-primary mt-0.5 h-5 w-5" />
           <div className="min-w-0 flex-1">
             <h2 className="font-semibold">Listing sources</h2>
-            <p className="text-muted-foreground mt-1 text-xs">MLS/official broker data stays authoritative. Zillow is a linked source for identity and distribution—not a replacement for MLS facts.</p>
+            <p className="text-muted-foreground mt-1 text-xs">MLS/official broker data stays authoritative. Zillow links are kept with the property for reference and distribution; they do not replace verified MLS facts.</p>
             <div className="mt-3 grid gap-3 md:grid-cols-2">
-              <div className="rounded-lg border p-3"><p className="text-xs font-medium">Import from URL</p><Input className="mt-2" value={zillow.listingUrl} onChange={(e) => setZillow({ ...zillow, listingUrl: e.target.value })} placeholder="https://www.zillow.com/..." aria-label="Zillow listing URL" /></div>
+              <div className="rounded-lg border p-3"><p className="text-xs font-medium">Zillow listing reference</p><Input className="mt-2" value={zillow.listingUrl} onChange={(e) => setZillow({ ...zillow, listingUrl: e.target.value })} placeholder="https://www.zillow.com/..." aria-label="Zillow listing URL" /></div>
               <div className="rounded-lg border p-3"><p className="text-xs font-medium">Link profile</p><Input className="mt-2" value={zillow.profileUrl} onChange={(e) => setZillow({ ...zillow, profileUrl: e.target.value })} placeholder="https://www.zillow.com/profile/..." aria-label="Zillow profile URL" /></div>
             </div>
-            <div className="mt-3 flex flex-wrap items-center gap-3"><Button type="button" size="sm" variant="outline" onClick={saveZillowLinks} disabled={!isAdmin || savingZillow}>{savingZillow ? "Saving…" : "Save Zillow links"}</Button><span className="text-muted-foreground text-[11px]">For full details, use Upload export or the connected MLS/IDX feed.</span></div>
+            <div className="mt-3 flex flex-wrap items-center gap-3"><Button type="button" size="sm" variant="outline" onClick={saveZillowLinks} disabled={!isAdmin || savingZillow}>{savingZillow ? "Saving…" : "Save Zillow references"}</Button><span className="text-muted-foreground text-[11px]">Paste MLS details or upload an export below to create the property—Zillow links alone cannot create a verified record.</span></div>
           </div>
         </div>
       </div>
@@ -413,12 +422,12 @@ export default function MarketingCampaignsPage() {
               value={mlsId}
               onChange={(e) => setMlsId(e.target.value)}
               placeholder="e.g. 303 Weed Avenue, Stamford, CT"
-              disabled={manual}
+              disabled={editing}
             />
           </div>
           <Button
             onClick={() => createBrief()}
-            disabled={!isAdmin || loading || (!manual && !mlsId.trim())}
+            disabled={!isAdmin || loading || !mlsId.trim()}
           >
             {loading ? (
               "Building…"
@@ -446,10 +455,9 @@ export default function MarketingCampaignsPage() {
           </Button>
         </div>
         <p className="text-muted-foreground mt-3 text-xs">
-          Search by the IDX listing ID or address returned by your connected
-          IDX Broker featured/agent-listings feed. A SmartMLS MLS number may
-          differ from the IDX listing ID, and this integration cannot search
-          the entire MLS.
+          Search the connected IDX feed by ID or address. If SmartMLS does not
+          return the listing through IDX, paste the verified MLS detail below
+          or upload its report—your search field remains available.
         </p>
         {savedBriefs.length > 0 && (
           <div className="mt-4 rounded-xl border bg-muted/30 p-3">
@@ -457,7 +465,7 @@ export default function MarketingCampaignsPage() {
             <p className="text-muted-foreground mt-1 text-[11px]">Organized by property location. Open a folder to manage every asset for that property.</p>
             <div className="mt-2 space-y-2">
               {propertyFolders.map(([folder, entries]) => (
-                <details key={folder} open={entries.some((saved) => saved.listingId === brief?.listingId)} className="rounded-lg border bg-background">
+                <details key={folder} open className="rounded-lg border bg-background">
                   <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2 text-sm font-medium">
                     <Folder className="h-4 w-4 text-amber-600" />
                     <span>{folder}</span>
@@ -486,7 +494,7 @@ export default function MarketingCampaignsPage() {
                 </span>
               ))}
             </div>
-            <p className="text-muted-foreground mt-2 text-[11px]">Connect or update channels in Connections and Business Profile. AgentStack keeps every draft here even when a channel is not yet connected.</p>
+            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px]"><a className="underline" href={`/sa/${subAccountId}/dashboard/settings`}>Connect Facebook &amp; Instagram</a><a className="underline" href={`/sa/${subAccountId}/business-profile`}>Set up Email &amp; Google Business</a><a className="underline" href={`/sa/${subAccountId}/connect`}>Open Connections</a><span className="text-muted-foreground">LinkedIn and TikTok drafts are kept here for export until their publishing integrations are connected.</span></div>
           </div>
         )}
         {brief && workflowStep === "schedule" && (
@@ -521,6 +529,12 @@ export default function MarketingCampaignsPage() {
                 <code>single-cpg_listing.php</code> template, including the
                 optional brochure.
               </p>
+              <div className="mt-3 rounded-lg border bg-background p-3">
+                <Label htmlFor="paste-smartmls" className="text-xs font-medium">Paste SmartMLS details</Label>
+                <p className="text-muted-foreground mt-1 text-[11px]">Copy the verified listing detail from SmartMLS, paste it here, and AgentStack will create the property record. This is the fastest route when IDX does not expose the listing.</p>
+                <Textarea id="paste-smartmls" className="mt-2" value={pastedMlsDetails} onChange={(event) => setPastedMlsDetails(event.target.value)} rows={4} placeholder="Paste the MLS listing detail, including the address, price, beds, baths, square feet, remarks, and Listing ID." />
+                <Button type="button" size="sm" className="mt-2" onClick={importPastedMlsDetails} disabled={!isAdmin || uploading || !pastedMlsDetails.trim()}>{uploading ? "Importing…" : "Create from pasted MLS details"}</Button>
+              </div>
               <div className="mt-2 flex flex-wrap gap-2">
                 <label className="hover:bg-muted inline-flex cursor-pointer items-center rounded-md border px-3 py-2 text-sm font-medium">
                   <FileUp className="mr-2 h-4 w-4" />
@@ -553,7 +567,7 @@ export default function MarketingCampaignsPage() {
                 </label>
                 <Button
                   type="button"
-                  onClick={importListing}
+                  onClick={() => importListing()}
                   disabled={!isAdmin || uploading || !listingFile}
                 >
                   {uploading ? "Importing…" : "Import listing + photos"}
@@ -639,6 +653,14 @@ export default function MarketingCampaignsPage() {
                 >
                   Cancel
                 </Button>
+              </div>
+            )}
+            {manual && !editing && (
+              <div className="flex gap-2 sm:col-span-2">
+                <Button type="button" onClick={() => createBrief("")} disabled={!isAdmin || loading}>
+                  {loading ? "Building…" : "Create property campaign"}
+                </Button>
+                <span className="self-center text-xs text-muted-foreground">Add verified details, then build all channel drafts.</span>
               </div>
             )}
           </div>
