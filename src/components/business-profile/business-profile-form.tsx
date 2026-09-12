@@ -127,6 +127,7 @@ export function BusinessProfileForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const fromWizard = searchParams.get("from") === "wizard";
+  const connectionImport = searchParams.get("import")?.trim() ?? "";
   const [content, setContent] = useState<BusinessProfileContent>(
     EMPTY_BUSINESS_PROFILE
   );
@@ -151,6 +152,13 @@ export function BusinessProfileForm() {
    * the button stayed armed and the destructive action stayed one click away.
    */
   const [loadFailed, setLoadFailed] = useState(false);
+
+  // The Connections Center is the canonical place a realtor saves Zillow,
+  // Homes.com and Realtor.com profiles. Carry those public URLs into this
+  // review-only importer instead of making the operator paste them again.
+  useEffect(() => {
+    if (connectionImport) setImportUrl(connectionImport);
+  }, [connectionImport]);
 
   useEffect(() => {
     let active = true;

@@ -34,6 +34,13 @@ async function readApiJson<T>(res: Response): Promise<T> {
   return (await res.json()) as T;
 }
 
+function addressSeed(value: string) {
+  const clean = value.trim();
+  const match = clean.match(/^(.+?)(?:,\s*|\s+)([A-Za-z .'-]+?)[,\s]+([A-Z]{2})\s*(\d{5}(?:-\d{4})?)$/i);
+  if (!match) return { address: clean, city: "", state: "", zip: "" };
+  return { address: match[1].trim(), city: match[2].trim(), state: match[3].toUpperCase(), zip: match[4] };
+}
+
 export default function MarketingCampaignsPage() {
   const { subAccountId, isAdmin } = useSubAccount();
   const [mlsId, setMlsId] = useState("");
@@ -222,7 +229,15 @@ export default function MarketingCampaignsPage() {
       }>(res);
       if (res.status === 404 && data.code === "IDX_LISTING_NOT_IN_FEED") {
         setManual(true);
-        toast.error("That property is not exposed by the connected IDX feed. Guided manual entry is open below, or import the listing PDF/CSV with its photos.");
+        const seed = addressSeed(identifier);
+        setForm((current) => ({
+          ...current,
+          address: current.address || seed.address,
+          city: current.city || seed.city,
+          state: current.state || seed.state,
+          zip: current.zip || seed.zip,
+        }));
+        toast.warning(seed.city ? "This IDX account does not expose that listing. Its address has been placed into the quick listing form below—add the verified facts or paste the full MLS detail." : "This IDX account does not expose that listing. Paste the complete MLS detail or use the quick listing form below.");
         return;
       }
       if (!res.ok || !data.ok || !data.brief)
@@ -367,8 +382,13 @@ export default function MarketingCampaignsPage() {
   }
 
   async function importPastedMlsDetails() {
-    if (!pastedMlsDetails.trim()) return;
-    const source = new File([pastedMlsDetails], "smartmls-listing.txt", { type: "text/plain" });
+    const pasted = pastedMlsDetails.trim();
+    if (!pasted) return;
+    if (/^\d{6,}$/.test(pasted)) {
+      toast.error("An MLS number alone cannot create a property. Copy and paste the full SmartMLS detail (address, city/state/ZIP, price, beds, baths, and remarks), or use the quick listing form below.");
+      return;
+    }
+    const source = new File([pasted], "smartmls-listing.txt", { type: "text/plain" });
     await importListing(source);
   }
 
@@ -531,7 +551,7 @@ export default function MarketingCampaignsPage() {
               </p>
               <div className="mt-3 rounded-lg border bg-background p-3">
                 <Label htmlFor="paste-smartmls" className="text-xs font-medium">Paste SmartMLS details</Label>
-                <p className="text-muted-foreground mt-1 text-[11px]">Copy the verified listing detail from SmartMLS, paste it here, and AgentStack will create the property record. This is the fastest route when IDX does not expose the listing.</p>
+                <p className="text-muted-foreground mt-1 text-[11px]">Copy the complete verified SmartMLS detail—not only the MLS number—and AgentStack will create the property record. This is the fastest route when IDX does not expose the listing.</p>
                 <Textarea id="paste-smartmls" className="mt-2" value={pastedMlsDetails} onChange={(event) => setPastedMlsDetails(event.target.value)} rows={4} placeholder="Paste the MLS listing detail, including the address, price, beds, baths, square feet, remarks, and Listing ID." />
                 <Button type="button" size="sm" className="mt-2" onClick={importPastedMlsDetails} disabled={!isAdmin || uploading || !pastedMlsDetails.trim()}>{uploading ? "Importing…" : "Create from pasted MLS details"}</Button>
               </div>
