@@ -72,4 +72,16 @@ describe("IDX Broker featured listings client", () => {
       status: 400,
     });
   });
+
+  it("accepts array and envelope responses with common listing ID aliases", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ results: [{ listingNumber: "24194554", address: "303 Weed Ave" }] }), { status: 200 }),
+      ),
+    );
+    await expect(fetchIdxListings("test-access-key")).resolves.toEqual([
+      { listingNumber: "24194554", address: "303 Weed Ave" },
+    ]);
+  });
 });

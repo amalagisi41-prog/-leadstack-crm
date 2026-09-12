@@ -52,6 +52,49 @@ export interface IdxBrokerRawListing {
   [key: string]: unknown;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function listingIdentifier(value: Record<string, unknown>): string | null {
+  for (const key of [
+    "listingID",
+    "listingId",
+    "listingNumber",
+    "listing_number",
+    "mlsNumber",
+    "mlsID",
+    "mlsId",
+    "mls",
+  ]) {
+    const candidate = value[key];
+    if (typeof candidate === "string" || typeof candidate === "number") {
+      const id = String(candidate).trim();
+      if (id) return id;
+    }
+  }
+  return null;
+}
+
+/** Accept the object-map, array, and envelope shapes returned by IDX exports. */
+function extractListingRecords(data: unknown): IdxBrokerRawListing[] {
+  if (Array.isArray(data)) {
+    return data.filter(isRecord).filter((value) => listingIdentifier(value));
+  }
+  if (!isRecord(data)) return [];
+
+  for (const key of ["listings", "results", "data", "featuredListings"]) {
+    if (key in data) {
+      const nested = extractListingRecords(data[key]);
+      if (nested.length > 0) return nested;
+    }
+  }
+
+  return Object.values(data)
+    .filter(isRecord)
+    .filter((value) => listingIdentifier(value));
+}
+
 function toMlsId(value: unknown): string | null {
   if (typeof value === "string" || typeof value === "number") {
     const id = String(value).trim();
@@ -123,14 +166,6 @@ export async function fetchIdxListings(
       res.status,
     );
   }
-  const data = (await res.json().catch(() => null)) as
-    | Record<string, IdxBrokerRawListing | unknown>
-    | null;
-  if (!data) return [];
-  return Object.values(data).filter(
-    (value): value is IdxBrokerRawListing =>
-      typeof value === "object" &&
-      value !== null &&
-      "listingID" in value,
-  );
+  const data = (await res.json().catch(() => null)) as unknown;
+  return extractListingRecords(data);
 }
