@@ -24,10 +24,16 @@ export async function GET(
   const { id } = await ctx.params;
   const access = await requireSubAccountMember(request, id);
   if (access instanceof NextResponse) return access;
+  const db = getAdminDb();
+  const [subSnap, profileSnap] = await Promise.all([
+    db.doc(`subAccounts/${id}`).get(),
+    db.doc(`subAccounts/${id}/businessProfile/main`).get(),
+  ]);
+  const sub = subSnap.data() as { metaConfig?: { pageId?: string | null; instagramBusinessAccountId?: string | null }; twilioConfig?: { enabled?: boolean } } | undefined;
+  const profile = profileSnap.data() as { email?: string; googleBusinessProfileUrl?: string } | undefined;
   const snap = await getAdminDb()
     .collection(`subAccounts/${id}/campaignBriefs`)
     .get();
-  const db = getAdminDb();
   const briefs = await Promise.all(snap.docs.map(async (doc) => {
     const listingSnap = await db.doc(`subAccounts/${id}/idxListings/${doc.id}`).get();
     return {
@@ -39,6 +45,16 @@ export async function GET(
   return NextResponse.json({
     ok: true,
     briefs,
+    channelAvailability: {
+      landingPage: { configured: true, publishable: true },
+      email: { configured: Boolean(profile?.email), publishable: false },
+      sms: { configured: sub?.twilioConfig?.enabled === true, publishable: sub?.twilioConfig?.enabled === true },
+      facebook: { configured: Boolean(sub?.metaConfig?.pageId), publishable: false },
+      instagram: { configured: Boolean(sub?.metaConfig?.instagramBusinessAccountId), publishable: false },
+      googleBusiness: { configured: Boolean(profile?.googleBusinessProfileUrl), publishable: false },
+      linkedin: { configured: false, publishable: false },
+      tiktok: { configured: false, publishable: false },
+    },
   });
 }
 

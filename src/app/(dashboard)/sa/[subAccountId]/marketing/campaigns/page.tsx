@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import type { CampaignBriefDoc } from "@/types/marketing-campaigns";
+import type { CampaignChannel } from "@/types/marketing-campaigns";
 import type { IdxListingDoc, ListingMarketingStatus } from "@/types/idx";
 
 const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
@@ -65,12 +66,13 @@ export default function MarketingCampaignsPage() {
   const [editingChannel, setEditingChannel] = useState<string | null>(null);
   const [editingBody, setEditingBody] = useState("");
   const [savingDraft, setSavingDraft] = useState(false);
+  const [channelAvailability, setChannelAvailability] = useState<Record<CampaignChannel, { configured: boolean; publishable: boolean }> | null>(null);
 
   useEffect(() => {
     if (!subAccountId) return;
     fetch(`/api/sub-accounts/${subAccountId}/marketing/campaigns`)
-      .then((res) => readApiJson<{ briefs?: Array<CampaignBriefDoc & { listing?: IdxListingDoc | null }> }>(res))
-      .then((data) => setSavedBriefs(data.briefs ?? []))
+      .then((res) => readApiJson<{ briefs?: Array<CampaignBriefDoc & { listing?: IdxListingDoc | null }>; channelAvailability?: Record<CampaignChannel, { configured: boolean; publishable: boolean }> }>(res))
+      .then((data) => { setSavedBriefs(data.briefs ?? []); setChannelAvailability(data.channelAvailability ?? null); })
       .catch(() => undefined);
   }, [subAccountId]);
 
@@ -375,6 +377,20 @@ export default function MarketingCampaignsPage() {
                 </Button>
               ))}
             </div>
+          </div>
+        )}
+        {channelAvailability && (
+          <div className="mt-4 rounded-xl border bg-muted/30 p-3">
+            <p className="text-xs font-medium">Distribution channels</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {(Object.entries(channelAvailability) as Array<[CampaignChannel, { configured: boolean; publishable: boolean }]>).map(([channel, availability]) => (
+                <span key={channel} className="rounded-full border bg-background px-2.5 py-1 text-[11px]">
+                  <span className="font-medium capitalize">{channel === "googleBusiness" ? "Google Business" : channel}</span>{" "}
+                  <span className="text-muted-foreground">· {availability.publishable ? "Publish ready" : availability.configured ? "Draft / export" : "Not connected"}</span>
+                </span>
+              ))}
+            </div>
+            <p className="text-muted-foreground mt-2 text-[11px]">Connect or update channels in Connections and Business Profile. AgentStack keeps every draft here even when a channel is not yet connected.</p>
           </div>
         )}
         <button
