@@ -92,8 +92,9 @@ export async function POST(
     if (!listing)
       return NextResponse.json(
         {
+          code: "IDX_LISTING_NOT_IN_FEED",
           error:
-            "No matching featured listing was returned by your connected IDX Broker account. Try Sync now, confirm this property is one of your featured/agent listings, or use guided manual entry.",
+            "This property is not in the connected IDX Broker featured/agent-listings feed. Use Sync now if the feed is stale, or use guided manual entry/import for this listing.",
         },
         { status: 404 }
       );

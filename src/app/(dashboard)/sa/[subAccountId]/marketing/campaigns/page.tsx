@@ -167,9 +167,15 @@ export default function MarketingCampaignsPage() {
       const data = await readApiJson<{
         ok?: boolean;
         error?: string;
+        code?: string;
         brief?: CampaignBriefDoc;
         listing?: IdxListingDoc;
       }>(res);
+      if (res.status === 404 && data.code === "IDX_LISTING_NOT_IN_FEED") {
+        setManual(true);
+        toast.error("That property is not exposed by the connected IDX feed. Guided manual entry is open below, or import the listing PDF/CSV with its photos.");
+        return;
+      }
       if (!res.ok || !data.ok || !data.brief)
         throw new Error(data.error ?? "Could not build campaign brief.");
       setBrief(data.brief);
