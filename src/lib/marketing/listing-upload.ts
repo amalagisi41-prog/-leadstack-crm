@@ -139,13 +139,13 @@ function listingFromRow(row: Record<string, unknown>, subAccountId: string, sour
   const sourceListingId = sourceField(/(?:^|\n)\s*Listing ID\s*:\s*([^\n]+)/i);
   // SmartMLS copy/paste can put labels on the same line, while reports often
   // put them on separate lines. Support both without inventing missing facts.
-  const sourceBeds = sourceField(/(?:^|\n)\s*(?:Active\s+)?(\d+)\s*(?:\n\s*)?Beds\b/i);
-  const sourceBaths = sourceField(/(?:^|\n)\s*(\d+(?:\/\d+)?)\s*(?:\n\s*)?Baths\b/i).split("/")[0] ?? "";
-  const sourceSqft = sourceField(/(?:^|\n)\s*([\d,]+)\s*(?:\n\s*)?SqFt\b/i);
-  const sourceYearBuilt = sourceField(/Year Built \/ Source:\s*(\d{4})/i);
+  const sourceBeds = sourceField(/(?:^|\n|\s)(?:Active\s+)?(\d+)\s*Beds\b/i);
+  const sourceBaths = sourceField(/(?:^|\n|\s)(\d+(?:\/\d+)?)\s*Baths\b/i).split("/")[0] ?? "";
+  const sourceSqft = sourceField(/(?:^|\n|\s)([\d,]+)\s*SqFt\b/i);
+  const sourceYearBuilt = sourceField(/Year Built\s*\/\s*Source\s*:\s*(\d{4})/i);
   const sourceAgent = sourceField(/(?:^|\n)\s*List Agent\s*:\s*([^\n]+)/i).replace(/\s*\([^)]*\)\s*$/, "");
   const sourceOffice = sourceField(/(?:^|\n)\s*List Office\s*:\s*([^\n]+)/i).replace(/\s*\([^)]*\)\s*$/, "");
-  const address = text(first(row, ["address", "street", "streetaddress"])) || (combined.match(/\d+\s+[A-Za-z0-9 .'-]+(?:Road|Rd|Street|St|Avenue|Ave|Drive|Dr|Lane|Ln|Court|Ct|Way|Boulevard|Blvd)\b/i)?.[0] ?? "");
+  const address = text(first(row, ["address", "street", "streetaddress"])) || (combined.match(/\d+\s+[A-Za-z0-9 .'-]+(?:Road|Rd|Street|St|Avenue|Ave|Drive|Dr|Lane|Ln|Court|Ct|Way|Boulevard|Blvd|Place|Pl)(?:\s*,?\s*(?:Unit\s*#?\s*[A-Za-z0-9-]+|#\s*[A-Za-z0-9-]+))?\b/i)?.[0] ?? "");
   const city = text(first(row, ["city", "cityname"])) || (combined.match(/,\s*([A-Za-z .'-]+),\s*[A-Z]{2}\s+\d{5}/)?.[1] ?? "");
   const state = text(first(row, ["state", "statecode"])) || (combined.match(/,\s*([A-Z]{2})\s+\d{5}/)?.[1] ?? "");
   if (!address || !city || !state) return "The upload needs at least address, city, and state fields.";
@@ -166,7 +166,7 @@ function listingFromRow(row: Record<string, unknown>, subAccountId: string, sour
     baths: number(first(row, ["baths", "bathrooms", "totalbaths"])) || number(sourceBaths),
     sqft: number(first(row, ["sqft", "squarefeet", "livingarea"])) || number(sourceSqft) || null,
     yearBuilt: number(first(row, ["yearbuilt", "built"])) || number(sourceYearBuilt) || null,
-    propertyType: text(first(row, ["propertytype", "proptype", "type"])) || (rawText.match(/\b(?:Single Family|Condominium|Multi[ -]?Family|Apartment|Townhouse)[^\n]*?(?:Rental|For Sale)?\b/i)?.[0] ?? "home"),
+    propertyType: text(first(row, ["propertytype", "proptype", "type"])) || (rawText.match(/\b(?:Single Family|Condominium|Multi[ -]?Family|Apartment|Townhouse)(?:\s+(?:Rental|For Sale))?\b/i)?.[0] ?? "home"),
     photos: uniquePhotos,
     remarks: text(first(row, ["remarks", "description", "publicremarks"])) || rawText,
     listingAgentName: text(first(row, ["listingagent", "listingagentname", "agent"])) || sourceAgent || null,
