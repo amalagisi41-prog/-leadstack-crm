@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   AlertTriangle,
@@ -8,6 +8,7 @@ import {
   Calendar,
   CheckCircle2,
   FileUp,
+  Folder,
   Link2,
   RefreshCw,
   Search,
@@ -74,6 +75,19 @@ export default function MarketingCampaignsPage() {
   const [schedulePlan, setSchedulePlan] = useState<Partial<Record<CampaignChannel, string | null>>>({});
   const [zillow, setZillow] = useState({ profileUrl: "", listingUrl: "" });
   const [savingZillow, setSavingZillow] = useState(false);
+  const propertyFolders = useMemo(() => {
+    const folders = new Map<string, Array<CampaignBriefDoc & { listing?: IdxListingDoc | null }>>();
+    for (const saved of savedBriefs) {
+      const listing = saved.listing;
+      const folder = listing
+        ? [listing.city, listing.state, listing.zip].filter(Boolean).join(", ")
+        : "Needs property details";
+      const entries = folders.get(folder) ?? [];
+      entries.push(saved);
+      folders.set(folder, entries);
+    }
+    return [...folders.entries()].sort(([a], [b]) => a.localeCompare(b));
+  }, [savedBriefs]);
 
   useEffect(() => {
     if (!subAccountId) return;
@@ -439,12 +453,24 @@ export default function MarketingCampaignsPage() {
         </p>
         {savedBriefs.length > 0 && (
           <div className="mt-4 rounded-xl border bg-muted/30 p-3">
-            <p className="text-xs font-medium">Saved property campaigns</p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {savedBriefs.map((saved) => (
-                <Button key={saved.id} type="button" size="sm" variant={brief?.listingId === saved.listingId ? "default" : "outline"} onClick={() => openSavedBrief(saved)}>
-                  {saved.listing?.address ?? saved.listingId}
-                </Button>
+            <p className="text-xs font-medium">Property folders</p>
+            <p className="text-muted-foreground mt-1 text-[11px]">Organized by property location. Open a folder to manage every asset for that property.</p>
+            <div className="mt-2 space-y-2">
+              {propertyFolders.map(([folder, entries]) => (
+                <details key={folder} open={entries.some((saved) => saved.listingId === brief?.listingId)} className="rounded-lg border bg-background">
+                  <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2 text-sm font-medium">
+                    <Folder className="h-4 w-4 text-amber-600" />
+                    <span>{folder}</span>
+                    <span className="text-muted-foreground text-xs">{entries.length} {entries.length === 1 ? "property" : "properties"}</span>
+                  </summary>
+                  <div className="flex flex-wrap gap-2 border-t px-3 py-2">
+                    {entries.map((saved) => (
+                      <Button key={saved.id} type="button" size="sm" variant={brief?.listingId === saved.listingId ? "default" : "outline"} onClick={() => openSavedBrief(saved)}>
+                        {saved.listing?.address ?? saved.listingId}
+                      </Button>
+                    ))}
+                  </div>
+                </details>
               ))}
             </div>
           </div>
