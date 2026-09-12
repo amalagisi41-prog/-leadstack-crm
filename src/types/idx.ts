@@ -25,6 +25,8 @@ export interface IdxListingDoc {
    * detail-page URL doesn't 404 while the listing still drops out of search.
    */
   status: "active" | "pending" | "sold" | "off-market";
+  /** Operator-facing lifecycle label used by marketing and listing management. */
+  marketingStatus?: ListingMarketingStatus;
   price: number;
   address: string;
   city: string;
@@ -47,3 +49,10 @@ export interface IdxListingDoc {
   raw: Record<string, unknown>;
   syncedAt: Timestamp | FieldValue;
 }
+
+export type ListingMarketingStatus =
+  | "new"
+  | "active"
+  | "under-contract"
+  | "just-sold"
+  | "off-market";

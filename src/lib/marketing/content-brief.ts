@@ -1,4 +1,4 @@
-import type { IdxListingDoc } from "@/types/idx";
+import type { IdxListingDoc, ListingMarketingStatus } from "@/types/idx";
 import {
   assessBoostEligibility,
   findDistressLanguage,
@@ -20,6 +20,28 @@ const CHANNEL_TOOL: Record<CampaignChannel, string> = {
   sms: "listing.campaign.sms",
   googleBusiness: "listing.campaign.googleBusiness",
 };
+
+export function listingMarketingStatus(
+  listing: Pick<IdxListingDoc, "status" | "marketingStatus">
+): ListingMarketingStatus {
+  if (listing.marketingStatus) return listing.marketingStatus;
+  if (listing.status === "pending") return "under-contract";
+  if (listing.status === "sold") return "just-sold";
+  if (listing.status === "off-market") return "off-market";
+  return "active";
+}
+
+export function listingMarketingStatusLabel(
+  listing: Pick<IdxListingDoc, "status" | "marketingStatus">
+): string {
+  return {
+    new: "New",
+    active: "Active",
+    "under-contract": "Under Contract",
+    "just-sold": "Just Sold",
+    "off-market": "Off Market",
+  }[listingMarketingStatus(listing)];
+}
 
 function displayAddress(listing: IdxListingDoc): string {
   let address = listing.address.trim();
@@ -43,20 +65,21 @@ export function channelCopyFor(
 ): string {
   const location = `${listing.city}, ${listing.state}`;
   const address = displayAddress(listing);
+  const status = listingMarketingStatusLabel(listing);
   const facts = `${listing.beds} bedrooms, ${listing.baths} bathrooms, ${strongestFeature}, and $${listing.price.toLocaleString()}`;
   switch (channel) {
     case "landingPage":
-      return `${address}, ${location}\n\nDiscover this ${listing.propertyType} in ${location}, offered at $${listing.price.toLocaleString()}. The home includes ${facts}. Explore the listing details and request more information.`;
+      return `${address}, ${location}\n\n${status}: Discover this ${listing.propertyType} in ${location}, offered at $${listing.price.toLocaleString()}. The home includes ${facts}. Explore the listing details and request more information.`;
     case "facebook":
-      return `A ${strongestFeature} home in ${location}. ${address} is offered at $${listing.price.toLocaleString()} with ${listing.beds} beds and ${listing.baths} baths. #${listing.city.replace(/[^a-z0-9]/gi, "")}RealEstate #ForSale`;
+      return `${status}: A ${strongestFeature} home in ${location}. ${address} is offered at $${listing.price.toLocaleString()} with ${listing.beds} beds and ${listing.baths} baths. #${listing.city.replace(/[^a-z0-9]/gi, "")}RealEstate #ForSale`;
     case "instagram":
-      return `${strongestFeature} in ${location} ✨ ${address} · $${listing.price.toLocaleString()} · ${listing.beds} bd · ${listing.baths} ba. #${listing.city.replace(/[^a-z0-9]/gi, "")}Homes #RealEstate`;
+      return `${status}: ${strongestFeature} in ${location} ✨ ${address} · $${listing.price.toLocaleString()} · ${listing.beds} bd · ${listing.baths} ba. #${listing.city.replace(/[^a-z0-9]/gi, "")}Homes #RealEstate`;
     case "email":
-      return `Subject: ${address} in ${location}\n\nHi — here are the verified details for ${address}: ${facts}. Reply if you would like to connect about the property.`;
+      return `Subject: ${status} — ${address} in ${location}\n\nHi — here are the verified details for ${address}: ${facts}. Current status: ${status}. Reply if you would like to connect about the property.`;
     case "sms":
-      return `${address}, ${location}: ${listing.beds} bd, ${listing.baths} ba, ${strongestFeature}, $${listing.price.toLocaleString()}. Reply STOP to opt out.`;
+      return `${status}: ${address}, ${location}: ${listing.beds} bd, ${listing.baths} ba, ${strongestFeature}, $${listing.price.toLocaleString()}. Reply STOP to opt out.`;
     case "googleBusiness":
-      return `${listing.city} real estate listing: ${address}, ${listing.state}. ${listing.propertyType} with ${listing.beds} bedrooms, ${listing.baths} bathrooms, and ${strongestFeature}. Listed at $${listing.price.toLocaleString()}.`;
+      return `${status}: ${listing.city} real estate listing: ${address}, ${listing.state}. ${listing.propertyType} with ${listing.beds} bedrooms, ${listing.baths} bathrooms, and ${strongestFeature}. Listed at $${listing.price.toLocaleString()}.`;
   }
 }
 

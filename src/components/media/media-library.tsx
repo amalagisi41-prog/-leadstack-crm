@@ -1,12 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FileText, ImagePlus, Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { useSubAccount } from "@/context/sub-account-context";
 import { Button } from "@/components/ui/button";
 
-export interface MediaAsset { id: string; name: string; url: string; publicUrl?: string | null; brandAsset?: boolean; contentType: string; size: number; createdAt: string | null }
+export interface MediaAsset { id: string; name: string; url: string; publicUrl?: string | null; brandAsset?: boolean; propertyId?: string | null; folderPath?: string | null; contentType: string; size: number; createdAt: string | null }
 
 export function MediaLibrary({ compact = false, onSelect }: { compact?: boolean; onSelect?: (asset: MediaAsset) => void }) {
   const { subAccountId } = useSubAccount();
@@ -14,6 +14,14 @@ export function MediaLibrary({ compact = false, onSelect }: { compact?: boolean;
   const [assets, setAssets] = useState<MediaAsset[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const propertyGroups = useMemo(() => {
+    const groups = new Map<string, MediaAsset[]>();
+    for (const asset of assets) {
+      const key = asset.propertyId?.trim() || "general";
+      groups.set(key, [...(groups.get(key) ?? []), asset]);
+    }
+    return [...groups.entries()];
+  }, [assets]);
 
   const load = useCallback(async () => {
     try {
@@ -71,13 +79,16 @@ export function MediaLibrary({ compact = false, onSelect }: { compact?: boolean;
       <Button type="button" onClick={() => inputRef.current?.click()} disabled={uploading}>{uploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}Upload</Button>
       <input ref={inputRef} type="file" accept="image/*,.pdf" className="hidden" onChange={(e) => { const file=e.target.files?.[0]; if(file) void upload(file); }} />
     </div>
-    {loading ? <div className="flex h-28 items-center justify-center"><Loader2 className="h-5 w-5 animate-spin" /></div> : assets.length === 0 ? <div className="rounded-2xl border border-dashed p-8 text-center text-sm text-muted-foreground"><ImagePlus className="mx-auto mb-2 h-6 w-6" />Your approved media will appear here.</div> : <div className={`grid gap-3 ${compact ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5"}`}>{assets.map((asset) => <button key={asset.id} type="button" onClick={() => onSelect?.(asset)} className="overflow-hidden rounded-xl border bg-card text-left transition hover:border-blue-400 hover:ring-2 hover:ring-blue-500/10">
-      <div className="flex aspect-square items-center justify-center bg-muted/30">{asset.contentType.startsWith("image/") ? (
-        // Remote user uploads do not have a fixed host or intrinsic dimensions.
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={asset.url} alt={asset.name} className="h-full w-full object-contain p-2" />
-      ) : <FileText className="h-8 w-8 text-muted-foreground" />}</div>
-      <p className="truncate px-2 py-2 text-xs font-medium">{asset.name}</p>
-    </button>)}</div>}
+    {loading ? <div className="flex h-28 items-center justify-center"><Loader2 className="h-5 w-5 animate-spin" /></div> : assets.length === 0 ? <div className="rounded-2xl border border-dashed p-8 text-center text-sm text-muted-foreground"><ImagePlus className="mx-auto mb-2 h-6 w-6" />Your approved media will appear here.</div> : propertyGroups.map(([propertyId, group]) => <section key={propertyId} className="space-y-3">
+      <div className="flex items-center justify-between"><div><h2 className="text-sm font-semibold">{propertyId === "general" ? "General media" : `Property folder · ${propertyId}`}</h2><p className="text-xs text-muted-foreground">{group.length} asset{group.length === 1 ? "" : "s"}{group[0]?.folderPath ? ` · ${group[0].folderPath}` : ""}</p></div></div>
+      <div className={`grid gap-3 ${compact ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5"}`}>{group.map((asset) => <button key={asset.id} type="button" onClick={() => onSelect?.(asset)} className="overflow-hidden rounded-xl border bg-card text-left transition hover:border-blue-400 hover:ring-2 hover:ring-blue-500/10">
+        <div className="flex aspect-square items-center justify-center bg-muted/30">{asset.contentType.startsWith("image/") ? (
+          // Remote user uploads do not have a fixed host or intrinsic dimensions.
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={asset.url} alt={asset.name} className="h-full w-full object-contain p-2" />
+        ) : <FileText className="h-8 w-8 text-muted-foreground" />}</div>
+        <p className="truncate px-2 py-2 text-xs font-medium">{asset.name}</p>
+      </button>)}</div>
+    </section>)}
   </div>;
 }

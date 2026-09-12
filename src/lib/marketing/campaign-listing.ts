@@ -3,7 +3,10 @@ import "server-only";
 import type { Firestore } from "firebase-admin/firestore";
 import { syncIdxListings } from "@/lib/idx/sync";
 import type { IdxListingDoc } from "@/types/idx";
-import { listingMatchesIdentifier } from "@/lib/marketing/campaign-route-helpers";
+import {
+  listingMatchesAddress,
+  listingMatchesIdentifier,
+} from "@/lib/marketing/campaign-route-helpers";
 
 export async function findCampaignListing(db: Firestore, subAccountId: string, identifier: string): Promise<IdxListingDoc | null> {
   const listingsCol = db.collection(`subAccounts/${subAccountId}/idxListings`);
@@ -12,7 +15,16 @@ export async function findCampaignListing(db: Firestore, subAccountId: string, i
 
   const findInCache = async (): Promise<IdxListingDoc | null> => {
     const snap = await listingsCol.get();
-    const found = snap.docs.find((doc) => listingMatchesIdentifier({ id: doc.id, ...(doc.data() as Omit<IdxListingDoc, "id">) }, identifier));
+    const found = snap.docs.find((doc) => {
+      const listing = {
+        id: doc.id,
+        ...(doc.data() as Omit<IdxListingDoc, "id">),
+      };
+      return (
+        listingMatchesIdentifier(listing, identifier) ||
+        listingMatchesAddress(listing, identifier)
+      );
+    });
     return found ? { id: found.id, ...(found.data() as Omit<IdxListingDoc, "id">) } : null;
   };
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildManualListing, isIdxCampaignEnabled, listingMatchesIdentifier } from "@/lib/marketing/campaign-route-helpers";
+import { buildManualListing, isIdxCampaignEnabled, listingMatchesAddress, listingMatchesIdentifier } from "@/lib/marketing/campaign-route-helpers";
 
 describe("campaign POST route helpers", () => {
   it("supports manual-entry fallback without a synced MLS record", () => {
@@ -19,5 +19,13 @@ describe("campaign POST route helpers", () => {
     expect(listingMatchesIdentifier(listing, "24194554")).toBe(true);
     expect(listingMatchesIdentifier({ ...listing, id: "vendor-id", raw: { mlsNumber: 24194554 } }, "24194554")).toBe(true);
     expect(listingMatchesIdentifier(listing, "99999999")).toBe(false);
+  });
+
+  it("matches a cached listing by address", () => {
+    const listing = buildManualListing({ address: "303 Weed Avenue", city: "Stamford", state: "CT", zip: "06902" }, "sa-1", "24200534");
+    if (typeof listing === "string") throw new Error(listing);
+    expect(listingMatchesAddress(listing, "303 Weed Avenue, Stamford, CT 06902")).toBe(true);
+    expect(listingMatchesAddress(listing, "303 weed avenue")).toBe(true);
+    expect(listingMatchesAddress(listing, "304 Weed Avenue")).toBe(false);
   });
 });

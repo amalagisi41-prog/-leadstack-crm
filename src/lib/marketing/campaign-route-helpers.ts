@@ -92,3 +92,27 @@ export function listingMatchesIdentifier(
       String(value).trim().toLowerCase() === wanted
   );
 }
+
+function normalizeListingSearchText(value: string): string {
+  return value
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+}
+
+/** Match a user-entered address against normalized fields in the IDX cache. */
+export function listingMatchesAddress(
+  listing: IdxListingDoc,
+  addressQuery: string
+): boolean {
+  const wanted = normalizeListingSearchText(addressQuery);
+  if (!wanted) return false;
+  const address = normalizeListingSearchText(listing.address);
+  const fullAddress = normalizeListingSearchText(
+    [listing.address, listing.city, listing.state, listing.zip].join(" ")
+  );
+  return address === wanted || fullAddress.includes(wanted);
+}

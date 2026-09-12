@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import type { CampaignBriefDoc } from "@/types/marketing-campaigns";
-import type { IdxListingDoc } from "@/types/idx";
+import type { IdxListingDoc, ListingMarketingStatus } from "@/types/idx";
 
 const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
 
@@ -58,6 +58,47 @@ export default function MarketingCampaignsPage() {
   const [approvedChannels, setApprovedChannels] = useState<string[]>([]);
   const [listing, setListing] = useState<IdxListingDoc | null>(null);
   const [editing, setEditing] = useState(false);
+  const [generateBrochure, setGenerateBrochure] = useState(false);
+  const [brochureUrl, setBrochureUrl] = useState<string | null>(null);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+
+  async function updateListingStatus(status: ListingMarketingStatus) {
+    if (!listing) return;
+    setUpdatingStatus(true);
+    try {
+      const res = await fetch(
+        "/api/sub-accounts/" + subAccountId + "/marketing/listings/" + listing.id + "/status",
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status }),
+        }
+      );
+      const data = await readApiJson<{
+        ok?: boolean;
+        error?: string;
+        listing?: IdxListingDoc;
+        brief?: CampaignBriefDoc | null;
+      }>(res);
+      if (!res.ok || !data.ok || !data.listing)
+        throw new Error(data.error ?? "Could not update listing status.");
+      setListing(data.listing);
+      if (data.brief) {
+        setBrief(data.brief);
+        setApprovedChannels([]);
+        setLandingPageUrl(null);
+      }
+      toast.success("Listing status updated and campaign drafts rebuilt.");
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Could not update listing status."
+      );
+    } finally {
+      setUpdatingStatus(false);
+    }
+  }
 
   async function createBrief(identifier = mlsId) {
     setLoading(true);
@@ -185,6 +226,7 @@ export default function MarketingCampaignsPage() {
       const body = new FormData();
       body.set("listingFile", listingFile);
       photoFiles.forEach((file) => body.append("photos", file));
+      body.set("generateBrochure", String(generateBrochure));
       const res = await fetch(
         `/api/sub-accounts/${subAccountId}/marketing/listing-upload`,
         { method: "POST", body }
@@ -193,11 +235,13 @@ export default function MarketingCampaignsPage() {
         ok?: boolean;
         error?: string;
         listing?: IdxListingDoc;
+        mediaPackage?: { brochureUrl?: string | null };
       }>(res);
       if (!res.ok || !data.ok || !data.listing)
         throw new Error(data.error ?? "Could not import listing.");
       setMlsId(data.listing.id);
       setListing(data.listing);
+      setBrochureUrl(data.mediaPackage?.brochureUrl ?? null);
       setForm({
         address: data.listing.address,
         city: data.listing.city,
@@ -238,12 +282,14 @@ export default function MarketingCampaignsPage() {
       <div className="bg-card rounded-2xl border p-5">
         <div className="flex flex-wrap items-end gap-3">
           <div className="min-w-64 flex-1 space-y-1.5">
-            <Label htmlFor="campaign-mls">IDX Broker listing number</Label>
+            <Label htmlFor="campaign-mls">
+              IDX listing number or property address
+            </Label>
             <Input
               id="campaign-mls"
               value={mlsId}
               onChange={(e) => setMlsId(e.target.value)}
-              placeholder="Search synced featured/agent listings"
+              placeholder="e.g. 303 Weed Avenue, Stamford, CT"
               disabled={manual}
             />
           </div>
@@ -277,9 +323,9 @@ export default function MarketingCampaignsPage() {
           </Button>
         </div>
         <p className="text-muted-foreground mt-3 text-xs">
-          Enter the listing number returned by your connected IDX Broker
-          featured/agent-listings feed. This integration cannot search the
-          entire MLS.
+          Search by the IDX listing number or address returned by your
+          connected IDX Broker featured/agent-listings feed. This integration
+          cannot search the entire MLS.
         </p>
         <button
           type="button"
@@ -297,6 +343,11 @@ export default function MarketingCampaignsPage() {
               <p className="text-muted-foreground text-xs">
                 Upload a PDF, CSV, XLSX, JSON, TXT, or HTML export, plus up to
                 20 JPG, PNG, WebP, or GIF photos. Combined upload limit: 4 MB.
+              </p>
+              <p className="text-muted-foreground mt-1 text-xs">
+                New listings use the existing WordPress{" "}
+                <code>single-cpg_listing.php</code> template; the optional
+                brochure follows <code>single-1076-westover.php</code>.
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
                 <label className="hover:bg-muted inline-flex cursor-pointer items-center rounded-md border px-3 py-2 text-sm font-medium">
@@ -336,6 +387,11 @@ export default function MarketingCampaignsPage() {
                   {uploading ? "Importing…" : "Import listing + photos"}
                 </Button>
               </div>
+              <label className="mt-3 flex items-center gap-2 text-xs">
+                <input type="checkbox" checked={generateBrochure} onChange={(event) => setGenerateBrochure(event.target.checked)} disabled={!isAdmin || uploading} />
+                Generate a one-page brochure using the 1076 Westover Road template
+              </label>
+              {brochureUrl && <a className="mt-2 inline-block text-xs underline" href={brochureUrl} target="_blank" rel="noreferrer">Open property brochure</a>}
               {(listingFile || photoFiles.length > 0) && (
                 <p className="text-muted-foreground mt-2 text-xs">
                   {listingFile ? listingFile.name : "No listing file selected"}
@@ -433,6 +489,37 @@ export default function MarketingCampaignsPage() {
                     : ` · ${brief.brief.daysOnMarket} days on market`}
                 </p>
               </div>
+              {listing && (
+                <label className="ml-auto flex items-center gap-2 text-xs">
+                  <span className="text-muted-foreground">Status</span>
+                  <select
+                    className="rounded-md border bg-background px-2 py-1.5 text-xs"
+                    value={
+                      listing.marketingStatus ??
+                      (listing.status === "pending"
+                        ? "under-contract"
+                        : listing.status === "sold"
+                          ? "just-sold"
+                          : listing.status === "off-market"
+                            ? "off-market"
+                            : "active")
+                    }
+                    onChange={(event) =>
+                      updateListingStatus(
+                        event.target.value as ListingMarketingStatus
+                      )
+                    }
+                    disabled={!isAdmin || updatingStatus}
+                    aria-label="Property status"
+                  >
+                    <option value="new">New</option>
+                    <option value="active">Active</option>
+                    <option value="under-contract">Under Contract</option>
+                    <option value="just-sold">Just Sold</option>
+                    <option value="off-market">Off Market</option>
+                  </select>
+                </label>
+              )}
             </div>
             {brief.brief.dataGaps.length > 0 && (
               <p className="mt-4 text-xs text-amber-700">
