@@ -39,6 +39,11 @@ import {
   UploadCloud,
   HeartPulse,
   Images,
+  MapPin,
+  Rocket,
+  Wrench,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import { getFirebaseDb } from "@/lib/firebase/client";
 import { signOutUser } from "@/lib/firebase/auth";
@@ -69,130 +74,91 @@ interface NavSection {
   items: NavItem[];
 }
 
-const SUB_ACCOUNT_NAV_SECTIONS: NavSection[] = [
+/* ─── Primary nav: 7 top-level items a realtor recognises ──────── */
+
+interface PrimaryNavItem {
+  href: string;
+  label: string;
+  icon: typeof Home;
+  badgeKey?: "dueToday" | "unreadConversations" | "siteHealth";
+}
+
+const PRIMARY_NAV: PrimaryNavItem[] = [
+  { href: "/dashboard", label: "Today", icon: Home },
+  { href: "/contacts", label: "People", icon: Users, badgeKey: "unreadConversations" },
+  { href: "/pipeline", label: "Deals", icon: GitBranch },
+  { href: "/properties", label: "Properties", icon: MapPin },
+];
+
+/* ─── Expandable sections under the primary items ──────────────── */
+
+interface NavGroupItem {
+  href: string;
+  label: string;
+  icon: typeof Home;
+  enabled: boolean;
+  badgeKey?: "dueToday" | "unreadConversations" | "siteHealth";
+}
+
+interface NavGroup {
+  key: string;
+  label: string;
+  icon: typeof Home;
+  items: NavGroupItem[];
+}
+
+const NAV_GROUPS: NavGroup[] = [
   {
-    label: "Your Day",
+    key: "marketing",
+    label: "Marketing",
+    icon: Megaphone,
     items: [
-      { href: "/dashboard", label: "Today", icon: Home, enabled: true },
-      {
-        href: "/tasks",
-        label: "Tasks",
-        icon: CheckSquare,
-        enabled: true,
-        badgeKey: "dueToday",
-      },
-    ],
-  },
-  {
-    label: "Site Health",
-    items: [
-      {
-        href: "/site-health",
-        label: "Site Health",
-        icon: HeartPulse,
-        enabled: true,
-        badgeKey: "siteHealth",
-      },
-    ],
-  },
-  {
-    label: "Clients",
-    items: [
-      {
-        href: "/conversations",
-        label: "Conversations",
-        icon: MessagesSquare,
-        enabled: true,
-        badgeKey: "unreadConversations",
-      },
-      { href: "/contacts", label: "People", icon: Users, enabled: true },
-      {
-        href: "/pipeline",
-        label: "Deals",
-        icon: GitBranch,
-        enabled: true,
-      },
-      { href: "/calendar", label: "Calendar", icon: Calendar, enabled: true },
-      {
-        href: "/booking",
-        label: "Booking",
-        icon: CalendarClock,
-        enabled: true,
-      },
-    ],
-  },
-  {
-    label: "Growth",
-    items: [
-      { href: "/forms", label: "Lead Capture", icon: FileText, enabled: true },
-      {
-        href: "/workflows",
-        label: "Follow-Up Plans",
-        icon: Workflow,
-        enabled: true,
-      },
-      {
-        href: "/funnels",
-        label: "Marketing Pages",
-        icon: Filter,
-        enabled: true,
-      },
       { href: "/marketing/campaigns", label: "Campaigns", icon: Megaphone, enabled: true },
+      { href: "/forms", label: "Lead Capture", icon: FileText, enabled: true },
+      { href: "/workflows", label: "Follow-Up Plans", icon: Workflow, enabled: true },
+      { href: "/funnels", label: "Marketing Pages", icon: Filter, enabled: true },
       { href: "/broadcasts", label: "Broadcasts", icon: Send, enabled: true },
       { href: "/social", label: "Social Planner", icon: Share2, enabled: true },
       { href: "/idx", label: "IDX Listings", icon: Building, enabled: true },
-      { href: "/quotes", label: "Quotes", icon: FileSignature, enabled: true },
     ],
   },
   {
-    label: "Business",
+    key: "grow",
+    label: "Grow My Business",
+    icon: Rocket,
     items: [
-      {
-        href: "/business-profile",
-        label: "Business Blueprint",
-        icon: BookOpen,
-        enabled: true,
-      },
+      { href: "/calendar", label: "Calendar", icon: Calendar, enabled: true },
+      { href: "/booking", label: "Booking", icon: CalendarClock, enabled: true },
+      { href: "/conversations", label: "Conversations", icon: MessagesSquare, enabled: true, badgeKey: "unreadConversations" },
+      { href: "/tasks", label: "Tasks", icon: CheckSquare, enabled: true, badgeKey: "dueToday" },
       { href: "/ai-agents", label: "AI Assistants", icon: Bot, enabled: true },
-      {
-        href: "/connect",
-        label: "Connections",
-        icon: Plug,
-        enabled: true,
-      },
-      { href: "/media", label: "Media Library", icon: Images, enabled: true },
-      { href: "/products", label: "Products", icon: Package, enabled: true },
-      { href: "/domain", label: "Domain", icon: Link2, enabled: true },
-      {
-        href: "/website-studio",
-        label: "Website Studio",
-        icon: LayoutTemplate,
-        enabled: true,
-      },
-      {
-        href: "/community",
-        label: "Community",
-        icon: GraduationCap,
-        enabled: true,
-      },
-      { href: "/templates", label: "Templates", icon: FileText, enabled: true },
+      { href: "/quotes", label: "Quotes", icon: FileSignature, enabled: true },
       { href: "/reports", label: "Analytics", icon: BarChart3, enabled: true },
+    ],
+  },
+  {
+    key: "setup",
+    label: "Set Up My Business",
+    icon: Wrench,
+    items: [
+      { href: "/business-profile", label: "Business Blueprint", icon: BookOpen, enabled: true },
+      { href: "/connect", label: "Connections", icon: Plug, enabled: true },
+      { href: "/site-health", label: "Site Health", icon: HeartPulse, enabled: true, badgeKey: "siteHealth" },
+      { href: "/media", label: "Media Library", icon: Images, enabled: true },
+      { href: "/domain", label: "Domain", icon: Link2, enabled: true },
+      { href: "/website-studio", label: "Website Studio", icon: LayoutTemplate, enabled: true },
+      { href: "/templates", label: "Templates", icon: FileText, enabled: true },
+      { href: "/products", label: "Products", icon: Package, enabled: true },
+      { href: "/community", label: "Community", icon: GraduationCap, enabled: true },
+      { href: "/import", label: "Import Contacts", icon: UploadCloud, enabled: true },
       { href: "/logs", label: "Logs", icon: ScrollText, enabled: true },
-      {
-        href: "/import",
-        label: "Import Contacts",
-        icon: UploadCloud,
-        enabled: true,
-      },
-      {
-        href: "/dashboard/settings",
-        label: "Settings",
-        icon: Settings,
-        enabled: true,
-      },
+      { href: "/dashboard/settings", label: "Settings", icon: Settings, enabled: true },
     ],
   },
 ];
+
+/* Keep legacy constant for backward compat if anything else imports it */
+const SUB_ACCOUNT_NAV_SECTIONS: NavSection[] = [];
 
 interface SidebarProps {
   open: boolean;
@@ -390,93 +356,52 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                 Ask Zack
               </button>
             </div>
-            {SUB_ACCOUNT_NAV_SECTIONS.map((section) => (
-              <div key={section.label} className="mb-4">
-                <p className="mb-1.5 px-2 text-[10px] font-semibold tracking-wider text-white/70 uppercase">
-                  {section.label}
-                </p>
-                {section.items.map((item) => {
-                  if (
-                    !agency.multiAccountModeEnabled &&
-                    (item.href === "/quotes" || item.href === "/products")
-                  ) {
-                    return null;
-                  }
-                  const fullHref = `${subRoot ?? `/sa/${linkSubId}`}${item.href}`;
-                  const isActive =
-                    pathname === fullHref ||
-                    (item.href !== "/dashboard" &&
-                      pathname.startsWith(fullHref));
 
-                  const gateLocked =
-                    (item.href === "/broadcasts" && broadcastsGate === false) ||
-                    ((item.href === "/website-studio" ||
-                      item.href === "/funnels") &&
-                      websiteStudioGate === false) ||
-                    (item.href === "/social" && socialGate === false) ||
-                    (item.href === "/community" && communityGate === false) ||
-                    (item.href === "/idx" && idxGate === false);
+            {/* ── Primary nav items (flat, always visible) ── */}
+            <div className="mb-2">
+              {PRIMARY_NAV.map((item) => {
+                const fullHref = `${subRoot ?? `/sa/${linkSubId}`}${item.href}`;
+                const isActive =
+                  pathname === fullHref ||
+                  (item.href !== "/dashboard" && pathname.startsWith(fullHref));
+                const badge =
+                  item.badgeKey === "unreadConversations" && unreadConversations > 0
+                    ? unreadConversations
+                    : null;
+                return (
+                  <SidebarLink
+                    key={item.href}
+                    href={fullHref}
+                    label={item.label}
+                    icon={item.icon}
+                    active={isActive}
+                    badge={badge}
+                  />
+                );
+              })}
+            </div>
 
-                  const gateHidden =
-                    (item.href === "/broadcasts" &&
-                      broadcastsGate === false &&
-                      broadcastsHidden) ||
-                    (item.href === "/social" &&
-                      socialGate === false &&
-                      socialHidden) ||
-                    (item.href === "/community" &&
-                      communityGate === false &&
-                      communityHidden) ||
-                    (item.href === "/idx" && idxGate === false && idxHidden);
-
-                  if (gateHidden) return null;
-
-                  if (!item.enabled || gateLocked) {
-                    return (
-                      <div
-                        key={item.href}
-                        className="flex min-h-11 cursor-not-allowed items-center justify-between gap-2.5 rounded-md px-2 py-1.5 text-sm text-white/45"
-                        title={
-                          gateLocked
-                            ? "Disabled by your agency administrator"
-                            : "Coming soon"
-                        }
-                      >
-                        <span className="flex items-center gap-2.5">
-                          <item.icon className="h-4 w-4" />
-                          {item.label}
-                        </span>
-                        <span className="flex items-center gap-1 rounded-full border border-white/10 px-1.5 text-[10px] tracking-wide uppercase">
-                          {gateLocked && <Lock className="h-2.5 w-2.5" />}
-                          {gateLocked ? "Locked" : "Soon"}
-                        </span>
-                      </div>
-                    );
-                  }
-
-                  const badge =
-                    item.badgeKey === "dueToday" && dueToday > 0
-                      ? dueToday
-                      : item.badgeKey === "unreadConversations" &&
-                          unreadConversations > 0
-                        ? unreadConversations
-                        : item.badgeKey === "siteHealth" &&
-                            siteHealthScore !== null
-                          ? `${siteHealthScore}%`
-                          : null;
-
-                  return (
-                    <SidebarLink
-                      key={item.href}
-                      href={fullHref}
-                      label={item.label}
-                      icon={item.icon}
-                      active={isActive}
-                      badge={badge}
-                    />
-                  );
-                })}
-              </div>
+            {/* ── Expandable nav groups ── */}
+            {NAV_GROUPS.map((group) => (
+              <NavGroupSection
+                key={group.key}
+                group={group}
+                subRoot={subRoot ?? `/sa/${linkSubId}`}
+                pathname={pathname}
+                dueToday={dueToday}
+                unreadConversations={unreadConversations}
+                siteHealthScore={siteHealthScore}
+                broadcastsGate={broadcastsGate}
+                websiteStudioGate={websiteStudioGate}
+                socialGate={socialGate}
+                communityGate={communityGate}
+                idxGate={idxGate}
+                broadcastsHidden={broadcastsHidden}
+                socialHidden={socialHidden}
+                communityHidden={communityHidden}
+                idxHidden={idxHidden}
+                multiAccountMode={agency.multiAccountModeEnabled}
+              />
             ))}
           </>
         )}
@@ -506,31 +431,188 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
+function NavGroupSection({
+  group,
+  subRoot,
+  pathname,
+  dueToday,
+  unreadConversations,
+  siteHealthScore,
+  broadcastsGate,
+  websiteStudioGate,
+  socialGate,
+  communityGate,
+  idxGate,
+  broadcastsHidden,
+  socialHidden,
+  communityHidden,
+  idxHidden,
+  multiAccountMode,
+}: {
+  group: NavGroup;
+  subRoot: string;
+  pathname: string;
+  dueToday: number;
+  unreadConversations: number;
+  siteHealthScore: number | null;
+  broadcastsGate: boolean | null;
+  websiteStudioGate: boolean | null;
+  socialGate: boolean | null;
+  communityGate: boolean | null;
+  idxGate: boolean | null;
+  broadcastsHidden: boolean;
+  socialHidden: boolean;
+  communityHidden: boolean;
+  idxHidden: boolean;
+  multiAccountMode: boolean;
+}) {
+  // Auto-expand if any child route is active
+  const hasActiveChild = group.items.some((item) => {
+    const fullHref = `${subRoot}${item.href}`;
+    return pathname === fullHref || pathname.startsWith(fullHref);
+  });
+  const [expanded, setExpanded] = useState(hasActiveChild);
+
+  // Sync expansion when route changes into this group
+  useEffect(() => {
+    if (hasActiveChild && !expanded) setExpanded(true);
+  }, [hasActiveChild]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const GroupIcon = group.icon;
+  const Chevron = expanded ? ChevronDown : ChevronRight;
+
+  return (
+    <div className="mb-1">
+      <button
+        onClick={() => setExpanded((v) => !v)}
+        className={cn(
+          "flex min-h-11 w-full items-center justify-between gap-2.5 rounded-md px-2 py-1.5 text-sm font-medium transition-colors",
+          hasActiveChild
+            ? "text-white"
+            : "text-white/85 hover:bg-[#6EA8FE] hover:text-[#102A4C]"
+        )}
+      >
+        <span className="flex items-center gap-2.5">
+          <GroupIcon className="h-4 w-4 shrink-0" />
+          {group.label}
+        </span>
+        <Chevron className="h-3.5 w-3.5 shrink-0 text-white/60" />
+      </button>
+      {expanded && (
+        <div className="ml-2 border-l border-white/15 pl-1">
+          {group.items.map((item) => {
+            if (
+              !multiAccountMode &&
+              (item.href === "/quotes" || item.href === "/products")
+            ) {
+              return null;
+            }
+
+            const fullHref = `${subRoot}${item.href}`;
+            const isActive =
+              pathname === fullHref || pathname.startsWith(fullHref);
+
+            const gateLocked =
+              (item.href === "/broadcasts" && broadcastsGate === false) ||
+              ((item.href === "/website-studio" || item.href === "/funnels") &&
+                websiteStudioGate === false) ||
+              (item.href === "/social" && socialGate === false) ||
+              (item.href === "/community" && communityGate === false) ||
+              (item.href === "/idx" && idxGate === false);
+
+            const gateHidden =
+              (item.href === "/broadcasts" &&
+                broadcastsGate === false &&
+                broadcastsHidden) ||
+              (item.href === "/social" && socialGate === false && socialHidden) ||
+              (item.href === "/community" &&
+                communityGate === false &&
+                communityHidden) ||
+              (item.href === "/idx" && idxGate === false && idxHidden);
+
+            if (gateHidden) return null;
+
+            if (!item.enabled || gateLocked) {
+              return (
+                <div
+                  key={item.href}
+                  className="flex min-h-9 cursor-not-allowed items-center justify-between gap-2.5 rounded-md px-2 py-1 text-[13px] text-white/45"
+                  title={
+                    gateLocked
+                      ? "Disabled by your agency administrator"
+                      : "Coming soon"
+                  }
+                >
+                  <span className="flex items-center gap-2.5">
+                    <item.icon className="h-3.5 w-3.5" />
+                    {item.label}
+                  </span>
+                  <span className="flex items-center gap-1 rounded-full border border-white/10 px-1.5 text-[10px] tracking-wide uppercase">
+                    {gateLocked && <Lock className="h-2.5 w-2.5" />}
+                    {gateLocked ? "Locked" : "Soon"}
+                  </span>
+                </div>
+              );
+            }
+
+            const badge =
+              item.badgeKey === "dueToday" && dueToday > 0
+                ? dueToday
+                : item.badgeKey === "unreadConversations" &&
+                    unreadConversations > 0
+                  ? unreadConversations
+                  : item.badgeKey === "siteHealth" && siteHealthScore !== null
+                    ? `${siteHealthScore}%`
+                    : null;
+
+            return (
+              <SidebarLink
+                key={item.href}
+                href={fullHref}
+                label={item.label}
+                icon={item.icon}
+                active={isActive}
+                badge={badge}
+                compact
+              />
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function SidebarLink({
   href,
   label,
   icon: Icon,
   active,
   badge,
+  compact,
 }: {
   href: string;
   label: string;
   icon: typeof Home;
   active: boolean;
   badge?: number | string | null;
+  compact?: boolean;
 }) {
   return (
     <Link
       href={href}
       className={cn(
-        "flex min-h-11 items-center justify-between gap-2.5 rounded-md px-2 py-1.5 text-sm font-medium transition-colors",
+        "flex items-center justify-between gap-2.5 rounded-md font-medium transition-colors",
+        compact
+          ? "min-h-9 px-2 py-1 text-[13px]"
+          : "min-h-11 px-2 py-1.5 text-sm",
         active
           ? "bg-[#9CC8FF] text-[#102A4C] shadow-sm"
           : "text-white/85 hover:bg-[#6EA8FE] hover:text-[#102A4C]"
       )}
     >
       <span className="flex items-center gap-2.5">
-        <Icon className="h-4 w-4 shrink-0" />
+        <Icon className={cn("shrink-0", compact ? "h-3.5 w-3.5" : "h-4 w-4")} />
         {label}
       </span>
       {badge != null && (
