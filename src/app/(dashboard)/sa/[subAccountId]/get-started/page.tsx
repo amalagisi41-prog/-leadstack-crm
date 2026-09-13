@@ -10,15 +10,17 @@ import {
   type OnboardingWizardStepKey,
 } from "@/components/dashboard/onboarding-wizard";
 import { SOLO_ENTITLEMENT_PATCH } from "@/lib/entitlements/solo";
-import { OnboardingFoundation } from "@/components/dashboard/onboarding-foundation";
+import { RealtorLaunchWizard } from "@/components/dashboard/realtor-launch-wizard";
 import { Loader2 } from "lucide-react";
 
 /**
  * Mandatory first-run wizard. The sub-account dashboard redirects here at
- * login until all onboarding step IDs are in subAccount.onboardingStepsCompleted.
+ * login until onboardingWizardCompletedAt is set.
  *
- * The wizard walks through the AgentStack Method flow and can deep-link to a
- * specific step via ?step=build|connect|capture|respond|nurture|close.
+ * New workspaces get the streamlined Realtor Launch wizard (5 screens:
+ * role → priority → identity → connect → launch). The old AgentStack Method
+ * wizard is still accessible via ?step= deep-links for returning users who
+ * started the original flow.
  */
 export default function GetStartedPage() {
   const searchParams = useSearchParams();
@@ -39,13 +41,10 @@ export default function GetStartedPage() {
     )
       ? (requestedStep as OnboardingWizardStepKey)
       : null;
-  // The wizard completion marker is the first-run gate. SMS/A2P and AI
-  // persona refinement remain optional follow-up work in the workspace.
   const setupIsComplete = Boolean(subAccount?.onboardingWizardCompletedAt);
 
   // Idempotent migration for workspaces created before the Solo entitlement
-  // entitlement baseline shipped. The endpoint is agency-owner-only; invited
-  // members receive a harmless 403 and keep their agency-managed gates.
+  // baseline shipped.
   useEffect(() => {
     if (!isGhlJourney || !subAccountId) return;
     const destination = new URLSearchParams({ source: "ghl" });
@@ -97,11 +96,6 @@ export default function GetStartedPage() {
     let active = true;
     void fetch(`/api/sub-accounts/${subAccountId}/onboarding-foundation`)
       .then(async (response) => {
-        // A 403 means this member isn't a sub-account admin. The foundation
-        // endpoint is admin-only for both GET and PATCH, so showing them the
-        // foundation screen trapped them permanently: the save always 403s,
-        // onComplete never fires, and the dashboard redirects them straight
-        // back here on every visit. They could never reach the CRM at all.
         if (response.status === 403) {
           if (active) setAdminOnly(true);
           return;
@@ -119,9 +113,7 @@ export default function GetStartedPage() {
     };
   }, [loading, subAccount, subAccountId]);
 
-  // A collaborator can't run setup, but they must still be able to use the
-  // workspace. Give them a real way out instead of a screen they can never
-  // complete.
+  // Collaborators bypass setup entirely.
   if (adminOnly) {
     return (
       <div className="mx-auto max-w-lg space-y-4 rounded-2xl border bg-card p-8 text-center">
@@ -154,22 +146,20 @@ export default function GetStartedPage() {
     );
   }
 
-  if (!foundationComplete) {
+  // Deep-link into the legacy wizard (returning users who started the old flow)
+  if (initialStep && foundationComplete) {
     return (
-      <OnboardingFoundation
+      <OnboardingWizard
         subAccountId={subAccountId}
         saPath={saPath}
-        onComplete={() => setFoundationComplete(true)}
+        initialCompleted={subAccount?.onboardingStepsCompleted ?? []}
+        initialStep={initialStep}
       />
     );
   }
 
+  // New default: Realtor Launch wizard (role → priority → identity → connect → launch)
   return (
-    <OnboardingWizard
-      subAccountId={subAccountId}
-      saPath={saPath}
-      initialCompleted={subAccount?.onboardingStepsCompleted ?? []}
-      initialStep={initialStep}
-    />
+    <RealtorLaunchWizard subAccountId={subAccountId} saPath={saPath} />
   );
 }
