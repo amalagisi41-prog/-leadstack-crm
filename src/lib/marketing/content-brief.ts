@@ -46,7 +46,7 @@ export function listingMarketingStatusLabel(
 }
 
 function displayAddress(listing: IdxListingDoc): string {
-  let address = listing.address.trim();
+  const address = listing.address.trim();
   const suffixes = [
     `${listing.city}, ${listing.state} ${listing.zip}`,
     `${listing.city}, ${listing.state}`,
