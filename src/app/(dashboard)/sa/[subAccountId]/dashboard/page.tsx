@@ -33,6 +33,10 @@ import type { Contact } from "@/types/contacts";
 import type { CalendarEvent } from "@/types/events";
 import type { Task } from "@/types/tasks";
 import type { WebChatSession } from "@/types/web-chat";
+import type {
+  CampaignBriefDoc,
+  CampaignChannel,
+} from "@/types/marketing-campaigns";
 import { Button } from "@/components/ui/button";
 import { NewDealDialog } from "@/components/pipeline/new-deal-dialog";
 import { cn } from "@/lib/utils";
@@ -44,6 +48,17 @@ import {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const STALLED_AFTER_MS = 7 * DAY_MS;
+
+type DashboardCampaign = CampaignBriefDoc & {
+  listing?: { photos?: unknown[] } | null;
+};
+
+type CampaignDashboardData = {
+  briefs?: DashboardCampaign[];
+  channelAvailability?: Partial<
+    Record<CampaignChannel, { configured: boolean; publishable: boolean }>
+  >;
+};
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -87,7 +102,31 @@ export default function DashboardPage() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [sessions, setSessions] = useState<WebChatSession[]>([]);
+  const [campaignHealth, setCampaignHealth] =
+    useState<CampaignDashboardData>({ briefs: [] });
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!subAccountId) return;
+    let active = true;
+
+    void fetch(`/api/sub-accounts/${subAccountId}/marketing/campaigns`)
+      .then(async (response) => {
+        if (!response.ok) return null;
+        return (await response.json()) as CampaignDashboardData;
+      })
+      .then((data) => {
+        if (active && data) setCampaignHealth(data);
+      })
+      .catch(() => {
+        // The CRM queue must not block on campaign health. If the source is
+        // unavailable, it simply cannot claim that any campaign is resolved.
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [subAccountId]);
 
   useEffect(() => {
     if (!user || !agencyId || !filterReady) return;
@@ -290,6 +329,105 @@ export default function DashboardPage() {
 
   const unresolvedTasks = useMemo<UniversalTask[]>(() => {
     const items: UniversalTask[] = [];
+    const briefs = campaignHealth.briefs ?? [];
+    const campaignHref = (listingId: string) =>
+      saPath(`/marketing/campaigns?listing=${encodeURIComponent(listingId)}`);
+    const firstBrief = briefs[0];
+
+    if (firstBrief?.brief?.dataGaps?.length) {
+      const address = firstBrief.brief.address || "A property";
+      items.push({
+        id: "property-gaps-" + firstBrief.listingId,
+        priority: 2,
+        label: `${address} needs verified details`,
+        detail: `Missing: ${firstBrief.brief.dataGaps.join(", ")}.`,
+        href: campaignHref(firstBrief.listingId),
+        cta: "Complete listing",
+      });
+    }
+
+    const photoBrief = briefs.find(
+      (brief) =>
+        (brief.brief?.images?.length ?? 0) === 0 &&
+        (brief.listing?.photos?.length ?? 0) === 0
+    );
+    if (photoBrief) {
+      const address = photoBrief.brief.address || "This property";
+      items.push({
+        id: "property-photos-" + photoBrief.listingId,
+        priority: 2,
+        label: `${address} needs photos`,
+        detail: "No verified listing photos are available for its marketing assets.",
+        href: campaignHref(photoBrief.listingId),
+        cta: "Add photos",
+      });
+    }
+
+    const reviewBrief = briefs.find((brief) => {
+      const drafts = brief.brief?.channels ?? [];
+      return drafts.some(
+        (draft) =>
+          (draft.status === "ready" || draft.status === "needs-review") &&
+          !brief.approvedChannels.includes(draft.channel)
+      );
+    });
+    if (reviewBrief) {
+      const reviewCount = (reviewBrief.brief?.channels ?? []).filter(
+        (draft) =>
+          (draft.status === "ready" || draft.status === "needs-review") &&
+          !reviewBrief.approvedChannels.includes(draft.channel)
+      ).length;
+      items.push({
+        id: "campaign-review-" + reviewBrief.listingId,
+        priority: 2,
+        label: `${reviewBrief.brief.address || "Property"} campaign needs review`,
+        detail: `${reviewCount} channel draft${reviewCount === 1 ? "" : "s"} is ready for your approval.`,
+        href: campaignHref(reviewBrief.listingId),
+        cta: "Review drafts",
+      });
+    }
+
+    const scheduleBrief = briefs.find((brief) => {
+      if (brief.workflowStep !== "schedule") return false;
+      return brief.approvedChannels.some(
+        (channel) => !brief.schedulePlan?.[channel]
+      );
+    });
+    if (scheduleBrief) {
+      items.push({
+        id: "campaign-schedule-" + scheduleBrief.listingId,
+        priority: 2,
+        label: `${scheduleBrief.brief.address || "Property"} needs a schedule`,
+        detail: "Approved channel content is waiting for a calendar date and time.",
+        href: campaignHref(scheduleBrief.listingId),
+        cta: "Set calendar",
+      });
+    }
+
+    const channelLabels: Partial<Record<CampaignChannel, string>> = {
+      sms: "SMS",
+      facebook: "Facebook",
+      instagram: "Instagram",
+      googleBusiness: "Google Business",
+      linkedin: "LinkedIn",
+      tiktok: "TikTok",
+    };
+    const unconfiguredChannels = Object.entries(
+      campaignHealth.channelAvailability ?? {}
+    )
+      .filter(([, status]) => status && !status.configured)
+      .map(([channel]) => channelLabels[channel as CampaignChannel] ?? channel);
+    if (unconfiguredChannels.length) {
+      items.push({
+        id: "publishing-connections",
+        priority: 3,
+        label: "Publishing connections need attention",
+        detail: `${unconfiguredChannels.join(", ")} ${unconfiguredChannels.length === 1 ? "is" : "are"} not connected. Drafts remain export-ready until authorization is available.`,
+        href: saPath("/connect"),
+        cta: "Open Connections",
+      });
+    }
+
     const escalated = escalatedSessions[0];
     if (escalated) {
       const name =
@@ -350,6 +488,7 @@ export default function DashboardPage() {
     }
     return items.sort((a, b) => a.priority - b.priority).slice(0, 6);
   }, [
+    campaignHealth,
     deals,
     escalatedSessions,
     newLeads,
