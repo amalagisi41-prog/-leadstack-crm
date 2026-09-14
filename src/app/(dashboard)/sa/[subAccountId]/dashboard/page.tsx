@@ -11,6 +11,7 @@ import {
   Calendar as CalendarIcon,
   CheckCircle2,
   Clock,
+  ListTodo,
   MapPin,
   Plus,
   PhoneCall,
@@ -286,6 +287,77 @@ export default function DashboardPage() {
         (completedOnboardingSteps.length / ONBOARDING_METHOD_STEPS.length) * 100
       )
     : 0;
+
+  const unresolvedTasks = useMemo<UniversalTask[]>(() => {
+    const items: UniversalTask[] = [];
+    const escalated = escalatedSessions[0];
+    if (escalated) {
+      const name =
+        escalated.capturedName ??
+        escalated.capturedEmail ??
+        escalated.capturedPhone ??
+        "A visitor";
+      items.push({
+        id: "reply-" + escalated.id,
+        priority: 1,
+        label: name + " needs a reply",
+        detail: "An AI conversation was escalated to you.",
+        href: saPath("/ai-agents/web-chat/sessions/" + escalated.id),
+        cta: "Reply",
+      });
+    }
+    for (const lead of newLeads
+      .filter((contact) => !deals.some((deal) => deal.contactId === contact.id))
+      .slice(0, 2)) {
+      items.push({
+        id: "lead-" + lead.id,
+        priority: 2,
+        label: (lead.name || lead.email || "New lead") + " is waiting",
+        detail: "New contact with no deal or follow-up yet.",
+        href: saPath("/contacts/" + lead.id),
+        cta: "Open lead",
+      });
+    }
+    if (overdueTasks[0]) {
+      items.push({
+        id: "task-" + overdueTasks[0].id,
+        priority: 2,
+        label: "Overdue task needs attention",
+        detail: overdueTasks[0].title || "Review your overdue task list.",
+        href: saPath("/tasks"),
+        cta: "Open tasks",
+      });
+    }
+    if (stalledDeals[0]) {
+      items.push({
+        id: "deal-" + stalledDeals[0].id,
+        priority: 3,
+        label: "A deal has gone quiet",
+        detail: "Follow up or update its next step.",
+        href: saPath("/pipeline?deal=" + stalledDeals[0].id),
+        cta: "Open deal",
+      });
+    }
+    if (nextOnboardingStep) {
+      items.push({
+        id: "setup-" + nextOnboardingStep.id,
+        priority: 3,
+        label: nextOnboardingStep.title,
+        detail: nextOnboardingStep.description,
+        href: saPath(nextOnboardingStep.href),
+        cta: nextOnboardingStep.cta,
+      });
+    }
+    return items.sort((a, b) => a.priority - b.priority).slice(0, 6);
+  }, [
+    deals,
+    escalatedSessions,
+    newLeads,
+    nextOnboardingStep,
+    overdueTasks,
+    saPath,
+    stalledDeals,
+  ]);
 
   const nextBestAction = useMemo<NextBestAction>(() => {
     const currentNow = new Date(nowMs);
@@ -627,6 +699,7 @@ export default function DashboardPage() {
               saPath={saPath}
             />
           )}
+          <UniversalTaskQueue items={unresolvedTasks} />
 
           {isWorkspaceEmpty ? (
             <div className="space-y-4">
@@ -677,6 +750,70 @@ interface TodayPriority {
   href: string;
   icon: ReactNode;
   iconBg: string;
+}
+
+interface UniversalTask {
+  id: string;
+  priority: number;
+  label: string;
+  detail: string;
+  href: string;
+  cta: string;
+}
+
+function UniversalTaskQueue({ items }: { items: UniversalTask[] }) {
+  return (
+    <section className="bg-card rounded-2xl border p-5">
+      <div className="flex items-start gap-3">
+        <div className="bg-primary/10 text-primary flex h-9 w-9 shrink-0 items-center justify-center rounded-xl">
+          <ListTodo className="h-4 w-4" />
+        </div>
+        <div>
+          <p className="text-muted-foreground text-[11px] font-semibold tracking-[0.24em] uppercase">
+            Your unresolved work
+          </p>
+          <h2 className="mt-1 text-lg font-semibold">What needs attention</h2>
+          <p className="text-muted-foreground mt-1 text-sm">
+            AgentStack names the next actions it can verify from your workspace.
+          </p>
+        </div>
+      </div>
+      {items.length === 0 ? (
+        <p className="text-muted-foreground mt-5 rounded-xl border border-dashed p-4 text-sm">
+          No unresolved action is currently visible. New work will appear here
+          when AgentStack can verify it.
+        </p>
+      ) : (
+        <ol className="mt-5 grid gap-3 md:grid-cols-2">
+          {items.map((item, index) => (
+            <li
+              key={item.id}
+              className="flex items-start gap-3 rounded-xl border p-4"
+            >
+              <span className="bg-muted text-muted-foreground flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold">
+                {index + 1}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium">{item.label}</p>
+                <p className="text-muted-foreground mt-1 line-clamp-2 text-xs">
+                  {item.detail}
+                </p>
+                <Button
+                  className="mt-3"
+                  size="sm"
+                  variant="outline"
+                  render={<Link href={item.href} />}
+                >
+                  {item.cta}
+                  <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </li>
+          ))}
+        </ol>
+      )}
+    </section>
+  );
 }
 
 function LoadingState() {
