@@ -69,7 +69,23 @@ function parseCsv(input: string): Record<string, unknown>[] {
 function parseText(textContent: string, extension: string): Record<string, unknown>[] {
   if (extension === ".json") {
     const parsed = JSON.parse(textContent) as unknown;
-    const rows = Array.isArray(parsed) ? parsed : [parsed];
+    const container =
+      parsed && typeof parsed === "object" && !Array.isArray(parsed)
+        ? (parsed as Record<string, unknown>)
+        : null;
+    // Listing portals commonly wrap an export in a named collection. Accept
+    // those containers while keeping the row parser authoritative for the
+    // actual listing facts. Do not recursively guess through arbitrary JSON.
+    const wrapped = container
+      ? ["listings", "properties", "homes", "results", "data"]
+          .map((key) => container[key])
+          .find((value) => Array.isArray(value))
+      : undefined;
+    const rows = Array.isArray(parsed)
+      ? parsed
+      : Array.isArray(wrapped)
+        ? wrapped
+        : [parsed];
     return rows.filter((row): row is Record<string, unknown> => typeof row === "object" && row !== null);
   }
   if (extension === ".csv") return parseCsv(textContent);

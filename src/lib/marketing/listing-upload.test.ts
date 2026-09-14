@@ -61,4 +61,44 @@ Listing ID : 24205988
       zip: "06902",
     });
   });
+
+  it("imports the first listing from a portal export collection", async () => {
+    const listing = await parseListingUpload({
+      buffer: Buffer.from(JSON.stringify({
+        source: "authorized Zillow export",
+        listings: [
+          {
+            listingId: "portal-303-weed",
+            streetAddress: "303 Weed Avenue",
+            city: "Stamford",
+            state: "CT",
+            zipcode: "06902",
+            price: "$3,200",
+            bedrooms: 2,
+            bathrooms: 1,
+            livingArea: 1100,
+            description: "A bright rental near downtown.",
+          },
+        ],
+      })),
+      filename: "zillow-listings.json",
+      subAccountId: "workspace-1",
+      sourceId: "portal-import",
+      photos: [],
+    });
+
+    expect(typeof listing).toBe("object");
+    if (typeof listing === "string") throw new Error(listing);
+    expect(listing).toMatchObject({
+      id: "portal-303-weed",
+      address: "303 Weed Avenue",
+      city: "Stamford",
+      state: "CT",
+      zip: "06902",
+      price: 3200,
+      beds: 2,
+      baths: 1,
+      sqft: 1100,
+    });
+  });
 });
