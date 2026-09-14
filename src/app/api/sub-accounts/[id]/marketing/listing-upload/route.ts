@@ -6,7 +6,7 @@ import { getStorage } from "firebase-admin/storage";
 import { NextResponse } from "next/server";
 import { requireSubAccountAdmin } from "@/lib/auth/require-tenancy";
 import { getAdminDb } from "@/lib/firebase/admin";
-import { parseListingUpload } from "@/lib/marketing/listing-upload";
+import { parseListingUploads } from "@/lib/marketing/listing-upload";
 import type { IdxListingDoc } from "@/types/idx";
 import {
   PROPERTY_SHARED_TEMPLATE,
@@ -72,33 +72,44 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
     if (source.size + photoFiles.reduce((total, file) => total + file.size, 0) > MAX_MULTIPART_BYTES) return NextResponse.json({ error: "Keep the combined listing export and photos under 4 MB for this upload. Use a smaller export or fewer/compressed photos." }, { status: 413 });
 
     const sourceId = `import-${Date.now()}-${randomUUID().slice(0, 8)}`;
-    const versionId = sourceId;
-    const listing = await parseListingUpload({ buffer: Buffer.from(await source.arrayBuffer()), filename: source.name, subAccountId: id, sourceId, photos: [] });
-    if (typeof listing === "string") return NextResponse.json({ error: listing }, { status: 400 });
-    const [sourceUrl, photoUrls] = await Promise.all([
-      saveAsset(id, listing.id, source, "source", versionId),
-      Promise.all(photoFiles.map((file) => saveAsset(id, listing.id, file, "property-photo", versionId))),
-    ]);
-    listing.photos = [...new Set([...listing.photos, ...photoUrls])].slice(0, 50);
+    const parsed = await parseListingUploads({ buffer: Buffer.from(await source.arrayBuffer()), filename: source.name, subAccountId: id, sourceId, photos: [] });
+    if (parsed.listings.length === 0) return NextResponse.json({ error: parsed.errors[0] ?? "The uploaded file does not contain a complete listing." }, { status: 400 });
     const db = getAdminDb();
-    const activeFolder = `media/${id}/properties/${listing.id}/active/${versionId}`;
-    const archiveFolder = `media/${id}/properties/${listing.id}/archive`;
     const shouldGenerateBrochure = form.get("generateBrochure") === "true";
-    const listingRef = db.doc(`subAccounts/${id}/idxListings/${listing.id}`);
-    await listingRef.set({ ...listing, raw: { ...listing.raw, importedFrom: source.name, mediaFolder: activeFolder, archiveFolder }, syncedAt: FieldValue.serverTimestamp() } satisfies Omit<IdxListingDoc, "syncedAt"> & { syncedAt: FieldValue }, { merge: true });
-    const packageRef = db.doc(`subAccounts/${id}/mediaPackages/${listing.id}`);
-    const previous = await packageRef.get();
-    if (previous.exists) {
-      await packageRef.collection("versions").doc((previous.data() as { activeVersionId: string }).activeVersionId).set({ ...previous.data(), archivedAt: FieldValue.serverTimestamp(), archivedFolder: previous.data()?.activeFolder ?? archiveFolder }, { merge: true });
+    const imported: Array<{ listing: IdxListingDoc; brochureUrl: string | null; photoCount: number }> = [];
+    const usedIds = new Set<string>();
+    for (const [index, originalListing] of parsed.listings.entries()) {
+      let listing = originalListing;
+      const baseId = listing.id;
+      let suffix = 1;
+      while (usedIds.has(listing.id)) listing = { ...listing, id: `${baseId}-${++suffix}`, mlsId: `${baseId}-${suffix}` };
+      usedIds.add(listing.id);
+      const versionId = `${sourceId}-${index + 1}`;
+      const listingPhotoFiles = index === 0 ? photoFiles : [];
+      const [sourceUrl, photoUrls] = await Promise.all([
+        saveAsset(id, listing.id, source, "source", versionId),
+        Promise.all(listingPhotoFiles.map((file) => saveAsset(id, listing.id, file, "property-photo", versionId))),
+      ]);
+      listing = { ...listing, photos: [...new Set([...listing.photos, ...photoUrls])].slice(0, 50) };
+      const activeFolder = `media/${id}/properties/${listing.id}/active/${versionId}`;
+      const archiveFolder = `media/${id}/properties/${listing.id}/archive`;
+      const listingRef = db.doc(`subAccounts/${id}/idxListings/${listing.id}`);
+      await listingRef.set({ ...listing, raw: { ...listing.raw, importedFrom: source.name, mediaFolder: activeFolder, archiveFolder }, syncedAt: FieldValue.serverTimestamp() } satisfies Omit<IdxListingDoc, "syncedAt"> & { syncedAt: FieldValue }, { merge: true });
+      const packageRef = db.doc(`subAccounts/${id}/mediaPackages/${listing.id}`);
+      const previous = await packageRef.get();
+      if (previous.exists) {
+        await packageRef.collection("versions").doc((previous.data() as { activeVersionId: string }).activeVersionId).set({ ...previous.data(), archivedAt: FieldValue.serverTimestamp(), archivedFolder: previous.data()?.activeFolder ?? archiveFolder }, { merge: true });
+      }
+      const brochureUrl = shouldGenerateBrochure
+        ? `${process.env.NEXT_PUBLIC_APP_URL ?? new URL(request.url).origin}/campaign/${id}/${listing.id}/brochure`
+        : null;
+      const mediaPackage: PropertyMediaPackageDoc = { listingId: listing.id, subAccountId: id, templateId: PROPERTY_SHARED_TEMPLATE, listingTemplateFile: PROPERTY_LISTING_TEMPLATE_FILE, brochureTemplateFile: PROPERTY_LISTING_TEMPLATE_FILE, activeFolder, archiveFolder, activeVersionId: versionId, brochureUrl, photoCount: photoUrls.length, sourceName: source.name, createdByUid: access.uid, createdAt: previous.exists ? (previous.data()?.createdAt ?? null) : FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() };
+      await packageRef.set(mediaPackage, { merge: true });
+      await packageRef.collection("versions").doc(versionId).set({ ...mediaPackage, versionId, createdAt: FieldValue.serverTimestamp() });
+      await db.collection(`subAccounts/${id}/listingImports`).doc(`${sourceId}-${index + 1}`).set({ sourceName: source.name, sourceType: source.type, sourceUrl, listingId: listing.id, mediaFolder: activeFolder, archiveFolder, templateId: PROPERTY_SHARED_TEMPLATE, listingTemplateFile: PROPERTY_LISTING_TEMPLATE_FILE, brochureTemplateFile: PROPERTY_LISTING_TEMPLATE_FILE, photoCount: photoUrls.length, importedByUid: access.uid, createdAt: FieldValue.serverTimestamp() });
+      imported.push({ listing, brochureUrl, photoCount: photoUrls.length });
     }
-    const brochureUrl = shouldGenerateBrochure
-      ? `${process.env.NEXT_PUBLIC_APP_URL ?? new URL(request.url).origin}/campaign/${id}/${listing.id}/brochure`
-      : null;
-    const mediaPackage: PropertyMediaPackageDoc = { listingId: listing.id, subAccountId: id, templateId: PROPERTY_SHARED_TEMPLATE, listingTemplateFile: PROPERTY_LISTING_TEMPLATE_FILE, brochureTemplateFile: PROPERTY_LISTING_TEMPLATE_FILE, activeFolder, archiveFolder, activeVersionId: versionId, brochureUrl, photoCount: photoUrls.length, sourceName: source.name, createdByUid: access.uid, createdAt: previous.exists ? (previous.data()?.createdAt ?? null) : FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() };
-    await packageRef.set(mediaPackage, { merge: true });
-    await packageRef.collection("versions").doc(versionId).set({ ...mediaPackage, versionId, createdAt: FieldValue.serverTimestamp() });
-    await db.collection(`subAccounts/${id}/listingImports`).doc(sourceId).set({ sourceName: source.name, sourceType: source.type, sourceUrl, listingId: listing.id, mediaFolder: activeFolder, archiveFolder, templateId: PROPERTY_SHARED_TEMPLATE, listingTemplateFile: PROPERTY_LISTING_TEMPLATE_FILE, brochureTemplateFile: PROPERTY_LISTING_TEMPLATE_FILE, photoCount: photoUrls.length, importedByUid: access.uid, createdAt: FieldValue.serverTimestamp() });
-    return NextResponse.json({ ok: true, listing: { ...listing, id: listing.id, photos: listing.photos }, sourceName: source.name, photoCount: photoUrls.length, mediaPackage: { brochureUrl } }, { status: 201 });
+    return NextResponse.json({ ok: true, listing: imported[0].listing, listings: imported.map((item) => item.listing), sourceName: source.name, photoCount: imported.reduce((total, item) => total + item.photoCount, 0), skippedRows: parsed.errors, mediaPackage: { brochureUrl: imported[0].brochureUrl } }, { status: 201 });
   } catch (error) {
     console.error("Listing upload error:", error);
     return NextResponse.json({ error: error instanceof Error ? error.message : "Listing import failed." }, { status: 500 });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parseListingUpload } from "./listing-upload";
+import { parseListingUpload, parseListingUploads } from "./listing-upload";
 
 describe("parseListingUpload", () => {
   it("creates a verified campaign record from pasted SmartMLS detail text", async () => {
@@ -100,5 +100,30 @@ Listing ID : 24205988
       baths: 1,
       sqft: 1100,
     });
+  });
+
+  it("returns every valid row from a multi-listing export", async () => {
+    const result = await parseListingUploads({
+      buffer: Buffer.from([
+        "listingId,address,city,state,zip,price",
+        "one,1 Main Street,Stamford,CT,06902,1000",
+        "two,2 Main Street,Stamford,CT,06902,2000",
+      ].join("\n")),
+      filename: "homes-listings.csv",
+      subAccountId: "workspace-1",
+      sourceId: "portal-import",
+      photos: [],
+    });
+
+    expect(result.errors).toEqual([]);
+    expect(result.listings).toHaveLength(2);
+    expect(result.listings.map((listing) => listing.id)).toEqual([
+      "one",
+      "two",
+    ]);
+    expect(result.listings.map((listing) => listing.address)).toEqual([
+      "1 Main Street",
+      "2 Main Street",
+    ]);
   });
 });

@@ -531,6 +531,8 @@ export default function MarketingCampaignsPage() {
         ok?: boolean;
         error?: string;
         listing?: IdxListingDoc;
+        listings?: IdxListingDoc[];
+        skippedRows?: string[];
         mediaPackage?: { brochureUrl?: string | null };
       }>(res);
       if (!res.ok || !data.ok || !data.listing)
@@ -552,9 +554,19 @@ export default function MarketingCampaignsPage() {
         disclaimer: data.listing.disclaimer ?? "",
         photos: data.listing.photos.join("\n"),
       });
-      await createBrief(data.listing.id);
+      const importedListings = data.listings?.length
+        ? data.listings
+        : [data.listing];
+      for (const importedListing of importedListings) {
+        await createBrief(importedListing.id);
+      }
+      const skippedMessage = data.skippedRows?.length
+        ? ` ${data.skippedRows.length} row${data.skippedRows.length === 1 ? " was" : "s were"} skipped because required address details were missing.`
+        : "";
       toast.success(
-        `Imported ${data.listing.address} and built drafts across all channels.`
+        importedListings.length === 1
+          ? `Imported ${data.listing.address} and built drafts across all channels.${skippedMessage}`
+          : `Imported ${importedListings.length} properties and built drafts across all channels.${skippedMessage}`
       );
     } catch (error) {
       toast.error(

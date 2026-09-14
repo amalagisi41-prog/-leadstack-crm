@@ -207,9 +207,27 @@ function listingFromRow(row: Record<string, unknown>, subAccountId: string, sour
   };
 }
 
-export async function parseListingUpload(input: { buffer: Buffer; filename: string; subAccountId: string; sourceId: string; photos: string[] }): Promise<IdxListingDoc | string> {
+export async function parseListingUploads(input: { buffer: Buffer; filename: string; subAccountId: string; sourceId: string; photos: string[] }): Promise<{ listings: IdxListingDoc[]; errors: string[] }> {
   const extension = `.${input.filename.split(".").pop()?.toLowerCase() ?? ""}`;
   const rows = await rowsFromFile(input.buffer, extension);
-  if (rows.length === 0) return "The uploaded file does not contain any listing rows.";
-  return listingFromRow(rows[0], input.subAccountId, input.sourceId, input.photos);
+  if (rows.length === 0) return { listings: [], errors: ["The uploaded file does not contain any listing rows."] };
+  const listings: IdxListingDoc[] = [];
+  const errors: string[] = [];
+  rows.forEach((row, index) => {
+    const parsed = listingFromRow(
+      row,
+      input.subAccountId,
+      rows.length === 1 ? input.sourceId : `${input.sourceId}-${index + 1}`,
+      index === 0 ? input.photos : []
+    );
+    if (typeof parsed === "string") errors.push(`Row ${index + 1}: ${parsed}`);
+    else listings.push(parsed);
+  });
+  return { listings, errors };
+}
+
+export async function parseListingUpload(input: { buffer: Buffer; filename: string; subAccountId: string; sourceId: string; photos: string[] }): Promise<IdxListingDoc | string> {
+  const result = await parseListingUploads(input);
+  if (result.listings[0]) return result.listings[0];
+  return result.errors[0] ?? "The uploaded file does not contain any listing rows.";
 }
