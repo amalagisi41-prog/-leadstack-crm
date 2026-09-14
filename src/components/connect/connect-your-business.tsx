@@ -181,7 +181,6 @@ export function ConnectYourBusiness() {
     const contactsHref = saPath("/contacts");
     const formsHref = saPath("/forms");
     const aiAgentsHref = saPath("/ai-agents/web-chat");
-    const idxHref = saPath("/idx");
     const domainHref = saPath("/domain");
 
     const smsConnected = subAccount.twilioConfig?.enabled === true;
