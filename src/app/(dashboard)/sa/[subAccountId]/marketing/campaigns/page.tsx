@@ -370,15 +370,17 @@ export default function MarketingCampaignsPage() {
     }
   }
 
-  async function approveReadyDrafts() {
+  async function approveDrafts(requestedChannels?: string[]) {
     if (!brief) return;
     setApproving(true);
     try {
-      const channels = brief.brief.channels
+      const channels = requestedChannels ?? brief.brief.channels
         .filter(
           (draft) => draft.status === "ready" && draft.findings.length === 0
         )
         .map((draft) => draft.channel);
+      if (channels.length === 0)
+        throw new Error("No channel is ready for approval yet.");
       const res = await fetch(
         `/api/sub-accounts/${subAccountId}/marketing/campaigns/${brief.listingId}/approve`,
         {
@@ -397,7 +399,11 @@ export default function MarketingCampaignsPage() {
         throw new Error(data.error ?? "Could not approve campaign drafts.");
       setLandingPageUrl(data.landingPageUrl ?? null);
       setApprovedChannels(data.approvedChannels ?? []);
-      toast.success("Ready campaign drafts approved.");
+      toast.success(
+        requestedChannels?.length === 1
+          ? `${requestedChannels[0]} draft approved.`
+          : "Ready campaign drafts approved."
+      );
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -408,6 +414,8 @@ export default function MarketingCampaignsPage() {
       setApproving(false);
     }
   }
+
+  const approveReadyDrafts = () => approveDrafts();
 
   async function syncListings() {
     setSyncing(true);
@@ -559,6 +567,26 @@ export default function MarketingCampaignsPage() {
             <Archive className="h-4 w-4" /> Archived safely. The property
             folder, drafts, approvals, and schedule remain available.
           </p>
+        )}
+        {brief && workflowStep === "create" && (
+          <div className="bg-muted/50 mt-4 rounded-xl p-4 text-sm">
+            <p className="font-medium">Create: confirm the source record</p>
+            <p className="text-muted-foreground mt-1 text-xs">
+              Verify the address, price, required facts, source status, and
+              photos before generating channel drafts. Missing items are named
+              below; AgentStack will not invent them.
+            </p>
+          </div>
+        )}
+        {brief && workflowStep === "optimize" && (
+          <div className="bg-muted/50 mt-4 rounded-xl p-4 text-sm">
+            <p className="font-medium">Optimize: review each channel</p>
+            <p className="text-muted-foreground mt-1 text-xs">
+              Edit copy where needed, resolve every compliance finding, then
+              approve channels individually. Approval is recorded per channel
+              and does not claim that an unconnected channel was published.
+            </p>
+          </div>
         )}
       </div>
       <div className="bg-card rounded-2xl border p-5">
@@ -1216,6 +1244,33 @@ export default function MarketingCampaignsPage() {
                     {draft.findings.join(", ")}
                   </p>
                 )}
+                <div className="mt-3 flex items-center justify-between gap-2">
+                  {approvedChannels.includes(draft.channel) ? (
+                    <span className="flex items-center gap-1 text-xs font-medium text-emerald-700">
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Approved
+                    </span>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => approveDrafts([draft.channel])}
+                      disabled={
+                        !isAdmin ||
+                        approving ||
+                        draft.status !== "ready" ||
+                        draft.findings.length > 0
+                      }
+                    >
+                      {approving ? "Approving…" : "Approve channel"}
+                    </Button>
+                  )}
+                  {draft.status !== "ready" &&
+                  !approvedChannels.includes(draft.channel) ? (
+                    <span className="text-muted-foreground text-[11px]">
+                      Not ready
+                    </span>
+                  ) : null}
+                </div>
                 <p className="text-muted-foreground mt-2 text-[11px]">
                   Status: {draft.status} · audited approval required
                 </p>

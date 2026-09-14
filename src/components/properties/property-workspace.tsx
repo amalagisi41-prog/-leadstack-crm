@@ -2,9 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import {
   ArrowLeft,
   CheckCircle2,
+  Copy,
   ExternalLink,
   ImageIcon,
   Info,
@@ -235,6 +237,8 @@ export function PropertyWorkspace({ listingId }: { listingId: string }) {
           <AssetsTab
             brief={brief}
             mediaPackage={mediaPackage}
+            subAccountId={subAccountId}
+            listingId={listingId}
             campaignHref={saPath(`/marketing/campaigns?listing=${listingId}`)}
           />
         </TabsContent>
@@ -331,12 +335,52 @@ function DetailsTab({
 function AssetsTab({
   brief,
   mediaPackage,
+  subAccountId,
+  listingId,
   campaignHref,
 }: {
   brief: WorkspaceData["brief"];
   mediaPackage: WorkspaceData["mediaPackage"];
+  subAccountId: string;
+  listingId: string;
   campaignHref: string;
 }) {
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [sharing, setSharing] = useState(false);
+
+  async function createShareLink() {
+    setSharing(true);
+    try {
+      const response = await fetch(
+        `/api/sub-accounts/${subAccountId}/marketing/campaigns/${listingId}/media-package/share`,
+        { method: "POST" }
+      );
+      const data = (await response.json().catch(() => ({}))) as {
+        shareUrl?: string;
+        error?: string;
+      };
+      if (!response.ok || !data.shareUrl)
+        throw new Error(data.error ?? "Could not create the media package link.");
+      setShareUrl(data.shareUrl);
+      await navigator.clipboard?.writeText(data.shareUrl);
+      toast.success("Media package link created and copied.");
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Could not create the media package link."
+      );
+    } finally {
+      setSharing(false);
+    }
+  }
+
+  async function copyShareLink() {
+    if (!shareUrl) return;
+    await navigator.clipboard?.writeText(shareUrl);
+    toast.success("Media package link copied.");
+  }
+
   return (
     <div className="space-y-4">
       <section className="bg-card rounded-2xl border p-5">
@@ -415,6 +459,50 @@ function AssetsTab({
                 </p>
               </>
             )}
+          </div>
+        </div>
+      </section>
+      <section className="bg-card rounded-2xl border p-5">
+        <div className="flex items-start gap-3">
+          <PackageOpen className="text-primary mt-0.5 h-5 w-5" />
+          <div className="min-w-0 flex-1">
+            <h2 className="font-semibold">Partner media package</h2>
+            <p className="text-muted-foreground mt-1 text-sm">
+              Create one view-only link for the brochure, photos, source files,
+              property link, and approved marketing drafts.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Button onClick={createShareLink} disabled={sharing} size="sm">
+                {sharing ? "Creating link…" : "Create share link"}
+              </Button>
+              {shareUrl ? (
+                <>
+                  <Button variant="outline" size="sm" onClick={copyShareLink}>
+                    <Copy className="mr-1.5 h-4 w-4" /> Copy link
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    render={
+                      <a
+                        href={`mailto:?subject=${encodeURIComponent(`Media package: ${brief.brief.address}`)}&body=${encodeURIComponent(`Here is the property media package: ${shareUrl}`)}`}
+                      />
+                    }
+                  >
+                    Open email with link
+                  </Button>
+                </>
+              ) : null}
+            </div>
+            {shareUrl ? (
+              <div className="bg-muted/50 mt-3 break-all rounded-lg p-3 text-xs">
+                {shareUrl}
+                <p className="text-muted-foreground mt-1">
+                  Anyone with this link can view the package. Create a new link
+                  if you need to distribute a different version.
+                </p>
+              </div>
+            ) : null}
           </div>
         </div>
       </section>

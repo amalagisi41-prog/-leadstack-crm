@@ -93,6 +93,8 @@ interface PropertyCardData {
   channelCount: number;
   approvedCount: number;
   hasAssets: boolean;
+  sourceLabel: string;
+  healthLabel: string;
   nextAction: string;
 }
 
@@ -118,6 +120,28 @@ function briefToCard(
   const step = doc.workflowStep ?? "create";
   const channelCount = b.channels?.length ?? 0;
   const approvedCount = doc.approvedChannels?.length ?? 0;
+  const listing = doc.listing;
+  const importedFrom =
+    typeof listing?.raw === "object" && listing.raw !== null &&
+    typeof (listing.raw as { importedFrom?: unknown }).importedFrom === "string"
+      ? (listing.raw as { importedFrom: string }).importedFrom
+      : null;
+  const sourceLabel = !listing
+    ? "Brief only"
+    : importedFrom === "guided manual entry"
+      ? "Guided entry"
+      : importedFrom
+        ? "Imported record"
+        : "IDX record";
+  const missingDetails = b.dataGaps?.length ?? 0;
+  const hasPhotos = (listing?.photos as unknown[] | undefined)?.length || b.images?.length;
+  const healthLabel = !listing
+    ? "Source record missing"
+    : missingDetails > 0
+      ? `${missingDetails} detail${missingDetails === 1 ? "" : "s"} missing`
+      : hasPhotos
+        ? "Facts and photos recorded"
+        : "Photos missing";
 
   return {
     id: doc.id,
@@ -136,6 +160,8 @@ function briefToCard(
     channelCount,
     approvedCount,
     hasAssets: channelCount > 0,
+    sourceLabel,
+    healthLabel,
     nextAction: deriveNextAction(step, approvedCount, channelCount),
   };
 }
@@ -471,6 +497,10 @@ function PropertyCard({
 
           {/* Asset summary + next action */}
           <div className="mt-auto pt-3">
+            <div className="mb-2 grid gap-1 text-[11px] text-neutral-500">
+              <span>Data source: {property.sourceLabel}</span>
+              <span>Health: {property.healthLabel}</span>
+            </div>
             <div className="flex items-center gap-2 text-xs text-neutral-400">
               {property.hasAssets && (
                 <>
