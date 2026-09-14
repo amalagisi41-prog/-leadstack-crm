@@ -7,6 +7,7 @@ import {
   Archive,
   Calendar,
   CheckCircle2,
+  ClipboardCopy,
   Download,
   FileUp,
   Link2,
@@ -1300,20 +1301,30 @@ export default function MarketingCampaignsPage() {
                   </div>
                 ) : (
                   <>
-                    <p className="mt-2 text-sm whitespace-pre-wrap">
+                    <p className="mt-2 whitespace-pre-wrap text-sm">
                       {draft.body}
                     </p>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="mt-2 px-0 text-xs"
-                      onClick={() => {
-                        setEditingChannel(draft.channel);
-                        setEditingBody(draft.body);
-                      }}
-                    >
-                      Edit draft
-                    </Button>
+                    <div className="mt-2 flex items-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="px-0 text-xs"
+                        onClick={() => {
+                          setEditingChannel(draft.channel);
+                          setEditingBody(draft.body);
+                        }}
+                      >
+                        Edit draft
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="px-0 text-xs"
+                        onClick={() => navigator.clipboard.writeText(draft.body).then(() => toast.success(draft.channel + " draft copied.")).catch(() => toast.error("Could not copy."))}
+                      >
+                        <ClipboardCopy className="mr-1 h-3 w-3" /> Copy
+                      </Button>
+                    </div>
                   </>
                 )}
                 {draft.findings.length > 0 && (
@@ -1452,14 +1463,19 @@ export default function MarketingCampaignsPage() {
                             </span>
                           </div>
                           <p className="mt-2 text-sm">{draft.body}</p>
-                          <p className="text-muted-foreground mt-3 text-xs">
-                            <span className="text-foreground font-medium">
-                              Hashtags:
-                            </span>{" "}
-                            {hashtags.length
-                              ? hashtags.join(" ")
-                              : "None required for this channel"}
-                          </p>
+                          <div className="mt-3 flex items-center justify-between">
+                            <p className="text-muted-foreground text-xs">
+                              <span className="text-foreground font-medium">
+                                Hashtags:
+                              </span>{" "}
+                              {hashtags.length
+                                ? hashtags.join(" ")
+                                : "None required for this channel"}
+                            </p>
+                            <Button size="sm" variant="ghost" className="text-xs" onClick={() => { navigator.clipboard.writeText(draft.body).then(() => toast.success(`${draft.channel} copy exported.`)).catch(() => toast.error("Could not copy.")); }}>
+                              <ClipboardCopy className="mr-1 h-3 w-3" /> Copy
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     );
