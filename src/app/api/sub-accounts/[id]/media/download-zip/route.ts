@@ -6,6 +6,7 @@ import { NextResponse } from "next/server";
 import { getStorage } from "firebase-admin/storage";
 import { requireSubAccountAdmin } from "@/lib/auth/require-tenancy";
 import { getAdminDb } from "@/lib/firebase/admin";
+import { uniqueFileName, zipFileName } from "@/lib/marketing/media-zip";
 
 export const runtime = "nodejs";
 
@@ -62,27 +63,12 @@ export async function POST(
     // Track file names to avoid duplicates
     const usedNames = new Set<string>();
 
-    function uniqueName(raw: string): string {
-      let candidate = raw;
-      let counter = 1;
-      while (usedNames.has(candidate)) {
-        const dot = raw.lastIndexOf(".");
-        if (dot > 0) {
-          candidate = `${raw.slice(0, dot)}-${counter}${raw.slice(dot)}`;
-        } else {
-          candidate = `${raw}-${counter}`;
-        }
-        counter += 1;
-      }
-      usedNames.add(candidate);
-      return candidate;
-    }
-
     // Add each asset to the archive
     const assetPromises = snap.docs.map(async (doc) => {
       const asset = doc.data();
-      const name = uniqueName(
-        String(asset.name ?? `asset-${doc.id}`).replace(/[/\\]/g, "-"),
+      const name = uniqueFileName(
+        String(asset.name ?? `asset-${doc.id}`),
+        usedNames,
       );
       const storagePath = String(asset.storagePath ?? "");
 
@@ -121,11 +107,6 @@ export async function POST(
     await Promise.all(assetPromises);
     archive.finalize();
 
-    // Build a sanitized filename for the download
-    const safeProperty = propertyId
-      .replace(/[^a-zA-Z0-9._-]+/g, "-")
-      .slice(0, 80);
-
     // Convert the PassThrough stream into a web-compatible ReadableStream
     const readable = new ReadableStream({
       start(controller) {
@@ -140,7 +121,7 @@ export async function POST(
     return new NextResponse(readable, {
       headers: {
         "Content-Type": "application/zip",
-        "Content-Disposition": `attachment; filename="${safeProperty}-media.zip"`,
+        "Content-Disposition": `attachment; filename="${zipFileName(propertyId)}"`,
         "Cache-Control": "private, no-cache",
       },
     });
