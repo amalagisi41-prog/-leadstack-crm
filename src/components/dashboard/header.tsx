@@ -113,14 +113,11 @@ export function Header({ onMenuClick, onOpenSearch }: HeaderProps) {
   // Avatar dropdown links:
   //   - "Your account" → /me/settings (user-level: profile, password,
   //     appearance, sign out — global, same across every sub-account).
-  //   - "Billing" → whichever sub-account's settings is active (subscription
-  //     lives at sub-account scope per the three-tier model). Falls back
-  //     to agency settings when no sub-account is selected.
-  const billingHref = homeSubId
-    ? `/sa/${homeSubId}/dashboard/settings`
-    : agencyRole === "owner"
-      ? "/agency/settings"
-      : "/me/settings";
+  //   - "Billing" → /agency/billing for agency owners. Sub-account settings
+  //     do not own the subscription, so sending an owner there creates a
+  //     misleading dead end. Collaborators cannot manage agency billing and
+  //     retain the personal-account destination instead.
+  const billingHref = agencyRole === "owner" ? "/agency/billing" : "/me/settings";
   // Email defaults to masked in the dropdown header so screenshares don't
   // leak the operator's address. Per-session toggle.
   const [emailShown, setEmailShown] = useState(false);

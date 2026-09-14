@@ -23,6 +23,25 @@ export interface BillingSnapshot {
   activeAddOnCount: number;
   bundleDiscountActive: boolean;
   bundleCouponConfigured: boolean;
+  lineItems: BillingLineItem[];
+  nextRecurringInvoice: NextRecurringInvoice | null;
+}
+
+export interface BillingLineItem {
+  id: string;
+  name: string;
+  kind: "plan" | "add_on" | "other";
+  quantity: number;
+  currency: string | null;
+  unitAmount: number | null;
+  recurringAmount: number | null;
+  interval: "day" | "week" | "month" | "year" | null;
+  intervalCount: number | null;
+}
+
+export interface NextRecurringInvoice {
+  amount: number;
+  currency: string;
 }
 
 const SUBSCRIPTION_EXPANDS = ["discounts", "items.data.price"] as const;
@@ -54,6 +73,8 @@ export function summarizeSubscription(
       activeAddOnCount: 0,
       bundleDiscountActive: false,
       bundleCouponConfigured: !!bundleCouponId,
+      lineItems: [],
+      nextRecurringInvoice: null,
     };
   }
 
@@ -93,7 +114,43 @@ export function summarizeSubscription(
     activeAddOnCount,
     bundleDiscountActive: hasBundleDiscount(subscription, bundleCouponId),
     bundleCouponConfigured: !!bundleCouponId,
+    lineItems: subscription.items.data.map((item) => summarizeLineItem(item)),
+    nextRecurringInvoice: null,
   };
+}
+
+/**
+ * Stripe's invoice preview is the only reliable total when coupons, tax, or
+ * account credits are involved. The subscription's price items are still
+ * returned when a preview cannot be generated, but we deliberately leave the
+ * total blank rather than manufacture a charge from list prices.
+ */
+export async function summarizeAgencyBilling(
+  subscription: Stripe.Subscription | null,
+): Promise<BillingSnapshot> {
+  const summary = summarizeSubscription(subscription);
+  if (!subscription) return summary;
+
+  try {
+    const preview = await getStripeServer().invoices.createPreview({
+      subscription: subscription.id,
+      preview_mode: "recurring",
+    });
+    if (typeof preview.total !== "number" || !preview.currency) return summary;
+    return {
+      ...summary,
+      nextRecurringInvoice: {
+        amount: preview.total,
+        currency: preview.currency,
+      },
+    };
+  } catch (error) {
+    // A preview can be unavailable for an incomplete or legacy subscription.
+    // Itemized subscription prices remain useful, and the UI tells the owner
+    // exactly where to see Stripe's authoritative invoice total.
+    console.warn("[billing] Could not preview the next recurring invoice", error);
+    return summary;
+  }
 }
 
 export async function syncBundleDiscount(subscriptionId: string) {
@@ -190,4 +247,40 @@ function hasBundleDiscount(
     if (!coupon) return false;
     return (typeof coupon === "string" ? coupon : coupon.id) === bundleCouponId;
   });
+}
+
+function summarizeLineItem(item: Stripe.SubscriptionItem): BillingLineItem {
+  const price = typeof item.price === "string" ? null : item.price;
+  const priceId = price?.id ?? (typeof item.price === "string" ? item.price : "");
+  const planKey = priceId ? planKeyForPriceId(priceId) : null;
+  const addOnKey = priceId ? addOnKeyForPriceId(priceId) : null;
+  const quantity = item.quantity ?? 1;
+  const unitAmount = price?.unit_amount ?? null;
+
+  return {
+    id: item.id,
+    name: planKey
+      ? getMarketingPlan(planKey).name
+      : addOnKey
+        ? addOnName(addOnKey)
+        : "Other subscription item",
+    kind: planKey ? "plan" : addOnKey ? "add_on" : "other",
+    quantity,
+    currency: price?.currency ?? null,
+    unitAmount,
+    recurringAmount: unitAmount === null ? null : unitAmount * quantity,
+    interval: price?.recurring?.interval ?? null,
+    intervalCount: price?.recurring?.interval_count ?? null,
+  };
+}
+
+function addOnName(key: AddOnKey) {
+  switch (key) {
+    case "idx":
+      return "IDX Core";
+    case "social":
+      return "Social Planner";
+    case "website_studio":
+      return "AI Website Studio";
+  }
 }

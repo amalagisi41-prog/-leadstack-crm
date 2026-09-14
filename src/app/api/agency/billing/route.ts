@@ -10,6 +10,7 @@ import { planPriceId } from "@/lib/stripe/catalog";
 import {
   findBasePlanItem,
   retrieveAgencySubscription,
+  summarizeAgencyBilling,
   summarizeSubscription,
   type BillingSnapshot,
 } from "@/lib/stripe/subscription-management";
@@ -120,7 +121,7 @@ export async function GET(request: Request) {
 
   const subscription = await retrieveAgencySubscription(owner.agency);
   return NextResponse.json(
-    responseForSummary(summarizeSubscription(subscription)),
+    responseForSummary(await summarizeAgencyBilling(subscription)),
   );
 }
 
@@ -157,7 +158,7 @@ export async function POST(request: Request) {
     const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "");
     const session = await stripe.billingPortal.sessions.create({
       customer: customerId,
-      return_url: `${appUrl}/agency/settings`,
+      return_url: `${appUrl}/agency/billing`,
     });
     return NextResponse.json({ ok: true, url: session.url });
   }
@@ -188,7 +189,7 @@ export async function POST(request: Request) {
     }
     if (basePlan.planKey === body.planKey) {
       return NextResponse.json(
-        responseForSummary(summarizeSubscription(subscription)),
+        responseForSummary(await summarizeAgencyBilling(subscription)),
       );
     }
 
@@ -203,7 +204,9 @@ export async function POST(request: Request) {
       updatedAt: FieldValue.serverTimestamp(),
     });
 
-    return NextResponse.json(responseForSummary(summarizeSubscription(updated)));
+    return NextResponse.json(
+      responseForSummary(await summarizeAgencyBilling(updated)),
+    );
   }
 
   if (body.action === "resume") {
@@ -221,7 +224,9 @@ export async function POST(request: Request) {
         createdByEmail: owner.email,
       });
 
-    return NextResponse.json(responseForSummary(summarizeSubscription(updated)));
+    return NextResponse.json(
+      responseForSummary(await summarizeAgencyBilling(updated)),
+    );
   }
 
   if (body.action === "cancel") {
@@ -256,7 +261,9 @@ export async function POST(request: Request) {
         createdByEmail: owner.email,
       });
 
-    return NextResponse.json(responseForSummary(summarizeSubscription(updated)));
+    return NextResponse.json(
+      responseForSummary(await summarizeAgencyBilling(updated)),
+    );
   }
 
   return NextResponse.json({ error: "Unknown billing action." }, { status: 400 });
