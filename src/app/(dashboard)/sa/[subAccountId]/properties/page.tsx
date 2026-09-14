@@ -8,16 +8,27 @@ import {
   FileText,
   ImageIcon,
   MapPin,
+  Pencil,
   Plus,
   Search,
+  Trash2,
 } from "lucide-react";
+import { toast } from "sonner";
 import { useSubAccount } from "@/context/sub-account-context";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import type {
   CampaignBriefDoc,
   CampaignWorkflowStep,
-  ContentBrief,
 } from "@/types/marketing-campaigns";
 
 /* ── Property status labels ── */
@@ -144,6 +155,8 @@ export default function PropertiesPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<PropertyStatus | "all">("all");
   const [search, setSearch] = useState("");
+  const [editing, setEditing] = useState<PropertyCardData | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!subAccountId) return;
@@ -183,6 +196,76 @@ export default function PropertiesPage() {
     }
     return list;
   }, [briefs, filter, search]);
+
+  async function handleSaveEdit(patch: {
+    address: string;
+    city: string;
+    state: string;
+    zip: string;
+    price: number;
+    beds: number;
+    baths: number;
+    sqft: number | null;
+    propertyType: string;
+  }) {
+    if (!subAccountId || !editing) return;
+    try {
+      const res = await fetch(
+        `/api/sub-accounts/${subAccountId}/marketing/campaigns/${editing.id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(patch),
+        }
+      );
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+        brief?: CampaignBriefDoc & { listing?: Record<string, unknown> | null };
+      };
+      if (!res.ok || !data.ok || !data.brief)
+        throw new Error(data.error ?? "Could not save changes.");
+      const updated = briefToCard(data.brief);
+      setBriefs((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+      toast.success("Property updated.");
+      setEditing(null);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Could not save changes."
+      );
+    }
+  }
+
+  async function handleDelete(property: PropertyCardData) {
+    if (!subAccountId) return;
+    if (
+      !confirm(
+        `Delete ${property.address || "this property"}? This removes its marketing brief, drafts, and schedule — it can't be undone.`
+      )
+    )
+      return;
+    setDeletingId(property.id);
+    try {
+      const res = await fetch(
+        `/api/sub-accounts/${subAccountId}/marketing/campaigns/${property.id}`,
+        { method: "DELETE" }
+      );
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+      };
+      if (!res.ok || !data.ok)
+        throw new Error(data.error ?? "Could not delete this property.");
+      setBriefs((prev) => prev.filter((p) => p.id !== property.id));
+      toast.success("Property deleted.");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Could not delete this property."
+      );
+    } finally {
+      setDeletingId(null);
+    }
+  }
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6">
@@ -268,10 +351,21 @@ export default function PropertiesPage() {
               key={property.id}
               property={property}
               saPath={saPath}
+              onEdit={() => setEditing(property)}
+              onDelete={() => handleDelete(property)}
+              deleting={deletingId === property.id}
             />
           ))}
         </div>
       )}
+
+      <EditPropertyDialog
+        property={editing}
+        onOpenChange={(open) => {
+          if (!open) setEditing(null);
+        }}
+        onSave={handleSaveEdit}
+      />
     </div>
   );
 }
@@ -279,9 +373,15 @@ export default function PropertiesPage() {
 function PropertyCard({
   property,
   saPath,
+  onEdit,
+  onDelete,
+  deleting,
 }: {
   property: PropertyCardData;
   saPath: (path: string) => string;
+  onEdit: () => void;
+  onDelete: () => void;
+  deleting: boolean;
 }) {
   const statusMeta = STATUS_META[property.status];
   const formattedPrice = property.price
@@ -289,86 +389,285 @@ function PropertyCard({
     : "Price TBD";
 
   return (
-    <Link
-      href={saPath(`/marketing/campaigns?listing=${property.id}`)}
-      className="group flex flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white transition-shadow hover:shadow-md"
-    >
-      {/* Image */}
-      <div className="relative aspect-[16/10] bg-neutral-100">
-        {property.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={property.imageUrl}
-            alt={property.address}
-            className="h-full w-full object-cover"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center">
-            <Building className="h-10 w-10 text-neutral-300" />
-          </div>
-        )}
-        <span
-          className={cn(
-            "absolute left-3 top-3 rounded-full px-2.5 py-1 text-xs font-semibold",
-            statusMeta.bg,
-            statusMeta.color
-          )}
+    <div className="group relative flex flex-col overflow-hidden rounded-xl border border-neutral-200 bg-white transition-shadow hover:shadow-md">
+      <div className="absolute top-2 right-2 z-10 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+        <button
+          type="button"
+          onClick={onEdit}
+          aria-label={`Edit ${property.address}`}
+          className="flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-neutral-600 shadow-sm hover:bg-white hover:text-neutral-900"
         >
-          {statusMeta.label}
-        </span>
+          <Pencil className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={onDelete}
+          disabled={deleting}
+          aria-label={`Delete ${property.address}`}
+          className="flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-neutral-600 shadow-sm hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
       </div>
 
-      {/* Details */}
-      <div className="flex flex-1 flex-col p-4">
-        <p className="text-lg font-semibold text-neutral-900 leading-snug">
-          {formattedPrice}
-        </p>
-        <p className="mt-0.5 text-sm text-neutral-600 leading-snug">
-          {property.address}
-        </p>
-        <p className="text-xs text-neutral-400">
-          {[property.city, property.state, property.zip]
-            .filter(Boolean)
-            .join(", ")}
-        </p>
-
-        {/* Stats row */}
-        <div className="mt-3 flex gap-3 text-xs text-neutral-500">
-          {property.beds > 0 && <span>{property.beds} bd</span>}
-          {property.baths > 0 && <span>{property.baths} ba</span>}
-          {property.sqft && (
-            <span>{property.sqft.toLocaleString()} sqft</span>
+      <Link
+        href={saPath(`/marketing/campaigns?listing=${property.id}`)}
+        className="flex flex-1 flex-col"
+      >
+        {/* Image */}
+        <div className="relative aspect-[16/10] bg-neutral-100">
+          {property.imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={property.imageUrl}
+              alt={property.address}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center">
+              <Building className="h-10 w-10 text-neutral-300" />
+            </div>
           )}
-          <span className="capitalize">{property.propertyType}</span>
+          <span
+            className={cn(
+              "absolute left-3 top-3 rounded-full px-2.5 py-1 text-xs font-semibold",
+              statusMeta.bg,
+              statusMeta.color
+            )}
+          >
+            {statusMeta.label}
+          </span>
         </div>
 
-        {/* Asset summary + next action */}
-        <div className="mt-auto pt-3">
-          <div className="flex items-center gap-2 text-xs text-neutral-400">
-            {property.hasAssets && (
-              <>
-                <FileText className="h-3 w-3" />
-                <span>
-                  {property.approvedCount}/{property.channelCount} approved
-                </span>
-                <span className="text-neutral-300">·</span>
-              </>
+        {/* Details */}
+        <div className="flex flex-1 flex-col p-4">
+          <p className="text-lg font-semibold text-neutral-900 leading-snug">
+            {formattedPrice}
+          </p>
+          <p className="mt-0.5 text-sm text-neutral-600 leading-snug">
+            {property.address}
+          </p>
+          <p className="text-xs text-neutral-400">
+            {[property.city, property.state, property.zip]
+              .filter(Boolean)
+              .join(", ")}
+          </p>
+
+          {/* Stats row */}
+          <div className="mt-3 flex gap-3 text-xs text-neutral-500">
+            {property.beds > 0 && <span>{property.beds} bd</span>}
+            {property.baths > 0 && <span>{property.baths} ba</span>}
+            {property.sqft && (
+              <span>{property.sqft.toLocaleString()} sqft</span>
             )}
-            {property.imageUrl && (
-              <>
-                <ImageIcon className="h-3 w-3" />
-                <span>Photos</span>
-              </>
-            )}
+            <span className="capitalize">{property.propertyType}</span>
           </div>
-          <div className="mt-2 flex items-center justify-between">
-            <span className="text-xs font-medium text-blue-600">
-              {property.nextAction}
-            </span>
-            <ChevronRight className="h-4 w-4 text-neutral-300 transition-colors group-hover:text-neutral-500" />
+
+          {/* Asset summary + next action */}
+          <div className="mt-auto pt-3">
+            <div className="flex items-center gap-2 text-xs text-neutral-400">
+              {property.hasAssets && (
+                <>
+                  <FileText className="h-3 w-3" />
+                  <span>
+                    {property.approvedCount}/{property.channelCount} approved
+                  </span>
+                  <span className="text-neutral-300">·</span>
+                </>
+              )}
+              {property.imageUrl && (
+                <>
+                  <ImageIcon className="h-3 w-3" />
+                  <span>Photos</span>
+                </>
+              )}
+            </div>
+            <div className="mt-2 flex items-center justify-between">
+              <span className="text-xs font-medium text-blue-600">
+                {property.nextAction}
+              </span>
+              <ChevronRight className="h-4 w-4 text-neutral-300 transition-colors group-hover:text-neutral-500" />
+            </div>
           </div>
         </div>
-      </div>
-    </Link>
+      </Link>
+    </div>
+  );
+}
+
+function EditPropertyDialog({
+  property,
+  onOpenChange,
+  onSave,
+}: {
+  property: PropertyCardData | null;
+  onOpenChange: (open: boolean) => void;
+  onSave: (patch: {
+    address: string;
+    city: string;
+    state: string;
+    zip: string;
+    price: number;
+    beds: number;
+    baths: number;
+    sqft: number | null;
+    propertyType: string;
+  }) => Promise<void>;
+}) {
+  const [form, setForm] = useState({
+    address: "",
+    city: "",
+    state: "",
+    zip: "",
+    price: "",
+    beds: "",
+    baths: "",
+    sqft: "",
+    propertyType: "",
+  });
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!property) return;
+    setForm({
+      address: property.address,
+      city: property.city,
+      state: property.state,
+      zip: property.zip,
+      price: property.price ? String(property.price) : "",
+      beds: property.beds ? String(property.beds) : "",
+      baths: property.baths ? String(property.baths) : "",
+      sqft: property.sqft ? String(property.sqft) : "",
+      propertyType: property.propertyType,
+    });
+  }, [property]);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form.address.trim() || !form.city.trim() || !form.state.trim()) {
+      toast.error("Address, city, and state are required.");
+      return;
+    }
+    setSaving(true);
+    await onSave({
+      address: form.address.trim(),
+      city: form.city.trim(),
+      state: form.state.trim(),
+      zip: form.zip.trim(),
+      price: Number(form.price) || 0,
+      beds: Number(form.beds) || 0,
+      baths: Number(form.baths) || 0,
+      sqft: form.sqft ? Number(form.sqft) || null : null,
+      propertyType: form.propertyType.trim() || "Residential",
+    });
+    setSaving(false);
+  }
+
+  return (
+    <Dialog open={property != null} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Edit property</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-address">Address</Label>
+            <Input
+              id="edit-address"
+              value={form.address}
+              onChange={(e) => setForm({ ...form, address: e.target.value })}
+              required
+            />
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="col-span-2 space-y-1.5">
+              <Label htmlFor="edit-city">City</Label>
+              <Input
+                id="edit-city"
+                value={form.city}
+                onChange={(e) => setForm({ ...form, city: e.target.value })}
+                required
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-state">State</Label>
+              <Input
+                id="edit-state"
+                value={form.state}
+                onChange={(e) => setForm({ ...form, state: e.target.value })}
+                required
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-zip">ZIP</Label>
+              <Input
+                id="edit-zip"
+                value={form.zip}
+                onChange={(e) => setForm({ ...form, zip: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-price">Price</Label>
+              <Input
+                id="edit-price"
+                type="number"
+                min={0}
+                value={form.price}
+                onChange={(e) => setForm({ ...form, price: e.target.value })}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-beds">Beds</Label>
+              <Input
+                id="edit-beds"
+                type="number"
+                min={0}
+                value={form.beds}
+                onChange={(e) => setForm({ ...form, beds: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-baths">Baths</Label>
+              <Input
+                id="edit-baths"
+                type="number"
+                min={0}
+                value={form.baths}
+                onChange={(e) => setForm({ ...form, baths: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-sqft">Sqft</Label>
+              <Input
+                id="edit-sqft"
+                type="number"
+                min={0}
+                value={form.sqft}
+                onChange={(e) => setForm({ ...form, sqft: e.target.value })}
+              />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-type">Property type</Label>
+            <Input
+              id="edit-type"
+              value={form.propertyType}
+              onChange={(e) =>
+                setForm({ ...form, propertyType: e.target.value })
+              }
+            />
+          </div>
+          <DialogFooter>
+            <Button type="submit" disabled={saving}>
+              {saving ? "Saving…" : "Save changes"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
