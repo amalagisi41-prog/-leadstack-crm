@@ -7,6 +7,7 @@ import {
   Archive,
   Calendar,
   CheckCircle2,
+  Download,
   FileUp,
   Link2,
   RefreshCw,
@@ -100,6 +101,7 @@ export default function MarketingCampaignsPage() {
   const [zillow, setZillow] = useState({ profileUrl: "", listingUrl: "" });
   const [savingZillow, setSavingZillow] = useState(false);
   const [pastedMlsDetails, setPastedMlsDetails] = useState("");
+  const [downloadingZip, setDownloadingZip] = useState(false);
   useEffect(() => {
     if (!subAccountId) return;
     fetch(`/api/sub-accounts/${subAccountId}/marketing/campaigns`)
@@ -209,6 +211,39 @@ export default function MarketingCampaignsPage() {
       );
     } finally {
       setSavingZillow(false);
+    }
+  }
+
+  async function downloadPropertyZip() {
+    if (!brief || downloadingZip) return;
+    setDownloadingZip(true);
+    try {
+      const res = await fetch(
+        `/api/sub-accounts/${subAccountId}/media/download-zip`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ propertyId: brief.listingId }),
+        },
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ error: "Download failed." }));
+        throw new Error(data.error ?? "Download failed.");
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${(brief.brief.address || brief.listingId).replace(/[^a-zA-Z0-9._-]+/g, "-")}-media.zip`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      toast.success("Media package downloaded.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not download media.");
+    } finally {
+      setDownloadingZip(false);
     }
   }
 
@@ -1199,9 +1234,21 @@ export default function MarketingCampaignsPage() {
                     for the visual layouts.
                   </p>
                 </div>
-                <span className="text-muted-foreground text-xs">
-                  {brief.brief.images.length} photos
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="text-muted-foreground text-xs">
+                    {brief.brief.images.length} photos
+                  </span>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={downloadPropertyZip}
+                    disabled={downloadingZip}
+                  >
+                    <Download className="mr-1 h-4 w-4" />
+                    {downloadingZip ? "Zipping…" : "Download all"}
+                  </Button>
+                </div>
               </div>
               <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
                 {brief.brief.images.map((image, index) => (
