@@ -102,7 +102,8 @@ function deriveNextAction(
   channelCount: number
 ): string {
   if (step === "create") return "Complete property details";
-  if (step === "optimize" && approvedCount === 0) return "Review & approve assets";
+  if (step === "optimize" && approvedCount === 0)
+    return "Review & approve assets";
   if (step === "optimize" && approvedCount < channelCount)
     return `${channelCount - approvedCount} assets awaiting approval`;
   if (step === "schedule") return "Schedule distribution";
@@ -260,7 +261,9 @@ export default function PropertiesPage() {
       toast.success("Property deleted.");
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Could not delete this property."
+        error instanceof Error
+          ? error.message
+          : "Could not delete this property."
       );
     } finally {
       setDeletingId(null);
@@ -290,13 +293,13 @@ export default function PropertiesPage() {
       {/* Search + filter bar */}
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+          <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-neutral-400" />
           <input
             type="text"
             placeholder="Search by address or city..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-lg border border-neutral-200 bg-white py-2 pl-10 pr-4 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded-lg border border-neutral-200 bg-white py-2 pr-4 pl-10 text-sm text-neutral-900 placeholder:text-neutral-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
           />
         </div>
         <div className="flex gap-1 overflow-x-auto">
@@ -305,7 +308,7 @@ export default function PropertiesPage() {
               key={sf.key}
               onClick={() => setFilter(sf.key)}
               className={cn(
-                "whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
+                "rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors",
                 filter === sf.key
                   ? "bg-neutral-900 text-white"
                   : "bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
@@ -336,7 +339,10 @@ export default function PropertiesPage() {
               : "Try a different filter or search term."}
           </p>
           {briefs.length === 0 && (
-            <Link href={saPath("/marketing/campaigns")} className="mt-4 inline-block">
+            <Link
+              href={saPath("/marketing/campaigns")}
+              className="mt-4 inline-block"
+            >
               <Button size="sm" variant="outline" className="gap-1.5">
                 <Plus className="h-4 w-4" />
                 Add Property
@@ -411,7 +417,7 @@ function PropertyCard({
       </div>
 
       <Link
-        href={saPath(`/marketing/campaigns?listing=${property.id}`)}
+        href={saPath(`/properties/${property.id}`)}
         className="flex flex-1 flex-col"
       >
         {/* Image */}
@@ -430,7 +436,7 @@ function PropertyCard({
           )}
           <span
             className={cn(
-              "absolute left-3 top-3 rounded-full px-2.5 py-1 text-xs font-semibold",
+              "absolute top-3 left-3 rounded-full px-2.5 py-1 text-xs font-semibold",
               statusMeta.bg,
               statusMeta.color
             )}
@@ -441,10 +447,10 @@ function PropertyCard({
 
         {/* Details */}
         <div className="flex flex-1 flex-col p-4">
-          <p className="text-lg font-semibold text-neutral-900 leading-snug">
+          <p className="text-lg leading-snug font-semibold text-neutral-900">
             {formattedPrice}
           </p>
-          <p className="mt-0.5 text-sm text-neutral-600 leading-snug">
+          <p className="mt-0.5 text-sm leading-snug text-neutral-600">
             {property.address}
           </p>
           <p className="text-xs text-neutral-400">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   AlertTriangle,
@@ -8,7 +8,6 @@ import {
   Calendar,
   CheckCircle2,
   FileUp,
-  Folder,
   Link2,
   RefreshCw,
   Search,
@@ -19,7 +18,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import type { CampaignBriefDoc, CampaignChannel, CampaignWorkflowStep } from "@/types/marketing-campaigns";
+import type {
+  CampaignBriefDoc,
+  CampaignChannel,
+  CampaignWorkflowStep,
+} from "@/types/marketing-campaigns";
 import type { IdxListingDoc, ListingMarketingStatus } from "@/types/idx";
 
 const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
@@ -36,9 +39,16 @@ async function readApiJson<T>(res: Response): Promise<T> {
 
 function addressSeed(value: string) {
   const clean = value.trim();
-  const match = clean.match(/^(.+?)(?:,\s*|\s+)([A-Za-z .'-]+?)[,\s]+([A-Z]{2})\s*(\d{5}(?:-\d{4})?)$/i);
+  const match = clean.match(
+    /^(.+?)(?:,\s*|\s+)([A-Za-z .'-]+?)[,\s]+([A-Z]{2})\s*(\d{5}(?:-\d{4})?)$/i
+  );
   if (!match) return { address: clean, city: "", state: "", zip: "" };
-  return { address: match[1].trim(), city: match[2].trim(), state: match[3].toUpperCase(), zip: match[4] };
+  return {
+    address: match[1].trim(),
+    city: match[2].trim(),
+    state: match[3].toUpperCase(),
+    zip: match[4],
+  };
 }
 
 export default function MarketingCampaignsPage() {
@@ -73,88 +83,178 @@ export default function MarketingCampaignsPage() {
   const [generateBrochure, setGenerateBrochure] = useState(false);
   const [brochureUrl, setBrochureUrl] = useState<string | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState(false);
-  const [savedBriefs, setSavedBriefs] = useState<Array<CampaignBriefDoc & { listing?: IdxListingDoc | null }>>([]);
   const [editingChannel, setEditingChannel] = useState<string | null>(null);
   const [editingBody, setEditingBody] = useState("");
   const [savingDraft, setSavingDraft] = useState(false);
-  const [channelAvailability, setChannelAvailability] = useState<Record<CampaignChannel, { configured: boolean; publishable: boolean }> | null>(null);
-  const [workflowStep, setWorkflowStep] = useState<CampaignWorkflowStep>("create");
-  const [schedulePlan, setSchedulePlan] = useState<Partial<Record<CampaignChannel, string | null>>>({});
+  const [channelAvailability, setChannelAvailability] = useState<Record<
+    CampaignChannel,
+    { configured: boolean; publishable: boolean }
+  > | null>(null);
+  const [workflowStep, setWorkflowStep] =
+    useState<CampaignWorkflowStep>("create");
+  const [schedulePlan, setSchedulePlan] = useState<
+    Partial<Record<CampaignChannel, string | null>>
+  >({});
   const [zillow, setZillow] = useState({ profileUrl: "", listingUrl: "" });
   const [savingZillow, setSavingZillow] = useState(false);
   const [pastedMlsDetails, setPastedMlsDetails] = useState("");
-  const propertyFolders = useMemo(() => {
-    const folders = new Map<string, Array<CampaignBriefDoc & { listing?: IdxListingDoc | null }>>();
-    for (const saved of savedBriefs) {
-      const listing = saved.listing;
-      const folder = listing
-        ? [listing.city, listing.state, listing.zip].filter(Boolean).join(", ")
-        : "Needs property details";
-      const entries = folders.get(folder) ?? [];
-      entries.push(saved);
-      folders.set(folder, entries);
-    }
-    return [...folders.entries()].sort(([a], [b]) => a.localeCompare(b));
-  }, [savedBriefs]);
-
   useEffect(() => {
     if (!subAccountId) return;
     fetch(`/api/sub-accounts/${subAccountId}/marketing/campaigns`)
-      .then((res) => readApiJson<{ briefs?: Array<CampaignBriefDoc & { listing?: IdxListingDoc | null }>; channelAvailability?: Record<CampaignChannel, { configured: boolean; publishable: boolean }> }>(res))
-      .then((data) => { setSavedBriefs(data.briefs ?? []); setChannelAvailability(data.channelAvailability ?? null); })
+      .then((res) =>
+        readApiJson<{
+          channelAvailability?: Record<
+            CampaignChannel,
+            { configured: boolean; publishable: boolean }
+          >;
+        }>(res)
+      )
+      .then((data) => {
+        setChannelAvailability(data.channelAvailability ?? null);
+      })
       .catch(() => undefined);
     fetch(`/api/sub-accounts/${subAccountId}/marketing/sources`)
-      .then((res) => readApiJson<{ zillow?: { profileUrl?: string | null; listingUrl?: string | null } }>(res))
-      .then((data) => setZillow({ profileUrl: data.zillow?.profileUrl ?? "", listingUrl: data.zillow?.listingUrl ?? "" }))
+      .then((res) =>
+        readApiJson<{
+          zillow?: { profileUrl?: string | null; listingUrl?: string | null };
+        }>(res)
+      )
+      .then((data) =>
+        setZillow({
+          profileUrl: data.zillow?.profileUrl ?? "",
+          listingUrl: data.zillow?.listingUrl ?? "",
+        })
+      )
       .catch(() => undefined);
   }, [subAccountId]);
 
-  function openSavedBrief(saved: CampaignBriefDoc & { listing?: IdxListingDoc | null }) {
-    setBrief(saved);
-    setListing(saved.listing ?? null);
-    setMlsId(saved.listing?.address ?? saved.listingId);
-    setApprovedChannels(saved.approvedChannels);
-    setLandingPageUrl(saved.approvedChannels.includes("landingPage") ? `/campaign/${subAccountId}/${saved.listingId}` : null);
-    setWorkflowStep(saved.workflowStep ?? (saved.approvedChannels.length ? "optimize" : "create"));
-    setSchedulePlan(saved.schedulePlan ?? {});
-  }
+  useEffect(() => {
+    if (!subAccountId || typeof window === "undefined") return;
+    const listingId = new URLSearchParams(window.location.search).get(
+      "listing"
+    );
+    if (!listingId) return;
+    let current = true;
+    void fetch(
+      `/api/sub-accounts/${subAccountId}/marketing/campaigns/${listingId}/workspace`
+    )
+      .then(async (response) => {
+        const data = (await readApiJson<{
+          brief?: CampaignBriefDoc;
+          listing?: IdxListingDoc | null;
+          error?: string;
+        }>(response)) as {
+          brief?: CampaignBriefDoc;
+          listing?: IdxListingDoc | null;
+          error?: string;
+        };
+        if (!response.ok || !data.brief) {
+          throw new Error(
+            data.error ?? "Could not open this property campaign."
+          );
+        }
+        return data;
+      })
+      .then((data) => {
+        if (!current || !data.brief) return;
+        setBrief(data.brief);
+        setListing(data.listing ?? null);
+        setMlsId(data.listing?.address ?? data.brief.listingId);
+        setApprovedChannels(data.brief.approvedChannels);
+        setLandingPageUrl(
+          data.brief.approvedChannels.includes("landingPage")
+            ? `/campaign/${subAccountId}/${data.brief.listingId}`
+            : null
+        );
+        setWorkflowStep(
+          data.brief.workflowStep ??
+            (data.brief.approvedChannels.length ? "optimize" : "create")
+        );
+        setSchedulePlan(data.brief.schedulePlan ?? {});
+      })
+      .catch((error) => {
+        if (current) {
+          toast.error(
+            error instanceof Error
+              ? error.message
+              : "Could not open this property campaign."
+          );
+        }
+      });
+    return () => {
+      current = false;
+    };
+  }, [subAccountId]);
 
   async function saveZillowLinks() {
     setSavingZillow(true);
     try {
-      const res = await fetch(`/api/sub-accounts/${subAccountId}/marketing/sources`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(zillow) });
+      const res = await fetch(
+        `/api/sub-accounts/${subAccountId}/marketing/sources`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(zillow),
+        }
+      );
       const data = await readApiJson<{ ok?: boolean; error?: string }>(res);
-      if (!res.ok || !data.ok) throw new Error(data.error ?? "Could not save Zillow links.");
+      if (!res.ok || !data.ok)
+        throw new Error(data.error ?? "Could not save Zillow links.");
       toast.success("Zillow source links saved.");
-    } catch (error) { toast.error(error instanceof Error ? error.message : "Could not save Zillow links."); }
-    finally { setSavingZillow(false); }
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Could not save Zillow links."
+      );
+    } finally {
+      setSavingZillow(false);
+    }
   }
 
   async function setWorkflow(next: CampaignWorkflowStep) {
     if (!brief) return;
-    const res = await fetch(`/api/sub-accounts/${subAccountId}/marketing/campaigns/${brief.listingId}/workflow`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ step: next, schedulePlan }) });
+    const res = await fetch(
+      `/api/sub-accounts/${subAccountId}/marketing/campaigns/${brief.listingId}/workflow`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ step: next, schedulePlan }),
+      }
+    );
     const data = await readApiJson<{ ok?: boolean; error?: string }>(res);
-    if (!res.ok || !data.ok) throw new Error(data.error ?? "Could not update campaign workflow.");
+    if (!res.ok || !data.ok)
+      throw new Error(data.error ?? "Could not update campaign workflow.");
     setWorkflowStep(next);
-    toast.success(next === "archive" ? "Campaign archived." : `Campaign moved to ${next}.`);
+    toast.success(
+      next === "archive" ? "Campaign archived." : `Campaign moved to ${next}.`
+    );
   }
 
   async function saveChannelDraft(channel: string) {
     if (!brief || !editingBody.trim()) return;
     setSavingDraft(true);
     try {
-      const res = await fetch(`/api/sub-accounts/${subAccountId}/marketing/campaigns/${brief.listingId}/drafts`, {
-        method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ channel, body: editingBody }),
-      });
+      const res = await fetch(
+        `/api/sub-accounts/${subAccountId}/marketing/campaigns/${brief.listingId}/drafts`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ channel, body: editingBody }),
+        }
+      );
       const data = await readApiJson<{ ok?: boolean; error?: string }>(res);
-      if (!res.ok || !data.ok) throw new Error(data.error ?? "Could not save draft.");
+      if (!res.ok || !data.ok)
+        throw new Error(data.error ?? "Could not save draft.");
       await createBrief(brief.listingId);
       setApprovedChannels([]);
       setEditingChannel(null);
       toast.success("Draft saved for review.");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not save draft.");
-    } finally { setSavingDraft(false); }
+      toast.error(
+        error instanceof Error ? error.message : "Could not save draft."
+      );
+    } finally {
+      setSavingDraft(false);
+    }
   }
 
   async function updateListingStatus(status: ListingMarketingStatus) {
@@ -162,7 +262,11 @@ export default function MarketingCampaignsPage() {
     setUpdatingStatus(true);
     try {
       const res = await fetch(
-        "/api/sub-accounts/" + subAccountId + "/marketing/listings/" + listing.id + "/status",
+        "/api/sub-accounts/" +
+          subAccountId +
+          "/marketing/listings/" +
+          listing.id +
+          "/status",
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -199,19 +303,18 @@ export default function MarketingCampaignsPage() {
     setLoading(true);
     try {
       const useManual = editing || (!identifier.trim() && manual);
-      const payload =
-        useManual
-          ? {
-              ...form,
-              mlsId: "",
-              listingId: listing?.id,
-              photos: form.photos.split(/\s*,\s*|\n/).filter(Boolean),
-              price: Number(form.price),
-              beds: Number(form.beds),
-              baths: Number(form.baths),
-              sqft: Number(form.sqft),
-            }
-          : { mlsId: identifier };
+      const payload = useManual
+        ? {
+            ...form,
+            mlsId: "",
+            listingId: listing?.id,
+            photos: form.photos.split(/\s*,\s*|\n/).filter(Boolean),
+            price: Number(form.price),
+            beds: Number(form.beds),
+            baths: Number(form.baths),
+            sqft: Number(form.sqft),
+          }
+        : { mlsId: identifier };
       const res = await fetch(
         `/api/sub-accounts/${subAccountId}/marketing/campaigns`,
         {
@@ -237,7 +340,11 @@ export default function MarketingCampaignsPage() {
           state: current.state || seed.state,
           zip: current.zip || seed.zip,
         }));
-        toast.warning(seed.city ? "This IDX account does not expose that listing. Its address has been placed into the quick listing form below—add the verified facts or paste the full MLS detail." : "This IDX account does not expose that listing. Paste the complete MLS detail or use the quick listing form below.");
+        toast.warning(
+          seed.city
+            ? "This IDX account does not expose that listing. Its address has been placed into the quick listing form below—add the verified facts or paste the full MLS detail."
+            : "This IDX account does not expose that listing. Paste the complete MLS detail or use the quick listing form below."
+        );
         return;
       }
       if (!res.ok || !data.ok || !data.brief)
@@ -327,8 +434,7 @@ export default function MarketingCampaignsPage() {
     setUploading(true);
     try {
       const totalBytes =
-        source.size +
-        photoFiles.reduce((total, file) => total + file.size, 0);
+        source.size + photoFiles.reduce((total, file) => total + file.size, 0);
       if (totalBytes > MAX_UPLOAD_BYTES) {
         throw new Error(
           "Keep the combined listing export and photos under 4 MB for this upload. Use a smaller export or fewer/compressed photos."
@@ -385,10 +491,14 @@ export default function MarketingCampaignsPage() {
     const pasted = pastedMlsDetails.trim();
     if (!pasted) return;
     if (/^\d{6,}$/.test(pasted)) {
-      toast.error("An MLS number alone cannot create a property. Copy and paste the full SmartMLS detail (address, city/state/ZIP, price, beds, baths, and remarks), or use the quick listing form below.");
+      toast.error(
+        "An MLS number alone cannot create a property. Copy and paste the full SmartMLS detail (address, city/state/ZIP, price, beds, baths, and remarks), or use the quick listing form below."
+      );
       return;
     }
-    const source = new File([pasted], "smartmls-listing.txt", { type: "text/plain" });
+    const source = new File([pasted], "smartmls-listing.txt", {
+      type: "text/plain",
+    });
     await importListing(source);
   }
 
@@ -405,29 +515,98 @@ export default function MarketingCampaignsPage() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="font-semibold">Property marketing workflow</h2>
-            <p className="text-muted-foreground mt-1 text-xs">One property, one source of truth, one approval trail.</p>
+            <p className="text-muted-foreground mt-1 text-xs">
+              One property, one source of truth, one approval trail.
+            </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            {(["create", "optimize", "schedule", "archive"] as CampaignWorkflowStep[]).map((step, index) => (
-              <button key={step} type="button" className={`rounded-full border px-3 py-1.5 text-xs ${workflowStep === step ? "bg-primary text-primary-foreground" : "bg-background"}`} onClick={() => brief && setWorkflow(step).catch((error) => toast.error(error instanceof Error ? error.message : "Could not update campaign workflow."))} disabled={!brief || !isAdmin}>
+            {(
+              [
+                "create",
+                "optimize",
+                "schedule",
+                "archive",
+              ] as CampaignWorkflowStep[]
+            ).map((step, index) => (
+              <button
+                key={step}
+                type="button"
+                className={`rounded-full border px-3 py-1.5 text-xs ${workflowStep === step ? "bg-primary text-primary-foreground" : "bg-background"}`}
+                onClick={() =>
+                  brief &&
+                  setWorkflow(step).catch((error) =>
+                    toast.error(
+                      error instanceof Error
+                        ? error.message
+                        : "Could not update campaign workflow."
+                    )
+                  )
+                }
+                disabled={!brief || !isAdmin}
+              >
                 {index + 1}. {step[0].toUpperCase() + step.slice(1)}
               </button>
             ))}
           </div>
         </div>
-        {workflowStep === "archive" && brief && <p className="mt-3 flex items-center gap-2 text-xs text-emerald-700"><Archive className="h-4 w-4" /> Archived safely. The property folder, drafts, approvals, and schedule remain available.</p>}
+        {workflowStep === "archive" && brief && (
+          <p className="mt-3 flex items-center gap-2 text-xs text-emerald-700">
+            <Archive className="h-4 w-4" /> Archived safely. The property
+            folder, drafts, approvals, and schedule remain available.
+          </p>
+        )}
       </div>
       <div className="bg-card rounded-2xl border p-5">
         <div className="flex items-start gap-3">
           <Link2 className="text-primary mt-0.5 h-5 w-5" />
           <div className="min-w-0 flex-1">
             <h2 className="font-semibold">Listing sources</h2>
-            <p className="text-muted-foreground mt-1 text-xs">MLS/official broker data stays authoritative. Zillow links are kept with the property for reference and distribution; they do not replace verified MLS facts.</p>
+            <p className="text-muted-foreground mt-1 text-xs">
+              MLS/official broker data stays authoritative. Zillow links are
+              kept with the property for reference and distribution; they do not
+              replace verified MLS facts.
+            </p>
             <div className="mt-3 grid gap-3 md:grid-cols-2">
-              <div className="rounded-lg border p-3"><p className="text-xs font-medium">Zillow listing reference</p><Input className="mt-2" value={zillow.listingUrl} onChange={(e) => setZillow({ ...zillow, listingUrl: e.target.value })} placeholder="https://www.zillow.com/..." aria-label="Zillow listing URL" /></div>
-              <div className="rounded-lg border p-3"><p className="text-xs font-medium">Link profile</p><Input className="mt-2" value={zillow.profileUrl} onChange={(e) => setZillow({ ...zillow, profileUrl: e.target.value })} placeholder="https://www.zillow.com/profile/..." aria-label="Zillow profile URL" /></div>
+              <div className="rounded-lg border p-3">
+                <p className="text-xs font-medium">Zillow listing reference</p>
+                <Input
+                  className="mt-2"
+                  value={zillow.listingUrl}
+                  onChange={(e) =>
+                    setZillow({ ...zillow, listingUrl: e.target.value })
+                  }
+                  placeholder="https://www.zillow.com/..."
+                  aria-label="Zillow listing URL"
+                />
+              </div>
+              <div className="rounded-lg border p-3">
+                <p className="text-xs font-medium">Link profile</p>
+                <Input
+                  className="mt-2"
+                  value={zillow.profileUrl}
+                  onChange={(e) =>
+                    setZillow({ ...zillow, profileUrl: e.target.value })
+                  }
+                  placeholder="https://www.zillow.com/profile/..."
+                  aria-label="Zillow profile URL"
+                />
+              </div>
             </div>
-            <div className="mt-3 flex flex-wrap items-center gap-3"><Button type="button" size="sm" variant="outline" onClick={saveZillowLinks} disabled={!isAdmin || savingZillow}>{savingZillow ? "Saving…" : "Save Zillow references"}</Button><span className="text-muted-foreground text-[11px]">Paste MLS details or upload an export below to create the property—Zillow links alone cannot create a verified record.</span></div>
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={saveZillowLinks}
+                disabled={!isAdmin || savingZillow}
+              >
+                {savingZillow ? "Saving…" : "Save Zillow references"}
+              </Button>
+              <span className="text-muted-foreground text-[11px]">
+                Paste MLS details or upload an export below to create the
+                property—Zillow links alone cannot create a verified record.
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -476,55 +655,129 @@ export default function MarketingCampaignsPage() {
         </div>
         <p className="text-muted-foreground mt-3 text-xs">
           Search the connected IDX feed by ID or address. If SmartMLS does not
-          return the listing through IDX, paste the verified MLS detail below
-          or upload its report—your search field remains available.
+          return the listing through IDX, paste the verified MLS detail below or
+          upload its report—your search field remains available.
         </p>
-        {savedBriefs.length > 0 && (
-          <div className="mt-4 rounded-xl border bg-muted/30 p-3">
-            <p className="text-xs font-medium">Property folders</p>
-            <p className="text-muted-foreground mt-1 text-[11px]">Organized by property location. Open a folder to manage every asset for that property.</p>
-            <div className="mt-2 space-y-2">
-              {propertyFolders.map(([folder, entries]) => (
-                <details key={folder} open className="rounded-lg border bg-background">
-                  <summary className="flex cursor-pointer list-none items-center gap-2 px-3 py-2 text-sm font-medium">
-                    <Folder className="h-4 w-4 text-amber-600" />
-                    <span>{folder}</span>
-                    <span className="text-muted-foreground text-xs">{entries.length} {entries.length === 1 ? "property" : "properties"}</span>
-                  </summary>
-                  <div className="flex flex-wrap gap-2 border-t px-3 py-2">
-                    {entries.map((saved) => (
-                      <Button key={saved.id} type="button" size="sm" variant={brief?.listingId === saved.listingId ? "default" : "outline"} onClick={() => openSavedBrief(saved)}>
-                        {saved.listing?.address ?? saved.listingId}
-                      </Button>
-                    ))}
-                  </div>
-                </details>
-              ))}
-            </div>
-          </div>
-        )}
+        <div className="bg-muted/30 mt-4 rounded-xl border p-3">
+          <p className="text-xs font-medium">Your property workspaces</p>
+          <p className="text-muted-foreground mt-1 text-[11px]">
+            Open Properties to manage a listing’s details, assets, marketing
+            drafts, and activity in one place.
+          </p>
+          <a
+            className="text-primary mt-2 inline-flex text-xs font-medium underline"
+            href={`/sa/${subAccountId}/properties`}
+          >
+            Open Properties
+          </a>
+        </div>
         {channelAvailability && (
-          <div className="mt-4 rounded-xl border bg-muted/30 p-3">
+          <div className="bg-muted/30 mt-4 rounded-xl border p-3">
             <p className="text-xs font-medium">Distribution channels</p>
             <div className="mt-2 flex flex-wrap gap-2">
-              {(Object.entries(channelAvailability) as Array<[CampaignChannel, { configured: boolean; publishable: boolean }]>).map(([channel, availability]) => (
-                <span key={channel} className="rounded-full border bg-background px-2.5 py-1 text-[11px]">
-                  <span className="font-medium capitalize">{channel === "googleBusiness" ? "Google Business" : channel}</span>{" "}
-                  <span className="text-muted-foreground">· {availability.publishable ? "Publish ready" : availability.configured ? "Draft / export" : "Not connected"}</span>
+              {(
+                Object.entries(channelAvailability) as Array<
+                  [
+                    CampaignChannel,
+                    { configured: boolean; publishable: boolean },
+                  ]
+                >
+              ).map(([channel, availability]) => (
+                <span
+                  key={channel}
+                  className="bg-background rounded-full border px-2.5 py-1 text-[11px]"
+                >
+                  <span className="font-medium capitalize">
+                    {channel === "googleBusiness" ? "Google Business" : channel}
+                  </span>{" "}
+                  <span className="text-muted-foreground">
+                    ·{" "}
+                    {availability.publishable
+                      ? "Publish ready"
+                      : availability.configured
+                        ? "Draft / export"
+                        : "Not connected"}
+                  </span>
                 </span>
               ))}
             </div>
-            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px]"><a className="underline" href={`/sa/${subAccountId}/dashboard/settings`}>Connect Facebook &amp; Instagram</a><a className="underline" href={`/sa/${subAccountId}/business-profile`}>Set up Email &amp; Google Business</a><a className="underline" href={`/sa/${subAccountId}/connect`}>Open Connections</a><span className="text-muted-foreground">LinkedIn and TikTok drafts are kept here for export until their publishing integrations are connected.</span></div>
+            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px]">
+              <a
+                className="underline"
+                href={`/sa/${subAccountId}/dashboard/settings`}
+              >
+                Connect Facebook &amp; Instagram
+              </a>
+              <a
+                className="underline"
+                href={`/sa/${subAccountId}/business-profile`}
+              >
+                Set up Email &amp; Google Business
+              </a>
+              <a className="underline" href={`/sa/${subAccountId}/connect`}>
+                Open Connections
+              </a>
+              <span className="text-muted-foreground">
+                LinkedIn and TikTok drafts are kept here for export until their
+                publishing integrations are connected.
+              </span>
+            </div>
           </div>
         )}
         {brief && workflowStep === "schedule" && (
-          <div className="mt-4 rounded-xl border bg-muted/30 p-3">
-            <div className="flex items-center gap-2"><Calendar className="h-4 w-4" /><p className="text-xs font-medium">Set campaign calendar</p></div>
-            <p className="text-muted-foreground mt-1 text-[11px]">Choose dates for connected social channels. Drafts remain saved when a channel is not connected.</p>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-              {brief.brief.channels.filter((draft) => ["facebook", "instagram", "linkedin", "tiktok", "googleBusiness"].includes(draft.channel)).map((draft) => <label key={draft.channel} className="text-xs capitalize">{draft.channel}<Input className="mt-1" type="datetime-local" value={schedulePlan[draft.channel] ?? ""} onChange={(e) => setSchedulePlan({ ...schedulePlan, [draft.channel]: e.target.value || null })} /></label>)}
+          <div className="bg-muted/30 mt-4 rounded-xl border p-3">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              <p className="text-xs font-medium">Set campaign calendar</p>
             </div>
-            <Button className="mt-3" size="sm" onClick={() => setWorkflow("schedule").catch((error) => toast.error(error instanceof Error ? error.message : "Could not save calendar."))} disabled={!isAdmin}>Save campaign calendar</Button>
+            <p className="text-muted-foreground mt-1 text-[11px]">
+              Choose dates for connected social channels. Drafts remain saved
+              when a channel is not connected.
+            </p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+              {brief.brief.channels
+                .filter((draft) =>
+                  [
+                    "facebook",
+                    "instagram",
+                    "linkedin",
+                    "tiktok",
+                    "googleBusiness",
+                  ].includes(draft.channel)
+                )
+                .map((draft) => (
+                  <label key={draft.channel} className="text-xs capitalize">
+                    {draft.channel}
+                    <Input
+                      className="mt-1"
+                      type="datetime-local"
+                      value={schedulePlan[draft.channel] ?? ""}
+                      onChange={(e) =>
+                        setSchedulePlan({
+                          ...schedulePlan,
+                          [draft.channel]: e.target.value || null,
+                        })
+                      }
+                    />
+                  </label>
+                ))}
+            </div>
+            <Button
+              className="mt-3"
+              size="sm"
+              onClick={() =>
+                setWorkflow("schedule").catch((error) =>
+                  toast.error(
+                    error instanceof Error
+                      ? error.message
+                      : "Could not save calendar."
+                  )
+                )
+              }
+              disabled={!isAdmin}
+            >
+              Save campaign calendar
+            </Button>
           </div>
         )}
         <button
@@ -549,11 +802,32 @@ export default function MarketingCampaignsPage() {
                 <code>single-cpg_listing.php</code> template, including the
                 optional brochure.
               </p>
-              <div className="mt-3 rounded-lg border bg-background p-3">
-                <Label htmlFor="paste-smartmls" className="text-xs font-medium">Paste SmartMLS details</Label>
-                <p className="text-muted-foreground mt-1 text-[11px]">Copy the complete verified SmartMLS detail—not only the MLS number—and AgentStack will create the property record. This is the fastest route when IDX does not expose the listing.</p>
-                <Textarea id="paste-smartmls" className="mt-2" value={pastedMlsDetails} onChange={(event) => setPastedMlsDetails(event.target.value)} rows={4} placeholder="Paste the MLS listing detail, including the address, price, beds, baths, square feet, remarks, and Listing ID." />
-                <Button type="button" size="sm" className="mt-2" onClick={importPastedMlsDetails} disabled={!isAdmin || uploading || !pastedMlsDetails.trim()}>{uploading ? "Importing…" : "Create from pasted MLS details"}</Button>
+              <div className="bg-background mt-3 rounded-lg border p-3">
+                <Label htmlFor="paste-smartmls" className="text-xs font-medium">
+                  Paste SmartMLS details
+                </Label>
+                <p className="text-muted-foreground mt-1 text-[11px]">
+                  Copy the complete verified SmartMLS detail—not only the MLS
+                  number—and AgentStack will create the property record. This is
+                  the fastest route when IDX does not expose the listing.
+                </p>
+                <Textarea
+                  id="paste-smartmls"
+                  className="mt-2"
+                  value={pastedMlsDetails}
+                  onChange={(event) => setPastedMlsDetails(event.target.value)}
+                  rows={4}
+                  placeholder="Paste the MLS listing detail, including the address, price, beds, baths, square feet, remarks, and Listing ID."
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  className="mt-2"
+                  onClick={importPastedMlsDetails}
+                  disabled={!isAdmin || uploading || !pastedMlsDetails.trim()}
+                >
+                  {uploading ? "Importing…" : "Create from pasted MLS details"}
+                </Button>
               </div>
               <div className="mt-2 flex flex-wrap gap-2">
                 <label className="hover:bg-muted inline-flex cursor-pointer items-center rounded-md border px-3 py-2 text-sm font-medium">
@@ -594,10 +868,26 @@ export default function MarketingCampaignsPage() {
                 </Button>
               </div>
               <label className="mt-3 flex items-center gap-2 text-xs">
-                <input type="checkbox" checked={generateBrochure} onChange={(event) => setGenerateBrochure(event.target.checked)} disabled={!isAdmin || uploading} />
+                <input
+                  type="checkbox"
+                  checked={generateBrochure}
+                  onChange={(event) =>
+                    setGenerateBrochure(event.target.checked)
+                  }
+                  disabled={!isAdmin || uploading}
+                />
                 Generate a one-page brochure using the shared listing template
               </label>
-              {brochureUrl && <a className="mt-2 inline-block text-xs underline" href={brochureUrl} target="_blank" rel="noreferrer">Open property brochure</a>}
+              {brochureUrl && (
+                <a
+                  className="mt-2 inline-block text-xs underline"
+                  href={brochureUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Open property brochure
+                </a>
+              )}
               {(listingFile || photoFiles.length > 0) && (
                 <p className="text-muted-foreground mt-2 text-xs">
                   {listingFile ? listingFile.name : "No listing file selected"}
@@ -677,10 +967,16 @@ export default function MarketingCampaignsPage() {
             )}
             {manual && !editing && (
               <div className="flex gap-2 sm:col-span-2">
-                <Button type="button" onClick={() => createBrief("")} disabled={!isAdmin || loading}>
+                <Button
+                  type="button"
+                  onClick={() => createBrief("")}
+                  disabled={!isAdmin || loading}
+                >
                   {loading ? "Building…" : "Create property campaign"}
                 </Button>
-                <span className="self-center text-xs text-muted-foreground">Add verified details, then build all channel drafts.</span>
+                <span className="text-muted-foreground self-center text-xs">
+                  Add verified details, then build all channel drafts.
+                </span>
               </div>
             )}
           </div>
@@ -707,7 +1003,7 @@ export default function MarketingCampaignsPage() {
                 <label className="ml-auto flex items-center gap-2 text-xs">
                   <span className="text-muted-foreground">Status</span>
                   <select
-                    className="rounded-md border bg-background px-2 py-1.5 text-xs"
+                    className="bg-background rounded-md border px-2 py-1.5 text-xs"
                     value={
                       listing.marketingStatus ??
                       (listing.status === "pending"
@@ -859,16 +1155,44 @@ export default function MarketingCampaignsPage() {
                 </div>
                 {editingChannel === draft.channel ? (
                   <div className="mt-2 space-y-2">
-                    <Textarea value={editingBody} onChange={(event) => setEditingBody(event.target.value)} rows={5} />
+                    <Textarea
+                      value={editingBody}
+                      onChange={(event) => setEditingBody(event.target.value)}
+                      rows={5}
+                    />
                     <div className="flex gap-2">
-                      <Button size="sm" onClick={() => saveChannelDraft(draft.channel)} disabled={savingDraft}>{savingDraft ? "Saving…" : "Save draft"}</Button>
-                      <Button size="sm" variant="outline" onClick={() => setEditingChannel(null)}>Cancel</Button>
+                      <Button
+                        size="sm"
+                        onClick={() => saveChannelDraft(draft.channel)}
+                        disabled={savingDraft}
+                      >
+                        {savingDraft ? "Saving…" : "Save draft"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setEditingChannel(null)}
+                      >
+                        Cancel
+                      </Button>
                     </div>
                   </div>
                 ) : (
                   <>
-                    <p className="mt-2 whitespace-pre-wrap text-sm">{draft.body}</p>
-                    <Button size="sm" variant="ghost" className="mt-2 px-0 text-xs" onClick={() => { setEditingChannel(draft.channel); setEditingBody(draft.body); }}>Edit draft</Button>
+                    <p className="mt-2 text-sm whitespace-pre-wrap">
+                      {draft.body}
+                    </p>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="mt-2 px-0 text-xs"
+                      onClick={() => {
+                        setEditingChannel(draft.channel);
+                        setEditingBody(draft.body);
+                      }}
+                    >
+                      Edit draft
+                    </Button>
                   </>
                 )}
                 {draft.findings.length > 0 && (
