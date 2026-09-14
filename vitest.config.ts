@@ -33,6 +33,7 @@ export default defineConfig({
         test: {
           name: "node",
           environment: "node",
+          sequence: { groupOrder: 1 },
           include: [
             "src/**/*.test.ts",
             "test/**/*.test.ts",
@@ -51,8 +52,13 @@ export default defineConfig({
         test: {
           name: "dom",
           environment: "jsdom",
+          sequence: { groupOrder: 2 },
           setupFiles: ["./test/setup-dom.ts"],
           include: ["src/**/*.test.tsx", "test/**/*.test.tsx"],
+          // Component suites share a jsdom-heavy runtime. Running all files
+          // at the default worker count starves the event loop and causes
+          // otherwise fast tests to hit Vitest's 5s timeout in CI.
+          maxWorkers: 2,
         },
       },
     ],
