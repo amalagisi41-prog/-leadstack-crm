@@ -27,6 +27,21 @@ type BillingSummary = {
   activeAddOnCount: number;
   bundleDiscountActive: boolean;
   bundleCouponConfigured: boolean;
+  lineItems: Array<{
+    id: string;
+    name: string;
+    kind: "plan" | "add_on" | "other";
+    quantity: number;
+    currency: string | null;
+    unitAmount: number | null;
+    recurringAmount: number | null;
+    interval: "day" | "week" | "month" | "year" | null;
+    intervalCount: number | null;
+  }>;
+  nextRecurringInvoice: {
+    amount: number;
+    currency: string;
+  } | null;
 };
 
 const PLAN_CHOICES = [
@@ -53,7 +68,24 @@ function formatDate(epochSeconds: number | null) {
   }).format(new Date(epochSeconds * 1000));
 }
 
-export function AgencyBillingSection() {
+function formatAmount(amount: number, currency: string) {
+  return new Intl.NumberFormat(undefined, {
+    style: "currency",
+    currency: currency.toUpperCase(),
+  }).format(amount / 100);
+}
+
+function intervalLabel(
+  interval: BillingSummary["lineItems"][number]["interval"],
+  intervalCount: number | null,
+) {
+  if (!interval) return "recurring interval unavailable";
+  const count = intervalCount ?? 1;
+  if (count === 1) return `per ${interval}`;
+  return `every ${count} ${interval}s`;
+}
+
+export function AgencyBillingSection({ detailed = false }: { detailed?: boolean }) {
   const [summary, setSummary] = useState<BillingSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [busyAction, setBusyAction] = useState<
@@ -154,7 +186,9 @@ export function AgencyBillingSection() {
           <CreditCard className="h-4 w-4" />
         </span>
         <div>
-          <h2 className="text-sm font-semibold">Billing</h2>
+          <h2 className="text-sm font-semibold">
+            {detailed ? "Current subscription" : "Billing"}
+          </h2>
           <p className="text-xs text-muted-foreground">
             Switch plans, manage your card, and cancel from inside AgentStack.
           </p>
@@ -193,6 +227,70 @@ export function AgencyBillingSection() {
               </>
             )}
           </Button>
+        </div>
+
+        <div className="rounded-lg border bg-muted/20 p-3">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <div>
+              <p className="text-sm font-medium">Next recurring charge</p>
+              <p className="text-xs text-muted-foreground">
+                Stripe preview including active discounts and applicable tax.
+              </p>
+            </div>
+            <p className="text-lg font-semibold tabular-nums">
+              {loading
+                ? "Loading…"
+                : summary?.nextRecurringInvoice
+                  ? formatAmount(
+                      summary.nextRecurringInvoice.amount,
+                      summary.nextRecurringInvoice.currency,
+                    )
+                  : "Not available"}
+            </p>
+          </div>
+          {!loading && !summary?.nextRecurringInvoice && summary?.subscriptionStatus && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Stripe could not return a recurring invoice preview for this subscription. Open Billing details to see Stripe&apos;s current invoice information.
+            </p>
+          )}
+        </div>
+
+        <div>
+          <div className="mb-2 flex items-baseline justify-between gap-2">
+            <p className="text-sm font-medium">Plan and add-ons</p>
+            {!loading && (
+              <p className="text-xs text-muted-foreground">
+                {summary?.lineItems.length ?? 0} billed item{(summary?.lineItems.length ?? 0) === 1 ? "" : "s"}
+              </p>
+            )}
+          </div>
+          {loading ? (
+            <div className="h-16 animate-pulse rounded-lg bg-muted" />
+          ) : summary?.lineItems.length ? (
+            <ul className="divide-y rounded-lg border bg-background">
+              {summary.lineItems.map((item) => (
+                <li key={item.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2.5">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium">{item.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {item.kind === "plan" ? "Plan" : item.kind === "add_on" ? "Add-on" : "Subscription item"}
+                      {item.quantity > 1 ? ` · Quantity ${item.quantity}` : ""}
+                      {" · "}{intervalLabel(item.interval, item.intervalCount)}
+                    </p>
+                  </div>
+                  <p className="text-sm font-medium tabular-nums">
+                    {item.recurringAmount !== null && item.currency
+                      ? formatAmount(item.recurringAmount, item.currency)
+                      : "Price unavailable"}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="rounded-lg border border-dashed px-3 py-3 text-sm text-muted-foreground">
+              No billed plan or add-ons are attached to this subscription yet.
+            </p>
+          )}
         </div>
 
         <div className="grid gap-2 sm:grid-cols-2">
