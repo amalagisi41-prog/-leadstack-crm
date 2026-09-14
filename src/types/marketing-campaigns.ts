@@ -83,4 +83,6 @@ export interface CampaignApprovalAuditDoc {
   approvedAt: Timestamp | FieldValue | null;
   channels: CampaignChannel[];
   screensCleared: ComplianceScreen[];
+  decision?: "approved" | "declined";
+  reason?: string;
 }

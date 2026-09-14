@@ -68,6 +68,8 @@ export async function GET(
       channels: audit.channels,
       approvedAt: isoTimestamp(audit.approvedAt),
       approvedByUid: audit.approvedByUid,
+      decision: audit.decision === "declined" ? "declined" : "approved",
+      reason: typeof audit.reason === "string" ? audit.reason : undefined,
     };
   });
 

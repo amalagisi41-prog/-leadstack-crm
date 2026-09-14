@@ -26,6 +26,8 @@ type ApprovalEvent = {
   channels: string[];
   approvedAt: string | null;
   approvedByUid: string;
+  decision?: "approved" | "declined";
+  reason?: string;
 };
 
 type WorkspaceListing = Omit<IdxListingDoc, "syncedAt"> & {
@@ -599,10 +601,18 @@ function ActivityTab({
     },
     ...approvals.map((approval) => ({
       id: approval.id,
-      title: "Channel drafts approved",
-      detail: approval.channels.length
-        ? approval.channels.join(", ")
-        : "No channels recorded",
+      title:
+        approval.decision === "declined"
+          ? "Channel revision requested"
+          : "Channel drafts approved",
+      detail: [
+        approval.channels.length
+          ? approval.channels.join(", ")
+          : "No channels recorded",
+        approval.reason ? "Reason: " + approval.reason : null,
+      ]
+        .filter(Boolean)
+        .join(" · "),
       at: approval.approvedAt,
     })),
   ].filter(

@@ -72,6 +72,8 @@ export default function MarketingCampaignsPage() {
   const [brief, setBrief] = useState<CampaignBriefDoc | null>(null);
   const [loading, setLoading] = useState(false);
   const [approving, setApproving] = useState(false);
+  const [decliningChannel, setDecliningChannel] = useState<string | null>(null);
+  const [declineReason, setDeclineReason] = useState("");
   const [syncing, setSyncing] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
@@ -416,6 +418,34 @@ export default function MarketingCampaignsPage() {
   }
 
   const approveReadyDrafts = () => approveDrafts();
+
+  async function declineDraft(channel: string) {
+    if (!brief || !declineReason.trim()) {
+      toast.error("Add a reason so the next revision is clear.");
+      return;
+    }
+    try {
+      const res = await fetch(
+        `/api/sub-accounts/${subAccountId}/marketing/campaigns/${brief.listingId}/decline`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ channel, reason: declineReason.trim() }),
+        }
+      );
+      const data = await readApiJson<{ ok?: boolean; error?: string }>(res);
+      if (!res.ok || !data.ok)
+        throw new Error(data.error ?? "Could not record the decline.");
+      setApprovedChannels((current) => current.filter((item) => item !== channel));
+      setDecliningChannel(null);
+      setDeclineReason("");
+      toast.success("Decline recorded. Revise the draft, then submit it again.");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Could not record the decline."
+      );
+    }
+  }
 
   async function syncListings() {
     setSyncing(true);
@@ -1246,23 +1276,49 @@ export default function MarketingCampaignsPage() {
                 )}
                 <div className="mt-3 flex items-center justify-between gap-2">
                   {approvedChannels.includes(draft.channel) ? (
-                    <span className="flex items-center gap-1 text-xs font-medium text-emerald-700">
-                      <CheckCircle2 className="h-3.5 w-3.5" /> Approved
-                    </span>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="flex items-center gap-1 text-xs font-medium text-emerald-700">
+                        <CheckCircle2 className="h-3.5 w-3.5" /> Approved
+                      </span>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setDecliningChannel(draft.channel);
+                          setDeclineReason("");
+                        }}
+                        disabled={!isAdmin || approving}
+                      >
+                        Request revision
+                      </Button>
+                    </div>
                   ) : (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => approveDrafts([draft.channel])}
-                      disabled={
-                        !isAdmin ||
-                        approving ||
-                        draft.status !== "ready" ||
-                        draft.findings.length > 0
-                      }
-                    >
-                      {approving ? "Approving…" : "Approve channel"}
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => approveDrafts([draft.channel])}
+                        disabled={
+                          !isAdmin ||
+                          approving ||
+                          draft.status !== "ready" ||
+                          draft.findings.length > 0
+                        }
+                      >
+                        {approving ? "Approving…" : "Approve channel"}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setDecliningChannel(draft.channel);
+                          setDeclineReason("");
+                        }}
+                        disabled={!isAdmin || approving}
+                      >
+                        Request revision
+                      </Button>
+                    </div>
                   )}
                   {draft.status !== "ready" &&
                   !approvedChannels.includes(draft.channel) ? (
@@ -1271,6 +1327,37 @@ export default function MarketingCampaignsPage() {
                     </span>
                   ) : null}
                 </div>
+                {decliningChannel === draft.channel ? (
+                  <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50/50 p-3">
+                    <label className="text-xs font-medium" htmlFor={`decline-${draft.channel}`}>
+                      Revision request
+                    </label>
+                    <Textarea
+                      id={`decline-${draft.channel}`}
+                      className="mt-2 bg-background"
+                      value={declineReason}
+                      onChange={(event) => setDeclineReason(event.target.value)}
+                      placeholder="What should change before approval?"
+                      rows={3}
+                    />
+                    <div className="mt-2 flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => declineDraft(draft.channel)}
+                        disabled={!declineReason.trim()}
+                      >
+                        Record revision request
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setDecliningChannel(null)}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
                 <p className="text-muted-foreground mt-2 text-[11px]">
                   Status: {draft.status} · audited approval required
                 </p>
