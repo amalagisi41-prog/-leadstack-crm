@@ -380,9 +380,9 @@ export function ConnectYourBusiness() {
         icon: Sparkles,
         iconTone: "bg-blue-100 text-blue-700",
         title: "Google Business Profile",
-        blurb: "Connect and manage your Google Business Profile from your business blueprint.",
-        status: "not_connected",
-        actionLabel: "Set up profile",
+        blurb: "View and manage your Google Business Profile details inside your Business Blueprint.",
+        status: "not_connected" as const,
+        actionLabel: "Open Blueprint",
         actionHref: saPath("/business-profile"),
       },
       {
@@ -391,8 +391,8 @@ export function ConnectYourBusiness() {
         iconTone: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
         title: "Google reviews",
         blurb:
-          "Save your Google review link and configure review requests without losing the connection during onboarding.",
-        status: "not_connected",
+          "Save your Google review link and configure review request settings.",
+        status: "not_connected" as const,
         actionLabel: "Configure reviews",
         actionHref: googleReviewsHref,
       },
@@ -433,15 +433,32 @@ export function ConnectYourBusiness() {
         </div>
       </div>
 
-      <section className="rounded-2xl border bg-card p-5">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h2 className="text-base font-semibold">Realtor profiles &amp; credentials</h2>
-            <p className="mt-1 max-w-3xl text-xs leading-relaxed text-muted-foreground">
-              Save the public profiles clients see. AgentStack uses them to prefill a reviewable Business Blueprint; you approve every credential before it becomes part of your brand. They are profile references, not publishing connections.
-            </p>
-          </div>
-          <span className="rounded-full bg-muted px-2.5 py-1 text-[11px] font-medium">Step 1 of 4</span>
+      {filtered.length === 0 ? (
+        <p className="text-muted-foreground rounded-2xl border border-dashed p-8 text-center text-sm">
+          No integrations match &ldquo;{search}&rdquo;.
+        </p>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {filtered.map((card) => (
+            <ConnectionCard key={card.key} data={card} />
+          ))}
+        </div>
+      )}
+
+      <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
+        <MessagesSquare className="h-3.5 w-3.5" />
+        Once connected, replies show up together in Conversations regardless of
+        which channel a lead used.
+      </p>
+
+      {/* Saved profile links — NOT integrations, just URL references */}
+      <section className="rounded-2xl border border-dashed p-5">
+        <div>
+          <h2 className="text-sm font-medium text-muted-foreground">Saved profile links</h2>
+          <p className="mt-1 max-w-3xl text-xs leading-relaxed text-muted-foreground">
+            Paste your public listing-portal URLs here for reference. These are not integrations&mdash;AgentStack
+            does not connect to or sync with these sites. The links prefill your Business Blueprint for review.
+          </p>
         </div>
         <div className="mt-4 grid gap-3 md:grid-cols-3">
           {([
@@ -476,29 +493,10 @@ export function ConnectYourBusiness() {
             disabled={!Object.values(portalProfiles).some(Boolean)}
             render={<Link href={`${saPath("/business-profile")}?import=${encodeURIComponent(Object.values(portalProfiles).filter(Boolean).join("\n"))}`} />}
           >
-            Review credentials in Blueprint
+            Review in Blueprint
           </Button>
-          <p className="text-[11px] text-muted-foreground">Next: review the collected facts, then save your approved brand profile.</p>
         </div>
       </section>
-
-      {filtered.length === 0 ? (
-        <p className="text-muted-foreground rounded-2xl border border-dashed p-8 text-center text-sm">
-          No integrations match &ldquo;{search}&rdquo;.
-        </p>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filtered.map((card) => (
-            <ConnectionCard key={card.key} data={card} />
-          ))}
-        </div>
-      )}
-
-      <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
-        <MessagesSquare className="h-3.5 w-3.5" />
-        Once connected, replies show up together in Conversations regardless of
-        which channel a lead used.
-      </p>
     </div>
   );
 }
