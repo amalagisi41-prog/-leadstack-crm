@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { AlertCircle, CheckCircle2, ClipboardCheck, HelpCircle } from "lucide-react";
 import { useSubAccount } from "@/context/sub-account-context";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,8 @@ function StatusIcon({ status }: { status: AcceptanceCheck["status"] }) {
 
 export default function LaunchReadinessPage() {
   const { subAccount, subAccountId, saPath } = useSubAccount();
+  const searchParams = useSearchParams();
+  const priority = searchParams.get("priority");
   const [checks, setChecks] = useState<AcceptanceCheck[] | null>(null);
   const [error, setError] = useState(false);
 
@@ -83,6 +86,16 @@ export default function LaunchReadinessPage() {
         </p>
       </div>
 
+      {priority && (
+        <section className="rounded-2xl border border-blue-200 bg-blue-50 p-5 text-sm dark:border-blue-800 dark:bg-blue-950/30">
+          <p className="font-medium">Your selected priority: {priorityLabel(priority)}</p>
+          <p className="text-muted-foreground mt-1">
+            Resolve the named launch items first. The checklist keeps the next
+            step visible so you can return to your chosen work without guessing.
+          </p>
+        </section>
+      )}
+
       {error ? (
         <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">
           We couldn&apos;t load campaign evidence right now. Reload this page before treating any provider as ready.
@@ -123,4 +136,15 @@ export default function LaunchReadinessPage() {
       </div>
     </div>
   );
+}
+
+function priorityLabel(value: string) {
+  return (
+    {
+      get_leads: "Get more leads",
+      organize_database: "Organize my database",
+      build_website: "Build my website",
+      ai_followup: "Set up AI follow-up",
+    } as Record<string, string>
+  )[value] ?? value.replaceAll("_", " ");
 }

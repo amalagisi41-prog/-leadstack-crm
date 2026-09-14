@@ -59,6 +59,14 @@ interface ConnectionCardData {
 
 function ConnectionCard({ data }: { data: ConnectionCardData }) {
   const disabled = data.status === "coming_soon";
+  const statusLabel =
+    data.status === "connected"
+      ? "Connected"
+      : data.status === "needs_attention"
+        ? "Needs attention"
+        : data.status === "coming_soon"
+          ? "Not available"
+          : "Not connected";
 
   return (
     <div className="bg-card flex h-full flex-col rounded-2xl border p-5">
@@ -73,6 +81,17 @@ function ConnectionCard({ data }: { data: ConnectionCardData }) {
 
       <div className="mt-3">
         <h3 className="text-sm font-semibold">{data.title}</h3>
+        <span
+          className={cn(
+            "mt-2 inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium",
+            data.status === "connected" && "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
+            data.status === "needs_attention" && "bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300",
+            data.status === "not_connected" && "bg-muted text-muted-foreground",
+            data.status === "coming_soon" && "bg-slate-100 text-slate-600 dark:bg-slate-900 dark:text-slate-300"
+          )}
+        >
+          {statusLabel}
+        </span>
         {data.detail && (
           <p
             className={cn(
@@ -176,7 +195,7 @@ export function ConnectYourBusiness() {
 
     const settingsHref = saPath("/dashboard/settings");
     const mlsFeedHref = `${settingsHref}#mls-feed`;
-    const businessEmailHref = `${settingsHref}?tab=messaging#business-email`;
+    const apiSettingsHref = `${settingsHref}?tab=api`;
     const googleReviewsHref = `${settingsHref}?tab=messaging#google-reviews`;
     const contactsHref = saPath("/contacts");
     const formsHref = saPath("/forms");
@@ -246,7 +265,7 @@ export function ConnectYourBusiness() {
           ? "connected"
           : "not_connected",
         actionLabel: subAccount.apiAccessEnabledByAgency ? "Manage" : "Set up",
-        actionHref: businessEmailHref,
+        actionHref: apiSettingsHref,
       },
       {
         key: "email",

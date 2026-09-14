@@ -222,11 +222,11 @@ export function RealtorLaunchWizard({
       const chosenPriority = PRIORITY_OPTIONS.find(
         (p) => p.value === priority
       );
-      if (chosenPriority) {
-        router.replace(saPath(chosenPriority.actionHref));
-      } else {
-        router.replace(saPath("/dashboard?welcome=1"));
-      }
+      const readinessParams = new URLSearchParams({ welcome: "1" });
+      if (chosenPriority) readinessParams.set("priority", chosenPriority.value);
+      router.replace(
+        saPath(`${SUB_ACCOUNT_ROUTES.launchReadiness}?${readinessParams.toString()}`)
+      );
       router.refresh();
     } catch {
       setFinishing(false);
@@ -293,7 +293,6 @@ export function RealtorLaunchWizard({
         {screen === 4 && (
           <ScreenLaunch
             priority={priority}
-            saPath={saPath}
             finishing={finishing}
             onFinish={finishWizard}
           />
@@ -614,12 +613,10 @@ function ConnectionCard({
 
 function ScreenLaunch({
   priority,
-  saPath,
   finishing,
   onFinish,
 }: {
   priority: LaunchPriority | null;
-  saPath: (p: string) => string;
   finishing: boolean;
   onFinish: () => void;
 }) {
@@ -632,11 +629,12 @@ function ScreenLaunch({
           You&apos;re ready
         </p>
         <h1 className="mt-2 text-2xl font-bold tracking-tight">
-          Your workspace is set up.
+          Your workspace is ready for a launch check.
         </h1>
         <p className="text-muted-foreground mt-2 text-sm">
-          Everything is configured. Your AI agent knows your business. Your
-          pipeline is ready. One thing left — your first action.
+          Your setup choices are saved. We&apos;ll now check the specific listing
+          data, connections, marketing draft, approval, and publishing steps
+          that still need your attention.
         </p>
       </div>
 
@@ -660,13 +658,13 @@ function ScreenLaunch({
       )}
 
       <div className="rounded-xl border bg-card p-5">
-        <p className="text-sm font-medium">What&apos;s next in your workspace</p>
+        <p className="text-sm font-medium">What happens next</p>
         <div className="mt-3 space-y-2">
           {[
-            "Your Business Profile is ready to review and refine",
-            "Your deal pipeline tracks leads from first contact to close",
-            "AI follow-up is pre-configured with your info",
-            "Domain and website setup available when you're ready",
+            "Launch Readiness checks what is actually connected",
+            "Missing items are named with the page that fixes them",
+            "Unsupported channels remain clearly marked for export",
+            "You can return here whenever your setup changes",
           ].map((item, idx) => (
             <div key={idx} className="flex items-start gap-2 text-sm">
               <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
@@ -682,11 +680,7 @@ function ScreenLaunch({
         ) : (
           <Zap className="mr-2 h-4 w-4" />
         )}
-        {finishing
-          ? "Opening your workspace…"
-          : chosen
-            ? chosen.actionLabel
-            : "Go to my workspace"}
+        {finishing ? "Opening your launch checklist…" : "Review launch readiness"}
         {!finishing && <ArrowRight className="ml-2 h-4 w-4" />}
       </Button>
     </div>
