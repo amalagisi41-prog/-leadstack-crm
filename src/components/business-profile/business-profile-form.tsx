@@ -25,7 +25,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { compileBusinessProfilePrompt } from "@/lib/business-profile/compile";
+import {
+  businessProfileCompleteness,
+  compileBusinessProfilePrompt,
+} from "@/lib/business-profile/compile";
 import { openAskAssistant } from "@/components/dashboard/ask-assistant-panel";
 import {
   MediaLibrary,
@@ -41,6 +44,70 @@ import { readJson } from "@/lib/http/read-json";
 import { GoogleOAuthImport } from "@/components/business-profile/google-oauth-import";
 
 const MAX_LIST_ITEMS = 30;
+const PROFILE_EXPORT_ALIASES: Record<string, keyof BusinessProfileContent> = {
+  agent: "agentName",
+  agentname: "agentName",
+  name: "agentName",
+  title: "title",
+  brokerage: "brokerage",
+  company: "brokerage",
+  license: "licenseNumber",
+  licensenumber: "licenseNumber",
+  licensestate: "licenseStates",
+  licensestates: "licenseStates",
+  phone: "phone",
+  telephone: "phone",
+  email: "email",
+  website: "website",
+  serviceareas: "serviceAreas",
+  specialties: "specialties",
+  services: "services",
+  bio: "bio",
+  biography: "bio",
+  clientpromise: "clientPromise",
+  languages: "languages",
+  testimonials: "testimonials",
+};
+
+function normalizeProfileExport(text: string): Partial<BusinessProfileContent> {
+  const trimmed = text.trim();
+  let entries: Array<[string, unknown]> = [];
+  try {
+    const parsed = JSON.parse(trimmed) as Record<string, unknown>;
+    const source =
+      parsed && typeof parsed.profile === "object" && parsed.profile !== null
+        ? (parsed.profile as Record<string, unknown>)
+        : parsed;
+    entries = Object.entries(source);
+  } catch {
+    const lines = trimmed.split(/\r?\n/).filter(Boolean);
+    entries = lines.map((line) => {
+      const separator = line.indexOf("=") >= 0 ? line.indexOf("=") : line.indexOf(",");
+      return separator > 0
+        ? [line.slice(0, separator).trim(), line.slice(separator + 1).trim()]
+        : ["", ""];
+    });
+  }
+
+  const result: Partial<BusinessProfileContent> = {};
+  for (const [rawKey, rawValue] of entries) {
+    const key = PROFILE_EXPORT_ALIASES[rawKey.toLowerCase().replace(/[^a-z]/g, "")];
+    if (!key || rawValue == null) continue;
+    const value = Array.isArray(rawValue)
+      ? rawValue.join(", ")
+      : String(rawValue).trim();
+    if (!value) continue;
+    if (key === "services") {
+      result.services = value
+        .split(/[,;|]/)
+        .map((item) => item.trim().toLowerCase().replace(/\s+/g, "_") as BusinessProfileContent["services"][number])
+        .filter((item) => SERVICE_SPECIALTIES.some((service) => service.id === item));
+    } else {
+      (result[key] as string) = value.slice(0, 4000);
+    }
+  }
+  return result;
+}
 
 /**
  * "Tell us about your business once. AgentStack handles the rest."
@@ -473,6 +540,43 @@ export function BusinessProfileForm() {
     }
   }
 
+  async function importProfileExport(file: File | undefined) {
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Keep the profile export under 2 MB.");
+      return;
+    }
+    try {
+      const imported = normalizeProfileExport(await file.text());
+      const importedKeys = Object.keys(imported) as Array<keyof BusinessProfileContent>;
+      if (importedKeys.length === 0) {
+        toast.error(
+          "No supported profile fields were found. Use a JSON, CSV, or field=value export with name, brokerage, contact, license, or service details."
+        );
+        return;
+      }
+      const next = { ...content, services: [...content.services] };
+      for (const key of importedKeys) {
+        if (key === "services") {
+          next.services = Array.from(
+            new Set([...next.services, ...(imported.services ?? [])])
+          );
+        } else if (!String(next[key] ?? "").trim()) {
+          (next[key] as string) = String(imported[key] ?? "");
+        }
+      }
+      setContent(next);
+      setCompleteness(businessProfileCompleteness(next));
+      toast.success(
+        `${importedKeys.length} profile field${importedKeys.length === 1 ? "" : "s"} imported for review. Save the Blueprint when it looks right.`
+      );
+    } catch {
+      toast.error(
+        "We couldn't read that export. Use a JSON, CSV, or field=value file from the portal."
+      );
+    }
+  }
+
   async function generatePersona() {
     setGenerating(true);
     try {
@@ -633,6 +737,31 @@ export function BusinessProfileForm() {
                 )}
                 Use AI to prefill
               </Button>
+            </div>
+            <div className="mt-3 rounded-xl border border-dashed p-3">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-xs font-medium">Have a portal export?</p>
+                  <p className="text-muted-foreground mt-0.5 text-[11px]">
+                    Upload a JSON, CSV, TXT, or HTML export from Zillow,
+                    Homes.com, or Realtor.com. It stays on this screen until
+                    you review and save it.
+                  </p>
+                </div>
+                <label className="inline-flex shrink-0 cursor-pointer items-center justify-center rounded-lg border px-3 py-2 text-xs font-medium hover:bg-muted">
+                  <Upload className="mr-1.5 h-3.5 w-3.5" />
+                  Upload export
+                  <input
+                    type="file"
+                    accept=".json,.csv,.txt,.html,text/plain,text/csv,application/json,text/html"
+                    className="sr-only"
+                    onChange={(event) => {
+                      void importProfileExport(event.target.files?.[0]);
+                      event.currentTarget.value = "";
+                    }}
+                  />
+                </label>
+              </div>
             </div>
             <p className="text-muted-foreground mt-2 text-[11px]">
               License, brokerage, contact, and service-area details are never
