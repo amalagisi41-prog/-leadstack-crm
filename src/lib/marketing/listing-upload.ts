@@ -146,9 +146,21 @@ function listingFromRow(row: Record<string, unknown>, subAccountId: string, sour
   const sourceAgent = sourceField(/(?:^|\n)\s*List Agent\s*:\s*([^\n]+)/i).replace(/\s*\([^)]*\)\s*$/, "");
   const sourceOffice = sourceField(/(?:^|\n)\s*List Office\s*:\s*([^\n]+)/i).replace(/\s*\([^)]*\)\s*$/, "");
   const address = text(first(row, ["address", "street", "streetaddress"])) || (combined.match(/\d+\s+[A-Za-z0-9 .'-]+(?:Road|Rd|Street|St|Avenue|Ave|Drive|Dr|Lane|Ln|Court|Ct|Way|Boulevard|Blvd|Place|Pl)(?:\s*,?\s*(?:Unit\s*#?\s*[A-Za-z0-9-]+|#\s*[A-Za-z0-9-]+))?\b/i)?.[0] ?? "");
-  const city = text(first(row, ["city", "cityname"])) || (combined.match(/,\s*([A-Za-z .'-]+),\s*[A-Z]{2}\s+\d{5}/)?.[1] ?? "");
-  const state = text(first(row, ["state", "statecode"])) || (combined.match(/,\s*([A-Z]{2})\s+\d{5}/)?.[1] ?? "");
-  if (!address || !city || !state) return "The upload needs at least address, city, and state fields.";
+  // SmartMLS detail pages sometimes omit the comma between a unit number and
+  // city ("Unit# 1 Stamford, CT 06902"). Find the city immediately before
+  // the state/ZIP rather than assuming every export has CSV-style commas.
+  const locationTail = combined.match(/([A-Za-z][A-Za-z .'-]+),\s*([A-Z]{2})\s+(\d{5}(?:-\d{4})?)/);
+  const city = text(first(row, ["city", "cityname"])) || (combined.match(/,\s*([A-Za-z .'-]+),\s*[A-Z]{2}\s+\d{5}/)?.[1] ?? locationTail?.[1] ?? "");
+  const state = text(first(row, ["state", "statecode"])) || (combined.match(/,\s*([A-Z]{2})\s+\d{5}/)?.[1] ?? locationTail?.[2] ?? "");
+  const zip = text(first(row, ["zip", "zipcode", "postalcode"])) || (combined.match(/\b\d{5}(?:-\d{4})?\b/)?.[0] ?? locationTail?.[3] ?? "");
+  const missing = [
+    !address && "street address",
+    !city && "city",
+    !state && "state",
+  ].filter(Boolean);
+  if (missing.length) {
+    return `The pasted listing is missing ${missing.join(", ")}. Copy the SmartMLS location line with the street address, city, state, and ZIP, or enter those verified fields in guided entry below.`;
+  }
   const listingId = text(first(row, ["mlsnumber", "mlsid", "mls", "listingid", "listingnumber"])) || sourceListingId || sourceId;
   const inlinePhotos = [...combined.matchAll(PHOTO_URL_RE)].map((match) => match[0]);
   const uniquePhotos = [...new Set([...photos, ...inlinePhotos])].slice(0, 50);
@@ -161,7 +173,7 @@ function listingFromRow(row: Record<string, unknown>, subAccountId: string, sour
     address,
     city,
     state,
-    zip: text(first(row, ["zip", "zipcode", "postalcode"])) || (combined.match(/\b\d{5}(?:-\d{4})?\b/)?.[0] ?? ""),
+    zip,
     beds: number(first(row, ["beds", "bedrooms"])) || number(sourceBeds),
     baths: number(first(row, ["baths", "bathrooms", "totalbaths"])) || number(sourceBaths),
     sqft: number(first(row, ["sqft", "squarefeet", "livingarea"])) || number(sourceSqft) || null,

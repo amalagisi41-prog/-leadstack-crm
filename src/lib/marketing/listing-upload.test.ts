@@ -37,4 +37,28 @@ Year Built / Source : 2018 / Public Records
       propertyType: "Condominium Rental",
     });
   });
+
+  it("parses the SmartMLS location line when a unit number is not comma-separated from the city", async () => {
+    const listing = await parseListingUpload({
+      buffer: Buffer.from(`
+27 Terrace Place, Unit# 1 Stamford, CT 06902
+$5,500 Per Month
+Active 3 Beds 2/1 Baths 2,165 SqFt
+Listing ID : 24205988
+`),
+      filename: "smartmls-listing.txt",
+      subAccountId: "workspace-1",
+      sourceId: "manual-import",
+      photos: [],
+    });
+
+    expect(typeof listing).toBe("object");
+    if (typeof listing === "string") throw new Error(listing);
+    expect(listing).toMatchObject({
+      address: "27 Terrace Place, Unit# 1",
+      city: "Stamford",
+      state: "CT",
+      zip: "06902",
+    });
+  });
 });

@@ -330,7 +330,10 @@ export default function MarketingCampaignsPage() {
         brief?: CampaignBriefDoc;
         listing?: IdxListingDoc;
       }>(res);
-      if (res.status === 404 && data.code === "IDX_LISTING_NOT_IN_FEED") {
+      if (
+        (res.status === 404 && data.code === "IDX_LISTING_NOT_IN_FEED") ||
+        (res.status === 409 && data.code === "IDX_SEARCH_NOT_CONNECTED")
+      ) {
         setManual(true);
         const seed = addressSeed(identifier);
         setForm((current) => ({
@@ -341,9 +344,11 @@ export default function MarketingCampaignsPage() {
           zip: current.zip || seed.zip,
         }));
         toast.warning(
-          seed.city
-            ? "This IDX account does not expose that listing. Its address has been placed into the quick listing form below—add the verified facts or paste the full MLS detail."
-            : "This IDX account does not expose that listing. Paste the complete MLS detail or use the quick listing form below."
+          data.code === "IDX_SEARCH_NOT_CONNECTED"
+            ? "IDX search is not connected for this workspace. Use the verified MLS detail, upload the MLS report, or complete the guided entry below."
+            : seed.city
+              ? "This IDX account does not expose that listing. Its address has been placed into guided entry below—add the verified facts or paste the full MLS detail."
+              : "This IDX account does not expose that listing. Paste the complete MLS detail or use guided entry below."
         );
         return;
       }
@@ -901,6 +906,16 @@ export default function MarketingCampaignsPage() {
         </div>
         {(manual || editing) && (
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {manual && !editing && (
+              <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs sm:col-span-2">
+                <p className="font-medium">Guided verified entry</p>
+                <p className="mt-1 text-muted-foreground">
+                  Enter the facts from the SmartMLS detail or broker-approved
+                  report. AgentStack will save this as a guided-entry property
+                  record—not as an MLS sync—and open its property workspace.
+                </p>
+              </div>
+            )}
             {(
               [
                 ["address", "Address"],

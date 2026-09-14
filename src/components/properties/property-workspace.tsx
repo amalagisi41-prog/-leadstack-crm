@@ -82,9 +82,12 @@ function propertySource(listing: WorkspaceListing | null): {
       ? listing.raw.importedFrom
       : null;
   if (importedFrom) {
+    const guidedEntry = importedFrom === "guided manual entry";
     return {
-      label: "Imported listing record",
-      detail: `Imported from ${importedFrom}.`,
+      label: guidedEntry ? "Guided-entry listing record" : "Imported listing record",
+      detail: guidedEntry
+        ? "Entered from verified source details by a workspace operator; it is not an MLS sync."
+        : `Imported from ${importedFrom}.`,
     };
   }
   return {

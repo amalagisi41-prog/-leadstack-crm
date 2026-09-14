@@ -8,7 +8,12 @@ import {
   listingMatchesIdentifier,
 } from "@/lib/marketing/campaign-route-helpers";
 
-export async function findCampaignListing(db: Firestore, subAccountId: string, identifier: string): Promise<IdxListingDoc | null> {
+export async function findCampaignListing(
+  db: Firestore,
+  subAccountId: string,
+  identifier: string,
+  options: { syncIfMissing?: boolean } = {},
+): Promise<IdxListingDoc | null> {
   const listingsCol = db.collection(`subAccounts/${subAccountId}/idxListings`);
   const direct = await listingsCol.doc(identifier).get();
   if (direct.exists) return { id: direct.id, ...(direct.data() as Omit<IdxListingDoc, "id">) };
@@ -30,6 +35,7 @@ export async function findCampaignListing(db: Firestore, subAccountId: string, i
 
   const cached = await findInCache();
   if (cached) return cached;
+  if (options.syncIfMissing === false) return null;
   const sync = await syncIdxListings(subAccountId);
   return sync.ok ? findInCache() : null;
 }

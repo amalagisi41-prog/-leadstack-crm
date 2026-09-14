@@ -73,12 +73,6 @@ export async function POST(
       { status: 404 }
     );
   const sub = subSnap.data() as SubAccountDoc;
-  if (!isIdxCampaignEnabled(sub)) {
-    return NextResponse.json(
-      { error: "IDX Listings is not enabled for this sub-account." },
-      { status: 403 }
-    );
-  }
   let body: Record<string, unknown>;
   try {
     body = (await request.json()) as Record<string, unknown>;
@@ -88,7 +82,20 @@ export async function POST(
   const mlsId = typeof body.mlsId === "string" ? body.mlsId.trim() : "";
   let listing: IdxListingDoc | null = null;
   if (mlsId) {
-    listing = await findCampaignListing(db, id, mlsId);
+    const idxSearchEnabled = isIdxCampaignEnabled(sub);
+    listing = await findCampaignListing(db, id, mlsId, {
+      syncIfMissing: idxSearchEnabled,
+    });
+    if (!listing && !idxSearchEnabled) {
+      return NextResponse.json(
+        {
+          code: "IDX_SEARCH_NOT_CONNECTED",
+          error:
+            "AgentStack cannot search the MLS feed because IDX Broker is not connected for this workspace. You can still paste a verified SmartMLS detail, upload an MLS report, or enter the verified facts below.",
+        },
+        { status: 409 }
+      );
+    }
     if (!listing)
       return NextResponse.json(
         {
@@ -102,7 +109,19 @@ export async function POST(
     const manual = buildManualListing(body, id);
     if (typeof manual === "string")
       return NextResponse.json({ error: manual }, { status: 400 });
-    listing = manual;
+    listing = {
+      ...manual,
+      raw: {
+        ...manual.raw,
+        importedFrom: "guided manual entry",
+      },
+    };
+    // Guided entry is a real property record, not an ephemeral campaign-only
+    // object. It intentionally remains distinct from IDX sync data so the
+    // workspace can accurately identify its source.
+    await db
+      .doc(`subAccounts/${id}/idxListings/${listing.id}`)
+      .set(listing, { merge: true });
   }
   const brief = buildContentBrief(listing);
   const ref = db.collection(`subAccounts/${id}/campaignBriefs`).doc(listing.id);
