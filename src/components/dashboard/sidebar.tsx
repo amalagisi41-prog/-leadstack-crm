@@ -42,6 +42,7 @@ import {
   MapPin,
   Rocket,
   Wrench,
+  ClipboardCheck,
   ChevronDown,
   ChevronRight,
 } from "lucide-react";
@@ -141,6 +142,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Set Up My Business",
     icon: Wrench,
     items: [
+      { href: "/launch-readiness", label: "Launch Readiness", icon: ClipboardCheck, enabled: true },
       { href: "/business-profile", label: "Business Blueprint", icon: BookOpen, enabled: true },
       { href: "/connect", label: "Connections", icon: Plug, enabled: true },
       { href: "/site-health", label: "Site Health", icon: HeartPulse, enabled: true, badgeKey: "siteHealth" },
