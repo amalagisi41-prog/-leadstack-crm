@@ -794,23 +794,24 @@ export default function MarketingCampaignsPage() {
               <p className="text-xs font-medium">Set campaign calendar</p>
             </div>
             <p className="text-muted-foreground mt-1 text-[11px]">
-              Choose dates for connected social channels. Drafts remain saved
-              when a channel is not connected.
+              Choose dates for every channel in one campaign calendar. Connected
+              channels can publish after approval; unsupported channels remain
+              export-ready drafts.
             </p>
             <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
               {brief.brief.channels
-                .filter((draft) =>
-                  [
-                    "facebook",
-                    "instagram",
-                    "linkedin",
-                    "tiktok",
-                    "googleBusiness",
-                  ].includes(draft.channel)
-                )
                 .map((draft) => (
-                  <label key={draft.channel} className="text-xs capitalize">
-                    {draft.channel}
+                  <label key={draft.channel} className="text-xs">
+                    <span className="capitalize">
+                      {draft.channel === "googleBusiness"
+                        ? "Google Business"
+                        : draft.channel}
+                    </span>
+                    <span className="text-muted-foreground ml-1">
+                      {channelAvailability?.[draft.channel]?.publishable
+                        ? "· connected"
+                        : "· draft/export"}
+                    </span>
                     <Input
                       className="mt-1"
                       type="datetime-local"

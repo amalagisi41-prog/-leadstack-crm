@@ -38,3 +38,27 @@ export async function POST(
     shareUrl: `${process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || origin}/media-package/${token}`,
   });
 }
+
+export async function DELETE(
+  request: Request,
+  ctx: { params: Promise<{ id: string; listingId: string }> },
+) {
+  const { id, listingId } = await ctx.params;
+  const access = await requireSubAccountAdmin(request, id);
+  if (access instanceof NextResponse) return access;
+  const token = new URL(request.url).searchParams.get("token");
+  if (!token || !/^[a-f0-9]{32}$/i.test(token)) {
+    return NextResponse.json({ error: "A valid package link token is required." }, { status: 400 });
+  }
+  const ref = getAdminDb().doc(`mediaPackageShares/${token}`);
+  const snap = await ref.get();
+  const share = snap.data() as { subAccountId?: string; listingId?: string; createdByUid?: string } | undefined;
+  if (!snap.exists || share?.subAccountId !== id || share?.listingId !== listingId) {
+    return NextResponse.json({ error: "That package link was not found." }, { status: 404 });
+  }
+  if (share.createdByUid !== access.uid) {
+    return NextResponse.json({ error: "Only the link creator can revoke it." }, { status: 403 });
+  }
+  await ref.delete();
+  return NextResponse.json({ ok: true });
+}

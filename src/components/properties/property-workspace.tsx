@@ -329,6 +329,31 @@ function DetailsTab({
             generated.
           </p>
         )}
+        <div className="mt-5 border-t pt-4">
+          <p className="text-sm font-medium">Launch health</p>
+          <dl className="mt-2 space-y-2 text-xs">
+            <div className="flex justify-between gap-3">
+              <dt className="text-muted-foreground">Website listing</dt>
+              <dd className="font-medium">
+                {brief.approvedChannels.includes("landingPage")
+                  ? "Approved landing page"
+                  : "Not approved"}
+              </dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-muted-foreground">Marketing approvals</dt>
+              <dd className="font-medium">
+                {brief.approvedChannels.length}/{brief.brief.channels.length}
+              </dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-muted-foreground">Scheduled channels</dt>
+              <dd className="font-medium">
+                {Object.values(brief.schedulePlan ?? {}).filter(Boolean).length}
+              </dd>
+            </div>
+          </dl>
+        </div>
       </section>
     </div>
   );
@@ -349,6 +374,7 @@ function AssetsTab({
 }) {
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
+  const [revoking, setRevoking] = useState(false);
 
   async function createShareLink() {
     setSharing(true);
@@ -381,6 +407,27 @@ function AssetsTab({
     if (!shareUrl) return;
     await navigator.clipboard?.writeText(shareUrl);
     toast.success("Media package link copied.");
+  }
+
+  async function revokeShareLink() {
+    if (!shareUrl) return;
+    const token = shareUrl.split("/").pop();
+    if (!token) return;
+    setRevoking(true);
+    try {
+      const response = await fetch(
+        `/api/sub-accounts/${subAccountId}/marketing/campaigns/${listingId}/media-package/share?token=${encodeURIComponent(token)}`,
+        { method: "DELETE" }
+      );
+      const data = (await response.json().catch(() => ({}))) as { error?: string };
+      if (!response.ok) throw new Error(data.error ?? "Could not revoke the package link.");
+      setShareUrl(null);
+      toast.success("Media package link revoked.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not revoke the package link.");
+    } finally {
+      setRevoking(false);
+    }
   }
 
   return (
@@ -492,6 +539,9 @@ function AssetsTab({
                     }
                   >
                     Open email with link
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={revokeShareLink} disabled={revoking}>
+                    {revoking ? "Revoking…" : "Revoke link"}
                   </Button>
                 </>
               ) : null}
