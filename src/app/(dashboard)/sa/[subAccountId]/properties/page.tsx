@@ -8,6 +8,7 @@ import {
   FileText,
   ImageIcon,
   MapPin,
+  Images,
   Pencil,
   Plus,
   Search,
@@ -25,6 +26,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  orderPhotos,
+  PHOTO_CATEGORIES,
+  type PhotoCategoryMap,
+} from "@/lib/marketing/photo-categories";
 import { cn } from "@/lib/utils";
 import type {
   CampaignBriefDoc,
@@ -90,6 +96,9 @@ interface PropertyCardData {
   status: PropertyStatus;
   workflowStep: CampaignWorkflowStep;
   imageUrl: string | null;
+  photos: string[];
+  photoCategories: PhotoCategoryMap;
+  categorizedCount: number;
   channelCount: number;
   approvedCount: number;
   hasAssets: boolean;
@@ -117,6 +126,8 @@ function briefToCard(
   doc: CampaignBriefDoc & { listing?: Record<string, unknown> | null }
 ): PropertyCardData {
   const b = doc.brief;
+  const categories = b.photoCategories ?? {};
+  const orderedPhotos = orderPhotos(b.images ?? [], categories);
   const step = doc.workflowStep ?? "create";
   const channelCount = b.channels?.length ?? 0;
   const approvedCount = doc.approvedChannels?.length ?? 0;
@@ -156,7 +167,10 @@ function briefToCard(
     propertyType: b.propertyType || "Residential",
     status: workflowToStatus(step),
     workflowStep: step,
-    imageUrl: b.images?.[0] ?? null,
+    imageUrl: orderedPhotos[0] ?? null,
+    photos: b.images ?? [],
+    photoCategories: categories,
+    categorizedCount: (b.images ?? []).filter((url) => categories[url]).length,
     channelCount,
     approvedCount,
     hasAssets: channelCount > 0,
@@ -183,6 +197,9 @@ export default function PropertiesPage() {
   const [filter, setFilter] = useState<PropertyStatus | "all">("all");
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<PropertyCardData | null>(null);
+  const [categorizing, setCategorizing] = useState<PropertyCardData | null>(
+    null
+  );
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -259,6 +276,35 @@ export default function PropertiesPage() {
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Could not save changes."
+      );
+    }
+  }
+
+  async function handleSaveCategories(photoCategories: PhotoCategoryMap) {
+    if (!subAccountId || !categorizing) return;
+    try {
+      const res = await fetch(
+        `/api/sub-accounts/${subAccountId}/marketing/campaigns/${categorizing.id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ photoCategories }),
+        }
+      );
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+        brief?: CampaignBriefDoc & { listing?: Record<string, unknown> | null };
+      };
+      if (!res.ok || !data.ok || !data.brief)
+        throw new Error(data.error ?? "Could not save photo categories.");
+      const updated = briefToCard(data.brief);
+      setBriefs((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
+      toast.success("Photo categories saved.");
+      setCategorizing(null);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Could not save photo categories."
       );
     }
   }
@@ -384,6 +430,7 @@ export default function PropertiesPage() {
               property={property}
               saPath={saPath}
               onEdit={() => setEditing(property)}
+              onCategorize={() => setCategorizing(property)}
               onDelete={() => handleDelete(property)}
               deleting={deletingId === property.id}
             />
@@ -398,6 +445,14 @@ export default function PropertiesPage() {
         }}
         onSave={handleSaveEdit}
       />
+
+      <CategorizePhotosDialog
+        property={categorizing}
+        onOpenChange={(open) => {
+          if (!open) setCategorizing(null);
+        }}
+        onSave={handleSaveCategories}
+      />
     </div>
   );
 }
@@ -406,12 +461,14 @@ function PropertyCard({
   property,
   saPath,
   onEdit,
+  onCategorize,
   onDelete,
   deleting,
 }: {
   property: PropertyCardData;
   saPath: (path: string) => string;
   onEdit: () => void;
+  onCategorize: () => void;
   onDelete: () => void;
   deleting: boolean;
 }) {
@@ -431,6 +488,16 @@ function PropertyCard({
         >
           <Pencil className="h-3.5 w-3.5" />
         </button>
+        {property.photos.length > 0 && (
+          <button
+            type="button"
+            onClick={onCategorize}
+            aria-label={`Categorize photos for ${property.address}`}
+            className="flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-neutral-600 shadow-sm hover:bg-white hover:text-neutral-900"
+          >
+            <Images className="h-3.5 w-3.5" />
+          </button>
+        )}
         <button
           type="button"
           onClick={onDelete}
@@ -514,7 +581,11 @@ function PropertyCard({
               {property.imageUrl && (
                 <>
                   <ImageIcon className="h-3 w-3" />
-                  <span>Photos</span>
+                  <span>
+                    {property.categorizedCount > 0
+                      ? `${property.categorizedCount}/${property.photos.length} tagged`
+                      : `${property.photos.length} photos, none tagged`}
+                  </span>
                 </>
               )}
             </div>
@@ -700,6 +771,126 @@ function EditPropertyDialog({
           <DialogFooter>
             <Button type="submit" disabled={saving}>
               {saving ? "Saving…" : "Save changes"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/**
+ * Photo categorization.
+ *
+ * Every public surface treats the first photo as the hero — brochure cover,
+ * OpenGraph image, card thumbnail — and today that's whatever the MLS export
+ * listed first. Tagging even one photo as the front exterior fixes all of
+ * them at once, which is why the dialog leads with the live preview of what
+ * the brochure cover will actually be.
+ */
+function CategorizePhotosDialog({
+  property,
+  onOpenChange,
+  onSave,
+}: {
+  property: PropertyCardData | null;
+  onOpenChange: (open: boolean) => void;
+  onSave: (categories: PhotoCategoryMap) => Promise<void>;
+}) {
+  const [draft, setDraft] = useState<PhotoCategoryMap>({});
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (property) setDraft(property.photoCategories ?? {});
+  }, [property]);
+
+  const photos = property?.photos ?? [];
+  const heroUrl = orderPhotos(photos, draft)[0] ?? null;
+  const taggedCount = photos.filter((url) => draft[url]).length;
+
+  function setCategory(url: string, value: string) {
+    setDraft((prev) => {
+      const next = { ...prev };
+      // An empty selection means "back to uncategorized" — drop the key so the
+      // photo returns to feed order rather than being pinned as "other".
+      if (!value) delete next[url];
+      else next[url] = value as PhotoCategoryMap[string];
+      return next;
+    });
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    await onSave(draft);
+    setSaving(false);
+  }
+
+  return (
+    <Dialog open={property != null} onOpenChange={onOpenChange}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Categorize photos</DialogTitle>
+        </DialogHeader>
+
+        <p className="text-xs text-neutral-500">
+          Tagging decides which photo leads your brochure, listing page, and
+          social preview. Untagged photos keep their current order and appear
+          after the tagged ones — you don&apos;t have to tag them all.
+        </p>
+
+        {heroUrl && (
+          <div className="flex items-center gap-3 rounded-lg border bg-neutral-50 p-3">
+            {/* eslint-disable-next-line @next/next/no-img-element -- listing CDN URLs */}
+            <img
+              src={heroUrl}
+              alt="Cover photo preview"
+              className="h-16 w-24 shrink-0 rounded object-cover"
+            />
+            <div className="text-xs">
+              <p className="font-medium text-neutral-900">Cover photo</p>
+              <p className="mt-0.5 text-neutral-500">
+                {taggedCount === 0
+                  ? "Nothing tagged yet — this is just the first photo in the feed."
+                  : "Chosen from your tags."}
+              </p>
+            </div>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div className="grid gap-3 sm:grid-cols-2">
+            {photos.map((url, index) => (
+              <div
+                key={url}
+                className="flex items-center gap-3 rounded-lg border p-2"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element -- listing CDN URLs */}
+                <img
+                  src={url}
+                  alt={`Listing photo ${index + 1}`}
+                  className="h-14 w-20 shrink-0 rounded object-cover"
+                />
+                <select
+                  value={draft[url] ?? ""}
+                  onChange={(e) => setCategory(url, e.target.value)}
+                  aria-label={`Category for photo ${index + 1}`}
+                  className="w-full rounded-md border border-neutral-200 bg-white px-2 py-1.5 text-xs text-neutral-900 focus:border-blue-500 focus:outline-none"
+                >
+                  <option value="">Not categorized</option>
+                  {PHOTO_CATEGORIES.map((category) => (
+                    <option key={category.value} value={category.value}>
+                      {category.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ))}
+          </div>
+
+          <DialogFooter>
+            <Button type="submit" disabled={saving}>
+              {saving ? "Saving…" : "Save categories"}
             </Button>
           </DialogFooter>
         </form>

@@ -4,6 +4,7 @@ import { getAdminDb } from "@/lib/firebase/admin";
 import { getSubAccountSiteLinks } from "@/lib/public-site/site-links";
 import { PublicSiteNav } from "@/components/public-site/public-site-nav";
 import type { SubAccountDoc } from "@/types";
+import { orderPhotos } from "@/lib/marketing/photo-categories";
 import type { IdxListingDoc } from "@/types/idx";
 
 export const dynamic = "force-dynamic";
@@ -152,10 +153,10 @@ export default async function IdxSearchPage({ params, searchParams }: PageProps)
                 className="group overflow-hidden rounded-xl border bg-white transition-shadow hover:shadow-md"
               >
                 <div className="aspect-[4/3] w-full overflow-hidden bg-neutral-100">
-                  {listing.photos[0] ? (
+                  {orderPhotos(listing.photos, listing.photoCategories)[0] ? (
                     // eslint-disable-next-line @next/next/no-img-element -- arbitrary IDX Broker CDN host
                     <img
-                      src={listing.photos[0]}
+                      src={orderPhotos(listing.photos, listing.photoCategories)[0]}
                       alt={listing.address}
                       className="h-full w-full object-cover transition-transform group-hover:scale-[1.02]"
                     />

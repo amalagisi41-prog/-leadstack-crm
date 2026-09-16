@@ -185,6 +185,7 @@ export function buildContentBrief(
     yearBuilt: listing.yearBuilt,
     propertyType: listing.propertyType,
     images: listing.photos,
+    photoCategories: listing.photoCategories ?? {},
     disclaimer: listing.disclaimer,
     boostTier: eligibility.tier?.tier ?? null,
     daysOnMarket: eligibility.daysOnMarket,

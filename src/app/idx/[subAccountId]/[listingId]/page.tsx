@@ -6,6 +6,7 @@ import { getSubAccountSiteLinks } from "@/lib/public-site/site-links";
 import { PublicSiteNav } from "@/components/public-site/public-site-nav";
 import { ListingInquiryForm } from "@/components/idx/listing-inquiry-form";
 import type { SubAccountDoc } from "@/types";
+import { orderPhotos } from "@/lib/marketing/photo-categories";
 import type { IdxListingDoc } from "@/types/idx";
 
 export const dynamic = "force-dynamic";
@@ -28,11 +29,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const listing = snap.data() as IdxListingDoc;
   const title = `${listing.address}, ${listing.city}, ${listing.state}`;
   const description = `${listing.beds} bedroom, ${listing.baths} bathroom ${listing.propertyType} listed at $${listing.price.toLocaleString()}.`;
+  // The social preview image is whatever lands first, so order before slicing.
+  const photos = orderPhotos(listing.photos, listing.photoCategories);
   return {
     title,
     description,
-    openGraph: { title, description, type: "website", images: listing.photos[0] ? [{ url: listing.photos[0], alt: title }] : [] },
-    twitter: { card: "summary_large_image", title, description, images: listing.photos[0] ? [listing.photos[0]] : [] },
+    openGraph: { title, description, type: "website", images: photos[0] ? [{ url: photos[0], alt: title }] : [] },
+    twitter: { card: "summary_large_image", title, description, images: photos[0] ? [photos[0]] : [] },
   };
 }
 
@@ -49,6 +52,7 @@ export default async function IdxListingDetailPage({ params }: PageProps) {
   if (sub.idxEnabledByAgency !== true || !sub.idxConfig?.enabled) notFound();
 
   const listing = listingSnap.data() as IdxListingDoc;
+  const photos = orderPhotos(listing.photos, listing.photoCategories);
   const isOffMarket = listing.status === "off-market" || listing.status === "sold";
 
   const links = await getSubAccountSiteLinks(subAccountId);
@@ -57,7 +61,7 @@ export default async function IdxListingDetailPage({ params }: PageProps) {
     "@type": "RealEstateListing",
     name: `${listing.address}, ${listing.city}, ${listing.state}`,
     url: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://agentstackcrm.app"}/idx/${subAccountId}/${listingId}`,
-    image: listing.photos,
+    image: photos,
     offers: { "@type": "Offer", price: listing.price, priceCurrency: "USD" },
     address: { "@type": "PostalAddress", streetAddress: listing.address, addressLocality: listing.city, addressRegion: listing.state, postalCode: listing.zip },
     geo: listing.lat != null && listing.lng != null ? { "@type": "GeoCoordinates", latitude: listing.lat, longitude: listing.lng } : undefined,
@@ -83,9 +87,9 @@ export default async function IdxListingDetailPage({ params }: PageProps) {
           </div>
         )}
 
-        {listing.photos.length > 0 && (
+        {photos.length > 0 && (
           <div className="mb-6 grid gap-2 sm:grid-cols-2">
-            {listing.photos.slice(0, 6).map((url, i) => (
+            {photos.slice(0, 6).map((url, i) => (
               // eslint-disable-next-line @next/next/no-img-element -- arbitrary IDX Broker CDN host
               <img
                 key={i}
