@@ -1,6 +1,7 @@
 import type { FieldValue, Timestamp } from "firebase-admin/firestore";
 import type { ApprovalLevel, ComplianceScreen, Reversibility } from "@/lib/marketing/tool-registry";
 import type { BoostTier } from "@/lib/marketing/listing-boost";
+import type { PhotoCategoryMap } from "@/lib/marketing/photo-categories";
 
 export type CampaignChannel =
   | "landingPage"
@@ -42,6 +43,12 @@ export interface ContentBrief {
   yearBuilt: number | null;
   propertyType: string;
   images: string[];
+  /**
+   * Carried from the listing so brochure/landing-page rendering can order
+   * `images` instead of trusting feed order. Absent on briefs built before an
+   * agent categorized the listing — consumers must fall back to raw order.
+   */
+  photoCategories?: PhotoCategoryMap;
   disclaimer: string | null;
   boostTier: BoostTier | null;
   daysOnMarket: number | null;

@@ -1,4 +1,5 @@
 import type { FieldValue, Timestamp } from "firebase/firestore";
+import type { PhotoCategoryMap } from "@/lib/marketing/photo-categories";
 
 /**
  * A single synced MLS listing, stored at
@@ -38,6 +39,12 @@ export interface IdxListingDoc {
   yearBuilt: number | null;
   propertyType: string;
   photos: string[];
+  /**
+   * Optional photo URL → category, set by the agent. Absent means nobody has
+   * categorized this listing yet, and every surface keeps rendering `photos`
+   * in feed order. See `lib/marketing/photo-categories.ts`.
+   */
+  photoCategories?: PhotoCategoryMap;
   remarks: string;
   listingAgentName: string | null;
   listingOfficeName: string | null;

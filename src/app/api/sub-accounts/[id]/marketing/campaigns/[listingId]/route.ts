@@ -4,6 +4,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { requireSubAccountAdmin } from "@/lib/auth/require-tenancy";
+import { sanitizePhotoCategories } from "@/lib/marketing/photo-categories";
 import type { CampaignBriefDoc } from "@/types/marketing-campaigns";
 
 /**
@@ -65,6 +66,14 @@ export async function PATCH(
   if ("sqft" in body) patch.sqft = num("sqft") ?? null;
   const propertyType = text("propertyType");
   if (propertyType !== undefined) patch.propertyType = propertyType;
+  // Replaces the whole map rather than merging: the categorize dialog always
+  // submits the full set, and a per-key merge would strip nothing when an
+  // agent clears a photo back to uncategorized.
+  if ("photoCategories" in body)
+    patch.photoCategories = sanitizePhotoCategories(
+      body.photoCategories,
+      existing.brief.images
+    );
 
   const brief = { ...existing.brief, ...patch };
   await ref.set(
