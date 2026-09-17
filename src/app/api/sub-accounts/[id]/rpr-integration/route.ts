@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { requireSubAccountAdmin } from "@/lib/auth/require-tenancy";
-import { isValidRprOrgId } from "@/lib/rpr/link";
+import { parseRprOrgId } from "@/lib/rpr/link";
 
 /**
  * Manage the per-sub-account RPR (Realtors Property Resource) MLS-SSO board
@@ -36,18 +36,20 @@ export async function POST(
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const rprOrgId = (body.rprOrgId ?? "").trim().toLowerCase();
-  if (!rprOrgId) {
+  const raw = (body.rprOrgId ?? "").trim();
+  if (!raw) {
     return NextResponse.json(
       { error: "RPR org code is required." },
       { status: 400 }
     );
   }
-  if (!isValidRprOrgId(rprOrgId)) {
+  // Accepts a bare code OR a pasted RPR URL — see parseRprOrgId.
+  const rprOrgId = parseRprOrgId(raw);
+  if (!rprOrgId) {
     return NextResponse.json(
       {
         error:
-          "That doesn't look like an RPR org code (lowercase letters, digits, and hyphens, e.g. \"ctconnm-n\").",
+          "Couldn't find an RPR org code in that. Paste your RPR URL (the whole thing is fine) or just the code itself, e.g. \"ctconnm-n\".",
       },
       { status: 400 }
     );
