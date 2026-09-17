@@ -15,10 +15,7 @@ import {
   Target,
   Zap,
   Bot,
-  Phone,
   Sparkles,
-  Link2,
-  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -28,6 +25,14 @@ import type {
   LaunchPriority as LaunchPriorityAnswer,
   RealtorRole as RealtorRoleAnswer,
 } from "@/types/onboarding-answers";
+import type { SubAccountDoc } from "@/types/tenancy";
+import {
+  connectItemsFor,
+  connectedCount,
+  needsSetupItems,
+  oneClickItems,
+  type ConnectItem,
+} from "@/lib/onboarding/connect-tiers";
 
 /* ---------- types ---------- */
 
@@ -45,6 +50,8 @@ interface RealtorLaunchWizardProps {
   /** Answers already stored for this workspace, so a refresh resumes. */
   initialRole?: RealtorRole | null;
   initialPriority?: LaunchPriority | null;
+  /** Drives real connected/not state on the connect screen. */
+  subAccount?: SubAccountDoc | null;
 }
 
 type WizardScreen = 0 | 1 | 2 | 3 | 4;
@@ -134,6 +141,7 @@ export function RealtorLaunchWizard({
   saPath,
   initialRole = null,
   initialPriority = null,
+  subAccount = null,
 }: RealtorLaunchWizardProps) {
   const router = useRouter();
   // Resume at the first unanswered question rather than restarting. Derived
@@ -340,7 +348,11 @@ export function RealtorLaunchWizard({
           />
         )}
         {screen === 3 && (
-          <ScreenConnect saPath={saPath} onNext={next} />
+          <ScreenConnect
+            saPath={saPath}
+            onNext={next}
+            subAccount={subAccount}
+          />
         )}
         {screen === 4 && (
           <ScreenLaunch
@@ -576,10 +588,17 @@ function ScreenIdentity({
 function ScreenConnect({
   saPath,
   onNext,
+  subAccount,
 }: {
   saPath: (p: string) => string;
   onNext: () => void;
+  subAccount: SubAccountDoc | null;
 }) {
+  const items = connectItemsFor(subAccount);
+  const oneClick = oneClickItems(items);
+  const needsSetup = needsSetupItems(items);
+  const done = connectedCount(items);
+
   return (
     <div className="space-y-6">
       <div>
@@ -587,74 +606,88 @@ function ScreenConnect({
           Connect
         </p>
         <h1 className="mt-2 text-2xl font-bold tracking-tight">
-          Connect your core accounts
+          Connect what you already use
         </h1>
         <p className="text-muted-foreground mt-2 text-sm">
-          These power AI responses, automated follow-up, and review management.
-          Connect what you have — skip what you don&apos;t.
+          Nothing here is required to finish setup. Sign in to what you have
+          today and leave the rest — each one says what you miss by waiting.
         </p>
+        {done > 0 && (
+          <p className="mt-2 text-sm font-medium text-emerald-700 dark:text-emerald-400">
+            {done} of {items.length} already connected.
+          </p>
+        )}
       </div>
 
       <div className="space-y-3">
-        <ConnectionCard
-          icon={<Globe2 className="h-5 w-5 text-blue-500" />}
-          title="Google Business Profile"
-          description="Pull in your reviews, business info, and photos. Powers local SEO campaigns."
-          href={saPath("/ai-agents/google-business")}
-          cta="Connect Google"
-        />
-        <ConnectionCard
-          icon={<Phone className="h-5 w-5 text-emerald-500" />}
-          title="Phone Number (SMS)"
-          description="Link a Twilio number so your AI agent can text leads within 60 seconds."
-          href={saPath(SUB_ACCOUNT_ROUTES.messagingSettings)}
-          cta="Set up SMS"
-        />
-        <ConnectionCard
-          icon={<Link2 className="h-5 w-5 text-violet-500" />}
-          title="Email & Calendar"
-          description="Connect Gmail or Outlook for email sync and automated booking."
-          href={saPath("/dashboard/settings?tab=messaging#business-email")}
-          cta="Connect email"
-        />
+        <p className="text-sm font-semibold">Takes one click</p>
+        {oneClick.map((item) => (
+          <ConnectTierCard key={item.id} item={item} saPath={saPath} />
+        ))}
+      </div>
+
+      <div className="space-y-3">
+        <p className="text-sm font-semibold">
+          Takes a bit longer — fine to do later
+        </p>
+        {needsSetup.map((item) => (
+          <ConnectTierCard key={item.id} item={item} saPath={saPath} />
+        ))}
       </div>
 
       <Button onClick={onNext} size="lg">
         Continue <ArrowRight className="ml-2 h-4 w-4" />
       </Button>
       <p className="text-muted-foreground text-xs">
-        All connections are optional. You can add them anytime from Settings.
+        You can connect any of these later from Settings — setup finishes
+        either way.
       </p>
     </div>
   );
 }
 
-function ConnectionCard({
-  icon,
-  title,
-  description,
-  href,
-  cta,
+/**
+ * One connection, showing its real state. A connected item keeps its row
+ * rather than disappearing, so the screen reads the same on a second visit
+ * and an agent can see what they already did.
+ */
+function ConnectTierCard({
+  item,
+  saPath,
 }: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  href: string;
-  cta: string;
+  item: ConnectItem;
+  saPath: (p: string) => string;
 }) {
   return (
-    <div className="bg-card flex items-center gap-4 rounded-xl border p-4">
-      <div className="bg-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
-        {icon}
+    <div className="bg-card rounded-xl border p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="flex items-center gap-2 text-sm font-medium">
+            {item.connected && (
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+            )}
+            {item.label}
+          </p>
+          <p className="text-muted-foreground mt-1 text-sm">{item.why}</p>
+          {!item.connected && item.timingNote && (
+            <p className="text-muted-foreground mt-1.5 text-xs">
+              {item.timingNote}
+            </p>
+          )}
+          {!item.connected && (
+            <p className="mt-1.5 text-xs text-amber-700 dark:text-amber-400">
+              If you leave it: {item.costIfSkipped}
+            </p>
+          )}
+        </div>
+        <Button
+          variant={item.connected ? "outline" : "default"}
+          size="sm"
+          render={<Link href={saPath(item.href)} />}
+        >
+          {item.connected ? "Manage" : item.cta}
+        </Button>
       </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium">{title}</p>
-        <p className="text-muted-foreground mt-0.5 text-xs">{description}</p>
-      </div>
-      <Button size="sm" variant="outline" render={<Link href={href} />}>
-        {cta}
-        <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
-      </Button>
     </div>
   );
 }

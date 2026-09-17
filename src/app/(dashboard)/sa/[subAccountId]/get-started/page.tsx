@@ -141,6 +141,7 @@ export default function GetStartedPage() {
       saPath={saPath}
       initialRole={subAccount.realtorRole ?? null}
       initialPriority={subAccount.launchPriority ?? null}
+      subAccount={subAccount}
     />
   );
 }
