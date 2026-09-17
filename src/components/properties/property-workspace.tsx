@@ -18,6 +18,7 @@ import {
 import { useSubAccount } from "@/context/sub-account-context";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { RprLinkButton } from "@/components/properties/rpr-link-button";
 import type { CampaignBriefDoc } from "@/types/marketing-campaigns";
 import type { IdxListingDoc } from "@/types/idx";
 
@@ -204,13 +205,21 @@ export function PropertyWorkspace({ listingId }: { listingId: string }) {
               .join(", ") || "Location not provided"}
           </p>
         </div>
-        <Button
-          render={
-            <Link href={saPath(`/marketing/campaigns?listing=${listingId}`)} />
-          }
-        >
-          <Megaphone className="mr-1.5 h-4 w-4" /> Open campaign editor
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <RprLinkButton
+            address={brief.brief.address}
+            city={brief.brief.city}
+            state={brief.brief.state}
+            zip={brief.brief.zip}
+          />
+          <Button
+            render={
+              <Link href={saPath(`/marketing/campaigns?listing=${listingId}`)} />
+            }
+          >
+            <Megaphone className="mr-1.5 h-4 w-4" /> Open campaign editor
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="details">

@@ -467,6 +467,18 @@ export interface SubAccountDoc {
    */
   idxConfig?: IdxConfig | null;
   /**
+   * RPR (Realtors Property Resource) MLS-SSO board code, e.g. "ctconnm-n"
+   * for SmartMLS/connectMLS in Connecticut. Powers the "View on RPR" link's
+   * entry-point URL (`narrpr.com/home?cbcode={rprOrgId}`) — a fixed, public
+   * per-MLS-board constant baked into RPR's own URLs, not a credential, so
+   * it's safe on this member-readable document (unlike `idxConfig.accessKey`
+   * or the other secrets that moved to `subAccounts/{id}/secrets/*`). Null
+   * until the operator sets it. RPR's API is off-limits for third-party
+   * data extraction — this is an SSO entry-point link only. See "RPR deep
+   * link" in CLAUDE.md.
+   */
+  rprOrgId?: string | null;
+  /**
    * Guided A2P 10DLC setup state for this sub-account's texting number. Holds
    * the business details, use-case summary, sample copy, and current
    * carrier-review status so operators can finish setup over multiple
