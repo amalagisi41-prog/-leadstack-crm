@@ -24,19 +24,27 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { SUB_ACCOUNT_ROUTES } from "@/lib/navigation/sub-account-routes";
 import { readJson } from "@/lib/http/read-json";
+import type {
+  LaunchPriority as LaunchPriorityAnswer,
+  RealtorRole as RealtorRoleAnswer,
+} from "@/types/onboarding-answers";
 
 /* ---------- types ---------- */
 
-type RealtorRole = "solo_agent" | "team_lead" | "brokerage" | "other";
-type LaunchPriority =
-  | "get_leads"
-  | "organize_database"
-  | "build_website"
-  | "ai_followup";
+/**
+ * The answer unions live in `@/types/onboarding-answers` because the API
+ * route validates against them too — they were declared only here while the
+ * server silently discarded whatever arrived.
+ */
+type RealtorRole = RealtorRoleAnswer;
+type LaunchPriority = LaunchPriorityAnswer;
 
 interface RealtorLaunchWizardProps {
   subAccountId: string;
   saPath: (p: string) => string;
+  /** Answers already stored for this workspace, so a refresh resumes. */
+  initialRole?: RealtorRole | null;
+  initialPriority?: LaunchPriority | null;
 }
 
 type WizardScreen = 0 | 1 | 2 | 3 | 4;
@@ -124,11 +132,23 @@ const PRIORITY_OPTIONS: {
 export function RealtorLaunchWizard({
   subAccountId,
   saPath,
+  initialRole = null,
+  initialPriority = null,
 }: RealtorLaunchWizardProps) {
   const router = useRouter();
-  const [screen, setScreen] = useState<WizardScreen>(0);
-  const [role, setRole] = useState<RealtorRole | null>(null);
-  const [priority, setPriority] = useState<LaunchPriority | null>(null);
+  // Resume at the first unanswered question rather than restarting. Derived
+  // from the answers themselves, not a stored screen index — an index has to
+  // be migrated every time a screen is added or reordered, and silently
+  // points at the wrong question when it isn't.
+  const [screen, setScreen] = useState<WizardScreen>(() => {
+    if (!initialRole) return 0;
+    if (!initialPriority) return 1;
+    return 2;
+  });
+  const [role, setRole] = useState<RealtorRole | null>(initialRole);
+  const [priority, setPriority] = useState<LaunchPriority | null>(
+    initialPriority
+  );
   const [profileUrls, setProfileUrls] = useState("");
   const [importing, setImporting] = useState(false);
   const [profileImported, setProfileImported] = useState(false);
@@ -141,6 +161,28 @@ export function RealtorLaunchWizard({
   const next = useCallback(() => {
     setScreen((s) => Math.min(4, s + 1) as WizardScreen);
   }, []);
+
+  /**
+   * Save an answer the moment it's picked, rather than only at the finish
+   * line. Someone who answers two questions and closes the tab has told us
+   * something; making them retype it because they didn't reach the end is
+   * how a twenty-minute setup becomes a fortnight.
+   *
+   * Best-effort on purpose: a failed save must never block the agent from
+   * moving through setup. The finish-line PATCH sends both answers again,
+   * so a dropped one still lands if they complete the wizard.
+   */
+  const saveAnswers = useCallback(
+    (answers: { realtorRole?: RealtorRole; launchPriority?: LaunchPriority }) => {
+      void fetch(`/api/sub-accounts/${subAccountId}/onboarding`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        // No `steps` key: this must not touch the checklist.
+        body: JSON.stringify(answers),
+      }).catch(() => undefined);
+    },
+    [subAccountId]
+  );
 
   async function importProfile() {
     const urls = (profileUrls.match(/https?:\/\/[^\s]+/gi) ?? []).map((url) =>
@@ -268,12 +310,22 @@ export function RealtorLaunchWizard({
 
         {/* screens */}
         {screen === 0 && (
-          <ScreenRole role={role} onSelect={setRole} onNext={next} />
+          <ScreenRole
+            role={role}
+            onSelect={(r) => {
+              setRole(r);
+              saveAnswers({ realtorRole: r });
+            }}
+            onNext={next}
+          />
         )}
         {screen === 1 && (
           <ScreenPriority
             priority={priority}
-            onSelect={setPriority}
+            onSelect={(p) => {
+              setPriority(p);
+              saveAnswers({ launchPriority: p });
+            }}
             onNext={next}
           />
         )}

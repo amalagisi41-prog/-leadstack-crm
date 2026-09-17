@@ -4,6 +4,7 @@ export type SubAccountStatus = "active" | "archived";
 
 import type { Timestamp, FieldValue } from "firebase/firestore";
 import type { SubscriptionStatus, MemberStatus } from "./firebase";
+import type { LaunchPriority, RealtorRole } from "./onboarding-answers";
 
 export interface AgencyDoc {
   id: string;
@@ -419,6 +420,22 @@ export interface SubAccountDoc {
    * actually reach their dashboard. Absent = never finished the wizard.
    */
   onboardingWizardCompletedAt?: Date | null;
+  /**
+   * What the agent told first-run setup about their business — the answers to
+   * "what kind of operation is this?" and "what do you want first?".
+   *
+   * The wizard collected both from day one and the PATCH route dropped them,
+   * so setup could not adapt to anything it had just been told. Persisting
+   * them lets later screens derive what to offer instead of showing every
+   * feature to everyone, and lets the wizard resume where the agent left off
+   * instead of restarting at screen one on a refresh.
+   *
+   * Absent is normal and permanent for anyone who closed the tab partway —
+   * never treat a missing answer as an error or as an incomplete setup. It
+   * only means nothing can be derived from it.
+   */
+  realtorRole?: RealtorRole | null;
+  launchPriority?: LaunchPriority | null;
   /**
    * The custom domain the sub-account wants to front their published website
    * (e.g. "janedoe-homes.com"). Bare host, no scheme. Saved during the domain

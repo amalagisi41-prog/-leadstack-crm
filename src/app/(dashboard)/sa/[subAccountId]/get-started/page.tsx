@@ -132,8 +132,15 @@ export default function GetStartedPage() {
     );
   }
 
-  // New default: Realtor Launch wizard (role → priority → identity → connect → launch)
+  // New default: Realtor Launch wizard (role → priority → identity → connect
+  // → launch). Stored answers are passed in so a refresh resumes at the first
+  // unanswered question instead of restarting from screen one.
   return (
-    <RealtorLaunchWizard subAccountId={subAccountId} saPath={saPath} />
+    <RealtorLaunchWizard
+      subAccountId={subAccountId}
+      saPath={saPath}
+      initialRole={subAccount.realtorRole ?? null}
+      initialPriority={subAccount.launchPriority ?? null}
+    />
   );
 }

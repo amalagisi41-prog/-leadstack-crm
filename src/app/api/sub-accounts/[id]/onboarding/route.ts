@@ -10,6 +10,7 @@ import {
 } from "@/lib/onboarding/steps";
 import { computeOnboardingState } from "@/lib/onboarding/state-machine";
 import { queueOnboardingLifecycleSequence } from "@/lib/onboarding/lifecycle-email";
+import { isLaunchPriority, isRealtorRole } from "@/types/onboarding-answers";
 
 /**
  * GET /api/sub-accounts/[id]/onboarding
@@ -43,8 +44,20 @@ export async function GET(
  * PATCH /api/sub-accounts/[id]/onboarding
  *
  * Persists the setup-checklist progress for the sub-account. Any member can
- * update it (setup is a shared task). Body: { steps: string[] } — the ids of
- * completed onboarding steps; unknown ids are dropped.
+ * update it (setup is a shared task).
+ *
+ * Body:
+ *   steps: string[]            — ids of completed onboarding steps; unknown
+ *                                ids are dropped.
+ *   wizardCompleted?: true     — records that the wizard was walked through.
+ *   realtorRole?, launchPriority?
+ *                              — the wizard's two business questions. These
+ *                                were being sent by the wizard and silently
+ *                                discarded here, which is why setup could
+ *                                never adapt to them. Each is applied only
+ *                                when present and recognised, so a PATCH that
+ *                                carries only `steps` leaves stored answers
+ *                                untouched rather than erasing them.
  */
 export async function PATCH(
   request: Request,
@@ -54,25 +67,41 @@ export async function PATCH(
   const access = await requireSubAccountMember(request, subAccountId);
   if (access instanceof NextResponse) return access;
 
-  let body: { steps?: unknown; wizardCompleted?: unknown };
+  let body: {
+    steps?: unknown;
+    wizardCompleted?: unknown;
+    realtorRole?: unknown;
+    launchPriority?: unknown;
+  };
   try {
     body = await request.json();
   } catch {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
-  if (!Array.isArray(body.steps)) {
+  // `steps` is optional so an answers-only PATCH can't clobber the checklist.
+  // It used to be required and always written, which meant saving an answer
+  // mid-wizard would have reset every completed step to none.
+  if (body.steps !== undefined && !Array.isArray(body.steps)) {
     return NextResponse.json({ error: "`steps` must be an array." }, { status: 400 });
   }
 
   const known = new Set<string>(ONBOARDING_STEP_IDS);
-  const steps = Array.from(
-    new Set(body.steps.filter((s): s is string => typeof s === "string" && known.has(s))),
-  );
+  const steps = Array.isArray(body.steps)
+    ? Array.from(
+        new Set(
+          body.steps.filter(
+            (s): s is string => typeof s === "string" && known.has(s),
+          ),
+        ),
+      )
+    : null;
 
   const update: Record<string, unknown> = {
-    onboardingStepsCompleted: steps,
     updatedAt: FieldValue.serverTimestamp(),
   };
+  if (steps) {
+    update.onboardingStepsCompleted = steps;
+  }
 
   // The wizard reports its own completion separately from the checklist.
   // Three of the nine checklist ids (`contacts`, `sms`, `booking`) have no
@@ -83,14 +112,27 @@ export async function PATCH(
   if (body.wizardCompleted === true) {
     update.onboardingWizardCompletedAt = FieldValue.serverTimestamp();
   }
-  if (isOnboardingComplete(steps)) {
+
+  // Applied only when present and recognised. The wizard saves each answer
+  // the moment it's picked, so these arrive on their own PATCHes; an
+  // unrecognised value is ignored rather than 400-ing, because a stale client
+  // sending a retired option must never block someone from finishing setup.
+  if (isRealtorRole(body.realtorRole)) {
+    update.realtorRole = body.realtorRole;
+  }
+  if (isLaunchPriority(body.launchPriority)) {
+    update.launchPriority = body.launchPriority;
+  }
+  if (steps && isOnboardingComplete(steps)) {
     update["onboardingLifecycleEmails.completedAt"] =
       FieldValue.serverTimestamp();
   }
 
   await getAdminDb().doc(`subAccounts/${subAccountId}`).update(update);
 
-  if (!isOnboardingComplete(steps)) {
+  // Only a checklist PATCH drives the lifecycle emails. An answers-only save
+  // says nothing about how far along setup is, so it must not re-queue them.
+  if (steps && !isOnboardingComplete(steps)) {
     try {
       await queueOnboardingLifecycleSequence(subAccountId);
     } catch (err) {
@@ -102,5 +144,5 @@ export async function PATCH(
     }
   }
 
-  return NextResponse.json({ ok: true, steps });
+  return NextResponse.json({ ok: true, steps: steps ?? undefined });
 }
