@@ -138,6 +138,7 @@ Adding a new gate: add the field to `SubAccountDoc`, write the default at the tw
 - **Workflows (v2 automation engine)** — a general-purpose visual trigger → node graph replacing the v1 recipe system. Triggers: `contact.created`, `contact.tag.added`, `form.submitted`, `pipeline.stage.changed`, `booking.created`, `quote.accepted`. Nodes: `send_email`, `send_sms`, `whatsapp_template`, `wait`, `if_else`, `goal`, `add_tag`, `remove_tag`, `move_stage`, `update_field`, `create_task`, `notify`, `webhook`. Live execution log at `/sa/[id]/workflows/[workflowId]/runs`. See "Workflows (builder engine v2)".
 - **Community + Courses** — Skool-style member portal per sub-account: discussion feed, group management, Tiptap-powered courses with sections + lessons (video + rich text), member leaderboard, DMs, magic-link auth (members are NOT Firebase Auth users). Agency-gated via `communityEnabledByAgency`. See "Community + Courses".
 - **Custom Fields** — operator-defined fields on contacts and deals (GHL parity). Field types: text, number, date, dropdown, multiselect, checkbox, url, phone, email. Definitions stored at `subAccounts/{id}/customFields/{key}`; values stored inline on the entity doc as `customFields: { [key]: value }`. See "Custom Fields".
+- **Ad Spend & Billing** — Marketing → Ad Spend & Billing tracks a client's monthly retainer (what they pay the agency) next to their ad platform accounts' monthly spend (what the agency spends running their ads), one client per page. v1 is manual entry — live Meta Ads / Google Ads sync is a real follow-on gated on each platform's own external approval process. See "Ad Spend & Billing (v1, manual entry)".
 - **Conversations / Unified Inbox** — cross-channel conversation list merging SMS, WhatsApp, Facebook Messenger, and Instagram DM threads. Thin index doc at `conversations/{contactId}` (channel, last message, unread count, bot mode). Operator views the thread at `/sa/[id]/conversations/[contactId]`. Bot mode toggles: `off` (manual only), `suggest` (drafts shown to operator), `auto` (AI replies automatically). See "Conversations (Unified Inbox)".
 - **Territory Scoping** — optional collaborator-level access restriction. When `territoryScopingEnabled === true` on the sub-account, collaborators only see contacts/deals/tasks/events tagged with their assigned territory (`territoryId`). Admins see everything. Indexes cover the `(subAccountId, territoryId)` composite for all scoped collections. See "Territory Scoping".
 - **Google Review Requests** — send a direct Google review link to contacts via email or SMS. Per-sub-account `googleReviewConfig.placeId` (the Google Business Profile place ID). Operator sends from the contact profile; activity row stamped. No Google OAuth required — the place ID is public.
@@ -383,6 +384,7 @@ firebase.json            Deploys firestore.rules only
 | `subAccounts/{id}/counters/quoteNumbers` | server-only | Per-sub-account sequence counter for the year-prefixed `Q-YYYY-NNNN` quote number generator. `{ year: number, seq: number, updatedAt }`. Atomic increment via Firestore transaction in `lib/quotes/number.ts::issueQuoteNumber()`. Never touched by clients — the resulting number returns in the create-quote API response. |
 | `quotes/{id}` | sub-account read/create/update/delete | Operator-built quote. Carries tenancy (`agencyId`, `subAccountId`, `createdByUid`), `contactId`, `quoteNumber` (e.g. `Q-2026-0001`), `status` (draft → sent → viewed → accepted/declined/expired → paid), `currency`, `lineItems[]`, `globalDiscount`, `globalTaxPercent`, `termsAndNotes`, `billedToOrganization`, `validUntil`, `autoCreateDealOnAccept`, lifecycle stamps (`sentAt`, `viewedAt`, `acceptedAt`, `declinedAt`, `declineReason`, `declineNote`, `paidAt`), and `publicTokenHash` (SHA-256 of the most recent HMAC-signed public token — raw token never persisted). Edits allowed on sent quotes per v1 spec. |
 | `socialPosts/{id}` | sub-account read; server-only write | Social Planner post (top-level, like `quotes`). Carries tenancy (`agencyId`, `subAccountId`, `createdByUid`), `caption`, `imageUrl`, `targets` (`("facebook"\|"instagram")[]`), `status` (draft → scheduled → publishing → published/failed), `scheduledAt`, `publishedAt`, per-target `results[]` (`{platform, status, externalId, error}`), and `qstashMessageId`. Reads stream to the content calendar via `subscribeToSocialPosts`; all writes go through Admin-SDK routes (rules are read-only for members, mirrors `products`). |
+| `adAccounts/{id}` | sub-account read; server-only write | "Ad Spend & Billing" ad platform account row (top-level, like `products`). Carries tenancy, `platform` (`meta`\|`google`\|`other`), `label`, `monthlySpendCents`, `currency`, `source` (always `"manual"` in v1), `externalAccountId` (reserved for a future live-sync pass), `notes`. See "Ad Spend & Billing (v1, manual entry)". |
 | `conversations/{contactId}` | sub-account read; server-only write | Unified inbox index — one doc per contact that has any message thread. Carries `subAccountId`, `agencyId`, `contactId`, `channel` (most-recent), `channelsSeen[]`, `lastMessageAt`, `lastMessageBody`, `unreadCount`, `status` (open/closed/snoozed), `snoozedUntil`, `botMode` (off/suggest/auto), `draft` (suggest-mode pending bot reply). Doc id = contactId for O(1) lookups. Written by all inbound message webhooks (Twilio, WhatsApp, Meta). |
 | `contacts/{id}/metaMessages/{id}` | sub-account read; server-only create/delete; client `readAt`-only update | Facebook Messenger + Instagram DM messages. `channel` field discriminates (`facebook`/`instagram`). Doc id = Meta message id. |
 | `subAccounts/{id}/customFields/{key}` | admins write; members read | Custom field definitions. `key` (snake_case, immutable identifier), `label`, `type` (text/number/date/dropdown/multiselect/checkbox/url/phone/email), `options[]` (for dropdown/multiselect), `required`, `order`, `entity` (contact/deal). Values stored inline on the contact/deal doc under `customFields: { [key]: value }`. |
@@ -777,6 +779,36 @@ Disconnect (Settings) removes **both**; that's why the Social Planner Connection
 - **Other networks** (LinkedIn, TikTok, GBP, YouTube, Pinterest, Threads) — Meta-only.
 - **Media upload** — pasted https image URL only (IG's Content Publishing API is URL-based anyway). Firebase Storage upload is the v2 add.
 - **Video / multi-image / Reels / Stories**, **recurring / evergreen queues / RSS / bulk CSV**, **post approval workflow**, **AI caption generation**, **analytics** (engagement/reach), **editing or deleting the live post on-platform** (delete only removes it from the calendar), **multi-Page selection** (first Page only).
+
+## Ad Spend & Billing (v1, manual entry)
+
+A per-sub-account page — **Marketing → Ad Spend & Billing**, deliberately separate from Marketing → Campaigns — that puts what a client pays the agency next to what the agency spends running that client's ads, per platform, in one place. Reachable at `/sa/[id]/marketing/ad-spend`.
+
+### Data model
+
+- **Monthly retainer** — `SubAccountDoc.monthlyRetainerCents` (+ `monthlyRetainerCurrency`, `monthlyRetainerUpdatedAt`) in [src/types/tenancy.ts](src/types/tenancy.ts). What the client pays the agency each month. **Always manual** — AgentStack's own Stripe billing is the agency's subscription to AgentStack, not a "bill my client" flow (that's the unbuilt Stripe Connect v2 upgrade under Products + Invoices), so there is no live source for this figure and there cannot be one without building the agency's own client-billing system, which is out of scope here.
+- **Ad platform accounts** — `adAccounts/{id}` (flat top-level collection, like `products`/`quotes`/`socialPosts` — matches this codebase's preference for flat tenancy-keyed collections over subcollections-of-subcollections). One row per ad account a client runs — [src/types/ad-accounts.ts](src/types/ad-accounts.ts): `platform` (`meta`\|`google`\|`other`), `label`, `monthlySpendCents`, `currency`, `source` (always `"manual"` in v1), `externalAccountId` (reserved, null in v1), `notes`. Rules are read-only for members (`allow write: if false`, mirrors `products`); all writes go through Admin-SDK routes.
+
+### Routes
+
+- `PATCH /api/sub-accounts/[id]/billing` — sets the retainer. Admin-only.
+- `POST /api/sub-accounts/[id]/ad-accounts` + `PATCH|DELETE .../[adAccountId]` — CRUD for ad account rows. Admin-only (tighter than Products, which any member can create — this is billing data). [src/lib/ad-accounts/sanitize.ts](src/lib/ad-accounts/sanitize.ts) validates every field; an unknown `platform` value is silently dropped rather than accepted.
+
+### UI
+
+The page shows three summary cards (retainer, total ad spend, margin = retainer − spend) above a table of ad accounts, each row tagged with an amber "Manual" source badge. Non-admin members get a read-only view (no Set/Edit/Add/Remove actions) — mirrors the admin-only write model on the rules.
+
+### What's intentionally NOT in v1 — and why it's a real follow-on, not a "someday"
+
+**Live Meta Ads / Google Ads sync** is a genuine planned upgrade, not deferred for lack of interest — it's gated on external approvals neither this codebase nor an agent can shortcut:
+- **Meta Ads** needs the `ads_read` permission, which requires its **own** Meta App Review — separate from the `pages_messaging`/`pages_manage_posts` scopes the Meta inbox/Social Planner connection already has reviewed (see "Facebook Messenger + Instagram DM inbox"). A live-sync build would extend that same OAuth connection's scope list, not add a second Meta connection.
+- **Google Ads** needs a **Google Ads API developer token** — a manual Google review (separate account, separate application) that can take days, the same class of external gate as the Google Business Profile import's manual API access review (see that section above).
+
+`source: "manual"` and the reserved `externalAccountId` field exist now specifically so a future live-sync pass is additive (flip `source` to `"live"`, populate `externalAccountId`, add a sync cron) rather than a schema migration.
+
+### Setup contract
+
+**No new env vars for v1** (manual entry only). Run `firebase deploy --only firestore:rules` after pulling this — the `adAccounts` collection rules block needs deploying or the page's `onSnapshot` read is denied.
 
 ## Booking pages v1
 
