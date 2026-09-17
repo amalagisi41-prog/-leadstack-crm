@@ -29,6 +29,7 @@ import { SubAccountPayPalSection } from "@/components/settings/sub-account-paypa
 import { SubAccountGoogleReviewSection } from "@/components/settings/sub-account-google-review-section";
 import { SubAccountDailyBriefingSection } from "@/components/settings/sub-account-daily-briefing-section";
 import { SubAccountIdxSection } from "@/components/settings/sub-account-idx-section";
+import { SubAccountRprSection } from "@/components/settings/sub-account-rpr-section";
 import { SubAccountAddOnsSection } from "@/components/settings/sub-account-add-ons-section";
 import { SubAccountStripeSection } from "@/components/settings/sub-account-stripe-section";
 import { SubAccountApiKeysSection } from "@/components/settings/sub-account-api-keys-section";
@@ -364,6 +365,11 @@ export default function SettingsPage() {
               own IDX Broker account. Self-gates: renders a "Locked by your
               agency" state until idxEnabledByAgency is on. */}
           <SubAccountIdxSection />
+
+          {/* RPR — public MLS-SSO board code that powers the "View on RPR"
+              button on the property workspace. Not gated by an agency
+              feature flag; the button self-locks until this is set. */}
+          <SubAccountRprSection />
 
           {/* Add-ons — this IS real billing (unlike the roadmap "Subscription"
               card above, which is about agencies billing their own clients).
