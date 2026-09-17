@@ -675,6 +675,17 @@ export interface MetaConfig {
   capabilities?: { inbox: boolean; publish: boolean };
   connectedByUid: string | null;
   connectedAt: Timestamp | FieldValue | null;
+  /**
+   * Set by the weekly auto-refresh job (`lib/comms/meta-refresh.ts`) when it
+   * can't renew the stored token (revoked, Page removed, or a legacy
+   * connection made before the token-refresh feature existed and so has no
+   * stored user token to refresh from). The settings card surfaces this as an
+   * explicit "needs reconnect" state rather than letting sends fail silently.
+   * Cleared automatically the next time the admin reconnects.
+   */
+  needsReconnect?: boolean;
+  /** Last time the auto-refresh job successfully renewed this connection's token. */
+  tokenRefreshedAt?: Timestamp | FieldValue | null;
 }
 
 export interface PayPalConfig {
