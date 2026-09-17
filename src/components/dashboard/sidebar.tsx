@@ -44,6 +44,7 @@ import {
   ClipboardCheck,
   ChevronDown,
   ChevronRight,
+  DollarSign,
 } from "lucide-react";
 import { getFirebaseDb } from "@/lib/firebase/client";
 import { signOutUser } from "@/lib/firebase/auth";
@@ -120,6 +121,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/broadcasts", label: "Broadcasts", icon: Send, enabled: true },
       { href: "/social", label: "Social Planner", icon: Share2, enabled: true },
       { href: "/idx", label: "IDX Listings", icon: Building, enabled: true },
+      { href: "/marketing/ad-spend", label: "Ad Spend & Billing", icon: DollarSign, enabled: true },
     ],
   },
   {

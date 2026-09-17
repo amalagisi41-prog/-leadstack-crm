@@ -816,6 +816,17 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Ad Spend & Billing — per-sub-account ad platform account rows. Reads
+    // drive the "Ad Spend & Billing" page (subscribeToAdAccounts); all
+    // writes go through admin-SDK API routes, same shape as `products`.
+    match /adAccounts/{adAccountId} {
+      allow read: if canAccessSub(
+        resource.data.subAccountId,
+        resource.data.agencyId
+      );
+      allow write: if false;
+    }
+
     // Social Planner posts. Reads from the browser (subscribeToSocialPosts
     // drives the content calendar); all writes go through admin-SDK API
     // routes (create/schedule/publish/delete), so client writes stay closed.

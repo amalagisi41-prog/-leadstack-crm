@@ -472,6 +472,20 @@ export interface SubAccountDoc {
    */
   rprOrgId?: string | null;
   /**
+   * What this client pays the agency each month — manual figure, not derived
+   * from anything else. AgentStack's own Stripe billing is the agency's
+   * subscription to AgentStack, not a "bill my client" flow (that's the
+   * planned Stripe Connect v2 upgrade under Products + Invoices — not built),
+   * so there is no live source for this; the operator types it in on the
+   * sub-account's "Ad Spend & Billing" page. Sits next to `adAccounts` (see
+   * `src/types/ad-accounts.ts`) so a client's revenue and ad-spend cost are
+   * visible together. Integer cents. Null/undefined = not set.
+   */
+  monthlyRetainerCents?: number | null;
+  /** ISO 4217. Defaults to "USD". Only meaningful when `monthlyRetainerCents` is set. */
+  monthlyRetainerCurrency?: string | null;
+  monthlyRetainerUpdatedAt?: Timestamp | FieldValue | null;
+  /**
    * Guided A2P 10DLC setup state for this sub-account's texting number. Holds
    * the business details, use-case summary, sample copy, and current
    * carrier-review status so operators can finish setup over multiple
