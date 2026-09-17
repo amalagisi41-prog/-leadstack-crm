@@ -1049,6 +1049,14 @@ Lets an operator import their Business Profile (name, phone, email, hours, servi
 
 Every operator-facing failure path (no profile found, API call failed, OAuth denied) degrades to "fill in your Blueprint manually" — this import is a convenience, never a blocker to finishing the Blueprint.
 
+### Optional — trusted first-party host for the website-paste Blueprint import
+
+| Var | Source |
+|---|---|
+| `BUSINESS_PROFILE_TRUSTED_AGENT_HOSTS` | Comma-separated hostname(s) of the operator's own agent/brokerage website, e.g. `youragentsite.com`. Not a credential — just your own domain. |
+
+When the operator pastes their own public website URL into Business Blueprint's "paste your website" import (see the "Other setup paths" flow), the page-text fallback parser (used when structured `schema.org`/JSON-LD data isn't available) normally only trusts a short allowlist of known real-estate **directory** hosts (`homes.com`, `loopnet.com`, `realtor.com`) for labelled text heuristics — an arbitrary page's prose is too risky to mine for a phone/license number. Listing your own site's hostname here extends that same trusted, labelled-heuristic parsing to it, and also fixes footer/referral-widget phone numbers from being picked up ahead of your own profile's real number. Leave unset and the import still works — it just falls back to reading `schema.org`/JSON-LD structured data or the AI extractor, which is the right default for a site not explicitly reviewed and opted in here.
+
 ### Optional — Meta (Facebook/Instagram inbox + Social Planner)
 One Meta app powers BOTH the FB Messenger / IG DM inbox AND the Social Planner (they share one connection). All optional — leave unset and both features stay off.
 

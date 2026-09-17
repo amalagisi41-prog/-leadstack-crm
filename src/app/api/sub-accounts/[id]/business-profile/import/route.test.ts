@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/auth/require-tenancy", () => ({
   requireSubAccountAdmin: vi.fn(async () => ({
@@ -91,6 +91,10 @@ beforeEach(() => {
     totalTokens: 0,
     model: "test",
   });
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
 });
 
 describe("POST business-profile/import", () => {
@@ -316,16 +320,16 @@ describe("POST business-profile/import", () => {
     vi.mocked(readPublicPageContent).mockResolvedValueOnce(
       pageOf(
         `<html><head><script type="application/ld+json">
-          {"@type":"Person","name":"Seamus Costigan",
-           "worksFor":{"@type":"Organization","name":"Marr Caruso Realty Group"},
-           "telephone":"(203) 550-0531","email":"sc.newbridge@gmail.com",
-           "url":"https://newbridge-properties.com/"}
+          {"@type":"Person","name":"Jordan Rivera",
+           "worksFor":{"@type":"Organization","name":"Example Realty Group"},
+           "telephone":"(203) 555-0100","email":"jordan@example.com",
+           "url":"https://example-realty.test/"}
         </script></head><body>Profile</body></html>`,
         "html"
       )
     );
     vi.mocked(callAi).mockResolvedValueOnce({
-      text: "agentName=Seamus Costigan",
+      text: "agentName=Jordan Rivera",
       promptTokens: 0,
       completionTokens: 0,
       totalTokens: 0,
@@ -333,16 +337,16 @@ describe("POST business-profile/import", () => {
     });
 
     const res = await POST(
-      makeRequest({ url: "https://www.crexi.com/profile/seamus-costigan" }),
+      makeRequest({ url: "https://www.crexi.com/profile/jordan-rivera" }),
       ctx
     );
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.profile.agentName).toBe("Seamus Costigan");
-    expect(body.profile.brokerage).toBe("Marr Caruso Realty Group");
-    expect(body.profile.phone).toBe("(203) 550-0531");
-    expect(body.profile.email).toBe("sc.newbridge@gmail.com");
-    expect(body.profile.website).toBe("https://newbridge-properties.com/");
+    expect(body.profile.agentName).toBe("Jordan Rivera");
+    expect(body.profile.brokerage).toBe("Example Realty Group");
+    expect(body.profile.phone).toBe("(203) 555-0100");
+    expect(body.profile.email).toBe("jordan@example.com");
+    expect(body.profile.website).toBe("https://example-realty.test/");
     expect(body.extractionMode).toBe("source-reader");
     expect(callAi).not.toHaveBeenCalled();
   });
@@ -351,7 +355,7 @@ describe("POST business-profile/import", () => {
     vi.mocked(readPublicPageContent).mockResolvedValueOnce(
       pageOf(
         `<html><head><script type="application/ld+json">
-          {"@type":"Person","name":"Seamus Costigan","telephone":"(203) 550-0531"}
+          {"@type":"Person","name":"Jordan Rivera","telephone":"(203) 555-0100"}
         </script></head><body>Profile</body></html>`,
         "html"
       )
@@ -359,31 +363,34 @@ describe("POST business-profile/import", () => {
     vi.mocked(callAi).mockRejectedValueOnce(new AiError("nope", { status: 402 }));
 
     const res = await POST(
-      makeRequest({ url: "https://www.crexi.com/profile/seamus-costigan" }),
+      makeRequest({ url: "https://www.crexi.com/profile/jordan-rivera" }),
       ctx
     );
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body.profile.agentName).toBe("Seamus Costigan");
-    expect(body.profile.phone).toBe("(203) 550-0531");
+    expect(body.profile.agentName).toBe("Jordan Rivera");
+    expect(body.profile.phone).toBe("(203) 555-0100");
   });
 
   it("keeps the first-party profile phone ahead of a referral footer phone", async () => {
-    const source = `Marr & Caruso Realty Group (978) 622-2360 footer referral Seamus Costigan Licensed Real Estate Agent & Investor Marr & Caruso Realty Group License: CT-0804225 sc.newbridge@gmail.com (203) 550-0531 About Seamus ${"Serving Stamford and Fairfield County. ".repeat(8)}`;
+    // This heuristic only applies to a host the operator has explicitly
+    // opted in via BUSINESS_PROFILE_TRUSTED_AGENT_HOSTS — see route.ts.
+    vi.stubEnv("BUSINESS_PROFILE_TRUSTED_AGENT_HOSTS", "example-agent-site.test");
+    const source = `Example Realty Group (978) 555-0200 footer referral Jordan Rivera Licensed Real Estate Agent & Investor Example Realty Group License: CT-0000000 jordan@example.com (203) 555-0100 About Jordan ${"Serving Stamford and Fairfield County. ".repeat(8)}`;
     vi.mocked(readPublicPageContent).mockResolvedValueOnce(pageOf(source));
 
     const res = await POST(
-      makeRequest({ url: "https://www.artisanhomenetwork.com/agents/seamus" }),
+      makeRequest({ url: "https://www.example-agent-site.test/agents/jordan" }),
       ctx,
     );
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.profile).toMatchObject({
-      agentName: "Seamus Costigan",
-      brokerage: "Marr & Caruso Realty Group",
-      licenseNumber: "CT-0804225",
+      agentName: "Jordan Rivera",
+      brokerage: "Example Realty Group",
+      licenseNumber: "CT-0000000",
       licenseStates: "CT",
-      phone: "(203) 550-0531",
+      phone: "(203) 555-0100",
     });
   });
 
@@ -441,28 +448,28 @@ describe("POST business-profile/import", () => {
   });
 
   it("builds a complete Zillow review draft without calling AI", async () => {
-    const source = "https://www.zillow.com/profile/Seamus%20Costigan";
+    const source = "https://www.zillow.com/profile/Jordan%20Rivera";
     vi.mocked(readPublicPageContent).mockResolvedValueOnce(pageOf(`
-      # Seamus Costigan
-      Marr Caruso Realty Group 5.0 [28 reviews](#reviews)
+      # Jordan Rivera
+      Example Realty Group 5.0 [28 reviews](#reviews)
       Real Estate Agent in Stamford, CT
 
-      ## Get to know Seamus Costigan
+      ## Get to know Jordan Rivera
       Real Estate Industry
       I’m a high performing and passionate real estate agent & Investor serving clients throughout Fairfield County and nearby areas. As a practically lifelong resident of Stamford, CT, originally from Ireland, I learned about real estate around our family-owned construction business of 30+ years.
       Specialties Buyer's Agent Listing Agent Commercial Properties Investment Properties New Construction
-      20 Years of experience [Visit agent website](https://newbridge-properties.com/)
+      20 Years of experience [Visit agent website](https://example-realty.test/)
 
       14 Sales last 12 months 149 Total sales $239K-$1.9M Price range $740K Average price
 
       ## Service areas (3)
       [Norwalk, CT](/norwalk-ct/) [Stamford, CT](/stamford-ct/) [Fairfield, CT](/fairfield-ct/)
-      ## Contact Seamus Costigan
-      [(203) 550-0531](tel:2035500531)
-      [sc.newbridge@gmail.com](mailto:sc.newbridge@gmail.com)
+      ## Contact Jordan Rivera
+      [(203) 555-0100](tel:2035550100)
+      [jordan@example.com](mailto:jordan@example.com)
     `));
     vi.mocked(callAi).mockResolvedValueOnce({
-      text: "agentName=Seamus Costigan",
+      text: "agentName=Jordan Rivera",
       promptTokens: 0,
       completionTokens: 0,
       totalTokens: 0,
@@ -476,12 +483,12 @@ describe("POST business-profile/import", () => {
     expect(body.extractionMode).toBe("source-reader");
     expect(body.completeness).toBe(100);
     expect(body.profile).toMatchObject({
-      agentName: "Seamus Costigan",
+      agentName: "Jordan Rivera",
       title: "Real Estate Agent",
-      brokerage: "Marr Caruso Realty Group",
-      phone: "(203) 550-0531",
-      email: "sc.newbridge@gmail.com",
-      website: "https://newbridge-properties.com/",
+      brokerage: "Example Realty Group",
+      phone: "(203) 555-0100",
+      email: "jordan@example.com",
+      website: "https://example-realty.test/",
       serviceAreas: "Norwalk, CT, Stamford, CT, Fairfield, CT",
       priceRanges: "$239K-$1.9M",
       clientExperience: "20 years of real estate experience",
@@ -495,19 +502,19 @@ describe("POST business-profile/import", () => {
   });
 
   it("ignores Zillow title/navigation noise and reads encoded contact links", async () => {
-    const source = "https://www.zillow.com/profile/Seamus%20Costigan";
+    const source = "https://www.zillow.com/profile/Jordan%20Rivera";
     vi.mocked(readPublicPageContent).mockResolvedValueOnce(pageOf(`
-      Title: Seamus Costigan - Real Estate Agent in Stamford, CT - Reviews | Zillow
+      Title: Jordan Rivera - Real Estate Agent in Stamford, CT - Reviews | Zillow
       Report a problem Profile Summary. Overview: Sales Statistics & Listings.
-      Report a problem Report a problem Seamus Costigan Marr Caruso Realty Group 5.0 28 reviews Recent Sales
+      Report a problem Report a problem Jordan Rivera Example Realty Group 5.0 28 reviews Recent Sales
       14 Sales last 12 months 149 Total sales $239K-$1.9M Price range $740K Average price
-      Get to know Seamus Costigan Real Estate Industry
+      Get to know Jordan Rivera Real Estate Industry
       I’m a high performing and passionate real estate agent & Investor serving clients all throughout Fairfield County and the nearby areas. As a practically lifelong resident of Stamford, CT, originally from Ireland, I learned about real estate around our family owned construction business of 30+ years.
       Specialties Buyer's Agent Listing Agent Commercial Properties Investment Properties New Construction
-      20 Years of experience [Visit agent website](newbridge-properties.com/)
-      Seamus Costigan Marr Caruso Realty Group 5.0 28 reviews 14 sales last 12 months
-      [(203)%20550-0531](tel:(203)%20550-0531)
-      [sc.newbridge@gmail.com](mailto:sc.newbridge@gmail.com)
+      20 Years of experience [Visit agent website](example-realty.test/)
+      Jordan Rivera Example Realty Group 5.0 28 reviews 14 sales last 12 months
+      [(203)%20555-0100](tel:(203)%20555-0100)
+      [jordan@example.com](mailto:jordan@example.com)
       Service areas (3) [Norwalk, CT](/norwalk-ct/) [Stamford, CT](/stamford-ct/) [Fairfield, CT](/fairfield-ct/)
       Nearby cities Real Estate in Armonk
     `));
@@ -519,11 +526,11 @@ describe("POST business-profile/import", () => {
     expect(body.extractionMode).toBe("source-reader");
     expect(body.completeness).toBe(100);
     expect(body.profile).toMatchObject({
-      agentName: "Seamus Costigan",
-      brokerage: "Marr Caruso Realty Group",
-      phone: "(203) 550-0531",
-      email: "sc.newbridge@gmail.com",
-      website: "https://newbridge-properties.com/",
+      agentName: "Jordan Rivera",
+      brokerage: "Example Realty Group",
+      phone: "(203) 555-0100",
+      email: "jordan@example.com",
+      website: "https://example-realty.test/",
       serviceAreas: "Norwalk, CT, Stamford, CT, Fairfield, CT",
     });
     expect(body.profile.brokerage).not.toMatch(/report a problem/i);

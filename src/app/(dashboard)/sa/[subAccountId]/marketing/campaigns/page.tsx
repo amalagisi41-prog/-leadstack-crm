@@ -731,7 +731,7 @@ export default function MarketingCampaignsPage() {
               id="campaign-mls"
               value={mlsId}
               onChange={(e) => setMlsId(e.target.value)}
-              placeholder="e.g. 303 Weed Avenue, Stamford, CT"
+              placeholder="e.g. 123 Main Street, Springfield, CT"
               disabled={editing}
             />
           </div>

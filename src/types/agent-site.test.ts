@@ -16,7 +16,7 @@ describe("agent site content normalization", () => {
   it("fills SEO fields a legacy document predates", () => {
     // Exactly the shape that crashed: a doc from before SEO fields existed.
     const legacy = {
-      agentName: "Franco Malagisi",
+      agentName: "Jordan Avery",
       tagline: "Personal connections. Professional results.",
     } as Partial<AgentSiteContent>;
 
@@ -27,7 +27,7 @@ describe("agent site content normalization", () => {
     expect(normalized.ogImageUrl).toBe("");
     // The crash was `.length` on undefined — prove it is now safe.
     expect(() => normalized.metaTitle.length).not.toThrow();
-    expect(normalized.agentName).toBe("Franco Malagisi");
+    expect(normalized.agentName).toBe("Jordan Avery");
   });
 
   it("keeps every stored value it was given", () => {
@@ -57,12 +57,12 @@ describe("agent site content normalization", () => {
 
   it("fills a partial compliance object the publish checklist reads", () => {
     const partial = {
-      compliance: { licenseNumber: "RES.0800123" },
+      compliance: { licenseNumber: "RES.0000000" },
     } as unknown as Partial<AgentSiteContent>;
 
     const normalized = normalizeAgentSiteContent(partial);
 
-    expect(normalized.compliance?.licenseNumber).toBe("RES.0800123");
+    expect(normalized.compliance?.licenseNumber).toBe("RES.0000000");
     expect(normalized.compliance?.privacyPolicyUrl).toBe("");
     expect(normalized.compliance?.fairHousingStatement).toContain(
       "equal housing opportunity"

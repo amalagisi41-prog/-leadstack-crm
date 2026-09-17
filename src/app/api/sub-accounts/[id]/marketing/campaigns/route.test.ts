@@ -14,20 +14,20 @@ describe("campaign POST route helpers", () => {
   });
 
   it("matches a listing number from the cached id or raw IDX identifier", () => {
-    const listing = buildManualListing({ address: "10 Main Street", city: "Stamford", state: "CT" }, "sa-1", "24194554");
+    const listing = buildManualListing({ address: "10 Main Street", city: "Stamford", state: "CT" }, "sa-1", "10000001");
     if (typeof listing === "string") throw new Error(listing);
-    expect(listingMatchesIdentifier(listing, "24194554")).toBe(true);
-    expect(listingMatchesIdentifier({ ...listing, id: "vendor-id", raw: { mlsNumber: 24194554 } }, "24194554")).toBe(true);
-    expect(listingMatchesIdentifier({ ...listing, id: "vendor-id", raw: { listingNumber: "24194554" } }, "24194554")).toBe(true);
+    expect(listingMatchesIdentifier(listing, "10000001")).toBe(true);
+    expect(listingMatchesIdentifier({ ...listing, id: "vendor-id", raw: { mlsNumber: 10000001 } }, "10000001")).toBe(true);
+    expect(listingMatchesIdentifier({ ...listing, id: "vendor-id", raw: { listingNumber: "10000001" } }, "10000001")).toBe(true);
     expect(listingMatchesIdentifier(listing, "99999999")).toBe(false);
   });
 
   it("matches a cached listing by address", () => {
-    const listing = buildManualListing({ address: "303 Weed Avenue", city: "Stamford", state: "CT", zip: "06902" }, "sa-1", "24200534");
+    const listing = buildManualListing({ address: "789 Main Street", city: "Stamford", state: "CT", zip: "06902" }, "sa-1", "10000002");
     if (typeof listing === "string") throw new Error(listing);
-    expect(listingMatchesAddress(listing, "303 Weed Avenue, Stamford, CT 06902")).toBe(true);
-    expect(listingMatchesAddress(listing, "303 Weed Ave, Stamford, CT 06902")).toBe(true);
-    expect(listingMatchesAddress(listing, "303 weed avenue")).toBe(true);
-    expect(listingMatchesAddress(listing, "304 Weed Avenue")).toBe(false);
+    expect(listingMatchesAddress(listing, "789 Main Street, Stamford, CT 06902")).toBe(true);
+    expect(listingMatchesAddress(listing, "789 Main St, Stamford, CT 06902")).toBe(true);
+    expect(listingMatchesAddress(listing, "789 main street")).toBe(true);
+    expect(listingMatchesAddress(listing, "790 Main Street")).toBe(false);
   });
 });

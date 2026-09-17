@@ -34,17 +34,17 @@ describe("ContentEditor — surviving legacy documents", () => {
   it("renders a document written before the SEO fields existed", () => {
     // Exactly the shape that crashed the client.
     const legacy = {
-      agentName: "Franco Malagisi",
+      agentName: "Jordan Avery",
       tagline: "Personal connections. Professional results.",
     };
 
     expect(() => renderEditor(legacy)).not.toThrow();
-    expect(screen.getByDisplayValue("Franco Malagisi")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Jordan Avery")).toBeInTheDocument();
   });
 
   it("renders when array fields are missing or explicitly null", () => {
     const broken = {
-      agentName: "Franco Malagisi",
+      agentName: "Jordan Avery",
       specialties: null,
       listings: undefined,
       testimonials: null,
@@ -56,12 +56,12 @@ describe("ContentEditor — surviving legacy documents", () => {
 
   it("renders when the compliance object is partial", () => {
     const partial = {
-      agentName: "Franco Malagisi",
-      compliance: { licenseNumber: "RES.0800123" },
+      agentName: "Jordan Avery",
+      compliance: { licenseNumber: "RES.0000000" },
     } as unknown as Partial<AgentSiteContent>;
 
     expect(() => renderEditor(partial)).not.toThrow();
-    expect(screen.getByDisplayValue("RES.0800123")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("RES.0000000")).toBeInTheDocument();
   });
 
   it("renders an entirely empty document", () => {
@@ -147,11 +147,11 @@ describe("ContentEditor — editing", () => {
       />
     );
 
-    await userEvent.type(screen.getByLabelText("Agent name"), "Franco");
+    await userEvent.type(screen.getByLabelText("Agent name"), "Jordan");
     await userEvent.click(screen.getByRole("button", { name: /save/i }));
 
     expect(onSave).toHaveBeenCalledWith(
-      expect.objectContaining({ agentName: "Franco" })
+      expect.objectContaining({ agentName: "Jordan" })
     );
   });
 });
