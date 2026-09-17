@@ -3,6 +3,7 @@ import {
   buildRprHomeUrl,
   formatAddressForRpr,
   isValidRprOrgId,
+  parseRprOrgId,
 } from "./link";
 
 describe("isValidRprOrgId", () => {
@@ -31,6 +32,66 @@ describe("isValidRprOrgId", () => {
     expect(isValidRprOrgId("ct connm")).toBe(false);
     expect(isValidRprOrgId("ctconnm_n")).toBe(false);
     expect(isValidRprOrgId("ctconnm/n")).toBe(false);
+  });
+});
+
+describe("parseRprOrgId", () => {
+  it("accepts a bare org code", () => {
+    expect(parseRprOrgId("ctconnm-n")).toBe("ctconnm-n");
+  });
+
+  it("extracts the code from the exact URL a real agent pasted", () => {
+    // This string was rejected as "that doesn't look like an RPR org code",
+    // which is what prompted this function: finding the value means being
+    // signed into RPR and looking at its URL, so a URL is what lands on the
+    // clipboard.
+    expect(
+      parseRprOrgId(
+        "narrpr.com/home?cbcode=ctconnm-n&listingid=24158847&pmode=1&LocationType=4",
+      ),
+    ).toBe("ctconnm-n");
+  });
+
+  it("handles the URL with a scheme and host prefix", () => {
+    expect(parseRprOrgId("https://www.narrpr.com/home?cbcode=ctconnm-n")).toBe(
+      "ctconnm-n",
+    );
+  });
+
+  it("falls back to orgid on a property-details URL", () => {
+    expect(
+      parseRprOrgId(
+        "https://www.narrpr.com/properties/details/info/78418177?orgid=ctconnm",
+      ),
+    ).toBe("ctconnm");
+  });
+
+  it("prefers cbcode over orgid when a URL carries both", () => {
+    // They hold different values on RPR's own URLs, and cbcode is the one
+    // the MLS-SSO entry link is actually built from.
+    expect(
+      parseRprOrgId("narrpr.com/home?orgid=ctconnm&cbcode=ctconnm-n"),
+    ).toBe("ctconnm-n");
+  });
+
+  it("lowercases a mis-cased paste rather than rejecting it", () => {
+    expect(parseRprOrgId("CTCONNM-N")).toBe("ctconnm-n");
+    expect(parseRprOrgId("narrpr.com/home?cbcode=CTCONNM-N")).toBe("ctconnm-n");
+  });
+
+  it("trims surrounding whitespace", () => {
+    expect(parseRprOrgId("  ctconnm-n  ")).toBe("ctconnm-n");
+  });
+
+  it("returns null for a URL with no board code in it", () => {
+    expect(parseRprOrgId("https://www.narrpr.com/home?pmode=1")).toBeNull();
+  });
+
+  it("returns null for genuine garbage rather than storing it", () => {
+    expect(parseRprOrgId("")).toBeNull();
+    expect(parseRprOrgId("   ")).toBeNull();
+    expect(parseRprOrgId("not a code!")).toBeNull();
+    expect(parseRprOrgId("narrpr.com/home?cbcode=not%20a%20code")).toBeNull();
   });
 });
 

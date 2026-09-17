@@ -30,6 +30,49 @@ export function isValidRprOrgId(value: string): boolean {
 }
 
 /**
+ * Pull the org/board code out of whatever the agent actually has in front of
+ * them. Finding this value means being signed into RPR and looking at its
+ * URL — so the thing on their clipboard is a whole URL, not a bare code.
+ * Asking them to hand-extract one query parameter from it is handing them a
+ * task to get wrong ("never ask the user for something the app can find
+ * out", CLAUDE.md), and it did: a pasted
+ * `narrpr.com/home?cbcode=ctconnm-n&listingid=…&pmode=1&LocationType=4`
+ * was rejected as "that doesn't look like an RPR org code".
+ *
+ * Accepts, in order of what shows up in practice:
+ *   - a bare code                  → `ctconnm-n`
+ *   - the SSO entry URL            → `narrpr.com/home?cbcode=ctconnm-n&…`
+ *   - a full property URL          → `https://www.narrpr.com/properties/details/info/78418177?orgid=ctconnm`
+ *   - any of the above mis-cased   → `CTCONNM-N`
+ *
+ * `cbcode` wins over `orgid` when both appear: `cbcode` is the MLS-SSO
+ * entry parameter this feature actually builds links with, and the two
+ * carry different values on RPR's own URLs (`cbcode=ctconnm-n` vs
+ * `orgid=ctconnm`). Returns null when nothing valid is present, so callers
+ * keep rejecting genuine garbage rather than silently storing it.
+ */
+export function parseRprOrgId(input: string): string | null {
+  const trimmed = (input ?? "").trim();
+  if (!trimmed) return null;
+
+  // A query string anywhere in the input means we were handed a URL. Parse
+  // by hand rather than with `new URL()` — the value is routinely pasted
+  // without a scheme ("narrpr.com/home?..."), which `new URL()` rejects.
+  const queryStart = trimmed.indexOf("?");
+  if (queryStart !== -1) {
+    const params = new URLSearchParams(trimmed.slice(queryStart + 1));
+    for (const key of ["cbcode", "orgid"]) {
+      const value = params.get(key)?.trim().toLowerCase();
+      if (value && isValidRprOrgId(value)) return value;
+    }
+    return null;
+  }
+
+  const candidate = trimmed.toLowerCase();
+  return isValidRprOrgId(candidate) ? candidate : null;
+}
+
+/**
  * RPR's verified MLS-SSO entry point for a given board. Lands the agent on
  * their own RPR home page via their SmartMLS/connectMLS SSO session — the
  * same URL confirmed live against a real SmartMLS→RPR federation.
