@@ -6,6 +6,7 @@ import { getAdminDb } from "@/lib/firebase/admin";
 import { requireSubAccountAdmin } from "@/lib/auth/require-tenancy";
 import {
   exchangeCodeForUserToken,
+  exchangeForLongLivedUserToken,
   getGrantedScopes,
   listMetaPages,
   metaAppConfigured,
@@ -79,7 +80,15 @@ export async function GET(
 
   try {
     const redirectUri = `${appBase(request)}/api/sub-accounts/${id}/meta/callback`;
-    const userToken = await exchangeCodeForUserToken(code, redirectUri);
+    const shortLivedToken = await exchangeCodeForUserToken(code, redirectUri);
+    // Upgrade to a long-lived (~60 day) user token BEFORE deriving the Page
+    // token — a Page token fetched with a short-lived user token inherits its
+    // ~1-2 hour lifetime, which would kill the connection almost immediately.
+    // Storing this token (below) is also what lets the weekly refresh job
+    // renew the connection automatically instead of the operator hitting a
+    // dead connection and having to notice + reconnect manually.
+    const { accessToken: userToken } =
+      await exchangeForLongLivedUserToken(shortLivedToken);
     // Record what Meta actually granted (vs declined), intersected with the
     // gates that are on — the single source of truth both features read.
     const granted = await getGrantedScopes(userToken);
@@ -112,8 +121,15 @@ export async function GET(
     // The token goes to the server-only secrets subcollection BEFORE the
     // parent write, so a crash between the two never leaves a connection that
     // looks live but has no credential behind it.
-    await writeMetaSecrets(id, { pageAccessToken: page.accessToken });
+    await writeMetaSecrets(id, {
+      pageAccessToken: page.accessToken,
+      userAccessToken: userToken,
+      userTokenObtainedAt: Date.now(),
+    });
 
+    // A full-object write (not a merge) — this is also how a previously
+    // flagged `needsReconnect` clears itself on reconnect, without an extra
+    // explicit delete.
     await db.doc(`subAccounts/${id}`).update({
       metaConfig: {
         connected: true,

@@ -178,6 +178,46 @@ export async function exchangeCodeForUserToken(
   return data.access_token;
 }
 
+interface LongLivedTokenResponse {
+  access_token?: string;
+  expires_in?: number;
+}
+
+/**
+ * Exchange a short-lived user token (from the OAuth code exchange) for a
+ * long-lived one (~60 days). This is the step the connect flow was missing:
+ * without it, every Page token derived from `listMetaPages()` inherits the
+ * short-lived user token's ~1-2 hour lifetime instead of the long-lived one,
+ * so the connection would die almost immediately rather than lasting weeks.
+ *
+ * Also used by the weekly refresh job (`lib/comms/meta-refresh.ts`) to
+ * re-exchange the STORED long-lived token for a fresh one before it expires —
+ * Meta allows re-exchanging a still-valid long-lived token, which is what
+ * keeps the connection alive indefinitely without the operator re-signing in.
+ */
+export async function exchangeForLongLivedUserToken(
+  shortLivedToken: string,
+): Promise<{ accessToken: string; expiresInSeconds: number | null }> {
+  const params = new URLSearchParams({
+    grant_type: "fb_exchange_token",
+    client_id: process.env.META_APP_ID ?? "",
+    client_secret: process.env.META_APP_SECRET ?? "",
+    fb_exchange_token: shortLivedToken,
+  });
+  const res = await fetch(`${GRAPH}/oauth/access_token?${params.toString()}`);
+  if (!res.ok) {
+    throw new Error(`Meta long-lived token exchange failed (${res.status})`);
+  }
+  const data = (await res.json()) as LongLivedTokenResponse;
+  if (!data.access_token) {
+    throw new Error("Meta long-lived token exchange: no token");
+  }
+  return {
+    accessToken: data.access_token,
+    expiresInSeconds: typeof data.expires_in === "number" ? data.expires_in : null,
+  };
+}
+
 export interface MetaPage {
   id: string;
   name: string;

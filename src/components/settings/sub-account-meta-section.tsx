@@ -142,6 +142,7 @@ export function SubAccountMetaSection() {
   }
 
   const connected = !!cfg?.connected;
+  const needsReconnect = !!cfg?.needsReconnect;
 
   return (
     <section className="rounded-2xl border bg-card p-6">
@@ -209,6 +210,17 @@ export function SubAccountMetaSection() {
               </Button>
             </div>
           </div>
+
+          {needsReconnect && (
+            <p className="mt-3 flex items-start gap-1.5 rounded-md border border-amber-500/30 bg-amber-500/10 p-2 text-[11px] text-amber-800 dark:text-amber-400">
+              <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
+              <span>
+                This connection needs to be refreshed — Meta stopped renewing
+                the access token automatically. Click Reconnect above to
+                restore Messenger/IG DMs and Social Planner posting.
+              </span>
+            </p>
+          )}
 
           {/* Capability badges — what THIS token can actually do, per feature
               gate. Prevents a connection made for one feature from looking

@@ -64,6 +64,11 @@ const PUBLIC_PATHS = [
   // Weekly Digest email — weekly fan-out + its per-sub-account step worker.
   // Both signature-verified inside the route.
   "/api/cron/weekly-digest",
+  // Meta (Facebook/Instagram) token auto-refresh — weekly fan-out + its
+  // per-sub-account step worker. Both signature-verified inside the route.
+  // Keeps every connected sub-account's token from silently expiring instead
+  // of the operator having to notice and manually reconnect.
+  "/api/cron/meta-token-refresh",
   "/api/landing/metrics",
   "/api/landing/recent-purchases",
   // Live-visitors heartbeat ping for the agency dashboard's world map.

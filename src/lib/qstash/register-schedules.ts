@@ -89,6 +89,13 @@ const SCHEDULES: ScheduleSpec[] = [
     description:
       "Weekly 'Your AI employee: X replies, Y bookings, Z revived' digest email, Mondays at 13:00 UTC (deduped via lastDigestSentAt).",
   },
+  {
+    scheduleId: "agentstack-meta-token-refresh",
+    path: "/api/cron/meta-token-refresh",
+    cron: "0 6 * * 0",
+    description:
+      "Weekly renewal of every connected Meta (Facebook/Instagram) sub-account's long-lived token, Sundays at 06:00 UTC — keeps the connection open indefinitely instead of it silently expiring ~60 days after connecting.",
+  },
 ];
 
 const MARKER_PATH = "system/scheduleRegistration";

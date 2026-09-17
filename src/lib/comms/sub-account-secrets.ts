@@ -262,6 +262,19 @@ export interface MetaSecrets {
    * and read its DMs, not a brief window.
    */
   pageAccessToken: string;
+  /**
+   * Long-lived USER access token the Page token above was derived from. Kept
+   * so the weekly refresh job (`lib/comms/meta-refresh.ts`) can re-exchange it
+   * for a fresh one and re-derive a fresh Page token before either expires —
+   * without this, the connection would silently die ~60 days after connecting
+   * and the operator would have to notice and manually reconnect. Optional so
+   * connections made before this existed (which only ever stored the Page
+   * token) still read cleanly; those just can't auto-refresh until the
+   * operator reconnects once.
+   */
+  userAccessToken?: string;
+  /** Epoch millis the stored `userAccessToken` was last obtained/refreshed. */
+  userTokenObtainedAt?: number;
 }
 
 export async function writeMetaSecrets(
@@ -278,8 +291,21 @@ export async function loadMetaSecrets(
   subAccountId: string,
 ): Promise<MetaSecrets | null> {
   const snap = await secretRef(subAccountId, META_SECRET).get();
-  const token = snap.data()?.pageAccessToken;
-  if (typeof token === "string" && token) return { pageAccessToken: token };
+  const data = snap.data();
+  const token = data?.pageAccessToken;
+  if (typeof token === "string" && token) {
+    const userToken = data?.userAccessToken;
+    const obtainedAt = data?.userTokenObtainedAt;
+    return {
+      pageAccessToken: token,
+      ...(typeof userToken === "string" && userToken
+        ? { userAccessToken: userToken }
+        : {}),
+      ...(typeof obtainedAt === "number"
+        ? { userTokenObtainedAt: obtainedAt }
+        : {}),
+    };
+  }
 
   return migrateInlineSecret<MetaSecrets>({
     subAccountId,
