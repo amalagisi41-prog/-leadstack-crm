@@ -1,14 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useSearchParams } from "next/navigation";
 import {
   ArrowRight,
   CheckCircle2,
   Globe2,
   Loader2,
   RefreshCw,
-  ShieldCheck,
   Sparkles,
   ExternalLink,
   ArrowUpRight,
@@ -26,7 +24,7 @@ import type {
 import { readJson } from "@/lib/http/read-json";
 
 const platforms: { value: BusinessSourcePlatform; label: string }[] = [
-  { value: "gohighlevel", label: "GoHighLevel (GHL)" },
+  { value: "gohighlevel", label: "GoHighLevel" },
   { value: "followupboss", label: "Follow Up Boss" },
   { value: "kvcore", label: "kvCORE" },
   { value: "lofty", label: "Lofty" },
@@ -55,8 +53,6 @@ export function OnboardingFoundation({
   saPath: (path: string) => string;
   onComplete: () => void;
 }) {
-  const searchParams = useSearchParams();
-  const ghlStatus = searchParams.get("ghl");
   // Most first-run customers are building their first AgentStack site. Start
   // them on that path instead of dropping them into a migration workflow.
   const [mode, setMode] = useState<OnboardingFoundationMode>("foundation");
@@ -70,38 +66,6 @@ export function OnboardingFoundation({
   const [importing, setImporting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [profileImported, setProfileImported] = useState(false);
-  const [transferConsent, setTransferConsent] = useState(false);
-  const [startingTransfer, setStartingTransfer] = useState(false);
-
-  async function startGhlWebsiteTransfer() {
-    if (!transferConsent) {
-      toast.error("Approve read-only access before starting the transfer.");
-      return;
-    }
-    setStartingTransfer(true);
-    try {
-      const response = await fetch(
-        `/api/sub-accounts/${subAccountId}/import/ghl/website-transfer`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ consent: true }),
-        }
-      );
-      const data = await readJson<{ ok?: boolean }>(response);
-      if (!response.ok)
-        throw new Error(data.error ?? "Could not start transfer.");
-      toast.success(
-        "Website transfer assessment started. Nothing will be published without approval."
-      );
-      window.location.assign(saPath("/import?source=ghl&website=queued"));
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Could not start transfer."
-      );
-      setStartingTransfer(false);
-    }
-  }
 
   async function importProfile() {
     const urls = (sourceUrl.match(/https?:\/\/[^\s]+/gi) ?? []).map((url) =>
@@ -195,10 +159,7 @@ export function OnboardingFoundation({
     { label: "Hosting", done: Boolean(hostingPoint) },
     {
       label: "Business source",
-      done:
-        mode !== "transfer" || platform === "gohighlevel"
-          ? ghlStatus === "connected" || mode !== "transfer"
-          : Boolean(sourceUrl),
+      done: mode !== "transfer" || Boolean(sourceUrl),
     },
     { label: "Blueprint", done: profileImported || mode !== "transfer" },
   ];
@@ -425,114 +386,27 @@ export function OnboardingFoundation({
               ))}
             </select>
             <div className="bg-background rounded-xl border p-4">
-              {platform === "gohighlevel" ? (
-                <div className="space-y-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="font-semibold">
-                        Connect your GoHighLevel account
-                      </p>
-                      <p className="text-muted-foreground mt-1 text-xs leading-5">
-                        Sign in on HighLevel and choose the location you want to
-                        move. AgentStack never asks for or stores your GHL
-                        password.
-                      </p>
-                    </div>
-                    {ghlStatus === "connected" ? (
-                      <span className="flex shrink-0 items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-800">
-                        <CheckCircle2 className="h-3.5 w-3.5" /> Connected
-                      </span>
-                    ) : null}
-                  </div>
-
-                  {ghlStatus === "connected" ? (
-                    <>
-                      <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-blue-200 bg-blue-50 p-3 text-sm">
-                        <input
-                          type="checkbox"
-                          checked={transferConsent}
-                          onChange={(event) =>
-                            setTransferConsent(event.target.checked)
-                          }
-                          className="mt-1 h-4 w-4"
-                        />
-                        <span>
-                          <strong className="block text-[#173B7A]">
-                            Allow a read-only migration assessment
-                          </strong>
-                          <span className="mt-1 block text-xs leading-5 text-[#526078]">
-                            AgentStack may read the selected GHL location,
-                            website structure, contacts, pipelines, fields, and
-                            approved assets to prepare a transfer plan. Nothing
-                            is changed in GHL or published in AgentStack without
-                            a separate approval.
-                          </span>
-                        </span>
-                      </label>
-                      <Button
-                        type="button"
-                        onClick={startGhlWebsiteTransfer}
-                        disabled={!transferConsent || startingTransfer}
-                      >
-                        {startingTransfer ? (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                          <RefreshCw className="mr-2 h-4 w-4" />
-                        )}
-                        Start website transfer
-                      </Button>
-                    </>
+              <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+                <textarea
+                  value={sourceUrl}
+                  onChange={(event) => setSourceUrl(event.target.value)}
+                  placeholder="Paste your existing website and Google Business Profile link (one URL per line)"
+                  rows={3}
+                  className="bg-background rounded-lg border px-3 py-2 text-sm"
+                />
+                <Button
+                  type="button"
+                  onClick={importProfile}
+                  disabled={importing}
+                >
+                  {importing ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : (
-                    <Button
-                      type="button"
-                      onClick={() =>
-                        window.location.assign(
-                          `/api/sub-accounts/${subAccountId}/import/ghl/oauth/start`
-                        )
-                      }
-                    >
-                      <ShieldCheck className="mr-2 h-4 w-4" />
-                      Log in to GoHighLevel
-                    </Button>
+                    <RefreshCw className="mr-2 h-4 w-4" />
                   )}
-                  {ghlStatus === "not_configured" ? (
-                    <p className="text-xs text-amber-700">
-                      The AgentStack HighLevel app credentials still need to be
-                      connected by the platform administrator.
-                    </p>
-                  ) : ghlStatus === "error" || ghlStatus === "bad_state" ? (
-                    <p className="text-xs text-red-600">
-                      HighLevel could not be connected. Please try again.
-                    </p>
-                  ) : ghlStatus === "cancelled" ? (
-                    <p className="text-xs text-amber-700">
-                      Connection canceled. No GHL data was accessed.
-                    </p>
-                  ) : null}
-                </div>
-              ) : (
-                <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
-                  <textarea
-                    value={sourceUrl}
-                    onChange={(event) => setSourceUrl(event.target.value)}
-                    placeholder="Paste your existing website and Google Business Profile link (one URL per line)"
-                    rows={3}
-                    className="bg-background rounded-lg border px-3 py-2 text-sm"
-                  />
-                  <Button
-                    type="button"
-                    onClick={importProfile}
-                    disabled={importing}
-                  >
-                    {importing ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <RefreshCw className="mr-2 h-4 w-4" />
-                    )}
-                    {profileImported ? "Import again" : "Import details"}
-                  </Button>
-                </div>
-              )}
+                  {profileImported ? "Import again" : "Import details"}
+                </Button>
+              </div>
             </div>
           </div>
           {profileImported ? (
@@ -540,23 +414,6 @@ export function OnboardingFoundation({
               Your draft is ready. Step 1 will let you review and correct every
               detail.
             </p>
-          ) : null}
-          {platform === "gohighlevel" ? (
-            <div className="bg-muted/40 text-muted-foreground mt-4 rounded-xl border p-4 text-xs leading-5">
-              Connection order:{" "}
-              <strong className="text-foreground">log in</strong>
-              {" → "}
-              <strong className="text-foreground">choose a GHL location</strong>
-              {" → "}
-              <strong className="text-foreground">
-                approve read-only access
-              </strong>
-              {" → "}
-              <strong className="text-foreground">
-                review the transfer plan
-              </strong>
-              .
-            </div>
           ) : null}
         </section>
       ) : null}

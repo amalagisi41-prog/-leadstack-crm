@@ -818,11 +818,6 @@ export function DomainConnect() {
               ) : null}
               Save domain &amp; current site
             </Button>
-            {sourcePlatform === "gohighlevel" && situation === "switching" ? (
-              <Button variant="outline" render={<a href={saPath("/import")} />}>
-                Open GHL import <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            ) : null}
           </div>
         </section>
       ) : situation === "new" ? (

@@ -19,7 +19,6 @@ import {
   Star,
   Upload,
   Globe2,
-  Workflow,
   Code2,
 } from "lucide-react";
 import { useSubAccount } from "@/context/sub-account-context";
@@ -235,24 +234,6 @@ export function ConnectYourBusiness() {
           ? "Manage domain"
           : "Connect domain",
         actionHref: domainHref,
-      },
-      {
-        key: "gohighlevel",
-        icon: Workflow,
-        iconTone: "bg-sky-500/10 text-sky-700 dark:text-sky-400",
-        title: "GoHighLevel",
-        detail: subAccount.ghlImportConfig?.locationId
-          ? "Connected"
-          : undefined,
-        blurb:
-          "Authorize read-only access, choose a location, and prepare a reviewed business and website transfer plan.",
-        status: subAccount.ghlImportConfig?.locationId
-          ? "connected"
-          : "not_connected",
-        actionLabel: subAccount.ghlImportConfig?.locationId
-          ? "Manage transfer"
-          : "Connect",
-        actionHref: saPath("/import?source=ghl"),
       },
       {
         key: "api-automation",
