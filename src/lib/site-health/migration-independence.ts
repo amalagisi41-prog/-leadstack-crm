@@ -152,10 +152,10 @@ export function buildMigrationIndependenceTasks(
     {
       id: "independence-data",
       title: `Import your contacts and deals from ${from}`,
-      detail: "Contacts, opportunities, and notes must be in AgentStack before the source account goes away.",
+      detail: `Export a CSV from ${from} and bring it into AgentStack — contacts, opportunities, and notes must be here before the source account goes away.`,
       complete: inputs.contactsImported,
-      href: "/import",
-      action: "Run import",
+      href: "/contacts",
+      action: "Import CSV",
     },
     {
       id: "independence-conversations",
@@ -177,10 +177,10 @@ export function buildMigrationIndependenceTasks(
     {
       id: "independence-backup",
       title: `Export a full backup from ${from}`,
-      detail: "Take a complete export and store it somewhere safe before you cancel, so a missed item is still recoverable.",
+      detail: `Take a complete export from ${from} and store it somewhere safe before you cancel, so a missed item is still recoverable. AgentStack can't do this step for you — it happens on ${from}'s side.`,
       complete: ackComplete(inputs, "backup_exported"),
-      href: "/import",
-      action: "I have exported it",
+      href: "/domain",
+      action: `Open ${from}`,
     },
   ];
 }

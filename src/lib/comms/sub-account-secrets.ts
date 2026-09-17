@@ -34,7 +34,6 @@ const SECRETS_COLLECTION = "secrets";
 
 export const GOOGLE_WORKSPACE_SECRET = "googleWorkspace";
 export const META_SECRET = "meta";
-export const GHL_IMPORT_SECRET = "ghlImport";
 export const IDX_SECRET = "idx";
 
 export interface GoogleWorkspaceSecrets {
@@ -301,70 +300,6 @@ export async function deleteMetaSecrets(subAccountId: string): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// GoHighLevel import — Private Integration Token or OAuth pair
-// ---------------------------------------------------------------------------
-
-export interface GhlImportSecrets {
-  /** Private Integration Token (`pit-…`) or the OAuth access token. */
-  token: string;
-  /** OAuth refresh token. Null for the Private-Integration-Token path. */
-  refreshToken: string | null;
-}
-
-export async function writeGhlImportSecrets(
-  subAccountId: string,
-  secrets: GhlImportSecrets,
-): Promise<void> {
-  await secretRef(subAccountId, GHL_IMPORT_SECRET).set(
-    {
-      token: secrets.token,
-      refreshToken: secrets.refreshToken,
-      updatedAt: FieldValue.serverTimestamp(),
-    },
-    { merge: true },
-  );
-}
-
-export async function loadGhlImportSecrets(
-  subAccountId: string,
-): Promise<GhlImportSecrets | null> {
-  const snap = await secretRef(subAccountId, GHL_IMPORT_SECRET).get();
-  const data = snap.data();
-  if (typeof data?.token === "string" && data.token) {
-    return {
-      token: data.token,
-      refreshToken:
-        typeof data.refreshToken === "string" ? data.refreshToken : null,
-    };
-  }
-
-  return migrateInlineSecret<GhlImportSecrets>({
-    subAccountId,
-    secretName: GHL_IMPORT_SECRET,
-    parentField: "ghlImportConfig",
-    inlineFields: ["token", "refreshToken"],
-    // The settings UI showed "connected" by testing for the token itself.
-    // Stamp the public marker in the same write that removes it.
-    publicPatch: { "ghlImportConfig.connected": true },
-    extract: (legacy) => {
-      const token = legacy.token;
-      if (typeof token !== "string" || !token) return null;
-      return {
-        token,
-        refreshToken:
-          typeof legacy.refreshToken === "string" ? legacy.refreshToken : null,
-      };
-    },
-  });
-}
-
-export async function deleteGhlImportSecrets(
-  subAccountId: string,
-): Promise<void> {
-  await secretRef(subAccountId, GHL_IMPORT_SECRET).delete();
-}
-
-// ---------------------------------------------------------------------------
 // IDX Broker — Platinum API access key
 // ---------------------------------------------------------------------------
 
@@ -394,7 +329,7 @@ export async function loadIdxSecrets(
     secretName: IDX_SECRET,
     parentField: "idxConfig",
     inlineFields: ["accessKey"],
-    // Same reason as GHL: `connected` was derived from the key's presence.
+    // Same reason as Meta above: `connected` was derived from the key's presence.
     publicPatch: { "idxConfig.connected": true },
     extract: (legacy) => {
       const value = legacy.accessKey;

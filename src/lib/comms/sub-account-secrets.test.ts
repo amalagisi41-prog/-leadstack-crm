@@ -9,7 +9,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
  * document at all — and none of these are short-lived:
  *
  *   - a Meta Page access token posts as the business and reads its DMs
- *   - a GoHighLevel token reads the operator's entire other CRM
  *   - an IDX Broker key is the MLS feed credential their brokerage vouched for
  *
  * The tests below hold the three properties that make the fix real rather than
@@ -72,7 +71,6 @@ vi.mock("@/lib/firebase/admin", () => ({
 import {
   deleteIdxSecrets,
   deleteMetaSecrets,
-  loadGhlImportSecrets,
   loadIdxSecrets,
   loadMetaSecrets,
   writeMetaSecrets,
@@ -80,7 +78,6 @@ import {
 
 const PARENT = "subAccounts/sub-1";
 const META_SECRET_PATH = "subAccounts/sub-1/secrets/meta";
-const GHL_SECRET_PATH = "subAccounts/sub-1/secrets/ghlImport";
 const IDX_SECRET_PATH = "subAccounts/sub-1/secrets/idx";
 
 beforeEach(() => {
@@ -153,32 +150,6 @@ describe("lazy migration closes the exposure without a backfill", () => {
     expect(secretWrittenFirst).toBe(true);
   });
 
-  it("migrates a GoHighLevel token pair and stamps the public marker", async () => {
-    docs.set(PARENT, {
-      ghlImportConfig: {
-        token: "pit-abc",
-        refreshToken: "refresh-abc",
-        locationId: "loc-1",
-      },
-    });
-
-    await expect(loadGhlImportSecrets("sub-1")).resolves.toEqual({
-      token: "pit-abc",
-      refreshToken: "refresh-abc",
-    });
-
-    const parent = docs.get(PARENT) as {
-      ghlImportConfig: Record<string, unknown>;
-    };
-    expect(parent.ghlImportConfig).not.toHaveProperty("token");
-    expect(parent.ghlImportConfig).not.toHaveProperty("refreshToken");
-    // The settings UI decided "connected" by testing for the token itself.
-    // Without this marker the migration would show a working import as
-    // disconnected, which reads as data loss to the operator.
-    expect(parent.ghlImportConfig.connected).toBe(true);
-    expect(parent.ghlImportConfig.locationId).toBe("loc-1");
-  });
-
   it("migrates an IDX access key and stamps the public marker", async () => {
     docs.set(PARENT, {
       idxConfig: { enabled: true, accessKey: "idx-key", mlsId: "mls-1" },
@@ -208,7 +179,6 @@ describe("lazy migration closes the exposure without a backfill", () => {
     docs.set(PARENT, { name: "Acme" });
 
     await expect(loadMetaSecrets("sub-1")).resolves.toBeNull();
-    await expect(loadGhlImportSecrets("sub-1")).resolves.toBeNull();
     await expect(loadIdxSecrets("sub-1")).resolves.toBeNull();
     expect(updates).toHaveLength(0);
   });
@@ -250,16 +220,13 @@ describe("the secret paths are the ones firestore.rules denies", () => {
     // the whole exposure this change removes, silently reintroduced.
     docs.set(PARENT, {
       metaConfig: { pageAccessToken: "m" },
-      ghlImportConfig: { token: "g" },
       idxConfig: { enabled: true, accessKey: "i" },
     });
 
     await loadMetaSecrets("sub-1");
-    await loadGhlImportSecrets("sub-1");
     await loadIdxSecrets("sub-1");
 
     expect(docs.has(META_SECRET_PATH)).toBe(true);
-    expect(docs.has(GHL_SECRET_PATH)).toBe(true);
     expect(docs.has(IDX_SECRET_PATH)).toBe(true);
   });
 });

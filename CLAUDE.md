@@ -140,7 +140,6 @@ Adding a new gate: add the field to `SubAccountDoc`, write the default at the tw
 - **Custom Fields** — operator-defined fields on contacts and deals (GHL parity). Field types: text, number, date, dropdown, multiselect, checkbox, url, phone, email. Definitions stored at `subAccounts/{id}/customFields/{key}`; values stored inline on the entity doc as `customFields: { [key]: value }`. See "Custom Fields".
 - **Conversations / Unified Inbox** — cross-channel conversation list merging SMS, WhatsApp, Facebook Messenger, and Instagram DM threads. Thin index doc at `conversations/{contactId}` (channel, last message, unread count, bot mode). Operator views the thread at `/sa/[id]/conversations/[contactId]`. Bot mode toggles: `off` (manual only), `suggest` (drafts shown to operator), `auto` (AI replies automatically). See "Conversations (Unified Inbox)".
 - **Territory Scoping** — optional collaborator-level access restriction. When `territoryScopingEnabled === true` on the sub-account, collaborators only see contacts/deals/tasks/events tagged with their assigned territory (`territoryId`). Admins see everything. Indexes cover the `(subAccountId, territoryId)` composite for all scoped collections. See "Territory Scoping".
-- **GHL Import** — migrate contacts + deals + pipelines from GoHighLevel using a Private Integration Token. Import job fans out via QStash; progress tracked at `subAccounts/{id}/importJobs/{jobId}`. UI at `/sa/[id]/import`. See "GHL Import".
 - **Google Review Requests** — send a direct Google review link to contacts via email or SMS. Per-sub-account `googleReviewConfig.placeId` (the Google Business Profile place ID). Operator sends from the contact profile; activity row stamped. No Google OAuth required — the place ID is public.
 - **Sub-account Branding** — each sub-account can upload a `logoUrl` (stored on `SubAccountDoc.logoUrl`, updated via `PATCH /api/sub-accounts/[id]/branding`). Shown in the sidebar header and outbound email templates.
 - **Pipeline Stage Customization** — `SubAccountDoc.pipelineStages` overrides the default 6-stage array (`New → Contacted → Qualified → Proposal → Won / Lost`) with a custom ordered stage list. The pipeline board reads `pipelineStages` first, falls back to defaults. Managed from dashboard settings.
@@ -180,7 +179,6 @@ src/
         community/                Community group list + [groupId] (feed, classroom, members) (agency-gated)
         website/                  gitpage.site builder (long sectioned form)
         products/                 Product catalog (list + add/edit)
-        import/                   GHL import wizard + job-progress tracker
         logs/                     Automation + webhook delivery logs viewer
         templates/                Shared email/SMS template library
         ai-agents/                Shared persona + KB (Overview) + per-channel pages
@@ -248,8 +246,11 @@ src/
         conversations/            GET conversation index list + PATCH status/bot-mode
         branding/                 PATCH logoUrl (upload URL handled client-side)
         calendar.ics              GET RFC-5545 ICS feed (auth-protected)
-        import/ghl/               POST start GHL import job (Private Integration Token)
-        import/[jobId]/           GET job progress
+        import/jobs/              GET list + POST create a bulk-import job (public API v1)
+        import/jobs/[jobId]/      POST write one chunk of records
+          chunk/
+        import/jobs/[jobId]/      POST mark a job finished
+          finish/
         community/                GET list + POST create community group
         community/[groupId]/      GET/PATCH/DELETE community group
         community/[groupId]/      GET/POST community posts
@@ -263,7 +264,6 @@ src/
       workflows/[workflowId]/     POST trigger test run (dry-run against a contact)
         test/
       social/publish/step/        POST QStash callback — publish one scheduled social post
-      import/ghl/step/            POST QStash callback — process one GHL import batch
       community/[groupId]/        POST public magic-link sign-in for community members
         auth/
       dev-only/danger-wipe-       DEV TESTING ONLY — wipes everything in the agency
@@ -293,7 +293,6 @@ src/
     conversations/       Unified inbox: conversation-list, conversation-thread, channel-badge, bot-mode-toggle, composer
     community/           Group-list, post-feed, lesson-viewer (Tiptap renderer), member-leaderboard, DM thread
     custom-fields/       Field-definition list + editor, value-renderer (contact/deal profile inline)
-    import/              GHL-import wizard (token input → field-mapping → job-progress bar)
   config/
     landing.ts           CUSTOM_BRAND fields (white-label config)
   lib/
@@ -387,7 +386,7 @@ firebase.json            Deploys firestore.rules only
 | `contacts/{id}/metaMessages/{id}` | sub-account read; server-only create/delete; client `readAt`-only update | Facebook Messenger + Instagram DM messages. `channel` field discriminates (`facebook`/`instagram`). Doc id = Meta message id. |
 | `subAccounts/{id}/customFields/{key}` | admins write; members read | Custom field definitions. `key` (snake_case, immutable identifier), `label`, `type` (text/number/date/dropdown/multiselect/checkbox/url/phone/email), `options[]` (for dropdown/multiselect), `required`, `order`, `entity` (contact/deal). Values stored inline on the contact/deal doc under `customFields: { [key]: value }`. |
 | `subAccounts/{id}/territories/{territoryId}` | admins write; members read | Territory definitions when `territoryScopingEnabled` is on. Each territory is a named region; contacts/deals/tasks/events carry an optional `territoryId` for filter-based access control. |
-| `subAccounts/{id}/importJobs/{jobId}` | sub-account admin; server-only write | GHL import job tracking. `status` (queued/running/completed/failed), `source` (ghl), `totals` (contacts/deals/queued/processed/failed), `startedAt`, `completedAt`, error logs. QStash fan-out updates progress atomically via `FieldValue.increment()`. |
+| `subAccounts/{id}/importJobs/{jobId}` | sub-account admin; server-only write | Generic, source-agnostic bulk-import job tracking backing the public API v1 import endpoints (`POST /api/sub-accounts/[id]/import/jobs/*`). `source` (`csv`\|`ghl`\|`api`), `status` (queued/running/completed/failed), per-entity `totals` (contacts/deals/tasks/events/notes — each with received/created/updated/skipped/failed), a capped error sample, `createdAt`/`updatedAt`/`finishedAt`. Writes go through `lib/import/bulk-write.ts::writeImportChunk()` (batched, upserts by `external_id`) and `lib/import/job-progress.ts::applyChunkResultToJob()` (atomic per-entity increments). See "GHL Import (removed)". |
 | `workflows/{workflowId}` | sub-account admin write; members read | Workflow definition. `name`, `status` (draft/active/paused), `trigger` (`{type: WorkflowTriggerType, config}`), `nodes[]` (ordered `{id, type: WorkflowNodeType, config, nextIds[]}`), `enabled`. Stored flat (not a graph object) — `nextIds[]` encodes the DAG edges; `if_else` nodes carry `trueNextId` + `falseNextId`. |
 | `workflowRuns/{runId}` | sub-account read; server-only write | Per-execution log. `workflowId`, `contactId`, `status` (running/completed/failed/stopped), `startedAt`, `completedAt`, `nodeResults[]` (per-node outcome log). Doc id = random UUID. Client subscribes to the run detail page via onSnapshot. |
 | `communityGroups/{groupId}` | sub-account admin write; community members read | Community group config. `subAccountId`, `name`, `slug`, `access` (free/paid), `joinPolicy` (open/approval), `status`, `coverUrl`, `logoUrl`, `memberCount`, `priceId` (Stripe price for paid groups). |
@@ -1019,11 +1018,11 @@ Without these two vars the email setup wizard still renders, but the Google opti
 
 **`auth` must be an OAuth2 client, never a token string.** `google.gmail({ version: "v1", auth })` accepts a string and treats it as an **API key** — appended as `?key=<value>` with no Authorization header. Passing a raw access token there makes every send fail with 401 and writes the token into the request URL. It type-checks and it builds; the only thing that catches it is [google-workspace.test.ts](src/lib/comms/google-workspace.test.ts), which asserts the Bearer header. Do not "simplify" that wiring.
 
-**The same module now holds three more.** `metaConfig.pageAccessToken`, `ghlImportConfig.token` / `refreshToken`, and `idxConfig.accessKey` were all sitting on the member-readable parent document with the identical exposure. They now live at `subAccounts/{id}/secrets/{meta,ghlImport,idx}` behind `loadMetaSecrets()` / `loadGhlImportSecrets()` / `loadIdxSecrets()`, each with the same lazy migration that deletes the inline copy on first read.
+**The same module also holds `metaConfig.pageAccessToken` and `idxConfig.accessKey`.** Both were sitting on the member-readable parent document with the identical exposure. They now live at `subAccounts/{id}/secrets/{meta,idx}` behind `loadMetaSecrets()` / `loadIdxSecrets()`, each with the same lazy migration that deletes the inline copy on first read. (A third — `ghlImportConfig.token` / `refreshToken` behind `loadGhlImportSecrets()` — followed the same pattern before the GHL connection it secured was removed entirely; see "GHL Import (removed)".)
 
 Two things to preserve when touching these:
 - **Never spread a config object back onto the parent.** `lib/idx/sync.ts` writes sync status by merging the config back; it destructures `accessKey` out explicitly, because spreading is exactly how a migrated credential gets silently re-inlined.
-- **`connected` is a public marker, not decoration.** The GHL and IDX settings UI used to derive "connected" from the presence of the credential itself. That test stops working the moment the credential moves, so the migration stamps `connected: true` in the same write that strips the inline copy, and the readers accept either.
+- **`connected` is a public marker, not decoration.** The IDX settings UI used to derive "connected" from the presence of the credential itself. That test stops working the moment the credential moves, so the migration stamps `connected: true` in the same write that strips the inline copy, and the readers accept either.
 
 **Still open (deliberate):** `twilioConfig.authToken` sits on the same member-readable parent document with the same exposure. It is read directly by 6 call sites including the Twilio + WhatsApp inbound webhooks (which use it for signature verification), so migrating it means converting all of them in lockstep. That belongs in its own change — see the FOLLOW-UP note at the bottom of `sub-account-secrets.ts`.
 
@@ -1702,29 +1701,16 @@ This is enforced server-side, not in Firestore rules — the rules continue to c
 2. Sub-account admin creates territories (Settings → Territories) and assigns them to collaborator members.
 3. Admin assigns `territoryId` to contacts as needed (bulk-assign via the contacts list action menu or individual contact profile).
 
-## GHL Import
+## GHL Import (removed)
 
-One-click import from GoHighLevel using a Private Integration Token. The import job fans out via QStash and tracks progress in Firestore.
+The earlier connected GoHighLevel import — an OAuth handshake plus a website-transfer assessment, reached via a dedicated `/sa/[id]/import` wizard, `ghlImportConfig` on the sub-account doc, and `subAccounts/{id}/secrets/ghlImport` — was removed. It never reliably completed the connection in production and had drifted from its own documentation (the OAuth-based flow that shipped didn't match the Private-Integration-Token flow this section used to describe), so it was a dead end for operators rather than a working migration path.
 
-### Flow
+**What replaced it:**
+- **Business source** (Foundation setup, "Replace my existing site" mode) — every prior platform, GoHighLevel included, now uses the same generic flow: paste the public website/business-profile URL, AgentStack scrapes only verifiable facts into a Business Blueprint draft for review. No OAuth, no connected account.
+- **Contacts** — bring data over as a CSV export from the source platform via the existing **Import CSV** action on `/sa/[id]/contacts`. This was always the generic, platform-agnostic import path; it's now the only one for migrating contact records.
+- The generic bulk-import infrastructure (`lib/import/bulk-write.ts`, `lib/import/job-progress.ts`, `types/import.ts`, `subAccounts/{id}/importJobs/{jobId}`) is intentionally untouched — it backs the public API v1 bulk-import endpoint (`POST /api/sub-accounts/[id]/import/jobs/[jobId]/chunk`) and was never GHL-specific.
 
-1. Operator goes to `/sa/[id]/import` and clicks **Import from GoHighLevel**.
-2. Pastes a **GHL Private Integration Token** (created in GHL → Settings → Integrations → Private Integrations). Also pastes the **Location ID** of the GHL sub-account they're migrating.
-3. `POST /api/sub-accounts/[id]/import/ghl` validates the token against the GHL API, creates an `importJobs/{jobId}` doc with `status: "queued"`, and fans out batched QStash messages — one per 100 contacts.
-4. Each QStash step (`POST /api/import/ghl/step`) fetches a page of GHL contacts + deals, writes them to Firestore via `lib/import/bulk-write.ts` (batched 500-doc writes), and atomically increments `importJobs/{jobId}.totals.*` via `FieldValue.increment()`.
-5. The operator's import page subscribes to the job doc via onSnapshot and shows a live progress bar.
-
-### What's imported
-
-- **Contacts** — all standard fields (name, email, phone, address, tags, source, assignedUser). GHL custom fields are imported as AgentStack custom fields if a matching `key` exists; otherwise logged as `unmappedFields`.
-- **Deals (Opportunities)** — mapped to the matching pipeline stage. If the stage name doesn't match a AgentStack stage (or the sub-account's `pipelineStages` override), the deal is placed at "New".
-- **NOT imported** — conversations/messages, automation history, email templates, files/documents, website funnels. v1 scope is contacts + deals only.
-
-### Credentials storage
-
-The GHL token lives in the server-only secrets subcollection at `subAccounts/{id}/secrets/ghlImport`, reached through `lib/comms/sub-account-secrets.ts::loadGhlImportSecrets()`. Only the public half — `connected`, `locationId`, `authMethod`, `connectedAt` — stays on `SubAccountDoc.ghlImportConfig` so the settings UI can render the connected state.
-
-It was previously stored inline on that parent document, described here as protected because "Firestore rules block member reads of this field". **That was wrong: Firestore has no field-level read rules.** The parent doc is readable by every active member down to `collaborator`, so the token was readable by all of them. `loadGhlImportSecrets()` lazily migrates pre-existing connections and deletes the inline copy on first read. After import completion, operators should still revoke the token in GHL.
+If a connected GoHighLevel import is rebuilt in the future, treat this as a fresh design rather than resurrecting the removed code — the OAuth app registration, token storage pattern (`subAccounts/{id}/secrets/{name}`, never inline on the parent doc), and QStash fan-out shape are all still sound references, but the removed implementation's OAuth flow was never verified working end-to-end.
 
 ## Affiliate Program
 
@@ -1761,8 +1747,6 @@ No new env vars beyond what's already required. The affiliate surfaces are gated
 - **Custom field `type: "dropdown"` shows no options** — `options[]` was left empty when the field was created. Edit the field definition to add options.
 - **Conversations inbox shows "No conversations yet" despite SMS threads existing** — the `conversations/{contactId}` index wasn't written because the inbound SMS arrived before the Conversations feature was deployed (old messages didn't trigger `upsertConversationForMessage`). The index only updates on NEW inbound messages. A one-time backfill script can populate historical rows if needed.
 - **Territory-filtered contacts list returns nothing for a collaborator** — their membership doc may not have a `territoryId` assigned, which causes the server to treat them as having no territory (returns empty). Check Settings → Members and assign a territory.
-- **GHL import job hangs at "queued"** — QStash isn't delivering the first step callback. Check `QSTASH_URL` region matches the signing keys, and that `/api/import/ghl/step` is in the `PUBLIC_PATH_PATTERNS` (it must be, since security is the QStash signature).
-- **GHL import succeeds but custom fields are empty** — the GHL custom field keys don't match the AgentStack custom field definitions. The import logs the unmapped fields in `importJobs/{jobId}.unmappedFields`. Create matching custom field definitions first, then re-import.
 - **`STRIPE_FOUNDERS_PRICE_ID` not recognized** — this env var is only read by the founders-cohort checkout flow in `src/lib/stripe/checkout.ts`. If you don't have a founders cohort, leave it unset — the standard `STRIPE_PRO_PRICE_ID` flow is unaffected.
 
 ## The new-user standard: no guessing

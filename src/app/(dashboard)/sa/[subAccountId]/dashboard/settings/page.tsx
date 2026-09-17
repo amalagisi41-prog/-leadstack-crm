@@ -19,7 +19,6 @@ import { SubAccountMembersSection } from "@/components/settings/sub-account-memb
 import { SubAccountTerritoriesSection } from "@/components/settings/sub-account-territories-section";
 import { SubAccountCustomFieldsSection } from "@/components/settings/sub-account-custom-fields-section";
 import { SubAccountPipelineSection } from "@/components/settings/sub-account-pipeline-section";
-import { GhlImportWizard } from "@/components/import/ghl-import-wizard";
 import { SubAccountSmsSection } from "@/components/settings/sub-account-sms-section";
 import { SubAccountA2pSection } from "@/components/settings/sub-account-a2p-section";
 import { SubAccountMetaSection } from "@/components/settings/sub-account-meta-section";
@@ -108,9 +107,7 @@ export default function SettingsPage() {
     const requestedTab = params.get("tab");
     if (
       requestedTab &&
-      ["admin", "messaging", "api", "custom-fields", "import"].includes(
-        requestedTab
-      )
+      ["admin", "messaging", "api", "custom-fields"].includes(requestedTab)
     ) {
       setSettingsTab(requestedTab);
     }
@@ -279,7 +276,6 @@ export default function SettingsPage() {
           <TabsTrigger value="messaging">Messaging &amp; email</TabsTrigger>
           <TabsTrigger value="api">API</TabsTrigger>
           <TabsTrigger value="custom-fields">Custom Fields</TabsTrigger>
-          <TabsTrigger value="import">Importer</TabsTrigger>
         </TabsList>
 
         {/* ---------- Admin: contact, branding, plan, members, territories,
@@ -410,11 +406,6 @@ export default function SettingsPage() {
             (the migration-target schema; also useful standalone) ---------- */}
         <TabsContent value="custom-fields" className="mt-6 space-y-6">
           <SubAccountCustomFieldsSection />
-        </TabsContent>
-
-        {/* ---------- Import: GoHighLevel migration wizard ---------- */}
-        <TabsContent value="import" className="mt-6 space-y-6">
-          <GhlImportWizard />
         </TabsContent>
 
         {/* ---------- Messaging: SMS/WhatsApp sender, email domain, reviews ---------- */}

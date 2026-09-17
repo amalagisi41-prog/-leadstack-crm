@@ -32,8 +32,6 @@ export default function GetStartedPage() {
   /** True when this member lacks admin rights and so cannot run setup at all. */
   const [adminOnly, setAdminOnly] = useState(false);
   const requestedStep = searchParams.get("step");
-  const isGhlJourney =
-    searchParams.get("source") === "ghl" || searchParams.has("ghl");
   const initialStep =
     requestedStep &&
     ["build", "connect", "capture", "respond", "nurture", "close"].includes(
@@ -43,36 +41,13 @@ export default function GetStartedPage() {
       : null;
   const setupIsComplete = Boolean(subAccount?.onboardingWizardCompletedAt);
 
+  useEffect(() => {
+    if (loading || !subAccount || requestedStep || !setupIsComplete) return;
+    router.replace(saPath("/dashboard"));
+  }, [loading, requestedStep, router, saPath, setupIsComplete, subAccount]);
+
   // Idempotent migration for workspaces created before the Solo entitlement
   // baseline shipped.
-  useEffect(() => {
-    if (!isGhlJourney || !subAccountId) return;
-    const destination = new URLSearchParams({ source: "ghl" });
-    const status = searchParams.get("ghl");
-    if (status) destination.set("ghl", status);
-    router.replace(`${saPath("/import")}?${destination.toString()}`);
-  }, [isGhlJourney, router, saPath, searchParams, subAccountId]);
-
-  useEffect(() => {
-    if (
-      loading ||
-      !subAccount ||
-      isGhlJourney ||
-      requestedStep ||
-      !setupIsComplete
-    )
-      return;
-    router.replace(saPath("/dashboard"));
-  }, [
-    isGhlJourney,
-    loading,
-    requestedStep,
-    router,
-    saPath,
-    setupIsComplete,
-    subAccount,
-  ]);
-
   useEffect(() => {
     if (!subAccountId || !subAccount) return;
     const alreadyAligned =
@@ -133,7 +108,6 @@ export default function GetStartedPage() {
   }
 
   if (
-    isGhlJourney ||
     (setupIsComplete && !requestedStep) ||
     loading ||
     !subAccount ||

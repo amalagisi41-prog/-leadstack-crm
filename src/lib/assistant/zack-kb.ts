@@ -16,35 +16,22 @@ export const ZACK_PRODUCT_KB = `# AgentStack product guide
 - Site Health: Site Health shows the completion score and remaining website/compliance tasks.
 - Clients: Conversations, People, Client Journeys, Calendar, Booking.
 - Growth: Lead Capture, Follow-Up Plans, Marketing Pages.
-- Business: Business Blueprint, AI Assistants, Connections, Domain, AI Website Studio, Media Library, Templates, Analytics, Logs, Import Contacts, Settings.
+- Business: Business Blueprint, AI Assistants, Connections, Domain, AI Website Studio, Media Library, Templates, Analytics, Logs, Settings.
 
 ## Guided setup
 - Setup is Build as you go: Domain -> External host -> Business source -> Business Blueprint -> Website build -> connections and launch.
 - Start with the domain and the external provider already serving the website. AgentStack does not provide, sell, register, transfer, or replace website hosting. It records the current provider, helps prepare content, and checks the live domain without asking the operator to move the site.
 - The Live build viewer keeps an existing site or new Website Studio build visible while setup continues. AI Website Studio uses the approved Business Blueprint and Claude-assisted creation; Vibe.co is an optional website-building connection.
-- For an existing business, choose Connect my existing business and select GoHighLevel, Follow Up Boss, kvCORE, Lofty, Chime, WordPress, or the actual source. Use a direct connection when AgentStack shows one; otherwise use the guided import and public-site assessment shown on screen.
+- For an existing business, choose Connect my existing business and select GoHighLevel, Follow Up Boss, kvCORE, Lofty, Chime, WordPress, or the actual source, then paste the operator's public website and business-profile links. AgentStack scrapes only verifiable facts into a Business Blueprint draft — nothing is imported or published without the operator's review and approval.
 - The six-step setup is Build, Connect, Capture, Respond, Nurture, Close.
 - Business Blueprint is the trusted source for the operator's identity, brokerage, service areas, voice, compliance rules, processes, FAQs, and assets. Imported public facts remain a draft until approved.
 - Treat the Business Blueprint as the business master prompt. New approved setup facts, brand assets, processes, FAQs, connections, and decisions should inform future assistance. Never overwrite verified or user-approved facts merely because a public page conflicts.
 - Subscription and stored-card details are handled by Stripe. AgentStack may streamline an approved purchase, but Zack must never request card numbers or claim an add-on was charged without confirmation.
 - If the user asks what to do next during setup, give the single next action on their current screen, then briefly explain what follows.
 
-## GoHighLevel connection and transfer
-- AgentStack's goal is to bring the selected GoHighLevel location into AgentStack, not move it to another GoHighLevel account.
-- On Before Step 1: choose Bring my business, select GoHighLevel (GHL), then click Log in to GoHighLevel.
-- HighLevel handles the login. AgentStack never asks for or stores the operator's GHL password.
-- The order is: log in -> choose a GHL location -> approve requested read-only access -> return to AgentStack -> approve the read-only migration assessment -> review the transfer plan.
-- After OAuth returns as connected, the screen shows Allow a read-only migration assessment. Check it, then click Start website transfer.
-- The assessment may read the selected location's website structure, contacts, pipelines, custom fields, and approved assets. It changes nothing in GHL and publishes nothing in AgentStack without separate approval.
-- The data importer brings contacts, opportunities/deals, notes, tags, source, addresses, and mapped custom fields. The operator reviews pipeline-stage and custom-field mapping before the import runs.
-- Re-running the data import updates records matched by their GHL id rather than intentionally creating duplicates.
-- GHL workflows, funnels/pages, calendars, forms, saved templates, files/media, and message history are not directly imported by the current data importer. AgentStack uses the assessment/transfer plan to identify what must be rebuilt natively.
-- If connection fails, advise the operator to retry Log in to GoHighLevel and confirm they chose the correct location and approved the requested access. Do not suggest CSV export until the connected import path has actually failed or the operator explicitly chooses a manual fallback.
-- If HighLevel displays "noAppVersionIdFound" or “No integration found,” explain that the Marketplace app has no installable version for that account. It is not a bad password. The platform administrator must activate a private testing version or wait for public Marketplace approval; no import has started.
-
 ## Other setup paths
 - Public profile prefill: in Business Blueprint, paste a public website, brokerage, Zillow, Realtor.com, or Homes.com page. AgentStack fills only verifiable details; the operator reviews and saves the draft.
-- Contacts: use People or Import Contacts for CSV imports and manual contacts.
+- Contacts: use People (Contacts) for CSV imports and manual contacts. There is no direct connected-account import from GoHighLevel or any other CRM — bring records over as a CSV export from the source platform.
 - Lead Capture: create a form; submissions can create contacts and enter follow-up.
 - Follow-Up Plans: configure the response sequence connected to a lead source.
 - Listing re-promotion: Zack can prepare a 30/60/90-day plan for an approved listing. Day 30 refreshes positioning and creative, day 60 expands distribution and follow-up, and day 90 prepares a seller-review package with performance evidence and next-step options. Planning is read-only; scheduling or sending requires the operator's explicit approval and the necessary listing, channel, and contact connections.

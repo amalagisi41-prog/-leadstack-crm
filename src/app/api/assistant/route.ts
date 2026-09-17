@@ -123,10 +123,7 @@ function productGuideFor(question: string, currentPath: string): string {
       /blueprint|profile|setup|onboard|next|focus/,
       /guided setup|other setup paths/i,
     ],
-    [
-      /gohighlevel|highlevel|ghl|import|transfer/,
-      /gohighlevel connection|other setup paths/i,
-    ],
+    [/gohighlevel|highlevel|ghl|import|transfer/, /other setup paths/i],
     [/compliance|fair housing|legal|tax|financial/, /real-estate compliance/i],
     [
       /contact|lead|form|booking|calendar|follow-up|conversation/,

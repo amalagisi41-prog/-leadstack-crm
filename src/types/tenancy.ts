@@ -452,13 +452,6 @@ export interface SubAccountDoc {
   /** When the check above last ran. Absent = never. */
   customDomainCheckedAt?: Date | null;
   /**
-   * GHL migration connection (Phase 4). Holds the Private Integration Token +
-   * location id used to pull the account's data. The token is a secret stored
-   * like `twilioConfig.authToken` — server-only, never returned to the client.
-   * Null until connected; cleared on disconnect.
-   */
-  ghlImportConfig?: GhlImportConfig | null;
-  /**
    * IDX Broker connection for the realtor's own MLS listings. Holds the
    * Platinum API access key (server-only, stored like `twilioConfig.authToken`)
    * + the approved MLS id it searches. Null until connected; preserved (not
@@ -480,30 +473,6 @@ export interface SubAccountDoc {
    * is complete.
    */
   onboardingLifecycleEmails?: OnboardingLifecycleEmails | null;
-}
-
-export interface GhlImportConfig {
-  /**
-   * @deprecated Never write this. The token lives in the server-only secrets
-   * subcollection — `subAccounts/{id}/secrets/ghlImport` — reached through
-   * `lib/comms/sub-account-secrets.ts::loadGhlImportSecrets()`. Retained only
-   * so that loader can lazily migrate pre-existing connections; the migration
-   * deletes it from this document on first read.
-   */
-  token?: string;
-  /** @deprecated Same as `token`. Lives in the secrets subcollection. */
-  refreshToken?: string;
-  /**
-   * True once a token has been stored. Public marker, safe on this
-   * member-readable document — it replaces the old "is `token` present?" test,
-   * which stops working the moment the token moves out of here.
-   */
-  connected?: boolean;
-  /** The GHL sub-account (location) id this token is scoped to. */
-  locationId: string;
-  connectedByUid: string | null;
-  connectedAt: Timestamp | FieldValue | null;
-  lastValidatedAt: Timestamp | FieldValue | null;
 }
 
 export interface IdxConfig {
