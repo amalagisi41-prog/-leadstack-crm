@@ -40,7 +40,7 @@ export function buildRprHomeUrl(rprOrgId: string): string {
 
 /**
  * Full postal address for pasting into RPR's own property search box.
- * RPR's search expects a single line like "303 Weed Ave, Stamford, CT 06902"
+ * RPR's search expects a single line like "123 Main St, Stamford, CT 06902"
  * — matches the format confirmed against RPR's live search UI.
  */
 export function formatAddressForRpr(fields: {

@@ -152,6 +152,6 @@ describe("businessProfileCompleteness", () => {
   });
 
   it("does not count compliance defaults as completed work", () => {
-    expect(businessProfileCompleteness(make({ agentName: "Seamus Costigan" }))).toBe(14);
+    expect(businessProfileCompleteness(make({ agentName: "Jordan Rivera" }))).toBe(14);
   });
 });

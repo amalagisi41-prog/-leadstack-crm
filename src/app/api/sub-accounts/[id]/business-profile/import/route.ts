@@ -147,6 +147,30 @@ function directoryProfileHost(url: string): string {
 }
 
 /**
+ * First-party agent/brokerage sites the operator has told us are safe for
+ * labelled text-heuristic parsing (see `conservativeProfileFromPage` +
+ * `isFirstPartyAgentSite` below). Every credential and config in this repo
+ * is user-provided (see CLAUDE.md) — this is no exception. Comma-separated
+ * hostnames, e.g. `BUSINESS_PROFILE_TRUSTED_AGENT_HOSTS=myagentsite.com`.
+ * Empty/unset means no host gets this treatment, which is always safe: the
+ * page just falls back to the generic JSON-LD/schema.org extractor.
+ */
+function trustedAgentHosts(): Set<string> {
+  return new Set(
+    (process.env.BUSINESS_PROFILE_TRUSTED_AGENT_HOSTS ?? "")
+      .split(",")
+      .map((host) => host.trim().toLowerCase())
+      .filter(Boolean)
+  );
+}
+
+function isTrustedAgentHost(host: string): boolean {
+  if (!host) return false;
+  const trusted = trustedAgentHosts();
+  return [...trusted].some((domain) => host === domain || host.endsWith(`.${domain}`));
+}
+
+/**
  * Zillow's reader output is stable, labelled profile text. Extract those
  * labels directly so a model outage cannot turn a complete public profile
  * into a misleading name-only "AI import". Every value below must occur in
@@ -292,9 +316,10 @@ function conservativeProfileFromPage(url: string, text: string): Record<string, 
   );
   // First-party brokerage/agent sites are also safe for labelled heuristics:
   // they commonly publish the same stable contact block as a directory, but
-  // do not use schema.org for a licence number. Keep this list explicit so a
-  // random free-form page can never donate a footer phone or licence.
-  const isKnownAgentSite = host === "artisanhomenetwork.com" || host.endsWith(".artisanhomenetwork.com");
+  // do not use schema.org for a licence number. Restricted to the operator's
+  // own opted-in host(s) (BUSINESS_PROFILE_TRUSTED_AGENT_HOSTS) so a random
+  // free-form page can never donate a footer phone or licence.
+  const isKnownAgentSite = isTrustedAgentHost(host);
   if (!isKnownDirectory && !isKnownAgentSite) return {};
   const result: Record<string, unknown> = {};
   const normalized = text.replace(/\s+/g, " ").trim();
@@ -332,10 +357,11 @@ function conservativeProfileFromPage(url: string, text: string): Record<string, 
     )?.[1];
     if (labelledBrokerage) result.brokerage = labelledBrokerage.trim();
   }
-  // Artisan pages can place a referral footer before the profile card in the
-  // server-rendered stream. Scope the first-party phone search to the agent's
-  // own heading through the bio/section boundary; otherwise `(978) 622-2360`
-  // wins simply because it appeared earlier in the HTML.
+  // A trusted first-party page can place a referral footer before the
+  // profile card in the server-rendered stream. Scope the first-party phone
+  // search to the agent's own heading through the bio/section boundary;
+  // otherwise an earlier-appearing footer/referral number wins simply
+  // because it appeared earlier in the HTML.
   const phoneText = isKnownAgentSite
     ? normalized.slice(
         Math.max(
@@ -358,7 +384,7 @@ function conservativeProfileFromPage(url: string, text: string): Record<string, 
   const priceRange = normalized.match(/\$\d+(?:\.\d+)?[KMB]?\s*[-–]\s*\$\d+(?:\.\d+)?[KMB]?/i)?.[0];
   if (priceRange) result.priceRanges = priceRange.replace(/\s+/g, "");
   // Directory pages use both "License #1234" and the more useful
-  // "Agent License: Connecticut RES.0804225" form. Keep the state and the
+  // "Agent License: Connecticut RES.0000000" form. Keep the state and the
   // explicitly labelled identifier together; never treat an arbitrary ID or
   // listing number as a licence.
   const labelledLicense = normalized.match(
@@ -562,14 +588,7 @@ async function importProfile(
   // labelled contact with that later declaration. Keep the narrow, host-aware
   // text fact in front for these pages; directory/schema facts retain their
   // existing precedence everywhere else.
-  const isFirstPartyAgentSite = (() => {
-    try {
-      const host = new URL(url).hostname.toLowerCase().replace(/^www\./, "");
-      return host === "artisanhomenetwork.com" || host.endsWith(".artisanhomenetwork.com");
-    } catch {
-      return false;
-    }
-  })();
+  const isFirstPartyAgentSite = isTrustedAgentHost(directoryProfileHost(url));
   const sourceFacts = sanitizeImportedProfile(
     isFirstPartyAgentSite
       ? { ...declaredFacts, ...textFacts }

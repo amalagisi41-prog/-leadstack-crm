@@ -77,11 +77,11 @@ describe("IDX Broker featured listings client", () => {
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue(
-        new Response(JSON.stringify({ results: [{ listingNumber: "24194554", address: "303 Weed Ave" }] }), { status: 200 }),
+        new Response(JSON.stringify({ results: [{ listingNumber: "10000001", address: "123 Main Street" }] }), { status: 200 }),
       ),
     );
     await expect(fetchIdxListings("test-access-key")).resolves.toEqual([
-      { listingNumber: "24194554", address: "303 Weed Ave" },
+      { listingNumber: "10000001", address: "123 Main Street" },
     ]);
   });
 });

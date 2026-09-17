@@ -38,11 +38,11 @@ describe("legacy document tolerance", () => {
     // `compliance?.fairHousingStatement.trim()` guarded the object but not
     // the field, so this shape threw a 500 inside the publish route.
     const partial = {
-      agentName: "Franco Malagisi",
-      brokerage: "Marr & Caruso Realty Group LLC",
-      phone: "978-622-2360",
+      agentName: "Jordan Avery",
+      brokerage: "Avery Property Group LLC",
+      phone: "978-555-0148",
       serviceAreas: "Connecticut, Massachusetts",
-      compliance: { licenseNumber: "RES.0800123" },
+      compliance: { licenseNumber: "RES.0000000" },
     } as never;
 
     expect(() => assessAgentSitePublishReadiness(partial)).not.toThrow();
@@ -58,9 +58,9 @@ describe("legacy document tolerance", () => {
     // The client assessed normalized state while the publish route assessed
     // the raw document, so the server could 409 a publish the UI had cleared.
     const raw = {
-      agentName: "Franco Malagisi",
-      brokerage: "Marr & Caruso Realty Group LLC",
-      phone: "978-622-2360",
+      agentName: "Jordan Avery",
+      brokerage: "Avery Property Group LLC",
+      phone: "978-555-0148",
       serviceAreas: "Connecticut, Massachusetts",
     } as never;
     const normalized = normalizeAgentSiteContent(raw);

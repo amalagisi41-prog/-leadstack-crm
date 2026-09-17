@@ -47,23 +47,23 @@ beforeEach(() => {
 describe("business-profile persistence", () => {
   it("does not refill the importer from a legacy source URL", async () => {
     stored = {
-      agentName: "Seamus Costigan",
-      website: "https://seamuscostigan.com",
-      importSourceUrl: "https://www.zillow.com/profile/Seamus%20Costigan",
+      agentName: "Jordan Rivera",
+      website: "https://jordan-rivera-realty.test",
+      importSourceUrl: "https://www.zillow.com/profile/Jordan%20Rivera",
     };
 
     const response = await GET(new Request("http://localhost"), ctx);
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(body.profile.website).toBe("https://seamuscostigan.com");
+    expect(body.profile.website).toBe("https://jordan-rivera-realty.test");
     expect(body.importSourceUrl).toBe("");
   });
 
   it("clears a directory URL left in the permanent website field by an old import", async () => {
     stored = {
-      agentName: "Seamus Costigan",
-      website: "https://www.zillow.com/profile/Seamus%20Costigan",
+      agentName: "Jordan Rivera",
+      website: "https://www.zillow.com/profile/Jordan%20Rivera",
     };
 
     const response = await GET(new Request("http://localhost"), ctx);
@@ -75,17 +75,17 @@ describe("business-profile persistence", () => {
 
   it("backs up the approved profile and removes the legacy import source on save", async () => {
     stored = {
-      agentName: "Seamus Costigan",
-      website: "https://seamuscostigan.com",
-      importSourceUrl: "https://www.zillow.com/profile/Seamus%20Costigan",
+      agentName: "Jordan Rivera",
+      website: "https://jordan-rivera-realty.test",
+      importSourceUrl: "https://www.zillow.com/profile/Jordan%20Rivera",
       completeness: 100,
     };
     const request = new Request("http://localhost", {
       method: "PATCH",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        agentName: "Seamus Costigan",
-        website: "https://seamuscostigan.com",
+        agentName: "Jordan Rivera",
+        website: "https://jordan-rivera-realty.test",
       }),
     });
 
@@ -95,7 +95,7 @@ describe("business-profile persistence", () => {
     expect(batchSet).toHaveBeenCalledWith(
       revisionDoc,
       expect.objectContaining({
-        agentName: "Seamus Costigan",
+        agentName: "Jordan Rivera",
         completeness: 100,
         reason: "before_explicit_save",
       })
@@ -103,8 +103,8 @@ describe("business-profile persistence", () => {
     expect(batchSet).toHaveBeenCalledWith(
       mainRef,
       expect.objectContaining({
-        agentName: "Seamus Costigan",
-        website: "https://seamuscostigan.com",
+        agentName: "Jordan Rivera",
+        website: "https://jordan-rivera-realty.test",
         importSourceUrl: DELETE,
         importReviewed: true,
       }),
@@ -115,10 +115,10 @@ describe("business-profile persistence", () => {
 
   it("archives the current Blueprint and replaces it with a clean slate", async () => {
     stored = {
-      agentName: "Seamus Costigan",
-      brokerage: "Marr Caruso Realty Group",
-      website: "https://www.zillow.com/profile/Seamus%20Costigan",
-      importSourceUrl: "https://www.zillow.com/profile/Seamus%20Costigan",
+      agentName: "Jordan Rivera",
+      brokerage: "Example Realty Group",
+      website: "https://www.zillow.com/profile/Jordan%20Rivera",
+      importSourceUrl: "https://www.zillow.com/profile/Jordan%20Rivera",
       completeness: 75,
     };
 
@@ -135,7 +135,7 @@ describe("business-profile persistence", () => {
     expect(batchSet).toHaveBeenCalledWith(
       revisionDoc,
       expect.objectContaining({
-        agentName: "Seamus Costigan",
+        agentName: "Jordan Rivera",
         completeness: 75,
         reason: "operator_clean_slate_reset",
       })

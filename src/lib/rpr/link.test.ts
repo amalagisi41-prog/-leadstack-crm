@@ -52,33 +52,33 @@ describe("formatAddressForRpr", () => {
   it("formats a full address the way RPR's search box expects", () => {
     expect(
       formatAddressForRpr({
-        address: "303 Weed Ave",
+        address: "123 Main St",
         city: "Stamford",
         state: "CT",
         zip: "06902",
       })
-    ).toBe("303 Weed Ave, Stamford, CT 06902");
+    ).toBe("123 Main St, Stamford, CT 06902");
   });
 
   it("omits a missing zip without leaving a trailing space", () => {
     expect(
       formatAddressForRpr({
-        address: "303 Weed Ave",
+        address: "123 Main St",
         city: "Stamford",
         state: "CT",
         zip: null,
       })
-    ).toBe("303 Weed Ave, Stamford, CT");
+    ).toBe("123 Main St, Stamford, CT");
   });
 
   it("drops empty city/state segments cleanly", () => {
     expect(
       formatAddressForRpr({
-        address: "303 Weed Ave",
+        address: "123 Main St",
         city: "",
         state: "",
         zip: "",
       })
-    ).toBe("303 Weed Ave");
+    ).toBe("123 Main St");
   });
 });

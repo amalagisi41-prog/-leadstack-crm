@@ -37,7 +37,7 @@ import {
  */
 
 const PROFILE = "https://www.homes.com/real-estate-agents/jane-doe/abc123/";
-const ZILLOW_PROFILE = "https://www.zillow.com/profile/Seamus%20Costigan";
+const ZILLOW_PROFILE = "https://www.zillow.com/profile/Jordan%20Rivera";
 
 /** A page with enough text to look like a real bio. */
 const BIO = `<html><body><h1>Jane Doe</h1><p>${"Jane has helped families buy and sell across the county for eleven years. ".repeat(
@@ -267,18 +267,18 @@ describe("reading a page end to end", () => {
   });
 
   it("keeps Zillow's summary and tail contact details within the extraction budget", async () => {
-    const summary = `Seamus Costigan Marr Caruso Realty Group 5.0 28 reviews ${"profile summary ".repeat(80)}`;
+    const summary = `Jordan Rivera Example Realty Group 5.0 28 reviews ${"profile summary ".repeat(80)}`;
     const listings = "listing history card ".repeat(8_000);
-    const contact = `${"footer context ".repeat(80)} Service areas (3) Norwalk, CT Stamford, CT Fairfield, CT Contact Seamus Costigan (203) 550-0531 sc.newbridge@gmail.com`;
+    const contact = `${"footer context ".repeat(80)} Service areas (3) Norwalk, CT Stamford, CT Fairfield, CT Contact Jordan Rivera (203) 555-0100 jordan@example.com`;
     fetchMock.mockResolvedValueOnce(
       htmlResponse(`<html><body>${summary}${listings}${contact}</body></html>`)
     );
 
     const text = await readPublicPage(ZILLOW_PROFILE);
 
-    expect(text).toMatch(/Marr Caruso Realty Group/);
+    expect(text).toMatch(/Example Realty Group/);
     expect(text).toMatch(/Service areas \(3\)/);
-    expect(text).toMatch(/sc\.newbridge@gmail\.com/);
+    expect(text).toMatch(/jordan@example\.com/);
     expect(text.length).toBeLessThanOrEqual(61_000);
     expect(fetchMock.mock.calls[0][0]).toBe(
       `https://r.jina.ai/${ZILLOW_PROFILE}`
@@ -374,12 +374,12 @@ describe("reading a page end to end", () => {
       )
       .mockResolvedValueOnce(
         new Response(
-          `Jane Doe\nMarr Caruso Realty Group\nAgent License: Connecticut RES.0804225\n(203) 550-0531\n${"Jane sells homes across Fairfield County. ".repeat(12)}`,
+          `Jane Doe\nExample Realty Group\nAgent License: Connecticut RES.0000000\n(203) 555-0100\n${"Jane sells homes across Fairfield County. ".repeat(12)}`,
           { status: 200 },
         ),
       );
 
-    await expect(readPublicPage(PROFILE)).resolves.toMatch(/RES\.0804225/);
+    await expect(readPublicPage(PROFILE)).resolves.toMatch(/RES\.0000000/);
     expect(fetchMock).toHaveBeenCalledTimes(3);
     expect(fetchMock.mock.calls[2][1]).toEqual(
       expect.objectContaining({

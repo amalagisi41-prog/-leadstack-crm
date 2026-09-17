@@ -3,7 +3,7 @@ import { prefillBookingFromBlueprint, parseBusinessHours } from "./blueprint-pre
 import { defaultBookingPageFormData } from "./defaults";
 
 const profile = {
-  agentName: "Seamus Costigan",
+  agentName: "Jordan Rivera",
   clientPromise: "Same-day guidance with zero surprises.",
   bio: "A local real estate professional.",
   businessHours: "Mon–Fri 9–6, Sat by appointment",
@@ -16,7 +16,7 @@ describe("booking Blueprint prefill", () => {
       defaultBookingPageFormData("", "America/New_York"),
       profile,
     );
-    expect(form.name).toBe("30-minute consultation with Seamus Costigan");
+    expect(form.name).toBe("30-minute consultation with Jordan Rivera");
     expect(form.description).toContain("Same-day guidance");
     expect(form.logoUrl).toBe("https://example.com/logo.png");
     expect(form.workingHours).toHaveLength(5);

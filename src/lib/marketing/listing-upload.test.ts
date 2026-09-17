@@ -68,8 +68,8 @@ Listing ID : 24205988
         source: "authorized Zillow export",
         listings: [
           {
-            listingId: "portal-303-weed",
-            streetAddress: "303 Weed Avenue",
+            listingId: "portal-123-main",
+            streetAddress: "123 Main Street",
             city: "Stamford",
             state: "CT",
             zipcode: "06902",
@@ -90,8 +90,8 @@ Listing ID : 24205988
     expect(typeof listing).toBe("object");
     if (typeof listing === "string") throw new Error(listing);
     expect(listing).toMatchObject({
-      id: "portal-303-weed",
-      address: "303 Weed Avenue",
+      id: "portal-123-main",
+      address: "123 Main Street",
       city: "Stamford",
       state: "CT",
       zip: "06902",
