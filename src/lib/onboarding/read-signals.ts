@@ -46,6 +46,25 @@ export async function readOnboardingSignals(
   const scoped = (collection: string) =>
     db.collection(collection).where("subAccountId", "==", subAccountId);
 
+  /**
+   * Records the CLIENT created, excluding the worked example every workspace
+   * is seeded with.
+   *
+   * Counted as total minus samples rather than with a "not sample" filter,
+   * because Firestore inequality queries skip documents missing the field —
+   * and every record predating the sample feature is missing it. Subtracting
+   * keeps those counted, which is the safe direction: the error would be
+   * showing a client work to do that they have already done, never the
+   * reverse.
+   */
+  const ownCountOf = async (collection: string): Promise<number> => {
+    const [total, samples] = await Promise.all([
+      countOf(() => scoped(collection)),
+      countOf(() => scoped(collection).where("isSample", "==", true)),
+    ]);
+    return Math.max(0, total - samples);
+  };
+
   const [
     sub,
     profile,
@@ -70,10 +89,10 @@ export async function readOnboardingSignals(
     docData<{ enabled?: boolean }>(
       `subAccounts/${subAccountId}/aiAgent/web-chat`
     ),
-    countOf(() => scoped("contacts")),
+    ownCountOf("contacts"),
     countOf(() => scoped("forms")),
     countOf(() => scoped("workflows")),
-    countOf(() => scoped("deals")),
+    ownCountOf("deals"),
     countOf(() => db.collection(`subAccounts/${subAccountId}/bookingPages`)),
     countOf(() => db.collection(`subAccounts/${subAccountId}/campaignBriefs`)),
   ]);

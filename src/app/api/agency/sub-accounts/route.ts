@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import { seedDefaultTemplates } from "@/lib/automations/seed-templates";
+import { seedSampleWorkspace } from "@/lib/seed/sample-workspace";
 import { seedMethodTemplates } from "@/lib/provisioning/method-templates";
 import { queueOnboardingLifecycleSequence } from "@/lib/onboarding/lifecycle-email";
 import { applySnapshot } from "@/lib/snapshots/apply";
@@ -26,11 +27,18 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const STARTING_ACCOUNT_NUMBER = 1000;
 
 type ContactValidation =
-  | { ok: true; value: { name: string | null; email: string | null; phone: string | null } | null }
+  | {
+      ok: true;
+      value: {
+        name: string | null;
+        email: string | null;
+        phone: string | null;
+      } | null;
+    }
   | { ok: false; error: string };
 
 function normalizeAccountContact(
-  raw: CreateBody["accountContact"],
+  raw: CreateBody["accountContact"]
 ): ContactValidation {
   if (raw === undefined || raw === null) return { ok: true, value: null };
   if (typeof raw !== "object") {
@@ -41,7 +49,10 @@ function normalizeAccountContact(
     typeof raw.email === "string" ? raw.email.trim().toLowerCase() : "";
   const phone = typeof raw.phone === "string" ? raw.phone.trim() : "";
   if (email && !EMAIL_RE.test(email)) {
-    return { ok: false, error: "Account contact email must be a valid email address." };
+    return {
+      ok: false,
+      error: "Account contact email must be a valid email address.",
+    };
   }
   if (!name && !email && !phone) return { ok: true, value: null };
   return {
@@ -61,7 +72,9 @@ interface CallerClaims {
   agencyId?: string | null;
 }
 
-async function requireAgencyOwnerFromHeaders(request: Request): Promise<
+async function requireAgencyOwnerFromHeaders(
+  request: Request
+): Promise<
   | { uid: string; email: string; displayName: string; agencyId: string }
   | NextResponse
 > {
@@ -81,7 +94,7 @@ async function requireAgencyOwnerFromHeaders(request: Request): Promise<
   if (claims.agencyRole !== "owner" || !claims.agencyId) {
     return NextResponse.json(
       { error: "Only the agency owner can manage sub-accounts." },
-      { status: 403 },
+      { status: 403 }
     );
   }
   return {
@@ -107,7 +120,8 @@ export async function GET(request: Request) {
     .doc(`agencies/${access.agencyId}/counters/subAccount`)
     .get();
   const next = counterSnap.exists
-    ? (counterSnap.data()?.next as number | undefined) ?? STARTING_ACCOUNT_NUMBER
+    ? ((counterSnap.data()?.next as number | undefined) ??
+      STARTING_ACCOUNT_NUMBER)
     : STARTING_ACCOUNT_NUMBER;
   return NextResponse.json({ next });
 }
@@ -130,15 +144,20 @@ export async function POST(request: Request) {
   const slug = body.slug?.trim().toLowerCase() || "";
   if (slug && !SLUG_RE.test(slug)) {
     return NextResponse.json(
-      { error: "Slug must contain only lowercase letters, numbers, and dashes." },
-      { status: 400 },
+      {
+        error: "Slug must contain only lowercase letters, numbers, and dashes.",
+      },
+      { status: 400 }
     );
   }
   const timezone = body.timezone?.trim();
   if (!timezone || timezone === "UTC") {
     return NextResponse.json(
-      { error: "Timezone is required and must be the creating user's local timezone, not UTC." },
-      { status: 400 },
+      {
+        error:
+          "Timezone is required and must be the creating user's local timezone, not UTC.",
+      },
+      { status: 400 }
     );
   }
   const contactCheck = normalizeAccountContact(body.accountContact);
@@ -166,14 +185,18 @@ export async function POST(request: Request) {
     // introduced" moment the product spec calls for.
     const isFirstEverSubAccount = !counterSnap.exists;
     const current = counterSnap.exists
-      ? (counterSnap.data()?.next as number | undefined) ?? STARTING_ACCOUNT_NUMBER
+      ? ((counterSnap.data()?.next as number | undefined) ??
+        STARTING_ACCOUNT_NUMBER)
       : STARTING_ACCOUNT_NUMBER;
     tx.set(counterRef, { next: current + 1 });
     if (!isFirstEverSubAccount) {
       tx.set(
         db.doc(`agencies/${agencyId}`),
-        { multiAccountModeEnabled: true, updatedAt: FieldValue.serverTimestamp() },
-        { merge: true },
+        {
+          multiAccountModeEnabled: true,
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true }
       );
     }
 
@@ -272,13 +295,27 @@ export async function POST(request: Request) {
     console.error("[sub-accounts] snapshot apply failed", subAccountId, err);
   }
 
+  // The worked example: a handful of obviously-fictional deals so the pipeline
+  // is legible on first open. Marked `isSample`, so onboarding still counts
+  // the client's own work at zero. Best-effort — a failed example must never
+  // cost someone their workspace.
+  try {
+    await seedSampleWorkspace(db, {
+      subAccountId,
+      agencyId,
+      createdByUid: uid,
+    });
+  } catch (err) {
+    console.error("[sub-accounts] sample seed failed", subAccountId, err);
+  }
+
   try {
     await queueOnboardingLifecycleSequence(subAccountId);
   } catch (err) {
     console.error(
       "[sub-accounts] onboarding lifecycle queue failed",
       subAccountId,
-      err,
+      err
     );
   }
 

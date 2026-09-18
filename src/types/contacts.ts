@@ -54,6 +54,17 @@ export interface ContactAttribution {
 
 export interface Contact {
   id: string;
+  /**
+   * True on the worked example every new workspace is given, so a client can
+   * see what a filled-in CRM looks like before they have one.
+   *
+   * Load-bearing, not decoration: `lib/onboarding/read-signals.ts` subtracts
+   * these from its counts. Without that, every new workspace would report its
+   * pipeline and contacts as done on day one — work the client has not done —
+   * which is exactly what the onboarding evidence model exists to prevent.
+   * Absent on everything a client creates themselves.
+   */
+  isSample?: boolean;
   name: string;
   email: string;
   phone: string;
@@ -74,7 +85,10 @@ export interface Contact {
    * docs and contacts with no custom fields set. Validated server-side against
    * the sub-account's field definitions on create/update.
    */
-  customFields?: Record<string, import("./custom-fields").CustomFieldValue> | null;
+  customFields?: Record<
+    string,
+    import("./custom-fields").CustomFieldValue
+  > | null;
   // Tenancy keys (replace the legacy ownerId).
   agencyId: string;
   subAccountId: string;
@@ -204,7 +218,10 @@ export type ContactFormData = Pick<
   | "homeAnniversary"
 > & {
   territoryId?: string | null;
-  customFields?: Record<string, import("./custom-fields").CustomFieldValue> | null;
+  customFields?: Record<
+    string,
+    import("./custom-fields").CustomFieldValue
+  > | null;
 };
 
 export type ActivityType =
