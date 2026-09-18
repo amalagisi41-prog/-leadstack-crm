@@ -25,6 +25,7 @@ import { AddContactModal } from "@/components/contacts/add-contact-modal";
 import { ImportContactsDialog } from "@/components/contacts/import-contacts-dialog";
 import { BulkEmailDialog } from "@/components/contacts/bulk-email-dialog";
 import { BulkCallDialog } from "@/components/contacts/bulk-call-dialog";
+import { SampleDataNotice } from "@/components/onboarding/sample-data-notice";
 import type { Contact } from "@/types/contacts";
 import type { TerritoryDoc } from "@/types";
 
@@ -54,7 +55,7 @@ function ImportQueryWatcher({ onOpen }: { onOpen: () => void }) {
 
 export default function ContactsPage() {
   const { user, loading: authLoading } = useAuth();
-  const { subAccountId, agencyId, subAccount } = useSubAccount();
+  const { subAccountId, agencyId, subAccount, isAdmin } = useSubAccount();
   const scopingOn = subAccount?.territoryScopingEnabled === true;
   const { ready: filterReady, filter: territoryFilter } =
     useEffectiveTerritoryFilter();
@@ -181,6 +182,15 @@ export default function ContactsPage() {
           className="pl-8"
         />
       </div>
+
+      {!loading && (
+        <SampleDataNotice
+          subAccountId={subAccountId}
+          count={contacts.filter((c) => c.isSample).length}
+          noun="people"
+          canRemove={isAdmin}
+        />
+      )}
 
       {loading ? (
         <TableSkeleton />

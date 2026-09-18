@@ -16,6 +16,7 @@ import type { TerritoryDoc } from "@/types";
 import { Button } from "@/components/ui/button";
 import { PipelineBoard } from "@/components/pipeline/pipeline-board";
 import { NewDealDialog } from "@/components/pipeline/new-deal-dialog";
+import { SampleDataNotice } from "@/components/onboarding/sample-data-notice";
 import {
   EMPTY_FILTERS,
   PipelineFilters,
@@ -186,6 +187,15 @@ export default function PipelinePage() {
         </div>
         <NewDealDialog contacts={contacts} />
       </div>
+
+      {!loading && (
+        <SampleDataNotice
+          subAccountId={subAccountId}
+          count={deals.filter((d) => d.isSample).length}
+          noun="deals"
+          canRemove={isAdmin}
+        />
+      )}
 
       {!loading && deals.length > 0 && (
         <PipelineFilters
