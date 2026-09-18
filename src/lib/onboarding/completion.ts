@@ -195,3 +195,22 @@ export const EMPTY_ONBOARDING_SIGNALS: OnboardingSignals = {
   customDomainLive: false,
   externalHostRecorded: false,
 };
+
+/**
+ * The client's own record count: total minus the seeded example.
+ *
+ * `null` for either input means that read FAILED, and the answer is zero
+ * rather than a guess. Returning `total` when the sample count is unavailable
+ * — which is what a missing composite index produces — would count the
+ * worked example as the client's own work and tell every new workspace it had
+ * already imported contacts and built a pipeline. Zero errs the other way: a
+ * client is shown work they have in fact done, which is visibly wrong to them
+ * and which a reload fixes. Only one of those is a false "you're done".
+ */
+export function ownRecordCount(
+  total: number | null,
+  samples: number | null
+): number {
+  if (total === null || samples === null) return 0;
+  return Math.max(0, total - samples);
+}

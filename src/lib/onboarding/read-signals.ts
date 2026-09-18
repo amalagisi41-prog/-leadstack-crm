@@ -2,7 +2,11 @@ import "server-only";
 
 import type { Firestore } from "firebase-admin/firestore";
 import { businessProfileCompleteness } from "@/lib/business-profile/compile";
-import { EMPTY_ONBOARDING_SIGNALS, type OnboardingSignals } from "./completion";
+import {
+  EMPTY_ONBOARDING_SIGNALS,
+  ownRecordCount,
+  type OnboardingSignals,
+} from "./completion";
 import type { BusinessProfileContent } from "@/types/business-profile";
 import type { OnboardingFoundation } from "@/types/onboarding-foundation";
 import type { SubAccountDoc } from "@/types/tenancy";
@@ -26,12 +30,15 @@ export async function readOnboardingSignals(
 ): Promise<OnboardingSignals> {
   const countOf = async (
     build: () => FirebaseFirestore.Query | FirebaseFirestore.CollectionReference
-  ): Promise<number> => {
+    // null means the read FAILED, which is not the same as counting zero.
+    // Callers decide which way to err; conflating the two is how a failed
+    // query turns into a claim.
+  ): Promise<number | null> => {
     try {
       const snap = await build().count().get();
       return snap.data().count;
     } catch {
-      return 0;
+      return null;
     }
   };
   const docData = async <T>(path: string): Promise<T | null> => {
@@ -53,16 +60,23 @@ export async function readOnboardingSignals(
    * Counted as total minus samples rather than with a "not sample" filter,
    * because Firestore inequality queries skip documents missing the field —
    * and every record predating the sample feature is missing it. Subtracting
-   * keeps those counted, which is the safe direction: the error would be
-   * showing a client work to do that they have already done, never the
-   * reverse.
+   * keeps those counted.
+   *
+   * If EITHER read fails, this reports zero rather than guessing. Returning
+   * the total when the sample count is unavailable — which is what happens if
+   * the composite index is missing — would count the seeded example as the
+   * client's own work and tell every new workspace it had already imported
+   * contacts and built a pipeline. Reporting zero errs the other way: a client
+   * is shown work they have in fact done, which they can see is wrong and
+   * which a reload fixes. Only one of those two errors is a false "you're
+   * done", and it is never the one to take.
    */
   const ownCountOf = async (collection: string): Promise<number> => {
     const [total, samples] = await Promise.all([
       countOf(() => scoped(collection)),
       countOf(() => scoped(collection).where("isSample", "==", true)),
     ]);
-    return Math.max(0, total - samples);
+    return ownRecordCount(total, samples);
   };
 
   const [
@@ -106,11 +120,14 @@ export async function readOnboardingSignals(
       ? businessProfileCompleteness(profile)
       : 0,
     contactCount,
-    formCount,
-    workflowCount,
     dealCount,
-    bookingPageCount,
-    campaignBriefCount,
+    // A failed read counts as zero here, showing the step as still to do.
+    // That is the safe direction: the other one tells a client they finished
+    // work they never started.
+    formCount: formCount ?? 0,
+    workflowCount: workflowCount ?? 0,
+    bookingPageCount: bookingPageCount ?? 0,
+    campaignBriefCount: campaignBriefCount ?? 0,
     smsConnected: sub?.twilioConfig?.enabled === true,
     aiPersonaSet: !!aiProfile?.systemPrompt?.trim(),
     aiChannelEnabled: aiSms?.enabled === true || aiWebChat?.enabled === true,

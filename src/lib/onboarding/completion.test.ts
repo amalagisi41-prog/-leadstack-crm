@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   deriveStepCompletion,
   EMPTY_ONBOARDING_SIGNALS,
+  ownRecordCount,
   summarizeOnboardingCompletion,
   type OnboardingSignals,
 } from "./completion";
@@ -186,5 +187,30 @@ describe("summarizeOnboardingCompletion", () => {
     expect(summary.outstanding).toEqual([]);
     // …but it still is not evidence, so setup is not finished.
     expect(summary.fullyVerified).toBe(false);
+  });
+});
+
+describe("ownRecordCount", () => {
+  it("subtracts the seeded example from the total", () => {
+    expect(ownRecordCount(7, 5)).toBe(2);
+  });
+
+  it("reports zero for a workspace holding only the example", () => {
+    expect(ownRecordCount(5, 5)).toBe(0);
+  });
+
+  it("returns zero when EITHER read failed, never the raw total", () => {
+    // A missing composite index makes the sample count unavailable. Falling
+    // back to the total there would count the example as the client's work and
+    // tell every new workspace it had already done it — a false "you're done",
+    // which is the one error this whole model exists to prevent.
+    expect(ownRecordCount(5, null)).toBe(0);
+    expect(ownRecordCount(null, 5)).toBe(0);
+    expect(ownRecordCount(null, null)).toBe(0);
+  });
+
+  it("never goes negative if the sample count outruns the total", () => {
+    // Possible mid-delete, when the two aggregations disagree by a moment.
+    expect(ownRecordCount(2, 5)).toBe(0);
   });
 });

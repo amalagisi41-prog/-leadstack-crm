@@ -69,9 +69,31 @@ const SAMPLE_CONTACTS = [
   },
 ] as const;
 
+/**
+ * A short worked conversation on the first sample contact, so the inbox is
+ * legible too — an empty Conversations screen teaches as little as an empty
+ * pipeline. Written to the SMS thread because that is the channel every
+ * workspace has a surface for without connecting anything.
+ */
+const SAMPLE_THREAD = [
+  {
+    direction: "inbound" as const,
+    body: "Hi! I saw the listing on Maple Street — is it still available?",
+  },
+  {
+    direction: "outbound" as const,
+    body: "It is. Would you like to see it this weekend? I have Saturday morning free.",
+  },
+  {
+    direction: "inbound" as const,
+    body: "Saturday works. 10am?",
+  },
+];
+
 export interface SampleSeedResult {
   contacts: number;
   deals: number;
+  conversations: number;
 }
 
 /**
@@ -89,6 +111,10 @@ export async function seedSampleWorkspace(
   const tenancy = { agencyId, subAccountId, createdByUid };
 
   let deals = 0;
+  let conversations = 0;
+  let firstContactId: string | null = null;
+  let firstContactName = "";
+  let firstContactPhone = "";
   for (const person of SAMPLE_CONTACTS) {
     const contactRef = db.collection("contacts").doc();
     batch.set(contactRef, {
@@ -108,6 +134,12 @@ export async function seedSampleWorkspace(
       updatedAt: now,
     });
 
+    if (!firstContactId) {
+      firstContactId = contactRef.id;
+      firstContactName = person.name;
+      firstContactPhone = person.phone;
+    }
+
     const dealRef = db.collection("deals").doc();
     batch.set(dealRef, {
       ...SAMPLE_MARKER,
@@ -125,8 +157,60 @@ export async function seedSampleWorkspace(
     deals += 1;
   }
 
+  // The example conversation, on the first sample contact. Messages carry the
+  // marker too, so removing the sample data takes the thread with it.
+  if (firstContactId) {
+    const contactRef = db.collection("contacts").doc(firstContactId);
+    SAMPLE_THREAD.forEach((message, index) => {
+      batch.set(contactRef.collection("messages").doc(), {
+        ...SAMPLE_MARKER,
+        ...tenancy,
+        contactId: firstContactId,
+        direction: message.direction,
+        status: message.direction === "inbound" ? "received" : "delivered",
+        body: message.body,
+        from: message.direction === "inbound" ? firstContactPhone : "",
+        to: message.direction === "inbound" ? "" : firstContactPhone,
+        twilioMessageSid: null,
+        sentByUid: null,
+        error: null,
+        // Spaced a minute apart so the thread reads in order rather than
+        // collapsing onto one server timestamp.
+        createdAt: new Date(
+          Date.now() - (SAMPLE_THREAD.length - index) * 60000
+        ),
+        readAt: null,
+      });
+    });
+
+    batch.set(db.collection("conversations").doc(firstContactId), {
+      ...SAMPLE_MARKER,
+      ...tenancy,
+      contactId: firstContactId,
+      contactName: firstContactName,
+      contactPhone: firstContactPhone,
+      channelsSeen: ["sms"],
+      lastChannel: "sms",
+      lastDirection: "inbound",
+      lastMessagePreview: SAMPLE_THREAD[SAMPLE_THREAD.length - 1].body,
+      lastMessageAt: new Date(),
+      unreadCount: 1,
+      status: "open",
+      assigneeUid: null,
+      // "off", not the usual "auto": the AI must never reply to a fictional
+      // lead. That would spend the workspace's model budget on a conversation
+      // with nobody, and put an invented exchange in the transcript.
+      botMode: "off",
+      botPausedUntil: null,
+      pendingDraft: null,
+      createdAt: now,
+      updatedAt: now,
+    });
+    conversations = 1;
+  }
+
   await batch.commit();
-  return { contacts: SAMPLE_CONTACTS.length, deals };
+  return { contacts: SAMPLE_CONTACTS.length, deals, conversations };
 }
 
 /**
@@ -139,19 +223,28 @@ export async function removeSampleWorkspace(
   db: Firestore,
   subAccountId: string
 ): Promise<SampleSeedResult> {
-  const counts: SampleSeedResult = { contacts: 0, deals: 0 };
-  for (const collection of ["contacts", "deals"] as const) {
+  const counts: SampleSeedResult = { contacts: 0, deals: 0, conversations: 0 };
+  for (const collection of ["contacts", "deals", "conversations"] as const) {
     const snap = await db
       .collection(collection)
       .where("subAccountId", "==", subAccountId)
       .where("isSample", "==", true)
       .get();
-    // Chunked: a batch is capped at 500 writes, and the example is small, but
-    // nothing here should break if it ever grows.
-    for (let i = 0; i < snap.docs.length; i += 400) {
-      const batch = db.batch();
-      for (const doc of snap.docs.slice(i, i + 400)) batch.delete(doc.ref);
-      await batch.commit();
+
+    // `recursiveDelete` for contacts, a plain delete for the rest: a contact
+    // owns subcollections (the sample message thread lives under it) and
+    // Firestore does not cascade, so a batch delete would leave the messages
+    // behind as orphans no screen can reach or remove.
+    if (collection === "contacts") {
+      for (const doc of snap.docs) await db.recursiveDelete(doc.ref);
+    } else {
+      // Chunked: a batch is capped at 500 writes. The example is small, but
+      // nothing here should break if it ever grows.
+      for (let i = 0; i < snap.docs.length; i += 400) {
+        const batch = db.batch();
+        for (const doc of snap.docs.slice(i, i + 400)) batch.delete(doc.ref);
+        await batch.commit();
+      }
     }
     counts[collection] = snap.size;
   }

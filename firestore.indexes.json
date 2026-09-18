@@ -280,6 +280,20 @@
           "order": "ASCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "conversations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "subAccountId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "isSample",
+          "order": "ASCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": [
