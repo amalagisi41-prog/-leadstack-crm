@@ -226,34 +226,6 @@
       ]
     },
     {
-      "collectionGroup": "idxListings",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "city",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "idxListings",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "status",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "beds",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
       "collectionGroup": "contacts",
       "queryScope": "COLLECTION",
       "fields": [
