@@ -7,10 +7,12 @@ Open ChatGPT Work Mode on chatgpt.com and paste the instructions below.
 Continue the AgentStack Website Studio audit using the authenticated desktop/browser session.
 
 Project dashboard:
-https://agentstackcrm.app/sa/iJhXWJeb8bjpBm32S0WE/website-studio
+https://agentstackcrm.app/sa/<subAccountId>/website-studio
+(substitute the sub-account you are auditing — do not commit a real one.)
 
 Public reference site:
-https://www.artisanhomenetwork.com/
+the customer's own public website, taken from that sub-account at audit time.
+Do not record a customer's domain here; this file is platform content.
 
 Inspect the current Website Studio implementation and verify the logged-in dashboard directly. Do not use screenshots as the source of truth. Do not proxy, scrape, iframe, or compare an external website as a replacement preview.
 

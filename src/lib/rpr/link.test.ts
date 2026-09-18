@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildRprHomeUrl,
+  buildRprPropertyUrl,
   formatAddressForRpr,
   isValidRprOrgId,
   parseRprOrgId,
@@ -106,6 +107,76 @@ describe("buildRprHomeUrl", () => {
     expect(buildRprHomeUrl("a b")).toBe(
       "https://www.narrpr.com/home?cbcode=a%20b"
     );
+  });
+});
+
+describe("buildRprPropertyUrl", () => {
+  const property = {
+    rprOrgId: "ctconnm-n",
+    address: "123 Main St",
+    city: "Stamford",
+    state: "CT",
+    zip: "06902",
+  };
+
+  it("uses the MLS listing number when the property has one", () => {
+    const url = new URL(
+      buildRprPropertyUrl({ ...property, mlsId: "24158847" })!,
+    );
+    expect(url.origin + url.pathname).toBe("https://narrpr.com/deep-link");
+    expect(url.searchParams.get("cbcode")).toBe("ctconnm-n");
+    expect(url.searchParams.get("listingid")).toBe("24158847");
+  });
+
+  it("does not also send an address query when it has the listing number", () => {
+    // RPR's own builder populates one lookup key, not two. Sending both is a
+    // shape their form never produces, so we don't invent it.
+    const url = new URL(
+      buildRprPropertyUrl({ ...property, mlsId: "24158847" })!,
+    );
+    expect(url.searchParams.get("query")).toBeNull();
+    expect(url.searchParams.get("searchtype")).toBeNull();
+  });
+
+  it("falls back to a full-address property search with no MLS number", () => {
+    const url = new URL(buildRprPropertyUrl({ ...property, mlsId: null })!);
+    expect(url.searchParams.get("query")).toBe("123 Main St, Stamford, CT 06902");
+    expect(url.searchParams.get("searchtype")).toBe("Properties");
+    expect(url.searchParams.get("listingid")).toBeNull();
+  });
+
+  it("treats a blank MLS number as absent rather than searching for nothing", () => {
+    const url = new URL(buildRprPropertyUrl({ ...property, mlsId: "   " })!);
+    expect(url.searchParams.get("listingid")).toBeNull();
+    expect(url.searchParams.get("query")).toBe("123 Main St, Stamford, CT 06902");
+  });
+
+  it("returns null rather than a link that would land on the wrong town", () => {
+    // RPR requires city + state on the address query. A bare street line
+    // resolves somewhere plausible and wrong, which is worse than no link —
+    // the caller falls back to the RPR home page instead.
+    expect(
+      buildRprPropertyUrl({ ...property, city: "", mlsId: null }),
+    ).toBeNull();
+    expect(
+      buildRprPropertyUrl({ ...property, state: "", mlsId: null }),
+    ).toBeNull();
+    expect(
+      buildRprPropertyUrl({ ...property, address: "  ", mlsId: null }),
+    ).toBeNull();
+  });
+
+  it("still builds an address link when only the zip is missing", () => {
+    const url = new URL(
+      buildRprPropertyUrl({ ...property, zip: null, mlsId: null })!,
+    );
+    expect(url.searchParams.get("query")).toBe("123 Main St, Stamford, CT");
+  });
+
+  it("encodes the address rather than emitting raw spaces and commas", () => {
+    const raw = buildRprPropertyUrl({ ...property, mlsId: null })!;
+    expect(raw).not.toMatch(/ /);
+    expect(raw).toContain("query=123+Main+St%2C+Stamford%2C+CT+06902");
   });
 });
 

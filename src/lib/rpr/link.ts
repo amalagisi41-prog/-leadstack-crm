@@ -6,16 +6,32 @@
  * integration is sending the agent into their OWN RPR portal via their
  * MLS-SSO session; we never fetch or store RPR data ourselves.
  *
- * What this module does NOT do: build a per-property link. RPR resolves
- * every property page through its own internal property id
- * (`/properties/details/info/{rprInternalId}`), which we have no legitimate
- * way to obtain — RPR 404s if you swap in a placeholder id, and an address
- * search still resolves through that same internal id rather than exposing
- * an intermediate, linkable results page (verified against a live SmartMLS/
- * RPR session before writing this). So the honest, buildable action is: open
- * RPR's real MLS-SSO entry point, scoped to the agent's own MLS board via
- * `orgId`, and hand the agent the property address to paste into RPR's own
- * search box.
+ * Per-property links go through RPR's own Deep Links feature, NOT through
+ * the internal property id in `/properties/details/info/{rprInternalId}`.
+ * That internal id is unobtainable (a fabricated one 404s — verified against
+ * a live SmartMLS/RPR session), which is why this module previously did no
+ * per-property linking at all and made the agent paste an address into RPR's
+ * search box. That was wrong about RPR, not just awkward: RPR publishes a
+ * documented deep-link endpoint that takes an MLS listing number or a full
+ * address and resolves the internal id on its own side.
+ *
+ * Evidence this is built on, since RPR is unreachable from CI and from this
+ * repo's build environment (egress-blocked), so none of it is a live check:
+ *
+ *   - RPR's own deep-link builder emits exactly this URL shape, keys and all:
+ *     `https://narrpr.com/deep-link?apn=&cbcode=…&detailstab=&fips=&listingid=
+ *      &orgid=&query=3433+Moulton+Ave%2C+Cincinnati%2C+OH+45205&reporttype=
+ *      &resulttype=&searchtype=Properties&ssocode=`
+ *   - RPR's MLS deep-link documentation describes filling `query`
+ *     dynamically with a full address including city, state and ZIP, and
+ *     lists Property/Listing Details among the linkable destinations.
+ *     (blog.narrpr.com/mls/rpr-deep-links, support.narrpr.com "Deep Linking")
+ *
+ * So `buildRprPropertyUrl()` is built to a documented contract that has not
+ * been exercised end-to-end from here. `RprLinkButton` therefore still puts
+ * the address on the clipboard: if a deep link ever lands on RPR's search
+ * rather than the property, the agent is one paste from where they were
+ * going instead of stranded.
  */
 
 /**
@@ -79,6 +95,56 @@ export function parseRprOrgId(input: string): string | null {
  */
 export function buildRprHomeUrl(rprOrgId: string): string {
   return `https://www.narrpr.com/home?cbcode=${encodeURIComponent(rprOrgId)}`;
+}
+
+/**
+ * RPR's deep-link endpoint. No `www.` — this is the host RPR's own
+ * deep-link builder emits, and it is a different path from the `www.…/home`
+ * SSO entry above.
+ */
+export const RPR_DEEP_LINK_BASE = "https://narrpr.com/deep-link";
+
+/**
+ * A link straight to one property inside the agent's own RPR account.
+ *
+ * Two ways in, preferred in this order:
+ *
+ *   1. **MLS listing number** (`listingid`) — exact, and it is the identifier
+ *      RPR's MLS deep-link integration is designed around. Our listings come
+ *      from the MLS feed, so `IdxListingDoc.mlsId` is that number.
+ *   2. **Full address** (`query` + `searchtype=Properties`) — RPR's docs are
+ *      explicit that the address must carry city and state (ZIP too where we
+ *      have it), so a partial address is not offered at all; a bare street
+ *      line would resolve to the wrong town.
+ *
+ * Returns null when neither is available, which is the caller's signal to
+ * fall back to `buildRprHomeUrl()` rather than to emit a link that cannot
+ * resolve. RPR still asks for a sign-in when the agent has no live session —
+ * `cbcode` is what makes that their MLS's SSO prompt rather than a dead end.
+ */
+export function buildRprPropertyUrl(fields: {
+  rprOrgId: string;
+  mlsId?: string | null;
+  address: string;
+  city: string;
+  state: string;
+  zip?: string | null;
+}): string | null {
+  const params = new URLSearchParams({ cbcode: fields.rprOrgId });
+
+  const mlsId = fields.mlsId?.trim();
+  if (mlsId) {
+    params.set("listingid", mlsId);
+    return `${RPR_DEEP_LINK_BASE}?${params.toString()}`;
+  }
+
+  const hasPlaceableAddress =
+    !!fields.address.trim() && !!fields.city.trim() && !!fields.state.trim();
+  if (!hasPlaceableAddress) return null;
+
+  params.set("query", formatAddressForRpr(fields));
+  params.set("searchtype", "Properties");
+  return `${RPR_DEEP_LINK_BASE}?${params.toString()}`;
 }
 
 /**
