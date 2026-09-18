@@ -5,6 +5,8 @@ import { CUSTOM_BRAND } from "@/config/landing";
 import { publishCallback, qstashIsConfigured } from "@/lib/automations/qstash";
 import { emailIsConfigured, sendEmail } from "@/lib/comms/resend";
 import { getAdminDb } from "@/lib/firebase/admin";
+import { summarizeOnboardingCompletion } from "@/lib/onboarding/completion";
+import { readOnboardingSignals } from "@/lib/onboarding/read-signals";
 import type {
   OnboardingLifecycleCadenceId,
   OnboardingLifecycleEmails,
@@ -43,8 +45,7 @@ const CADENCES: Array<{
     id: "day3",
     label: "Day 3",
     delaySeconds: 3 * 24 * 60 * 60,
-    intro:
-      "Most teams start feeling the payoff once this next step is live.",
+    intro: "Most teams start feeling the payoff once this next step is live.",
   },
   {
     id: "day7",
@@ -78,7 +79,8 @@ const STEP_SUPPORT: Record<OnboardingMethodStepId, StepSupportCopy> = {
     ctaLabel: "Finish your business profile",
   },
   connect: {
-    question: "How do I bring my contacts and phone setup over without making a mess?",
+    question:
+      "How do I bring my contacts and phone setup over without making a mess?",
     answer:
       "Import your contacts first, review duplicates before they are committed, then connect your texting number. That gives AgentStack real people to work and a live channel to reply through.",
     helpHref: "/help/import-contacts",
@@ -103,9 +105,7 @@ const STEP_SUPPORT: Record<OnboardingMethodStepId, StepSupportCopy> = {
   },
 };
 
-function tsToDate(
-  value: Timestamp | Date | null | undefined,
-): Date | null {
+function tsToDate(value: Timestamp | Date | null | undefined): Date | null {
   if (!value) return null;
   if (value instanceof Date) return value;
   if (typeof value.toDate === "function") return value.toDate();
@@ -117,7 +117,7 @@ function getCadence(id: OnboardingLifecycleCadenceId) {
 }
 
 function getMethodStep(
-  completed: string[] | null | undefined,
+  completed: string[] | null | undefined
 ): OnboardingMethodStepMeta | null {
   for (const step of ONBOARDING_METHOD_STEPS) {
     if (!isOnboardingMethodStepComplete(step, completed)) {
@@ -127,19 +127,43 @@ function getMethodStep(
   return null;
 }
 
+/**
+ * The step ids this workspace can be shown to have done — observed work plus
+ * anything ticked.
+ *
+ * Nudge emails used to read the stored tick list alone, so a user who ticked
+ * every box and did none of the work was marked "onboarding complete" and the
+ * help stopped arriving. Reading the workspace instead means the nudges follow
+ * what is actually outstanding.
+ */
+async function derivedDoneStepIds(subAccountId: string): Promise<string[]> {
+  const db = getAdminDb();
+  const [signals, snap] = await Promise.all([
+    readOnboardingSignals(db, subAccountId),
+    db.doc(`subAccounts/${subAccountId}`).get(),
+  ]);
+  const attested = (snap.data()?.onboardingStepsCompleted ?? []) as string[];
+  return summarizeOnboardingCompletion(signals, attested).doneStepIds;
+}
+
 function getSentAt(
   state: OnboardingLifecycleEmails | null | undefined,
-  cadenceId: OnboardingLifecycleCadenceId,
+  cadenceId: OnboardingLifecycleCadenceId
 ): Date | null {
   const key = `${cadenceId}SentAt` as const;
   return tsToDate(state?.[key] as Timestamp | Date | null | undefined);
 }
 
-function isQueued(state: OnboardingLifecycleEmails | null | undefined): boolean {
+function isQueued(
+  state: OnboardingLifecycleEmails | null | undefined
+): boolean {
   return Boolean(state?.queuedAt || state?.day0SentAt);
 }
 
-function buildSetupUrl(subAccountId: string, stepId: OnboardingMethodStepId): string | null {
+function buildSetupUrl(
+  subAccountId: string,
+  stepId: OnboardingMethodStepId
+): string | null {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
   if (!baseUrl) return null;
   return `${baseUrl}/sa/${subAccountId}/get-started?step=${stepId}`;
@@ -159,7 +183,9 @@ function esc(value: string): string {
     .replace(/"/g, "&quot;");
 }
 
-async function resolveRecipient(subAccount: Pick<SubAccountDoc, "createdByUid" | "id">): Promise<Recipient | null> {
+async function resolveRecipient(
+  subAccount: Pick<SubAccountDoc, "createdByUid" | "id">
+): Promise<Recipient | null> {
   const db = getAdminDb();
 
   const creatorSnap = await db.doc(`users/${subAccount.createdByUid}`).get();
@@ -169,7 +195,8 @@ async function resolveRecipient(subAccount: Pick<SubAccountDoc, "createdByUid" |
       | undefined;
     const email = creator?.email?.trim().toLowerCase() ?? "";
     if (email) {
-      const displayName = creator?.displayName?.trim() || email.split("@")[0] || "there";
+      const displayName =
+        creator?.displayName?.trim() || email.split("@")[0] || "there";
       return { email, firstName: displayName.split(" ")[0] || "there" };
     }
   }
@@ -179,7 +206,15 @@ async function resolveRecipient(subAccount: Pick<SubAccountDoc, "createdByUid" |
     .get();
 
   const members = membersSnap.docs
-    .map((doc) => doc.data() as { role?: string; status?: string; email?: string; displayName?: string })
+    .map(
+      (doc) =>
+        doc.data() as {
+          role?: string;
+          status?: string;
+          email?: string;
+          displayName?: string;
+        }
+    )
     .filter((member) => member.status === "active" && member.email);
 
   const admin = members.find((member) => member.role === "admin") ?? members[0];
@@ -197,7 +232,7 @@ async function resolveRecipient(subAccount: Pick<SubAccountDoc, "createdByUid" |
 }
 
 export async function queueOnboardingLifecycleSequence(
-  subAccountId: string,
+  subAccountId: string
 ): Promise<{ queued: boolean; reason: string }> {
   if (!qstashIsConfigured()) {
     return { queued: false, reason: "qstash_not_configured" };
@@ -206,12 +241,16 @@ export async function queueOnboardingLifecycleSequence(
   const db = getAdminDb();
   const ref = db.doc(`subAccounts/${subAccountId}`);
 
+  // Derived outside the transaction: it reads several documents, which a
+  // Firestore transaction must not do mid-flight.
+  const doneStepIds = await derivedDoneStepIds(subAccountId);
+
   const claimed = await db.runTransaction(async (tx) => {
     const snap = await tx.get(ref);
     if (!snap.exists) return false;
 
     const data = snap.data() as SubAccountDoc;
-    if (getMethodStep(data.onboardingStepsCompleted) === null) {
+    if (getMethodStep(doneStepIds) === null) {
       tx.update(ref, {
         "onboardingLifecycleEmails.completedAt": FieldValue.serverTimestamp(),
       });
@@ -306,7 +345,7 @@ export async function sendOnboardingLifecycleEmail({
     return { status: "ignored", reason: "already_sent" };
   }
 
-  const nextStep = getMethodStep(subAccount.onboardingStepsCompleted);
+  const nextStep = getMethodStep(await derivedDoneStepIds(subAccount.id));
   if (!nextStep) {
     return { status: "ignored", reason: "onboarding_complete" };
   }
@@ -393,4 +432,3 @@ export async function sendOnboardingLifecycleEmail({
     stepId: nextStep.id,
   };
 }
-

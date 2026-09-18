@@ -142,6 +142,7 @@ export default function GetStartedPage() {
         // first step the WORKSPACE cannot show as done, rather than at the
         // first one nobody happened to tick.
         initialCompleted={onboardingCompletion?.doneStepIds ?? []}
+        initialAttested={onboardingCompletion?.attestedStepIds ?? []}
         initialStep={initialStep}
       />
     );
