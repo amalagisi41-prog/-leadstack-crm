@@ -10,6 +10,7 @@ import {
   type JourneyEventName,
   type OnboardingJourney,
 } from "@/lib/onboarding/journey-evaluation";
+import { readOnboardingSignals } from "@/lib/onboarding/read-signals";
 
 const EVENTS = new Set<JourneyEventName>([
   "journey_started",
@@ -40,10 +41,14 @@ export async function GET(
   const { id } = await ctx.params;
   const access = await requireSubAccountAdmin(request, id);
   if (access instanceof NextResponse) return access;
+  const db = getAdminDb();
   const journey = await journeyFor(id);
-  const snap = await getAdminDb()
-    .collection(`subAccounts/${id}/onboardingJourneyEvents`)
-    .get();
+  const [snap, signals, subSnap] = await Promise.all([
+    db.collection(`subAccounts/${id}/onboardingJourneyEvents`).get(),
+    readOnboardingSignals(db, id),
+    db.doc(`subAccounts/${id}`).get(),
+  ]);
+  const attested = (subSnap.data()?.onboardingStepsCompleted ?? []) as string[];
   const events = snap.docs.map((doc) => {
     const data = doc.data();
     return {
@@ -53,7 +58,7 @@ export async function GET(
     } satisfies JourneyEvent;
   });
   return NextResponse.json({
-    evaluation: evaluateOnboardingJourney(journey, events),
+    evaluation: evaluateOnboardingJourney(journey, events, signals, attested),
     events: events.length,
   });
 }

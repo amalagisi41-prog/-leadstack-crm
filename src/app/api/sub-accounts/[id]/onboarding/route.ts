@@ -9,21 +9,23 @@ import {
   isOnboardingComplete,
 } from "@/lib/onboarding/steps";
 import { computeOnboardingState } from "@/lib/onboarding/state-machine";
+import { summarizeOnboardingCompletion } from "@/lib/onboarding/completion";
+import { readOnboardingSignals } from "@/lib/onboarding/read-signals";
 import { queueOnboardingLifecycleSequence } from "@/lib/onboarding/lifecycle-email";
 import { isLaunchPriority, isRealtorRole } from "@/types/onboarding-answers";
 
 /**
  * GET /api/sub-accounts/[id]/onboarding
  *
- * Returns the onboarding checklist's current state machine: which of the 8
- * canonical steps are done, whether setup is fully complete, and the single
- * `nextRecommendedAction` — the next incomplete step in canonical order.
+ * Returns the onboarding checklist's current state: which steps are done and
+ * on what evidence (observed in the workspace vs. ticked by a user), whether
+ * setup is fully VERIFIED, and the single `nextRecommendedAction`.
  * Any member can read it (mirrors the PATCH's "setup is a shared task"
  * posture).
  */
 export async function GET(
   request: Request,
-  ctx: { params: Promise<{ id: string }> },
+  ctx: { params: Promise<{ id: string }> }
 ) {
   const { id: subAccountId } = await ctx.params;
   const access = await requireSubAccountMember(request, subAccountId);
@@ -31,13 +33,30 @@ export async function GET(
 
   const snap = await getAdminDb().doc(`subAccounts/${subAccountId}`).get();
   if (!snap.exists) {
-    return NextResponse.json({ error: "Sub-account not found" }, { status: 404 });
+    return NextResponse.json(
+      { error: "Sub-account not found" },
+      { status: 404 }
+    );
   }
 
-  const state = computeOnboardingState(
-    snap.data()?.onboardingStepsCompleted as string[] | undefined,
-  );
-  return NextResponse.json({ ok: true, ...state });
+  // Progress is derived from what the workspace contains, not from what was
+  // ticked. Stored ticks are still honoured, but reported as `attested` so no
+  // surface can present someone's claim as evidence — see
+  // lib/onboarding/completion.ts.
+  const attested = (snap.data()?.onboardingStepsCompleted ?? []) as string[];
+  const signals = await readOnboardingSignals(getAdminDb(), subAccountId);
+  const completion = summarizeOnboardingCompletion(signals, attested);
+  const state = computeOnboardingState(completion.doneStepIds);
+
+  return NextResponse.json({
+    ok: true,
+    ...state,
+    steps: completion.steps,
+    verifiedStepIds: completion.verifiedStepIds,
+    attestedStepIds: completion.attestedStepIds,
+    fullyVerified: completion.fullyVerified,
+    outstanding: completion.outstanding,
+  });
 }
 
 /**
@@ -61,7 +80,7 @@ export async function GET(
  */
 export async function PATCH(
   request: Request,
-  ctx: { params: Promise<{ id: string }> },
+  ctx: { params: Promise<{ id: string }> }
 ) {
   const { id: subAccountId } = await ctx.params;
   const access = await requireSubAccountMember(request, subAccountId);
@@ -82,7 +101,10 @@ export async function PATCH(
   // It used to be required and always written, which meant saving an answer
   // mid-wizard would have reset every completed step to none.
   if (body.steps !== undefined && !Array.isArray(body.steps)) {
-    return NextResponse.json({ error: "`steps` must be an array." }, { status: 400 });
+    return NextResponse.json(
+      { error: "`steps` must be an array." },
+      { status: 400 }
+    );
   }
 
   const known = new Set<string>(ONBOARDING_STEP_IDS);
@@ -90,9 +112,9 @@ export async function PATCH(
     ? Array.from(
         new Set(
           body.steps.filter(
-            (s): s is string => typeof s === "string" && known.has(s),
-          ),
-        ),
+            (s): s is string => typeof s === "string" && known.has(s)
+          )
+        )
       )
     : null;
 
@@ -136,11 +158,7 @@ export async function PATCH(
     try {
       await queueOnboardingLifecycleSequence(subAccountId);
     } catch (err) {
-      console.error(
-        "[onboarding] lifecycle queue failed",
-        subAccountId,
-        err,
-      );
+      console.error("[onboarding] lifecycle queue failed", subAccountId, err);
     }
   }
 

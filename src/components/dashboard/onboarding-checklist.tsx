@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   CheckCircle2,
@@ -63,7 +63,7 @@ function StepRow({
         "rounded-xl border transition-colors",
         done
           ? "border-emerald-200 bg-emerald-50/50 dark:border-emerald-800/40 dark:bg-emerald-950/20"
-          : "border-border bg-card",
+          : "border-border bg-card"
       )}
     >
       <button
@@ -82,7 +82,7 @@ function StepRow({
           {done ? (
             <CheckCircle2 className="h-5 w-5 text-emerald-500" />
           ) : (
-            <Circle className="h-5 w-5 text-muted-foreground/40" />
+            <Circle className="text-muted-foreground/40 h-5 w-5" />
           )}
         </button>
 
@@ -92,7 +92,7 @@ function StepRow({
             "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
             done
               ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40"
-              : "bg-blue-50 text-blue-600 dark:bg-blue-950/40",
+              : "bg-blue-50 text-blue-600 dark:bg-blue-950/40"
           )}
         >
           <Icon className="h-4 w-4" />
@@ -102,7 +102,7 @@ function StepRow({
         <span
           className={cn(
             "flex-1 text-sm font-medium",
-            done && "text-muted-foreground line-through",
+            done && "text-muted-foreground line-through"
           )}
         >
           {step.title}
@@ -110,21 +110,21 @@ function StepRow({
 
         {/* Video badge — only when a walkthrough URL is configured */}
         {videoUrl && !done && (
-          <span className="hidden items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground sm:flex">
+          <span className="bg-muted text-muted-foreground hidden items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium sm:flex">
             {step.videoMinutes} min video
           </span>
         )}
 
         {expanded ? (
-          <ChevronUp className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <ChevronUp className="text-muted-foreground h-4 w-4 shrink-0" />
         ) : (
-          <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <ChevronDown className="text-muted-foreground h-4 w-4 shrink-0" />
         )}
       </button>
 
       {expanded && !done && (
-        <div className="border-t border-border px-4 py-3">
-          <p className="text-sm text-muted-foreground">{step.description}</p>
+        <div className="border-border border-t px-4 py-3">
+          <p className="text-muted-foreground text-sm">{step.description}</p>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             {preview || !saPath ? (
               <Button size="sm" disabled>
@@ -180,9 +180,47 @@ export function OnboardingChecklist({
 }) {
   const agency = useAgency();
   const [completed, setCompleted] = useState<Set<string>>(
-    () => new Set(initialCompleted ?? []),
+    () => new Set(initialCompleted ?? [])
   );
   const [dismissed, setDismissed] = useState(false);
+  /**
+   * What the workspace actually contains, from
+   * `GET /api/sub-accounts/{id}/onboarding`. Null until it answers (or in the
+   * agency-settings preview, which has no workspace to read).
+   */
+  const [verification, setVerification] = useState<{
+    verifiedStepIds: string[];
+    attestedStepIds: string[];
+    fullyVerified: boolean;
+    steps: { id: string; evidence: string; missing: string | null }[];
+  } | null>(null);
+
+  useEffect(() => {
+    if (!subAccountId || preview) return;
+    let active = true;
+    void fetch(`/api/sub-accounts/${subAccountId}/onboarding`)
+      .then(async (r) => (r.ok ? await r.json() : null))
+      .then((data) => {
+        if (!active || !data?.ok) return;
+        setVerification({
+          verifiedStepIds: data.verifiedStepIds ?? [],
+          attestedStepIds: data.attestedStepIds ?? [],
+          fullyVerified: data.fullyVerified === true,
+          steps: data.steps ?? [],
+        });
+        // Anything observed counts as done even if nobody ticked it — doing
+        // the work is what completes a step, not reporting it.
+        setCompleted((prev) => {
+          const next = new Set(prev);
+          for (const id of data.verifiedStepIds ?? []) next.add(id);
+          return next;
+        });
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [subAccountId, preview]);
 
   if (dismissed) return null;
 
@@ -209,14 +247,27 @@ export function OnboardingChecklist({
     });
 
   const doneCount = ONBOARDING_METHOD_STEPS.filter((step) =>
-    isOnboardingMethodStepComplete(step, Array.from(completed)),
+    isOnboardingMethodStepComplete(step, Array.from(completed))
   ).length;
   const totalCount = ONBOARDING_METHOD_STEPS.length;
   const allDone = doneCount === totalCount;
   const progressPct = Math.round((doneCount / totalCount) * 100);
+  // In the agency-settings preview there is no workspace to read, so no claim
+  // about one is made either way.
+  const fullyVerified = verification?.fullyVerified === true;
+  const attestedCount = verification?.attestedStepIds.length ?? 0;
+  // Required work we could not observe. Named, so "not verified" is never a
+  // bare verdict the agent has to go hunting to explain.
+  // Steps someone ticked that the workspace does not show. `outstanding`
+  // deliberately excludes these (they count as done for the progress bar), so
+  // the banner has to read the evidence, not the outstanding list.
+  const unverified = (verification?.steps ?? []).filter(
+    (item): item is { id: string; evidence: string; missing: string } =>
+      item.evidence === "attested" && !!item.missing
+  );
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+    <div className="border-border bg-card rounded-2xl border p-6 shadow-sm">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -225,19 +276,27 @@ export function OnboardingChecklist({
           </div>
           <div>
             <h2 className="font-semibold tracking-tight">
-              {allDone ? "You're all set!" : `Get set up in ${totalCount} method steps`}
+              {fullyVerified
+                ? "You're all set!"
+                : `Get set up in ${totalCount} method steps`}
             </h2>
-            <p className="text-xs text-muted-foreground">
-              {allDone
-                ? "Your account is fully configured — time to close some deals."
-                : `${doneCount} of ${totalCount} complete`}
+            <p className="text-muted-foreground text-xs">
+              {/* "Fully configured" is only ever said about work we can see.
+                  Steps a user ticked are counted in the progress bar but say
+                  so, because a false "you're done" removes the only signal
+                  that anything is left. */}
+              {fullyVerified
+                ? "Every step verified in your workspace — time to close some deals."
+                : allDone && attestedCount > 0
+                  ? `${doneCount} of ${totalCount} done · ${attestedCount} marked by you, not yet verified`
+                  : `${doneCount} of ${totalCount} complete`}
             </p>
           </div>
         </div>
         {!preview && !mandatory && (
           <button
             onClick={() => setDismissed(true)}
-            className="text-xs text-muted-foreground hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground text-xs"
           >
             Dismiss
           </button>
@@ -245,7 +304,7 @@ export function OnboardingChecklist({
       </div>
 
       {/* Progress bar */}
-      <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+      <div className="bg-muted mt-4 h-1.5 w-full overflow-hidden rounded-full">
         <div
           className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-500"
           style={{ width: `${progressPct}%` }}
@@ -279,12 +338,36 @@ export function OnboardingChecklist({
       </div>
 
       {allDone && (
-        <div className="mt-4 rounded-xl bg-emerald-50 p-4 text-center dark:bg-emerald-950/30">
-          <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
-            🎉 Setup complete — you&apos;re ready to work leads.
+        <div
+          className={
+            fullyVerified
+              ? "mt-4 rounded-xl bg-emerald-50 p-4 text-center dark:bg-emerald-950/30"
+              : "mt-4 rounded-xl bg-amber-50 p-4 text-center dark:bg-amber-950/30"
+          }
+        >
+          <p
+            className={
+              fullyVerified
+                ? "text-sm font-medium text-emerald-700 dark:text-emerald-400"
+                : "text-sm font-medium text-amber-800 dark:text-amber-300"
+            }
+          >
+            {fullyVerified
+              ? "🎉 Setup complete — you're ready to work leads."
+              : "Marked complete — but some steps aren't showing up in your workspace yet."}
           </p>
+          {!fullyVerified && unverified.length > 0 && (
+            <ul className="mt-2 space-y-1 text-left text-xs text-amber-800 dark:text-amber-300">
+              {unverified.map((item) => (
+                <li key={item.id}>• {item.missing}</li>
+              ))}
+            </ul>
+          )}
           {mandatory && saPath && (
-            <Button className="mt-3" render={<Link href={saPath("/dashboard")} />}>
+            <Button
+              className="mt-3"
+              render={<Link href={saPath("/dashboard")} />}
+            >
               Continue to dashboard
             </Button>
           )}
