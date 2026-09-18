@@ -4,8 +4,8 @@ Date: 2026-08-18
 
 ## Incident outcome
 
-The Seamus Costigan Blueprint was not reset by the August 15 Website Studio
-rebuild. The approved profile was later replaced by the Business Blueprint
+The affected customer's Blueprint was not reset by the August 15 Website
+Studio rebuild. The approved profile was later replaced by the Business Blueprint
 public-profile import endpoint. That endpoint wrote an AI-generated review
 draft directly into the permanent `businessProfile/main` Firestore document
 before the operator selected **Save profile**.
@@ -46,7 +46,7 @@ This explains the observed sequence:
 - Visual check on the intact 100% workspace after a hard reload:
   - AI import-source field starts blank.
   - Permanent Website field remains the approved business website.
-- Visual check on the Seamus workspace after a hard reload:
+- Visual check on the affected workspace after a hard reload:
   - AI import-source field starts blank.
   - Previously overwritten stored profile is still present at 75%, proving the
     issue is persistent data mutation rather than a client rendering failure.
@@ -67,7 +67,7 @@ introduced by later AI-assisted Business Blueprint import work.
 
 ## Live reset acceptance
 
-The operator approved a clean-slate reset for only the Seamus Costigan
+The operator approved a clean-slate reset for only the affected customer's
 Business Blueprint. Production deployment `dpl_7jf2KtN284fFWojDLn9zCuPhfrcr`
 was visually exercised in the authenticated installed app before updating
 main.

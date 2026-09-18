@@ -5,19 +5,27 @@ import { ExternalLink, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { useSubAccount } from "@/context/sub-account-context";
 import { Button } from "@/components/ui/button";
-import { buildRprHomeUrl, formatAddressForRpr } from "@/lib/rpr/link";
+import {
+  buildRprHomeUrl,
+  buildRprPropertyUrl,
+  formatAddressForRpr,
+} from "@/lib/rpr/link";
 
 /**
- * "View on RPR" — opens the agent's own RPR (Realtors Property Resource)
- * account via their MLS-SSO entry point and copies the property address so
- * it can be pasted into RPR's search box.
+ * "View on RPR" — opens this property inside the agent's own RPR (Realtors
+ * Property Resource) account, through their MLS sign-in.
  *
- * RPR resolves every property page through an internal property id we have
- * no legitimate way to obtain (verified live: a fabricated id 404s, and an
- * address search still resolves through that same internal id rather than
- * a linkable intermediate page). So this deliberately does NOT try to jump
- * straight to a specific property, CMA, or valuation page — that would be a
- * guessed link that might silently 404. See src/lib/rpr/link.ts.
+ * It used to open RPR's home page and tell the agent to paste the address
+ * into RPR's search box, on the belief that RPR could not be linked to a
+ * specific property from outside. That was wrong: RPR publishes a deep-link
+ * endpoint that takes an MLS listing number or a full address. The link is
+ * now built from whichever of those this property has — see
+ * src/lib/rpr/link.ts, including what that contract is and is not verified
+ * against.
+ *
+ * The address still goes on the clipboard. It costs the agent nothing and
+ * means that if a deep link ever lands on RPR's search instead of the
+ * property, they are one paste from where they were going.
  *
  * Locked (not hidden) when the sub-account hasn't set an RPR org code yet —
  * names what's missing and links straight to where it's fixed, per the
@@ -28,11 +36,13 @@ export function RprLinkButton({
   city,
   state,
   zip,
+  mlsId,
 }: {
   address: string;
   city: string;
   state: string;
   zip?: string | null;
+  mlsId?: string | null;
 }) {
   const { subAccount, isAdmin, saPath } = useSubAccount();
   const rprOrgId = subAccount?.rprOrgId ?? null;
@@ -53,11 +63,25 @@ export function RprLinkButton({
 
   function handleClick() {
     const line = formatAddressForRpr({ address, city, state, zip });
-    void navigator.clipboard?.writeText(line).then(
-      () => toast.success("Address copied — paste it into RPR's search box."),
-      () => undefined
-    );
-    window.open(buildRprHomeUrl(rprOrgId!), "_blank", "noopener,noreferrer");
+    if (line) {
+      void navigator.clipboard?.writeText(line).then(
+        () =>
+          toast.success(
+            "Opening this property in RPR — address copied in case you need to search."
+          ),
+        () => undefined
+      );
+    }
+    const target =
+      buildRprPropertyUrl({
+        rprOrgId: rprOrgId!,
+        mlsId,
+        address,
+        city,
+        state,
+        zip,
+      }) ?? buildRprHomeUrl(rprOrgId!);
+    window.open(target, "_blank", "noopener,noreferrer");
   }
 
   return (

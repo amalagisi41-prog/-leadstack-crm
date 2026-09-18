@@ -211,6 +211,9 @@ export function PropertyWorkspace({ listingId }: { listingId: string }) {
             city={brief.brief.city}
             state={brief.brief.state}
             zip={brief.brief.zip}
+            // The MLS number is what RPR's deep link resolves most precisely;
+            // it comes straight from the synced listing when there is one.
+            mlsId={listing?.mlsId ?? null}
           />
           <Button
             render={
