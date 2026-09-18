@@ -6,22 +6,10 @@ import { getAdminDb } from "@/lib/firebase/admin";
 import { requireSubAccountAdmin } from "@/lib/auth/require-tenancy";
 import { buildContentBrief } from "@/lib/marketing/content-brief";
 import type { IdxListingDoc, ListingMarketingStatus } from "@/types/idx";
-
-const STATUS_TO_IDX: Record<ListingMarketingStatus, IdxListingDoc["status"]> = {
-  new: "active",
-  active: "active",
-  "under-contract": "pending",
-  "just-sold": "sold",
-  "off-market": "off-market",
-};
-
-const STATUSES = new Set<ListingMarketingStatus>([
-  "new",
-  "active",
-  "under-contract",
-  "just-sold",
-  "off-market",
-]);
+import {
+  isMarketingStatus,
+  MARKETING_STATUS_TO_IDX_STATUS as STATUS_TO_IDX,
+} from "@/lib/marketing/listing-source";
 
 export async function PATCH(
   request: Request,
@@ -36,7 +24,7 @@ export async function PATCH(
   } catch {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
-  if (typeof body.status !== "string" || !STATUSES.has(body.status as ListingMarketingStatus)) {
+  if (!isMarketingStatus(body.status)) {
     return NextResponse.json({ error: "Choose a valid listing status." }, { status: 400 });
   }
   const marketingStatus = body.status as ListingMarketingStatus;

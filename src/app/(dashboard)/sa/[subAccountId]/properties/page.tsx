@@ -31,6 +31,8 @@ import {
   PHOTO_CATEGORIES,
   type PhotoCategoryMap,
 } from "@/lib/marketing/photo-categories";
+import { describeListingSource } from "@/lib/marketing/listing-source";
+import { SUB_ACCOUNT_ROUTES } from "@/lib/navigation/sub-account-routes";
 import { cn } from "@/lib/utils";
 import type {
   CampaignBriefDoc,
@@ -132,18 +134,9 @@ function briefToCard(
   const channelCount = b.channels?.length ?? 0;
   const approvedCount = doc.approvedChannels?.length ?? 0;
   const listing = doc.listing;
-  const importedFrom =
-    typeof listing?.raw === "object" && listing.raw !== null &&
-    typeof (listing.raw as { importedFrom?: unknown }).importedFrom === "string"
-      ? (listing.raw as { importedFrom: string }).importedFrom
-      : null;
-  const sourceLabel = !listing
-    ? "Brief only"
-    : importedFrom === "guided manual entry"
-      ? "Guided entry"
-      : importedFrom
-        ? "Imported record"
-        : "IDX record";
+  // One vocabulary across the Listings browser, this list, and the composer —
+  // see lib/marketing/listing-source.ts.
+  const sourceLabel = describeListingSource(listing).label;
   const missingDetails = b.dataGaps?.length ?? 0;
   const hasPhotos = (listing?.photos as unknown[] | undefined)?.length || b.images?.length;
   const healthLabel = !listing
@@ -354,7 +347,10 @@ export default function PropertiesPage() {
             Your listings and their marketing status at a glance.
           </p>
         </div>
-        <Link href={saPath("/marketing/campaigns")}>
+        {/* Picking from inventory beats retyping an MLS number: the Listings
+            browser already holds every property this workspace has, on the
+            MLS and off it. */}
+        <Link href={saPath(SUB_ACCOUNT_ROUTES.listings)}>
           <Button size="sm" className="gap-1.5">
             <Plus className="h-4 w-4" />
             Add Property

@@ -18,6 +18,13 @@ export const SUB_ACCOUNT_ROUTES = {
   forms: "/forms",
   contacts: "/contacts",
   pipeline: "/pipeline",
+  properties: "/properties",
+  /**
+   * The inventory browser. Still mounted at `/idx` for bookmark stability,
+   * though it is no longer IDX-only — it lists off-market property too, and
+   * renders without an IDX Broker connection.
+   */
+  listings: "/idx",
   calendar: "/calendar",
   booking: "/booking",
   domain: "/domain",

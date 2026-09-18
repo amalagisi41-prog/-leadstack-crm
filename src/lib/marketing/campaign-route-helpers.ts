@@ -5,6 +5,10 @@ import type {
   CampaignChannel,
   ContentBrief,
 } from "@/types/marketing-campaigns";
+import {
+  isMarketingStatus,
+  MARKETING_STATUS_TO_IDX_STATUS,
+} from "@/lib/marketing/listing-source";
 
 export function isIdxCampaignEnabled(
   sub: Pick<SubAccountDoc, "idxEnabledByAgency" | "idxConfig">
@@ -32,11 +36,20 @@ export function buildManualListing(
     : [];
   if (!text("address") || !text("city") || !text("state"))
     return "MLS number or address, city, and state are required.";
+  // Manually-added property is most often NOT active — pocket listings,
+  // coming-soon, and just-sold work all arrive this way. Defaulting every
+  // one of them to "Active" made the inventory screen assert something the
+  // operator never said, so the caller picks; "active" stays the fallback
+  // only for callers that send nothing.
+  const marketingStatus = isMarketingStatus(body.marketingStatus)
+    ? body.marketingStatus
+    : "active";
   return {
     id: listingId,
     subAccountId,
     mlsId: "manual",
-    status: "active",
+    status: MARKETING_STATUS_TO_IDX_STATUS[marketingStatus],
+    marketingStatus,
     price: number("price"),
     address: text("address"),
     city: text("city"),
