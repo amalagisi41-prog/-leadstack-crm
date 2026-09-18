@@ -15,23 +15,25 @@
  * documented deep-link endpoint that takes an MLS listing number or a full
  * address and resolves the internal id on its own side.
  *
- * Evidence this is built on, since RPR is unreachable from CI and from this
- * repo's build environment (egress-blocked), so none of it is a live check:
+ * **Verified live against a signed-in RPR session, both paths.** RPR followed
+ * each link and resolved its own internal property id, landing on the correct
+ * property page:
  *
- *   - RPR's own deep-link builder emits exactly this URL shape, keys and all:
- *     `https://narrpr.com/deep-link?apn=&cbcode=…&detailstab=&fips=&listingid=
- *      &orgid=&query=3433+Moulton+Ave%2C+Cincinnati%2C+OH+45205&reporttype=
- *      &resulttype=&searchtype=Properties&ssocode=`
- *   - RPR's MLS deep-link documentation describes filling `query`
- *     dynamically with a full address including city, state and ZIP, and
- *     lists Property/Listing Details among the linkable destinations.
- *     (blog.narrpr.com/mls/rpr-deep-links, support.narrpr.com "Deep Linking")
+ *   - By MLS number: `…/deep-link?cbcode=ctconnm-n&listingid=24200534`
+ *     → `narrpr.com/properties/details/info/78456398`, the right address.
+ *   - By full address: `…/deep-link?cbcode=…&query=<addr>&searchtype=Properties`
+ *     → `narrpr.com/properties/details/info/78501778`, the right address.
  *
- * So `buildRprPropertyUrl()` is built to a documented contract that has not
- * been exercised end-to-end from here. `RprLinkButton` therefore still puts
- * the address on the clipboard: if a deep link ever lands on RPR's search
- * rather than the property, the agent is one paste from where they were
- * going instead of stranded.
+ * That is the whole point of the endpoint: the internal id is unobtainable
+ * to us (a fabricated one 404s), and RPR derives it on its own side. The
+ * shape matches RPR's own deep-link builder output and its MLS deep-link
+ * documentation, which specifies a full address including city, state and
+ * ZIP for `query` and lists Property/Listing Details among the destinations.
+ *
+ * Note that RPR is unreachable from CI and from this repo's build
+ * environment (egress-blocked), so nothing here can be re-checked
+ * automatically. If this ever needs re-verifying, it takes a signed-in
+ * browser and one click per path.
  */
 
 /**
