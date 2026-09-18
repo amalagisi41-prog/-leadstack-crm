@@ -26,6 +26,11 @@ import type {
   CampaignWorkflowStep,
 } from "@/types/marketing-campaigns";
 import type { IdxListingDoc, ListingMarketingStatus } from "@/types/idx";
+import {
+  MARKETING_STATUS_LABELS,
+  MARKETING_STATUSES,
+  resolveMarketingStatus,
+} from "@/lib/marketing/listing-source";
 
 const MAX_UPLOAD_BYTES = 4 * 1024 * 1024;
 
@@ -70,6 +75,10 @@ export default function MarketingCampaignsPage() {
     remarks: "",
     disclaimer: "",
     photos: "",
+    // Spread into the POST body, so `buildManualListing` picks it up. Without
+    // it every hand-entered property saved as Active, including pocket and
+    // coming-soon listings that plainly are not.
+    marketingStatus: "active" as ListingMarketingStatus,
   });
   const [brief, setBrief] = useState<CampaignBriefDoc | null>(null);
   const [loading, setLoading] = useState(false);
@@ -225,10 +234,12 @@ export default function MarketingCampaignsPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ propertyId: brief.listingId }),
-        },
+        }
       );
       if (!res.ok) {
-        const data = await res.json().catch(() => ({ error: "Download failed." }));
+        const data = await res
+          .json()
+          .catch(() => ({ error: "Download failed." }));
         throw new Error(data.error ?? "Download failed.");
       }
       const blob = await res.blob();
@@ -242,7 +253,9 @@ export default function MarketingCampaignsPage() {
       URL.revokeObjectURL(url);
       toast.success("Media package downloaded.");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not download media.");
+      toast.error(
+        error instanceof Error ? error.message : "Could not download media."
+      );
     } finally {
       setDownloadingZip(false);
     }
@@ -412,11 +425,13 @@ export default function MarketingCampaignsPage() {
     if (!brief) return;
     setApproving(true);
     try {
-      const channels = requestedChannels ?? brief.brief.channels
-        .filter(
-          (draft) => draft.status === "ready" && draft.findings.length === 0
-        )
-        .map((draft) => draft.channel);
+      const channels =
+        requestedChannels ??
+        brief.brief.channels
+          .filter(
+            (draft) => draft.status === "ready" && draft.findings.length === 0
+          )
+          .map((draft) => draft.channel);
       if (channels.length === 0)
         throw new Error("No channel is ready for approval yet.");
       const res = await fetch(
@@ -472,10 +487,14 @@ export default function MarketingCampaignsPage() {
       const data = await readApiJson<{ ok?: boolean; error?: string }>(res);
       if (!res.ok || !data.ok)
         throw new Error(data.error ?? "Could not record the decline.");
-      setApprovedChannels((current) => current.filter((item) => item !== channel));
+      setApprovedChannels((current) =>
+        current.filter((item) => item !== channel)
+      );
       setDecliningChannel(null);
       setDeclineReason("");
-      toast.success("Decline recorded. Revise the draft, then submit it again.");
+      toast.success(
+        "Decline recorded. Revise the draft, then submit it again."
+      );
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Could not record the decline."
@@ -553,6 +572,9 @@ export default function MarketingCampaignsPage() {
         remarks: data.listing.remarks,
         disclaimer: data.listing.disclaimer ?? "",
         photos: data.listing.photos.join("\n"),
+        // Carry the imported record's own lifecycle rather than resetting it
+        // to Active — an uploaded sold comp is not suddenly back on the market.
+        marketingStatus: resolveMarketingStatus(data.listing),
       });
       const importedListings = data.listings?.length
         ? data.listings
@@ -847,32 +869,31 @@ export default function MarketingCampaignsPage() {
               export-ready drafts.
             </p>
             <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-              {brief.brief.channels
-                .map((draft) => (
-                  <label key={draft.channel} className="text-xs">
-                    <span className="capitalize">
-                      {draft.channel === "googleBusiness"
-                        ? "Google Business"
-                        : draft.channel}
-                    </span>
-                    <span className="text-muted-foreground ml-1">
-                      {channelAvailability?.[draft.channel]?.publishable
-                        ? "· connected"
-                        : "· draft/export"}
-                    </span>
-                    <Input
-                      className="mt-1"
-                      type="datetime-local"
-                      value={schedulePlan[draft.channel] ?? ""}
-                      onChange={(e) =>
-                        setSchedulePlan({
-                          ...schedulePlan,
-                          [draft.channel]: e.target.value || null,
-                        })
-                      }
-                    />
-                  </label>
-                ))}
+              {brief.brief.channels.map((draft) => (
+                <label key={draft.channel} className="text-xs">
+                  <span className="capitalize">
+                    {draft.channel === "googleBusiness"
+                      ? "Google Business"
+                      : draft.channel}
+                  </span>
+                  <span className="text-muted-foreground ml-1">
+                    {channelAvailability?.[draft.channel]?.publishable
+                      ? "· connected"
+                      : "· draft/export"}
+                  </span>
+                  <Input
+                    className="mt-1"
+                    type="datetime-local"
+                    value={schedulePlan[draft.channel] ?? ""}
+                    onChange={(e) =>
+                      setSchedulePlan({
+                        ...schedulePlan,
+                        [draft.channel]: e.target.value || null,
+                      })
+                    }
+                  />
+                </label>
+              ))}
             </div>
             <Button
               className="mt-3"
@@ -1016,7 +1037,7 @@ export default function MarketingCampaignsPage() {
             {manual && !editing && (
               <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs sm:col-span-2">
                 <p className="font-medium">Guided verified entry</p>
-                <p className="mt-1 text-muted-foreground">
+                <p className="text-muted-foreground mt-1">
                   Enter the facts from the SmartMLS detail or broker-approved
                   report. AgentStack will save this as a guided-entry property
                   record—not as an MLS sync—and open its property workspace.
@@ -1045,6 +1066,26 @@ export default function MarketingCampaignsPage() {
                 />
               </div>
             ))}
+            <div className="space-y-1">
+              <Label htmlFor="manual-status">Status</Label>
+              <select
+                id="manual-status"
+                value={form.marketingStatus}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    marketingStatus: e.target.value as ListingMarketingStatus,
+                  })
+                }
+                className="border-input bg-background h-9 w-full rounded-md border px-3 text-sm"
+              >
+                {MARKETING_STATUSES.map((status) => (
+                  <option key={status} value={status}>
+                    {MARKETING_STATUS_LABELS[status]}
+                  </option>
+                ))}
+              </select>
+            </div>
             <div className="space-y-1 sm:col-span-2">
               <Label htmlFor="manual-remarks">Remarks</Label>
               <Textarea
@@ -1313,7 +1354,7 @@ export default function MarketingCampaignsPage() {
                   </div>
                 ) : (
                   <>
-                    <p className="mt-2 whitespace-pre-wrap text-sm">
+                    <p className="mt-2 text-sm whitespace-pre-wrap">
                       {draft.body}
                     </p>
                     <div className="mt-2 flex items-center gap-2">
@@ -1332,7 +1373,14 @@ export default function MarketingCampaignsPage() {
                         size="sm"
                         variant="ghost"
                         className="px-0 text-xs"
-                        onClick={() => navigator.clipboard.writeText(draft.body).then(() => toast.success(draft.channel + " draft copied.")).catch(() => toast.error("Could not copy."))}
+                        onClick={() =>
+                          navigator.clipboard
+                            .writeText(draft.body)
+                            .then(() =>
+                              toast.success(draft.channel + " draft copied.")
+                            )
+                            .catch(() => toast.error("Could not copy."))
+                        }
                       >
                         <ClipboardCopy className="mr-1 h-3 w-3" /> Copy
                       </Button>
@@ -1400,12 +1448,15 @@ export default function MarketingCampaignsPage() {
                 </div>
                 {decliningChannel === draft.channel ? (
                   <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50/50 p-3">
-                    <label className="text-xs font-medium" htmlFor={`decline-${draft.channel}`}>
+                    <label
+                      className="text-xs font-medium"
+                      htmlFor={`decline-${draft.channel}`}
+                    >
                       Revision request
                     </label>
                     <Textarea
                       id={`decline-${draft.channel}`}
-                      className="mt-2 bg-background"
+                      className="bg-background mt-2"
                       value={declineReason}
                       onChange={(event) => setDeclineReason(event.target.value)}
                       placeholder="What should change before approval?"
@@ -1484,7 +1535,21 @@ export default function MarketingCampaignsPage() {
                                 ? hashtags.join(" ")
                                 : "None required for this channel"}
                             </p>
-                            <Button size="sm" variant="ghost" className="text-xs" onClick={() => { navigator.clipboard.writeText(draft.body).then(() => toast.success(`${draft.channel} copy exported.`)).catch(() => toast.error("Could not copy.")); }}>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-xs"
+                              onClick={() => {
+                                navigator.clipboard
+                                  .writeText(draft.body)
+                                  .then(() =>
+                                    toast.success(
+                                      `${draft.channel} copy exported.`
+                                    )
+                                  )
+                                  .catch(() => toast.error("Could not copy."));
+                              }}
+                            >
                               <ClipboardCopy className="mr-1 h-3 w-3" /> Copy
                             </Button>
                           </div>

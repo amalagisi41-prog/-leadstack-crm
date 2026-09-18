@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { AgentSiteRenderer } from "@/components/website-studio/agent-site-renderer";
 import { getTemplate } from "@/lib/website-studio/templates";
+import { hydrateSiteContent } from "@/lib/website-studio/hydrate-site-content";
 import type { AgentSiteDoc } from "@/types/agent-site";
 
 /**
@@ -34,11 +35,13 @@ export default async function PublishedAgentSite({
   const idxConnected = Boolean(
     subAccount?.idxEnabledByAgency === true && subAccount?.idxConfig?.enabled
   );
+  // Featured cards that reference a real property render the live record.
+  const content = await hydrateSiteContent(site.content, subAccountId);
 
   return (
     <AgentSiteRenderer
       template={getTemplate(site.templateId)}
-      content={site.content}
+      content={content}
       composition={site.composition}
       idx={{
         connected: idxConnected,

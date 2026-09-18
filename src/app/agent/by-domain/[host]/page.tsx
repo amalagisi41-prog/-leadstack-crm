@@ -3,6 +3,7 @@ import { getAdminDb } from "@/lib/firebase/admin";
 import { AgentSiteRenderer } from "@/components/website-studio/agent-site-renderer";
 import { getTemplate } from "@/lib/website-studio/templates";
 import { normalizeHost } from "@/lib/domains/app-hosts";
+import { hydrateSiteContent } from "@/lib/website-studio/hydrate-site-content";
 import type { AgentSiteDoc } from "@/types/agent-site";
 
 /**
@@ -63,15 +64,17 @@ export default async function PublishedSiteByDomain({
   if (site.status !== "published") return <DomainConnectedButNoSite />;
 
   const idxConnected = Boolean(
-    sub.data?.idxEnabledByAgency === true && sub.data?.idxConfig?.enabled,
+    sub.data?.idxEnabledByAgency === true && sub.data?.idxConfig?.enabled
   );
+  // Featured cards that reference a real property render the live record.
+  const content = await hydrateSiteContent(site.content, sub.id);
 
   // Same props as /agent/[subAccountId]/[slug] — this route differs only in
   // how it finds the sub-account, never in what it renders.
   return (
     <AgentSiteRenderer
       template={getTemplate(site.templateId)}
-      content={site.content}
+      content={content}
       composition={site.composition}
       idx={{
         connected: idxConnected,

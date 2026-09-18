@@ -31,33 +31,38 @@ import {
   PHOTO_CATEGORIES,
   type PhotoCategoryMap,
 } from "@/lib/marketing/photo-categories";
-import { describeListingSource } from "@/lib/marketing/listing-source";
+import {
+  describeListingSource,
+  MARKETING_STATUS_LABELS,
+  MARKETING_STATUSES,
+  resolveMarketingStatus,
+} from "@/lib/marketing/listing-source";
 import { SUB_ACCOUNT_ROUTES } from "@/lib/navigation/sub-account-routes";
 import { cn } from "@/lib/utils";
 import type {
   CampaignBriefDoc,
   CampaignWorkflowStep,
 } from "@/types/marketing-campaigns";
+import type { ListingMarketingStatus } from "@/types/idx";
 
 /* ── Property status labels ── */
-type PropertyStatus =
-  | "draft"
-  | "coming-soon"
-  | "active"
-  | "under-contract"
-  | "just-sold"
-  | "archived";
+
+/**
+ * What the badge says: the PROPERTY's lifecycle, read off its listing record.
+ *
+ * This used to be derived from the campaign's `workflowStep`, so the word
+ * "Status" reported how far the marketing had got rather than what was true
+ * of the property — a just-sold listing whose drafts were still being written
+ * read "Active". Campaign progress is a separate axis and still shows, as the
+ * card's next-action line.
+ */
+type PropertyLifecycle = ListingMarketingStatus | "no-record";
 
 const STATUS_META: Record<
-  PropertyStatus,
+  PropertyLifecycle,
   { label: string; color: string; bg: string }
 > = {
-  draft: { label: "Draft", color: "text-neutral-600", bg: "bg-neutral-100" },
-  "coming-soon": {
-    label: "Coming Soon",
-    color: "text-amber-700",
-    bg: "bg-amber-50",
-  },
+  new: { label: "New", color: "text-sky-700", bg: "bg-sky-50" },
   active: { label: "Active", color: "text-green-700", bg: "bg-green-50" },
   "under-contract": {
     label: "Under Contract",
@@ -69,20 +74,19 @@ const STATUS_META: Record<
     color: "text-purple-700",
     bg: "bg-purple-50",
   },
-  archived: {
-    label: "Archived",
-    color: "text-neutral-500",
-    bg: "bg-neutral-50",
+  "off-market": {
+    label: "Off Market",
+    color: "text-neutral-600",
+    bg: "bg-neutral-100",
+  },
+  // Not a lifecycle the operator chose — the brief outlived its listing doc.
+  // Named rather than quietly shown as a draft, so the gap is visible.
+  "no-record": {
+    label: "No property record",
+    color: "text-amber-700",
+    bg: "bg-amber-50",
   },
 };
-
-function workflowToStatus(step?: CampaignWorkflowStep): PropertyStatus {
-  if (!step || step === "create") return "draft";
-  if (step === "optimize") return "active";
-  if (step === "schedule") return "active";
-  if (step === "archive") return "archived";
-  return "draft";
-}
 
 interface PropertyCardData {
   id: string;
@@ -95,7 +99,9 @@ interface PropertyCardData {
   baths: number;
   sqft: number | null;
   propertyType: string;
-  status: PropertyStatus;
+  lifecycle: PropertyLifecycle;
+  /** Campaign archived — a marketing state, kept separate from the lifecycle. */
+  archived: boolean;
   workflowStep: CampaignWorkflowStep;
   imageUrl: string | null;
   photos: string[];
@@ -138,7 +144,8 @@ function briefToCard(
   // see lib/marketing/listing-source.ts.
   const sourceLabel = describeListingSource(listing).label;
   const missingDetails = b.dataGaps?.length ?? 0;
-  const hasPhotos = (listing?.photos as unknown[] | undefined)?.length || b.images?.length;
+  const hasPhotos =
+    (listing?.photos as unknown[] | undefined)?.length || b.images?.length;
   const healthLabel = !listing
     ? "Source record missing"
     : missingDetails > 0
@@ -158,7 +165,8 @@ function briefToCard(
     baths: b.baths || 0,
     sqft: b.sqft,
     propertyType: b.propertyType || "Residential",
-    status: workflowToStatus(step),
+    lifecycle: listing ? resolveMarketingStatus(listing) : "no-record",
+    archived: step === "archive",
     workflowStep: step,
     imageUrl: orderedPhotos[0] ?? null,
     photos: b.images ?? [],
@@ -173,21 +181,26 @@ function briefToCard(
   };
 }
 
-/* ── Status filter tabs ── */
-const STATUS_FILTERS: { key: PropertyStatus | "all"; label: string }[] = [
+/* ── Filter tabs ──
+   Lifecycle chips filter on the property; "Archived campaign" filters on the
+   marketing axis, and is labelled so the two are not read as one scale. */
+type PropertyFilter = PropertyLifecycle | "all" | "archived-campaign";
+
+const STATUS_FILTERS: { key: PropertyFilter; label: string }[] = [
   { key: "all", label: "All" },
-  { key: "draft", label: "Draft" },
-  { key: "active", label: "Active" },
-  { key: "under-contract", label: "Under Contract" },
-  { key: "just-sold", label: "Just Sold" },
-  { key: "archived", label: "Archived" },
+  ...MARKETING_STATUSES.map((status) => ({
+    key: status as PropertyFilter,
+    label: MARKETING_STATUS_LABELS[status],
+  })),
+  { key: "no-record", label: "No property record" },
+  { key: "archived-campaign", label: "Archived campaign" },
 ];
 
 export default function PropertiesPage() {
   const { subAccountId, saPath } = useSubAccount();
   const [briefs, setBriefs] = useState<PropertyCardData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<PropertyStatus | "all">("all");
+  const [filter, setFilter] = useState<PropertyFilter>("all");
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<PropertyCardData | null>(null);
   const [categorizing, setCategorizing] = useState<PropertyCardData | null>(
@@ -222,7 +235,9 @@ export default function PropertiesPage() {
 
   const filtered = useMemo(() => {
     let list = briefs;
-    if (filter !== "all") list = list.filter((p) => p.status === filter);
+    if (filter === "archived-campaign") list = list.filter((p) => p.archived);
+    else if (filter !== "all")
+      list = list.filter((p) => p.lifecycle === filter);
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(
@@ -297,7 +312,9 @@ export default function PropertiesPage() {
       setCategorizing(null);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Could not save photo categories."
+        error instanceof Error
+          ? error.message
+          : "Could not save photo categories."
       );
     }
   }
@@ -408,7 +425,7 @@ export default function PropertiesPage() {
           </p>
           {briefs.length === 0 && (
             <Link
-              href={saPath("/marketing/campaigns")}
+              href={saPath(SUB_ACCOUNT_ROUTES.listings)}
               className="mt-4 inline-block"
             >
               <Button size="sm" variant="outline" className="gap-1.5">
@@ -468,7 +485,7 @@ function PropertyCard({
   onDelete: () => void;
   deleting: boolean;
 }) {
-  const statusMeta = STATUS_META[property.status];
+  const statusMeta = STATUS_META[property.lifecycle];
   const formattedPrice = property.price
     ? `$${property.price.toLocaleString()}`
     : "Price TBD";

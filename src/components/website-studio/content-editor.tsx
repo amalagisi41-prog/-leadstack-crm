@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
-import { Plus, Trash2, Save } from "lucide-react";
+import { useEffect, useId, useMemo, useState } from "react";
+import { Building, Link2, Plus, Trash2, Save } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { subscribeToIdxListings } from "@/lib/firestore/idx-listings";
+import { listingToSiteCard } from "@/lib/website-studio/listing-cards";
+import type { IdxListingDoc } from "@/types/idx";
 import {
   normalizeAgentSiteContent,
   type AgentSiteCompliance,
@@ -105,11 +108,19 @@ export function ContentEditor({
   onSave,
   saving,
   revealGroup,
+  subAccountId,
 }: {
   content: AgentSiteContent;
   onChange: (c: AgentSiteContent) => void;
   onSave: (c: AgentSiteContent) => Promise<void>;
   saving: boolean;
+  /**
+   * Enables the "Add from my listings" picker. Optional, and passed in rather
+   * than read from context on purpose: this editor is a presentational
+   * component that must render standalone (its tests mount it bare), so it
+   * cannot require a SubAccountProvider above it.
+   */
+  subAccountId?: string;
   /**
    * Group title to scroll to when the editor opens. The publish checklist
    * sends users here to fix compliance fields, which sit near the bottom of
@@ -296,7 +307,13 @@ export function ContentEditor({
           {local.listings.map((l, i) => (
             <div key={i} className="space-y-2 rounded-lg border p-2">
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground text-xs font-medium">
+                <span className="text-muted-foreground flex items-center gap-1 text-xs font-medium">
+                  {l.listingId && (
+                    <Link2
+                      className="h-3 w-3 text-emerald-600"
+                      aria-label="Linked to a property in your listings"
+                    />
+                  )}
                   Listing {i + 1}
                 </span>
                 <button
@@ -343,8 +360,33 @@ export function ContentEditor({
                 value={l.imageUrl}
                 onChange={(e) => setListing(i, { imageUrl: e.target.value })}
               />
+              {l.listingId && (
+                <p className="text-muted-foreground text-[11px]">
+                  Linked to a property in your listings — the published page
+                  shows its current price and status and links to it. What you
+                  type here is the fallback if that property is ever removed.{" "}
+                  <button
+                    type="button"
+                    className="underline underline-offset-2"
+                    onClick={() => setListing(i, { listingId: undefined })}
+                  >
+                    Unlink
+                  </button>
+                </p>
+              )}
             </div>
           ))}
+          <ListingPicker
+            subAccountId={subAccountId}
+            onPick={(card) => set("listings", [...local.listings, card])}
+            alreadyAdded={
+              new Set(
+                local.listings
+                  .map((l) => l.listingId)
+                  .filter((id): id is string => !!id)
+              )
+            }
+          />
           <Button
             variant="outline"
             size="sm"
@@ -361,7 +403,7 @@ export function ContentEditor({
               ])
             }
           >
-            <Plus className="mr-1 h-3.5 w-3.5" /> Add listing
+            <Plus className="mr-1 h-3.5 w-3.5" /> Add blank listing
           </Button>
         </Group>
 
@@ -530,8 +572,109 @@ export function ContentEditor({
             }
           />
         </Group>
-
       </div>
+    </div>
+  );
+}
+
+/**
+ * Pick a featured listing from the workspace's own inventory instead of
+ * retyping it.
+ *
+ * Picking stores the property's id alongside a snapshot of its current values,
+ * so the published card tracks the live record and still renders something if
+ * that property is later removed. Typing a card by hand stays available for
+ * anything not in inventory.
+ */
+function ListingPicker({
+  onPick,
+  alreadyAdded,
+  subAccountId,
+}: {
+  onPick: (card: AgentSiteListing) => void;
+  alreadyAdded: Set<string>;
+  subAccountId?: string;
+}) {
+  const [listings, setListings] = useState<IdxListingDoc[]>([]);
+  const [open, setOpen] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!subAccountId || !open) return;
+    const unsub = subscribeToIdxListings(
+      subAccountId,
+      (list) => {
+        setListings(list);
+        setLoaded(true);
+      },
+      () => setLoaded(true)
+    );
+    return () => unsub();
+  }, [subAccountId, open]);
+
+  const available = useMemo(
+    () => listings.filter((l) => !alreadyAdded.has(l.id)),
+    [listings, alreadyAdded]
+  );
+
+  // No workspace in scope (a bare render, e.g. a preview harness) means there
+  // is no inventory to pick from — hide the control rather than offer one that
+  // cannot work.
+  if (!subAccountId) return null;
+
+  if (!open) {
+    return (
+      <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+        <Building className="mr-1 h-3.5 w-3.5" /> Add from my listings
+      </Button>
+    );
+  }
+
+  return (
+    <div className="space-y-2 rounded-lg border p-2">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-medium">Your listings</span>
+        <button
+          type="button"
+          className="text-muted-foreground text-xs underline underline-offset-2"
+          onClick={() => setOpen(false)}
+        >
+          Close
+        </button>
+      </div>
+      {!loaded ? (
+        <div className="bg-muted/50 h-16 animate-pulse rounded" />
+      ) : available.length === 0 ? (
+        // Named rather than an empty box: the two reasons differ and only one
+        // of them is something the agent can act on here.
+        <p className="text-muted-foreground text-[11px]">
+          {listings.length === 0
+            ? "No properties in this workspace yet. Add one under Listings, then come back."
+            : "Every property in your listings is already featured."}
+        </p>
+      ) : (
+        <div className="max-h-56 space-y-1 overflow-y-auto">
+          {available.map((listing) => (
+            <button
+              key={listing.id}
+              type="button"
+              onClick={() => {
+                onPick(listingToSiteCard(listing));
+                setOpen(false);
+              }}
+              className="hover:bg-muted/50 flex w-full items-center justify-between gap-2 rounded px-2 py-1.5 text-left text-xs"
+            >
+              <span className="min-w-0 flex-1 truncate">
+                {listing.address || listing.id}
+                <span className="text-muted-foreground block truncate text-[11px]">
+                  {[listing.city, listing.state].filter(Boolean).join(", ")}
+                </span>
+              </span>
+              <Plus className="h-3.5 w-3.5 shrink-0" />
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

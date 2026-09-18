@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import type {
   AgentSiteComposition,
   AgentSiteContent,
@@ -494,7 +494,11 @@ export function AgentSiteRenderer({
           <h2 style={h2}>Properties</h2>
           <div className="agent-site-listings" style={{ gap: 20 }}>
             {content.listings.map((l, i) => (
-              <div key={i} style={card}>
+              // A card that references a real property links to that
+              // property's own page, which already carries the photos, the
+              // inquiry form, and the MLS disclaimer. A hand-typed card has
+              // nowhere to go, so it stays a plain div.
+              <CardShell key={i} href={l.href} style={card}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={l.imageUrl}
@@ -522,7 +526,7 @@ export function AgentSiteRenderer({
                     {l.location}
                   </div>
                 </div>
-              </div>
+              </CardShell>
             ))}
           </div>
         </section>
@@ -677,5 +681,30 @@ export function AgentSiteRenderer({
         ) : null}
       </footer>
     </div>
+  );
+}
+
+/**
+ * A listing card's outer element: an anchor when the card points at a real
+ * property page, a plain div otherwise. Keeping this in one place means the
+ * card's styling cannot drift between the two cases.
+ */
+function CardShell({
+  href,
+  style,
+  children,
+}: {
+  href?: string;
+  style: CSSProperties;
+  children: ReactNode;
+}) {
+  if (!href) return <div style={style}>{children}</div>;
+  return (
+    <a
+      style={{ ...style, color: "inherit", textDecoration: "none" }}
+      href={href}
+    >
+      {children}
+    </a>
   );
 }

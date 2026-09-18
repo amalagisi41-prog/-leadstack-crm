@@ -44,13 +44,33 @@ export interface AgentSiteComposition {
   sections: AgentSiteSection[];
 }
 
-/** A single showcased listing / featured property card. */
+/**
+ * A single showcased listing / featured property card.
+ *
+ * The five display fields are authoritative for a hand-typed card, and act as
+ * a snapshot for one that references a real property — see
+ * `lib/website-studio/listing-cards.ts` for how a reference is resolved and
+ * why the snapshot is kept.
+ */
 export interface AgentSiteListing {
+  /**
+   * Optional link to a property in this workspace's inventory
+   * (`subAccounts/{id}/idxListings`). When set, the published page renders the
+   * live record and links to its own page; the fields below are the fallback
+   * if that listing is ever removed. Absent on every card built before this
+   * existed, which is exactly how those keep rendering unchanged.
+   */
+  listingId?: string;
   title: string;
   price: string;
   location: string;
   imageUrl: string;
   status: string; // "For Sale" | "Just Sold" | "Pending" | free text
+  /**
+   * Resolved at render time by `hydrateSiteListings()` — never persisted, and
+   * absent whenever the card has no live listing to point at.
+   */
+  href?: string;
 }
 
 export interface AgentSiteTestimonial {

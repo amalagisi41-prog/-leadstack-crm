@@ -72,9 +72,12 @@ export function describeListingSource(
  * actually on the market.
  */
 export function resolveMarketingStatus(
-  listing: Pick<IdxListingDoc, "status" | "marketingStatus">
+  // Loose for the same reason as `describeListingSource` — some callers hold a
+  // typed doc, others an untyped Firestore payload.
+  listing: { status?: unknown; marketingStatus?: unknown }
 ): ListingMarketingStatus {
-  if (listing.marketingStatus) return listing.marketingStatus;
+  if (isMarketingStatus(listing.marketingStatus))
+    return listing.marketingStatus;
   switch (listing.status) {
     case "pending":
       return "under-contract";
