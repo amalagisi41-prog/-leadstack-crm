@@ -44,3 +44,22 @@ export const LEGACY_SUB_ACCOUNT_ROUTES: Record<string, string> = {
   "/automations": SUB_ACCOUNT_ROUTES.workflows,
   "/automations/settings": SUB_ACCOUNT_ROUTES.workflows,
 };
+
+/**
+ * The workspace home for whichever sub-account a path belongs to, or null
+ * when the path names none.
+ *
+ * The 404 page used to send everyone to the bare `/dashboard`, which is the
+ * legacy flat route: a member who mistyped a URL inside their own workspace
+ * got bounced out through the redirect stub instead of back to where they
+ * were. Reading the sub-account out of the address they already have is the
+ * "never ask for something the app can find out" rule applied to the one
+ * screen where a user is most lost.
+ */
+export function subAccountHomeFromPath(pathname: string): string | null {
+  const id = /^\/sa\/([^/?#]+)/.exec(pathname ?? "")?.[1];
+  // A bare "/sa/" leaves an empty capture, and a literal "undefined" is what
+  // a broken href interpolation produces — neither names a workspace.
+  if (!id || id === "undefined" || id === "null") return null;
+  return `/sa/${id}${SUB_ACCOUNT_ROUTES.dashboard}`;
+}
