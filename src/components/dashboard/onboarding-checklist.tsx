@@ -255,6 +255,9 @@ export function OnboardingChecklist({
   // In the agency-settings preview there is no workspace to read, so no claim
   // about one is made either way.
   const fullyVerified = verification?.fullyVerified === true;
+  // The preview has no workspace to verify against, so it shows the finished
+  // state the agency owner is previewing rather than pretending to check one.
+  const claimsComplete = preview ? allDone : fullyVerified;
   const attestedCount = verification?.attestedStepIds.length ?? 0;
   // Required work we could not observe. Named, so "not verified" is never a
   // bare verdict the agent has to go hunting to explain.
@@ -276,7 +279,7 @@ export function OnboardingChecklist({
           </div>
           <div>
             <h2 className="font-semibold tracking-tight">
-              {fullyVerified
+              {claimsComplete
                 ? "You're all set!"
                 : `Get set up in ${totalCount} method steps`}
             </h2>
@@ -285,7 +288,7 @@ export function OnboardingChecklist({
                   Steps a user ticked are counted in the progress bar but say
                   so, because a false "you're done" removes the only signal
                   that anything is left. */}
-              {fullyVerified
+              {claimsComplete
                 ? "Every step verified in your workspace — time to close some deals."
                 : allDone && attestedCount > 0
                   ? `${doneCount} of ${totalCount} done · ${attestedCount} marked by you, not yet verified`
@@ -337,7 +340,18 @@ export function OnboardingChecklist({
         ))}
       </div>
 
-      {allDone && (
+      {/* In the agency-settings preview there is no workspace behind this, so
+          it must not claim anything about one — neither "verified" nor "not
+          showing up yet". Only the real checklist makes evidence claims. */}
+      {allDone && preview && (
+        <div className="mt-4 rounded-xl bg-emerald-50 p-4 text-center dark:bg-emerald-950/30">
+          <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
+            🎉 Setup complete — you&apos;re ready to work leads.
+          </p>
+        </div>
+      )}
+
+      {allDone && !preview && (
         <div
           className={
             fullyVerified

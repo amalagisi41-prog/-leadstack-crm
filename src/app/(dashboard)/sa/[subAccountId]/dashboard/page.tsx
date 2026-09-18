@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useSubAccount } from "@/context/sub-account-context";
+import { useOnboardingCompletion } from "@/hooks/use-onboarding-completion";
 import { useEffectiveTerritoryFilter } from "@/hooks/use-effective-territory-filter";
 import { subscribeToContacts } from "@/lib/firestore/contacts";
 import { subscribeToDeals } from "@/lib/firestore/deals";
@@ -41,7 +42,6 @@ import { Button } from "@/components/ui/button";
 import { NewDealDialog } from "@/components/pipeline/new-deal-dialog";
 import { cn } from "@/lib/utils";
 import {
-  isOnboardingComplete,
   isOnboardingMethodStepComplete,
   ONBOARDING_METHOD_STEPS,
 } from "@/lib/onboarding/steps";
@@ -64,7 +64,8 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { subAccount, subAccountId, agencyId, saPath, isAdmin } = useSubAccount();
+  const { subAccount, subAccountId, agencyId, saPath, isAdmin } =
+    useSubAccount();
   const { ready: filterReady, filter: territoryFilter } =
     useEffectiveTerritoryFilter();
 
@@ -79,13 +80,6 @@ export default function DashboardPage() {
   // (setup progress below), so they stay visible as outstanding work rather
   // than silently disappearing.
   const wizardDone = Boolean(subAccount?.onboardingWizardCompletedAt);
-
-  // Separate question: is every checklist item actually done? Drives the
-  // setup-progress card, which is how the items the wizard doesn't cover
-  // (`contacts`, `sms`, `booking`) stay visible as outstanding work.
-  const checklistComplete = isOnboardingComplete(
-    subAccount?.onboardingStepsCompleted
-  );
 
   useEffect(() => {
     // Only admins can complete setup — the onboarding-foundation endpoint is
@@ -102,8 +96,9 @@ export default function DashboardPage() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [sessions, setSessions] = useState<WebChatSession[]>([]);
-  const [campaignHealth, setCampaignHealth] =
-    useState<CampaignDashboardData>({ briefs: [] });
+  const [campaignHealth, setCampaignHealth] = useState<CampaignDashboardData>({
+    briefs: [],
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -198,7 +193,8 @@ export default function DashboardPage() {
     hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
   const nowMs = now.getTime();
 
-  const displayName = user?.displayName?.trim() || user?.email?.split("@")[0] || null;
+  const displayName =
+    user?.displayName?.trim() || user?.email?.split("@")[0] || null;
 
   const workspaceName = subAccount?.name?.trim() || "your workspace";
 
@@ -308,24 +304,29 @@ export default function DashboardPage() {
     events.length === 0 &&
     sessions.length === 0;
 
+  // Progress comes from what the workspace contains, not from the stored tick
+  // list. Reading the ticks made this card wrong in both directions at once —
+  // a workspace full of contacts showed "contacts" outstanding because nobody
+  // ticked it, while an empty pipeline showed done because somebody did.
+  const { completion: onboardingCompletion, loading: onboardingLoading } =
+    useOnboardingCompletion(subAccountId);
+  const onboardingDoneIds = onboardingCompletion?.doneStepIds ?? [];
   const completedOnboardingSteps = ONBOARDING_METHOD_STEPS.filter((step) =>
-    isOnboardingMethodStepComplete(
-      step,
-      subAccount?.onboardingStepsCompleted ?? []
-    )
+    isOnboardingMethodStepComplete(step, onboardingDoneIds)
   );
   const nextOnboardingStep = ONBOARDING_METHOD_STEPS.find(
-    (step) =>
-      !isOnboardingMethodStepComplete(
-        step,
-        subAccount?.onboardingStepsCompleted ?? []
-      )
+    (step) => !isOnboardingMethodStepComplete(step, onboardingDoneIds)
   );
   const onboardingProgress = ONBOARDING_METHOD_STEPS.length
     ? Math.round(
         (completedOnboardingSteps.length / ONBOARDING_METHOD_STEPS.length) * 100
       )
     : 0;
+  // The card disappears only once every required step is OBSERVED. Hiding it
+  // on the strength of ticks would retire the one surface still showing a
+  // client what is left to do — the items the wizard does not cover
+  // (`contacts`, `sms`, `booking`) are exactly the ones that go unticked.
+  const checklistComplete = onboardingCompletion?.fullyVerified === true;
 
   const unresolvedTasks = useMemo<UniversalTask[]>(() => {
     const items: UniversalTask[] = [];
@@ -357,7 +358,8 @@ export default function DashboardPage() {
         id: "property-photos-" + photoBrief.listingId,
         priority: 2,
         label: `${address} needs photos`,
-        detail: "No verified listing photos are available for its marketing assets.",
+        detail:
+          "No verified listing photos are available for its marketing assets.",
         href: campaignHref(photoBrief.listingId),
         cta: "Add photos",
       });
@@ -398,7 +400,8 @@ export default function DashboardPage() {
         id: "campaign-schedule-" + scheduleBrief.listingId,
         priority: 2,
         label: `${scheduleBrief.brief.address || "Property"} needs a schedule`,
-        detail: "Approved channel content is waiting for a calendar date and time.",
+        detail:
+          "Approved channel content is waiting for a calendar date and time.",
         href: campaignHref(scheduleBrief.listingId),
         cta: "Set calendar",
       });
@@ -806,7 +809,14 @@ export default function DashboardPage() {
             {today}
           </p>
           <h1 className="text-2xl font-semibold tracking-tight">
-            {displayName ? `${greeting}, ${displayName}` : <span className="inline-block h-7 w-56 animate-pulse rounded bg-muted" aria-label="Loading greeting" />}
+            {displayName ? (
+              `${greeting}, ${displayName}`
+            ) : (
+              <span
+                className="bg-muted inline-block h-7 w-56 animate-pulse rounded"
+                aria-label="Loading greeting"
+              />
+            )}
           </h1>
           <p className="text-muted-foreground max-w-2xl text-sm">
             {workspaceName === "your workspace"
@@ -831,7 +841,10 @@ export default function DashboardPage() {
         <LoadingState />
       ) : (
         <>
-          {!checklistComplete && (
+          {/* Held back until the derived progress arrives. Rendering during
+              the read would briefly assert "0% ready" — a false claim about a
+              workspace we simply have not finished measuring. */}
+          {!checklistComplete && !onboardingLoading && (
             <SetupProgressCard
               progress={onboardingProgress}
               nextStep={nextOnboardingStep}
