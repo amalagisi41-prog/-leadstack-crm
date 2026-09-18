@@ -29,8 +29,10 @@ export default function GetStartedPage() {
   const { subAccountId, subAccount, saPath, loading } = useSubAccount();
   // Must sit above every early return below — hooks run in the same order on
   // each render or React tears the component state apart.
-  const { completion: onboardingCompletion } =
-    useOnboardingCompletion(subAccountId);
+  const {
+    completion: onboardingCompletion,
+    loading: onboardingCompletionLoading,
+  } = useOnboardingCompletion(subAccountId);
   const [foundationComplete, setFoundationComplete] = useState<boolean | null>(
     null
   );
@@ -116,7 +118,12 @@ export default function GetStartedPage() {
     (setupIsComplete && !requestedStep) ||
     loading ||
     !subAccount ||
-    foundationComplete === null
+    foundationComplete === null ||
+    // The wizard seeds its completed-step state ONCE, in a lazy useState
+    // initializer. Mounting it before the derived progress lands would seed it
+    // empty and never correct itself — it would tell a fully set-up workspace
+    // it had done nothing.
+    onboardingCompletionLoading
   ) {
     return (
       <div className="text-muted-foreground flex h-64 items-center justify-center">
