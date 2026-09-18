@@ -128,8 +128,7 @@ export function SubAccountRprSection() {
             We never fetch or store RPR data — this just sends you into your
             own RPR account via your MLS sign-in. The button opens the
             property you were looking at, using its MLS number where there is
-            one and its address otherwise, and copies the address to your
-            clipboard so you can search for it if RPR asks.
+            one and its address otherwise.
           </p>
           <div className="mt-3 flex justify-end">
             <Button
