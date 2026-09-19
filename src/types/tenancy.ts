@@ -279,6 +279,8 @@ export interface SubAccountDoc {
    * `metaInboxEnabledByAgency` is on). See {@link MetaConfig}.
    */
   metaConfig?: MetaConfig | null;
+  /** Authorized external calendar connection. OAuth tokens live in the server-only secrets subcollection. */
+  calendarConfig?: CalendarConnectionConfig | null;
   bookingConfig: BookingConfig | null;
   sendWindow: SendWindow | null;
   /**
@@ -847,6 +849,17 @@ export interface GoogleWorkspaceConfig {
   /** When this configuration was first connected. */
   connectedAt: Date;
   /** UID of the sub-account admin who connected this. */
+  connectedByUid: string;
+}
+
+export type CalendarProvider = "google" | "outlook";
+
+export interface CalendarConnectionConfig {
+  provider: CalendarProvider;
+  status: "connected";
+  email: string;
+  displayName: string | null;
+  connectedAt: Date | Timestamp | FieldValue;
   connectedByUid: string;
 }
 
