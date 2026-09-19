@@ -200,7 +200,7 @@ export function ConnectYourBusiness() {
     const formsHref = saPath("/forms");
     const aiAgentsHref = saPath("/ai-agents/web-chat");
     const domainHref = saPath("/domain");
-    const calendarHref = settingsHref;
+    const calendarHref = `${settingsHref}#calendar-connection`;
 
     const smsConnected = subAccount.twilioConfig?.enabled === true;
     const emailDomainVerified =
