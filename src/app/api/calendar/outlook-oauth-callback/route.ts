@@ -77,7 +77,9 @@ export async function GET(request: NextRequest) {
     if (!tokenResponse.ok) return redirect(verified.subAccountId, "token_exchange_failed");
 
     const tokens = (await tokenResponse.json()) as MicrosoftTokenResponse;
-    if (!tokens.refresh_token) return redirect(verified.subAccountId, "refresh_token_missing");
+    const existingSecrets = await loadCalendarSecrets(verified.subAccountId, "outlook");
+    const refreshToken = tokens.refresh_token ?? existingSecrets?.refreshToken;
+    if (!refreshToken) return redirect(verified.subAccountId, "refresh_token_missing");
 
     const profileResponse = await fetch("https://graph.microsoft.com/v1.0/me", {
       headers: { Authorization: `Bearer ${tokens.access_token}` },
