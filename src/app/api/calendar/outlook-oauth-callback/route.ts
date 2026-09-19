@@ -3,7 +3,7 @@ import "server-only";
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
-import { writeCalendarSecrets } from "@/lib/comms/sub-account-secrets";
+import { loadCalendarSecrets, writeCalendarSecrets } from "@/lib/comms/sub-account-secrets";
 import { verifyCalendarOAuthState } from "@/lib/calendar/oauth-state";
 
 type MicrosoftTokenResponse = {
@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
     await writeCalendarSecrets(verified.subAccountId, {
       provider: "outlook",
       accessToken: tokens.access_token,
-      refreshToken: tokens.refresh_token,
+      refreshToken,
       expiresAt: Date.now() + tokens.expires_in * 1000,
     });
     await getAdminDb().doc(`subAccounts/${verified.subAccountId}`).update({
