@@ -168,5 +168,27 @@ export async function POST(
     console.warn("[idx/inquire] activity write failed", err);
   }
 
+  // The same fact, recorded where it can be counted. The activity row above
+  // lives under the contact, in a subcollection carrying no tenancy key, so
+  // totalling inquiries per listing from it would need a collection-group
+  // query spanning every agency's contacts. This row is flat and
+  // tenancy-keyed, so the rollup is one scoped query.
+  //
+  // Also best-effort, and deliberately after the visitor's real outcomes
+  // (contact, task, escalation email) have been secured: this is an
+  // analytics count, and losing one must never cost a lead.
+  try {
+    await db.collection("listingInquiries").add({
+      agencyId,
+      subAccountId,
+      listingId,
+      listingAddress: listing.address || "",
+      contactId,
+      createdAt: FieldValue.serverTimestamp(),
+    });
+  } catch (err) {
+    console.warn("[idx/inquire] inquiry stat write failed", err);
+  }
+
   return jsonWithCors({ ok: true });
 }

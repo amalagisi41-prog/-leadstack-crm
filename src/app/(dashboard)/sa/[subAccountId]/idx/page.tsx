@@ -35,6 +35,7 @@ import {
 import { SUB_ACCOUNT_ROUTES } from "@/lib/navigation/sub-account-routes";
 import { cn } from "@/lib/utils";
 import type { IdxListingDoc, ListingMarketingStatus } from "@/types/idx";
+import type { ListingInquiryStat } from "@/types/listing-inquiries";
 import type { IdxConfig } from "@/types/tenancy";
 
 /**
@@ -91,6 +92,14 @@ export default function ListingsPage() {
   // say which of the two it is — see the note on the subscription below.
   const [loadError, setLoadError] = useState<string | null>(null);
   const [briefIds, setBriefIds] = useState<Set<string>>(new Set());
+  // Inquiry counts per listing. `null` means "not loaded or the read failed" —
+  // distinct from an empty object, which means "loaded, nobody has enquired".
+  // Rendering 0 for the first case would tell an agent their marketing
+  // produced nothing when in fact nothing was measured.
+  const [inquiryStats, setInquiryStats] = useState<Record<
+    string,
+    ListingInquiryStat
+  > | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [addingId, setAddingId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
@@ -144,6 +153,27 @@ export default function ListingsPage() {
         if (!r.ok) return;
         const data = (await r.json()) as { briefs?: { id: string }[] };
         if (active) setBriefIds(new Set((data.briefs ?? []).map((b) => b.id)));
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
+  }, [subAccountId]);
+
+  // How many inquiries each property has drawn. One fetch for the whole
+  // workspace, same shape as the campaign-membership load above.
+  useEffect(() => {
+    if (!subAccountId) return;
+    let active = true;
+    void fetch(`/api/sub-accounts/${subAccountId}/listings/inquiry-stats`)
+      .then(async (r) => {
+        // Leave the state null on failure so the column renders "—" rather
+        // than a zero nobody measured.
+        if (!r.ok) return;
+        const data = (await r.json()) as {
+          stats?: Record<string, ListingInquiryStat>;
+        };
+        if (active) setInquiryStats(data.stats ?? {});
       })
       .catch(() => undefined);
     return () => {
@@ -367,6 +397,7 @@ export default function ListingsPage() {
                 <th className="px-4 py-2 text-left">Source</th>
                 <th className="px-4 py-2 text-right">Price</th>
                 <th className="px-4 py-2 text-right">Beds/Baths</th>
+                <th className="px-4 py-2 text-right">Leads</th>
                 <th className="px-4 py-2 text-right">Marketing</th>
               </tr>
             </thead>
@@ -413,6 +444,12 @@ export default function ListingsPage() {
                     </td>
                     <td className="text-muted-foreground px-4 py-2 text-right">
                       {listing.beds} / {listing.baths}
+                    </td>
+                    <td className="px-4 py-2 text-right">
+                      <ListingLeadsCell
+                        stat={inquiryStats?.[listing.id] ?? null}
+                        loaded={inquiryStats !== null}
+                      />
                     </td>
                     <td className="px-4 py-2 text-right">
                       {inCampaigns ? (
@@ -913,5 +950,48 @@ function ListingsLoadError({ reason }: { reason: string }) {
         </p>
       )}
     </div>
+  );
+}
+
+/**
+ * One property's inquiry count, and how long ago the last one came in.
+ *
+ * Three states, kept distinct on purpose:
+ *
+ *   not loaded / failed  → "—"   we have not measured this
+ *   loaded, no inquiries → "0"   we measured, and it is zero
+ *   loaded, n inquiries  → "n"   plus when the most recent arrived
+ *
+ * Collapsing the first two is the tempting simplification and the wrong one.
+ * "0 leads" on a property an agent has been marketing is a verdict; showing
+ * it because a fetch failed would be inventing that verdict. The dash says
+ * nothing, which is the honest thing to say when nothing is known.
+ */
+function ListingLeadsCell({
+  stat,
+  loaded,
+}: {
+  stat: ListingInquiryStat | null;
+  loaded: boolean;
+}) {
+  if (!loaded) {
+    return (
+      <span className="text-muted-foreground/60" title="Not loaded">
+        —
+      </span>
+    );
+  }
+  if (!stat || stat.count < 1) {
+    return <span className="text-muted-foreground">0</span>;
+  }
+  return (
+    <span className="inline-flex flex-col items-end leading-tight">
+      <span className="font-medium">{stat.count}</span>
+      {stat.lastAt !== null && (
+        <span className="text-muted-foreground text-[11px]">
+          {formatRelativeTime(new Date(stat.lastAt))}
+        </span>
+      )}
+    </span>
   );
 }

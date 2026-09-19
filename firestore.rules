@@ -816,6 +816,19 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // One row per inquiry made on a public listing page, so "how many leads
+    // did this property bring in" is a scoped query rather than a
+    // collection-group scan of every agency's contact activities. Written
+    // only by the unauthenticated inquiry route through the Admin SDK, which
+    // is why members read but nobody writes.
+    match /listingInquiries/{inquiryId} {
+      allow read: if canAccessSub(
+        resource.data.subAccountId,
+        resource.data.agencyId
+      );
+      allow write: if false;
+    }
+
     // Ad Spend & Billing — per-sub-account ad platform account rows. Reads
     // drive the "Ad Spend & Billing" page (subscribeToAdAccounts); all
     // writes go through admin-SDK API routes, same shape as `products`.
