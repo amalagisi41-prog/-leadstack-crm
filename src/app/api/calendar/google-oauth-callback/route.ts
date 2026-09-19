@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
     await writeCalendarSecrets(verified.subAccountId, {
       provider: "google",
       accessToken: tokens.access_token,
-      refreshToken: tokens.refresh_token,
+      refreshToken,
       expiresAt: Date.now() + tokens.expires_in * 1000,
     });
     await db.doc(`subAccounts/${verified.subAccountId}`).update({
