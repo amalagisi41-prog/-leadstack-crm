@@ -220,6 +220,7 @@ export function RealtorLaunchWizard({
         const data = await readJson<{ ok?: boolean }>(response);
         if (response.ok && data.ok === true) imported += 1;
         else lastError = data.error ?? "Could not read that link.";
+        else lastError = data.error ?? "Could not read that link.";
       }
       if (imported === 0)
         throw new Error(lastError || "Could not read those links.");

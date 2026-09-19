@@ -212,9 +212,6 @@ export async function syncIdxListings(subAccountId: string): Promise<SyncResult>
         idxConfig: {
           ...publicCfg,
           lastSyncAt: FieldValue.serverTimestamp(),
-          // A valid request with no records is not evidence that listings
-          // are flowing. Keep it distinct from both a failed request and a
-          // verified non-empty sync.
           lastSyncStatus: raw.length === 0 ? "empty" : "success",
           lastSyncError: null,
           listingCount,
