@@ -4,11 +4,11 @@ import "server-only";
  * Thin client for the IDX Broker Platinum API. Each realtor brings their own
  * IDX Broker account + access key — we never provision or resell accounts.
  *
- * This client intentionally uses IDX Broker's featured-listings API. IDX
- * Broker does not expose MLS-wide listing search through this API; featured
- * listings are the supported listing-data exception for the agents on the
- * connected account. `raw` on each normalized listing preserves the source
- * response so fields outside our normalized shape remain recoverable.
+ * The standard client listing surface used here is IDX Broker's featured
+ * listings endpoint. Its result set is controlled by the connected IDX Broker
+ * account's Featured IDs configuration; an MLS/agent identifier is not sent
+ * as a selector to this endpoint. `raw` on each normalized listing preserves
+ * the source response so fields outside our normalized shape remain recoverable.
  */
 
 const BASE_URL = "https://api.idxbroker.com";
