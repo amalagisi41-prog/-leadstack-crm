@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import {
+  loadCalendarSecrets,
   writeCalendarSecrets,
 } from "@/lib/comms/sub-account-secrets";
 import { verifyCalendarOAuthState } from "@/lib/calendar/oauth-state";
@@ -74,7 +75,9 @@ export async function GET(request: NextRequest) {
     if (!tokenResponse.ok) return redirect(verified.subAccountId, "token_exchange_failed");
 
     const tokens = (await tokenResponse.json()) as GoogleTokenResponse;
-    if (!tokens.refresh_token) return redirect(verified.subAccountId, "refresh_token_missing");
+    const existingSecrets = await loadCalendarSecrets(verified.subAccountId, "google");
+    const refreshToken = tokens.refresh_token ?? existingSecrets?.refreshToken;
+    if (!refreshToken) return redirect(verified.subAccountId, "refresh_token_missing");
 
     const userInfoResponse = await fetch(
       "https://www.googleapis.com/oauth2/v3/userinfo",
