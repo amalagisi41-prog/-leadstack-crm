@@ -11,12 +11,8 @@ import {
   addOnPriceId,
   type AddOnKey,
 } from "@/lib/stripe/catalog";
-import { getStripeServer } from "@/lib/stripe/server";
-import {
-  findAddOnItem,
-  retrieveAgencySubscription,
-  syncBundleDiscount,
-} from "@/lib/stripe/subscription-management";
+import { syncAddOnSubscriptionItem } from "@/lib/stripe/add-on-sync";
+import { syncBundleDiscount } from "@/lib/stripe/subscription-management";
 
 interface Body {
   addOnKey?: string;
@@ -92,27 +88,15 @@ export async function PATCH(
     );
   }
 
-  const stripe = getStripeServer();
-
-  if (body.enabled) {
-    await stripe.subscriptionItems.create({
-      subscription: agency.subscriptionId,
-      price: priceId,
-      quantity: 1,
-      metadata: {
-        addOnKey,
-        subAccountId,
-      },
-    });
-  } else {
-    const subscription = await retrieveAgencySubscription(agency);
-    const item = subscription
-      ? findAddOnItem(subscription, addOnKey as AddOnKey, subAccountId)
-      : null;
-    if (item) {
-      await stripe.subscriptionItems.del(item.id);
-    }
-  }
+  // Shared with the agency Manage dialog's feature-gates route, which used to
+  // flip these same gates with no Stripe call at all. One reconciler means
+  // the two screens cannot bill differently for the same toggle.
+  const billing = await syncAddOnSubscriptionItem({
+    agency,
+    subAccountId,
+    addOnKey: addOnKey as AddOnKey,
+    enabled: body.enabled,
+  });
 
   await db.doc(`subAccounts/${subAccountId}`).update({
     [gateField]: body.enabled,
@@ -124,6 +108,7 @@ export async function PATCH(
     ok: true,
     enabled: body.enabled,
     gateField,
+    billing,
     summary,
   });
 }

@@ -6,7 +6,13 @@ import { getAdminDb } from "@/lib/firebase/admin";
 import { requireSubAccountMember } from "@/lib/auth/require-tenancy";
 import { removeSendingDomain } from "@/lib/comms/resend-domains";
 import { metaAppConfigured } from "@/lib/comms/meta";
-import type { ResendConfig } from "@/types";
+import {
+  addOnKeyForGateField,
+  isUnbilled,
+  syncAddOnSubscriptionItem,
+  type AddOnSyncResult,
+} from "@/lib/stripe/add-on-sync";
+import type { AgencyDoc, ResendConfig } from "@/types";
 
 /**
  * Agency-only feature gates per sub-account. Each gate is a boolean toggle
@@ -150,10 +156,17 @@ export async function PATCH(
       { status: 404 },
     );
   }
-  const existingCfg = subSnap.data()?.resendConfig as
-    | ResendConfig
-    | null
-    | undefined;
+  const sub = subSnap.data() ?? {};
+  const existingCfg = sub.resendConfig as ResendConfig | null | undefined;
+
+  // Needed to attach paid add-on items to the right subscription. Read once
+  // here rather than inside the loop below, which would re-fetch per gate.
+  const agencyId = typeof sub.agencyId === "string" ? sub.agencyId : null;
+  const agency = agencyId
+    ? ((await db.doc(`agencies/${agencyId}`).get()).data() as
+        | AgencyDoc
+        | undefined)
+    : undefined;
 
   const updates: Record<string, unknown> = {
     updatedAt: FieldValue.serverTimestamp(),
@@ -282,10 +295,47 @@ export async function PATCH(
     updates.idxHiddenWhenDisabled = body.idxHiddenWhenDisabled;
   }
 
+  // Three of these gates are paid add-ons, and this route used to flip them
+  // with no Stripe call at all — so an agency owner enabling IDX here got the
+  // feature and no line on the invoice, while the same gate flipped from
+  // Settings → Add-ons billed correctly. Both paths now go through one
+  // reconciler, so the two screens cannot drift again.
+  //
+  // Billing runs BEFORE the gate is written: if Stripe genuinely fails, the
+  // feature stays off rather than being given away. Configuration states
+  // (no price on this deployment, no subscription on the agency) are not
+  // failures — they let the write proceed and are reported back, because a
+  // silent unbilled enable is the bug this fixes.
+  const billing: AddOnSyncResult[] = [];
+  for (const [gateField, value] of Object.entries(updates)) {
+    if (typeof value !== "boolean") continue;
+    const addOnKey = addOnKeyForGateField(gateField);
+    if (!addOnKey) continue;
+    const currently =
+      (sub as unknown as Record<string, unknown>)[gateField] === true;
+    if (currently === value) continue;
+    billing.push(
+      await syncAddOnSubscriptionItem({
+        agency,
+        subAccountId,
+        addOnKey,
+        enabled: value,
+      })
+    );
+  }
+
   await subRef.update(updates);
 
   return NextResponse.json({
     ok: true,
+    ...(billing.length > 0
+      ? {
+          billing,
+          // Named explicitly so a caller does not have to know which outcomes
+          // mean "on but nobody is paying for it".
+          unbilled: billing.filter(isUnbilled).map((r) => r.addOnKey),
+        }
+      : {}),
     ...(wantsEmail ? { emailDomainEnabled: body.emailDomainEnabled } : {}),
     ...(wantsApi ? { apiAccessEnabled: body.apiAccessEnabled } : {}),
     ...(wantsBroadcasts ? { broadcastsEnabled: body.broadcastsEnabled } : {}),
