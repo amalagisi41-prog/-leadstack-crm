@@ -200,6 +200,7 @@ export function ConnectYourBusiness() {
     const formsHref = saPath("/forms");
     const aiAgentsHref = saPath("/ai-agents/web-chat");
     const domainHref = saPath("/domain");
+    const calendarHref = settingsHref;
 
     const smsConnected = subAccount.twilioConfig?.enabled === true;
     const emailDomainVerified =
@@ -229,7 +230,14 @@ export function ConnectYourBusiness() {
         detail: subAccount.customDomain ?? undefined,
         blurb:
           "Have AgentStack review your existing site and content while your domain and hosting remain with your current provider.",
-        status: subAccount.customDomain ? "connected" : "not_connected",
+        status:
+          subAccount.customDomainState === "live"
+            ? "connected"
+            : subAccount.customDomainState === "points_elsewhere" ||
+                subAccount.customDomainState === "no_records" ||
+                subAccount.customDomainState === "unknown"
+              ? "needs_attention"
+              : "not_connected",
         actionLabel: subAccount.customDomain
           ? "Manage domain"
           : "Connect domain",
@@ -319,6 +327,18 @@ export function ConnectYourBusiness() {
         actionHref: settingsHref,
       },
       {
+        key: "calendar",
+        icon: Calendar,
+        iconTone: "bg-teal-500/10 text-teal-600 dark:text-teal-400",
+        title: "Google or Outlook Calendar",
+        detail: subAccount.calendarConfig?.email ?? undefined,
+        blurb:
+          "Authorize the calendar you already use. OAuth credentials stay server-side; AgentStack never asks you to paste a calendar URL or password.",
+        status: subAccount.calendarConfig?.status === "connected" ? "connected" : "not_connected",
+        actionLabel: subAccount.calendarConfig?.status === "connected" ? "Manage calendar" : "Connect calendar",
+        actionHref: calendarHref,
+      },
+      {
         key: "booking",
         icon: Calendar,
         iconTone: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
@@ -355,7 +375,7 @@ export function ConnectYourBusiness() {
         key: "mls-feed",
         icon: Building,
         iconTone: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-        title: "SmartMLS & MLS feed",
+        title: "Listings & MLS feed",
         detail: idxNeedsAttention
           ? "Choose your approved feed"
           : idxConfigured
@@ -371,8 +391,8 @@ export function ConnectYourBusiness() {
           : idxConfigured
             ? "connected"
             : "not_connected",
-        actionLabel: idxConfigured ? "Manage MLS feed" : "Connect SmartMLS",
-        actionHref: mlsFeedHref,
+        actionLabel: idxConfigured ? "Manage MLS feed" : "Manage listings",
+        actionHref: idxConfigured ? mlsFeedHref : saPath("/idx"),
       },
       {
         key: "gbp",
@@ -389,9 +409,10 @@ export function ConnectYourBusiness() {
         icon: Star,
         iconTone: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
         title: "Google reviews",
+        detail: subAccount.googleReviewConfig?.placeId ? "Configured" : undefined,
         blurb:
           "Save your Google review link and configure review request settings.",
-        status: "not_connected" as const,
+        status: subAccount.googleReviewConfig?.placeId ? "connected" : "not_connected",
         actionLabel: "Configure reviews",
         actionHref: googleReviewsHref,
       },
