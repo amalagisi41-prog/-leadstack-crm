@@ -109,6 +109,18 @@ export function connectItemsFor(sub: SubAccountDoc | null): ConnectItem[] {
       cta: "Sign in with Google",
     },
     {
+      id: "calendar",
+      label: "Google or Outlook Calendar",
+      tier: "one_click",
+      connected: sub?.calendarConfig?.status === "connected",
+      why: "New bookings can be coordinated with the calendar you already use, so your public availability and appointment workflow stay in one place.",
+      costIfSkipped:
+        "AgentStack bookings still work, but your external calendar will not be connected until you authorize it.",
+      timingNote: "A secure provider sign-in opens in a new step; no calendar URL or password is pasted into AgentStack.",
+      href: SUB_ACCOUNT_ROUTES.settings,
+      cta: sub?.calendarConfig?.status === "connected" ? "Manage calendar" : "Connect calendar",
+    },
+    {
       id: "domain",
       label: "Your website address",
       tier: "needs_setup",
@@ -122,15 +134,15 @@ export function connectItemsFor(sub: SubAccountDoc | null): ConnectItem[] {
     },
     {
       id: "mls",
-      label: "Your MLS listings",
+      label: "Your listing sources",
       tier: "needs_setup",
       connected: isMlsConnected(sub),
-      why: "Your listings show on your site and can be turned into campaigns without re-typing them.",
+      why: "Bring MLS/IDX listings or agent-managed properties into one inventory so campaigns and public pages use the same listing record.",
       costIfSkipped: deferralFor("lseo").cost,
       timingNote:
         "Needs a key from IDX Broker, which your MLS has to approve first.",
-      href: "/idx",
-      cta: "Set up listings",
+      href: SUB_ACCOUNT_ROUTES.listings,
+      cta: "Manage listings",
     },
     {
       id: "texting",
