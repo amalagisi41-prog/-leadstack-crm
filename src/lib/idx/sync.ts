@@ -212,7 +212,7 @@ export async function syncIdxListings(subAccountId: string): Promise<SyncResult>
         idxConfig: {
           ...publicCfg,
           lastSyncAt: FieldValue.serverTimestamp(),
-          lastSyncStatus: "success",
+          lastSyncStatus: raw.length === 0 ? "empty" : "success",
           lastSyncError: null,
           listingCount,
         },
