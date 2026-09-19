@@ -25,7 +25,10 @@ import { AddContactModal } from "@/components/contacts/add-contact-modal";
 import { ImportContactsDialog } from "@/components/contacts/import-contacts-dialog";
 import { BulkEmailDialog } from "@/components/contacts/bulk-email-dialog";
 import { BulkCallDialog } from "@/components/contacts/bulk-call-dialog";
-import { SampleDataNotice } from "@/components/onboarding/sample-data-notice";
+import {
+  SampleDataNotice,
+  ShowExampleButton,
+} from "@/components/onboarding/sample-data-notice";
 import type { Contact } from "@/types/contacts";
 import type { TerritoryDoc } from "@/types";
 
@@ -195,7 +198,11 @@ export default function ContactsPage() {
       {loading ? (
         <TableSkeleton />
       ) : contacts.length === 0 ? (
-        <EmptyState onImport={() => setImportOpen(true)} />
+        <EmptyState
+          onImport={() => setImportOpen(true)}
+          subAccountId={subAccountId}
+          canSeed={isAdmin}
+        />
       ) : (
         <ContactsTable
           contacts={contacts}
@@ -240,7 +247,15 @@ function TableSkeleton() {
   );
 }
 
-function EmptyState({ onImport }: { onImport: () => void }) {
+function EmptyState({
+  onImport,
+  subAccountId,
+  canSeed,
+}: {
+  onImport: () => void;
+  subAccountId: string;
+  canSeed: boolean;
+}) {
   return (
     <div className="bg-card/50 rounded-xl border border-dashed p-12 text-center">
       <div className="bg-primary/10 mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full">
@@ -250,12 +265,13 @@ function EmptyState({ onImport }: { onImport: () => void }) {
       <p className="text-muted-foreground mt-1 text-sm">
         Add your first lead or import a CSV from your old CRM.
       </p>
-      <div className="mt-6 flex justify-center gap-2">
+      <div className="mt-6 flex flex-wrap justify-center gap-2">
         <AddContactModal />
         <Button variant="outline" onClick={onImport}>
           <Upload className="mr-1 h-4 w-4" />
           Import CSV
         </Button>
+        <ShowExampleButton subAccountId={subAccountId} canSeed={canSeed} />
       </div>
     </div>
   );

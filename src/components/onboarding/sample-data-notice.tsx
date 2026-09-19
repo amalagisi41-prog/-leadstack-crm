@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -120,7 +120,7 @@ export function SampleDataNotice({
       </div>
 
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md" data-testid="confirm-remove">
           <DialogHeader>
             <DialogTitle>Remove the sample data?</DialogTitle>
             <DialogDescription>
@@ -130,8 +130,8 @@ export function SampleDataNotice({
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
             Anything you created yourself is untouched — only records marked as
-            samples are removed. This cannot be undone, and the example cannot
-            be put back.
+            samples are removed. You can bring the example back later from the
+            empty screen it leaves behind.
           </p>
           <DialogFooter>
             <Button
@@ -152,5 +152,61 @@ export function SampleDataNotice({
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+/**
+ * Puts the worked example into a workspace that hasn't got one.
+ *
+ * Lives on the empty state of People and Deals — the exact screen where an
+ * example is worth having, and the screen the removal leaves behind. Two
+ * cases reach it:
+ *
+ *   - Someone removed the example and wants it back. The removal dialog says
+ *     they can, so something has to make that true.
+ *   - A workspace created BEFORE the seeder existed, which otherwise can
+ *     never receive the example at all — seeding only runs at creation. Every
+ *     workspace made before this shipped is in that position, and without
+ *     this there is no way in.
+ *
+ * Admin-only, matching the route. A non-admin sees nothing rather than a
+ * button that 403s.
+ */
+export function ShowExampleButton({
+  subAccountId,
+  canSeed,
+}: {
+  subAccountId: string;
+  canSeed: boolean;
+}) {
+  const [working, setWorking] = useState(false);
+
+  if (!canSeed) return null;
+
+  const handleSeed = async () => {
+    setWorking(true);
+    try {
+      const res = await fetch(`/api/sub-accounts/${subAccountId}/sample-data`, {
+        method: "POST",
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        toast.error(data?.error ?? "Could not add the example. Try again.");
+        return;
+      }
+      // onSnapshot fills the screen in — nothing to refresh.
+      toast.success("Added a sample pipeline you can play with.");
+    } catch {
+      toast.error("Could not add the example. Check your connection.");
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  return (
+    <Button variant="outline" onClick={handleSeed} disabled={working}>
+      <Wand2 className="mr-1 h-4 w-4" />
+      {working ? "Adding…" : "Show me an example"}
+    </Button>
   );
 }

@@ -16,7 +16,10 @@ import type { TerritoryDoc } from "@/types";
 import { Button } from "@/components/ui/button";
 import { PipelineBoard } from "@/components/pipeline/pipeline-board";
 import { NewDealDialog } from "@/components/pipeline/new-deal-dialog";
-import { SampleDataNotice } from "@/components/onboarding/sample-data-notice";
+import {
+  SampleDataNotice,
+  ShowExampleButton,
+} from "@/components/onboarding/sample-data-notice";
 import {
   EMPTY_FILTERS,
   PipelineFilters,
@@ -225,7 +228,11 @@ export default function PipelinePage() {
       {loading ? (
         <BoardSkeleton />
       ) : deals.length === 0 ? (
-        <EmptyState hasContacts={contacts.length > 0} contacts={contacts} />
+        <EmptyState
+          hasContacts={contacts.length > 0}
+          contacts={contacts}
+          canSeed={isAdmin}
+        />
       ) : filteredDeals.length === 0 && hasActiveFilters(filters) ? (
         <div className="rounded-xl border border-dashed bg-card/50 p-12 text-center">
           <p className="text-sm text-muted-foreground">
@@ -296,11 +303,13 @@ function BoardSkeleton() {
 function EmptyState({
   hasContacts,
   contacts,
+  canSeed,
 }: {
   hasContacts: boolean;
   contacts: Contact[];
+  canSeed: boolean;
 }) {
-  const { saPath } = useSubAccount();
+  const { saPath, subAccountId } = useSubAccount();
   return (
     <div className="rounded-xl border border-dashed bg-card/50 p-12 text-center">
       <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
@@ -312,7 +321,7 @@ function EmptyState({
           ? "Create your first deal to start tracking opportunities."
           : "Add a contact first, then open your first deal against them."}
       </p>
-      <div className="mt-6 flex justify-center">
+      <div className="mt-6 flex flex-wrap justify-center gap-2">
         {hasContacts ? (
           <NewDealDialog contacts={contacts} />
         ) : (
@@ -320,6 +329,7 @@ function EmptyState({
             Go to People
           </Button>
         )}
+        <ShowExampleButton subAccountId={subAccountId} canSeed={canSeed} />
       </div>
     </div>
   );

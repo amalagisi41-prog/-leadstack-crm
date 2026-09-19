@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { SampleDataNotice } from "./sample-data-notice";
+import { SampleDataNotice, ShowExampleButton } from "./sample-data-notice";
 
 const toastSuccess = vi.fn();
 const toastError = vi.fn();
@@ -150,5 +150,63 @@ describe("SampleDataNotice", () => {
     );
     // Still on screen: a failed removal must not read as a successful one.
     expect(screen.getByText(/5 of these people are a sample/i)).toBeTruthy();
+  });
+});
+
+describe("ShowExampleButton", () => {
+  it("renders nothing for someone who cannot seed", () => {
+    const { container } = render(
+      <ShowExampleButton subAccountId="sub-1" canSeed={false} />
+    );
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it("POSTs the sample-data route", async () => {
+    const fetchMock = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        ok: true,
+        seeded: { contacts: 5, deals: 5, conversations: 1 },
+      }),
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<ShowExampleButton subAccountId="sub-1" canSeed />);
+    await userEvent.click(
+      screen.getByRole("button", { name: /show me an example/i })
+    );
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [
+      string,
+      { method: string },
+    ];
+    expect(url).toBe("/api/sub-accounts/sub-1/sample-data");
+    expect(init.method).toBe("POST");
+    await waitFor(() => expect(toastSuccess).toHaveBeenCalled());
+  });
+
+  it("surfaces the already-seeded refusal rather than claiming success", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: false,
+        json: async () => ({
+          error: "This workspace already has the example in it.",
+        }),
+      }))
+    );
+
+    render(<ShowExampleButton subAccountId="sub-1" canSeed />);
+    await userEvent.click(
+      screen.getByRole("button", { name: /show me an example/i })
+    );
+
+    await waitFor(() =>
+      expect(toastError).toHaveBeenCalledWith(
+        "This workspace already has the example in it."
+      )
+    );
+    expect(toastSuccess).not.toHaveBeenCalled();
   });
 });
