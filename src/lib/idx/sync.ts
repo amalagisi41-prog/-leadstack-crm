@@ -7,6 +7,7 @@ import {
   type IdxBrokerRawListing,
 } from "@/lib/idx/broker-client";
 import { loadIdxSecrets } from "@/lib/comms/sub-account-secrets";
+import { describeListingSource } from "@/lib/marketing/listing-source";
 import type { IdxConfig } from "@/types";
 import type { IdxListingDoc } from "@/types/idx";
 
@@ -83,6 +84,30 @@ function normalizeListing(
   };
 }
 
+/**
+ * Should a listing already in the collection be flipped to off-market because
+ * this sync pass did not return it?
+ *
+ * Only ever true for FEED-sourced listings. The collection holds hand-added
+ * off-market property alongside the MLS feed, and "absent from the feed" says
+ * nothing about a property that was never in it. Getting this wrong meant
+ * every sync rewrote the operator's own pocket listings and past sales to
+ * off-market — and a sync that legitimately returned zero listings did it to
+ * the whole workspace at once.
+ *
+ * Pure and exported so the rule can be tested without a Firestore round trip;
+ * it is easier to reason about here than inside the batch loop that applies it.
+ */
+export function shouldMarkOffMarket(
+  listing: { id?: unknown; raw?: unknown } | null | undefined,
+  seenListingIds: ReadonlySet<string>,
+  docId: string
+): boolean {
+  if (!listing) return false;
+  if (seenListingIds.has(docId)) return false;
+  return describeListingSource(listing).isFeedSourced;
+}
+
 export interface SyncResult {
   ok: boolean;
   listingCount: number;
@@ -123,6 +148,15 @@ export async function syncIdxListings(subAccountId: string): Promise<SyncResult>
   // `accessKey` is destructured out, not merely absent: spreading the config
   // back onto the parent document is precisely how a migrated credential would
   // get silently re-inlined onto a member-readable doc.
+  //
+  // EVERY write below must use `publicCfg`, not `cfg`. `cfg` was read from the
+  // parent document a few lines above; `loadIdxSecrets()` has since migrated
+  // any legacy inline key into the server-only secrets subcollection, which
+  // DELETES it from the parent. So `cfg` still holds the key in memory after
+  // Firestore has dropped it, and writing `{...cfg}` back would restore the
+  // credential onto a document every member of the sub-account can read —
+  // undoing the migration on every successful sync. The two writes below did
+  // exactly that until this was fixed.
   const { accessKey: _accessKey, ...publicCfg } = cfg;
   await subRef.set(
     { idxConfig: { ...publicCfg, connected: true, lastSyncStatus: "syncing" } },
@@ -148,10 +182,22 @@ export async function syncIdxListings(subAccountId: string): Promise<SyncResult>
 
     // Flip any previously-synced listing not seen this pass to off-market —
     // never hard-delete, so a bookmarked detail-page URL keeps resolving.
+    //
+    // **Feed-sourced listings only.** This collection holds hand-added
+    // off-market property alongside the MLS feed, and "absent from the feed"
+    // says nothing about a property that was never in it. Without this
+    // filter, every sync flipped the operator's own pocket listings,
+    // coming-soons and past sales to off-market — and a sync that legitimately
+    // returned zero listings flipped the entire workspace, silently rewriting
+    // statuses a person had set by hand. `isFeedSourced` is the same
+    // distinction the Listings screen and the disclaimer rules use; staleness
+    // is one more thing that must respect it.
     const existingSnap = await listingsCol
       .where("status", "!=", "off-market")
       .get();
-    const staleDocs = existingSnap.docs.filter((d) => !seenIds.has(d.id));
+    const staleDocs = existingSnap.docs.filter((d) =>
+      shouldMarkOffMarket(d.data(), seenIds, d.id)
+    );
     for (let i = 0; i < staleDocs.length; i += BATCH_OP_LIMIT) {
       const batch = db.batch();
       for (const doc of staleDocs.slice(i, i + BATCH_OP_LIMIT)) {
@@ -164,7 +210,7 @@ export async function syncIdxListings(subAccountId: string): Promise<SyncResult>
     await subRef.set(
       {
         idxConfig: {
-          ...cfg,
+          ...publicCfg,
           lastSyncAt: FieldValue.serverTimestamp(),
           lastSyncStatus: "success",
           lastSyncError: null,
@@ -182,7 +228,7 @@ export async function syncIdxListings(subAccountId: string): Promise<SyncResult>
       .set(
         {
           idxConfig: {
-            ...cfg,
+            ...publicCfg,
             lastSyncAt: FieldValue.serverTimestamp(),
             lastSyncStatus: "failed",
             lastSyncError: message,
