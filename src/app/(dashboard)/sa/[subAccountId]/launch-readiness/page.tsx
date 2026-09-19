@@ -8,7 +8,6 @@ import { useSubAccount } from "@/context/sub-account-context";
 import { Button } from "@/components/ui/button";
 import { evaluateLaunchAcceptance, type AcceptanceCheck } from "@/lib/launch/acceptance";
 import type { CampaignChannel, CampaignBriefDoc } from "@/types/marketing-campaigns";
-import { toDate } from "@/lib/format";
 
 interface CampaignResponse {
   briefs?: CampaignBriefDoc[];
@@ -42,14 +41,16 @@ export default function LaunchReadinessPage() {
         const brief = data.briefs?.[0];
         const approved = brief?.approvedChannels ?? [];
         const scheduled = approved.some((channel) => Boolean(brief?.schedulePlan?.[channel]));
-        const idx = subAccount?.idxConfig;
-        const lastSync = toDate(idx?.lastSyncAt)?.toISOString() ?? null;
+              const idx = subAccount?.idxConfig;
+        const listingCount = idx?.listingCount ?? null;
+        const listingAvailable = Boolean(brief) || (idx?.connected === true && (listingCount ?? 0) > 0);
+        const listingSourceLabel = idx?.connected === true ? "MLS/IDX" : "agent-managed inventory";
         setChecks(
           evaluateLaunchAcceptance({
-            idx: {
-              connected: idx?.connected === true,
-              listingsSynced: idx?.connected === true ? idx.listingCount : null,
-              lastSyncAt: lastSync,
+            listingInventory: {
+              available: listingAvailable,
+              count: listingCount,
+              sourceLabel: listingAvailable ? listingSourceLabel : null,
             },
             listingCreated: Boolean(brief),
             campaignGenerated: Boolean(brief?.brief?.channels?.length),
