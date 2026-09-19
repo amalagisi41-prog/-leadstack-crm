@@ -321,6 +321,11 @@ export function SubAccountIdxSection() {
               </Button>
             </div>
           </form>
+          {cfg?.lastSyncStatus === "empty" && (
+            <p className="mt-3 rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-300">
+              The last IDX Broker sync returned no listings. Check the account&apos;s featured listings and ask IDX Broker whether listings shown on its hosted agent page are available to your API key. This feed is not verified for launch.
+            </p>
+          )}
           {cfg?.lastSyncStatus === "failed" && cfg?.lastSyncError && (
             <p className="mt-3 rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">
               Last sync failed: {cfg.lastSyncError}
