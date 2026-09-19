@@ -279,6 +279,8 @@ export interface SubAccountDoc {
    * `metaInboxEnabledByAgency` is on). See {@link MetaConfig}.
    */
   metaConfig?: MetaConfig | null;
+  /** Authorized external calendar connection. OAuth tokens live in the server-only secrets subcollection. */
+  calendarConfig?: CalendarConnectionConfig | null;
   bookingConfig: BookingConfig | null;
   sendWindow: SendWindow | null;
   /**
@@ -477,6 +479,14 @@ export interface SubAccountDoc {
    */
   idxConfig?: IdxConfig | null;
   /**
+   * Provider-neutral listing sources for this sub-account. Each source owns
+   * how listings enter AgentStack; source-specific credentials stay in the
+   * existing server-only secrets model rather than this member-readable doc.
+   * Undefined/empty preserves the legacy IDX-only behavior until the tenant
+   * configures additional sources.
+   */
+  listingSources?: ListingSourceConfig[];
+  /**
    * RPR (Realtors Property Resource) MLS-SSO board code, e.g. "ctconnm-n"
    * for SmartMLS/connectMLS in Connecticut. Powers the "View on RPR" link's
    * entry-point URL (`narrpr.com/home?cbcode={rprOrgId}`) — a fixed, public
@@ -516,6 +526,28 @@ export interface SubAccountDoc {
    * is complete.
    */
   onboardingLifecycleEmails?: OnboardingLifecycleEmails | null;
+}
+
+export type ListingSourceProvider = "idx" | "wordpress" | "manual" | "cms";
+export type ListingSourceMode = "read_only" | "managed" | "publish";
+
+export interface ListingSourceConfig {
+  id: string;
+  provider: ListingSourceProvider;
+  mode: ListingSourceMode;
+  enabled: boolean;
+  /** Human-readable label chosen by the sub-account. */
+  name: string;
+  /** Provider-specific connection reference; credentials never belong here. */
+  connectionId?: string | null;
+  /** Provider-specific mapping/configuration, intentionally schema-light for extensibility. */
+  mapping?: Record<string, string> | null;
+  /** External collection/type identifier, such as a CMS post type. */
+  collectionType?: string | null;
+  /** Public source URL when the provider exposes one. */
+  publicUrl?: string | null;
+  createdAt?: Timestamp | FieldValue | null;
+  updatedAt?: Timestamp | FieldValue | null;
 }
 
 export interface IdxConfig {
@@ -817,6 +849,17 @@ export interface GoogleWorkspaceConfig {
   /** When this configuration was first connected. */
   connectedAt: Date;
   /** UID of the sub-account admin who connected this. */
+  connectedByUid: string;
+}
+
+export type CalendarProvider = "google" | "outlook";
+
+export interface CalendarConnectionConfig {
+  provider: CalendarProvider;
+  status: "connected";
+  email: string;
+  displayName: string | null;
+  connectedAt: Date | Timestamp | FieldValue;
   connectedByUid: string;
 }
 
