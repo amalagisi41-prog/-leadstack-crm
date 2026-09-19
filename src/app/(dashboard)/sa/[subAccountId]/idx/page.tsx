@@ -233,7 +233,11 @@ export default function ListingsPage() {
         listingCount?: number;
       };
       if (!res.ok || !data.ok) throw new Error(data.error ?? "Sync failed.");
-      toast.success(`Synced ${data.listingCount ?? 0} listings.`);
+      if ((data.listingCount ?? 0) === 0) {
+        toast.warning("IDX Broker returned no active listings. Check whether this account has featured listings and whether the expected listings are available through its API. The hosted agent page alone does not confirm API access.");
+      } else {
+        toast.success(`Synced ${data.listingCount} active listings.`);
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Sync failed.");
     } finally {
@@ -598,13 +602,7 @@ function FeedStatusCard({
             cfg?.lastSyncStatus === "failed" && "text-destructive"
           )}
         >
-          {cfg?.lastSyncStatus === "failed"
-            ? "Failed"
-            : cfg?.lastSyncStatus === "empty" || (cfg?.lastSyncStatus === "success" && (cfg?.listingCount ?? 0) === 0)
-              ? "No listings returned"
-              : cfg?.lastSyncStatus === "success"
-                ? "Listings synced"
-                : "Not verified"}
+          {cfg?.lastSyncStatus === "failed" ? "Failed" : "OK"}
         </p>
       </div>
       <div className="bg-card flex items-center gap-2 rounded-2xl border p-4">
