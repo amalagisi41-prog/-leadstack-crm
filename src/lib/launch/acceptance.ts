@@ -8,10 +8,10 @@ export interface AcceptanceCheck {
 }
 
 export interface LaunchAcceptanceInput {
-  idx: {
-    connected: boolean;
-    listingsSynced: number | null;
-    lastSyncAt: string | null;
+  listingInventory: {
+    available: boolean;
+    count?: number | null;
+    sourceLabel?: string | null;
   };
   listingCreated: boolean;
   campaignGenerated: boolean;
@@ -35,26 +35,27 @@ export function evaluateLaunchAcceptance(
   const checks: AcceptanceCheck[] = [];
   const add = (check: AcceptanceCheck) => checks.push(check);
 
-  if (!input.idx.connected) {
+  if (!input.listingInventory.available) {
     add({
-      id: "idx-connected",
-      label: "SmartMLS/IDX feed authorized",
+      id: "listing-inventory",
+      label: "Listing inventory available",
       status: "not_verified",
-      detail: "No authorized IDX connection is evidenced for this workspace.",
-    });
-  } else if (input.idx.listingsSynced == null || !input.idx.lastSyncAt) {
-    add({
-      id: "idx-connected",
-      label: "SmartMLS/IDX feed authorized",
-      status: "blocked",
-      detail: "The feed is marked connected, but sync evidence is incomplete.",
+      detail:
+        "No listing inventory is evidenced yet. Add an MLS/IDX listing or create an agent-managed property before launching a listing campaign.",
     });
   } else {
+    const count = input.listingInventory.count;
+    const source = input.listingInventory.sourceLabel
+      ? ` from ${input.listingInventory.sourceLabel}`
+      : "";
     add({
-      id: "idx-connected",
-      label: "SmartMLS/IDX feed authorized",
+      id: "listing-inventory",
+      label: "Listing inventory available",
       status: "passed",
-      detail: `${input.idx.listingsSynced} listing${input.idx.listingsSynced === 1 ? "" : "s"} observed at ${input.idx.lastSyncAt}.`,
+      detail:
+        count != null
+          ? `${count} listing${count === 1 ? "" : "s"} available${source}.`
+          : `Listing inventory is available${source}.`,
     });
   }
 
