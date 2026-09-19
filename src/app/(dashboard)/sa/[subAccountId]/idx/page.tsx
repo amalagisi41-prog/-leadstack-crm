@@ -87,6 +87,9 @@ export default function ListingsPage() {
   const { subAccountId, subAccount, isAdmin, saPath } = useSubAccount();
   const [listings, setListings] = useState<IdxListingDoc[]>([]);
   const [loaded, setLoaded] = useState(false);
+  // A failed read is NOT an empty inventory. Kept separate so the screen can
+  // say which of the two it is — see the note on the subscription below.
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [briefIds, setBriefIds] = useState<Set<string>>(new Set());
   const [syncing, setSyncing] = useState(false);
   const [addingId, setAddingId] = useState<string | null>(null);
@@ -107,9 +110,26 @@ export default function ListingsPage() {
       subAccountId,
       (list) => {
         setListings(list);
+        setLoadError(null);
         setLoaded(true);
       },
-      () => setLoaded(true)
+      // This used to be `() => setLoaded(true)` — the error was dropped and
+      // the screen rendered "No properties yet". That is the worst possible
+      // reading of a failed query: an agent who has just saved a property is
+      // told their inventory is empty, and the one cause that actually
+      // produces it (Firestore rules not deployed, which the client SDK
+      // reports as permission-denied and nothing else surfaces) looks
+      // identical to having no listings. A read that could not happen must
+      // never render as a confirmed-empty result.
+      (err) => {
+        console.error("[listings] subscription failed", err);
+        setLoadError(
+          /permission|insufficient/i.test(err.message)
+            ? "permission"
+            : "unknown"
+        );
+        setLoaded(true);
+      }
     );
     return () => unsub();
   }, [subAccountId]);
@@ -324,6 +344,8 @@ export default function ListingsPage() {
 
       {!loaded ? (
         <div className="bg-muted/50 h-32 animate-pulse rounded-2xl" />
+      ) : loadError ? (
+        <ListingsLoadError reason={loadError} />
       ) : rows.length === 0 ? (
         <EmptyState
           hasAny={listings.length > 0}
@@ -844,6 +866,52 @@ function Field({
         inputMode={inputMode}
         onChange={(e) => onChange(e.target.value)}
       />
+    </div>
+  );
+}
+
+/**
+ * Shown when the listings query FAILED, in place of the empty state.
+ *
+ * These two look identical from the outside — an empty table — and mean
+ * opposite things. An agent who has just saved a property and is then told
+ * "No properties yet" will reasonably conclude the save was lost, and go and
+ * enter it again. The likeliest cause is also the least guessable: this
+ * workspace's Firestore rules have not been deployed, which the client SDK
+ * reports only as permission-denied on the stream.
+ *
+ * So this names the cause and the command that fixes it rather than offering
+ * a generic retry. The same failure mode is documented for the voice-calls
+ * and website screens; this is the first one that says so on screen.
+ */
+function ListingsLoadError({ reason }: { reason: string }) {
+  return (
+    <div className="bg-card rounded-2xl border border-dashed p-10 text-center">
+      <h2 className="text-base font-semibold">
+        We could not load your properties
+      </h2>
+      {reason === "permission" ? (
+        <>
+          <p className="text-muted-foreground mx-auto mt-1 max-w-lg text-sm">
+            This workspace is not permitted to read its listings, which almost
+            always means this deployment&rsquo;s Firestore rules are out of
+            date. Anything you have saved is still there — it cannot be shown
+            until the rules are deployed.
+          </p>
+          <p className="text-muted-foreground mx-auto mt-3 max-w-lg text-xs">
+            Whoever runs this deployment can fix it by running{" "}
+            <code className="bg-muted rounded px-1 py-0.5">
+              firebase deploy --only firestore:rules
+            </code>{" "}
+            from the project, then reloading this page.
+          </p>
+        </>
+      ) : (
+        <p className="text-muted-foreground mx-auto mt-1 max-w-lg text-sm">
+          The connection to your listings dropped. Reload the page to try
+          again — nothing you have saved is affected.
+        </p>
+      )}
     </div>
   );
 }
