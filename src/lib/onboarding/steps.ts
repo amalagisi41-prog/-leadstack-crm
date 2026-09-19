@@ -151,10 +151,14 @@ export const ONBOARDING_STEPS: readonly OnboardingStepMeta[] = [
   },
   {
     id: "domain",
-    title: "Put your business on your own web address",
+    title: "Make sure leads land on the right website",
     description:
-      "The final step — point your website to your own domain. Already own one? We'll show you the exact DNS records to add. Need one? We'll walk you through registering a new one.",
-    cta: "Connect Domain",
+      // Covers all three situations the Domain screen actually offers. The
+      // old copy said only "point your website to your own domain", which
+      // describes none of the work for a client keeping the site they already
+      // have — the commonest case, and one this step is satisfied by.
+      "Tell us where your website lives. Keeping the site you already have? Name your host and we'll check your DNS — nothing moves. Moving to an AgentStack site, or need a domain? We'll walk you through it.",
+    cta: "Open Domain",
     href: SUB_ACCOUNT_ROUTES.domain,
     videoMinutes: 4,
   },
@@ -177,7 +181,7 @@ export const OPTIONAL_ONBOARDING_STEP_IDS: readonly OnboardingStepId[] = [
 
 export const REQUIRED_ONBOARDING_STEP_IDS: readonly OnboardingStepId[] =
   ONBOARDING_STEP_IDS.filter(
-    (id) => !OPTIONAL_ONBOARDING_STEP_IDS.includes(id),
+    (id) => !OPTIONAL_ONBOARDING_STEP_IDS.includes(id)
   );
 
 export const ONBOARDING_METHOD_STEPS: readonly OnboardingMethodStepMeta[] = [
@@ -228,7 +232,7 @@ export const ONBOARDING_METHOD_STEP_IDS: readonly OnboardingMethodStepId[] =
 
 /** True once every onboarding step id is present in `completed`. */
 export function isOnboardingComplete(
-  completed: readonly string[] | null | undefined,
+  completed: readonly string[] | null | undefined
 ): boolean {
   if (!completed) return false;
   const set = new Set(completed);
@@ -237,7 +241,7 @@ export function isOnboardingComplete(
 
 /** True once the workspace can be used without phone approval or AI tuning. */
 export function isOnboardingLaunchReady(
-  completed: readonly string[] | null | undefined,
+  completed: readonly string[] | null | undefined
 ): boolean {
   if (!completed) return false;
   const set = new Set(completed);
@@ -249,7 +253,7 @@ export type OnboardingVideos = Partial<Record<OnboardingStepId, string>>;
 
 export function isOnboardingMethodStepComplete(
   step: OnboardingMethodStepMeta,
-  completed: readonly string[] | null | undefined,
+  completed: readonly string[] | null | undefined
 ): boolean {
   if (!completed) return false;
   const set = new Set(completed);
@@ -258,7 +262,7 @@ export function isOnboardingMethodStepComplete(
 
 export function getOnboardingMethodVideoUrl(
   step: OnboardingMethodStepMeta,
-  videos: OnboardingVideos | null | undefined,
+  videos: OnboardingVideos | null | undefined
 ): string | null {
   if (!videos) return null;
   for (const id of step.stepIds) {

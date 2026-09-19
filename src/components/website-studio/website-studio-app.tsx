@@ -992,6 +992,7 @@ export function WebsiteStudioApp({
               ) : mode === "edit" ? (
                 <ContentEditor
                   revealGroup={revealGroup}
+                  subAccountId={subAccountId}
                   content={content}
                   onChange={(next) => {
                     setContent(next);

@@ -49,6 +49,12 @@ interface WizardProps {
   subAccountId: string;
   saPath: (p: string) => string;
   initialCompleted: string[];
+  /**
+   * Of `initialCompleted`, the ids a user ticked that the workspace cannot
+   * confirm. Shown as their claim rather than as progress — see
+   * lib/onboarding/completion.ts.
+   */
+  initialAttested?: string[];
   initialStep?: OnboardingWizardStepKey | null;
 }
 
@@ -144,7 +150,7 @@ const FUNNEL_RECOMMENDATIONS = [
 async function persistSteps(
   subAccountId: string,
   steps: string[],
-  opts: { wizardCompleted?: boolean } = {},
+  opts: { wizardCompleted?: boolean } = {}
 ): Promise<boolean> {
   try {
     const res = await fetch(`/api/sub-accounts/${subAccountId}/onboarding`, {
@@ -167,6 +173,7 @@ export function OnboardingWizard({
   subAccountId,
   saPath,
   initialCompleted,
+  initialAttested = [],
   initialStep,
 }: WizardProps) {
   const router = useRouter();
@@ -313,10 +320,7 @@ export function OnboardingWizard({
           {/* ── main content ── */}
           <main className="bg-background/90 min-w-0 flex-1 rounded-2xl border p-5 shadow-sm md:p-7">
             {currentStep === 0 && (
-              <StepBuild
-                saPath={saPath}
-                onNext={() => advance(["domain"])}
-              />
+              <StepBuild saPath={saPath} onNext={() => advance(["domain"])} />
             )}
             {currentStep === 1 && (
               <StepConnect
@@ -350,6 +354,7 @@ export function OnboardingWizard({
             {currentStep === 5 && (
               <StepClose
                 completed={completed}
+                attested={new Set(initialAttested)}
                 onFinish={finish}
                 finishing={finishing}
                 saPath={saPath}
@@ -445,9 +450,12 @@ function StepBuild({
       </div>
 
       <div className="mt-6 rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-900/50 dark:bg-blue-950/20">
-        <p className="text-sm font-medium">Connect Google before Blueprint (optional)</p>
+        <p className="text-sm font-medium">
+          Connect Google before Blueprint (optional)
+        </p>
         <p className="text-muted-foreground mt-1 text-sm">
-          Keep your Google Business Profile, customer reviews, and Workspace/Gmail tools available throughout setup.
+          Keep your Google Business Profile, customer reviews, and
+          Workspace/Gmail tools available throughout setup.
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           <Button
@@ -550,10 +558,10 @@ function StepConnect({
         duplicate detection automatically. Connecting your phone number is what
         powers AI SMS responses — your agent can start answering leads the
         moment you flip the switch. One thing carriers require before texts
-        deliver reliably: A2P 10DLC registration. It&apos;s a self-service
-        form — business details, sample messages, submission tracking —
-        sitting right below your Twilio setup in SMS Settings. Do it as soon
-        as your number is connected; carrier review can take several days.
+        deliver reliably: A2P 10DLC registration. It&apos;s a self-service form
+        — business details, sample messages, submission tracking — sitting right
+        below your Twilio setup in SMS Settings. Do it as soon as your number is
+        connected; carrier review can take several days.
       </TeachingNote>
     </StepShell>
   );
@@ -856,11 +864,13 @@ function StepNurture({
 
 function StepClose({
   completed,
+  attested,
   onFinish,
   finishing,
   saPath,
 }: {
   completed: Set<string>;
+  attested: Set<string>;
   onFinish: () => Promise<void>;
   finishing: boolean;
   saPath: (p: string) => string;
@@ -869,14 +879,19 @@ function StepClose({
     completed.has(id)
   ).length;
   const totalCount = ONBOARDING_STEP_IDS.length;
-  const remaining = ONBOARDING_STEPS.filter(
-    (step) => !completed.has(step.id),
-  );
+  const remaining = ONBOARDING_STEPS.filter((step) => !completed.has(step.id));
   const requiredRemaining = remaining.filter(
-    (step) => !OPTIONAL_ONBOARDING_STEP_IDS.includes(step.id),
+    (step) => !OPTIONAL_ONBOARDING_STEP_IDS.includes(step.id)
+  );
+  // Required steps a user ticked that the workspace cannot show. They are not
+  // "remaining" — the user says they are done — but a screen headed "here is
+  // what is still missing" must not quietly count them as finished either.
+  const requiredAttested = ONBOARDING_STEPS.filter(
+    (step) =>
+      attested.has(step.id) && !OPTIONAL_ONBOARDING_STEP_IDS.includes(step.id)
   );
   const optionalRemaining = remaining.filter((step) =>
-    OPTIONAL_ONBOARDING_STEP_IDS.includes(step.id),
+    OPTIONAL_ONBOARDING_STEP_IDS.includes(step.id)
   );
 
   return (
@@ -884,7 +899,7 @@ function StepClose({
       icon={<Star className="h-6 w-6 text-amber-500" />}
       eyebrow="Step 6: Start your first working day"
       title={
-        requiredRemaining.length === 0
+        requiredRemaining.length === 0 && requiredAttested.length === 0
           ? "Your workspace is ready. Here is what happens next."
           : "Almost there — here is what is still missing."
       }
@@ -916,14 +931,53 @@ function StepClose({
       {requiredRemaining.length > 0 ? (
         <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-5">
           <p className="text-sm font-semibold text-amber-950">
-            {requiredRemaining.length} {requiredRemaining.length === 1 ? "step" : "steps"} still to do
+            {requiredRemaining.length}{" "}
+            {requiredRemaining.length === 1 ? "step" : "steps"} still to do
           </p>
           <p className="mt-1 text-xs leading-5 text-amber-900/80">
-            None of these are done yet. Each one takes a few minutes — start
-            wherever you like.
+            We cannot see any of these in your workspace yet. Each one takes a
+            few minutes — start wherever you like.
           </p>
           <div className="mt-4 space-y-2">
             {requiredRemaining.map((step) => (
+              <div
+                key={step.id}
+                className="flex flex-col gap-3 rounded-xl border bg-white p-3 sm:flex-row sm:items-center"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium">{step.title}</p>
+                  <p className="text-muted-foreground mt-0.5 text-xs leading-5">
+                    {step.description}
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  render={<Link href={saPath(step.href)} />}
+                >
+                  {step.cta} <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {requiredAttested.length > 0 ? (
+        <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-5">
+          <p className="text-sm font-semibold text-amber-950">
+            {requiredAttested.length}{" "}
+            {requiredAttested.length === 1 ? "step is" : "steps are"} marked
+            done but not showing up yet
+          </p>
+          <p className="mt-1 text-xs leading-5 text-amber-900/80">
+            Someone ticked {requiredAttested.length === 1 ? "this" : "these"}{" "}
+            off, but we cannot see the work in your workspace. Either finish{" "}
+            {requiredAttested.length === 1 ? "it" : "them"} or ignore this —
+            nothing is blocked.
+          </p>
+          <div className="mt-4 space-y-2">
+            {requiredAttested.map((step) => (
               <div
                 key={step.id}
                 className="flex flex-col gap-3 rounded-xl border bg-white p-3 sm:flex-row sm:items-center"

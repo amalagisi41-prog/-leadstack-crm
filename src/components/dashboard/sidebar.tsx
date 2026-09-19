@@ -120,7 +120,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/funnels", label: "Marketing Pages", icon: Filter, enabled: true },
       { href: "/broadcasts", label: "Broadcasts", icon: Send, enabled: true },
       { href: "/social", label: "Social Planner", icon: Share2, enabled: true },
-      { href: "/idx", label: "IDX Listings", icon: Building, enabled: true },
+      { href: "/idx", label: "Listings", icon: Building, enabled: true },
       { href: "/marketing/ad-spend", label: "Ad Spend & Billing", icon: DollarSign, enabled: true },
     ],
   },
@@ -187,11 +187,9 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   );
   const [socialGate, setSocialGate] = useState<boolean | null>(null);
   const [communityGate, setCommunityGate] = useState<boolean | null>(null);
-  const [idxGate, setIdxGate] = useState<boolean | null>(null);
   const [broadcastsHidden, setBroadcastsHidden] = useState(false);
   const [socialHidden, setSocialHidden] = useState(false);
   const [communityHidden, setCommunityHidden] = useState(false);
-  const [idxHidden, setIdxHidden] = useState(false);
   const [siteHealthScore, setSiteHealthScore] = useState<number | null>(null);
 
   useEffect(() => {
@@ -201,7 +199,6 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       setWebsiteStudioGate(null);
       setSocialGate(null);
       setCommunityGate(null);
-      setIdxGate(null);
       return;
     }
     return onSnapshot(
@@ -212,19 +209,16 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         setWebsiteStudioGate(data?.websiteStudioEnabledByAgency === true);
         setSocialGate(data?.socialPlannerEnabledByAgency === true);
         setCommunityGate(data?.communityEnabledByAgency === true);
-        setIdxGate(data?.idxEnabledByAgency === true);
         setBroadcastsHidden(data?.broadcastsHiddenWhenDisabled === true);
         setSocialHidden(data?.socialPlannerHiddenWhenDisabled === true);
         setCommunityHidden(data?.communityHiddenWhenDisabled === true);
-        setIdxHidden(data?.idxHiddenWhenDisabled === true);
       },
       () => {
         setBroadcastsGate(null);
         setWebsiteStudioGate(null);
         setSocialGate(null);
         setCommunityGate(null);
-        setIdxGate(null);
-      }
+        }
     );
   }, [activeSubId, memberships]);
 
@@ -397,11 +391,9 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                 websiteStudioGate={websiteStudioGate}
                 socialGate={socialGate}
                 communityGate={communityGate}
-                idxGate={idxGate}
                 broadcastsHidden={broadcastsHidden}
                 socialHidden={socialHidden}
                 communityHidden={communityHidden}
-                idxHidden={idxHidden}
                 multiAccountMode={agency.multiAccountModeEnabled}
               />
             ))}
@@ -444,11 +436,9 @@ function NavGroupSection({
   websiteStudioGate,
   socialGate,
   communityGate,
-  idxGate,
   broadcastsHidden,
   socialHidden,
   communityHidden,
-  idxHidden,
   multiAccountMode,
 }: {
   group: NavGroup;
@@ -461,11 +451,9 @@ function NavGroupSection({
   websiteStudioGate: boolean | null;
   socialGate: boolean | null;
   communityGate: boolean | null;
-  idxGate: boolean | null;
   broadcastsHidden: boolean;
   socialHidden: boolean;
   communityHidden: boolean;
-  idxHidden: boolean;
   multiAccountMode: boolean;
 }) {
   // Auto-expand if any child route is active
@@ -519,8 +507,7 @@ function NavGroupSection({
               ((item.href === "/website-studio" || item.href === "/funnels") &&
                 websiteStudioGate === false) ||
               (item.href === "/social" && socialGate === false) ||
-              (item.href === "/community" && communityGate === false) ||
-              (item.href === "/idx" && idxGate === false);
+              (item.href === "/community" && communityGate === false);
 
             const gateHidden =
               (item.href === "/broadcasts" &&
@@ -529,8 +516,7 @@ function NavGroupSection({
               (item.href === "/social" && socialGate === false && socialHidden) ||
               (item.href === "/community" &&
                 communityGate === false &&
-                communityHidden) ||
-              (item.href === "/idx" && idxGate === false && idxHidden);
+                communityHidden);
 
             if (gateHidden) return null;
 

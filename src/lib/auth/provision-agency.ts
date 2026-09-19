@@ -6,6 +6,7 @@ import { seedDefaultTemplates } from "@/lib/automations/seed-templates";
 import { seedMethodTemplates } from "@/lib/provisioning/method-templates";
 import { defaultNotificationPreferences } from "@/lib/notifications/preferences";
 import { queueOnboardingLifecycleSequence } from "@/lib/onboarding/lifecycle-email";
+import { seedSampleWorkspace } from "@/lib/seed/sample-workspace";
 import { SOLO_FEATURE_GATES } from "@/lib/entitlements/solo";
 import { GLOBAL_TERRITORY_ID, type Role } from "@/types";
 
@@ -138,7 +139,8 @@ export async function provisionNewAgency(
     name: agencyName,
     slug: "main",
     status: "active",
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "America/New_York",
+    timezone:
+      Intl.DateTimeFormat().resolvedOptions().timeZone || "America/New_York",
     createdByUid: uid,
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
@@ -228,6 +230,20 @@ export async function provisionNewAgency(
   });
 
   await batch.commit();
+
+  // The worked example, so the very first workspace an owner opens has a
+  // legible pipeline rather than six empty columns. Marked `isSample`, so
+  // onboarding still counts their own work at zero. Best-effort — a failed
+  // example must never cost someone their signup.
+  try {
+    await seedSampleWorkspace(db, {
+      subAccountId,
+      agencyId,
+      createdByUid: uid,
+    });
+  } catch (err) {
+    console.error("[provision-agency] sample seed failed", subAccountId, err);
+  }
 
   try {
     await queueOnboardingLifecycleSequence(subAccountId);

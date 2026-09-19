@@ -12,6 +12,7 @@ import {
 import { SOLO_ENTITLEMENT_PATCH } from "@/lib/entitlements/solo";
 import { RealtorLaunchWizard } from "@/components/dashboard/realtor-launch-wizard";
 import { Loader2 } from "lucide-react";
+import { useOnboardingCompletion } from "@/hooks/use-onboarding-completion";
 
 /**
  * Mandatory first-run wizard. The sub-account dashboard redirects here at
@@ -26,6 +27,12 @@ export default function GetStartedPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { subAccountId, subAccount, saPath, loading } = useSubAccount();
+  // Must sit above every early return below — hooks run in the same order on
+  // each render or React tears the component state apart.
+  const {
+    completion: onboardingCompletion,
+    loading: onboardingCompletionLoading,
+  } = useOnboardingCompletion(subAccountId);
   const [foundationComplete, setFoundationComplete] = useState<boolean | null>(
     null
   );
@@ -91,14 +98,14 @@ export default function GetStartedPage() {
   // Collaborators bypass setup entirely.
   if (adminOnly) {
     return (
-      <div className="mx-auto max-w-lg space-y-4 rounded-2xl border bg-card p-8 text-center">
+      <div className="bg-card mx-auto max-w-lg space-y-4 rounded-2xl border p-8 text-center">
         <h1 className="text-lg font-semibold">
           Setup is handled by your workspace admin
         </h1>
         <p className="text-muted-foreground text-sm">
           Your account is set up as a collaborator, so the first-run setup steps
-          aren&apos;t yours to complete. Everything else in {subAccount?.name ?? "this workspace"} is
-          ready for you now.
+          aren&apos;t yours to complete. Everything else in{" "}
+          {subAccount?.name ?? "this workspace"} is ready for you now.
         </p>
         <Button render={<Link href={saPath("/dashboard")} />}>
           Go to my dashboard
@@ -111,7 +118,12 @@ export default function GetStartedPage() {
     (setupIsComplete && !requestedStep) ||
     loading ||
     !subAccount ||
-    foundationComplete === null
+    foundationComplete === null ||
+    // The wizard seeds its completed-step state ONCE, in a lazy useState
+    // initializer. Mounting it before the derived progress lands would seed it
+    // empty and never correct itself — it would tell a fully set-up workspace
+    // it had done nothing.
+    onboardingCompletionLoading
   ) {
     return (
       <div className="text-muted-foreground flex h-64 items-center justify-center">
@@ -126,7 +138,11 @@ export default function GetStartedPage() {
       <OnboardingWizard
         subAccountId={subAccountId}
         saPath={saPath}
-        initialCompleted={subAccount?.onboardingStepsCompleted ?? []}
+        // Derived, not the stored tick list: a returning user resumes at the
+        // first step the WORKSPACE cannot show as done, rather than at the
+        // first one nobody happened to tick.
+        initialCompleted={onboardingCompletion?.doneStepIds ?? []}
+        initialAttested={onboardingCompletion?.attestedStepIds ?? []}
         initialStep={initialStep}
       />
     );

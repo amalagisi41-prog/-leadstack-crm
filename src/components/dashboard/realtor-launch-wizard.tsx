@@ -218,7 +218,7 @@ export function RealtorLaunchWizard({
           }
         );
         const data = await readJson<{ ok?: boolean }>(response);
-        if (response.ok) imported += 1;
+        if (response.ok && data.ok === true) imported += 1;
         else lastError = data.error ?? "Could not read that link.";
       }
       if (imported === 0)
@@ -239,7 +239,7 @@ export function RealtorLaunchWizard({
     setFinishing(true);
     try {
       // Save foundation as complete (fresh mode, minimal)
-      await fetch(
+      const foundationResponse = await fetch(
         `/api/sub-accounts/${subAccountId}/onboarding-foundation`,
         {
           method: "PATCH",
@@ -257,17 +257,27 @@ export function RealtorLaunchWizard({
         }
       );
 
-      // Save role and priority as custom metadata
-      await fetch(`/api/sub-accounts/${subAccountId}/onboarding`, {
+      if (!foundationResponse.ok) {
+        const data = await readJson<{ error?: string }>(foundationResponse);
+        throw new Error(data.error ?? "Could not save your setup foundation.");
+      }
+
+      // Save role and priority as custom metadata. An imported profile remains
+      // a review draft until the operator saves it in Business Blueprint.
+      const onboardingResponse = await fetch(`/api/sub-accounts/${subAccountId}/onboarding`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          steps: profileImported ? ["business_profile"] : [],
+          steps: [],
           wizardCompleted: true,
           realtorRole: role,
           launchPriority: priority,
         }),
       });
+      if (!onboardingResponse.ok) {
+        const data = await readJson<{ error?: string }>(onboardingResponse);
+        throw new Error(data.error ?? "Could not save your onboarding choices.");
+      }
 
       const chosenPriority = PRIORITY_OPTIONS.find(
         (p) => p.value === priority
@@ -532,8 +542,8 @@ function ScreenIdentity({
         </h1>
         <p className="text-muted-foreground mt-2 text-sm">
           Paste your website, Google Business Profile, or social links. We&apos;ll
-          pull your name, brokerage, headshot, and service areas into a draft
-          Business Profile for you to review.
+          find public facts for a draft. Nothing is saved as your approved
+          Business Profile until you review and save it in Business Blueprint.
         </p>
       </div>
 
@@ -560,7 +570,7 @@ function ScreenIdentity({
           </Button>
           {profileImported && (
             <span className="flex items-center gap-1 text-sm font-medium text-emerald-600">
-              <CheckCircle2 className="h-4 w-4" /> Draft ready for review
+              <CheckCircle2 className="h-4 w-4" /> Draft found — review in Business Blueprint
             </span>
           )}
         </div>
