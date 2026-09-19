@@ -598,7 +598,13 @@ function FeedStatusCard({
             cfg?.lastSyncStatus === "failed" && "text-destructive"
           )}
         >
-          {cfg?.lastSyncStatus === "failed" ? "Failed" : "OK"}
+          {cfg?.lastSyncStatus === "failed"
+            ? "Failed"
+            : cfg?.lastSyncStatus === "empty" || (cfg?.lastSyncStatus === "success" && (cfg?.listingCount ?? 0) === 0)
+              ? "No listings returned"
+              : cfg?.lastSyncStatus === "success"
+                ? "Listings synced"
+                : "Not verified"}
         </p>
       </div>
       <div className="bg-card flex items-center gap-2 rounded-2xl border p-4">
