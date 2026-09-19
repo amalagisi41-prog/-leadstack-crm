@@ -571,7 +571,7 @@ export interface IdxConfig {
   /** "Listings provided by <MLS name>" attribution line shown on public pages. */
   displayName: string | null;
   lastSyncAt: Timestamp | FieldValue | null;
-  lastSyncStatus: "idle" | "syncing" | "success" | "failed";
+  lastSyncStatus: "idle" | "syncing" | "success" | "empty" | "failed";
   lastSyncError: string | null;
   listingCount: number;
 }
