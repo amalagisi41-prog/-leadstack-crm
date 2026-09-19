@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest";
 import { evaluateLaunchAcceptance, type LaunchAcceptanceInput } from "./acceptance";
 
 const completeInput: LaunchAcceptanceInput = {
-  idx: { connected: true, listingsSynced: 1, lastSyncAt: "2026-09-14T12:00:00Z" },
+  listingInventory: {
+    available: true,
+    count: 1,
+    sourceLabel: "MLS/IDX",
+  },
   listingCreated: true,
   campaignGenerated: true,
   approved: true,
@@ -19,6 +23,22 @@ describe("evaluateLaunchAcceptance", () => {
     const result = evaluateLaunchAcceptance(completeInput);
     expect(result.passed).toBe(true);
     expect(result.checks.every((check) => check.status === "passed")).toBe(true);
+  });
+
+  it("accepts agent-managed inventory without an IDX connection", () => {
+    const result = evaluateLaunchAcceptance({
+      ...completeInput,
+      listingInventory: {
+        available: true,
+        count: 1,
+        sourceLabel: "agent-managed inventory",
+      },
+    });
+
+    expect(result.passed).toBe(true);
+    expect(
+      result.checks.find((check) => check.id === "listing-inventory")?.status,
+    ).toBe("passed");
   });
 
   it("does not confuse an unconnected provider with a failed live test", () => {
