@@ -326,6 +326,56 @@ export async function deleteMetaSecrets(subAccountId: string): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
+// Authorized external calendar connections
+// ---------------------------------------------------------------------------
+
+export type CalendarProvider = "google" | "outlook";
+
+export interface CalendarSecrets {
+  provider: CalendarProvider;
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: number;
+}
+
+export async function writeCalendarSecrets(
+  subAccountId: string,
+  secrets: CalendarSecrets,
+): Promise<void> {
+  await secretRef(subAccountId, `calendar-${secrets.provider}`).set(
+    { ...secrets, updatedAt: FieldValue.serverTimestamp() },
+    { merge: true },
+  );
+}
+
+export async function loadCalendarSecrets(
+  subAccountId: string,
+  provider: CalendarProvider,
+): Promise<CalendarSecrets | null> {
+  const snap = await secretRef(subAccountId, `calendar-${provider}`).get();
+  const data = snap.data();
+  if (
+    typeof data?.accessToken === "string" &&
+    typeof data?.refreshToken === "string"
+  ) {
+    return {
+      provider,
+      accessToken: data.accessToken,
+      refreshToken: data.refreshToken,
+      expiresAt: toEpochMillis(data.expiresAt) ?? 0,
+    };
+  }
+  return null;
+}
+
+export async function deleteCalendarSecrets(
+  subAccountId: string,
+  provider: CalendarProvider,
+): Promise<void> {
+  await secretRef(subAccountId, `calendar-${provider}`).delete();
+}
+
+// ---------------------------------------------------------------------------
 // IDX Broker — Platinum API access key
 // ---------------------------------------------------------------------------
 

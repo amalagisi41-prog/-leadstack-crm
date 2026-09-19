@@ -164,7 +164,14 @@ export function SubAccountIdxSection() {
       if (!res.ok || !data.ok) {
         throw new Error(data.error ?? "Sync failed.");
       }
-      toast.success(`Synced ${data.listingCount ?? 0} listings.`);
+      const count = data.listingCount ?? 0;
+      if (count === 0) {
+        toast.warning(
+          "Sync completed with 0 listings. Check the IDX Broker account's Featured IDs configuration and confirm the connected account has listings available to its client API.",
+        );
+      } else {
+        toast.success(`Synced ${count} listings.`);
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Sync failed.");
     } finally {
