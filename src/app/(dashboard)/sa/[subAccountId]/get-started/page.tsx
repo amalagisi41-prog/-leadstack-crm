@@ -18,8 +18,8 @@ import { useOnboardingCompletion } from "@/hooks/use-onboarding-completion";
  * Mandatory first-run wizard. The sub-account dashboard redirects here at
  * login until onboardingWizardCompletedAt is set.
  *
- * New workspaces get the streamlined Realtor Launch wizard (5 screens:
- * role → priority → identity → connect → launch). The old AgentStack Method
+ * New workspaces get the streamlined AgentStack guided setup (5 questions:
+ * role → priority → identity → connect → next action). The old AgentStack Method
  * wizard is still accessible via ?step= deep-links for returning users who
  * started the original flow.
  */
@@ -148,8 +148,8 @@ export default function GetStartedPage() {
     );
   }
 
-  // New default: Realtor Launch wizard (role → priority → identity → connect
-  // → launch). Stored answers are passed in so a refresh resumes at the first
+  // New default: guided AgentStack setup (role → priority → identity → connect
+  // → next action). Stored answers are passed in so a refresh resumes at the first
   // unanswered question instead of restarting from screen one.
   return (
     <RealtorLaunchWizard
