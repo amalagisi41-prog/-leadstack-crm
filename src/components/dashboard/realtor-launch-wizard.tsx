@@ -458,7 +458,7 @@ function ScreenPriority({
       <div>
         <p className="text-primary text-sm font-semibold tracking-wider uppercase">Question 2</p>
         <h1 className="mt-2 text-2xl font-bold tracking-tight">What do you want AgentStack to help with first?</h1>
-        <p className="text-muted-foreground mt-2 text-sm">We'll use your answer to put the fastest path in front of you — not make you configure everything.</p>
+        <p className="text-muted-foreground mt-2 text-sm">We’ll use your answer to put the fastest path in front of you — not make you configure everything.</p>
       </div>
 
       <div className="space-y-3">
@@ -508,7 +508,7 @@ function ScreenIdentity({
       <div>
         <p className="text-primary text-sm font-semibold tracking-wider uppercase">Question 3</p>
         <h1 className="mt-2 text-2xl font-bold tracking-tight">Where does your business already live online?</h1>
-        <p className="text-muted-foreground mt-2 text-sm">Give AS a website, Google Business Profile, or social link. We'll use public information to prepare your Business Blueprint draft.</p>
+        <p className="text-muted-foreground mt-2 text-sm">Give AS a website, Google Business Profile, or social link. We’ll use public information to prepare your Business Blueprint draft.</p>
       </div>
 
       <div className="space-y-3">
@@ -610,7 +610,7 @@ function ScreenNext({
       <div>
         <p className="text-primary text-sm font-semibold tracking-wider uppercase">Question 5 · Keep it moving</p>
         <h1 className="mt-2 text-2xl font-bold tracking-tight">What should AgentStack help you do next?</h1>
-        <p className="text-muted-foreground mt-2 text-sm">Your answers tell AS where to start. Pick one outcome and we'll take you there — the rest can evolve as your business does.</p>
+        <p className="text-muted-foreground mt-2 text-sm">Your answers tell AS where to start. Pick one outcome and we’ll take you there — the rest can evolve as your business does.</p>
       </div>
 
       <div className="space-y-3">
