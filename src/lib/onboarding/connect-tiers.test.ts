@@ -58,7 +58,7 @@ describe("what first-run setup offers to connect", () => {
 
   it("puts everything needing a key, a DNS change, or an approval in the slower tier", () => {
     const slower = needsSetupItems(connectItemsFor(sub())).map((i) => i.id);
-    expect(slower).toEqual(["domain", "mls", "texting"]);
+    expect(slower).toEqual(["calendar", "domain", "mls", "texting"]);
   });
 });
 
@@ -114,6 +114,13 @@ describe("connected state reflects reality", () => {
       sub({ customDomain: "example.test", customDomainState: "live" }),
     );
     expect(items.find((i) => i.id === "domain")?.connected).toBe(true);
+  });
+
+  it("does not treat an enabled IDX config as connected without a stored key", () => {
+    const items = connectItemsFor(
+      sub({ idxConfig: { enabled: true, connected: false } as SubAccountDoc["idxConfig"] }),
+    );
+    expect(items.find((i) => i.id === "mls")?.connected).toBe(false);
   });
 
   it("counts dedicated texting only when it is switched on", () => {
