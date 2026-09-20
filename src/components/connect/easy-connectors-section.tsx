@@ -235,10 +235,40 @@ export function EasyConnectorsSection() {
         </div>
       </div>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {connectors.map((connector) => (
-          <ConnectorCard key={connector.key} connector={connector} />
+      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        {[
+          { title: "I want my website connected", description: "Domain, existing site, and AgentStack website tools.", href: saPath("/domain"), icon: Sparkles },
+          { title: "I want my listings connected", description: "MLS/IDX or agent-managed properties in one inventory.", href: idxConnected ? settingsHref + "#mls-feed" : saPath("/idx"), icon: MapPin },
+          { title: "I want Google or social connected", description: "Business Profile, reviews, Facebook, and Instagram.", href: saPath("/business-profile"), icon: Share2 },
+          { title: "I want leads, automation, or AI", description: "Forms, follow-up plans, AI assistants, and API/MCP tools.", href: saPath("/workflows"), icon: Bot },
+        ].map((choice) => (
+          <Button key={choice.title} variant="outline" className="h-auto justify-between rounded-xl p-4 text-left" render={<Link href={choice.href} />}>
+            <span className="flex min-w-0 items-start gap-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <choice.icon className="h-4 w-4" />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-sm font-semibold">{choice.title}</span>
+                <span className="mt-1 block text-xs font-normal leading-relaxed text-muted-foreground">{choice.description}</span>
+              </span>
+            </span>
+            <ArrowRight className="ml-3 h-4 w-4 shrink-0" />
+          </Button>
         ))}
+      </div>
+
+      <details className="mt-5 rounded-xl border bg-background">
+        <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium">I need a different connection</summary>
+        <div className="grid gap-3 border-t p-4 sm:grid-cols-2 lg:grid-cols-4">
+          {connectors.map((connector) => (
+            <ConnectorCard key={connector.key} connector={connector} />
+          ))}
+        </div>
+      </details>
+
+      <div className="mt-4 flex items-start gap-2 text-xs text-muted-foreground">
+        <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+        <p>Use provider authorization or a key created specifically for AgentStack. Never paste secrets into chat, screenshots, email, or public forms.</p>
       </div>
 
       <div className="mt-5 grid gap-3 lg:grid-cols-3">
