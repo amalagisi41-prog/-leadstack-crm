@@ -7,6 +7,8 @@ import { AlertCircle, CheckCircle2, ClipboardCheck, HelpCircle } from "lucide-re
 import { useSubAccount } from "@/context/sub-account-context";
 import { Button } from "@/components/ui/button";
 import { evaluateLaunchAcceptance, type AcceptanceCheck } from "@/lib/launch/acceptance";
+import { subscribeToIdxListings } from "@/lib/firestore/idx-listings";
+import { describeListingSource } from "@/lib/marketing/listing-source";
 import type { CampaignChannel, CampaignBriefDoc } from "@/types/marketing-campaigns";
 
 interface CampaignResponse {
@@ -27,10 +29,38 @@ export default function LaunchReadinessPage() {
   const searchParams = useSearchParams();
   const priority = searchParams.get("priority");
   const [checks, setChecks] = useState<AcceptanceCheck[] | null>(null);
+  const [listingInventory, setListingInventory] = useState<{
+    count: number;
+    sourceLabel: string | null;
+  } | null>(null);
   const [error, setError] = useState(false);
 
   useEffect(() => {
+    setListingInventory(null);
+    return subscribeToIdxListings(
+      subAccountId,
+      (listings) => {
+        const sources = new Set(
+          listings.map((listing) => describeListingSource(listing).key)
+        );
+        const labels = [
+          sources.has("mls") ? "MLS feed" : null,
+          sources.has("manual") ? "agent-managed inventory" : null,
+          sources.has("imported") ? "imported inventory" : null,
+        ].filter(Boolean) as string[];
+        setListingInventory({
+          count: listings.length,
+          sourceLabel: labels.length > 0 ? labels.join(" + ") : null,
+        });
+      },
+      () => setError(true)
+    );
+  }, [subAccountId]);
+
+  useEffect(() => {
+    if (listingInventory === null) return;
     let active = true;
+    setChecks(null);
     void fetch(`/api/sub-accounts/${subAccountId}/marketing/campaigns`)
       .then(async (response) => {
         if (!response.ok) throw new Error("campaign status unavailable");
@@ -40,17 +70,15 @@ export default function LaunchReadinessPage() {
         if (!active) return;
         const brief = data.briefs?.[0];
         const approved = brief?.approvedChannels ?? [];
-        const scheduled = approved.some((channel) => Boolean(brief?.schedulePlan?.[channel]));
-              const idx = subAccount?.idxConfig;
-        const listingCount = idx?.listingCount ?? null;
-        const listingAvailable = Boolean(brief) || (idx?.connected === true && (listingCount ?? 0) > 0);
-        const listingSourceLabel = idx?.connected === true ? "MLS/IDX" : "agent-managed inventory";
+        const scheduled = approved.some((channel) =>
+          Boolean(brief?.schedulePlan?.[channel])
+        );
         setChecks(
           evaluateLaunchAcceptance({
             listingInventory: {
-              available: listingAvailable,
-              count: listingCount,
-              sourceLabel: listingAvailable ? listingSourceLabel : null,
+              available: listingInventory.count > 0,
+              count: listingInventory.count,
+              sourceLabel: listingInventory.sourceLabel,
             },
             listingCreated: Boolean(brief),
             campaignGenerated: Boolean(brief?.brief?.channels?.length),
@@ -67,7 +95,7 @@ export default function LaunchReadinessPage() {
     return () => {
       active = false;
     };
-  }, [subAccountId, subAccount]);
+  }, [subAccountId, listingInventory]);
 
   const passed =
     checks !== null &&
