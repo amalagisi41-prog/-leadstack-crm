@@ -20,7 +20,7 @@ import { useSubAccount } from "@/context/sub-account-context";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-type ConnectorState = "connected" | "setup" | "external" | "coming_soon";
+type ConnectorState = "connected" | "setup" | "external" | "available" | "coming_soon";
 
 type Connector = {
   key: string;
@@ -37,6 +37,7 @@ function StatePill({ state }: { state: ConnectorState }) {
     connected: "Connected",
     setup: "Connect in AgentStack",
     external: "External setup",
+    available: "Available now",
     coming_soon: "Planned",
   };
 
@@ -47,6 +48,7 @@ function StatePill({ state }: { state: ConnectorState }) {
         state === "connected" && "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
         state === "setup" && "bg-primary/10 text-primary",
         state === "external" && "bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300",
+        state === "available" && "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
         state === "coming_soon" && "bg-muted text-muted-foreground",
       )}
     >
@@ -102,6 +104,7 @@ export function EasyConnectorsSection() {
   const settingsHref = saPath("/dashboard/settings");
   const apiHref = settingsHref + "?tab=api";
   const calendarHref = settingsHref + "#calendar-connection";
+  const mcpHref = "/api/mcp";
 
   const calendarConnected = subAccount.calendarConfig?.status === "connected";
   const idxConnected =
@@ -134,10 +137,10 @@ export function EasyConnectorsSection() {
       icon: PlugZap,
       title: "MCP — connect AI to AgentStack",
       description:
-        "Model Context Protocol provides a standard way for AI hosts to connect to tools and data. Use this when you want Claude, ChatGPT-compatible tooling, or another MCP host to work with AS capabilities.",
-      state: "coming_soon",
-      href: "https://modelcontextprotocol.io/",
-      action: "Learn about MCP",
+        "AgentStack already exposes an authenticated MCP server. MCP-compatible AI clients can authorize access to your AS workspace without sharing your AgentStack password or API secret.",
+      state: "available",
+      href: mcpHref,
+      action: "Open AS MCP endpoint",
     },
     {
       key: "agentstack-api",
