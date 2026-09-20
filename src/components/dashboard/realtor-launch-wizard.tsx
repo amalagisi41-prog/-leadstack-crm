@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -13,9 +12,11 @@ import {
   Users,
   Building2,
   Target,
-  Zap,
   Bot,
   Sparkles,
+  MapPin,
+  Share2,
+  Workflow,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -26,31 +27,18 @@ import type {
   RealtorRole as RealtorRoleAnswer,
 } from "@/types/onboarding-answers";
 import type { SubAccountDoc } from "@/types/tenancy";
-import {
-  connectItemsFor,
-  connectedCount,
-  needsSetupItems,
-  oneClickItems,
-  type ConnectItem,
-} from "@/lib/onboarding/connect-tiers";
 
 /* ---------- types ---------- */
 
-/**
- * The answer unions live in `@/types/onboarding-answers` because the API
- * route validates against them too — they were declared only here while the
- * server silently discarded whatever arrived.
- */
 type RealtorRole = RealtorRoleAnswer;
 type LaunchPriority = LaunchPriorityAnswer;
+type SetupPath = "website" | "listings" | "presence" | "leads" | "automation" | "ai" | "dashboard";
 
 interface RealtorLaunchWizardProps {
   subAccountId: string;
   saPath: (p: string) => string;
-  /** Answers already stored for this workspace, so a refresh resumes. */
   initialRole?: RealtorRole | null;
   initialPriority?: LaunchPriority | null;
-  /** Drives real connected/not state on the connect screen. */
   subAccount?: SubAccountDoc | null;
 }
 
@@ -93,46 +81,122 @@ const PRIORITY_OPTIONS: {
   label: string;
   description: string;
   icon: React.ReactNode;
-  actionLabel: string;
-  actionHref: string;
 }[] = [
   {
     value: "get_leads",
     label: "Get more leads",
-    description:
-      "Set up lead capture forms and landing pages that feed straight into your pipeline",
+    description: "Turn your website, listings, forms, and follow-up into a lead engine.",
     icon: <Target className="h-5 w-5 text-amber-500" />,
-    actionLabel: "Build your first lead form",
-    actionHref: SUB_ACCOUNT_ROUTES.forms,
   },
   {
     value: "organize_database",
     label: "Organize my database",
-    description:
-      "Import contacts from your old CRM and get everyone in one place",
+    description: "Bring contacts and active opportunities into one place.",
     icon: <Users className="h-5 w-5 text-blue-500" />,
-    actionLabel: "Import your contacts",
-    actionHref: "/contacts?import=1",
   },
   {
     value: "build_website",
-    label: "Build my website",
-    description:
-      "Launch a professional real estate site with IDX, listings, and local SEO",
+    label: "Build or connect my website",
+    description: "Get your brand, domain, listings, and public presence working together.",
     icon: <Globe2 className="h-5 w-5 text-emerald-500" />,
-    actionLabel: "Open Website Studio",
-    actionHref: SUB_ACCOUNT_ROUTES.websiteStudio,
   },
   {
     value: "ai_followup",
     label: "Set up AI follow-up",
-    description:
-      "Enable instant AI response so every lead gets a reply within 60 seconds",
+    description: "Let AgentStack respond, qualify, nurture, and help book appointments.",
     icon: <Bot className="h-5 w-5 text-violet-500" />,
-    actionLabel: "Enable Speed-to-Lead",
-    actionHref: SUB_ACCOUNT_ROUTES.workflows,
   },
 ];
+
+const CONNECT_OPTIONS: {
+  value: Extract<SetupPath, "website" | "listings" | "presence">;
+  label: string;
+  description: string;
+  guidance: string;
+  icon: React.ReactNode;
+}[] = [
+  {
+    value: "website",
+    label: "Website + domain",
+    description: "Use your own web address and make your existing site work with AgentStack.",
+    guidance: "AgentStack will show you exactly what to change. Your domain stays with your current provider.",
+    icon: <Globe2 className="h-5 w-5" />,
+  },
+  {
+    value: "listings",
+    label: "Listings + MLS",
+    description: "Bring MLS/IDX and agent-managed properties into one listing inventory.",
+    guidance: "We'll ask which listing source you already use and guide you to the right connection.",
+    icon: <MapPin className="h-5 w-5" />,
+  },
+  {
+    value: "presence",
+    label: "Google + social",
+    description: "Connect the public accounts people already use to find and contact you.",
+    guidance: "Sign in with the provider when authorization is required. AgentStack never needs your social password.",
+    icon: <Share2 className="h-5 w-5" />,
+  },
+];
+
+const NEXT_OPTIONS: {
+  value: Extract<SetupPath, "leads" | "automation" | "ai">;
+  label: string;
+  description: string;
+  icon: React.ReactNode;
+}[] = [
+  {
+    value: "leads",
+    label: "Capture and organize leads",
+    description: "Start with forms, contacts, and a clear pipeline so every inquiry has a next step.",
+    icon: <Target className="h-5 w-5" />,
+  },
+  {
+    value: "automation",
+    label: "Automate follow-up",
+    description: "Set the rules that keep new leads moving without manual reminders.",
+    icon: <Workflow className="h-5 w-5" />,
+  },
+  {
+    value: "ai",
+    label: "Turn on AI",
+    description: "Use your Business Blueprint to guide AI responses, qualification, and booking.",
+    icon: <Bot className="h-5 w-5" />,
+  },
+];
+
+function priorityPath(priority: LaunchPriority | null): SetupPath | null {
+  switch (priority) {
+    case "get_leads":
+      return "leads";
+    case "organize_database":
+      return "leads";
+    case "build_website":
+      return "website";
+    case "ai_followup":
+      return "ai";
+    default:
+      return null;
+  }
+}
+
+function pathHref(path: SetupPath): string {
+  switch (path) {
+    case "website":
+      return SUB_ACCOUNT_ROUTES.domain;
+    case "listings":
+      return SUB_ACCOUNT_ROUTES.listings;
+    case "presence":
+      return SUB_ACCOUNT_ROUTES.businessProfile;
+    case "leads":
+      return SUB_ACCOUNT_ROUTES.forms;
+    case "automation":
+      return SUB_ACCOUNT_ROUTES.workflows;
+    case "ai":
+      return SUB_ACCOUNT_ROUTES.aiAgents;
+    default:
+      return SUB_ACCOUNT_ROUTES.dashboard;
+  }
+}
 
 /* ---------- main component ---------- */
 
@@ -141,25 +205,20 @@ export function RealtorLaunchWizard({
   saPath,
   initialRole = null,
   initialPriority = null,
-  subAccount = null,
 }: RealtorLaunchWizardProps) {
   const router = useRouter();
-  // Resume at the first unanswered question rather than restarting. Derived
-  // from the answers themselves, not a stored screen index — an index has to
-  // be migrated every time a screen is added or reordered, and silently
-  // points at the wrong question when it isn't.
   const [screen, setScreen] = useState<WizardScreen>(() => {
     if (!initialRole) return 0;
     if (!initialPriority) return 1;
     return 2;
   });
   const [role, setRole] = useState<RealtorRole | null>(initialRole);
-  const [priority, setPriority] = useState<LaunchPriority | null>(
-    initialPriority
-  );
+  const [priority, setPriority] = useState<LaunchPriority | null>(initialPriority);
   const [profileUrls, setProfileUrls] = useState("");
   const [importing, setImporting] = useState(false);
   const [profileImported, setProfileImported] = useState(false);
+  const [connectPath, setConnectPath] = useState<Extract<SetupPath, "website" | "listings" | "presence"> | null>(null);
+  const [nextPath, setNextPath] = useState<Extract<SetupPath, "leads" | "automation" | "ai"> | null>(null);
   const [finishing, setFinishing] = useState(false);
 
   const back = useCallback(() => {
@@ -170,22 +229,11 @@ export function RealtorLaunchWizard({
     setScreen((s) => Math.min(4, s + 1) as WizardScreen);
   }, []);
 
-  /**
-   * Save an answer the moment it's picked, rather than only at the finish
-   * line. Someone who answers two questions and closes the tab has told us
-   * something; making them retype it because they didn't reach the end is
-   * how a twenty-minute setup becomes a fortnight.
-   *
-   * Best-effort on purpose: a failed save must never block the agent from
-   * moving through setup. The finish-line PATCH sends both answers again,
-   * so a dropped one still lands if they complete the wizard.
-   */
   const saveAnswers = useCallback(
     (answers: { realtorRole?: RealtorRole; launchPriority?: LaunchPriority }) => {
       void fetch(`/api/sub-accounts/${subAccountId}/onboarding`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        // No `steps` key: this must not touch the checklist.
         body: JSON.stringify(answers),
       }).catch(() => undefined);
     },
@@ -193,7 +241,7 @@ export function RealtorLaunchWizard({
   );
 
   async function importProfile() {
-    const urls = (profileUrls.match(/https?:\/\/[^\s]+/gi) ?? []).map((url) =>
+    const urls = (profileUrls.match(/https?:\\/\\/[^\\s]+/gi) ?? []).map((url) =>
       url.replace(/[),.;]+$/g, "")
     );
     if (urls.length === 0) {
@@ -221,12 +269,9 @@ export function RealtorLaunchWizard({
         if (response.ok && data.ok === true) imported += 1;
         else lastError = data.error ?? "Could not read that link.";
       }
-      if (imported === 0)
-        throw new Error(lastError || "Could not read those links.");
+      if (imported === 0) throw new Error(lastError || "Could not read those links.");
       setProfileImported(true);
-      toast.success(
-        `Imported ${imported} ${imported === 1 ? "page" : "pages"} as a draft for you to review.`
-      );
+      toast.success(`Imported ${imported} ${imported === 1 ? "page" : "pages"} as a draft for you to review.`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Import failed.");
     } finally {
@@ -238,7 +283,6 @@ export function RealtorLaunchWizard({
     if (finishing) return;
     setFinishing(true);
     try {
-      // Save foundation as complete (fresh mode, minimal)
       const foundationResponse = await fetch(
         `/api/sub-accounts/${subAccountId}/onboarding-foundation`,
         {
@@ -262,8 +306,6 @@ export function RealtorLaunchWizard({
         throw new Error(data.error ?? "Could not save your setup foundation.");
       }
 
-      // Save role and priority as custom metadata. An imported profile remains
-      // a review draft until the operator saves it in Business Blueprint.
       const onboardingResponse = await fetch(`/api/sub-accounts/${subAccountId}/onboarding`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -279,20 +321,12 @@ export function RealtorLaunchWizard({
         throw new Error(data.error ?? "Could not save your onboarding choices.");
       }
 
-      const chosenPriority = PRIORITY_OPTIONS.find(
-        (p) => p.value === priority
-      );
-      const readinessParams = new URLSearchParams({ welcome: "1" });
-      if (chosenPriority) readinessParams.set("priority", chosenPriority.value);
-      router.replace(
-        saPath(`${SUB_ACCOUNT_ROUTES.launchReadiness}?${readinessParams.toString()}`)
-      );
+      const destination = nextPath ?? connectPath ?? priorityPath(priority) ?? "dashboard";
+      router.replace(saPath(pathHref(destination)));
       router.refresh();
-    } catch {
+    } catch (error) {
       setFinishing(false);
-      toast.error(
-        "Could not save your setup. Check your connection and try again."
-      );
+      toast.error(error instanceof Error ? error.message : "Could not save your setup. Check your connection and try again.");
     }
   }
 
@@ -300,33 +334,20 @@ export function RealtorLaunchWizard({
 
   return (
     <div className="flex min-h-[calc(100vh-4rem)] flex-col bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
-      {/* progress bar */}
       <div className="bg-muted h-1 w-full">
-        <div
-          className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-500"
-          style={{ width: `${progressPercent}%` }}
-        />
+        <div className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-500" style={{ width: `${progressPercent}%` }} />
       </div>
 
       <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-6 px-4 py-8 md:px-8 md:py-12">
-        {/* header */}
         <div className="flex items-center justify-between">
           {screen > 0 ? (
-            <button
-              onClick={back}
-              className="text-muted-foreground flex items-center gap-1 text-sm hover:text-foreground"
-            >
+            <button onClick={back} className="text-muted-foreground flex items-center gap-1 text-sm hover:text-foreground">
               <ArrowLeft className="h-4 w-4" /> Back
             </button>
-          ) : (
-            <div />
-          )}
-          <span className="text-muted-foreground text-sm">
-            {screen + 1} of 5
-          </span>
+          ) : <div />}
+          <span className="text-muted-foreground text-sm">{screen + 1} of 5</span>
         </div>
 
-        {/* screens */}
         {screen === 0 && (
           <ScreenRole
             role={role}
@@ -359,14 +380,17 @@ export function RealtorLaunchWizard({
         )}
         {screen === 3 && (
           <ScreenConnect
-            saPath={saPath}
+            selected={connectPath}
+            onSelect={setConnectPath}
             onNext={next}
-            subAccount={subAccount}
           />
         )}
         {screen === 4 && (
-          <ScreenLaunch
+          <ScreenNext
+            selected={nextPath}
+            onSelect={setNextPath}
             priority={priority}
+            connectPath={connectPath}
             finishing={finishing}
             onFinish={finishWizard}
           />
@@ -375,10 +399,6 @@ export function RealtorLaunchWizard({
     </div>
   );
 }
-
-/* ════════════════════════════════════════════════════════════
-   Screen 1 — Role
-   ════════════════════════════════════════════════════════════ */
 
 function ScreenRole({
   role,
@@ -392,16 +412,9 @@ function ScreenRole({
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-muted-foreground text-sm font-medium tracking-wider uppercase">
-          Welcome to AgentStack
-        </p>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight">
-          What kind of real estate business are you?
-        </h1>
-        <p className="text-muted-foreground mt-2 text-sm">
-          This shapes how your workspace is configured — you can adjust
-          everything later.
-        </p>
+        <p className="text-primary text-sm font-semibold tracking-wider uppercase">Welcome to AgentStack</p>
+        <h1 className="mt-2 text-2xl font-bold tracking-tight">First, what kind of business are you running?</h1>
+        <p className="text-muted-foreground mt-2 text-sm">A couple of answers help AS point you to the right setup. You can change anything later.</p>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
@@ -412,41 +425,24 @@ function ScreenRole({
             onClick={() => onSelect(option.value)}
             className={cn(
               "flex items-start gap-3 rounded-xl border p-4 text-left transition-all",
-              role === option.value
-                ? "border-blue-500 bg-blue-50 ring-2 ring-blue-500/20 dark:bg-blue-950/30"
-                : "bg-card hover:border-blue-300"
+              role === option.value ? "border-blue-500 bg-blue-50 ring-2 ring-blue-500/20 dark:bg-blue-950/30" : "bg-card hover:border-blue-300"
             )}
           >
-            <div
-              className={cn(
-                "mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
-                role === option.value
-                  ? "bg-blue-100 text-blue-600 dark:bg-blue-900/50"
-                  : "bg-muted text-muted-foreground"
-              )}
-            >
+            <div className={cn("mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", role === option.value ? "bg-blue-100 text-blue-600 dark:bg-blue-900/50" : "bg-muted text-muted-foreground")}>
               {option.icon}
             </div>
             <div>
               <p className="text-sm font-medium">{option.label}</p>
-              <p className="text-muted-foreground mt-0.5 text-xs">
-                {option.description}
-              </p>
+              <p className="text-muted-foreground mt-0.5 text-xs">{option.description}</p>
             </div>
           </button>
         ))}
       </div>
 
-      <Button onClick={onNext} disabled={!role} size="lg">
-        Continue <ArrowRight className="ml-2 h-4 w-4" />
-      </Button>
+      <Button onClick={onNext} disabled={!role} size="lg">Continue <ArrowRight className="ml-2 h-4 w-4" /></Button>
     </div>
   );
 }
-
-/* ════════════════════════════════════════════════════════════
-   Screen 2 — Priority
-   ════════════════════════════════════════════════════════════ */
 
 function ScreenPriority({
   priority,
@@ -460,16 +456,9 @@ function ScreenPriority({
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-muted-foreground text-sm font-medium tracking-wider uppercase">
-          Your first win
-        </p>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight">
-          What&apos;s your #1 priority right now?
-        </h1>
-        <p className="text-muted-foreground mt-2 text-sm">
-          We&apos;ll get you to one useful result before this setup is over.
-          Everything else is available from your workspace.
-        </p>
+        <p className="text-primary text-sm font-semibold tracking-wider uppercase">Question 2</p>
+        <h1 className="mt-2 text-2xl font-bold tracking-tight">What do you want AgentStack to help with first?</h1>
+        <p className="text-muted-foreground mt-2 text-sm">We'll use your answer to put the fastest path in front of you — not make you configure everything.</p>
       </div>
 
       <div className="space-y-3">
@@ -480,41 +469,24 @@ function ScreenPriority({
             onClick={() => onSelect(option.value)}
             className={cn(
               "flex w-full items-start gap-4 rounded-xl border p-4 text-left transition-all",
-              priority === option.value
-                ? "border-blue-500 bg-blue-50 ring-2 ring-blue-500/20 dark:bg-blue-950/30"
-                : "bg-card hover:border-blue-300"
+              priority === option.value ? "border-blue-500 bg-blue-50 ring-2 ring-blue-500/20 dark:bg-blue-950/30" : "bg-card hover:border-blue-300"
             )}
           >
-            <div
-              className={cn(
-                "mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
-                priority === option.value
-                  ? "bg-blue-100 dark:bg-blue-900/50"
-                  : "bg-muted"
-              )}
-            >
+            <div className={cn("mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", priority === option.value ? "bg-blue-100 dark:bg-blue-900/50" : "bg-muted")}>
               {option.icon}
             </div>
             <div>
               <p className="text-sm font-medium">{option.label}</p>
-              <p className="text-muted-foreground mt-0.5 text-xs">
-                {option.description}
-              </p>
+              <p className="text-muted-foreground mt-0.5 text-xs">{option.description}</p>
             </div>
           </button>
         ))}
       </div>
 
-      <Button onClick={onNext} disabled={!priority} size="lg">
-        Continue <ArrowRight className="ml-2 h-4 w-4" />
-      </Button>
+      <Button onClick={onNext} disabled={!priority} size="lg">Continue <ArrowRight className="ml-2 h-4 w-4" /></Button>
     </div>
   );
 }
-
-/* ════════════════════════════════════════════════════════════
-   Screen 3 — Identity (profile import)
-   ════════════════════════════════════════════════════════════ */
 
 function ScreenIdentity({
   profileUrls,
@@ -534,17 +506,9 @@ function ScreenIdentity({
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-muted-foreground text-sm font-medium tracking-wider uppercase">
-          Your identity
-        </p>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight">
-          Where can we find you online?
-        </h1>
-        <p className="text-muted-foreground mt-2 text-sm">
-          Paste your website, Google Business Profile, or social links. We&apos;ll
-          find public facts for a draft. Nothing is saved as your approved
-          Business Profile until you review and save it in Business Blueprint.
-        </p>
+        <p className="text-primary text-sm font-semibold tracking-wider uppercase">Question 3</p>
+        <h1 className="mt-2 text-2xl font-bold tracking-tight">Where does your business already live online?</h1>
+        <p className="text-muted-foreground mt-2 text-sm">Give AS a website, Google Business Profile, or social link. We'll use public information to prepare your Business Blueprint draft.</p>
       </div>
 
       <div className="space-y-3">
@@ -556,21 +520,13 @@ function ScreenIdentity({
           className="bg-background w-full rounded-xl border px-4 py-3 text-sm placeholder:text-muted-foreground/50"
         />
         <div className="flex flex-wrap items-center gap-3">
-          <Button
-            onClick={onImport}
-            disabled={importing || !profileUrls.trim()}
-            variant="outline"
-          >
-            {importing ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Sparkles className="mr-2 h-4 w-4" />
-            )}
-            {profileImported ? "Import again" : "Import my profile"}
+          <Button onClick={onImport} disabled={importing || !profileUrls.trim()} variant="outline">
+            {importing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+            {profileImported ? "Import again" : "Let AS prepare my profile"}
           </Button>
           {profileImported && (
             <span className="flex items-center gap-1 text-sm font-medium text-emerald-600">
-              <CheckCircle2 className="h-4 w-4" /> Draft found — review in Business Blueprint
+              <CheckCircle2 className="h-4 w-4" /> Draft prepared — review it in Business Blueprint
             </span>
           )}
         </div>
@@ -578,206 +534,137 @@ function ScreenIdentity({
 
       <div className="flex items-center gap-3">
         <Button onClick={onNext} size="lg">
-          {profileImported ? "Continue" : "Skip for now"}
-          <ArrowRight className="ml-2 h-4 w-4" />
+          {profileImported ? "Continue" : "Skip for now"} <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
-        {!profileImported && (
-          <p className="text-muted-foreground text-xs">
-            You can set up your Business Profile manually anytime.
-          </p>
-        )}
+        {!profileImported && <p className="text-muted-foreground text-xs">You can answer this later in Business Blueprint.</p>}
       </div>
     </div>
   );
 }
 
-/* ════════════════════════════════════════════════════════════
-   Screen 4 — Connect core accounts
-   ════════════════════════════════════════════════════════════ */
-
 function ScreenConnect({
-  saPath,
+  selected,
+  onSelect,
   onNext,
-  subAccount,
 }: {
-  saPath: (p: string) => string;
+  selected: Extract<SetupPath, "website" | "listings" | "presence"> | null;
+  onSelect: (path: Extract<SetupPath, "website" | "listings" | "presence">) => void;
   onNext: () => void;
-  subAccount: SubAccountDoc | null;
 }) {
-  const items = connectItemsFor(subAccount);
-  const oneClick = oneClickItems(items);
-  const needsSetup = needsSetupItems(items);
-  const done = connectedCount(items);
-
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-muted-foreground text-sm font-medium tracking-wider uppercase">
-          Connect
-        </p>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight">
-          Connect what you already use
-        </h1>
-        <p className="text-muted-foreground mt-2 text-sm">
-          Nothing here is required to finish setup. Sign in to what you have
-          today and leave the rest — each one says what you miss by waiting.
-        </p>
-        {done > 0 && (
-          <p className="mt-2 text-sm font-medium text-emerald-700 dark:text-emerald-400">
-            {done} of {items.length} already connected.
-          </p>
-        )}
+        <p className="text-primary text-sm font-semibold tracking-wider uppercase">Question 4 · Connect</p>
+        <h1 className="mt-2 text-2xl font-bold tracking-tight">What should we connect first?</h1>
+        <p className="text-muted-foreground mt-2 text-sm">AS will take you to the right place and tell you what to do. Pick the piece that matters most — you do not need to connect everything today.</p>
       </div>
 
       <div className="space-y-3">
-        <p className="text-sm font-semibold">Takes one click</p>
-        {oneClick.map((item) => (
-          <ConnectTierCard key={item.id} item={item} saPath={saPath} />
-        ))}
-      </div>
-
-      <div className="space-y-3">
-        <p className="text-sm font-semibold">
-          Takes a bit longer — fine to do later
-        </p>
-        {needsSetup.map((item) => (
-          <ConnectTierCard key={item.id} item={item} saPath={saPath} />
-        ))}
-      </div>
-
-      <Button onClick={onNext} size="lg">
-        Continue <ArrowRight className="ml-2 h-4 w-4" />
-      </Button>
-      <p className="text-muted-foreground text-xs">
-        You can connect any of these later from Settings — setup finishes
-        either way.
-      </p>
-    </div>
-  );
-}
-
-/**
- * One connection, showing its real state. A connected item keeps its row
- * rather than disappearing, so the screen reads the same on a second visit
- * and an agent can see what they already did.
- */
-function ConnectTierCard({
-  item,
-  saPath,
-}: {
-  item: ConnectItem;
-  saPath: (p: string) => string;
-}) {
-  return (
-    <div className="bg-card rounded-xl border p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <p className="flex items-center gap-2 text-sm font-medium">
-            {item.connected && (
-              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+        {CONNECT_OPTIONS.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => onSelect(option.value)}
+            className={cn(
+              "flex w-full items-start gap-4 rounded-xl border p-4 text-left transition-all",
+              selected === option.value ? "border-blue-500 bg-blue-50 ring-2 ring-blue-500/20 dark:bg-blue-950/30" : "bg-card hover:border-blue-300"
             )}
-            {item.label}
-          </p>
-          <p className="text-muted-foreground mt-1 text-sm">{item.why}</p>
-          {!item.connected && item.timingNote && (
-            <p className="text-muted-foreground mt-1.5 text-xs">
-              {item.timingNote}
-            </p>
-          )}
-          {!item.connected && (
-            <p className="mt-1.5 text-xs text-amber-700 dark:text-amber-400">
-              If you leave it: {item.costIfSkipped}
-            </p>
-          )}
-        </div>
-        <Button
-          variant={item.connected ? "outline" : "default"}
-          size="sm"
-          render={<Link href={saPath(item.href)} />}
-        >
-          {item.connected ? "Manage" : item.cta}
-        </Button>
+          >
+            <div className={cn("mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", selected === option.value ? "bg-blue-100 text-blue-600 dark:bg-blue-900/50" : "bg-muted text-muted-foreground")}>
+              {option.icon}
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-medium">{option.label}</p>
+              <p className="text-muted-foreground mt-1 text-sm">{option.description}</p>
+              <p className="text-muted-foreground mt-1.5 text-xs">{option.guidance}</p>
+            </div>
+          </button>
+        ))}
       </div>
+
+      <Button onClick={onNext} disabled={!selected} size="lg">Continue <ArrowRight className="ml-2 h-4 w-4" /></Button>
     </div>
   );
 }
 
-/* ════════════════════════════════════════════════════════════
-   Screen 5 — Launch (one action based on priority)
-   ════════════════════════════════════════════════════════════ */
-
-function ScreenLaunch({
+function ScreenNext({
+  selected,
+  onSelect,
   priority,
+  connectPath,
   finishing,
   onFinish,
 }: {
+  selected: Extract<SetupPath, "leads" | "automation" | "ai"> | null;
+  onSelect: (path: Extract<SetupPath, "leads" | "automation" | "ai">) => void;
   priority: LaunchPriority | null;
+  connectPath: Extract<SetupPath, "website" | "listings" | "presence"> | null;
   finishing: boolean;
   onFinish: () => void;
 }) {
-  const chosen = PRIORITY_OPTIONS.find((p) => p.value === priority);
+  const suggested = priorityPath(priority);
+  const effectiveSelection = selected ?? (suggested && ["leads", "automation", "ai"].includes(suggested) ? suggested as Extract<SetupPath, "leads" | "automation" | "ai"> : null);
 
   return (
     <div className="space-y-6">
       <div>
-        <p className="text-muted-foreground text-sm font-medium tracking-wider uppercase">
-          You&apos;re ready
-        </p>
-        <h1 className="mt-2 text-2xl font-bold tracking-tight">
-          Your workspace is ready for a launch check.
-        </h1>
-        <p className="text-muted-foreground mt-2 text-sm">
-          Your setup choices are saved. We&apos;ll now check the specific listing
-          data, connections, marketing draft, approval, and publishing steps
-          that still need your attention.
-        </p>
+        <p className="text-primary text-sm font-semibold tracking-wider uppercase">Question 5 · Keep it moving</p>
+        <h1 className="mt-2 text-2xl font-bold tracking-tight">What should AgentStack help you do next?</h1>
+        <p className="text-muted-foreground mt-2 text-sm">Your answers tell AS where to start. Pick one outcome and we'll take you there — the rest can evolve as your business does.</p>
       </div>
 
-      {chosen && (
-        <div className="rounded-xl border-2 border-blue-200 bg-blue-50 p-5 dark:border-blue-800 dark:bg-blue-950/30">
-          <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900/50">
-              {chosen.icon}
+      <div className="space-y-3">
+        {NEXT_OPTIONS.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            onClick={() => onSelect(option.value)}
+            className={cn(
+              "flex w-full items-start gap-4 rounded-xl border p-4 text-left transition-all",
+              effectiveSelection === option.value ? "border-blue-500 bg-blue-50 ring-2 ring-blue-500/20 dark:bg-blue-950/30" : "bg-card hover:border-blue-300"
+            )}
+          >
+            <div className={cn("mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", effectiveSelection === option.value ? "bg-blue-100 text-blue-600 dark:bg-blue-900/50" : "bg-muted text-muted-foreground")}>
+              {option.icon}
             </div>
             <div>
-              <p className="text-xs font-medium tracking-wider text-blue-600 uppercase dark:text-blue-400">
-                Your #1 priority
-              </p>
-              <p className="mt-1 font-semibold">{chosen.label}</p>
-              <p className="text-muted-foreground mt-1 text-sm">
-                {chosen.description}
-              </p>
+              <p className="text-sm font-medium">{option.label}</p>
+              <p className="text-muted-foreground mt-1 text-sm">{option.description}</p>
             </div>
-          </div>
+          </button>
+        ))}
+      </div>
+
+      {connectPath && (
+        <div className="rounded-xl border border-dashed bg-muted/20 p-4 text-sm">
+          <p className="font-medium">Your first connection: {CONNECT_OPTIONS.find((option) => option.value === connectPath)?.label}</p>
+          <p className="text-muted-foreground mt-1">After this question, AS will open the setup for that connection. You can return here anytime.</p>
         </div>
       )}
 
-      <div className="rounded-xl border bg-card p-5">
-        <p className="text-sm font-medium">What happens next</p>
-        <div className="mt-3 space-y-2">
-          {[
-            "Launch Readiness checks what is actually connected",
-            "Missing items are named with the page that fixes them",
-            "Unsupported channels remain clearly marked for export",
-            "You can return here whenever your setup changes",
-          ].map((item, idx) => (
-            <div key={idx} className="flex items-start gap-2 text-sm">
-              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
-              <span className="text-muted-foreground">{item}</span>
-            </div>
-          ))}
-        </div>
+      <div className="flex flex-wrap items-center gap-3">
+        <Button onClick={onFinish} disabled={finishing} size="lg">
+          {finishing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ArrowRight className="mr-2 h-4 w-4" />}
+          {finishing ? "Opening your next step…" : "Take me there"}
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => {
+            if (finishing) return;
+            // Let the user intentionally choose a clean workspace home without
+            // adding another onboarding requirement.
+            onSelect("leads");
+            window.setTimeout(onFinish, 0);
+          }}
+          disabled={finishing}
+        >
+          Go to Today
+        </Button>
       </div>
 
-      <Button size="lg" onClick={onFinish} disabled={finishing}>
-        {finishing ? (
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        ) : (
-          <Zap className="mr-2 h-4 w-4" />
-        )}
-        {finishing ? "Opening your launch checklist…" : "Review launch readiness"}
-        {!finishing && <ArrowRight className="ml-2 h-4 w-4" />}
-      </Button>
+      <p className="text-muted-foreground text-xs">
+        No launch checklist. No setup score. AgentStack stays available while you work.
+      </p>
     </div>
   );
 }
