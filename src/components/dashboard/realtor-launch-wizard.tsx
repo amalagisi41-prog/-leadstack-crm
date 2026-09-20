@@ -279,7 +279,7 @@ export function RealtorLaunchWizard({
     }
   }
 
-  async function finishWizard() {
+  async function finishWizard(destinationOverride?: SetupPath) {
     if (finishing) return;
     setFinishing(true);
     try {
@@ -321,7 +321,7 @@ export function RealtorLaunchWizard({
         throw new Error(data.error ?? "Could not save your onboarding choices.");
       }
 
-      const destination = nextPath ?? connectPath ?? priorityPath(priority) ?? "dashboard";
+      const destination = destinationOverride ?? nextPath ?? connectPath ?? priorityPath(priority) ?? "dashboard";
       router.replace(saPath(pathHref(destination)));
       router.refresh();
     } catch (error) {
@@ -600,7 +600,7 @@ function ScreenNext({
   priority: LaunchPriority | null;
   connectPath: Extract<SetupPath, "website" | "listings" | "presence"> | null;
   finishing: boolean;
-  onFinish: () => void;
+  onFinish: (destinationOverride?: SetupPath) => void;
 }) {
   const suggested = priorityPath(priority);
   const effectiveSelection = selected ?? (suggested && ["leads", "automation", "ai"].includes(suggested) ? suggested as Extract<SetupPath, "leads" | "automation" | "ai"> : null);
@@ -649,13 +649,7 @@ function ScreenNext({
         </Button>
         <Button
           variant="outline"
-          onClick={() => {
-            if (finishing) return;
-            // Let the user intentionally choose a clean workspace home without
-            // adding another onboarding requirement.
-            onSelect("leads");
-            window.setTimeout(onFinish, 0);
-          }}
+          onClick={() => onFinish("dashboard")}
           disabled={finishing}
         >
           Go to Today
