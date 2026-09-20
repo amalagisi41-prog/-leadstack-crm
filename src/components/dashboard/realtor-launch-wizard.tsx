@@ -241,7 +241,7 @@ export function RealtorLaunchWizard({
   );
 
   async function importProfile() {
-    const urls = (profileUrls.match(/https?:\\/\\/[^\\s]+/gi) ?? []).map((url) =>
+    const urls = (profileUrls.match(/https?:\/\/[^\s]+/gi) ?? []).map((url) =>
       url.replace(/[),.;]+$/g, "")
     );
     if (urls.length === 0) {
