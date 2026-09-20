@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { EasyConnectorsSection } from "@/components/connect/easy-connectors-section";
 
 type PortalProfiles = { zillow: string; homes: string; realtor: string };
 
@@ -434,6 +435,7 @@ export function ConnectYourBusiness() {
 
   return (
     <div className="space-y-6 pb-12">
+      <EasyConnectorsSection />
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Connections</h1>
