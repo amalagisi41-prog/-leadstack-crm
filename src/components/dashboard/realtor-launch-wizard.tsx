@@ -643,7 +643,7 @@ function ScreenNext({
       )}
 
       <div className="flex flex-wrap items-center gap-3">
-        <Button onClick={onFinish} disabled={finishing} size="lg">
+        <Button onClick={() => onFinish()} disabled={finishing} size="lg">
           {finishing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ArrowRight className="mr-2 h-4 w-4" />}
           {finishing ? "Opening your next step…" : "Take me there"}
         </Button>
