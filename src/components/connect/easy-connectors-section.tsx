@@ -11,7 +11,9 @@ import {
   Code2,
   KeyRound,
   LockKeyhole,
+  MapPin,
   PlugZap,
+  Share2,
   ServerCog,
   ShieldCheck,
   Sparkles,
@@ -215,18 +217,15 @@ export function EasyConnectorsSection() {
               <Sparkles className="h-4 w-4" />
             </span>
             <div>
-              <h2 className="text-base font-semibold">Easy Connectors & Assistance</h2>
+              <h2 className="text-base font-semibold">Ask AgentStack what to connect</h2>
               <p className="text-xs text-muted-foreground">
-                A guided home for the services you may need now or later.
+                Answer one question. AS takes you to the right setup.
               </p>
             </div>
           </div>
 
           <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-            AgentStack works best when the systems around it are connected correctly.
-            This area separates connections AgentStack can manage today from
-            third-party setup you complete with the provider. When you are unsure
-            what a key, OAuth permission, webhook, or MCP server is for, start here.
+            You do not need to understand integrations first. Tell AS what you are trying to get working and it will point you to the shortest path.
           </p>
         </div>
 
