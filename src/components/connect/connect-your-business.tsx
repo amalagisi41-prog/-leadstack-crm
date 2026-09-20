@@ -410,10 +410,10 @@ export function ConnectYourBusiness() {
         icon: Star,
         iconTone: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
         title: "Google reviews",
-        detail: subAccount.googleReviewConfig?.placeId ? "Configured" : undefined,
+        detail: subAccount.googleReviewConfig?.reviewUrl ? "Configured" : undefined,
         blurb:
           "Save your Google review link and configure review request settings.",
-        status: subAccount.googleReviewConfig?.placeId ? "connected" : "not_connected",
+        status: subAccount.googleReviewConfig?.reviewUrl ? "connected" : "not_connected",
         actionLabel: "Configure reviews",
         actionHref: googleReviewsHref,
       },
