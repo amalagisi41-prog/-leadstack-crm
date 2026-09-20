@@ -76,15 +76,18 @@ function ConnectorCard({ connector }: { connector: Connector }) {
       </p>
 
       <div className="mt-4">
-        <Button asChild size="sm" variant="outline" className="w-full justify-between">
-          <Link
+        <Button
+          size="sm"
+          variant="outline"
+          className="w-full justify-between"
+          render={<Link
             href={connector.href}
             target={external ? "_blank" : undefined}
             rel={external ? "noreferrer" : undefined}
-          >
-            {connector.action}
-            {external ? <ArrowUpRight className="h-3.5 w-3.5" /> : null}
-          </Link>
+          />}
+        >
+          {connector.action}
+          {external ? <ArrowUpRight className="h-3.5 w-3.5" /> : null}
         </Button>
       </div>
     </div>
