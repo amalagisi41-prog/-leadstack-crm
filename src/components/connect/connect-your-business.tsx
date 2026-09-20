@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { EasyConnectorsSection } from "@/components/connect/easy-connectors-section";
 
 type PortalProfiles = { zillow: string; homes: string; realtor: string };
 
@@ -409,10 +410,10 @@ export function ConnectYourBusiness() {
         icon: Star,
         iconTone: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
         title: "Google reviews",
-        detail: subAccount.googleReviewConfig?.placeId ? "Configured" : undefined,
+        detail: subAccount.googleReviewConfig?.reviewUrl ? "Configured" : undefined,
         blurb:
           "Save your Google review link and configure review request settings.",
-        status: subAccount.googleReviewConfig?.placeId ? "connected" : "not_connected",
+        status: subAccount.googleReviewConfig?.reviewUrl ? "connected" : "not_connected",
         actionLabel: "Configure reviews",
         actionHref: googleReviewsHref,
       },
@@ -434,36 +435,48 @@ export function ConnectYourBusiness() {
 
   return (
     <div className="space-y-6 pb-12">
+      <EasyConnectorsSection />
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Connections</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Connect your business</h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            One place to connect the apps, channels, domains, imports, and
-            plug-ins that power your AgentStack workspace.
+            Start with a goal above. AS will guide you to the right connection; this is the full connection list when you need it.
           </p>
-        </div>
-        <div className="relative w-full sm:w-64">
-          <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search integrations"
-            className="pl-9"
-          />
         </div>
       </div>
 
-      {filtered.length === 0 ? (
-        <p className="text-muted-foreground rounded-2xl border border-dashed p-8 text-center text-sm">
-          No integrations match &ldquo;{search}&rdquo;.
-        </p>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filtered.map((card) => (
-            <ConnectionCard key={card.key} data={card} />
-          ))}
+      <details className="rounded-2xl border bg-card">
+        <summary className="cursor-pointer list-none px-5 py-4 text-sm font-semibold">
+          See all connections
+          <span className="ml-2 text-xs font-normal text-muted-foreground">
+            {filtered.length} available
+          </span>
+        </summary>
+        <div className="border-t p-5">
+          <div className="mb-4 flex justify-end">
+            <div className="relative w-full sm:w-64">
+              <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search connections"
+                className="pl-9"
+              />
+            </div>
+          </div>
+          {filtered.length === 0 ? (
+            <p className="text-muted-foreground rounded-xl border border-dashed p-8 text-center text-sm">
+              No integrations match &ldquo;{search}&rdquo;.
+            </p>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {filtered.map((card) => (
+                <ConnectionCard key={card.key} data={card} />
+              ))}
+            </div>
+          )}
         </div>
-      )}
+      </details>
 
       <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
         <MessagesSquare className="h-3.5 w-3.5" />

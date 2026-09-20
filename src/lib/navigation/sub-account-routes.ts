@@ -35,7 +35,6 @@ export const SUB_ACCOUNT_ROUTES = {
   aiAgents: "/ai-agents",
   siteHealth: "/site-health",
   getStarted: "/get-started",
-  launchReadiness: "/launch-readiness", // final launch evidence check; source-neutral by design
 
   messagingSettings: "/dashboard/settings?tab=messaging",
   marketingCampaigns: "/marketing/campaigns",

@@ -348,7 +348,7 @@ export default function SettingsPage() {
               ids + won/lost terminals are fixed). */}
           <SubAccountPipelineSection />
 
-          {/* Calendar sync — per-sub-account .ics subscription URL. */}
+          {/* Calendar connection — provider OAuth; booking ICS remains available separately. */}
           <SubAccountCalendarSyncSection />
 
           {/* Payments — PayPal.me username for the Products + Invoices flow. */}

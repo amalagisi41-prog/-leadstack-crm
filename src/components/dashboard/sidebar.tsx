@@ -41,7 +41,6 @@ import {
   MapPin,
   Rocket,
   Wrench,
-  ClipboardCheck,
   ChevronDown,
   ChevronRight,
   DollarSign,
@@ -140,12 +139,11 @@ const NAV_GROUPS: NavGroup[] = [
   },
   {
     key: "setup",
-    label: "Set Up My Business",
+    label: "Connect & Set Up",
     icon: Wrench,
     items: [
-      { href: "/launch-readiness", label: "Launch Readiness", icon: ClipboardCheck, enabled: true },
       { href: "/business-profile", label: "Business Blueprint", icon: BookOpen, enabled: true },
-      { href: "/connect", label: "Connections", icon: Plug, enabled: true },
+      { href: "/connect", label: "Connect", icon: Plug, enabled: true },
       { href: "/site-health", label: "Site Health", icon: HeartPulse, enabled: true, badgeKey: "siteHealth" },
       { href: "/media", label: "Media Library", icon: Images, enabled: true },
       { href: "/domain", label: "Domain", icon: Link2, enabled: true },
