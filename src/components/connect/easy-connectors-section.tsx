@@ -6,10 +6,8 @@ import {
   ArrowRight,
   ArrowUpRight,
   Bot,
-  BookOpen,
   BrainCircuit,
   Calendar,
-  CheckCircle2,
   Code2,
   KeyRound,
   LockKeyhole,
@@ -275,12 +273,12 @@ export function EasyConnectorsSection() {
               <Sparkles className="h-4 w-4" />
             </span>
             <div>
-              <h2 className="text-base font-semibold">Let's get your business connected</h2>
+              <h2 className="text-base font-semibold">Let’s get your business connected</h2>
               <p className="text-xs text-muted-foreground">AS asks a few questions and takes you to the shortest path.</p>
             </div>
           </div>
           <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-            You don't need to know which integration you need. Tell AgentStack what you want working first, and we'll guide the connection.
+            You don’t need to know which integration you need. Tell AgentStack what you want working first, and we’ll guide the connection.
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2 rounded-xl border bg-background px-3 py-2 text-xs text-muted-foreground">
