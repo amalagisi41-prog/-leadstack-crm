@@ -81,7 +81,7 @@ function isDomainConnected(sub: SubAccountDoc | null): boolean {
 }
 
 function isMlsConnected(sub: SubAccountDoc | null): boolean {
-  return sub?.idxConfig?.connected === true || sub?.idxConfig?.enabled === true;
+  return sub?.idxConfig?.connected === true;
 }
 
 export function connectItemsFor(sub: SubAccountDoc | null): ConnectItem[] {
@@ -111,7 +111,7 @@ export function connectItemsFor(sub: SubAccountDoc | null): ConnectItem[] {
     {
       id: "calendar",
       label: "Google or Outlook Calendar",
-      tier: "one_click",
+      tier: "needs_setup",
       connected: sub?.calendarConfig?.status === "connected",
       why: "New bookings can be coordinated with the calendar you already use, so your public availability and appointment workflow stay in one place.",
       costIfSkipped:
