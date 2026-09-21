@@ -87,7 +87,7 @@ const PRIMARY_NAV: PrimaryNavItem[] = [
   { href: "/dashboard", label: "Today", icon: Home },
   { href: "/contacts", label: "People", icon: Users, badgeKey: "unreadConversations" },
   { href: "/pipeline", label: "Deals", icon: GitBranch },
-  { href: "/properties", label: "Properties", icon: MapPin },
+  { href: "/idx", label: "Properties", icon: MapPin },
 ];
 
 /* ─── Expandable sections under the primary items ──────────────── */
@@ -119,7 +119,6 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/funnels", label: "Marketing Pages", icon: Filter, enabled: true },
       { href: "/broadcasts", label: "Broadcasts", icon: Send, enabled: true },
       { href: "/social", label: "Social Planner", icon: Share2, enabled: true },
-      { href: "/idx", label: "Listings", icon: Building, enabled: true },
       { href: "/marketing/ad-spend", label: "Ad Spend & Billing", icon: DollarSign, enabled: true },
     ],
   },
