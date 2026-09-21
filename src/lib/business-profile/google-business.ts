@@ -310,17 +310,15 @@ function extractGoogleProfile(location: GoogleLocation): GoogleBusinessProfile {
  */
 function formatBusinessHours(
   regularHours?: {
-    periods: Array<{
-      openDay: number;
-      openTime: { hours: number; minutes: number };
-      closeDay: number;
-      closeTime: { hours: number; minutes: number };
+    periods?: Array<{
+      openDay?: number | string;
+      openTime?: { hours?: number; minutes?: number };
+      closeDay?: number | string;
+      closeTime?: { hours?: number; minutes?: number };
     }>;
   }
 ): string {
-  if (!regularHours?.periods || regularHours.periods.length === 0) {
-    return "";
-  }
+  if (!regularHours?.periods?.length) return "";
 
   const dayNames = [
     "Sun",
@@ -331,33 +329,52 @@ function formatBusinessHours(
     "Fri",
     "Sat",
   ];
-
-  const formatTime = (h: number, m: number): string => {
-    const period = h >= 12 ? "pm" : "am";
-    const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-    return m === 0 ? `${hour12}${period}` : `${hour12}:${m.toString().padStart(2, "0")}${period}`;
+  const dayMap: Record<string, number> = {
+    SUNDAY: 0,
+    MONDAY: 1,
+    TUESDAY: 2,
+    WEDNESDAY: 3,
+    THURSDAY: 4,
+    FRIDAY: 5,
+    SATURDAY: 6,
+  };
+  const dayIndex = (value: number | string | undefined): number | null => {
+    if (typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= 6) {
+      return value;
+    }
+    if (typeof value === "string") {
+      const normalized = value.trim().toUpperCase();
+      if (normalized in dayMap) return dayMap[normalized];
+      const numeric = Number(normalized);
+      if (Number.isInteger(numeric) && numeric >= 0 && numeric <= 6) return numeric;
+    }
+    return null;
   };
 
-  // Group periods by day range
+  const formatTime = (h: number | undefined, m: number | undefined): string => {
+    const hour = Number.isFinite(h) ? Number(h) : 0;
+    const minute = Number.isFinite(m) ? Number(m) : 0;
+    const period = hour >= 12 ? "pm" : "am";
+    const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+    return minute === 0
+      ? `${hour12}${period}`
+      : `${hour12}:${minute.toString().padStart(2, "0")}${period}`;
+  };
+
   const grouped: string[] = [];
   for (const period of regularHours.periods) {
-    const openDay = dayNames[period.openDay];
-    const closeDay = dayNames[period.closeDay];
-    const openTime = formatTime(
-      period.openTime.hours,
-      period.openTime.minutes
-    );
-    const closeTime = formatTime(
-      period.closeTime.hours,
-      period.closeTime.minutes
-    );
+    const openDayIndex = dayIndex(period.openDay);
+    const closeDayIndex = dayIndex(period.closeDay);
+    if (openDayIndex === null || closeDayIndex === null) continue;
+    const openDay = dayNames[openDayIndex];
+    const closeDay = dayNames[closeDayIndex];
+    const openTime = formatTime(period.openTime?.hours, period.openTime?.minutes);
+    const closeTime = formatTime(period.closeTime?.hours, period.closeTime?.minutes);
 
-    if (period.openDay === period.closeDay) {
+    if (openDayIndex === closeDayIndex) {
       grouped.push(`${openDay} ${openTime}–${closeTime}`);
     } else {
-      grouped.push(
-        `${openDay}–${closeDay} ${openTime}–${closeTime}`
-      );
+      grouped.push(`${openDay}–${closeDay} ${openTime}–${closeTime}`);
     }
   }
 
