@@ -162,7 +162,7 @@ export function MediaLibrary({ compact = false, onSelect }: Props) {
             <div className="min-w-0">
               <p className="text-sm font-semibold">Add to a folder</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Use names like "Brand", "Seller Guides", or a property address. Leaving this blank keeps the file in General.
+                Use names like &quot;Brand&quot;, &quot;Seller Guides&quot;, or a property address. Leaving this blank keeps the file in General.
               </p>
               <Input
                 value={uploadFolder}
