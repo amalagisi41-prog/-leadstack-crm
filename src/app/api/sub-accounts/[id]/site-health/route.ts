@@ -2,8 +2,8 @@ import "server-only";
 
 import { NextResponse } from "next/server";
 import { requireSubAccountMember } from "@/lib/auth/require-tenancy";
-import { getAdminDb } from "@/lib/firebase/admin";
-import { computeSiteHealth } from "@/lib/site-health/tasks";
+import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
+import { computeSiteHealth, isBusinessEmailVerified } from "@/lib/site-health/tasks";
 import {
   PLATFORM_SIGNATURES,
   isConfirmedOffPlatform,
@@ -57,6 +57,29 @@ export async function GET(
   const replyToEmail =
     typeof sub.replyToEmail === "string" ? sub.replyToEmail.trim() : "";
   const hasTrustedReplyTo = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(replyToEmail);
+  const resendVerified = sub.resendConfig?.status === "verified";
+  const googleWorkspaceConnected =
+    sub.googleWorkspaceConfig?.status === "connected";
+
+  // A saved Reply-To address is configuration, not proof that the operator
+  // controls that mailbox. When it matches the signed-in user's address, use
+  // Firebase's authoritative verification state; otherwise require a verified
+  // sending provider.
+  const authUser = await getAdminAuth().getUser(access.uid);
+  const accountEmailMatchesReplyTo =
+    Boolean(authUser.email) &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(replyToEmail) &&
+    authUser.email!.trim().toLowerCase() === replyToEmail.toLowerCase();
+  const firebaseEmailVerified =
+    accountEmailMatchesReplyTo && authUser.emailVerified === true;
+  const businessEmailVerified = isBusinessEmailVerified({
+    replyToEmail,
+    accountEmail: authUser.email ?? undefined,
+    accountEmailVerified: authUser.emailVerified,
+    resendVerified,
+    googleWorkspaceConnected,
+  });
+
   const profile = (profileSnap.data() ??
     {}) as Partial<BusinessProfileContent> & {
     completeness?: number;
@@ -141,9 +164,28 @@ export async function GET(
       chatSnap.exists &&
       chatSnap.data()?.enabled === true &&
       (publishedAgentSite || verification?.agentStackWidgetInstalled === true),
-        businessEmailVerified:
-          hasTrustedReplyTo || sub.resendConfig?.status === "verified",
+    businessEmailVerified,
   });
+
+  const emailTask = result.tasks.find((task) => task.id === "email");
+  if (emailTask && !emailTask.complete) {
+    if (!hasTrustedReplyTo) {
+      emailTask.detail =
+        "Choose the business address AgentStack should use for follow-up.";
+      emailTask.href = "/dashboard/settings?email_setup=1";
+      emailTask.action = "Set up business email";
+    } else if (accountEmailMatchesReplyTo && !firebaseEmailVerified) {
+      emailTask.detail =
+        "Verify the business email before AgentStack marks it trusted.";
+      emailTask.href = "/verify-email";
+      emailTask.action = "Verify email";
+    } else {
+      emailTask.detail =
+        "Finish business email setup so AgentStack can trust the address for follow-up.";
+      emailTask.href = "/dashboard/settings?email_setup=1";
+      emailTask.action = "Finish email setup";
+    }
+  }
 
   return NextResponse.json({
     ...result,

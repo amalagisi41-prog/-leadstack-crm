@@ -112,6 +112,14 @@ export default function SettingsPage() {
     ) {
       setSettingsTab(requestedTab);
     }
+
+    if (params.get("email_setup") === "1") {
+      setSettingsTab("messaging");
+      setEmailSetupOpen(true);
+      const url = new URL(window.location.href);
+      url.searchParams.delete("email_setup");
+      window.history.replaceState(null, "", url);
+    }
   }, []);
 
   useEffect(() => {

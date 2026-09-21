@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   computeSiteHealth,
+  isBusinessEmailVerified,
   remainingSiteHealthTaskIds,
   type SiteHealthInputs,
 } from "./tasks";
@@ -217,5 +218,72 @@ describe("Site Health — compliance is all-or-nothing", () => {
       profile: { ...PROFILE_DONE, fairHousing: false },
     };
     expect(remainingSiteHealthTaskIds(unchecked)).toContain("compliance");
+  });
+});
+
+describe("Site Health — business email verification", () => {
+  it("does not treat a merely typed Reply-To address as verified", () => {
+    expect(
+      isBusinessEmailVerified({
+        replyToEmail: "agent@example.com",
+        accountEmail: "agent@example.com",
+        accountEmailVerified: false,
+      })
+    ).toBe(false);
+  });
+
+  it("accepts a Firebase-verified Reply-To when it matches the signed-in account", () => {
+    expect(
+      isBusinessEmailVerified({
+        replyToEmail: "agent@example.com",
+        accountEmail: "agent@example.com",
+        accountEmailVerified: true,
+      })
+    ).toBe(true);
+  });
+
+  it("does not trust a verified account email when Reply-To points elsewhere", () => {
+    expect(
+      isBusinessEmailVerified({
+        replyToEmail: "business@example.com",
+        accountEmail: "agent@example.com",
+        accountEmailVerified: true,
+      })
+    ).toBe(false);
+  });
+
+  it("accepts a verified sending provider for a different Reply-To mailbox", () => {
+    expect(
+      isBusinessEmailVerified({
+        replyToEmail: "business@example.com",
+        resendVerified: true,
+      })
+    ).toBe(true);
+
+    expect(
+      isBusinessEmailVerified({
+        replyToEmail: "business@example.com",
+        googleWorkspaceConnected: true,
+      })
+    ).toBe(true);
+  });
+
+  it("keeps the Site Health score at 88% until business email is actually trusted", () => {
+    const pending = {
+      profile: PROFILE_DONE,
+      publishedWebsite: true,
+      publishedAgentSite: false,
+      customDomain: "example-realty.test",
+      hasLeadForm: true,
+      hasBookingPage: true,
+      webChatEnabled: true,
+      businessEmailVerified: false,
+    };
+
+    expect(computeSiteHealth(pending).score).toBe(88);
+    expect(remainingSiteHealthTaskIds(pending)).toEqual(["email"]);
+    expect(
+      computeSiteHealth({ ...pending, businessEmailVerified: true }).score
+    ).toBe(100);
   });
 });
