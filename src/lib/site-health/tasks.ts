@@ -49,6 +49,39 @@ export interface SiteHealthInputs {
   businessEmailVerified: boolean;
 }
 
+export interface BusinessEmailVerificationInputs {
+  replyToEmail?: string;
+  accountEmail?: string;
+  accountEmailVerified?: boolean;
+  resendVerified?: boolean;
+  googleWorkspaceConnected?: boolean;
+}
+
+/**
+ * A Reply-To value alone is not verification. The address is trusted when it
+ * is verified by Firebase for the signed-in account, or when a connected
+ * sending provider has verified ownership of the sending setup.
+ */
+export function isBusinessEmailVerified(
+  inputs: BusinessEmailVerificationInputs
+): boolean {
+  const replyToEmail = inputs.replyToEmail?.trim().toLowerCase() ?? "";
+  const accountEmail = inputs.accountEmail?.trim().toLowerCase() ?? "";
+  const hasReplyTo = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(replyToEmail);
+  if (!hasReplyTo) return false;
+
+  const firebaseVerified =
+    inputs.accountEmailVerified === true &&
+    !!accountEmail &&
+    accountEmail === replyToEmail;
+
+  return (
+    firebaseVerified ||
+    inputs.resendVerified === true ||
+    inputs.googleWorkspaceConnected === true
+  );
+}
+
 export interface SiteHealthTask {
   id: string;
   title: string;
