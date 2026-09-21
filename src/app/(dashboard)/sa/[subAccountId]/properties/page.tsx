@@ -358,10 +358,10 @@ export default function PropertiesPage() {
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-neutral-900">
-            Properties
+            Marketing properties
           </h1>
           <p className="mt-1 text-sm text-neutral-500">
-            Your listings and their marketing status at a glance.
+            Your listing inventory lives in Listings. This workspace shows the properties you have chosen to market and their campaign progress.
           </p>
         </div>
         {/* Picking from inventory beats retyping an MLS number: the Listings
@@ -370,7 +370,7 @@ export default function PropertiesPage() {
         <Link href={saPath(SUB_ACCOUNT_ROUTES.listings)}>
           <Button size="sm" className="gap-1.5">
             <Plus className="h-4 w-4" />
-            Add Property
+            Choose from Listings
           </Button>
         </Link>
       </div>
