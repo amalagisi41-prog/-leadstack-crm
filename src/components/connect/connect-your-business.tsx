@@ -27,12 +27,7 @@ import { metaCanInbox } from "@/lib/comms/meta-capabilities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
 import { EasyConnectorsSection } from "@/components/connect/easy-connectors-section";
-
-type PortalProfiles = { zillow: string; homes: string; realtor: string };
-
-const EMPTY_PORTAL_PROFILES: PortalProfiles = { zillow: "", homes: "", realtor: "" };
 
 type ConnectionStatus =
   | "connected"
