@@ -458,7 +458,7 @@ export default function ListingsPage() {
                     <td className="px-4 py-2 text-right">
                       {inCampaigns ? (
                         <Link
-                          href={saPath(SUB_ACCOUNT_ROUTES.properties)}
+                          href={saPath(SUB_ACCOUNT_ROUTES.listings)}
                           className="text-muted-foreground inline-flex items-center gap-1 text-xs hover:underline"
                         >
                           <Check className="h-3.5 w-3.5 text-emerald-600" />
