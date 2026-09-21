@@ -21,6 +21,7 @@ import {
 import { useSubAccount } from "@/context/sub-account-context";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { SUB_ACCOUNT_ROUTES } from "@/lib/navigation/sub-account-routes";
 
 type ConnectorState = "connected" | "setup" | "external" | "available" | "coming_soon";
 
@@ -157,7 +158,7 @@ export function EasyConnectorsSection() {
       question: "What kind of listings do you have?",
       options: [
         { title: "MLS / IDX listings", description: "Connect your authorized IDX Broker feed and bring approved MLS inventory into AgentStack.", href: idxConnected ? settingsHref + "#mls-feed" : saPath("/idx"), action: idxConnected ? "Manage MLS" : "Connect MLS" },
-        { title: "My own / off-market listings", description: "Add agent-managed properties without waiting for an MLS feed.", href: saPath("/listings"), action: "Add my listings" },
+        { title: "My own / off-market listings", description: "Add agent-managed properties without waiting for an MLS feed.", href: saPath(SUB_ACCOUNT_ROUTES.listings), action: "Add my listings" },
         { title: "Both", description: "Keep MLS and agent-managed inventory together with source ownership preserved.", href: idxConnected ? settingsHref + "#mls-feed" : saPath("/idx"), action: "Set up my listing sources" },
       ],
     },
