@@ -7,6 +7,7 @@ import {
   ArrowRight,
   Check,
   Eye,
+  ExternalLink,
   Globe2,
   Loader2,
   Plus,
@@ -212,6 +213,12 @@ export function BusinessProfileForm() {
   const [mediaOpen, setMediaOpen] = useState<
     "logoUrl" | "headshotUrl" | "buyerGuideUrl" | "sellerGuideUrl" | null
   >(null);
+  const [portalProfiles, setPortalProfiles] = useState({
+    zillow: "",
+    homes: "",
+    realtor: "",
+  });
+  const [savingPortalProfiles, setSavingPortalProfiles] = useState(false);
   /**
    * The initial load failed, so `content` is still EMPTY_BUSINESS_PROFILE
    * rather than what's actually stored. Saving from this state PATCHes every
@@ -226,6 +233,51 @@ export function BusinessProfileForm() {
   useEffect(() => {
     if (connectionImport) setImportUrl(connectionImport);
   }, [connectionImport]);
+
+  useEffect(() => {
+    if (!subAccountId) return;
+    void fetch(`/api/sub-accounts/${subAccountId}/marketing/sources`)
+      .then((res) => res.json())
+      .then((data: { portalProfiles?: Partial<typeof portalProfiles> }) => {
+        setPortalProfiles((current) => ({
+          ...current,
+          ...(data.portalProfiles ?? {}),
+        }));
+      })
+      .catch(() => undefined);
+  }, [subAccountId]);
+
+  async function savePortalProfiles() {
+    setSavingPortalProfiles(true);
+    try {
+      const res = await fetch(`/api/sub-accounts/${subAccountId}/marketing/sources`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ portalProfiles }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+        portalProfiles?: Partial<typeof portalProfiles>;
+      };
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error ?? "Could not save public profile links.");
+      }
+      setPortalProfiles((current) => ({
+        ...current,
+        ...(data.portalProfiles ?? {}),
+      }));
+      toast.success("Public profile links saved.");
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Could not save public profile links.",
+      );
+    } finally {
+      setSavingPortalProfiles(false);
+    }
+  }
 
   useEffect(() => {
     let active = true;
@@ -771,6 +823,54 @@ export function BusinessProfileForm() {
           </div>
         </div>
       </section>
+
+      <Section
+        title="Public profiles"
+        desc="Save the public profile pages people use to find you. These are reference links, not integrations, and AgentStack does not sync with these sites."
+      >
+        <div className="grid gap-4 sm:grid-cols-3">
+          {([
+            ["zillow", "Zillow profile", "https://www.zillow.com/profile/..."],
+            ["homes", "Homes.com profile", "https://www.homes.com/..."],
+            ["realtor", "Realtor.com profile", "https://www.realtor.com/..."],
+          ] as const).map(([key, label, placeholder]) => (
+            <Field key={key} label={label}>
+              <input
+                type="url"
+                className={input}
+                value={portalProfiles[key]}
+                onChange={(event) =>
+                  setPortalProfiles((current) => ({
+                    ...current,
+                    [key]: event.target.value,
+                  }))
+                }
+                placeholder={placeholder}
+              />
+              {portalProfiles[key] ? (
+                <a
+                  href={portalProfiles[key]}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-1 inline-flex items-center gap-1 text-[11px] text-primary underline"
+                >
+                  View public profile <ExternalLink className="h-3 w-3" />
+                </a>
+              ) : null}
+            </Field>
+          ))}
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            size="sm"
+            onClick={savePortalProfiles}
+            disabled={savingPortalProfiles}
+          >
+            {savingPortalProfiles ? "Saving…" : "Save public profile links"}
+          </Button>
+        </div>
+      </Section>
 
       {/* Google OAuth Import */}
       <GoogleOAuthImport onProfileImported={handleGoogleProfileImported} />

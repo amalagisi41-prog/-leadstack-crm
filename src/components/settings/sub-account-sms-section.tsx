@@ -6,6 +6,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   Copy,
+  ExternalLink,
   Loader2,
   MessageCircle,
   MessageSquare,
@@ -256,7 +257,38 @@ export function SubAccountSmsSection() {
         </div>
       </header>
 
-      <label className="flex items-start gap-3 rounded-lg border bg-background p-3">
+      {!isExistingConfig && (
+        <div className="mb-4 rounded-xl border border-violet-200 bg-violet-50/60 p-4 dark:border-violet-900/50 dark:bg-violet-950/20">
+          <p className="text-sm font-semibold">Need a Twilio account first?</p>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+            AgentStack can connect an account you already own. Twilio handles
+            account creation, email/phone verification, and number setup on its
+            side.
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              render={
+                <a
+                  href="https://www.twilio.com/try-twilio"
+                  target="_blank"
+                  rel="noreferrer"
+                />
+              }
+            >
+              Create Twilio account
+              <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
+            </Button>
+            <span className="text-[11px] text-muted-foreground">
+              After signup: verify email + phone, open Messaging, then return here with your Account SID, Auth Token, and Twilio number.
+            </span>
+          </div>
+        </div>
+      )}
+
+  <label className="flex items-start gap-3 rounded-lg border bg-background p-3">
         <input
           type="checkbox"
           checked={enabled}

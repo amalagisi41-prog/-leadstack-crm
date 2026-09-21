@@ -19,12 +19,126 @@ export async function GET(request: Request, ctx: { params: Promise<{ id: string 
     const propertyId = new URL(request.url).searchParams.get("propertyId")?.trim() ?? "";
     const snap = await getAdminDb().collection(`subAccounts/${id}/mediaAssets`).orderBy("createdAt", "desc").limit(500).get();
     const assets = snap.docs
-      .map((doc) => ({ id: doc.id, ...doc.data(), createdAt: doc.data().createdAt?.toDate?.()?.toISOString?.() ?? null }))
+      .map((doc) => {
+        const data = doc.data();
+        // Never send the storage download token as a standalone field. The
+        // direct URL may contain a necessary access token, but exposing it
+        // separately makes accidental logging/telemetry leakage much easier.
+        const { token: _token, ...safe } = data;
+        return { id: doc.id, ...safe, createdAt: data.createdAt?.toDate?.()?.toISOString?.() ?? null };
+      })
       .filter((asset) => !propertyId || (asset as Record<string, unknown>).propertyId === propertyId);
     return NextResponse.json({ assets });
   } catch (error) {
     console.error("Media GET error:", error);
     return NextResponse.json({ error: error instanceof Error ? error.message : "Failed to load media assets" }, { status: 500 });
+  }
+}
+
+export async function PATCH(request: Request, ctx: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await ctx.params;
+    const access = await requireSubAccountAdmin(request, id);
+    if (access instanceof NextResponse) return access;
+
+    const body = (await request.json().catch(() => null)) as {
+      assetId?: string;
+      name?: string;
+      folderPath?: string | null;
+      propertyId?: string | null;
+    } | null;
+    const assetId = body?.assetId?.trim();
+    if (!assetId) {
+      return NextResponse.json({ error: "Asset id is required." }, { status: 400 });
+    }
+
+    const ref = getAdminDb().doc(`subAccounts/${id}/mediaAssets/${assetId}`);
+    const snap = await ref.get();
+    if (!snap.exists) {
+      return NextResponse.json({ error: "Media asset not found." }, { status: 404 });
+    }
+
+    const patch: Record<string, unknown> = {
+      updatedAt: FieldValue.serverTimestamp(),
+      updatedByUid: access.uid,
+    };
+    if (body?.name !== undefined) {
+      const name = String(body.name).trim().replace(/[^a-zA-Z0-9._ -]+/g, "").slice(0, 120);
+      if (!name) return NextResponse.json({ error: "File name cannot be empty." }, { status: 400 });
+      patch.name = name;
+    }
+    if (body?.folderPath !== undefined) {
+      const folderPath = String(body.folderPath ?? "")
+        .trim()
+        .replace(/\\+/g, "/")
+        .replace(/^\/+|\/+$/g, "")
+        .replace(/\/+/g, " / ");
+      patch.folderPath = folderPath || null;
+    }
+    if (body?.propertyId !== undefined) {
+      patch.propertyId = String(body.propertyId ?? "").trim() || null;
+    }
+
+    await ref.update(patch);
+    const updated = (await ref.get()).data();
+    if (!updated) return NextResponse.json({ error: "Could not load updated asset." }, { status: 500 });
+    const { token: _token, ...safe } = updated;
+    return NextResponse.json({
+      asset: {
+        id: assetId,
+        ...safe,
+        createdAt: updated.createdAt?.toDate?.()?.toISOString?.() ?? null,
+        updatedAt: updated.updatedAt?.toDate?.()?.toISOString?.() ?? null,
+      },
+    });
+  } catch (error) {
+    console.error("Media PATCH error:", error);
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Could not update media asset." }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request, ctx: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await ctx.params;
+    const access = await requireSubAccountAdmin(request, id);
+    if (access instanceof NextResponse) return access;
+
+    const assetId = new URL(request.url).searchParams.get("assetId")?.trim();
+    if (!assetId) {
+      return NextResponse.json({ error: "Asset id is required." }, { status: 400 });
+    }
+
+    const ref = getAdminDb().doc(`subAccounts/${id}/mediaAssets/${assetId}`);
+    const snap = await ref.get();
+    if (!snap.exists) {
+      return NextResponse.json({ error: "Media asset not found." }, { status: 404 });
+    }
+    const data = snap.data() ?? {};
+    const storagePath = typeof data.storagePath === "string" ? data.storagePath : "";
+
+    if (storagePath.startsWith("firestore:")) {
+      const chunks = await ref.collection("chunks").get();
+      const batch = getAdminDb().batch();
+      chunks.docs.forEach((chunk) => batch.delete(chunk.ref));
+      await batch.commit();
+    } else if (storagePath) {
+      const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
+      if (bucketName) {
+        try {
+          await getStorage().bucket(bucketName).file(storagePath).delete();
+        } catch {
+          // The metadata delete below is authoritative for the workspace. A
+          // missing blob should not prevent the operator from cleaning up the
+          // library.
+        }
+      }
+    }
+
+    await ref.delete();
+    return NextResponse.json({ ok: true, deletedByUid: access.uid });
+  } catch (error) {
+    console.error("Media DELETE error:", error);
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Could not delete media asset." }, { status: 500 });
   }
 }
 
@@ -69,10 +183,29 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
     }
 
     const brandAsset = form?.get("brandAsset") === "true";
+    const folderPath =
+      String(form?.get("folderPath") ?? "")
+        .trim()
+        .replace(/\\+/g, "/")
+        .replace(/^\/+|\/+$/g, "")
+        .replace(/\/+/g, " / ") || null;
     const publicUrl = brandAsset
       ? `${new URL(request.url).origin}/api/sub-accounts/${id}/media/${ref.id}`
       : null;
-    const asset = { name: cleanName, url, publicUrl, brandAsset, token, storagePath, contentType: file.type, size: file.size, uploadedByUid: access.uid, createdAt: FieldValue.serverTimestamp() };
+    const asset = {
+      name: cleanName,
+      url,
+      publicUrl,
+      brandAsset,
+      token,
+      storagePath,
+      folderPath,
+      propertyId: String(form?.get("propertyId") ?? "").trim() || null,
+      contentType: file.type,
+      size: file.size,
+      uploadedByUid: access.uid,
+      createdAt: FieldValue.serverTimestamp(),
+    };
     await ref.set(asset);
     return NextResponse.json({ asset: { id: ref.id, ...asset, createdAt: new Date().toISOString() } }, { status: 201 });
   } catch (error) {

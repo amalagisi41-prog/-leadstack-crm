@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ExternalLink } from "lucide-react";
+
 import { doc, onSnapshot } from "firebase/firestore";
 import {
   Building,
@@ -27,12 +27,7 @@ import { metaCanInbox } from "@/lib/comms/meta-capabilities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
 import { EasyConnectorsSection } from "@/components/connect/easy-connectors-section";
-
-type PortalProfiles = { zillow: string; homes: string; realtor: string };
-
-const EMPTY_PORTAL_PROFILES: PortalProfiles = { zillow: "", homes: "", realtor: "" };
 
 type ConnectionStatus =
   | "connected"
@@ -145,8 +140,6 @@ export function ConnectYourBusiness() {
   const { subAccount, saPath } = useSubAccount();
   const [webChatEnabled, setWebChatEnabled] = useState<boolean | null>(null);
   const [search, setSearch] = useState("");
-  const [portalProfiles, setPortalProfiles] = useState<PortalProfiles>(EMPTY_PORTAL_PROFILES);
-  const [savingProfiles, setSavingProfiles] = useState(false);
 
   useEffect(() => {
     if (!subAccount) return;
@@ -160,35 +153,6 @@ export function ConnectYourBusiness() {
     );
   }, [subAccount]);
 
-  useEffect(() => {
-    if (!subAccount) return;
-    void fetch(`/api/sub-accounts/${subAccount.id}/marketing/sources`)
-      .then((res) => res.json())
-      .then((data: { portalProfiles?: Partial<PortalProfiles> }) =>
-        setPortalProfiles({ ...EMPTY_PORTAL_PROFILES, ...data.portalProfiles })
-      )
-      .catch(() => undefined);
-  }, [subAccount]);
-
-  async function savePortalProfiles() {
-    if (!subAccount) return;
-    setSavingProfiles(true);
-    try {
-      const res = await fetch(`/api/sub-accounts/${subAccount.id}/marketing/sources`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ portalProfiles }),
-      });
-      const data = await res.json().catch(() => ({})) as { ok?: boolean; error?: string; portalProfiles?: Partial<PortalProfiles> };
-      if (!res.ok || !data.ok) throw new Error(data.error ?? "Could not save profile links.");
-      setPortalProfiles({ ...EMPTY_PORTAL_PROFILES, ...data.portalProfiles });
-      toast.success("Realtor profile links saved.");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not save profile links.");
-    } finally {
-      setSavingProfiles(false);
-    }
-  }
 
   const cards = useMemo<ConnectionCardData[]>(() => {
     if (!subAccount) return [];
@@ -484,52 +448,6 @@ export function ConnectYourBusiness() {
         which channel a lead used.
       </p>
 
-      {/* Saved profile links — NOT integrations, just URL references */}
-      <section className="rounded-2xl border border-dashed p-5">
-        <div>
-          <h2 className="text-sm font-medium text-muted-foreground">Saved profile links</h2>
-          <p className="mt-1 max-w-3xl text-xs leading-relaxed text-muted-foreground">
-            Paste your public listing-portal URLs here for reference. These are not integrations&mdash;AgentStack
-            does not connect to or sync with these sites. The links prefill your Business Blueprint for review.
-          </p>
-        </div>
-        <div className="mt-4 grid gap-3 md:grid-cols-3">
-          {([
-            ["zillow", "Zillow profile", "https://www.zillow.com/profile/..."],
-            ["homes", "Homes.com profile", "https://www.homes.com/..."],
-            ["realtor", "Realtor.com profile", "https://www.realtor.com/..."],
-          ] as const).map(([key, label, placeholder]) => (
-            <label key={key} className="block">
-              <span className="text-xs font-medium">{label}</span>
-              <Input
-                className="mt-1"
-                value={portalProfiles[key]}
-                onChange={(event) => setPortalProfiles({ ...portalProfiles, [key]: event.target.value })}
-                placeholder={placeholder}
-              />
-              {portalProfiles[key] ? (
-                <a href={portalProfiles[key]} target="_blank" rel="noreferrer" className="mt-1 inline-flex items-center gap-1 text-[11px] text-primary underline">
-                  View public profile <ExternalLink className="h-3 w-3" />
-                </a>
-              ) : null}
-            </label>
-          ))}
-        </div>
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <Button type="button" size="sm" onClick={savePortalProfiles} disabled={savingProfiles}>
-            {savingProfiles ? "Saving…" : "Save profile links"}
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            disabled={!Object.values(portalProfiles).some(Boolean)}
-            render={<Link href={`${saPath("/business-profile")}?import=${encodeURIComponent(Object.values(portalProfiles).filter(Boolean).join("\n"))}`} />}
-          >
-            Review in Blueprint
-          </Button>
-        </div>
-      </section>
     </div>
   );
 }

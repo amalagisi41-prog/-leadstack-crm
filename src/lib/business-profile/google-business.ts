@@ -36,37 +36,51 @@ export interface GoogleBusinessProfile {
  * The actual response is much larger; we extract only what we need.
  */
 interface GoogleLocation {
-  name: string; // "accounts/ABC/locations/XYZ"
-  displayName: string; // agent name
-  primaryPhone: string;
-  primaryContactInfo?: {
-    emails?: string[];
+  name: string;
+  // Current Business Information API v1 fields.
+  title?: string;
+  phoneNumbers?: {
+    primaryPhone?: string;
+    additionalPhones?: string[];
   };
-  websiteUri: string;
-  businessType: string;
-  shortDescription: string;
+  websiteUri?: string;
+  storefrontAddress?: {
+    addressLines?: string[];
+    locality?: string;
+    administrativeArea?: string;
+    postalCode?: string;
+  };
   profile?: {
-    description: string;
+    description?: string;
   };
-  serviceAreaBusinesses?: Array<{
-    businessType: string;
-    areas?: Array<{
-      displayName: string;
-    }>;
-  }>;
+  serviceArea?: {
+    businessType?: string;
+    places?: {
+      placeInfos?: Array<{
+        placeName?: string;
+        placeId?: string;
+      }>;
+    };
+  };
   regularHours?: {
-    periods: Array<{
-      openDay: number; // 0=Sunday, 6=Saturday
-      openTime: { hours: number; minutes: number };
-      closeDay: number;
-      closeTime: { hours: number; minutes: number };
+    periods?: Array<{
+      openDay?: number | string;
+      openTime?: { hours?: number; minutes?: number };
+      closeDay?: number | string;
+      closeTime?: { hours?: number; minutes?: number };
     }>;
   };
-  photos?: Array<{
-    name: string;
-    mediaKey: string;
-    uploadUrl: string;
+  // Legacy response shapes are retained as fallbacks for older API behavior.
+  displayName?: string;
+  primaryPhone?: string;
+  primaryContactInfo?: { emails?: string[] };
+  businessType?: string;
+  shortDescription?: string;
+  serviceAreaBusinesses?: Array<{
+    businessType?: string;
+    areas?: Array<{ displayName?: string }>;
   }>;
+  photos?: Array<{ name?: string; mediaKey?: string; uploadUrl?: string }>;
 }
 
 /**
@@ -220,12 +234,19 @@ export async function fetchGoogleBusinessProfile(
   const accountName = accountsData.accounts[0].name;
 
   // Step 2: Get locations under the account
-  const locationsResponse = await fetch(
-    `https://mybusinessbusinessinformation.googleapis.com/v1/${accountName}/locations`,
-    {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    }
-  );
+  const readMask = [
+    "title",
+    "phoneNumbers",
+    "websiteUri",
+    "regularHours",
+    "profile",
+    "serviceArea",
+  ].join(",");
+  const locationsUrl =
+    `https://mybusinessbusinessinformation.googleapis.com/v1/${accountName}/locations?readMask=${encodeURIComponent(readMask)}`;
+  const locationsResponse = await fetch(locationsUrl, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
 
   if (!locationsResponse.ok) {
     throw new Error(
@@ -253,23 +274,30 @@ export async function fetchGoogleBusinessProfile(
  */
 function extractGoogleProfile(location: GoogleLocation): GoogleBusinessProfile {
   const serviceAreas: string[] = [];
-  if (location.serviceAreaBusinesses) {
-    for (const sab of location.serviceAreaBusinesses) {
-      if (sab.areas) {
-        serviceAreas.push(...sab.areas.map((a) => a.displayName));
-      }
+  for (const place of location.serviceArea?.places?.placeInfos ?? []) {
+    if (place.placeName) serviceAreas.push(place.placeName);
+  }
+  for (const sab of location.serviceAreaBusinesses ?? []) {
+    for (const area of sab.areas ?? []) {
+      if (area.displayName) serviceAreas.push(area.displayName);
     }
   }
 
   const hours = formatBusinessHours(location.regularHours);
 
   return {
-    agentName: location.displayName || "",
-    phone: location.primaryPhone || "",
+    agentName: location.title || location.displayName || "",
+    phone:
+      location.phoneNumbers?.primaryPhone ||
+      location.primaryPhone ||
+      "",
+    // Business Information API v1 does not expose a business contact email on
+    // the Location resource. Keep this blank rather than mislabeling the
+    // authenticated Google account email as the business email.
     email: location.primaryContactInfo?.emails?.[0] || "",
     website: location.websiteUri || "",
-    brokerage: location.businessType || "", // Often "LOCAL_BUSINESS" or "REAL_ESTATE_AGENT"
-    serviceAreas: serviceAreas.join(", "),
+    brokerage: "",
+    serviceAreas: Array.from(new Set(serviceAreas)).join(", "),
     businessHours: hours,
     bio: location.profile?.description || location.shortDescription || "",
     headshotUrl: location.photos?.[0]?.mediaKey || undefined,
@@ -282,17 +310,15 @@ function extractGoogleProfile(location: GoogleLocation): GoogleBusinessProfile {
  */
 function formatBusinessHours(
   regularHours?: {
-    periods: Array<{
-      openDay: number;
-      openTime: { hours: number; minutes: number };
-      closeDay: number;
-      closeTime: { hours: number; minutes: number };
+    periods?: Array<{
+      openDay?: number | string;
+      openTime?: { hours?: number; minutes?: number };
+      closeDay?: number | string;
+      closeTime?: { hours?: number; minutes?: number };
     }>;
   }
 ): string {
-  if (!regularHours?.periods || regularHours.periods.length === 0) {
-    return "";
-  }
+  if (!regularHours?.periods?.length) return "";
 
   const dayNames = [
     "Sun",
@@ -303,33 +329,52 @@ function formatBusinessHours(
     "Fri",
     "Sat",
   ];
-
-  const formatTime = (h: number, m: number): string => {
-    const period = h >= 12 ? "pm" : "am";
-    const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-    return m === 0 ? `${hour12}${period}` : `${hour12}:${m.toString().padStart(2, "0")}${period}`;
+  const dayMap: Record<string, number> = {
+    SUNDAY: 0,
+    MONDAY: 1,
+    TUESDAY: 2,
+    WEDNESDAY: 3,
+    THURSDAY: 4,
+    FRIDAY: 5,
+    SATURDAY: 6,
+  };
+  const dayIndex = (value: number | string | undefined): number | null => {
+    if (typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= 6) {
+      return value;
+    }
+    if (typeof value === "string") {
+      const normalized = value.trim().toUpperCase();
+      if (normalized in dayMap) return dayMap[normalized];
+      const numeric = Number(normalized);
+      if (Number.isInteger(numeric) && numeric >= 0 && numeric <= 6) return numeric;
+    }
+    return null;
   };
 
-  // Group periods by day range
+  const formatTime = (h: number | undefined, m: number | undefined): string => {
+    const hour = Number.isFinite(h) ? Number(h) : 0;
+    const minute = Number.isFinite(m) ? Number(m) : 0;
+    const period = hour >= 12 ? "pm" : "am";
+    const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+    return minute === 0
+      ? `${hour12}${period}`
+      : `${hour12}:${minute.toString().padStart(2, "0")}${period}`;
+  };
+
   const grouped: string[] = [];
   for (const period of regularHours.periods) {
-    const openDay = dayNames[period.openDay];
-    const closeDay = dayNames[period.closeDay];
-    const openTime = formatTime(
-      period.openTime.hours,
-      period.openTime.minutes
-    );
-    const closeTime = formatTime(
-      period.closeTime.hours,
-      period.closeTime.minutes
-    );
+    const openDayIndex = dayIndex(period.openDay);
+    const closeDayIndex = dayIndex(period.closeDay);
+    if (openDayIndex === null || closeDayIndex === null) continue;
+    const openDay = dayNames[openDayIndex];
+    const closeDay = dayNames[closeDayIndex];
+    const openTime = formatTime(period.openTime?.hours, period.openTime?.minutes);
+    const closeTime = formatTime(period.closeTime?.hours, period.closeTime?.minutes);
 
-    if (period.openDay === period.closeDay) {
+    if (openDayIndex === closeDayIndex) {
       grouped.push(`${openDay} ${openTime}–${closeTime}`);
     } else {
-      grouped.push(
-        `${openDay}–${closeDay} ${openTime}–${closeTime}`
-      );
+      grouped.push(`${openDay}–${closeDay} ${openTime}–${closeTime}`);
     }
   }
 

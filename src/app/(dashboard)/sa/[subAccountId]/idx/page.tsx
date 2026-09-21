@@ -586,42 +586,101 @@ function FeedStatusCard({
       ? `${window.location.origin}/idx/${subAccountId}`
       : `/idx/${subAccountId}`;
 
+  const syncStatus = cfg?.lastSyncStatus ?? null;
+  const resultLabel =
+    syncStatus === "success"
+      ? `${cfg?.listingCount ?? 0} active listings`
+      : syncStatus === "empty"
+        ? "0 listings returned"
+        : syncStatus === "failed"
+          ? "Sync failed"
+          : syncStatus === "syncing"
+            ? "Sync in progress"
+            : "Not tested yet";
+  const resultTone =
+    syncStatus === "failed"
+      ? "text-destructive"
+      : syncStatus === "empty"
+        ? "text-amber-700 dark:text-amber-400"
+        : syncStatus === "success"
+          ? "text-emerald-700 dark:text-emerald-400"
+          : "text-foreground";
+
   return (
-    <div className="grid gap-3 sm:grid-cols-3">
-      <div className="bg-card rounded-2xl border p-4">
-        <p className="text-muted-foreground text-xs">Last MLS sync</p>
-        <p className="mt-1 text-lg font-semibold">
-          {cfg?.lastSyncAt ? formatRelativeTime(cfg.lastSyncAt) : "Never"}
-        </p>
-      </div>
-      <div className="bg-card rounded-2xl border p-4">
-        <p className="text-muted-foreground text-xs">Feed status</p>
-        <p
-          className={cn(
-            "mt-1 text-lg font-semibold",
-            cfg?.lastSyncStatus === "failed" && "text-destructive"
-          )}
-        >
-          {cfg?.lastSyncStatus === "failed" ? "Failed" : "OK"}
-        </p>
-      </div>
-      <div className="bg-card flex items-center gap-2 rounded-2xl border p-4">
-        <div className="min-w-0 flex-1">
-          <p className="text-muted-foreground text-xs">Public search page</p>
-          <p className="truncate text-xs">{publicUrl}</p>
+    <div className="space-y-3">
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div className="bg-card rounded-2xl border p-4">
+          <p className="text-muted-foreground text-xs">Connection</p>
+          <p className="mt-1 text-lg font-semibold text-emerald-700 dark:text-emerald-400">
+            Connected
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            IDX Broker authorization is saved.
+          </p>
         </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            void navigator.clipboard.writeText(publicUrl);
-            toast.success("Link copied.");
-          }}
-        >
-          <Copy className="h-3.5 w-3.5" />
-        </Button>
+        <div className="bg-card rounded-2xl border p-4">
+          <p className="text-muted-foreground text-xs">API result</p>
+          <p className={cn("mt-1 text-lg font-semibold", resultTone)}>
+            {resultLabel}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {cfg?.lastSyncAt
+              ? `Last tested ${formatRelativeTime(cfg.lastSyncAt)}.`
+              : "Run Sync now to test the feed."}
+          </p>
+        </div>
+        <div className="bg-card flex items-center gap-2 rounded-2xl border p-4">
+          <div className="min-w-0 flex-1">
+            <p className="text-muted-foreground text-xs">Public search page</p>
+            <p className="truncate text-xs">{publicUrl}</p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              void navigator.clipboard.writeText(publicUrl);
+              toast.success("Link copied.");
+            }}
+          >
+            <Copy className="h-3.5 w-3.5" />
+          </Button>
+        </div>
       </div>
+
+      {syncStatus === "empty" ? (
+        <div className="rounded-2xl border border-amber-300/60 bg-amber-500/5 p-4 text-sm">
+          <p className="font-medium text-amber-900 dark:text-amber-200">
+            IDX Broker is connected, but its listings API returned zero records.
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-amber-800 dark:text-amber-300">
+            This does not mean the MLS account is broken. The connected IDX Broker
+            account may have no featured listings available to this API response,
+            or its Featured IDs configuration may point at a different agent.
+            Check IDX Broker&apos;s Featured IDs for the intended agent, then run
+            Sync now again.
+          </p>
+          <Link
+            href={`${settingsHref}#mls-feed`}
+            className="mt-3 inline-block text-xs font-medium underline-offset-4 hover:underline"
+          >
+            Open MLS connection settings
+          </Link>
+        </div>
+      ) : null}
+
+      {syncStatus === "failed" && cfg?.lastSyncError ? (
+        <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-sm">
+          <p className="font-medium text-destructive">The last MLS test failed.</p>
+          <p className="mt-1 break-words text-xs text-muted-foreground">{cfg.lastSyncError}</p>
+          <Link
+            href={`${settingsHref}#mls-feed`}
+            className="mt-3 inline-block text-xs font-medium underline-offset-4 hover:underline"
+          >
+            Open MLS connection settings
+          </Link>
+        </div>
+      ) : null}
     </div>
   );
 }
