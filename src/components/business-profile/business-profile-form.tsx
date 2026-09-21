@@ -7,6 +7,7 @@ import {
   ArrowRight,
   Check,
   Eye,
+  ExternalLink,
   Globe2,
   Loader2,
   Plus,
@@ -212,6 +213,12 @@ export function BusinessProfileForm() {
   const [mediaOpen, setMediaOpen] = useState<
     "logoUrl" | "headshotUrl" | "buyerGuideUrl" | "sellerGuideUrl" | null
   >(null);
+  const [portalProfiles, setPortalProfiles] = useState({
+    zillow: "",
+    homes: "",
+    realtor: "",
+  });
+  const [savingPortalProfiles, setSavingPortalProfiles] = useState(false);
   /**
    * The initial load failed, so `content` is still EMPTY_BUSINESS_PROFILE
    * rather than what's actually stored. Saving from this state PATCHes every
@@ -226,6 +233,51 @@ export function BusinessProfileForm() {
   useEffect(() => {
     if (connectionImport) setImportUrl(connectionImport);
   }, [connectionImport]);
+
+  useEffect(() => {
+    if (!subAccountId) return;
+    void fetch(`/api/sub-accounts/${subAccountId}/marketing/sources`)
+      .then((res) => res.json())
+      .then((data: { portalProfiles?: Partial<typeof portalProfiles> }) => {
+        setPortalProfiles((current) => ({
+          ...current,
+          ...(data.portalProfiles ?? {}),
+        }));
+      })
+      .catch(() => undefined);
+  }, [subAccountId]);
+
+  async function savePortalProfiles() {
+    setSavingPortalProfiles(true);
+    try {
+      const res = await fetch(`/api/sub-accounts/${subAccountId}/marketing/sources`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ portalProfiles }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+        portalProfiles?: Partial<typeof portalProfiles>;
+      };
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error ?? "Could not save public profile links.");
+      }
+      setPortalProfiles((current) => ({
+        ...current,
+        ...(data.portalProfiles ?? {}),
+      }));
+      toast.success("Public profile links saved.");
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Could not save public profile links.",
+      );
+    } finally {
+      setSavingPortalProfiles(false);
+    }
+  }
 
   useEffect(() => {
     let active = true;
@@ -772,6 +824,54 @@ export function BusinessProfileForm() {
         </div>
       </section>
 
+      <Section
+        title="Public profiles"
+        desc="Save the public profile pages people use to find you. These are reference links, not integrations, and AgentStack does not sync with these sites."
+      >
+        <div className="grid gap-4 sm:grid-cols-3">
+          {([
+            ["zillow", "Zillow profile", "https://www.zillow.com/profile/..."],
+            ["homes", "Homes.com profile", "https://www.homes.com/..."],
+            ["realtor", "Realtor.com profile", "https://www.realtor.com/..."],
+          ] as const).map(([key, label, placeholder]) => (
+            <Field key={key} label={label}>
+              <input
+                type="url"
+                className={input}
+                value={portalProfiles[key]}
+                onChange={(event) =>
+                  setPortalProfiles((current) => ({
+                    ...current,
+                    [key]: event.target.value,
+                  }))
+                }
+                placeholder={placeholder}
+              />
+              {portalProfiles[key] ? (
+                <a
+                  href={portalProfiles[key]}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-1 inline-flex items-center gap-1 text-[11px] text-primary underline"
+                >
+                  View public profile <ExternalLink className="h-3 w-3" />
+                </a>
+              ) : null}
+            </Field>
+          ))}
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            size="sm"
+            onClick={savePortalProfiles}
+            disabled={savingPortalProfiles}
+          >
+            {savingPortalProfiles ? "Saving…" : "Save public profile links"}
+          </Button>
+        </div>
+      </Section>
+
       {/* Google OAuth Import */}
       <GoogleOAuthImport onProfileImported={handleGoogleProfileImported} />
 
@@ -1198,486 +1298,3 @@ export function BusinessProfileForm() {
                 <p className="text-xs text-muted-foreground">Stored in your approved Media Library.</p>
               </div>
               <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => set("logoUrl", "")}
-                aria-label="Remove brand logo"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          ) : (
-            <p className="rounded-lg border border-dashed p-3 text-xs text-muted-foreground">
-              No logo uploaded yet. Upload one or choose an approved image from your Media Library.
-            </p>
-          )}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="mt-2"
-            onClick={() => setMediaOpen("logoUrl")}
-          >
-            <Upload className="mr-1.5 h-3.5 w-3.5" />
-            Upload or choose from Media Library
-          </Button>
-        </Field>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Buyer guide link">
-            <input
-              className={input}
-              value={content.buyerGuideUrl}
-              onChange={(e) => set("buyerGuideUrl", e.target.value)}
-              placeholder="https://…/buyer-guide.pdf"
-            />
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="mt-2"
-              onClick={() => setMediaOpen("buyerGuideUrl")}
-            >
-              <Upload className="mr-1.5 h-3.5 w-3.5" />
-              Upload or choose
-            </Button>
-          </Field>
-          <Field label="Seller guide link">
-            <input
-              className={input}
-              value={content.sellerGuideUrl}
-              onChange={(e) => set("sellerGuideUrl", e.target.value)}
-              placeholder="https://…/seller-guide.pdf"
-            />
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="mt-2"
-              onClick={() => setMediaOpen("sellerGuideUrl")}
-            >
-              <Upload className="mr-1.5 h-3.5 w-3.5" />
-              Upload or choose
-            </Button>
-          </Field>
-        </div>
-        <Field
-          label="Preferred vendors"
-          hint="Lenders, attorneys, inspectors, photographers the AI can recommend."
-          {...ai("vendors")}
-        >
-          <textarea
-            rows={2}
-            className={input}
-            value={content.vendors}
-            onChange={(e) => set("vendors", e.target.value)}
-            placeholder="Lender: Sam at Rate Inc. · Inspector: Ace Home Inspections"
-          />
-        </Field>
-        <Field label="Testimonials" {...ai("testimonials")}>
-          <textarea
-            rows={2}
-            className={input}
-            value={content.testimonials}
-            onChange={(e) => set("testimonials", e.target.value)}
-            placeholder="“Jane sold our home in 6 days over asking.” — The Rivers family"
-          />
-        </Field>
-      </Section>
-
-      {/* 9. Buyer & seller process */}
-      <Section
-        title="10. Buyer & seller process"
-        desc="What happens after someone inquires — the AI uses this to explain next steps and write on-brand listing copy."
-      >
-        <Field
-          label="Buyer process"
-          hint="Walk through what a buyer lead can expect, step by step."
-          {...ai("buyerProcess")}
-        >
-          <textarea
-            rows={3}
-            className={input}
-            value={content.buyerProcess}
-            onChange={(e) => set("buyerProcess", e.target.value)}
-            placeholder="We start with a quick call to understand your budget and timeline, then set up a search and schedule showings within 48 hours."
-          />
-        </Field>
-        <Field
-          label="Seller process"
-          hint="Walk through what a seller lead can expect, step by step."
-          {...ai("sellerProcess")}
-        >
-          <textarea
-            rows={3}
-            className={input}
-            value={content.sellerProcess}
-            onChange={(e) => set("sellerProcess", e.target.value)}
-            placeholder="We start with a free valuation and walkthrough, then prep a listing plan and target an on-market date within 2 weeks."
-          />
-        </Field>
-        <Field
-          label="Listing description style"
-          hint="How should AI-written listing descriptions sound?"
-          {...ai("listingCopyStyle")}
-        >
-          <textarea
-            rows={2}
-            className={input}
-            value={content.listingCopyStyle}
-            onChange={(e) => set("listingCopyStyle", e.target.value)}
-            placeholder="Warm and specific — lead with the best feature, avoid clichés like 'must see', always mention the neighborhood."
-          />
-        </Field>
-      </Section>
-
-      {/* 10. Objections */}
-      <Section
-        title="11. Objections"
-        desc="Common pushback and your approved response. The AI uses these to handle objections the way you would."
-      >
-        <div className="space-y-3">
-          {content.objections.map((o, i) => (
-            <div key={i} className="rounded-xl border p-3">
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-muted-foreground text-xs font-medium">
-                  Objection {i + 1}
-                </span>
-                <button
-                  onClick={() =>
-                    set(
-                      "objections",
-                      content.objections.filter((_, idx) => idx !== i)
-                    )
-                  }
-                  className="text-muted-foreground hover:text-red-500"
-                  aria-label="Remove objection"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-              <input
-                className={`${input} mb-2`}
-                value={o.objection}
-                onChange={(e) => setObjection(i, "objection", e.target.value)}
-                placeholder="Objection — e.g. I want to wait for rates to drop."
-              />
-              <textarea
-                rows={2}
-                className={input}
-                value={o.response}
-                onChange={(e) => setObjection(i, "response", e.target.value)}
-                placeholder="Approved response — e.g. Totally fair — here's what waiting could cost you in this market..."
-              />
-            </div>
-          ))}
-          {content.objections.length < MAX_LIST_ITEMS ? (
-            <button
-              onClick={() =>
-                set("objections", [
-                  ...content.objections,
-                  { objection: "", response: "" },
-                ])
-              }
-              className="flex items-center gap-1 text-xs font-medium text-[#1b3d7a] hover:underline"
-            >
-              <Plus className="h-3.5 w-3.5" /> Add an objection
-            </button>
-          ) : null}
-        </div>
-      </Section>
-
-      {/* 11. Documents */}
-      <Section
-        title="12. Documents"
-        desc="Links the AI can share — comp sheets, disclosures, checklists, anything beyond the buyer/seller guides above."
-      >
-        <div className="space-y-3">
-          {content.documents.map((d, i) => (
-            <div key={i} className="rounded-xl border p-3">
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-muted-foreground text-xs font-medium">
-                  Document {i + 1}
-                </span>
-                <button
-                  onClick={() =>
-                    set(
-                      "documents",
-                      content.documents.filter((_, idx) => idx !== i)
-                    )
-                  }
-                  className="text-muted-foreground hover:text-red-500"
-                  aria-label="Remove document"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-              <input
-                className={`${input} mb-2`}
-                value={d.label}
-                onChange={(e) => setDocument(i, "label", e.target.value)}
-                placeholder="Label — e.g. Pre-listing checklist"
-              />
-              <input
-                className={input}
-                value={d.url}
-                onChange={(e) => setDocument(i, "url", e.target.value)}
-                placeholder="https://…/checklist.pdf"
-              />
-            </div>
-          ))}
-          {content.documents.length < MAX_LIST_ITEMS ? (
-            <button
-              onClick={() =>
-                set("documents", [...content.documents, { label: "", url: "" }])
-              }
-              className="flex items-center gap-1 text-xs font-medium text-[#1b3d7a] hover:underline"
-            >
-              <Plus className="h-3.5 w-3.5" /> Add a document
-            </button>
-          ) : null}
-        </div>
-      </Section>
-
-      {/* 12. Your scripts */}
-      <Section
-        title="13. Your scripts"
-        desc="For your own reference — not sent to leads. Cold-call openers, listing presentation talk tracks, anything in your own voice."
-      >
-        <Field label="Scripts" {...ai("scripts")}>
-          <textarea
-            rows={4}
-            className={input}
-            value={content.scripts}
-            onChange={(e) => set("scripts", e.target.value)}
-            placeholder="Cold-call opener: Hi, this is Jane with Keller Williams. I noticed..."
-          />
-        </Field>
-      </Section>
-
-      {/* 13. FAQs */}
-      <Section
-        title="14. FAQs"
-        desc="Approved answers the AI can use word-for-word. Great for the questions you get all the time."
-      >
-        <div className="space-y-3">
-          {content.faqs.map((f, i) => (
-            <div key={i} className="rounded-xl border p-3">
-              <div className="mb-2 flex items-center justify-between">
-                <span className="text-muted-foreground text-xs font-medium">
-                  FAQ {i + 1}
-                </span>
-                <button
-                  onClick={() =>
-                    set(
-                      "faqs",
-                      content.faqs.filter((_, idx) => idx !== i)
-                    )
-                  }
-                  className="text-muted-foreground hover:text-red-500"
-                  aria-label="Remove FAQ"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-              <input
-                className={`${input} mb-2`}
-                value={f.q}
-                onChange={(e) => setFaq(i, "q", e.target.value)}
-                placeholder="Question — e.g. Do you charge for a home valuation?"
-              />
-              <textarea
-                rows={2}
-                className={input}
-                value={f.a}
-                onChange={(e) => setFaq(i, "a", e.target.value)}
-                placeholder="Approved answer — e.g. No, my home valuations are always free and no-obligation."
-              />
-            </div>
-          ))}
-          {content.faqs.length < 30 ? (
-            <button
-              onClick={() => set("faqs", [...content.faqs, { q: "", a: "" }])}
-              className="flex items-center gap-1 text-xs font-medium text-[#1b3d7a] hover:underline"
-            >
-              <Plus className="h-3.5 w-3.5" /> Add an FAQ
-            </button>
-          ) : null}
-        </div>
-      </Section>
-
-      {/* AI setup — confirm-and-go */}
-      <Section
-        title="AI setup — done for you"
-        desc="No prompt-writing. Generate a ready-to-use AI persona straight from everything above."
-      >
-        <div className="flex items-start gap-3 rounded-xl border border-blue-200/60 bg-blue-50/60 p-4 dark:border-blue-900/40 dark:bg-blue-950/30">
-          <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
-          <div className="min-w-0 flex-1">
-            <p className="text-sm text-blue-900/80 dark:text-blue-100/80">
-              We&apos;ll write your AI assistant&apos;s voice from your profile
-              and apply it to every channel — chat, SMS, and voice. You can fine
-              tune it later on the AI Agents page.
-            </p>
-            <Button
-              className="mt-3"
-              size="sm"
-              onClick={generatePersona}
-              disabled={generating || saving}
-            >
-              {generating ? (
-                <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Sparkles className="mr-1 h-3.5 w-3.5" />
-              )}
-              Generate my AI assistant
-            </Button>
-          </div>
-        </div>
-      </Section>
-
-      {/* Sticky save bar */}
-      <div className="bg-background/95 fixed inset-x-0 bottom-0 z-10 border-t px-4 py-3 backdrop-blur lg:left-64">
-        <div className="mx-auto flex max-w-4xl items-center justify-between gap-3">
-          <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
-            <Shield className="h-3.5 w-3.5" />
-            Saved to your private workspace. Used only by your AI tools.
-          </p>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              onClick={resetBlueprint}
-              disabled={saving || resetting}
-              className="text-muted-foreground hover:text-destructive"
-            >
-              {resetting ? (
-                <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-              ) : (
-                <Trash2 className="mr-1 h-4 w-4" />
-              )}
-              Start over
-            </Button>
-            <Button
-              variant="outline"
-              onClick={save}
-              disabled={saving || loadFailed}
-            >
-              {saving ? (
-                <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-              ) : (
-                <Check className="mr-1 h-4 w-4" />
-              )}
-              Save profile
-            </Button>
-            {fromWizard && (
-              <Button
-                onClick={async () => {
-                  const ok = await save();
-                  if (ok) router.push(saPath("/get-started"));
-                }}
-                disabled={saving || loadFailed}
-              >
-                {saving ? (
-                  <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-                ) : (
-                  <ArrowRight className="mr-1 h-4 w-4" />
-                )}
-                Save &amp; Continue setup
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-        <DialogContent className="max-h-[80vh] max-w-xl overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>What AgentStack knows about your business</DialogTitle>
-            <DialogDescription>
-              The exact text every AI assistant reads before replying — updates
-              live as you edit the Blueprint below. Nothing here is ever spoken
-              verbatim; it&rsquo;s reference material the AI draws on.
-            </DialogDescription>
-          </DialogHeader>
-          {(() => {
-            const compiled = compileBusinessProfilePrompt(content);
-            return compiled ? (
-              <pre className="bg-muted/30 rounded-lg border p-4 font-mono text-xs leading-relaxed whitespace-pre-wrap">
-                {compiled}
-              </pre>
-            ) : (
-              <p className="text-muted-foreground rounded-lg border border-dashed p-6 text-center text-sm">
-                Nothing to show yet — fill in a few fields below (like your
-                name, brokerage, or service areas) and they&rsquo;ll appear
-                here.
-              </p>
-            );
-          })()}
-        </DialogContent>
-      </Dialog>
-      <Dialog
-        open={mediaOpen !== null}
-        onOpenChange={(open) => {
-          if (!open) setMediaOpen(null);
-        }}
-      >
-        <DialogContent className="max-h-[85vh] max-w-3xl overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              {mediaOpen === "headshotUrl" || mediaOpen === "logoUrl"
-                ? "Upload a profile image"
-                : "Choose from your Media Library"}
-            </DialogTitle>
-            <DialogDescription>
-              {mediaOpen === "headshotUrl" || mediaOpen === "logoUrl"
-                ? "Upload a new image or select an approved image you already use. PDFs cannot be used for profile images."
-                : "Upload a new approved asset or select one you already use. The selected file will be linked to this Blueprint field."}
-            </DialogDescription>
-          </DialogHeader>
-          <MediaLibrary
-            compact
-            onSelect={(asset) => {
-              if (mediaOpen) chooseMedia(mediaOpen, asset);
-            }}
-          />
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-}
-
-function ToggleRow({
-  label,
-  hint,
-  checked,
-  onChange,
-}: {
-  label: string;
-  hint: string;
-  checked: boolean;
-  onChange: (v: boolean) => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={() => onChange(!checked)}
-      className="flex w-full items-start gap-3 rounded-lg border p-3 text-left"
-    >
-      <span
-        className={`mt-0.5 flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 transition-colors ${
-          checked ? "bg-[#1b3d7a]" : "bg-muted"
-        }`}
-      >
-        <span
-          className={`h-4 w-4 rounded-full bg-white shadow transition-transform ${
-            checked ? "translate-x-4" : ""
-          }`}
-        />
-      </span>
-      <span>
-        <span className="block text-sm font-medium">{label}</span>
-        <span className="text-muted-foreground block text-xs">{hint}</span>
-      </span>
-    </button>
-  );
-}
