@@ -3,7 +3,7 @@ import "server-only";
 import { NextResponse } from "next/server";
 import { requireSubAccountMember } from "@/lib/auth/require-tenancy";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
-import { computeSiteHealth } from "@/lib/site-health/tasks";
+import { computeSiteHealth, isBusinessEmailVerified } from "@/lib/site-health/tasks";
 import {
   PLATFORM_SIGNATURES,
   isConfirmedOffPlatform,
@@ -64,18 +64,22 @@ export async function GET(
   // A saved Reply-To address is configuration, not proof that the operator
   // controls that mailbox. When it matches the signed-in user's address, use
   // Firebase's authoritative verification state; otherwise require a verified
-  // sending provider. This keeps Site Health from reporting an arbitrary typed
-  // address as "verified".
+  // sending provider.
   const authUser = await getAdminAuth().getUser(access.uid);
   const accountEmailMatchesReplyTo =
     Boolean(authUser.email) &&
-    hasTrustedReplyTo &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(replyToEmail) &&
     authUser.email!.trim().toLowerCase() === replyToEmail.toLowerCase();
   const firebaseEmailVerified =
     accountEmailMatchesReplyTo && authUser.emailVerified === true;
-  const businessEmailVerified =
-    hasTrustedReplyTo &&
-    (firebaseEmailVerified || resendVerified || googleWorkspaceConnected);
+  const businessEmailVerified = isBusinessEmailVerified({
+    replyToEmail,
+    accountEmail: authUser.email ?? undefined,
+    accountEmailVerified: authUser.emailVerified,
+    resendVerified,
+    googleWorkspaceConnected,
+  });
+
   const profile = (profileSnap.data() ??
     {}) as Partial<BusinessProfileContent> & {
     completeness?: number;
