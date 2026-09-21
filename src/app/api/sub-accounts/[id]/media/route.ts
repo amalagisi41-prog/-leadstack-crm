@@ -183,10 +183,29 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
     }
 
     const brandAsset = form?.get("brandAsset") === "true";
+    const folderPath =
+      String(form?.get("folderPath") ?? "")
+        .trim()
+        .replace(/\\+/g, "/")
+        .replace(/^\/+|\/+$/g, "")
+        .replace(/\/+/g, " / ") || null;
     const publicUrl = brandAsset
       ? `${new URL(request.url).origin}/api/sub-accounts/${id}/media/${ref.id}`
       : null;
-    const asset = { name: cleanName, url, publicUrl, brandAsset, token, storagePath, contentType: file.type, size: file.size, uploadedByUid: access.uid, createdAt: FieldValue.serverTimestamp() };
+    const asset = {
+      name: cleanName,
+      url,
+      publicUrl,
+      brandAsset,
+      token,
+      storagePath,
+      folderPath,
+      propertyId: String(form?.get("propertyId") ?? "").trim() || null,
+      contentType: file.type,
+      size: file.size,
+      uploadedByUid: access.uid,
+      createdAt: FieldValue.serverTimestamp(),
+    };
     await ref.set(asset);
     return NextResponse.json({ asset: { id: ref.id, ...asset, createdAt: new Date().toISOString() } }, { status: 201 });
   } catch (error) {
