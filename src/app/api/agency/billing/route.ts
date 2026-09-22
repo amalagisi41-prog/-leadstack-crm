@@ -14,6 +14,10 @@ import {
   summarizeSubscription,
   type BillingSnapshot,
 } from "@/lib/stripe/subscription-management";
+import {
+  billUnbilledAddOns,
+  findUnbilledAddOns,
+} from "@/lib/stripe/add-on-reconcile";
 
 type BillingAction =
   | {
@@ -30,6 +34,9 @@ type BillingAction =
     }
   | {
       action: "portal";
+    }
+  | {
+      action: "bill_add_ons";
     };
 
 interface CallerClaims {
@@ -120,9 +127,10 @@ export async function GET(request: Request) {
   if (owner instanceof NextResponse) return owner;
 
   const subscription = await retrieveAgencySubscription(owner.agency);
-  return NextResponse.json(
-    responseForSummary(await summarizeAgencyBilling(subscription)),
-  );
+  return NextResponse.json({
+    ...responseForSummary(await summarizeAgencyBilling(subscription)),
+    unbilledAddOns: await findUnbilledAddOns(owner.agencyId, subscription),
+  });
 }
 
 export async function POST(request: Request) {
@@ -145,6 +153,20 @@ export async function POST(request: Request) {
       { error: "No active subscription found for this agency." },
       { status: 400 },
     );
+  }
+
+  if (body.action === "bill_add_ons") {
+    const unresolved = await billUnbilledAddOns(
+      owner.agency,
+      owner.agencyId,
+      subscription,
+    );
+    const refreshed = await retrieveAgencySubscription(owner.agency);
+    return NextResponse.json({
+      ...responseForSummary(await summarizeAgencyBilling(refreshed)),
+      unbilledAddOns: await findUnbilledAddOns(owner.agencyId, refreshed),
+      unresolved,
+    });
   }
 
   if (body.action === "portal") {
