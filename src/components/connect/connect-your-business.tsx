@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 
 import { doc, onSnapshot } from "firebase/firestore";
 import {
@@ -15,7 +17,6 @@ import {
   MessagesSquare,
   Phone,
   Search,
-  Sparkles,
   Star,
   Upload,
   Globe2,
@@ -28,6 +29,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { EasyConnectorsSection } from "@/components/connect/easy-connectors-section";
+import { GoogleGIcon } from "@/components/brand/google-g-icon";
+import { googleAccountConnectPath } from "@/lib/google/account-connect-path";
 
 type ConnectionStatus =
   | "connected"
@@ -115,7 +118,11 @@ function ConnectionCard({ data }: { data: ConnectionCardData }) {
             variant="outline"
             className="w-full"
             render={
-              data.actionHref ? <Link href={data.actionHref} /> : undefined
+              data.actionHref
+                ? data.actionHref.startsWith("/api/")
+                  ? <a href={data.actionHref} />
+                  : <Link href={data.actionHref} />
+                : undefined
             }
           >
             {data.actionLabel}
@@ -140,6 +147,25 @@ export function ConnectYourBusiness() {
   const { subAccount, saPath } = useSubAccount();
   const [webChatEnabled, setWebChatEnabled] = useState<boolean | null>(null);
   const [search, setSearch] = useState("");
+  const searchParams = useSearchParams();
+  const googleResult = searchParams.get("google");
+  const googleError = searchParams.get("google_error");
+
+  useEffect(() => {
+    if (googleResult === "connected") {
+      toast.success("Google account connected.");
+    } else if (googleResult === "error") {
+      const reason =
+        googleError === "access_denied"
+          ? "Google access was not granted."
+          : googleError === "not_configured"
+            ? "Google sign-in is not configured on this deployment yet."
+            : googleError === "admin_only"
+              ? "Only a sub-account admin can connect Google."
+              : "Google connection did not finish. Try again.";
+      toast.error(reason);
+    }
+  }, [googleResult, googleError]);
 
   useEffect(() => {
     if (!subAccount) return;
@@ -166,6 +192,7 @@ export function ConnectYourBusiness() {
     const aiAgentsHref = saPath("/ai-agents/web-chat");
     const domainHref = saPath("/domain");
     const calendarHref = `${settingsHref}#calendar-connection`;
+    const googleAccount = subAccount.googleAccountConfig ?? null;
 
     const smsConnected = subAccount.twilioConfig?.enabled === true;
     const emailDomainVerified =
@@ -360,14 +387,16 @@ export function ConnectYourBusiness() {
         actionHref: idxConfigured ? mlsFeedHref : saPath("/idx"),
       },
       {
-        key: "gbp",
-        icon: Sparkles,
-        iconTone: "bg-blue-100 text-blue-700",
-        title: "Google Business Profile",
-        blurb: "View and manage your Google Business Profile details inside your Business Blueprint.",
-        status: "not_connected" as const,
-        actionLabel: "Open Blueprint",
-        actionHref: saPath("/business-profile"),
+        key: "google-account",
+        icon: GoogleGIcon,
+        iconTone: "bg-white text-foreground ring-1 ring-border",
+        title: "Google Profile",
+        detail: googleAccount?.email || undefined,
+        blurb:
+          "Connect your Google account once: profile, Gmail sending, Google Calendar, and Business Profile. OAuth keeps credentials server-side.",
+        status: googleAccount?.status === "connected" ? "connected" : "not_connected",
+        actionLabel: googleAccount?.status === "connected" ? "Reconnect Google" : "Connect Google",
+        actionHref: googleAccountConnectPath(subAccount.id),
       },
       {
         key: "google-reviews",

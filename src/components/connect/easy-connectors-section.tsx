@@ -22,6 +22,7 @@ import { useSubAccount } from "@/context/sub-account-context";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { SUB_ACCOUNT_ROUTES } from "@/lib/navigation/sub-account-routes";
+import { googleAccountConnectPath } from "@/lib/google/account-connect-path";
 
 type ConnectorState = "connected" | "setup" | "external" | "available" | "coming_soon";
 
@@ -165,9 +166,9 @@ export function EasyConnectorsSection() {
     reach: {
       question: "Where do you want to be connected first?",
       options: [
-        { title: "Google", description: "Open Business Brain for your business profile, reviews, and Google setup.", href: saPath("/business-profile"), action: "Connect Google" },
+        { title: "Google", description: "Connect your Google account once: profile, Gmail, Calendar, and Business Profile.", href: googleAccountConnectPath(subAccount.id), action: "Connect Google" },
         { title: "Facebook & Instagram", description: "Authorize Meta so messages can flow into Conversations and publishing can use your connected page.", href: settingsHref, action: "Connect social" },
-        { title: "Both", description: "Start with Google and social; AS will keep the next step clear.", href: saPath("/business-profile"), action: "Start connections" },
+        { title: "Both", description: "Start with your Google account, then connect Facebook & Instagram.", href: googleAccountConnectPath(subAccount.id), action: "Start with Google" },
       ],
     },
     leads: {
@@ -328,7 +329,7 @@ export function EasyConnectorsSection() {
                 key={option.title}
                 variant="outline"
                 className="h-auto items-start justify-start rounded-xl p-4 text-left"
-                render={<Link href={option.href} />}
+                render={option.href.startsWith("/api/") ? <a href={option.href} /> : <Link href={option.href} />}
               >
                 <span>
                   <span className="block text-sm font-semibold">{option.title}</span>

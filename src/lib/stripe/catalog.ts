@@ -25,6 +25,13 @@ export type { AddOnKey };
 export { ADD_ON_KEYS, ADD_ON_GATE_FIELD };
 
 export type PlanKey = SelfServePlanKey;
+
+/** Env price ids pasted into a host UI often carry a trailing newline/space,
+ *  which silently breaks every equality check below. */
+function envPrice(name: string): string | null {
+  const value = process.env[name]?.trim();
+  return value ? value : null;
+}
 export const PLAN_KEYS: readonly PlanKey[] = SELF_SERVE_PLAN_KEYS;
 
 export function planPriceId(
@@ -34,12 +41,10 @@ export function planPriceId(
   switch (key) {
     case "starter":
       return interval === "year"
-        ? (process.env.STRIPE_SOLO_ANNUAL_PRICE_ID ?? null)
-        : (process.env.STRIPE_SOLO_PRICE_ID ??
-            process.env.STRIPE_STARTER_PRICE_ID ??
-            null);
+        ? envPrice("STRIPE_SOLO_ANNUAL_PRICE_ID")
+        : (envPrice("STRIPE_SOLO_PRICE_ID") ?? envPrice("STRIPE_STARTER_PRICE_ID"));
     case "pro":
-      return process.env.STRIPE_PRO_PRICE_ID ?? null;
+      return envPrice("STRIPE_PRO_PRICE_ID");
   }
 }
 
@@ -57,11 +62,11 @@ export function planKeyForPriceId(priceId: string): PlanKey | null {
 export function addOnPriceId(key: AddOnKey): string | null {
   switch (key) {
     case "idx":
-      return process.env.STRIPE_ADDON_IDX_PRICE_ID ?? null;
+      return envPrice("STRIPE_ADDON_IDX_PRICE_ID");
     case "social":
-      return process.env.STRIPE_ADDON_SOCIAL_PRICE_ID ?? null;
+      return envPrice("STRIPE_ADDON_SOCIAL_PRICE_ID");
     case "website_studio":
-      return process.env.STRIPE_ADDON_WEBSITE_STUDIO_PRICE_ID ?? null;
+      return envPrice("STRIPE_ADDON_WEBSITE_STUDIO_PRICE_ID");
   }
 }
 
@@ -79,4 +84,37 @@ export function gateFieldForPriceId(priceId: string): string | null {
     if (addOnPriceId(key) === priceId) return ADD_ON_GATE_FIELD[key];
   }
   return null;
+}
+
+/**
+ * Recognize a Stripe price even when the env id does not match it exactly
+ * (a legacy/test price, a re-created price, or a missing env var): fall back
+ * to `metadata.plan_key` / `metadata.addon_key` or the price lookup_key.
+ */
+export function planKeyForPrice(price: {
+  id: string;
+  lookup_key?: string | null;
+  metadata?: Record<string, string> | null;
+}): PlanKey | null {
+  const byId = planKeyForPriceId(price.id);
+  if (byId) return byId;
+  const hint = (price.metadata?.plan_key ?? price.lookup_key ?? "").trim();
+  if (!hint) return null;
+  const normalized = hint === "solo" ? "starter" : hint;
+  return (PLAN_KEYS as readonly string[]).includes(normalized)
+    ? (normalized as PlanKey)
+    : null;
+}
+
+export function addOnKeyForPrice(price: {
+  id: string;
+  lookup_key?: string | null;
+  metadata?: Record<string, string> | null;
+}): AddOnKey | null {
+  const byId = addOnKeyForPriceId(price.id);
+  if (byId) return byId;
+  const hint = (price.metadata?.addon_key ?? price.lookup_key ?? "").trim();
+  return (ADD_ON_KEYS as readonly string[]).includes(hint)
+    ? (hint as AddOnKey)
+    : null;
 }

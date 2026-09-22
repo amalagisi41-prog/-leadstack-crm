@@ -2,6 +2,8 @@ import "server-only";
 
 import { NextRequest, NextResponse } from "next/server";
 import { verifyGoogleOAuthState } from "@/lib/comms/google-oauth-state";
+import { verifyGoogleAccountState } from "@/lib/google/account-connect";
+import { completeGoogleAccountConnection } from "@/lib/google/account-callback";
 
 /**
  * OAuth callback handler for Google Business Profile import.
@@ -21,6 +23,15 @@ export async function GET(request: NextRequest) {
 
   // Handle OAuth errors
   if (error) {
+    const deniedAccount = state ? verifyGoogleAccountState(state) : null;
+    if (deniedAccount) {
+      return NextResponse.redirect(
+        new URL(
+          `/sa/${deniedAccount.subAccountId}/connect?google=error&google_error=${encodeURIComponent(error)}`,
+          request.nextUrl.origin
+        )
+      );
+    }
     const message = errorDescription || error;
     const redirectUrl = new URL("/", request.nextUrl.origin);
     redirectUrl.searchParams.set("oauth_error", error);
@@ -34,6 +45,14 @@ export async function GET(request: NextRequest) {
     redirectUrl.searchParams.set("oauth_error", "invalid_request");
     redirectUrl.searchParams.set("error_message", "Missing code or state parameter");
     return NextResponse.redirect(redirectUrl);
+  }
+
+  // Unified "Google Profile" connection shares this registered redirect URI.
+  // Its state has a distinct shape + HMAC domain, so it is checked first and
+  // can never be mistaken for a Business Profile import state (or vice versa).
+  const account = verifyGoogleAccountState(state);
+  if (account) {
+    return completeGoogleAccountConnection(request, account.subAccountId, code);
   }
 
   // Verify the HMAC signature before trusting anything inside `state`.
