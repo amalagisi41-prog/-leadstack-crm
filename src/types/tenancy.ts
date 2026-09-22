@@ -281,6 +281,8 @@ export interface SubAccountDoc {
   metaConfig?: MetaConfig | null;
   /** Authorized external calendar connection. OAuth tokens live in the server-only secrets subcollection. */
   calendarConfig?: CalendarConnectionConfig | null;
+  /** Unified "Google Profile" connection (profile, Gmail, Calendar, Business Profile). Public half only. */
+  googleAccountConfig?: GoogleAccountConfig | null;
   bookingConfig: BookingConfig | null;
   sendWindow: SendWindow | null;
   /**
@@ -853,6 +855,19 @@ export interface GoogleWorkspaceConfig {
 }
 
 export type CalendarProvider = "google" | "outlook";
+
+export interface GoogleAccountConfig {
+  status: "connected";
+  email: string;
+  name: string;
+  picture: string | null;
+  scopes: string[];
+  gmail: boolean;
+  calendar: boolean;
+  businessProfile: boolean;
+  connectedAt: Date | Timestamp | FieldValue;
+  connectedByUid: string;
+}
 
 export interface CalendarConnectionConfig {
   provider: CalendarProvider;
