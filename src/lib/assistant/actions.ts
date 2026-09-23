@@ -69,7 +69,10 @@ export function sanitizeZackAction(value: unknown): ZackAction | null {
     // send an operator to a 404 page.
     const canonicalPath = path
       .replace(/\/lead-capture(?=\/|$)/, "/forms")
-      .replace(/\/booking\/create(?=\/|$)/, "/booking/new");
+      .replace(/\/booking\/create(?=\/|$)/, "/booking/new")
+      .replace(/\/connections(?=\/|$)/, "/connect")
+      .replace(/\/properties(?=\/|$)/, "/idx")
+      .replace(/\/ai-assistants(?=\/|$)/, "/ai-agents");
     return { type: "navigate", path: canonicalPath, label, description };
   }
 
