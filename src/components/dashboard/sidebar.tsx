@@ -131,7 +131,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/booking", label: "Booking", icon: CalendarClock, enabled: true },
       { href: "/conversations", label: "Conversations", icon: MessagesSquare, enabled: true, badgeKey: "unreadConversations" },
       { href: "/tasks", label: "Tasks", icon: CheckSquare, enabled: true, badgeKey: "dueToday" },
-      { href: "/ai-agents", label: "AI Assistants", icon: Bot, enabled: true },
+      { href: "/ai-agents", label: "AI Agents", icon: Bot, enabled: true },
       { href: "/quotes", label: "Quotes", icon: FileSignature, enabled: true },
       { href: "/reports", label: "Analytics", icon: BarChart3, enabled: true },
     ],
