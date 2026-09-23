@@ -22,37 +22,37 @@ type GoogleUserInfo = {
 
 export async function GET(request: NextRequest) {
   const base = request.nextUrl.origin;
+  const state = request.nextUrl.searchParams.get("state");
+  const verifiedState = state ? verifyCalendarOAuthState(state) : null;
   const redirect = (id: string, error?: string) =>
     NextResponse.redirect(
       new URL(
         id
           ? `/sa/${id}/dashboard/settings?calendar_oauth=${error ? "error" : "success"}${error ? `&calendar_oauth_error=${encodeURIComponent(error)}` : ""}`
-          : "/sa?calendar_oauth_error=server_error",
+          : `/?oauth_error=calendar_${encodeURIComponent(error ?? "server_error")}`,
         base,
       ),
     );
 
   try {
     const code = request.nextUrl.searchParams.get("code");
-    const state = request.nextUrl.searchParams.get("state");
     if (request.nextUrl.searchParams.get("error")) {
-      const verified = state ? verifyCalendarOAuthState(state) : null;
-      return redirect(verified?.subAccountId ?? "", "access_denied");
+      return redirect(verifiedState?.subAccountId ?? "", "access_denied");
     }
-    if (!code || !state) return redirect("", "missing_params");
+    if (!code || !state) return redirect(verifiedState?.subAccountId ?? "", "missing_params");
 
-    const verified = verifyCalendarOAuthState(state);
+    const verified = verifiedState;
     if (!verified || verified.provider !== "google") return redirect("", "invalid_state");
 
     const session = (await cookies()).get("__session")?.value;
-    if (!session) return redirect("", "unauthorized");
+    if (!session) return redirect(verified.subAccountId, "unauthorized");
     const decoded = await getAdminAuth().verifySessionCookie(session, true);
     const membership = await getAdminDb()
       .doc(`subAccounts/${verified.subAccountId}/subAccountMembers/${decoded.uid}`)
       .get();
     const member = membership.data() as { role?: string; status?: string } | undefined;
     if (!membership.exists || member?.role !== "admin" || member.status !== "active") {
-      return redirect("", "unauthorized");
+      return redirect(verified.subAccountId, "unauthorized");
     }
 
     const clientId = process.env.GOOGLE_CALENDAR_CLIENT_ID;
@@ -107,6 +107,6 @@ export async function GET(request: NextRequest) {
     return redirect(verified.subAccountId);
   } catch (error) {
     console.error("[calendar/google-oauth-callback] Error:", error);
-    return redirect("", "server_error");
+    return redirect(verifiedState?.subAccountId ?? "", "server_error");
   }
 }
