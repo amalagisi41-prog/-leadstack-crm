@@ -20,32 +20,41 @@ interface UserInfoResponse {
 }
 
 export async function GET(request: NextRequest) {
-  try {
-    const searchParams = request.nextUrl.searchParams;
-    const code = searchParams.get("code");
-    const state = searchParams.get("state");
-    const error = searchParams.get("error");
+  const searchParams = request.nextUrl.searchParams;
+  const code = searchParams.get("code");
+  const state = searchParams.get("state");
+  const error = searchParams.get("error");
+  const verifiedState = state ? verifyGoogleOAuthState(state) : null;
+  const settingsRedirect = (reason: string) =>
+    verifiedState
+      ? NextResponse.redirect(
+          new URL(
+            `/sa/${verifiedState.subAccountId}/dashboard/settings?tab=messaging&email_oauth_error=${encodeURIComponent(reason)}`,
+            request.nextUrl.origin
+          )
+        )
+      : NextResponse.redirect(
+          new URL(
+            `/?oauth_error=email_${encodeURIComponent(reason)}`,
+            request.nextUrl.origin
+          )
+        );
 
+  try {
     if (error) {
-      return NextResponse.redirect(
-        new URL(`/sa?email_oauth_error=${error}`, request.nextUrl.origin)
-      );
+      return settingsRedirect(error);
     }
 
     if (!code || !state) {
-      return NextResponse.redirect(
-        new URL("/sa?email_oauth_error=missing_params", request.nextUrl.origin)
-      );
+      return settingsRedirect("missing_params");
     }
 
     // Verify the HMAC-signed state. Rejects any `state` we did not mint,
     // which is what stops an attacker from attaching their own Google account
     // to someone else's sub-account.
-    const verified = verifyGoogleOAuthState(state);
+    const verified = verifiedState;
     if (!verified) {
-      return NextResponse.redirect(
-        new URL("/sa?email_oauth_error=invalid_state", request.nextUrl.origin)
-      );
+      return settingsRedirect("invalid_state");
     }
 
     const { subAccountId } = verified;
@@ -80,9 +89,7 @@ export async function GET(request: NextRequest) {
 
     const membershipDoc = await membershipRef.get();
     if (!membershipDoc.exists) {
-      return NextResponse.redirect(
-        new URL("/sa?email_oauth_error=unauthorized", request.nextUrl.origin)
-      );
+      return settingsRedirect("unauthorized");
     }
 
     // Role AND status. Removal sets the membership row's status to "removed"
@@ -93,9 +100,7 @@ export async function GET(request: NextRequest) {
       status?: string;
     };
     if (membership.role !== "admin" || membership.status !== "active") {
-      return NextResponse.redirect(
-        new URL("/sa?email_oauth_error=unauthorized", request.nextUrl.origin)
-      );
+      return settingsRedirect("unauthorized");
     }
 
     // Exchange code for tokens
@@ -117,11 +122,12 @@ export async function GET(request: NextRequest) {
     });
 
     if (!tokenResponse.ok) {
-      const errorData = await tokenResponse.json();
-      console.error("[email/google-oauth-callback] Token exchange failed:", errorData);
-      return NextResponse.redirect(
-        new URL("/sa?email_oauth_error=token_exchange_failed", request.nextUrl.origin)
+      const errorData = await tokenResponse.json().catch(() => null);
+      console.error(
+        "[email/google-oauth-callback] Token exchange failed:",
+        errorData
       );
+      return settingsRedirect("token_exchange_failed");
     }
 
     const tokens = (await tokenResponse.json()) as TokenResponse;
@@ -136,9 +142,7 @@ export async function GET(request: NextRequest) {
 
     if (!userInfoResponse.ok) {
       console.error("[email/google-oauth-callback] Failed to fetch user info");
-      return NextResponse.redirect(
-        new URL("/sa?email_oauth_error=userinfo_failed", request.nextUrl.origin)
-      );
+      return settingsRedirect("userinfo_failed");
     }
 
     const userInfo = (await userInfoResponse.json()) as UserInfoResponse;
@@ -172,8 +176,6 @@ export async function GET(request: NextRequest) {
     );
   } catch (error) {
     console.error("[email/google-oauth-callback] Error:", error);
-    return NextResponse.redirect(
-      new URL("/sa?email_oauth_error=server_error", request.nextUrl.origin)
-    );
+    return settingsRedirect("server_error");
   }
 }
