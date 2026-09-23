@@ -80,15 +80,15 @@ export default function SettingsPage() {
     const params = new URLSearchParams(window.location.search);
     const emailOAuthStatus = params.get("email_oauth");
     const emailOAuthError = params.get("email_oauth_error");
+    const calendarOAuthStatus = params.get("calendar_oauth");
+    const calendarOAuthError = params.get("calendar_oauth_error");
 
     if (emailOAuthStatus === "success") {
+      setSettingsTab("messaging");
       setEmailSetupOpen(true);
       toast.success("Google Workspace connected successfully!");
-      // Clean up the URL
-      const url = new URL(window.location.href);
-      url.searchParams.delete("email_oauth");
-      window.history.replaceState(null, "", url);
     } else if (emailOAuthError) {
+      setSettingsTab("messaging");
       const errorMessages: Record<string, string> = {
         missing_params: "Missing OAuth parameters",
         invalid_state: "Invalid OAuth state",
@@ -98,10 +98,40 @@ export default function SettingsPage() {
         server_error: "Server error occurred",
       };
       const errorMsg = errorMessages[emailOAuthError] || emailOAuthError;
-      toast.error(`OAuth failed: ${errorMsg}`);
-      // Clean up the URL
+      toast.error(`Google email connection failed: ${errorMsg}`);
+    }
+
+    if (calendarOAuthStatus === "success") {
+      setSettingsTab("admin");
+      toast.success("Google Calendar connected successfully!");
+    } else if (calendarOAuthError) {
+      setSettingsTab("admin");
+      const calendarErrorMessages: Record<string, string> = {
+        access_denied: "Google access was not granted",
+        missing_params: "Missing OAuth parameters",
+        invalid_state: "Invalid OAuth state",
+        unauthorized: "You don't have permission to access this resource",
+        not_configured: "Google Calendar is not configured on this deployment",
+        token_exchange_failed: "Failed to exchange authorization code",
+        refresh_token_missing: "Google did not return a refresh token",
+        userinfo_failed: "Failed to fetch Google account information",
+        server_error: "Server error occurred",
+      };
+      const errorMsg =
+        calendarErrorMessages[calendarOAuthError] || calendarOAuthError;
+      toast.error(`Google Calendar connection failed: ${errorMsg}`);
+    }
+
+    if (emailOAuthStatus || emailOAuthError || calendarOAuthStatus || calendarOAuthError) {
       const url = new URL(window.location.href);
-      url.searchParams.delete("email_oauth_error");
+      for (const key of [
+        "email_oauth",
+        "email_oauth_error",
+        "calendar_oauth",
+        "calendar_oauth_error",
+      ]) {
+        url.searchParams.delete(key);
+      }
       window.history.replaceState(null, "", url);
     }
 
