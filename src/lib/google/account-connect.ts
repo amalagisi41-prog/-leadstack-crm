@@ -13,10 +13,8 @@ import { googleBusinessRedirectUri } from "@/lib/business-profile/google-redirec
  *
  * This flow asks for everything once, on the SAME OAuth client
  * (GOOGLE_OAUTH_CLIENT_ID) and the SAME already-registered redirect URI as the
- * Business Profile import, so no Google Cloud console change is needed. The
- * shared callback tells the two apart by the state format: account-connect
- * states carry an extra `acct` segment and a distinct HMAC domain, so a state
- * minted for one flow can never validate as the other.
+ * Business Profile import. Calendar can enter this flow with a signed return
+ * target so the Settings connection card returns to the right screen.
  */
 
 export const GOOGLE_ACCOUNT_SCOPES = [
@@ -37,6 +35,8 @@ export const BUSINESS_MANAGE_SCOPE =
 const STATE_PREFIX = "acct";
 const HMAC_DOMAIN = "googleaccount:";
 
+export type GoogleAccountReturnTo = "connect" | "calendar";
+
 function stateSecret(): string {
   return process.env.AUTOMATIONS_TOKEN_SECRET ?? "";
 }
@@ -51,19 +51,29 @@ function sign(payload: string): string {
 export function signGoogleAccountState(
   subAccountId: string,
   nonce: string = crypto.randomBytes(16).toString("hex"),
+  returnTo: GoogleAccountReturnTo = "connect",
 ): string {
-  const payload = `${STATE_PREFIX}.${subAccountId}.${nonce}`;
+  const payload = `${STATE_PREFIX}.${subAccountId}.${nonce}.${returnTo}`;
   return `${payload}.${sign(payload)}`;
 }
 
 export function verifyGoogleAccountState(
   state: string,
-): { subAccountId: string } | null {
+): { subAccountId: string; returnTo: GoogleAccountReturnTo } | null {
   const parts = state.split(".");
-  if (parts.length !== 4 || parts[0] !== STATE_PREFIX) return null;
-  const [, subAccountId, nonce, sig] = parts;
-  if (!subAccountId || !nonce || !sig) return null;
-  const expected = sign(`${STATE_PREFIX}.${subAccountId}.${nonce}`);
+  if (parts.length !== 5 || parts[0] !== STATE_PREFIX) return null;
+  const [, subAccountId, nonce, returnTo, sig] = parts;
+  if (
+    !subAccountId ||
+    !nonce ||
+    !sig ||
+    (returnTo !== "connect" && returnTo !== "calendar")
+  ) {
+    return null;
+  }
+  const expected = sign(
+    `${STATE_PREFIX}.${subAccountId}.${nonce}.${returnTo}`,
+  );
   if (sig.length !== expected.length) return null;
   try {
     if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) {
@@ -72,7 +82,7 @@ export function verifyGoogleAccountState(
   } catch {
     return null;
   }
-  return { subAccountId };
+  return { subAccountId, returnTo };
 }
 
 export function googleAccountClient(): {
@@ -88,6 +98,7 @@ export function googleAccountClient(): {
 export function buildGoogleAccountAuthUrl(
   subAccountId: string,
   clientId: string,
+  returnTo: GoogleAccountReturnTo = "connect",
 ): string {
   const params = new URLSearchParams({
     client_id: clientId,
@@ -97,7 +108,7 @@ export function buildGoogleAccountAuthUrl(
     access_type: "offline",
     include_granted_scopes: "true",
     prompt: "consent select_account",
-    state: signGoogleAccountState(subAccountId),
+    state: signGoogleAccountState(subAccountId, undefined, returnTo),
   });
   return `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
 }
