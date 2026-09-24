@@ -19,6 +19,13 @@ describe("Google Profile account-connect state", () => {
   it("round-trips the sub-account id", () => {
     expect(verifyGoogleAccountState(signGoogleAccountState("sa_1", "n"))).toEqual({
       subAccountId: "sa_1",
+      returnTo: "connect",
+    });
+    expect(
+      verifyGoogleAccountState(signGoogleAccountState("sa_1", "n", "calendar")),
+    ).toEqual({
+      subAccountId: "sa_1",
+      returnTo: "calendar",
     });
   });
 
@@ -44,6 +51,7 @@ describe("buildGoogleAccountAuthUrl", () => {
     expect(url.searchParams.get("access_type")).toBe("offline");
     expect(verifyGoogleAccountState(url.searchParams.get("state") ?? "")).toEqual({
       subAccountId: "sa_1",
+      returnTo: "connect",
     });
   });
 });

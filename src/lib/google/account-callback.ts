@@ -26,25 +26,26 @@ type TokenResponse = {
 
 type UserInfo = { email?: string; name?: string; picture?: string };
 
-/**
- * Finish the unified Google Profile connection: one token exchange, then fan
- * the grant out to every Google-backed connection the user actually approved
- * (Google's consent screen lets them untick individual scopes).
- *
- * Tokens only ever go to the server-only secrets subcollection; the
- * sub-account document gets the public half so the Connect screen can show
- * "Connected · name@gmail.com".
- */
 export async function completeGoogleAccountConnection(
   request: NextRequest,
   subAccountId: string,
   code: string,
+  returnTo: "connect" | "calendar" = "connect",
 ): Promise<NextResponse> {
   const origin = request.nextUrl.origin;
   const back = (params: string) =>
-    NextResponse.redirect(new URL(`/sa/${subAccountId}/connect?${params}`, origin));
+    NextResponse.redirect(
+      new URL(
+        returnTo === "calendar"
+          ? `/sa/${subAccountId}/dashboard/settings?${params}`
+          : `/sa/${subAccountId}/connect?${params}`,
+        origin,
+      ),
+    );
   const fail = (reason: string) =>
-    back(`google=error&google_error=${encodeURIComponent(reason)}`);
+    returnTo === "calendar"
+      ? back(`calendar_oauth=error&calendar_oauth_error=${encodeURIComponent(reason)}`)
+      : back(`google=error&google_error=${encodeURIComponent(reason)}`);
 
   const access = await requireSubAccountAdmin(request, subAccountId);
   if (access instanceof NextResponse) return fail("unauthorized");
@@ -88,7 +89,6 @@ export async function completeGoogleAccountConnection(
           calendarConfig?: { provider?: string } | null;
         }
       | undefined;
-    // Never silently replace a different sender mailbox or an Outlook calendar.
     const existingSender = current?.googleWorkspaceConfig?.senderEmail;
     const canSetGmail =
       !existingSender || existingSender.toLowerCase() === email.toLowerCase();
@@ -111,7 +111,6 @@ export async function completeGoogleAccountConnection(
     };
 
     if (granted.has(GMAIL_SEND_SCOPE) && canSetGmail) {
-      // Same OAuth client the Gmail sender refreshes with (google-workspace.ts).
       await writeGoogleWorkspaceSecrets(subAccountId, {
         accessToken: tokens.access_token,
         refreshToken: tokens.refresh_token ?? null,
@@ -148,7 +147,9 @@ export async function completeGoogleAccountConnection(
     }
 
     await subRef.update(update);
-    return back("google=connected");
+    return returnTo === "calendar"
+      ? back("calendar_oauth=success")
+      : back("google=connected");
   } catch (err) {
     console.error("[google/account-callback] error", err);
     return fail("server_error");
