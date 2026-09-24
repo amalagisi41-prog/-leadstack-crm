@@ -37,14 +37,14 @@ export async function completeGoogleAccountConnection(
     NextResponse.redirect(
       new URL(
         returnTo === "calendar"
-          ? `/sa/${subAccountId}/dashboard/settings?calendar_oauth=${params.includes("google=connected") ? "success" : "error"}${params.includes("google_error=") ? `&calendar_oauth_error=${params.split("google_error=")[1]}` : ""}`
+          ? `/sa/${subAccountId}/dashboard/settings?${params}`
           : `/sa/${subAccountId}/connect?${params}`,
         origin,
       ),
     );
   const fail = (reason: string) =>
     returnTo === "calendar"
-      ? back(`calendar_error&google_error=${encodeURIComponent(reason)}`)
+      ? back(`calendar_oauth=error&calendar_oauth_error=${encodeURIComponent(reason)}`)
       : back(`google=error&google_error=${encodeURIComponent(reason)}`);
 
   const access = await requireSubAccountAdmin(request, subAccountId);
@@ -148,7 +148,7 @@ export async function completeGoogleAccountConnection(
 
     await subRef.update(update);
     return returnTo === "calendar"
-      ? back("calendar_oauth_success")
+      ? back("calendar_oauth=success")
       : back("google=connected");
   } catch (err) {
     console.error("[google/account-callback] error", err);
