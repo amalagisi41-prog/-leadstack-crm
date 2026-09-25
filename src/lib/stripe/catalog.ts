@@ -1,6 +1,11 @@
 import "server-only";
 
-import { ADD_ON_GATE_FIELD, ADD_ON_KEYS, type AddOnKey } from "./addon-catalog";
+import {
+  ADD_ON_GATE_FIELD,
+  ADD_ON_KEYS,
+  ADD_ON_PRICE_ENV_VAR,
+  type AddOnKey,
+} from "./addon-catalog";
 import { SELF_SERVE_PLAN_KEYS, type SelfServePlanKey } from "@/config/landing";
 
 /**
@@ -22,7 +27,7 @@ import { SELF_SERVE_PLAN_KEYS, type SelfServePlanKey } from "@/config/landing";
  */
 
 export type { AddOnKey };
-export { ADD_ON_KEYS, ADD_ON_GATE_FIELD };
+export { ADD_ON_KEYS, ADD_ON_GATE_FIELD, ADD_ON_PRICE_ENV_VAR };
 
 export type PlanKey = SelfServePlanKey;
 

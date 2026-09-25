@@ -26,9 +26,10 @@ import type { BookingPage, BookingPageFormData } from "@/types/booking";
  *        (atomic uniqueness via create()), hosts are re-resolved against live
  *        membership, and the territoryId is landed defensively. The one
  *        divergence from create: if the source carried a payment gate but the
- *        sub-account no longer has PayPal connected, the clone DROPS the
- *        payment block + returns a `warning` rather than 400-ing — duplicating
- *        should never hard-fail on a config the operator can fix afterwards.
+ *        sub-account no longer has a payment portal connected, the clone
+ *        DROPS the payment block + returns a `warning` rather than 400-ing —
+ *        duplicating should never hard-fail on a config the operator can fix
+ *        afterwards.
  */
 
 /** Max length of a name (matches validateName) — leave room for the prefix. */
@@ -81,7 +82,7 @@ export async function POST(
   }
   const source = sourceSnap.data() as Omit<BookingPage, "id">;
 
-  // ── Load the sub-account (tenancy + PayPal gate) ──────────────────
+  // ── Load the sub-account (tenancy + payment portal gate) ──────────
   const subSnap = await db.doc(`subAccounts/${subAccountId}`).get();
   if (!subSnap.exists) {
     return NextResponse.json(
@@ -103,12 +104,13 @@ export async function POST(
   // fresh name, drafted status (slug is set per-attempt below).
   let warning: string | null = null;
   let payment = source.payment ?? null;
-  if (payment && !sub.paypalConfig) {
-    // PayPal was disconnected after the source was built. Don't fail the
-    // duplicate — drop the gate and tell the operator to re-add it.
+  if (payment && !sub.paymentPortalConfig?.url) {
+    // The payment portal was disconnected after the source was built.
+    // Don't fail the duplicate — drop the gate and tell the operator to
+    // re-add it.
     payment = null;
     warning =
-      "Payment was removed from the copy — connect a PayPal.me username under Settings → Payments, then re-enable it on the new page.";
+      "Payment was removed from the copy — connect a payment portal under Settings → Payments, then re-enable it on the new page.";
   }
 
   const draft: BookingPageFormData = {

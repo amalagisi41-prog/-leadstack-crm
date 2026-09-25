@@ -2,29 +2,29 @@
 
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
-import { CheckCircle2, Loader2, Wallet } from "lucide-react";
+import { CheckCircle2, ExternalLink, Loader2, Wallet } from "lucide-react";
 import { useSubAccount } from "@/context/sub-account-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 /**
- * Sub-account PayPal settings panel — powers the Products + Invoices
- * payment flow. Operator pastes a PayPal.me username; on invoice send
- * we generate `https://paypal.me/{username}/{amount}{currency}`.
- *
- * No API roundtrip to PayPal (paypal.me has no validate endpoint).
- * Server-side validation enforces username format (1-20 chars,
- * alphanumeric + hyphens). Sub-account owner sees their generated
- * paypal.me URL after save for a quick sanity-click.
+ * Sub-account payment portal settings panel. Powers the Pay CTA on
+ * invoices, paid booking-page deposits, and paid community group/course
+ * purchases. Provider-agnostic by design: the operator pastes a link to
+ * whatever payment portal they already use — PayPal.me, Venmo, Square, a
+ * Stripe Payment Link, a bank's own pay page — instead of the app
+ * integrating with one specific provider. The link is always shown as-is;
+ * the app never templates an amount into it (providers format that too
+ * differently to generalize).
  */
-
-export function SubAccountPayPalSection() {
+export function SubAccountPaymentPortalSection() {
   const { subAccountId, subAccount, isAdmin } = useSubAccount();
-  const cfg = subAccount?.paypalConfig ?? null;
-  const connected = !!cfg?.username;
+  const cfg = subAccount?.paymentPortalConfig ?? null;
+  const connected = !!cfg?.url;
 
-  const [username, setUsername] = useState("");
+  const [url, setUrl] = useState("");
+  const [label, setLabel] = useState("");
   const [saving, setSaving] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
 
@@ -35,23 +35,24 @@ export function SubAccountPayPalSection() {
     setSaving(true);
     try {
       const res = await fetch(
-        `/api/sub-accounts/${subAccountId}/paypal-integration`,
+        `/api/sub-accounts/${subAccountId}/payment-portal`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username: username.trim() }),
+          body: JSON.stringify({ url: url.trim(), label: label.trim() || null }),
         },
       );
       const data = (await res.json().catch(() => ({}))) as {
         ok?: boolean;
         error?: string;
-        username?: string;
+        url?: string;
       };
       if (!res.ok || !data.ok) {
-        throw new Error(data.error ?? "Failed to save PayPal.me username.");
+        throw new Error(data.error ?? "Failed to save the payment link.");
       }
-      setUsername("");
-      toast.success(`PayPal connected — paypal.me/${data.username}`);
+      setUrl("");
+      setLabel("");
+      toast.success("Payment portal connected.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to save.");
     } finally {
@@ -62,7 +63,7 @@ export function SubAccountPayPalSection() {
   async function handleDisconnect() {
     if (
       !confirm(
-        "Disconnect PayPal? Sending new invoices will require reconnecting. Invoices already sent stay valid (their paypal.me links keep working).",
+        "Disconnect your payment portal? Invoices, paid bookings, and paid community purchases will lose their Pay link until you reconnect one.",
       )
     ) {
       return;
@@ -70,7 +71,7 @@ export function SubAccountPayPalSection() {
     setDisconnecting(true);
     try {
       const res = await fetch(
-        `/api/sub-accounts/${subAccountId}/paypal-integration`,
+        `/api/sub-accounts/${subAccountId}/payment-portal`,
         { method: "DELETE" },
       );
       const data = (await res.json().catch(() => ({}))) as {
@@ -80,7 +81,7 @@ export function SubAccountPayPalSection() {
       if (!res.ok || !data.ok) {
         throw new Error(data.error ?? "Failed to disconnect.");
       }
-      toast.success("PayPal disconnected.");
+      toast.success("Payment portal disconnected.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to disconnect.");
     } finally {
@@ -95,19 +96,12 @@ export function SubAccountPayPalSection() {
           <Wallet className="h-4 w-4" />
         </span>
         <div className="min-w-0 flex-1">
-          <h2 className="text-base font-semibold">Payments — PayPal</h2>
+          <h2 className="text-base font-semibold">Payments</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            Paste your PayPal.me username so invoices can collect payment via
-            a PayPal-hosted page. Set one up at{" "}
-            <a
-              href="https://www.paypal.com/paypalme/grab"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-medium text-primary underline-offset-4 hover:underline"
-            >
-              paypal.com/paypalme
-            </a>{" "}
-            (free, takes a minute).
+            Connect your own payment portal — PayPal.me, Venmo, Square, a
+            Stripe Payment Link, or anywhere else you already collect
+            payment. We link to it as-is; you handle the transaction on
+            your provider&apos;s side and mark paid here once funds land.
           </p>
         </div>
       </header>
@@ -116,20 +110,22 @@ export function SubAccountPayPalSection() {
         <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4">
           <p className="flex items-center gap-2 text-sm text-emerald-700 dark:text-emerald-400">
             <CheckCircle2 className="h-4 w-4" />
-            Connected as{" "}
-            <a
-              href={`https://paypal.me/${cfg!.username}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-semibold underline-offset-4 hover:underline"
-            >
-              paypal.me/{cfg!.username}
-            </a>
+            Connected
+            {cfg?.label ? ` — ${cfg.label}` : ""}
           </p>
+          <a
+            href={cfg!.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-emerald-700 underline-offset-4 hover:underline dark:text-emerald-400"
+          >
+            {cfg!.url}
+            <ExternalLink className="h-3 w-3" />
+          </a>
           <p className="mt-2 text-xs text-muted-foreground">
-            Each invoice you send generates a unique payment URL with the
-            invoice total pre-filled. PayPal handles the rest; you mark the
-            invoice paid manually once funds land in your account.
+            Every invoice, paid booking, and paid community purchase links
+            here. Amounts are shown as text next to the link, not encoded
+            in the URL — enter the total on your provider&apos;s page.
           </p>
           <div className="mt-3 flex justify-end">
             <Button
@@ -153,29 +149,37 @@ export function SubAccountPayPalSection() {
       ) : (
         <form onSubmit={handleSave} className="space-y-4">
           <div className="space-y-1.5">
-            <Label htmlFor="paypal-username">PayPal.me username</Label>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">paypal.me/</span>
-              <Input
-                id="paypal-username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="yourbusiness"
-                autoComplete="off"
-                spellCheck={false}
-              />
-            </div>
+            <Label htmlFor="payment-portal-url">Payment link</Label>
+            <Input
+              id="payment-portal-url"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://paypal.me/yourbusiness, venmo.com/u/you, …"
+              autoComplete="off"
+              spellCheck={false}
+            />
             <p className="text-[11px] text-muted-foreground">
-              1-20 characters, letters/digits/hyphens. We don&apos;t store any
-              keys or credentials — just the username.
+              Any https link where a customer can pay you. We don&apos;t
+              validate which provider it is — paste whatever you use.
             </p>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="payment-portal-label">Button label (optional)</Label>
+            <Input
+              id="payment-portal-label"
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
+              placeholder="Pay via Venmo"
+              maxLength={40}
+              autoComplete="off"
+            />
           </div>
 
           <div className="flex items-center justify-end gap-3">
             <Button
               type="submit"
               size="sm"
-              disabled={saving || !username.trim()}
+              disabled={saving || !url.trim()}
             >
               {saving ? (
                 <>
@@ -183,7 +187,7 @@ export function SubAccountPayPalSection() {
                   Saving…
                 </>
               ) : (
-                "Connect PayPal"
+                "Connect payment portal"
               )}
             </Button>
           </div>

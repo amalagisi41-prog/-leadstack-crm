@@ -147,8 +147,8 @@ export default function CommunityRosterPage({
             Pending payments ({pendingPurchases.length})
           </h2>
           <p className="text-xs text-muted-foreground">
-            Confirm the payment landed in your PayPal account, then mark it paid
-            to grant access.
+            Confirm the payment landed on your connected payment portal,
+            then mark it paid to grant access.
           </p>
           {pendingPurchases.map((p) => (
             <div

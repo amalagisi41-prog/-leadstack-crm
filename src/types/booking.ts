@@ -65,11 +65,12 @@ export interface BookingHost {
 }
 
 /**
- * Optional PayPal.me deposit gate per booking page. When set, the slot
- * holds in `awaiting_payment` until the operator confirms the payment
- * landed in their PayPal account (manual flip — PayPal.me has no
- * webhook). After `holdHours`, an unpaid hold auto-cancels and frees
- * the slot. Uses the sub-account's existing `paypalConfig.username`.
+ * Optional deposit gate per booking page, via the sub-account's connected
+ * payment portal (`paymentPortalConfig`). When set, the slot holds in
+ * `awaiting_payment` until the operator confirms the payment landed on
+ * their provider's side (manual flip — a generic portal link has no
+ * webhook). After `holdHours`, an unpaid hold auto-cancels and frees the
+ * slot.
  */
 export interface BookingPayment {
   /** Major currency units (e.g. dollars, not cents). */
@@ -149,7 +150,7 @@ export interface BookingPage {
   /**
    * Optional URL the visitor is sent to after a confirmed booking (free
    * pages only — paid/awaiting-payment holds never redirect so the
-   * PayPal CTA stays visible). The book route appends `booking_id` +
+   * payment CTA stays visible). The book route appends `booking_id` +
    * `email` query params for downstream conversion tracking, then the
    * public confirmation panel auto-navigates after a short countdown.
    * `null` = stay on the in-app confirmation panel (today's behaviour).
@@ -178,7 +179,7 @@ export interface BookingPage {
    */
   reminderOffsetsMinutes: number[];
 
-  // ── Payment (uses sub-account paypalConfig) ───────────────────
+  // ── Payment (uses sub-account paymentPortalConfig) ────────────
   payment: BookingPayment | null;
 
   // ── Territories (only meaningful when scopingEnabled) ─────────

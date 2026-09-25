@@ -6,8 +6,9 @@ import type { Timestamp, FieldValue } from "firebase/firestore";
  * which handles the missing-field case so call sites stay clean.
  *
  *   - "scheduled"        — normal, will fire reminders.
- *   - "awaiting_payment" — booking-page hold; PayPal.me deposit gate. Slot is
- *                          busy for availability but no reminders fire.
+ *   - "awaiting_payment" — booking-page hold; deposit gate via the
+ *                          sub-account's connected payment portal. Slot
+ *                          is busy for availability but no reminders fire.
  *   - "completed"        — operator marked the meeting as done.
  *   - "cancelled"        — operator or visitor cancelled; slot is free.
  *   - "no_show"          — meeting time passed, attendee didn't appear.
@@ -78,7 +79,7 @@ export interface CalendarEvent {
   paymentRequired?: boolean;
   paymentAmount?: number | null;
   paymentCurrency?: string | null;
-  /** PayPal.me URL minted at booking time (stateless URL — no API call). */
+  /** The operator's connected payment portal URL, snapshotted at booking time. */
   paymentLinkUrl?: string | null;
   /** Set when the operator flips `awaiting_payment` → `scheduled`. */
   paidAt?: Timestamp | FieldValue | null;
