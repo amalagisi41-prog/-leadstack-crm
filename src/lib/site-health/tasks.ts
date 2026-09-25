@@ -82,6 +82,39 @@ export function isBusinessEmailVerified(
   );
 }
 
+export interface WebChatReadinessInputs {
+  /** subAccounts/{id}/aiAgent/web-chat exists and `enabled === true`. */
+  chatChannelEnabled: boolean;
+  /** True when a legacy `website` doc is ready or has a live URL. */
+  publishedWebsite: boolean;
+  /** True when agentSites/main has status "published". */
+  publishedAgentSite: boolean;
+  /** True only for an externally hosted site verified to carry the AgentStack widget tag. */
+  agentStackWidgetInstalled?: boolean;
+}
+
+/**
+ * Whether the "Turn on website chat" task is actually done.
+ *
+ * A channel toggle alone only proves AgentStack is configured — nothing
+ * proves a visitor can reach it. A site AgentStack itself hosts and serves
+ * carries the widget by construction, from EITHER builder: the legacy
+ * gitpage.site-based Website Studio (`publishedWebsite`) or the newer AI
+ * Website Studio (`publishedAgentSite`). This must accept both, exactly as
+ * the "website" task itself does — checking only one of the two silently
+ * strands every operator who published through the other builder: they can
+ * enable chat and this task still never clears, no matter what they do.
+ * Only an EXTERNALLY hosted site needs the separate widget-install proof.
+ */
+export function deriveWebChatEnabled(inputs: WebChatReadinessInputs): boolean {
+  return (
+    inputs.chatChannelEnabled &&
+    (inputs.publishedWebsite ||
+      inputs.publishedAgentSite ||
+      inputs.agentStackWidgetInstalled === true)
+  );
+}
+
 export interface SiteHealthTask {
   id: string;
   title: string;

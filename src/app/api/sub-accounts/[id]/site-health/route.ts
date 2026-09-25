@@ -3,7 +3,11 @@ import "server-only";
 import { NextResponse } from "next/server";
 import { requireSubAccountMember } from "@/lib/auth/require-tenancy";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
-import { computeSiteHealth, isBusinessEmailVerified } from "@/lib/site-health/tasks";
+import {
+  computeSiteHealth,
+  deriveWebChatEnabled,
+  isBusinessEmailVerified,
+} from "@/lib/site-health/tasks";
 import {
   PLATFORM_SIGNATURES,
   isConfirmedOffPlatform,
@@ -157,13 +161,12 @@ export async function GET(
       : undefined,
     hasLeadForm: !formsSnap.empty,
     hasBookingPage: !bookingSnap.empty,
-    // A channel toggle only proves that AgentStack is configured. For an
-    // externally hosted site, Site Health must also prove that the widget tag
-    // is present before reporting the chat launch item as done.
-    webChatEnabled:
-      chatSnap.exists &&
-      chatSnap.data()?.enabled === true &&
-      (publishedAgentSite || verification?.agentStackWidgetInstalled === true),
+    webChatEnabled: deriveWebChatEnabled({
+      chatChannelEnabled: chatSnap.exists && chatSnap.data()?.enabled === true,
+      publishedWebsite,
+      publishedAgentSite,
+      agentStackWidgetInstalled: verification?.agentStackWidgetInstalled === true,
+    }),
     businessEmailVerified,
   });
 

@@ -1,10 +1,67 @@
 import { describe, expect, it } from "vitest";
 import {
   computeSiteHealth,
+  deriveWebChatEnabled,
   isBusinessEmailVerified,
   remainingSiteHealthTaskIds,
   type SiteHealthInputs,
 } from "./tasks";
+
+describe("deriveWebChatEnabled", () => {
+  it("is false when the chat channel itself is off, regardless of the site", () => {
+    expect(
+      deriveWebChatEnabled({
+        chatChannelEnabled: false,
+        publishedWebsite: true,
+        publishedAgentSite: true,
+      }),
+    ).toBe(false);
+  });
+
+  it("completes for a site published through the legacy gitpage.site-based Website Studio", () => {
+    // Regression: this task used to only recognize `publishedAgentSite`,
+    // stranding every operator who published through the older builder —
+    // they could enable chat and this item would never clear.
+    expect(
+      deriveWebChatEnabled({
+        chatChannelEnabled: true,
+        publishedWebsite: true,
+        publishedAgentSite: false,
+      }),
+    ).toBe(true);
+  });
+
+  it("completes for a site published through the newer AI Website Studio", () => {
+    expect(
+      deriveWebChatEnabled({
+        chatChannelEnabled: true,
+        publishedWebsite: false,
+        publishedAgentSite: true,
+      }),
+    ).toBe(true);
+  });
+
+  it("completes for an externally hosted site with a verified widget install", () => {
+    expect(
+      deriveWebChatEnabled({
+        chatChannelEnabled: true,
+        publishedWebsite: false,
+        publishedAgentSite: false,
+        agentStackWidgetInstalled: true,
+      }),
+    ).toBe(true);
+  });
+
+  it("stays incomplete when chat is on but no site is published anywhere", () => {
+    expect(
+      deriveWebChatEnabled({
+        chatChannelEnabled: true,
+        publishedWebsite: false,
+        publishedAgentSite: false,
+      }),
+    ).toBe(false);
+  });
+});
 
 /**
  * The path to 100%, walked persona by persona.
