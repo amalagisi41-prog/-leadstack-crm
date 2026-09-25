@@ -7,7 +7,6 @@ import type { GoogleWorkspaceConfig } from "@/types/tenancy";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { emailIsConfigured, sendEmail, tenantFrom } from "@/lib/comms/resend";
 import { Resend } from "resend";
-import { buildPaypalAmountUrl } from "@/lib/paypal/payment-link";
 import {
   computeAvailability,
   isSlotAvailable,
@@ -227,11 +226,11 @@ export async function POST(
   const sub = subSnap.data() as SubAccountDoc;
   const agencyId = sub.agencyId;
 
-  // Payment gate is only honoured when the sub-account has PayPal
-  // connected. Defense in depth: the editor also rejects payment
-  // configs without PayPal, but a config drift shouldn't let a
-  // visitor land on a "Pay" button that doesn't exist.
-  const paymentRequired = !!page.payment && !!sub.paypalConfig;
+  // Payment gate is only honoured when the sub-account has a payment
+  // portal connected. Defense in depth: the editor also rejects payment
+  // configs without a connected portal, but a config drift shouldn't let
+  // a visitor land on a "Pay" button that goes nowhere.
+  const paymentRequired = !!page.payment && !!sub.paymentPortalConfig?.url;
 
   // ── Transactional create with re-verify ─────────────────────────
   // Pull a tight window of busy events around the requested slot,
@@ -364,12 +363,11 @@ export async function POST(
       const status = paymentRequired ? "awaiting_payment" : "scheduled";
       let paymentLinkUrl: string | null = null;
       let paymentHoldExpiresAt: Date | null = null;
-      if (paymentRequired && page.payment && sub.paypalConfig) {
-        paymentLinkUrl = buildPaypalAmountUrl({
-          paypal: sub.paypalConfig,
-          amount: page.payment.amount,
-          currency: page.payment.currency,
-        });
+      if (paymentRequired && page.payment && sub.paymentPortalConfig?.url) {
+        // The portal link is shown as-is — no amount templating, since
+        // providers format that too differently to generalize. The
+        // amount is stated in the confirmation email/page text instead.
+        paymentLinkUrl = sub.paymentPortalConfig.url;
         paymentHoldExpiresAt = new Date(
           now.getTime() + page.payment.holdHours * 60 * 60_000
         );
@@ -576,7 +574,7 @@ export async function POST(
   });
 
   // Post-booking redirect — confirmed (free) bookings only. Paid holds
-  // stay on the in-app confirmation so the PayPal CTA is always shown.
+  // stay on the in-app confirmation so the Pay CTA is always shown.
   // Append booking_id + email so the destination page can de-dupe
   // conversions + fire pixel Advanced Matching. A malformed stored URL
   // never breaks a successful booking — it just falls back to no redirect.

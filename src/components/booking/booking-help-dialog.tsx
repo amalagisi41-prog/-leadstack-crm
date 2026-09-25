@@ -40,8 +40,9 @@ export function BookingHelpDialog({
             A <strong className="text-foreground">booking page</strong> is
             a branded public URL where leads pick a slot. Each page has
             its own working hours, slot length, intake form, optional
-            PayPal deposit, and built-in reminders + reschedule / cancel.
-            Replaces Calendly / Cal.com for the common case.
+            deposit via your connected payment portal, and built-in
+            reminders + reschedule / cancel. Replaces Calendly / Cal.com
+            for the common case.
           </p>
 
           <Section title="Lifecycle of a booking">
@@ -58,7 +59,7 @@ export function BookingHelpDialog({
                 ],
                 [
                   "Awaiting payment",
-                  "If a deposit is required: status holds in Awaiting payment, a PayPal.me link emails to the visitor. You mark paid manually once the funds land.",
+                  "If a deposit is required: status holds in Awaiting payment, your payment portal link emails to the visitor. You mark paid manually once the funds land.",
                 ],
                 [
                   "Reminders",
@@ -123,20 +124,21 @@ export function BookingHelpDialog({
             </ul>
           </Section>
 
-          <Section title="Payment (PayPal.me)">
+          <Section title="Payment (your connected portal)">
             <p className="text-muted-foreground">
-              When a deposit is required, the visitor lands on a PayPal
-              page with the amount pre-filled. PayPal.me doesn&apos;t
-              call back when payment arrives — you watch your PayPal
-              inbox and click{" "}
+              When a deposit is required, the visitor lands on your
+              connected payment portal (Settings → Payments — any
+              provider you use) with the amount shown as text next to
+              the link. Nothing calls back when payment arrives — you
+              watch your provider&apos;s side and click{" "}
               <strong className="text-foreground">Mark as paid</strong>
               {" "}on the event in your calendar. Unpaid holds auto-cancel
               after the hold window so the slot frees up.
             </p>
             <p className="mt-2 text-xs text-muted-foreground">
-              Connect your PayPal.me username under Settings → Payments
-              first. The payment section in the editor stays disabled
-              until that&apos;s done.
+              Connect a payment portal under Settings → Payments first.
+              The payment section in the editor stays disabled until
+              that&apos;s done.
             </p>
           </Section>
 
@@ -145,7 +147,7 @@ export function BookingHelpDialog({
               head={["Stage", "Email sent"]}
               rows={[
                 ["Confirmed (no payment)", "Confirmation + .ics invite + reschedule / cancel link"],
-                ["Awaiting payment", "Pay-to-confirm email with the PayPal link"],
+                ["Awaiting payment", "Pay-to-confirm email with your payment portal link"],
                 ["Mark as paid", "Fresh confirmation + .ics invite (replaces the hold email)"],
                 ["T-24h / T-1h before", "Reminder with the reschedule / cancel link"],
                 ["Cancelled / hold expired", "Heads-up that the slot has been released"],

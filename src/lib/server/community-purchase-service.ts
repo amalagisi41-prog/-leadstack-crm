@@ -2,18 +2,19 @@ import "server-only";
 
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
-import { buildPaypalAmountUrl } from "@/lib/paypal/payment-link";
 import { emitWebhookEvent } from "@/lib/api/webhooks/dispatch";
 import { getGroupById } from "@/lib/server/community-service";
 import { getCourse } from "@/lib/server/community-classroom-service";
 import type { Purchase, PurchaseScope } from "@/types/community";
-import type { PayPalConfig } from "@/types";
 
 /**
- * One-time PayPal purchases for group access or a single course. v1 is
- * manual-reconcile: the member pays via the sub-account's paypal.me link, then
- * a staff admin clicks "Mark paid", which grants access. The doc shape is
- * forward-compatible with Stripe auto-grant (flip status from a webhook).
+ * One-time purchase requests for group access or a single course. v1 is
+ * manual-reconcile: when the sub-account has a payment portal connected
+ * (Settings → Payments — any provider), the member pays via that link,
+ * then a staff admin clicks "Mark paid", which grants access. No portal
+ * connected → the request still lands (pending), the owner arranges
+ * payment off-system. The doc shape is forward-compatible with a real
+ * payment provider's auto-grant (flip status from a webhook).
  */
 
 function purchasesCol(saId: string, groupId: string) {
@@ -24,7 +25,7 @@ function purchasesCol(saId: string, groupId: string) {
 
 export interface RequestPurchaseResult {
   purchaseId: string;
-  paypalUrl: string;
+  portalUrl: string | null;
   status: Purchase["status"];
 }
 
@@ -38,13 +39,8 @@ export async function requestPurchaseServerSide(opts: {
   const db = getAdminDb();
   const subSnap = await db.doc(`subAccounts/${opts.subAccountId}`).get();
   const sub = subSnap.data();
-  const paypal = sub?.paypalConfig as PayPalConfig | null | undefined;
-  if (!paypal?.username) {
-    throw new Error(
-      "This group hasn't set up payments yet. Contact the group owner.",
-    );
-  }
   const agencyId = (sub?.agencyId as string) ?? "";
+  const portalUrl = (sub?.paymentPortalConfig?.url as string | undefined) ?? null;
 
   // Resolve the price for the target.
   let amountCents: number;
@@ -77,16 +73,10 @@ export async function requestPurchaseServerSide(opts: {
     const doc = existing.docs[0];
     return {
       purchaseId: doc.id,
-      paypalUrl: (doc.data().paypalUrl as string) ?? "",
+      portalUrl: (doc.data().portalUrl as string | undefined) ?? portalUrl,
       status: "pending",
     };
   }
-
-  const paypalUrl = buildPaypalAmountUrl({
-    paypal,
-    amount: amountCents / 100,
-    currency,
-  });
 
   const ref = await purchasesCol(opts.subAccountId, opts.groupId).add({
     subAccountId: opts.subAccountId,
@@ -97,14 +87,14 @@ export async function requestPurchaseServerSide(opts: {
     targetId: opts.targetId,
     amountCents,
     currency,
-    paypalUrl,
+    portalUrl,
     status: "pending",
     grantedByUid: null,
     requestedAt: FieldValue.serverTimestamp(),
     paidAt: null,
   });
 
-  return { purchaseId: ref.id, paypalUrl, status: "pending" };
+  return { purchaseId: ref.id, portalUrl, status: "pending" };
 }
 
 /** Has this member paid for this course? (Drives the unlock check.) */

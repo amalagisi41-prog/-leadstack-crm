@@ -4,12 +4,15 @@ import { CreditCard } from "lucide-react";
 import { useSubAccount } from "@/context/sub-account-context";
 
 /**
- * Stripe Connect roadmap placeholder. v1 ships PayPal-only payment
- * collection (see SubAccountPayPalSection). Stripe Connect is on the
- * roadmap — when it lands, the sub-account owner will click "Connect
- * with Stripe" and OAuth through to grant the platform permission to
- * issue charges on their behalf (no key-pasting). Keeps the surface
- * visible so operators know it's coming and stop asking.
+ * Stripe Connect roadmap placeholder. Today, payment collection is a
+ * generic link to the operator's own payment portal (see
+ * SubAccountPaymentPortalSection, above) — the operator pastes a link,
+ * we display it, they process the transaction on their side. Stripe
+ * Connect is on the roadmap for actual in-app-processed payments — when
+ * it lands, the sub-account owner will click "Connect with Stripe" and
+ * OAuth through to grant the platform permission to issue charges on
+ * their behalf (no key-pasting). Keeps the surface visible so operators
+ * know it's coming and stop asking.
  */
 
 export function SubAccountStripeSection() {
@@ -30,8 +33,9 @@ export function SubAccountStripeSection() {
             </span>
           </div>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            A &ldquo;Connect with Stripe&rdquo; button is on the roadmap —
-            Until then, invoices use PayPal (above) for payment collection.
+            A &ldquo;Connect with Stripe&rdquo; button is on the roadmap
+            for automated, in-app-processed payments. Until then, connect
+            your own payment portal above.
           </p>
         </div>
       </header>

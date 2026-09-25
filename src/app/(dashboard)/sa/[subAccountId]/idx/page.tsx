@@ -231,10 +231,20 @@ export default function ListingsPage() {
         ok?: boolean;
         error?: string;
         listingCount?: number;
+        sources?: Record<string, number>;
       };
       if (!res.ok || !data.ok) throw new Error(data.error ?? "Sync failed.");
       if ((data.listingCount ?? 0) === 0) {
-        toast.warning("IDX Broker returned no active listings. Check whether this account has featured listings and whether the expected listings are available through its API. The hosted agent page alone does not confirm API access.");
+        const breakdown = data.sources
+          ? Object.entries(data.sources)
+              .map(([source, n]) => `${source}: ${n}`)
+              .join(", ")
+          : null;
+        toast.warning(
+          breakdown
+            ? `Sync completed with 0 listings across every source (${breakdown}). See the breakdown in Settings for details.`
+            : "Sync completed with 0 listings. See the breakdown in Settings for details.",
+        );
       } else {
         toast.success(`Synced ${data.listingCount} active listings.`);
       }
@@ -651,7 +661,7 @@ function FeedStatusCard({
       {syncStatus === "empty" ? (
         <div className="rounded-2xl border border-amber-300/60 bg-amber-500/5 p-4 text-sm">
           <p className="font-medium text-amber-900 dark:text-amber-200">
-            IDX Broker is connected, but its listings API returned zero records.
+            IDX Broker is connected, but every source checked returned zero listings.
           </p>
           <p className="mt-1 text-xs leading-relaxed text-amber-800 dark:text-amber-300">
             This does not mean the MLS account is broken. The connected IDX Broker
@@ -660,6 +670,16 @@ function FeedStatusCard({
             Check IDX Broker&apos;s Featured IDs for the intended agent, then run
             Sync now again.
           </p>
+          {cfg?.lastSyncSources && (
+            <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-amber-800 dark:text-amber-300 sm:grid-cols-4">
+              {Object.entries(cfg.lastSyncSources).map(([source, count]) => (
+                <div key={source}>
+                  <dt className="font-medium capitalize">{source.replace(/([A-Z])/g, " $1")}</dt>
+                  <dd>{count}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
           <Link
             href={`${settingsHref}#mls-feed`}
             className="mt-3 inline-block text-xs font-medium underline-offset-4 hover:underline"

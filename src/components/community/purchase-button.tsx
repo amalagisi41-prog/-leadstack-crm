@@ -5,9 +5,12 @@ import { ExternalLink, Loader2 } from "lucide-react";
 
 /**
  * Starts a one-time purchase (group access or a course), then surfaces the
- * paypal.me link to pay at. v1 is manual-reconcile: after paying, a staff admin
- * marks the purchase paid to grant access. Used on the About page (group) and
- * the classroom catalog (course).
+ * sub-account's connected payment portal link to pay at (any provider —
+ * PayPal.me, Venmo, Square, etc). v1 is manual-reconcile: after paying, a
+ * staff admin marks the purchase paid to grant access. When no portal is
+ * connected, the request still lands and the member is told the owner will
+ * follow up. Used on the About page (group) and the classroom catalog
+ * (course).
  */
 export function PurchaseButton({
   saId,
@@ -27,7 +30,8 @@ export function PurchaseButton({
   className?: string;
 }) {
   const [busy, setBusy] = useState(false);
-  const [paypalUrl, setPaypalUrl] = useState<string | null>(null);
+  const [requested, setRequested] = useState(false);
+  const [portalUrl, setPortalUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function start() {
@@ -41,13 +45,14 @@ export function PurchaseButton({
       });
       const d = (await res.json().catch(() => ({}))) as {
         ok?: boolean;
-        paypalUrl?: string;
+        portalUrl?: string | null;
         error?: string;
       };
-      if (!res.ok || !d.ok || !d.paypalUrl) {
+      if (!res.ok || !d.ok) {
         throw new Error(d.error ?? "Couldn't start purchase");
       }
-      setPaypalUrl(d.paypalUrl);
+      setPortalUrl(d.portalUrl ?? null);
+      setRequested(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't start purchase");
     } finally {
@@ -55,11 +60,11 @@ export function PurchaseButton({
     }
   }
 
-  if (paypalUrl) {
+  if (portalUrl) {
     return (
       <div className="space-y-1.5">
         <a
-          href={paypalUrl}
+          href={portalUrl}
           target="_blank"
           rel="noreferrer"
           className={
@@ -68,12 +73,21 @@ export function PurchaseButton({
           }
           style={{ backgroundColor: brand }}
         >
-          Pay on PayPal <ExternalLink className="h-4 w-4" />
+          Pay now <ExternalLink className="h-4 w-4" />
         </a>
         <p className="text-center text-xs text-[#909090]">
           After you pay, the group owner confirms it and unlocks your access.
         </p>
       </div>
+    );
+  }
+
+  if (requested) {
+    return (
+      <p className="text-center text-xs text-[#909090]">
+        Request sent — the group owner will follow up to arrange payment
+        and unlock your access.
+      </p>
     );
   }
 

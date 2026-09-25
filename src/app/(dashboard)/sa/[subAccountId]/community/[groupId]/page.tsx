@@ -414,8 +414,8 @@ export default function CommunityGroupSettingsPage({
               placeholder="49.00"
             />
             <p className="text-xs text-muted-foreground">
-              Paid joins (one-time PayPal, admin marks paid) go live with the
-              access-controls slice. Until then a paid group can&apos;t be joined.
+              A member pays via your connected payment portal (Settings →
+              Payments), then you mark the purchase paid to grant access.
             </p>
           </div>
         )}

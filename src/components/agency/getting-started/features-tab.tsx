@@ -100,7 +100,7 @@ const FEATURES: Feature[] = [
     tone: "amber",
     href: "/products",
     description:
-      "Reusable product catalog plus an invoice document type. Build line-itemed invoices (or convert an accepted quote in place), send a branded email with a PayPal.me Pay button, and mark paid when the money lands. PDF download on the public page.",
+      "Reusable product catalog plus an invoice document type. Build line-itemed invoices (or convert an accepted quote in place), send a branded email with a Pay button linking to your own connected payment portal, and mark paid when the money lands. PDF download on the public page.",
   },
   {
     icon: FileSignature,

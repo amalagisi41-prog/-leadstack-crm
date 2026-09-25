@@ -24,12 +24,12 @@ import { SubAccountA2pSection } from "@/components/settings/sub-account-a2p-sect
 import { SubAccountMetaSection } from "@/components/settings/sub-account-meta-section";
 import { SubAccountEmailDomainSection } from "@/components/settings/sub-account-email-domain-section";
 import { EmailSetupWizardDialog } from "@/components/settings/email-setup-wizard-dialog";
-import { SubAccountPayPalSection } from "@/components/settings/sub-account-paypal-section";
 import { SubAccountGoogleReviewSection } from "@/components/settings/sub-account-google-review-section";
 import { SubAccountDailyBriefingSection } from "@/components/settings/sub-account-daily-briefing-section";
 import { SubAccountIdxSection } from "@/components/settings/sub-account-idx-section";
 import { SubAccountRprSection } from "@/components/settings/sub-account-rpr-section";
 import { SubAccountAddOnsSection } from "@/components/settings/sub-account-add-ons-section";
+import { SubAccountPaymentPortalSection } from "@/components/settings/sub-account-payment-portal-section";
 import { SubAccountStripeSection } from "@/components/settings/sub-account-stripe-section";
 import { SubAccountApiKeysSection } from "@/components/settings/sub-account-api-keys-section";
 import { SubAccountApiRecipesSection } from "@/components/settings/sub-account-api-recipes-section";
@@ -388,10 +388,14 @@ export default function SettingsPage() {
           {/* Calendar connection — provider OAuth; booking ICS remains available separately. */}
           <SubAccountCalendarSyncSection />
 
-          {/* Payments — PayPal.me username for the Products + Invoices flow. */}
-          <SubAccountPayPalSection />
+          {/* Payments — a generic link to whatever payment portal the
+              operator already uses (PayPal.me, Venmo, Square, a Stripe
+              Payment Link, etc). Powers the Pay CTA on invoices, paid
+              bookings, and paid community purchases. */}
+          <SubAccountPaymentPortalSection />
 
-          {/* Stripe Connect — v2 roadmap placeholder. */}
+          {/* Stripe Connect — v2 roadmap placeholder for automated,
+              in-app-processed payments (vs. the generic portal link above). */}
           <SubAccountStripeSection />
 
           {/* IDX Listings — realtor MLS search powered by the sub-account's

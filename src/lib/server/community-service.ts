@@ -273,9 +273,10 @@ export type JoinOutcome =
 
 /**
  * Join a published group. Free + open → active immediately. Approval-policy →
- * pending (admin approves later). Paid groups return `payment_required` — the
- * actual one-time PayPal flow lands in Slice 6; until then a paid group can't
- * be joined here. Idempotent: an existing membership is returned as `already`.
+ * pending (admin approves later). Paid groups return `payment_required` —
+ * the caller then goes through `requestPurchaseServerSide()` in
+ * `community-purchase-service.ts` to start the one-time purchase.
+ * Idempotent: an existing membership is returned as `already`.
  *
  * The membership doc id is the memberId, so a member can only hold one
  * membership per group (natural idempotency).
@@ -304,7 +305,8 @@ export async function joinGroupServerSide(opts: {
   }
 
   if (group.access === "paid") {
-    // Paid join is wired in Slice 6 (one-time PayPal + admin mark-paid).
+    // Paid join goes through the one-time purchase flow (any connected
+    // payment portal + admin mark-paid) in community-purchase-service.ts.
     return { status: "payment_required" };
   }
 

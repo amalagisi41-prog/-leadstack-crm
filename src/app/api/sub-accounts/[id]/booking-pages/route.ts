@@ -75,13 +75,13 @@ export async function POST(
     );
   }
 
-  // Reject payment block when the sub-account has no PayPal.me connected
-  // — the public page would render a Pay button that goes nowhere.
-  if (data.payment && !sub.paypalConfig) {
+  // Reject payment blocks when no payment portal is connected — the
+  // public page would render a Pay button that goes nowhere.
+  if (data.payment && !sub.paymentPortalConfig?.url) {
     return NextResponse.json(
       {
         error:
-          "Connect a PayPal.me username under Settings → Payments before requiring payment on a booking page.",
+          "Connect a payment portal under Settings → Payments before requiring payment on a booking page.",
       },
       { status: 400 },
     );

@@ -103,7 +103,7 @@ export function BookingPageEditor({ mode, initial }: Props) {
   const router = useRouter();
   const { subAccountId, subAccount, saPath } = useSubAccount();
   const scopingOn = subAccount?.territoryScopingEnabled === true;
-  const hasPaypal = !!subAccount?.paypalConfig;
+  const hasPaymentPortal = !!subAccount?.paymentPortalConfig?.url;
 
   const hydrated: BookingPageFormData = useMemo(() => {
     if (mode === "edit" && initial) {
@@ -721,34 +721,34 @@ export function BookingPageEditor({ mode, initial }: Props) {
         </label>
       </Section>
 
-      {/* ── Payment (gated on subAccount.paypalConfig) ─────────── */}
+      {/* ── Payment (gated on subAccount.paymentPortalConfig) ─────── */}
       <Section
         title="Payment"
         description={
-          hasPaypal
-            ? "Require a PayPal.me deposit before the slot is confirmed. You mark each booking paid manually once the funds land."
-            : "Connect a PayPal.me username under Settings → Payments to require deposits."
+          hasPaymentPortal
+            ? "Require a deposit via your connected payment portal before the slot is confirmed. You mark each booking paid manually once the funds land."
+            : "Connect a payment portal under Settings → Payments to require deposits."
         }
       >
-        {!hasPaypal && (
+        {!hasPaymentPortal && (
           <div className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-700 dark:text-amber-400">
             <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
             <span>
-              Payment requires PayPal.me. Once you connect it, this
-              section enables.
+              Payment requires a connected payment portal. Once you
+              connect one, this section enables.
             </span>
           </div>
         )}
         <label
           className={`flex cursor-pointer items-start gap-3 rounded-lg border bg-background p-3 ${
-            !hasPaypal ? "opacity-50" : ""
+            !hasPaymentPortal ? "opacity-50" : ""
           }`}
         >
           <input
             type="checkbox"
             checked={!!form.payment}
             onChange={(e) => togglePayment(e.target.checked)}
-            disabled={!hasPaypal}
+            disabled={!hasPaymentPortal}
             className="mt-0.5 h-4 w-4 cursor-pointer"
           />
           <div className="min-w-0 flex-1">

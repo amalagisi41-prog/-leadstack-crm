@@ -346,13 +346,13 @@ export interface SubAccountDoc {
    */
   accountContact: AccountContact | null;
   /**
-   * Per-sub-account PayPal connection used for the Products + Invoices
-   * payment flow. v1 uses paypal.me links — sub-account owner pastes
-   * their PayPal.me username; on invoice send we generate
-   * `https://paypal.me/{username}/{amount}{currency}`. Null = not
-   * connected. v2 will add Stripe Connect alongside.
+   * Per-sub-account payment collection link (see `PaymentPortalConfig`) —
+   * powers the Pay CTA on invoices, paid booking-page deposits, and paid
+   * community group/course purchases. Optional: legacy/undefined docs
+   * read as "no portal connected," same as every other optional
+   * feature-config field in this doc.
    */
-  paypalConfig: PayPalConfig | null;
+  paymentPortalConfig?: PaymentPortalConfig | null;
   /**
    * Google review-request config (SMS / WhatsApp "leave us a review" sends
    * after payment or on demand). Optional — legacy/undefined reads as off.
@@ -572,10 +572,29 @@ export interface IdxConfig {
   mlsId: string | null;
   /** "Listings provided by <MLS name>" attribution line shown on public pages. */
   displayName: string | null;
+  /**
+   * The connected IDX Broker account's own id, as `/clients/accountinfo`
+   * reports it. Shown in Settings so the operator can self-verify this key
+   * belongs to the account they expect — the app has no way to know which
+   * account is "correct" for a given customer, so it surfaces the evidence
+   * instead of guessing.
+   */
+  accountId?: string | null;
+  /** The MLS-issued agent id discovered from `/clients/agents`, used to narrow the Featured request to one agent's listings. Null until unambiguously discovered (more than one agent on the account leaves this null). */
+  agentMlsId?: string | null;
   lastSyncAt: Timestamp | FieldValue | null;
   lastSyncStatus: "idle" | "syncing" | "success" | "empty" | "failed";
   lastSyncError: string | null;
   listingCount: number;
+  /** Per-source listing counts from the last sync — see `lib/idx/sync.ts`. */
+  lastSyncSources?: {
+    featured: number;
+    agentFiltered: number;
+    savedLink: number;
+    supplemental: number;
+  } | null;
+  /** Non-fatal issues from the last sync (a source that errored, no saved link found, etc) — shown alongside the source breakdown instead of a single generic message. */
+  lastSyncWarnings?: string[] | null;
 }
 
 export type A2pCarrierStatus =
@@ -753,14 +772,21 @@ export interface MetaConfig {
   tokenRefreshedAt?: Timestamp | FieldValue | null;
 }
 
-export interface PayPalConfig {
-  /**
-   * PayPal.me username — the path segment after paypal.me/. 1-20 chars,
-   * alphanumeric + hyphens. The operator finds this on
-   * https://paypal.com/paypalme. Stored as the bare username (no
-   * leading slash, no `paypal.me/` prefix).
-   */
-  username: string;
+/**
+ * Per-sub-account payment collection link. Provider-agnostic by design —
+ * the operator pastes a link to whatever payment portal they already use
+ * (PayPal.me, Venmo, Square, Cash App, a Stripe Payment Link, a bank's own
+ * pay page, anything that resolves to a page a customer can pay on) rather
+ * than the app integrating with one specific provider. We never parse or
+ * template an amount into the URL — every provider formats that
+ * differently and some don't support it at all — so the link is always
+ * shown as-is, with the amount stated in the surrounding text instead.
+ */
+export interface PaymentPortalConfig {
+  /** The operator's payment portal URL, shown verbatim wherever a payment CTA renders. */
+  url: string;
+  /** Optional label for the CTA/button, e.g. "Pay via Venmo". Falls back to a generic "Pay now" when unset. */
+  label?: string | null;
   connectedAt: Date;
 }
 

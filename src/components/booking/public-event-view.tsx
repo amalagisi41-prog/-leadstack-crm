@@ -304,7 +304,7 @@ export function PublicEventView(props: Props) {
               className="inline-flex h-10 items-center justify-center rounded-lg border bg-foreground px-5 text-sm font-medium text-background"
               style={accentStyle.backgroundColor ? accentStyle : undefined}
             >
-              Pay {props.paymentCurrency} {props.paymentAmount} on PayPal
+              Pay {props.paymentCurrency} {props.paymentAmount}
             </a>
           </section>
         )}
