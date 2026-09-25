@@ -160,14 +160,22 @@ export function SubAccountIdxSection() {
         ok?: boolean;
         error?: string;
         listingCount?: number;
+        sources?: Record<string, number>;
       };
       if (!res.ok || !data.ok) {
         throw new Error(data.error ?? "Sync failed.");
       }
       const count = data.listingCount ?? 0;
       if (count === 0) {
+        const breakdown = data.sources
+          ? Object.entries(data.sources)
+              .map(([source, n]) => `${source}: ${n}`)
+              .join(", ")
+          : null;
         toast.warning(
-          "Sync completed with 0 listings. Check the IDX Broker account's Featured IDs configuration and confirm the connected account has listings available to its client API.",
+          breakdown
+            ? `Sync completed with 0 listings across every source (${breakdown}). See the breakdown below for details.`
+            : "Sync completed with 0 listings. See the breakdown below for details.",
         );
       } else {
         toast.success(`Synced ${count} listings.`);
@@ -322,13 +330,50 @@ export function SubAccountIdxSection() {
             </div>
           </form>
           {cfg?.lastSyncStatus === "empty" && (
-            <p className="mt-3 rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-300">
-              The last IDX Broker sync returned no listings. Check the account&apos;s featured listings and ask IDX Broker whether listings shown on its hosted agent page are available to your API key. This feed is not verified for launch.
-            </p>
+            <div className="mt-3 space-y-2 rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-300">
+              <p>
+                The last sync found 0 listings across every source checked.
+                This feed is not verified for launch.
+              </p>
+              {cfg?.lastSyncSources && (
+                <dl className="grid grid-cols-2 gap-x-3 gap-y-1 sm:grid-cols-4">
+                  {Object.entries(cfg.lastSyncSources).map(([source, count]) => (
+                    <div key={source}>
+                      <dt className="font-medium capitalize">{source.replace(/([A-Z])/g, " $1")}</dt>
+                      <dd>{count}</dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
+              {cfg?.lastSyncWarnings && cfg.lastSyncWarnings.length > 0 && (
+                <ul className="list-disc space-y-0.5 pl-4">
+                  {cfg.lastSyncWarnings.map((warning) => (
+                    <li key={warning}>{warning}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+          {cfg?.lastSyncStatus === "success" && cfg?.lastSyncWarnings && cfg.lastSyncWarnings.length > 0 && (
+            <div className="mt-3 rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">
+              <p className="font-medium text-foreground">Some sources didn&apos;t contribute to this sync:</p>
+              <ul className="mt-1 list-disc space-y-0.5 pl-4">
+                {cfg.lastSyncWarnings.map((warning) => (
+                  <li key={warning}>{warning}</li>
+                ))}
+              </ul>
+            </div>
           )}
           {cfg?.lastSyncStatus === "failed" && cfg?.lastSyncError && (
             <p className="mt-3 rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">
               Last sync failed: {cfg.lastSyncError}
+            </p>
+          )}
+          {cfg?.accountId && (
+            <p className="mt-3 text-[11px] text-muted-foreground">
+              Connected IDX Broker account: <span className="font-mono">{cfg.accountId}</span>
+              {cfg?.agentMlsId ? <> · Agent MLS id: <span className="font-mono">{cfg.agentMlsId}</span></> : null}
+              . Confirm this is the account you expect in IDX Broker&apos;s own dashboard.
             </p>
           )}
           <div className="mt-4 rounded-lg border bg-background p-3">

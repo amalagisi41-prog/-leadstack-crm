@@ -3,13 +3,118 @@ import "server-only";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
 import {
+  extractListingsFromSavedLink,
+  fetchAccountInfo,
+  fetchAgents,
   fetchIdxListings,
+  fetchSavedLinks,
+  fetchSupplementalListings,
+  listingIdentifier,
   type IdxBrokerRawListing,
 } from "@/lib/idx/broker-client";
 import { loadIdxSecrets } from "@/lib/comms/sub-account-secrets";
 import { describeListingSource } from "@/lib/marketing/listing-source";
 import type { IdxConfig } from "@/types";
 import type { IdxListingDoc } from "@/types/idx";
+
+/**
+ * A year, in hours, per IDX Broker's `interval` parameter on `/clients/featured`
+ * (that endpoint's interval is hours, not days).
+ */
+const FEATURED_INTERVAL_HOURS = 8765;
+
+type SyncSources = NonNullable<IdxConfig["lastSyncSources"]>;
+
+function emptySources(): SyncSources {
+  return { featured: 0, agentFiltered: 0, savedLink: 0, supplemental: 0 };
+}
+
+/**
+ * Fetches every available IDX Broker listing source for this account,
+ * merges them, and de-dupes by `idxID` + the listing's own identifier.
+ * Featured alone under-reports (see the file-level comment on
+ * broker-client.ts) — this is the actual fix: don't rely on one endpoint's
+ * notion of "the listings," combine everything the account can see.
+ *
+ * Each source is fetched independently and a failure in one (a saved link
+ * endpoint that doesn't exist for this account, an agent filter IDX Broker
+ * rejects, etc) is recorded as a warning rather than aborting the whole
+ * sync — the point of fanning out across sources is resilience to exactly
+ * this kind of partial failure.
+ */
+async function collectListings(
+  accessKey: string,
+  agentMlsId: string | null,
+): Promise<{
+  listings: IdxBrokerRawListing[];
+  sources: SyncSources;
+  warnings: string[];
+}> {
+  const sources = emptySources();
+  const warnings: string[] = [];
+  const collected: IdxBrokerRawListing[] = [];
+
+  async function tryFetch(
+    label: keyof SyncSources,
+    run: () => Promise<IdxBrokerRawListing[]>,
+  ): Promise<void> {
+    try {
+      const records = await run();
+      sources[label] = records.length;
+      collected.push(...records);
+    } catch (err) {
+      warnings.push(
+        `${label}: ${err instanceof Error ? err.message : "request failed"}`,
+      );
+    }
+  }
+
+  await tryFetch("featured", () =>
+    fetchIdxListings(accessKey, { intervalHours: FEATURED_INTERVAL_HOURS }),
+  );
+
+  if (agentMlsId) {
+    await tryFetch("agentFiltered", () =>
+      fetchIdxListings(accessKey, {
+        intervalHours: FEATURED_INTERVAL_HOURS,
+        agentMlsId,
+      }),
+    );
+  } else {
+    warnings.push(
+      "agentFiltered: skipped — no MLS agent id is saved for this account yet.",
+    );
+  }
+
+  try {
+    const savedLinks = await fetchSavedLinks(accessKey);
+    if (savedLinks.length === 0) {
+      warnings.push(
+        "savedLink: no saved link found in IDX Broker — create one for the agent's active listings to widen sync coverage.",
+      );
+    } else {
+      const fromLinks = savedLinks.flatMap(extractListingsFromSavedLink);
+      sources.savedLink = fromLinks.length;
+      collected.push(...fromLinks);
+    }
+  } catch (err) {
+    warnings.push(
+      `savedLink: ${err instanceof Error ? err.message : "request failed"}`,
+    );
+  }
+
+  await tryFetch("supplemental", () => fetchSupplementalListings(accessKey));
+
+  const seen = new Map<string, IdxBrokerRawListing>();
+  for (const record of collected) {
+    const idxId = typeof record.idxID === "string" ? record.idxID : "";
+    const listingId = listingIdentifier(record) ?? "";
+    const key = `${idxId}::${listingId}` || JSON.stringify(record).slice(0, 80);
+    if (!seen.has(key)) seen.set(key, record);
+  }
+
+  return { listings: Array.from(seen.values()), sources, warnings };
+}
 
 const BATCH_OP_LIMIT = 400; // stay under Firestore's 500-op batch cap
 
@@ -112,6 +217,12 @@ export interface SyncResult {
   ok: boolean;
   listingCount: number;
   error?: string;
+  /** Per-source listing counts from this sync (present whenever the account check succeeded, even on a total failure downstream). */
+  sources?: SyncSources;
+  /** The connected IDX Broker account's own id, so the operator can self-verify this key belongs to the account they expect. */
+  accountId?: string | null;
+  /** Non-fatal issues surfaced alongside the counts — a source that errored, no saved link found, etc. */
+  warnings?: string[];
 }
 
 /**
@@ -163,8 +274,62 @@ export async function syncIdxListings(subAccountId: string): Promise<SyncResult>
     { merge: true },
   );
 
+  // Account check first: every source below shares this same access key, so
+  // a failure here (revoked key, wrong account) will fail every one of them
+  // identically. Fail fast with the real reason instead of a pile of
+  // per-source warnings that all say the same thing a different way.
+  let accountId: string | null = null;
   try {
-    const raw = await fetchIdxListings(idxSecrets.accessKey);
+    const info = await fetchAccountInfo(idxSecrets.accessKey);
+    accountId = info.accountId;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Couldn't verify the IDX Broker account.";
+    await subRef
+      .set(
+        {
+          idxConfig: {
+            ...publicCfg,
+            lastSyncAt: FieldValue.serverTimestamp(),
+            lastSyncStatus: "failed",
+            lastSyncError: message,
+          },
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true },
+      )
+      .catch(() => undefined);
+    return { ok: false, listingCount: 0, error: message, accountId: null };
+  }
+
+  // Agent discovery: only auto-save when it's unambiguous. A brokerage
+  // account can list several agents, and guessing which one is "the" agent
+  // for this sub-account would be worse than leaving it unset — the operator
+  // gets a clear warning instead of a silently wrong filter.
+  let agentMlsId = cfg.agentMlsId ?? null;
+  const agentWarnings: string[] = [];
+  try {
+    const agents = await fetchAgents(idxSecrets.accessKey);
+    if (!agentMlsId) {
+      if (agents.length === 1 && agents[0].agentMlsId) {
+        agentMlsId = agents[0].agentMlsId;
+      } else if (agents.length === 0) {
+        agentWarnings.push("agents: IDX Broker returned no agents for this account.");
+      } else {
+        agentWarnings.push(
+          `agents: ${agents.length} agents on this account — pick one manually to enable the agent-filtered check.`,
+        );
+      }
+    }
+  } catch (err) {
+    agentWarnings.push(
+      `agents: ${err instanceof Error ? err.message : "request failed"}`,
+    );
+  }
+
+  try {
+    const { listings: raw, sources, warnings: sourceWarnings } =
+      await collectListings(idxSecrets.accessKey, agentMlsId);
+    const warnings = [...agentWarnings, ...sourceWarnings];
     const listingsCol = db.collection(`subAccounts/${subAccountId}/idxListings`);
     const normalized = raw
       .map((r) => normalizeListing(r, subAccountId, cfg.mlsId as string))
@@ -211,17 +376,21 @@ export async function syncIdxListings(subAccountId: string): Promise<SyncResult>
       {
         idxConfig: {
           ...publicCfg,
+          accountId,
+          agentMlsId,
           lastSyncAt: FieldValue.serverTimestamp(),
           lastSyncStatus: raw.length === 0 ? "empty" : "success",
           lastSyncError: null,
           listingCount,
+          lastSyncSources: sources,
+          lastSyncWarnings: warnings,
         },
         updatedAt: FieldValue.serverTimestamp(),
       },
       { merge: true },
     );
 
-    return { ok: true, listingCount };
+    return { ok: true, listingCount, sources, accountId, warnings };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Sync failed.";
     await subRef
@@ -229,6 +398,8 @@ export async function syncIdxListings(subAccountId: string): Promise<SyncResult>
         {
           idxConfig: {
             ...publicCfg,
+            accountId,
+            agentMlsId,
             lastSyncAt: FieldValue.serverTimestamp(),
             lastSyncStatus: "failed",
             lastSyncError: message,
@@ -238,6 +409,6 @@ export async function syncIdxListings(subAccountId: string): Promise<SyncResult>
         { merge: true },
       )
       .catch(() => undefined);
-    return { ok: false, listingCount: 0, error: message };
+    return { ok: false, listingCount: 0, error: message, accountId };
   }
 }

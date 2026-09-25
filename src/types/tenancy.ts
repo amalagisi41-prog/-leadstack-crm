@@ -572,10 +572,29 @@ export interface IdxConfig {
   mlsId: string | null;
   /** "Listings provided by <MLS name>" attribution line shown on public pages. */
   displayName: string | null;
+  /**
+   * The connected IDX Broker account's own id, as `/clients/accountinfo`
+   * reports it. Shown in Settings so the operator can self-verify this key
+   * belongs to the account they expect — the app has no way to know which
+   * account is "correct" for a given customer, so it surfaces the evidence
+   * instead of guessing.
+   */
+  accountId?: string | null;
+  /** The MLS-issued agent id discovered from `/clients/agents`, used to narrow the Featured request to one agent's listings. Null until unambiguously discovered (more than one agent on the account leaves this null). */
+  agentMlsId?: string | null;
   lastSyncAt: Timestamp | FieldValue | null;
   lastSyncStatus: "idle" | "syncing" | "success" | "empty" | "failed";
   lastSyncError: string | null;
   listingCount: number;
+  /** Per-source listing counts from the last sync — see `lib/idx/sync.ts`. */
+  lastSyncSources?: {
+    featured: number;
+    agentFiltered: number;
+    savedLink: number;
+    supplemental: number;
+  } | null;
+  /** Non-fatal issues from the last sync (a source that errored, no saved link found, etc) — shown alongside the source breakdown instead of a single generic message. */
+  lastSyncWarnings?: string[] | null;
 }
 
 export type A2pCarrierStatus =

@@ -20,9 +20,20 @@ export async function POST(
   const result = await syncIdxListings(subAccountId);
   if (!result.ok) {
     return NextResponse.json(
-      { error: result.error ?? "Sync failed." },
+      {
+        error: result.error ?? "Sync failed.",
+        accountId: result.accountId ?? null,
+        sources: result.sources ?? null,
+        warnings: result.warnings ?? [],
+      },
       { status: 400 },
     );
   }
-  return NextResponse.json({ ok: true, listingCount: result.listingCount });
+  return NextResponse.json({
+    ok: true,
+    listingCount: result.listingCount,
+    accountId: result.accountId ?? null,
+    sources: result.sources ?? null,
+    warnings: result.warnings ?? [],
+  });
 }

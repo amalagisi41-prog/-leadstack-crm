@@ -140,10 +140,14 @@ export async function POST(
     connected: true,
     mlsId,
     displayName: existing?.displayName ?? null,
+    accountId: existing?.accountId ?? null,
+    agentMlsId: existing?.agentMlsId ?? null,
     lastSyncAt: existing?.lastSyncAt ?? null,
     lastSyncStatus: existing?.lastSyncStatus ?? "idle",
     lastSyncError: null,
     listingCount: existing?.listingCount ?? 0,
+    lastSyncSources: existing?.lastSyncSources ?? null,
+    lastSyncWarnings: existing?.lastSyncWarnings ?? null,
   };
 
   await subRef.set(
