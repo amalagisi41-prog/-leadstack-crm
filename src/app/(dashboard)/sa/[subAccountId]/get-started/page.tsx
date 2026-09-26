@@ -10,7 +10,7 @@ import {
   type OnboardingWizardStepKey,
 } from "@/components/dashboard/onboarding-wizard";
 import { SOLO_ENTITLEMENT_PATCH } from "@/lib/entitlements/solo";
-import { RealtorLaunchWizard } from "@/components/dashboard/realtor-launch-wizard";
+import { SetupModal } from "@/components/dashboard/setup-modal";
 import { Loader2 } from "lucide-react";
 import { useOnboardingCompletion } from "@/hooks/use-onboarding-completion";
 
@@ -18,10 +18,11 @@ import { useOnboardingCompletion } from "@/hooks/use-onboarding-completion";
  * Mandatory first-run wizard. The sub-account dashboard redirects here at
  * login until onboardingWizardCompletedAt is set.
  *
- * New workspaces get the streamlined AgentStack guided setup (5 questions:
- * role → priority → identity → connect → next action). The old AgentStack Method
- * wizard is still accessible via ?step= deep-links for returning users who
- * started the original flow.
+ * New workspaces get the account-first setup flow — Identity →
+ * Communications account → Listings source → Social → Payments → Domain,
+ * locked in order (see setup-modal.tsx). The old AgentStack Method wizard is
+ * still accessible via ?step= deep-links for returning users who started
+ * the original flow.
  */
 export default function GetStartedPage() {
   const searchParams = useSearchParams();
@@ -39,6 +40,12 @@ export default function GetStartedPage() {
   /** True when this member lacks admin rights and so cannot run setup at all. */
   const [adminOnly, setAdminOnly] = useState(false);
   const requestedStep = searchParams.get("step");
+  // The sidebar's "Setup" link (unlike the mandatory first-run redirect) has
+  // to survive setup already being complete — an admin who skipped Listings
+  // or Social needs a way back in that doesn't just bounce them to the
+  // dashboard. `revisit=1` marks that intent explicitly, the same way
+  // `?step=` already carves out the legacy wizard's deep link.
+  const isRevisit = searchParams.get("revisit") === "1";
   const initialStep =
     requestedStep &&
     ["build", "connect", "capture", "respond", "nurture", "close"].includes(
@@ -49,9 +56,24 @@ export default function GetStartedPage() {
   const setupIsComplete = Boolean(subAccount?.onboardingWizardCompletedAt);
 
   useEffect(() => {
-    if (loading || !subAccount || requestedStep || !setupIsComplete) return;
+    if (
+      loading ||
+      !subAccount ||
+      requestedStep ||
+      isRevisit ||
+      !setupIsComplete
+    )
+      return;
     router.replace(saPath("/dashboard"));
-  }, [loading, requestedStep, router, saPath, setupIsComplete, subAccount]);
+  }, [
+    loading,
+    requestedStep,
+    isRevisit,
+    router,
+    saPath,
+    setupIsComplete,
+    subAccount,
+  ]);
 
   // Idempotent migration for workspaces created before the Solo entitlement
   // baseline shipped.
@@ -115,7 +137,7 @@ export default function GetStartedPage() {
   }
 
   if (
-    (setupIsComplete && !requestedStep) ||
+    (setupIsComplete && !requestedStep && !isRevisit) ||
     loading ||
     !subAccount ||
     foundationComplete === null ||
@@ -148,15 +170,15 @@ export default function GetStartedPage() {
     );
   }
 
-  // New default: guided AgentStack setup (role → priority → identity → connect
-  // → next action). Stored answers are passed in so a refresh resumes at the first
-  // unanswered question instead of restarting from screen one.
+  // New default: the account-first setup flow (Identity → Communications
+  // account → Listings source → Social → Payments → Domain), replacing the
+  // old role/priority Realtor Launch Wizard. Each step derives its own
+  // done/locked state live from subAccount, so a refresh always resumes at
+  // the right step — see components/dashboard/setup-modal.tsx.
   return (
-    <RealtorLaunchWizard
+    <SetupModal
       subAccountId={subAccountId}
       saPath={saPath}
-      initialRole={subAccount.realtorRole ?? null}
-      initialPriority={subAccount.launchPriority ?? null}
       subAccount={subAccount}
     />
   );
