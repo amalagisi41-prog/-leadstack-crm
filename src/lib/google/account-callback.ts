@@ -11,7 +11,6 @@ import {
   writeGoogleWorkspaceSecrets,
 } from "@/lib/comms/sub-account-secrets";
 import {
-  BUSINESS_MANAGE_SCOPE,
   CALENDAR_EVENTS_SCOPE,
   GMAIL_SEND_SCOPE,
   googleAccountClient,
@@ -104,7 +103,6 @@ export async function completeGoogleAccountConnection(
         scopes: Array.from(granted),
         gmail: granted.has(GMAIL_SEND_SCOPE),
         calendar: granted.has(CALENDAR_EVENTS_SCOPE),
-        businessProfile: granted.has(BUSINESS_MANAGE_SCOPE),
         connectedAt: FieldValue.serverTimestamp(),
         connectedByUid: access.uid,
       },

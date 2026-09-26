@@ -241,7 +241,7 @@ export function SubAccountSmsSection() {
   }
 
   return (
-    <section className="rounded-2xl border bg-card p-6">
+    <section id="sms-connection" className="scroll-mt-6 rounded-2xl border bg-card p-6">
       <header className="mb-4 flex items-start gap-3">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400">
           <MessageSquare className="h-4 w-4" />

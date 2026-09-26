@@ -890,7 +890,6 @@ export interface GoogleAccountConfig {
   scopes: string[];
   gmail: boolean;
   calendar: boolean;
-  businessProfile: boolean;
   connectedAt: Date | Timestamp | FieldValue;
   connectedByUid: string;
 }
