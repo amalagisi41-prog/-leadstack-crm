@@ -133,6 +133,46 @@ export interface SiteHealthResult {
   cancellation: CancellationReadiness | null;
 }
 
+/**
+ * The chat task's copy depends on WHY it's incomplete, not just that it is.
+ * Enabling the channel toggle does nothing for an agent whose site lives
+ * outside AgentStack until the chat snippet is actually pasted onto that
+ * site and re-verified — before this, the task pointed everyone at the same
+ * "Set up chat" link regardless of cause, stranding that persona with no
+ * way to tell what was actually missing (the widget-install step lives on
+ * the Site Health page's "website" task, not on the chat settings page the
+ * generic link sends them to).
+ */
+function chatTaskCopy(
+  inputs: SiteHealthInputs
+): Pick<SiteHealthTask, "detail" | "href" | "action"> {
+  const anySitePublished = inputs.publishedWebsite || inputs.publishedAgentSite;
+  if (inputs.webChatEnabled || anySitePublished) {
+    return {
+      detail: "Answer common questions and capture leads while you are busy.",
+      href: "/ai-agents/web-chat",
+      action: "Set up chat",
+    };
+  }
+  if (inputs.externalSiteVerified) {
+    // Verified live, but deriveWebChatEnabled() found no widget on it — the
+    // channel toggle alone can never satisfy that; the snippet has to be
+    // pasted onto the agent's own site and re-verified above.
+    return {
+      detail:
+        'Your site is verified, but the chat snippet is not on it yet. Copy it from Web Chat settings, paste it into your site, then click "I already have a website" on the task above to re-check.',
+      href: "/ai-agents/web-chat",
+      action: "Get your chat snippet",
+    };
+  }
+  return {
+    detail:
+      "Publish your website first (above) — chat turns on automatically once it's live.",
+    href: "/website-studio",
+    action: "Publish your website",
+  };
+}
+
 export function buildSiteHealthTasks(
   inputs: SiteHealthInputs
 ): SiteHealthTask[] {
@@ -200,10 +240,8 @@ export function buildSiteHealthTasks(
     {
       id: "chat",
       title: "Turn on website chat",
-      detail: "Answer common questions and capture leads while you are busy.",
       complete: inputs.webChatEnabled,
-      href: "/ai-agents/web-chat",
-      action: "Set up chat",
+      ...chatTaskCopy(inputs),
     },
     {
       id: "email",

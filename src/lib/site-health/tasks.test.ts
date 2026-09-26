@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildSiteHealthTasks,
   computeSiteHealth,
   deriveWebChatEnabled,
   isBusinessEmailVerified,
@@ -60,6 +61,55 @@ describe("deriveWebChatEnabled", () => {
         publishedAgentSite: false,
       }),
     ).toBe(false);
+  });
+});
+
+describe("Site Health — chat task copy explains WHY it's blocked", () => {
+  // Regression: the task used to send everyone to the same "Set up chat"
+  // link regardless of cause. An agent on an externally hosted site who
+  // hasn't pasted the widget snippet yet could flip that toggle forever and
+  // this item would never clear, with no hint why.
+  const base: SiteHealthInputs = {
+    profile: {},
+    publishedWebsite: false,
+    publishedAgentSite: false,
+    customDomain: undefined,
+    hasLeadForm: false,
+    hasBookingPage: false,
+    webChatEnabled: false,
+    businessEmailVerified: false,
+  };
+
+  it("points to publishing a website when nothing is published anywhere", () => {
+    const chat = buildSiteHealthTasks(base).find((t) => t.id === "chat")!;
+    expect(chat.action).toBe("Publish your website");
+    expect(chat.href).toBe("/website-studio");
+  });
+
+  it("points to the chat snippet when an external site is verified but carries no widget", () => {
+    const chat = buildSiteHealthTasks({
+      ...base,
+      externalSiteVerified: true,
+    }).find((t) => t.id === "chat")!;
+    expect(chat.action).toBe("Get your chat snippet");
+    expect(chat.detail).toContain("chat snippet is not on it yet");
+  });
+
+  it("falls back to the generic chat setup link once a site is published", () => {
+    const chat = buildSiteHealthTasks({
+      ...base,
+      publishedAgentSite: true,
+    }).find((t) => t.id === "chat")!;
+    expect(chat.action).toBe("Set up chat");
+    expect(chat.href).toBe("/ai-agents/web-chat");
+  });
+
+  it("uses the generic copy once chat is actually enabled", () => {
+    const chat = buildSiteHealthTasks({
+      ...base,
+      webChatEnabled: true,
+    }).find((t) => t.id === "chat")!;
+    expect(chat.action).toBe("Set up chat");
   });
 });
 
