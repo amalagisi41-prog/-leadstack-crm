@@ -102,6 +102,50 @@ Listing ID : 24205988
     });
   });
 
+  it("gives two rows with no listing number the same id when the address matches", async () => {
+    // Regression: a row with no parseable MLS/listing number used to fall
+    // back to the per-request sourceId, so retrying a failed upload (or
+    // re-pasting the same property) minted a brand-new duplicate record
+    // every time instead of updating the one already there.
+    const first = await parseListingUpload({
+      buffer: Buffer.from("303 Weed Avenue, Stamford, CT 06902\n"),
+      filename: "attempt-1.txt",
+      subAccountId: "workspace-1",
+      sourceId: "manual-import-1",
+      photos: [],
+    });
+    const second = await parseListingUpload({
+      buffer: Buffer.from("303 Weed Ave, Stamford, CT 06902\n$799,000\n4 Beds 2 Baths\n"),
+      filename: "attempt-2.txt",
+      subAccountId: "workspace-1",
+      sourceId: "manual-import-2",
+      photos: [],
+    });
+    if (typeof first === "string") throw new Error(first);
+    if (typeof second === "string") throw new Error(second);
+    expect(first.id).toBe(second.id);
+  });
+
+  it("gives two different addresses different ids when neither has a listing number", async () => {
+    const a = await parseListingUpload({
+      buffer: Buffer.from("29 Division Street West #3, Greenwich, CT 06830\n"),
+      filename: "a.txt",
+      subAccountId: "workspace-1",
+      sourceId: "manual-import-a",
+      photos: [],
+    });
+    const b = await parseListingUpload({
+      buffer: Buffer.from("151 Sun Dance Road, Stamford, CT 06903\n"),
+      filename: "b.txt",
+      subAccountId: "workspace-1",
+      sourceId: "manual-import-b",
+      photos: [],
+    });
+    if (typeof a === "string") throw new Error(a);
+    if (typeof b === "string") throw new Error(b);
+    expect(a.id).not.toBe(b.id);
+  });
+
   it("returns every valid row from a multi-listing export", async () => {
     const result = await parseListingUploads({
       buffer: Buffer.from([
