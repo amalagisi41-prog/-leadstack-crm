@@ -256,6 +256,19 @@ service cloud.firestore {
         allow write: if false;
       }
 
+      // Listings-page import source — the sub-account's connected public
+      // listings URL, kept in sync into idxListings (see
+      // lib/marketing/listings-source-sync.ts). Members read so the
+      // Marketing settings card hydrates; writes go through the Admin-SDK
+      // routes under /api/sub-accounts/[id]/marketing/listings-source/*.
+      match /listingsImportSource/{docId} {
+        allow read: if canAccessSub(
+          subAccountId,
+          get(/databases/$(database)/documents/subAccounts/$(subAccountId)).data.agencyId
+        );
+        allow write: if false;
+      }
+
       // IDX Listings — MLS listings synced from the sub-account's own IDX
       // Broker account (see "IDX Listings (IDX Broker) v1"). Members read so
       // the operator's /sa/[id]/idx browser hydrates; the public /idx/* pages
