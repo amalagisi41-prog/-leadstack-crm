@@ -69,6 +69,12 @@ const PUBLIC_PATHS = [
   // Keeps every connected sub-account's token from silently expiring instead
   // of the operator having to notice and manually reconnect.
   "/api/cron/meta-token-refresh",
+  // Public listings-page sync — weekly fan-out + its per-sub-account step
+  // worker. Both signature-verified inside the route. Scrapes a sub-account's
+  // own public listings page into the Listings inventory (see
+  // lib/marketing/listings-source-sync.ts).
+  "/api/cron/listings-source-sync",
+  "/api/listings-source-sync/step",
   "/api/landing/metrics",
   "/api/landing/recent-purchases",
   // Live-visitors heartbeat ping for the agency dashboard's world map.

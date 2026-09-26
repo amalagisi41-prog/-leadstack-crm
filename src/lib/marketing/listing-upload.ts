@@ -2,6 +2,7 @@ import "server-only";
 
 import * as XLSX from "xlsx";
 import type { IdxListingDoc } from "@/types/idx";
+import { normalizeAddressKey, stableListingId } from "@/lib/marketing/listing-dedupe";
 
 // pdfjs-dist expects this browser geometry global while loading. Text parsing
 // does not render paths, so a small pure-JS 2D matrix is sufficient and keeps
@@ -177,7 +178,15 @@ function listingFromRow(row: Record<string, unknown>, subAccountId: string, sour
   if (missing.length) {
     return `The pasted listing is missing ${missing.join(", ")}. Copy the SmartMLS location line with the street address, city, state, and ZIP, or enter those verified fields in guided entry below.`;
   }
-  const listingId = text(first(row, ["mlsnumber", "mlsid", "mls", "listingid", "listingnumber"])) || sourceListingId || sourceId;
+  // No real MLS/listing number → fall back to an address-derived id rather
+  // than the per-upload sourceId. A retried or re-pasted upload of the same
+  // property then upserts the existing record instead of piling up a new
+  // duplicate every attempt (the bug behind repeated "off-market" rows all
+  // showing the same address with blank data from earlier failed parses).
+  const listingId =
+    text(first(row, ["mlsnumber", "mlsid", "mls", "listingid", "listingnumber"])) ||
+    sourceListingId ||
+    stableListingId(normalizeAddressKey(address, city, state));
   const inlinePhotos = [...combined.matchAll(PHOTO_URL_RE)].map((match) => match[0]);
   const uniquePhotos = [...new Set([...photos, ...inlinePhotos])].slice(0, 50);
   return {
