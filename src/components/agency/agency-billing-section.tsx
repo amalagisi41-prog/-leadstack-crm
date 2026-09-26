@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { CreditCard, Loader2, ReceiptText } from "lucide-react";
 import { getMarketingPlan } from "@/config/landing";
+import { ADD_ON_PRICE_ENV_VAR } from "@/lib/stripe/addon-catalog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -103,6 +104,13 @@ export function AgencyBillingSection({ detailed = false }: { detailed?: boolean 
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState<string>("too_expensive");
   const [cancelDetail, setCancelDetail] = useState("");
+  /**
+   * Set by the last "Add to billing" click — what it could NOT fix, so the
+   * toast never claims full success when a price is still missing. A ref,
+   * not state: it's read synchronously right after the call resolves, before
+   * a state update would have re-rendered.
+   */
+  const lastUnresolvedRef = useRef<UnbilledAddOn[]>([]);
 
   async function loadSummary() {
     setLoading(true);
@@ -154,6 +162,7 @@ export function AgencyBillingSection({ detailed = false }: { detailed?: boolean 
         url?: string;
         summary?: BillingSummary;
         unbilledAddOns?: UnbilledAddOn[];
+        unresolved?: UnbilledAddOn[];
         error?: string;
       };
       if (!res.ok) {
@@ -165,6 +174,7 @@ export function AgencyBillingSection({ detailed = false }: { detailed?: boolean 
       }
       if (data.summary) setSummary(data.summary);
       if (data.unbilledAddOns) setUnbilled(data.unbilledAddOns);
+      lastUnresolvedRef.current = data.unresolved ?? [];
       return data.summary ?? null;
     } catch (err) {
       toast.error(
@@ -316,29 +326,35 @@ export function AgencyBillingSection({ detailed = false }: { detailed?: boolean 
                 <li key={`${u.subAccountId}:${u.addOnKey}`}>
                   {u.addOnName} · {u.subAccountName}
                   {u.reason === "not_priced"
-                    ? " — no Stripe price configured on this deployment"
+                    ? ` — no Stripe price configured on this deployment. Create a recurring price in Stripe and set ${ADD_ON_PRICE_ENV_VAR[u.addOnKey]} in your environment variables, then click "Add to billing" again.`
                     : u.reason === "no_subscription"
-                      ? " — no active subscription"
+                      ? " — no active subscription to attach this to"
                       : ""}
                 </li>
               ))}
             </ul>
-            {unbilled.some((u) => u.reason === "missing_item") && (
-              <Button
-                size="sm"
-                className="mt-3"
-                disabled={busyAction !== null}
-                onClick={() =>
-                  void runAction({ action: "bill_add_ons" }, "bill_add_ons").then(
-                    (next) => {
-                      if (next) toast.success("Billing updated for active add-ons.");
-                    },
-                  )
-                }
-              >
-                {busyAction === "bill_add_ons" ? "Updating…" : "Add to billing"}
-              </Button>
-            )}
+            <Button
+              size="sm"
+              className="mt-3"
+              disabled={busyAction !== null}
+              onClick={() =>
+                void runAction({ action: "bill_add_ons" }, "bill_add_ons").then(
+                  (next) => {
+                    if (!next) return; // runAction already toasted the error
+                    const unresolved = lastUnresolvedRef.current;
+                    if (unresolved.length > 0) {
+                      toast.warning(
+                        `Billed what we could — ${unresolved.length} add-on${unresolved.length === 1 ? "" : "s"} still ${unresolved.length === 1 ? "needs" : "need"} a Stripe price configured.`,
+                      );
+                    } else {
+                      toast.success("Billing updated for active add-ons.");
+                    }
+                  },
+                )
+              }
+            >
+              {busyAction === "bill_add_ons" ? "Updating…" : "Add to billing"}
+            </Button>
           </div>
         )}
 
