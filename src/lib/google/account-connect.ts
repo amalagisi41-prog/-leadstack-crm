@@ -19,20 +19,29 @@ import { googleBusinessRedirectUri } from "@/lib/business-profile/google-redirec
  * minted for one flow can never validate as the other.
  */
 
+/**
+ * Deliberately does NOT request `business.manage`. Google Business Profile
+ * import (see `lib/business-profile/google-business.ts`) is a separate,
+ * one-shot OAuth handshake that never reads or reuses anything this flow
+ * stores — it always mints its own fresh consent when the operator clicks
+ * "Import from Google," regardless of whether this unified connection
+ * exists. Requesting the scope here therefore bought nothing: it never
+ * powered any feature, it just added Google's scariest-sounding permission
+ * ("See, edit, create and delete your Google business listings") to the
+ * consent screen and a `businessProfile: true` flag that claimed a
+ * "connection" nothing was actually using.
+ */
 export const GOOGLE_ACCOUNT_SCOPES = [
   "openid",
   "email",
   "profile",
   "https://www.googleapis.com/auth/gmail.send",
   "https://www.googleapis.com/auth/calendar.events",
-  "https://www.googleapis.com/auth/business.manage",
 ] as const;
 
 export const GMAIL_SEND_SCOPE = "https://www.googleapis.com/auth/gmail.send";
 export const CALENDAR_EVENTS_SCOPE =
   "https://www.googleapis.com/auth/calendar.events";
-export const BUSINESS_MANAGE_SCOPE =
-  "https://www.googleapis.com/auth/business.manage";
 
 const STATE_PREFIX = "acct";
 const HMAC_DOMAIN = "googleaccount:";

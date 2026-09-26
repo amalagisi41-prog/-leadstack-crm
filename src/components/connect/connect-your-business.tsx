@@ -31,6 +31,14 @@ import { cn } from "@/lib/utils";
 import { EasyConnectorsSection } from "@/components/connect/easy-connectors-section";
 import { GoogleGIcon } from "@/components/brand/google-g-icon";
 import { googleAccountConnectPath } from "@/lib/google/account-connect-path";
+import type { GoogleAccountConfig } from "@/types/tenancy";
+
+/** The first requested Google scope that was NOT granted, named for the operator — or null if everything was. */
+function googleMissingScope(account: GoogleAccountConfig): string | null {
+  if (!account.gmail) return "Gmail sending";
+  if (!account.calendar) return "Calendar";
+  return null;
+}
 
 type ConnectionStatus =
   | "connected"
@@ -206,6 +214,16 @@ export function ConnectYourBusiness() {
     const metaConnected = metaCanInbox(subAccount.metaConfig ?? null);
     const metaNeedsAttention =
       !!subAccount.metaConfig?.connected && !metaConnected;
+    // metaInboxEnabledByAgency/socialPlannerEnabledByAgency are a deliberate
+    // "inert and invisible everywhere" preview gate — the connect UI itself
+    // (SubAccountMetaSection) renders nothing at all until the agency turns
+    // one on. Showing this card unconditionally used to promise a working
+    // connection that Settings could never deliver — the dead end behind
+    // "no social sign up anywhere." Matching that same contract here means
+    // the card doesn't exist for a sub-account the feature is invisible for.
+    const metaGateOn =
+      subAccount.metaInboxEnabledByAgency === true ||
+      subAccount.socialPlannerEnabledByAgency === true;
 
     const idxConfigured =
       subAccount.idxEnabledByAgency === true &&
@@ -213,7 +231,7 @@ export function ConnectYourBusiness() {
     const idxNeedsAttention =
       subAccount.idxEnabledByAgency === true && !subAccount.idxConfig?.enabled;
 
-    return [
+    const list: (ConnectionCardData | null)[] = [
       {
         key: "domain-hosting",
         icon: Globe2,
@@ -269,7 +287,7 @@ export function ConnectYourBusiness() {
             ? "connected"
             : "not_connected",
         actionLabel: emailDomainVerified ? "Manage" : "Connect",
-        actionHref: settingsHref,
+        actionHref: `${settingsHref}?tab=messaging#business-email`,
       },
       {
         key: "sms",
@@ -282,7 +300,7 @@ export function ConnectYourBusiness() {
         blurb: "Your own number for two-way SMS with leads and clients.",
         status: smsConnected ? "connected" : "not_connected",
         actionLabel: smsConnected ? "Manage" : "Connect",
-        actionHref: settingsHref,
+        actionHref: `${settingsHref}?tab=messaging#sms-connection`,
       },
       {
         key: "chat-widget",
@@ -296,7 +314,9 @@ export function ConnectYourBusiness() {
         actionLabel: webChatEnabled ? "Verify install" : "Connect",
         actionHref: aiAgentsHref,
       },
-      {
+      !metaGateOn
+        ? null
+        : {
         key: "meta",
         icon: Facebook,
         iconTone: "bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-400",
@@ -316,7 +336,7 @@ export function ConnectYourBusiness() {
             ? "connected"
             : "not_connected",
         actionLabel: metaConnected ? "Manage" : "Connect",
-        actionHref: settingsHref,
+        actionHref: `${settingsHref}?tab=messaging#meta-connection`,
       },
       {
         key: "calendar",
@@ -391,10 +411,27 @@ export function ConnectYourBusiness() {
         icon: GoogleGIcon,
         iconTone: "bg-white text-foreground ring-1 ring-border",
         title: "Google Profile",
-        detail: googleAccount?.email || undefined,
+        // Google's consent screen lets someone grant the account overall but
+        // untick an individual scope, so "Connected" alone can't be trusted —
+        // it has to say which of the two things actually got granted. A
+        // blended "Connected" here previously hid a declined Gmail-send or
+        // Calendar grant with no indication anything was missing.
+        detail: !googleAccount
+          ? undefined
+          : googleMissingScope(googleAccount)
+            ? `${googleAccount.email} — ${googleMissingScope(googleAccount)} not granted`
+            : googleAccount.email,
+        detailTone: googleAccount && googleMissingScope(googleAccount)
+          ? "text-amber-600 dark:text-amber-400"
+          : undefined,
         blurb:
-          "Connect your Google account once: profile, Gmail sending, Google Calendar, and Business Profile. OAuth keeps credentials server-side.",
-        status: googleAccount?.status === "connected" ? "connected" : "not_connected",
+          "Connect your Google account once: profile, Gmail sending, and Google Calendar. OAuth keeps credentials server-side.",
+        status:
+          googleAccount?.status !== "connected"
+            ? "not_connected"
+            : googleMissingScope(googleAccount)
+              ? "needs_attention"
+              : "connected",
         actionLabel: googleAccount?.status === "connected" ? "Reconnect Google" : "Connect Google",
         actionHref: googleAccountConnectPath(subAccount.id),
       },
@@ -411,6 +448,7 @@ export function ConnectYourBusiness() {
         actionHref: googleReviewsHref,
       },
     ];
+    return list.filter((card): card is ConnectionCardData => card !== null);
   }, [subAccount, saPath, webChatEnabled]);
 
   const filtered = useMemo(() => {

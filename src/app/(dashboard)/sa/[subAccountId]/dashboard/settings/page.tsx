@@ -158,7 +158,11 @@ export default function SettingsPage() {
         ? "business-email"
         : window.location.hash === "#google-reviews"
           ? "google-reviews"
-          : null;
+          : window.location.hash === "#sms-connection"
+            ? "sms-connection"
+            : window.location.hash === "#meta-connection"
+              ? "meta-connection"
+              : null;
     if (!hashTarget) return;
     const frame = window.requestAnimationFrame(() => {
       document

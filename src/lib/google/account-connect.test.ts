@@ -46,4 +46,14 @@ describe("buildGoogleAccountAuthUrl", () => {
       subAccountId: "sa_1",
     });
   });
+
+  it("never requests business.manage — nothing in this flow persists or uses it", () => {
+    // Google Business Profile import is a separate, one-shot OAuth handshake
+    // (lib/business-profile/google-business.ts) that always mints its own
+    // fresh consent, so requesting this scope here bought nothing but the
+    // scariest line on the consent screen.
+    expect(GOOGLE_ACCOUNT_SCOPES).not.toContain(
+      "https://www.googleapis.com/auth/business.manage",
+    );
+  });
 });

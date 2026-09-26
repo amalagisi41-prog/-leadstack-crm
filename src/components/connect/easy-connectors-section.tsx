@@ -112,6 +112,14 @@ export function EasyConnectorsSection() {
   const idxConnected =
     subAccount.idxEnabledByAgency === true &&
     subAccount.idxConfig?.connected === true;
+  // Deliberate "inert and invisible" preview gate (see SubAccountMetaSection) —
+  // Settings itself shows nothing for Facebook/Instagram until the agency
+  // turns one of these on, so pointing someone there without saying that is
+  // the dead end behind "no social sign up anywhere."
+  const metaGateOn =
+    subAccount.metaInboxEnabledByAgency === true ||
+    subAccount.socialPlannerEnabledByAgency === true;
+  const metaHref = `${settingsHref}?tab=messaging#meta-connection`;
 
   const goalChoices = [
     {
@@ -166,8 +174,15 @@ export function EasyConnectorsSection() {
     reach: {
       question: "Where do you want to be connected first?",
       options: [
-        { title: "Google", description: "Connect your Google account once: profile, Gmail, Calendar, and Business Profile.", href: googleAccountConnectPath(subAccount.id), action: "Connect Google" },
-        { title: "Facebook & Instagram", description: "Authorize Meta so messages can flow into Conversations and publishing can use your connected page.", href: settingsHref, action: "Connect social" },
+        { title: "Google", description: "Connect your Google account once: profile, Gmail sending, and Calendar.", href: googleAccountConnectPath(subAccount.id), action: "Connect Google" },
+        {
+          title: "Facebook & Instagram",
+          description: metaGateOn
+            ? "Authorize Meta so messages can flow into Conversations and publishing can use your connected page."
+            : "Ask your agency owner to turn this on for your workspace first — it's a preview feature, off by default.",
+          href: metaGateOn ? metaHref : settingsHref + "?tab=messaging",
+          action: metaGateOn ? "Connect social" : "See where to ask",
+        },
         { title: "Both", description: "Start with your Google account, then connect Facebook & Instagram.", href: googleAccountConnectPath(subAccount.id), action: "Start with Google" },
       ],
     },
