@@ -33,7 +33,7 @@ import {
   resolveMarketingStatus,
 } from "@/lib/marketing/listing-source";
 import { SUB_ACCOUNT_ROUTES } from "@/lib/navigation/sub-account-routes";
-import { ListingsSourceCard } from "@/components/marketing/listings-source-card";
+import { ListingsSourcesSection } from "@/components/marketing/listings-source-card";
 import { cn } from "@/lib/utils";
 import type { IdxListingDoc, ListingMarketingStatus } from "@/types/idx";
 import type { ListingInquiryStat } from "@/types/listing-inquiries";
@@ -340,7 +340,7 @@ export default function ListingsPage() {
         subAccountId={subAccountId}
       />
 
-      <ListingsSourceCard subAccountId={subAccountId} isAdmin={isAdmin} />
+      <ListingsSourcesSection subAccountId={subAccountId} isAdmin={isAdmin} />
 
       {/* Search + filters */}
       <div className="space-y-3">

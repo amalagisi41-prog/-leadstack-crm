@@ -3,7 +3,11 @@ import "server-only";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { firecrawlIsConfigured, scrapeUrl, FirecrawlError } from "@/lib/firecrawl/client";
-import { normalizeAddressKey, stableListingId } from "@/lib/marketing/listing-dedupe";
+import {
+  normalizeAddressKey,
+  stableListingId,
+  stableSourceId,
+} from "@/lib/marketing/listing-dedupe";
 import { MARKETING_STATUS_TO_IDX_STATUS } from "@/lib/marketing/listing-source";
 import { parseListingsFromMarkdown } from "@/lib/marketing/listings-scrape";
 import type { IdxListingDoc } from "@/types/idx";
@@ -13,23 +17,29 @@ import type {
 } from "@/types/listings-import";
 
 /**
- * Scrapes a sub-account's saved public listings page and upserts each
- * property into `idxListings` — the same collection the manual upload flow
- * and the IDX Broker sync write to, so the Listings browser, the campaign
- * composer, and Website Studio's featured-listing cards all see one
- * inventory regardless of where a property came from.
+ * Scrapes one of a sub-account's connected public listings pages and
+ * upserts each property into `idxListings` — the same collection the
+ * manual upload flow and the IDX Broker sync write to, so the Listings
+ * browser, the campaign composer, and Website Studio's featured-listing
+ * cards all see one inventory regardless of where a property came from.
+ *
+ * A sub-account can connect several source pages (see
+ * `subAccounts/{id}/listingsImportSources/{sourceId}`), so every function
+ * here takes the specific `sourceId` being synced rather than assuming
+ * there is only one.
  *
  * Shared by the operator's "Sync now" action (inline, synchronous — a
  * single-page Firecrawl scrape finishes in a few seconds, same as the AI
  * Agent's refresh-kb) and the weekly QStash-scheduled fan-out
- * (`/api/cron/listings-source-sync` -> `/api/marketing/listings-source/sync-step`).
+ * (`/api/cron/listings-source-sync` -> `/api/listings-source-sync/step`).
  */
 
-const SOURCE_DOC = (subAccountId: string) =>
-  `subAccounts/${subAccountId}/listingsImportSource/main`;
+export const sourcesCollection = (subAccountId: string) =>
+  `subAccounts/${subAccountId}/listingsImportSources`;
 
 /** See `ListingsImportSourceClient`'s doc comment for why this exists. */
 export function serializeListingsImportSource(
+  id: string,
   data: Record<string, unknown> | undefined,
 ): ListingsImportSourceClient | null {
   if (!data) return null;
@@ -40,6 +50,7 @@ export function serializeListingsImportSource(
       ? (lastSyncedAt as { toMillis: () => number }).toMillis()
       : null;
   return {
+    id,
     url: typeof data.url === "string" ? data.url : "",
     status:
       data.status === "processing" ||
@@ -59,14 +70,20 @@ export interface ListingsSourceSyncResult {
   error?: string;
 }
 
+/** Deterministic id for a URL — connecting the same URL twice updates one source. See `stableSourceId`. */
+export function sourceIdForUrl(url: string): string {
+  return stableSourceId(url);
+}
+
 export async function syncListingsFromSource(
   subAccountId: string,
+  sourceId: string,
 ): Promise<ListingsSourceSyncResult> {
   const db = getAdminDb();
-  const ref = db.doc(SOURCE_DOC(subAccountId));
+  const ref = db.doc(`${sourcesCollection(subAccountId)}/${sourceId}`);
   const snap = await ref.get();
   if (!snap.exists) {
-    return { ok: false, propertyCount: 0, error: "No listings page is connected." };
+    return { ok: false, propertyCount: 0, error: "That listings page is not connected." };
   }
   const source = snap.data() as ListingsImportSourceDoc;
 
@@ -91,7 +108,7 @@ export async function syncListingsFromSource(
     markdown = (await scrapeUrl(source.url)).markdown;
   } catch (err) {
     if (err instanceof FirecrawlError) return fail(err.message);
-    console.error(`[listings-source] sa=${subAccountId} scrape failed:`, err);
+    console.error(`[listings-source] sa=${subAccountId} source=${sourceId} scrape failed:`, err);
     return fail("Failed to fetch the listings page. Try again in a minute.");
   }
 
@@ -141,6 +158,7 @@ export async function syncListingsFromSource(
         raw: {
           ...priorRaw,
           importedFrom: "listings page sync",
+          sourceId,
           sourceUrl: source.url,
           addressKey,
           tags: card.tags,
@@ -151,12 +169,14 @@ export async function syncListingsFromSource(
     );
   }
 
-  // A property this source wrote before but didn't see this time came down
+  // A property THIS source wrote before but didn't see this time came down
   // off the page — flip it to off-market rather than deleting it, same as
-  // the IDX sync does for a listing that drops out of the MLS feed. Leads
-  // and campaign history tied to the record survive.
+  // the IDX sync does for a listing that drops out of the MLS feed. Scoped
+  // by sourceId (not just sourceUrl) now that a sub-account can have more
+  // than one connected page. Leads and campaign history tied to the record
+  // survive.
   const priorFromThisSource = await listingsRef
-    .where("raw.sourceUrl", "==", source.url)
+    .where("raw.sourceId", "==", sourceId)
     .get();
   for (const doc of priorFromThisSource.docs) {
     if (seenIds.has(doc.id)) continue;

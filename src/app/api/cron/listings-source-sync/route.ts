@@ -10,7 +10,7 @@ import {
 /**
  * Fired weekly by the "agentstack-listings-source-sync" QStash schedule
  * (see lib/qstash/register-schedules.ts). Fans out one staggered callback
- * per sub-account with a connected listings page to
+ * per CONNECTED LISTINGS PAGE (a sub-account may have more than one) to
  * /api/listings-source-sync/step, mirroring the IDX listing sync fan-out.
  * Weekly rather than every 6 hours like IDX — a public listings page for
  * one agent's own site doesn't turn over anywhere near as often as an MLS
@@ -31,9 +31,10 @@ export async function POST(request: Request) {
   }
 
   const db = getAdminDb();
-  // One singleton doc per sub-account, so a small collectionGroup scan
-  // (no composite index needed) is filtered in JS rather than in a query.
-  const snap = await db.collectionGroup("listingsImportSource").get();
+  // Typically a handful of docs total across every sub-account, so a small
+  // collectionGroup scan (no composite index needed) is filtered in JS
+  // rather than in a query.
+  const snap = await db.collectionGroup("listingsImportSources").get();
   const targets = snap.docs.filter(
     (doc) => typeof doc.data().url === "string" && doc.data().url,
   );
@@ -41,14 +42,15 @@ export async function POST(request: Request) {
   const runTag = Math.floor(Date.now() / 1000);
   let scheduled = 0;
   for (let i = 0; i < targets.length; i++) {
-    // subAccounts/{id}/listingsImportSource/main -> {id} is the parent's parent.
+    // subAccounts/{id}/listingsImportSources/{sourceId} -> {id} is the parent's parent.
     const subAccountId = targets[i].ref.parent.parent?.id;
+    const sourceId = targets[i].id;
     if (!subAccountId) continue;
     const result = await publishCallback({
       pathname: "/api/listings-source-sync/step",
-      body: { subAccountId },
+      body: { subAccountId, sourceId },
       delaySeconds: i * STAGGER_SECONDS,
-      deduplicationId: `listings_source_sync_${subAccountId}_${runTag}`,
+      deduplicationId: `listings_source_sync_${subAccountId}_${sourceId}_${runTag}`,
     });
     if (result) scheduled += 1;
   }

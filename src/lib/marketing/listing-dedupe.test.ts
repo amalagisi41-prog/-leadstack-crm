@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeAddressKey, stableListingId } from "./listing-dedupe";
+import { normalizeAddressKey, stableListingId, stableSourceId } from "./listing-dedupe";
 
 describe("normalizeAddressKey", () => {
   it("treats common street-suffix and directional abbreviations as equivalent", () => {
@@ -48,5 +48,28 @@ describe("stableListingId", () => {
 
   it("is prefixed so it's recognizable as address-derived rather than an MLS id", () => {
     expect(stableListingId("x|y|z")).toMatch(/^prop-[0-9a-f]{16}$/);
+  });
+});
+
+describe("stableSourceId", () => {
+  it("is deterministic for the same URL", () => {
+    const url = "https://caseyspropertygroup.com/listings/";
+    expect(stableSourceId(url)).toBe(stableSourceId(url));
+  });
+
+  it("treats a trailing slash and case as equivalent, so connecting the same page twice updates one source", () => {
+    expect(stableSourceId("https://caseyspropertygroup.com/listings/")).toBe(
+      stableSourceId("https://CaseysPropertyGroup.com/listings"),
+    );
+  });
+
+  it("differs for genuinely different pages", () => {
+    expect(stableSourceId("https://one.example/listings")).not.toBe(
+      stableSourceId("https://two.example/listings"),
+    );
+  });
+
+  it("is prefixed distinctly from a listing id so the two can never collide", () => {
+    expect(stableSourceId("https://example.com")).toMatch(/^src-[0-9a-f]{16}$/);
   });
 });
