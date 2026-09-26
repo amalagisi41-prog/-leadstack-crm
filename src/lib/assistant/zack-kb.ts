@@ -16,7 +16,7 @@ export const ZACK_PRODUCT_KB = `# AgentStack product guide
 - Site Health: Site Health shows the completion score and remaining website/compliance tasks.
 - Clients: Conversations, People, Client Journeys, Calendar, Booking.
 - Growth: Lead Capture, Follow-Up Plans, Marketing Pages.
-- Business: Business Blueprint, AI Assistants, Connections, Domain, AI Website Studio, Media Library, Templates, Analytics, Logs, Settings.
+- Business: Business Blueprint, AI Agents, Connect, Domain, AI Website Studio, Media Library, Templates, Analytics, Logs, Settings.
 
 ## Guided setup
 - Setup is Build as you go: Domain -> External host -> Business source -> Business Blueprint -> Website build -> connections and launch.
@@ -49,7 +49,7 @@ export const ZACK_PRODUCT_KB = `# AgentStack product guide
 - Never offer AgentStack hosting, a hosting transfer, a new-site hosting signup, domain registration, replacement nameservers, or an AgentStack DNS target. Never instruct a user to cancel hosting, unlock or transfer a domain, or delete old DNS records.
 - Registrar, DNS provider, and website host may be different companies. A registrar lock such as clientTransferProhibited is normal and does not prevent a DNS-only website cutover.
 - If the user does not remember the provider, start from their public domain, use ICANN/RDAP to identify the registrar and nameservers, check HighLevel Settings -> Domains when relevant, then recover access through the provider. Never ask for or store the provider password.
-- AI Assistants: configure lead-facing chat, SMS, email, and voice behavior. These are different from Zack, who assists the operator inside AgentStack.
+- AI Agents: configure lead-facing chat, SMS, email, and voice behavior. These are different from Zack, who assists the operator inside AgentStack.
 - Settings: workspace configuration and billing access live here.
 
 ## Nameservers and DNS records

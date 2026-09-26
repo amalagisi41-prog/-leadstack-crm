@@ -39,6 +39,7 @@ import {
   HeartPulse,
   Images,
   MapPin,
+  ListChecks,
   Rocket,
   Wrench,
   ChevronDown,
@@ -141,6 +142,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Connect & Set Up",
     icon: Wrench,
     items: [
+      { href: "/get-started?revisit=1", label: "Setup", icon: ListChecks, enabled: true },
       { href: "/business-profile", label: "Business Blueprint", icon: BookOpen, enabled: true },
       { href: "/connect", label: "Connect", icon: Plug, enabled: true },
       { href: "/site-health", label: "Site Health", icon: HeartPulse, enabled: true, badgeKey: "siteHealth" },

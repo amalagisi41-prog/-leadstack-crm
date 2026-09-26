@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FileText, FolderOpen, ImagePlus, Loader2, Pencil, Trash2, Upload } from "lucide-react";
+import { AlertTriangle, FileText, FolderOpen, ImagePlus, Loader2, Pencil, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { useSubAccount } from "@/context/sub-account-context";
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,7 @@ export function MediaLibrary({ compact = false, onSelect }: Props) {
   const [editingName, setEditingName] = useState("");
   const [editingFolder, setEditingFolder] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [removingDuplicates, setRemovingDuplicates] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -76,6 +77,65 @@ export function MediaLibrary({ compact = false, onSelect }: Props) {
     }
     return [...groups.entries()];
   }, [assets, folderFilter]);
+
+  /**
+   * Same folder, same byte size, same content type — the signal available
+   * without a stored content hash (the API doesn't compute one). Not proof
+   * of identical bytes, but close enough to flag for a human look: two real
+   * photos coincidentally sharing an exact size is vanishingly unlikely,
+   * and this is exactly the shape of the reported duplicates ("two files
+   * both named IMG_9467-3.jpg," "two blank, nameless file icons").
+   */
+  const duplicateGroups = useMemo(() => {
+    const map = new Map<string, MediaAsset[]>();
+    for (const asset of assets) {
+      const key = `${asset.folderPath?.trim() || "General"}::${asset.size}::${asset.contentType}`;
+      map.set(key, [...(map.get(key) ?? []), asset]);
+    }
+    return [...map.values()]
+      .filter((group) => group.length > 1)
+      .map((group) =>
+        [...group].sort((a, b) => (a.createdAt ?? "").localeCompare(b.createdAt ?? "")),
+      );
+  }, [assets]);
+
+  // Every copy in a group except the oldest — what "Remove duplicates" clears.
+  const duplicateAssetIds = useMemo(
+    () => new Set(duplicateGroups.flatMap((group) => group.slice(1).map((a) => a.id))),
+    [duplicateGroups],
+  );
+
+  async function removeAllDuplicates() {
+    const ids = [...duplicateAssetIds];
+    if (ids.length === 0) return;
+    if (
+      !window.confirm(
+        `Remove ${ids.length} duplicate ${ids.length === 1 ? "file" : "files"}? The oldest copy in each group is kept. This cannot be undone.`,
+      )
+    ) {
+      return;
+    }
+    setRemovingDuplicates(true);
+    let removed = 0;
+    for (const id of ids) {
+      try {
+        const res = await fetch(
+          `/api/sub-accounts/${subAccountId}/media?assetId=${encodeURIComponent(id)}`,
+          { method: "DELETE" },
+        );
+        if (res.ok) removed += 1;
+      } catch {
+        // Best-effort — a single failed delete doesn't block the rest.
+      }
+    }
+    await load();
+    setRemovingDuplicates(false);
+    if (removed === ids.length) {
+      toast.success(`Removed ${removed} duplicate ${removed === 1 ? "file" : "files"}.`);
+    } else {
+      toast.warning(`Removed ${removed} of ${ids.length} duplicates — some failed. Try again for the rest.`);
+    }
+  }
 
   async function upload(file: File) {
     setUploading(true);
@@ -202,6 +262,36 @@ export function MediaLibrary({ compact = false, onSelect }: Props) {
         </div>
       ) : null}
 
+      {!loading && !compact && duplicateAssetIds.size > 0 && (
+        <div className="rounded-xl border border-amber-300/60 bg-amber-500/5 p-3 text-sm">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+            <div className="min-w-0 flex-1">
+              <p className="font-medium text-amber-900 dark:text-amber-200">
+                {duplicateAssetIds.size} possible duplicate {duplicateAssetIds.size === 1 ? "file" : "files"} found
+              </p>
+              <p className="mt-1 text-xs text-amber-800 dark:text-amber-300">
+                Same folder, same file size and type as another file — marked &ldquo;Possible duplicate&rdquo;
+                below. Matching size isn&apos;t proof of identical content; review before removing.
+              </p>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="mt-2"
+                onClick={() => void removeAllDuplicates()}
+                disabled={removingDuplicates}
+              >
+                {removingDuplicates ? (
+                  <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+                ) : null}
+                Remove {duplicateAssetIds.size} extra {duplicateAssetIds.size === 1 ? "copy" : "copies"}, keep the oldest of each
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {!loading && assets.length > 0 && !compact && (
         <div className="flex flex-wrap gap-1.5">
           {folders.map((folder) => (
@@ -237,7 +327,12 @@ export function MediaLibrary({ compact = false, onSelect }: Props) {
           )}
           <div className={`grid gap-3 ${compact ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-2 sm:grid-cols-3 lg:grid-cols-5"}`}>
             {group.map((asset) => (
-              <div key={asset.id} className="overflow-hidden rounded-xl border bg-card">
+              <div key={asset.id} className="relative overflow-hidden rounded-xl border bg-card">
+                {!compact && duplicateAssetIds.has(asset.id) && (
+                  <span className="absolute top-1.5 left-1.5 z-10 rounded-full bg-amber-500 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                    Possible duplicate
+                  </span>
+                )}
                 <button
                   type="button"
                   onClick={() => onSelect?.(asset)}
@@ -251,7 +346,7 @@ export function MediaLibrary({ compact = false, onSelect }: Props) {
                       <FileText className="h-8 w-8 text-muted-foreground" />
                     )}
                   </div>
-                  <p className="truncate px-2 py-2 text-xs font-medium">{asset.name}</p>
+                  <p className="truncate px-2 py-2 text-xs font-medium">{asset.name || "Untitled file"}</p>
                 </button>
                 {!compact && (
                   <div className="flex items-center gap-1 border-t px-2 py-2">

@@ -441,6 +441,15 @@ export interface SubAccountDoc {
   realtorRole?: RealtorRole | null;
   launchPriority?: LaunchPriority | null;
   /**
+   * Step ids the operator explicitly chose to skip in the account-first
+   * setup flow (components/dashboard/setup-modal.tsx) — "listings",
+   * "social", "payments", "domain". A skip is a recorded, explicit choice,
+   * distinct from a step nobody has gotten to yet: the setup flow never
+   * re-locks a skipped step behind itself, and no surface treats a skip as
+   * evidence the step is actually done. Absent/empty on a fresh sub-account.
+   */
+  setupSkippedSteps?: string[];
+  /**
    * The custom domain the sub-account wants to front their published website
    * (e.g. "janedoe-homes.com"). Bare host, no scheme. Saved during the domain
    * setup step; the actual DNS + Vercel domain hookup is an ops step the
