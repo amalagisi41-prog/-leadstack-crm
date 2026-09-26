@@ -77,3 +77,17 @@ export function normalizeAddressKey(
 export function stableListingId(addressKey: string): string {
   return `prop-${createHash("sha1").update(addressKey).digest("hex").slice(0, 16)}`;
 }
+
+/**
+ * A deterministic doc id for a connected listings-page URL — same URL, same
+ * id, every time. A sub-account can connect several source pages, so
+ * connecting the SAME url twice (a re-paste, a double-click) must update the
+ * existing connection rather than create a second one alongside it, exactly
+ * the same principle as `stableListingId` above, applied to sources instead
+ * of properties. Distinct prefix so a source id and a listing id can never
+ * collide even though both are 16-hex-char sha1 slices.
+ */
+export function stableSourceId(url: string): string {
+  const normalized = url.trim().toLowerCase().replace(/\/+$/, "");
+  return `src-${createHash("sha1").update(normalized).digest("hex").slice(0, 16)}`;
+}

@@ -1,15 +1,22 @@
 import type { FieldValue, Timestamp } from "firebase/firestore";
 
 /**
- * A sub-account's public listings page, kept in sync into `idxListings`.
+ * One of a sub-account's public listings pages, kept in sync into
+ * `idxListings`.
  *
- * One singleton per sub-account at `subAccounts/{id}/listingsImportSource/main`
- * — an agent has exactly one "my own site's listings page" to point at, same
- * shape as the AI Agent's `aiAgent/profile` singleton. Firecrawl scrapes the
- * URL, a parser turns each property card into an `IdxListingDoc` upsert (see
- * `lib/marketing/listings-scrape.ts`), keyed by a deterministic id derived
- * from the property's address so a re-sync updates the same record instead
- * of piling up duplicates (see `lib/marketing/listing-dedupe.ts`).
+ * A sub-account can connect any number of these — a brokerage-affiliated
+ * agent may have their own site's listings page AND a page on the
+ * brokerage's site, for instance. Stored at
+ * `subAccounts/{id}/listingsImportSources/{sourceId}`, where `sourceId` is
+ * derived from the URL itself (see `lib/marketing/listing-dedupe.ts`'s
+ * `stableListingId`, reused here) so connecting the same URL twice updates
+ * the existing source instead of creating a duplicate connection.
+ *
+ * Firecrawl scrapes the URL, a parser turns each property card into an
+ * `IdxListingDoc` upsert (see `lib/marketing/listings-scrape.ts`), keyed by
+ * a deterministic id derived from the property's OWN address so a re-sync
+ * updates the same listing record regardless of which source (or how many
+ * sources) it came from.
  */
 export interface ListingsImportSourceDoc {
   url: string;
@@ -30,6 +37,7 @@ export interface ListingsImportSourceDoc {
  * `lib/marketing/listings-source-sync.ts` does.
  */
 export interface ListingsImportSourceClient {
+  id: string;
   url: string;
   status: "pending" | "processing" | "ready" | "failed";
   errorMessage: string | null;
