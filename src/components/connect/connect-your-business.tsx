@@ -9,6 +9,7 @@ import { doc, onSnapshot } from "firebase/firestore";
 import {
   Building,
   Calendar,
+  CreditCard,
   Facebook,
   FileUp,
   Lock,
@@ -48,6 +49,18 @@ type ConnectionStatus =
 
 interface ConnectionCardData {
   key: string;
+  /**
+   * "account" — an outside identity or service the operator provides
+   * credentials for (Google, Meta, Twilio, IDX Broker, a payment provider,
+   * a domain registrar, an API consumer). "feature" — an in-app capability
+   * that needs no outside sign-in at all (chat widget, booking pages, CSV
+   * import, forms, reviews link). Kept apart because mixing the two in one
+   * flat list is the thing new operators actually got lost in: "sign into
+   * something" and "turn a built-in thing on" are different mental
+   * actions, and the account-first reframe is specifically about not
+   * making someone hunt for Twilio between Booking Pages and CSV Import.
+   */
+  group: "account" | "feature";
   icon: React.ElementType;
   iconTone: string;
   title: string;
@@ -231,9 +244,14 @@ export function ConnectYourBusiness() {
     const idxNeedsAttention =
       subAccount.idxEnabledByAgency === true && !subAccount.idxConfig?.enabled;
 
+    const outlookCalendarConnected =
+      subAccount.calendarConfig?.status === "connected" &&
+      subAccount.calendarConfig.provider === "outlook";
+
     const list: (ConnectionCardData | null)[] = [
       {
         key: "domain-hosting",
+        group: "account",
         icon: Globe2,
         iconTone: "bg-cyan-500/10 text-cyan-700 dark:text-cyan-400",
         title: "Domain & external host",
@@ -255,6 +273,7 @@ export function ConnectYourBusiness() {
       },
       {
         key: "api-automation",
+        group: "account",
         icon: Code2,
         iconTone: "bg-slate-500/10 text-slate-700 dark:text-slate-300",
         title: "Zapier, Make & API",
@@ -268,6 +287,7 @@ export function ConnectYourBusiness() {
       },
       {
         key: "email",
+        group: "account",
         icon: Mail,
         iconTone: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
         title: "Business email",
@@ -291,6 +311,7 @@ export function ConnectYourBusiness() {
       },
       {
         key: "sms",
+        group: "account",
         icon: Phone,
         iconTone: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
         title: "Text messaging",
@@ -304,6 +325,7 @@ export function ConnectYourBusiness() {
       },
       {
         key: "chat-widget",
+        group: "feature",
         icon: MessageSquare,
         iconTone: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400",
         title: "Chat widget",
@@ -318,6 +340,7 @@ export function ConnectYourBusiness() {
         ? null
         : {
         key: "meta",
+        group: "account",
         icon: Facebook,
         iconTone: "bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-400",
         title: "Facebook & Instagram",
@@ -339,19 +362,42 @@ export function ConnectYourBusiness() {
         actionHref: `${settingsHref}?tab=messaging#meta-connection`,
       },
       {
-        key: "calendar",
+        key: "outlook-calendar",
+        group: "account",
         icon: Calendar,
-        iconTone: "bg-teal-500/10 text-teal-600 dark:text-teal-400",
-        title: "Google or Outlook Calendar",
-        detail: subAccount.calendarConfig?.email ?? undefined,
+        iconTone: "bg-sky-500/10 text-sky-700 dark:text-sky-400",
+        title: "Microsoft / Outlook",
+        // Google Calendar lives on the Google card below — this codebase's
+        // OAuth client already unifies Gmail + Calendar into one grant, so a
+        // second, separate "connect Google Calendar" entry point here was the
+        // exact duplicate-path confusion the account-first reframe exists to
+        // remove. This card is Outlook-only.
+        detail:
+          outlookCalendarConnected ? subAccount.calendarConfig?.email ?? undefined : undefined,
         blurb:
-          "Authorize the calendar you already use. OAuth credentials stay server-side; AgentStack never asks you to paste a calendar URL or password.",
-        status: subAccount.calendarConfig?.status === "connected" ? "connected" : "not_connected",
-        actionLabel: subAccount.calendarConfig?.status === "connected" ? "Manage calendar" : "Connect calendar",
+          "Authorize the Outlook calendar you already use for booking pages. OAuth credentials stay server-side.",
+        status: outlookCalendarConnected ? "connected" : "not_connected",
+        actionLabel: outlookCalendarConnected ? "Manage calendar" : "Connect Outlook",
         actionHref: calendarHref,
       },
       {
+        key: "payments",
+        group: "account",
+        icon: CreditCard,
+        iconTone: "bg-lime-500/10 text-lime-700 dark:text-lime-400",
+        title: "Payments",
+        detail: subAccount.paymentPortalConfig?.url
+          ? subAccount.paymentPortalConfig.label || "Connected"
+          : undefined,
+        blurb:
+          "Connect the payment link your clients already pay you through (PayPal.me, Stripe payment link, or any other hosted checkout) for invoices and paid booking pages.",
+        status: subAccount.paymentPortalConfig?.url ? "connected" : "not_connected",
+        actionLabel: subAccount.paymentPortalConfig?.url ? "Manage" : "Connect",
+        actionHref: `${settingsHref}#payment-connection`,
+      },
+      {
         key: "booking",
+        group: "feature",
         icon: Calendar,
         iconTone: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
         title: "Booking pages",
@@ -363,6 +409,7 @@ export function ConnectYourBusiness() {
       },
       {
         key: "csv-import",
+        group: "feature",
         icon: FileUp,
         iconTone: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
         title: "CSV import",
@@ -373,6 +420,7 @@ export function ConnectYourBusiness() {
       },
       {
         key: "forms",
+        group: "feature",
         icon: Upload,
         iconTone: "bg-pink-500/10 text-pink-600 dark:text-pink-400",
         title: "Website forms",
@@ -385,6 +433,7 @@ export function ConnectYourBusiness() {
       },
       {
         key: "mls-feed",
+        group: "account",
         icon: Building,
         iconTone: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
         title: "Listings & MLS feed",
@@ -408,6 +457,7 @@ export function ConnectYourBusiness() {
       },
       {
         key: "google-account",
+        group: "account",
         icon: GoogleGIcon,
         iconTone: "bg-white text-foreground ring-1 ring-border",
         title: "Google Profile",
@@ -437,6 +487,7 @@ export function ConnectYourBusiness() {
       },
       {
         key: "google-reviews",
+        group: "feature",
         icon: Star,
         iconTone: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
         title: "Google reviews",
@@ -460,6 +511,22 @@ export function ConnectYourBusiness() {
     );
   }, [cards, search]);
 
+  // Account-first reframe: split the flat card list into the outside
+  // identities/services the operator signs into or pastes credentials for
+  // ("account") and the in-app capabilities that need no outside sign-in at
+  // all ("feature"). New operators were getting lost hunting for Twilio
+  // between Booking Pages and CSV Import in one undifferentiated grid —
+  // this groups "connect something" work together and separately from
+  // "turn a built-in thing on" work.
+  const accountCards = useMemo(
+    () => filtered.filter((c) => c.group === "account"),
+    [filtered]
+  );
+  const featureCards = useMemo(
+    () => filtered.filter((c) => c.group === "feature"),
+    [filtered]
+  );
+
   if (!subAccount) {
     return <div className="bg-muted/30 h-64 animate-pulse rounded-2xl" />;
   }
@@ -476,38 +543,65 @@ export function ConnectYourBusiness() {
         </div>
       </div>
 
-      <details className="rounded-2xl border bg-card">
-        <summary className="cursor-pointer list-none px-5 py-4 text-sm font-semibold">
-          See all connections
-          <span className="ml-2 text-xs font-normal text-muted-foreground">
-            {filtered.length} available
-          </span>
-        </summary>
-        <div className="border-t p-5">
-          <div className="mb-4 flex justify-end">
-            <div className="relative w-full sm:w-64">
-              <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search connections"
-                className="pl-9"
-              />
-            </div>
-          </div>
-          {filtered.length === 0 ? (
-            <p className="text-muted-foreground rounded-xl border border-dashed p-8 text-center text-sm">
-              No integrations match &ldquo;{search}&rdquo;.
-            </p>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {filtered.map((card) => (
-                <ConnectionCard key={card.key} data={card} />
-              ))}
-            </div>
-          )}
+      <div className="flex justify-end">
+        <div className="relative w-full sm:w-64">
+          <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search connections"
+            className="pl-9"
+          />
         </div>
-      </details>
+      </div>
+
+      {filtered.length === 0 ? (
+        <p className="text-muted-foreground rounded-xl border border-dashed p-8 text-center text-sm">
+          No integrations match &ldquo;{search}&rdquo;.
+        </p>
+      ) : (
+        <>
+          <section className="space-y-3">
+            <div>
+              <h2 className="text-base font-semibold">Connect an account</h2>
+              <p className="text-muted-foreground text-xs">
+                Sign in or paste credentials for an outside service — Google,
+                Meta, Twilio, your MLS feed, and the rest of what AgentStack
+                connects to on your behalf.
+              </p>
+            </div>
+            {accountCards.length === 0 ? (
+              <p className="text-muted-foreground rounded-xl border border-dashed p-6 text-center text-sm">
+                No account connections match &ldquo;{search}&rdquo;.
+              </p>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {accountCards.map((card) => (
+                  <ConnectionCard key={card.key} data={card} />
+                ))}
+              </div>
+            )}
+          </section>
+
+          {featureCards.length > 0 && (
+            <details className="rounded-2xl border bg-card">
+              <summary className="cursor-pointer list-none px-5 py-4 text-sm font-semibold">
+                Built-in features
+                <span className="ml-2 text-xs font-normal text-muted-foreground">
+                  {featureCards.length} available — no external sign-in needed
+                </span>
+              </summary>
+              <div className="border-t p-5">
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {featureCards.map((card) => (
+                    <ConnectionCard key={card.key} data={card} />
+                  ))}
+                </div>
+              </div>
+            </details>
+          )}
+        </>
+      )}
 
       <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
         <MessagesSquare className="h-3.5 w-3.5" />
