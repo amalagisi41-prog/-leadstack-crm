@@ -14,6 +14,7 @@ import {
 } from "@/lib/idx/broker-client";
 import { loadIdxSecrets } from "@/lib/comms/sub-account-secrets";
 import { describeListingSource } from "@/lib/marketing/listing-source";
+import { draftCampaignsForNewListings } from "@/lib/idx/listing-created-dispatch";
 import type { IdxConfig } from "@/types";
 import type { IdxListingDoc } from "@/types/idx";
 
@@ -223,6 +224,8 @@ export interface SyncResult {
   accountId?: string | null;
   /** Non-fatal issues surfaced alongside the counts — a source that errored, no saved link found, etc. */
   warnings?: string[];
+  /** Draft campaign briefs auto-created this pass — only non-zero when idxConfig.autoDraftOnNewListing is on. */
+  autoDrafted?: number;
 }
 
 /**
@@ -336,6 +339,15 @@ export async function syncIdxListings(subAccountId: string): Promise<SyncResult>
       .filter((l): l is IdxListingDoc => l !== null);
     const seenIds = new Set(normalized.map((l) => l.id));
 
+    // Snapshot which of these ids the collection already has, BEFORE the
+    // upsert below overwrites them — "new to inventory" has to be known
+    // ahead of the write that would otherwise erase the distinction.
+    // `.select()` with no fields returns real doc ids with no field data,
+    // the cheapest read that still tells us what exists.
+    const existingIdsSnap = await listingsCol.select().get();
+    const existingIds = new Set(existingIdsSnap.docs.map((d) => d.id));
+    const newListings = normalized.filter((l) => !existingIds.has(l.id));
+
     // Upsert every listing seen this pass, batched under Firestore's op cap.
     for (let i = 0; i < normalized.length; i += BATCH_OP_LIMIT) {
       const batch = db.batch();
@@ -343,6 +355,28 @@ export async function syncIdxListings(subAccountId: string): Promise<SyncResult>
         batch.set(listingsCol.doc(listing.id), listing, { merge: false });
       }
       await batch.commit();
+    }
+
+    // Opt-in: auto-draft a campaign brief for each listing genuinely new to
+    // this workspace's inventory. Best-effort — a drafting failure is a
+    // warning on this sync, never a reason to fail it; the listings
+    // themselves are already synced above regardless of what happens here.
+    let autoDrafted = 0;
+    if (cfg.autoDraftOnNewListing === true && newListings.length > 0) {
+      try {
+        const { drafted, errors: draftErrors } = await draftCampaignsForNewListings(
+          db,
+          subAccountId,
+          sub.agencyId as string,
+          newListings,
+        );
+        autoDrafted = drafted;
+        warnings.push(...draftErrors.map((e) => `auto-draft: ${e}`));
+      } catch (err) {
+        warnings.push(
+          `auto-draft: ${err instanceof Error ? err.message : "failed"}`,
+        );
+      }
     }
 
     // Flip any previously-synced listing not seen this pass to off-market —
@@ -390,7 +424,7 @@ export async function syncIdxListings(subAccountId: string): Promise<SyncResult>
       { merge: true },
     );
 
-    return { ok: true, listingCount, sources, accountId, warnings };
+    return { ok: true, listingCount, sources, accountId, warnings, autoDrafted };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Sync failed.";
     await subRef
