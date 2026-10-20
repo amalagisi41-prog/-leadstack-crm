@@ -20,6 +20,7 @@ import {
   DonutChart,
   FunnelChart,
 } from "@/components/reports/charts";
+import { PerformanceNarrativeCard } from "@/components/reports/performance-narrative-card";
 import { type Deal } from "@/types/deals";
 import { usePipelineStages } from "@/hooks/use-pipeline-stages";
 import type { Contact } from "@/types/contacts";
@@ -277,6 +278,8 @@ export default function ReportsPage() {
               bg="bg-amber-500/10"
             />
           </div>
+
+          <PerformanceNarrativeCard range={range} />
 
           {/* Charts row 1 */}
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">

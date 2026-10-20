@@ -127,6 +127,20 @@ const TOOLS: readonly ZackTool[] = [
     outbound: true,
     audited: true as const,
   })),
+  {
+    id: "reports.performance-narrative",
+    label: "Summarize performance",
+    summary:
+      "Reads the selected date range's KPIs and writes a plain-English summary with 2-3 next steps.",
+    requires: ["businessProfile"],
+    // Read-only analysis over the operator's own pipeline data — nothing
+    // leaves the workspace and there's nothing to undo.
+    approval: "none",
+    reversibility: "instant",
+    screens: ["no-invented-facts"],
+    outbound: false,
+    audited: true,
+  },
 ];
 
 export const ZACK_TOOL_REGISTRY = TOOLS;
