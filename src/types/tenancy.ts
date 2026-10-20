@@ -354,6 +354,13 @@ export interface SubAccountDoc {
    */
   paymentPortalConfig?: PaymentPortalConfig | null;
   /**
+   * The Placid.app template id the operator designed once in Placid's own
+   * editor for this brand (listing photo + price + beds/baths layers). Not a
+   * secret — Placid auth lives in the agency-level PLACID_API_TOKEN env var;
+   * this is just which template to fill. Null until the operator sets one.
+   */
+  placidTemplateId?: string | null;
+  /**
    * Google review-request config (SMS / WhatsApp "leave us a review" sends
    * after payment or on demand). Optional — legacy/undefined reads as off.
    */

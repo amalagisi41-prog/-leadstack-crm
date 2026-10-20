@@ -67,6 +67,37 @@ export interface LseoStrategy {
   blockers: string[];
 }
 
+/** A generated asset's lifecycle — shared shape for both creative connectors below. */
+export type GeneratedAssetStatus = "queued" | "processing" | "ready" | "failed";
+
+/**
+ * Creatify (image-to-video) job state for a campaign brief. Never set until
+ * the operator explicitly requests a video — see lib/creative/creatify-client.ts.
+ */
+export interface VideoGenerationState {
+  status: GeneratedAssetStatus;
+  jobId: string;
+  videoUrl: string | null;
+  error: string | null;
+  requestedByUid: string;
+  requestedAt: Timestamp | FieldValue | null;
+}
+
+/**
+ * Placid (branded template fill) render state for a campaign brief. The
+ * template itself is designed once by the operator in Placid's own editor —
+ * this only fills the listing's own verified facts into it. See
+ * lib/creative/placid-client.ts.
+ */
+export interface CreativeImageState {
+  status: GeneratedAssetStatus;
+  templateId: string;
+  imageUrl: string | null;
+  error: string | null;
+  requestedByUid: string;
+  requestedAt: Timestamp | FieldValue | null;
+}
+
 export interface CampaignBriefDoc {
   id: string;
   agencyId: string;
@@ -80,6 +111,8 @@ export interface CampaignBriefDoc {
   workflowStep?: CampaignWorkflowStep;
   archivedAt?: Timestamp | FieldValue | null;
   schedulePlan?: Partial<Record<CampaignChannel, string | null>>;
+  video?: VideoGenerationState | null;
+  creativeImage?: CreativeImageState | null;
 }
 
 export interface CampaignApprovalAuditDoc {

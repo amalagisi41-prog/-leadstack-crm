@@ -155,6 +155,32 @@ const TOOLS: readonly ZackTool[] = [
     outbound: false,
     audited: true,
   },
+  {
+    id: "listing.campaign.video",
+    label: "Generate a listing video",
+    summary:
+      "Turns one of the listing's own photos into a short video via Creatify, from the approved brief's own copy.",
+    requires: ["businessProfile", "idx"],
+    // A generated video is a real asset the operator posts publicly under
+    // their name — same bar as the other listing.campaign.* drafts.
+    approval: "operator-explicit",
+    reversibility: "permanent",
+    screens: ["fair-housing", "seller-position", "mls-attribution", "no-invented-facts"],
+    outbound: true,
+    audited: true,
+  },
+  {
+    id: "listing.campaign.image",
+    label: "Generate a branded listing image",
+    summary:
+      "Fills the listing's verified facts into the operator's own Placid template (photo, price, beds/baths).",
+    requires: ["businessProfile", "idx"],
+    approval: "operator-explicit",
+    reversibility: "permanent",
+    screens: ["fair-housing", "seller-position", "mls-attribution", "no-invented-facts"],
+    outbound: true,
+    audited: true,
+  },
 ];
 
 export const ZACK_TOOL_REGISTRY = TOOLS;

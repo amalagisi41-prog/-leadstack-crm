@@ -1090,6 +1090,22 @@ Every operator-facing failure path (no profile found, API call failed, OAuth den
 
 When the operator pastes their own public website URL into Business Blueprint's "paste your website" import (see the "Other setup paths" flow), the page-text fallback parser (used when structured `schema.org`/JSON-LD data isn't available) normally only trusts a short allowlist of known real-estate **directory** hosts (`homes.com`, `loopnet.com`, `realtor.com`) for labelled text heuristics — an arbitrary page's prose is too risky to mine for a phone/license number. Listing your own site's hostname here extends that same trusted, labelled-heuristic parsing to it, and also fixes footer/referral-widget phone numbers from being picked up ahead of your own profile's real number. Leave unset and the import still works — it just falls back to reading `schema.org`/JSON-LD structured data or the AI extractor, which is the right default for a site not explicitly reviewed and opted in here.
 
+### Optional — Creative generation (Creatify video + Placid branded images)
+
+Two independent, self-serve creative connectors for the `listing.campaign.video` / `listing.campaign.image` marketing skills — neither is required; each degrades to a clear 503 on its own routes when unset. **AdCreative.ai was evaluated and deliberately excluded** — its API is enterprise-sales-only with no self-serve signup, the wrong model for a buyer who just wants to paste a key.
+
+| Var | Source |
+|---|---|
+| `CREATIFY_API_ID` | [creatify.ai](https://creatify.ai) → sign up for the self-serve API plan (API Starter, $99/mo as of writing) → account settings. |
+| `CREATIFY_API_KEY` | Same page. |
+| `PLACID_API_TOKEN` | [placid.app](https://placid.app) → sign up (entry plan ~$19/mo; unlimited free watermarked test renders) → a Project → **API Tokens**. |
+
+Without `CREATIFY_API_ID`/`CREATIFY_API_KEY`, the "Generate" button under a campaign's **Generate creative → Video** panel returns a friendly 503. Without `PLACID_API_TOKEN`, the **Branded image** panel does the same.
+
+**Placid also needs a per-sub-account template id** — the operator designs their own branded template once in Placid's own editor (a photo layer named `photo`, text layers named `price`, `beds_baths`, `address` — those exact names, since AgentStack fills a template by layer name) and saves the template's id via `PATCH /api/sub-accounts/[id]/creative-config`. Until that's set, the branded-image route 403s with a named "set a template id first" error rather than guessing which template to use.
+
+**Verify before relying on either in production.** Both vendors' own API reference docs (`docs.creatify.ai`, `placid.app/docs`) were unreachable from the environment this integration was built in — egress-blocked, the same limitation already documented above for `narrpr.com`. The request/response shapes in `lib/creative/creatify-client.ts` and `lib/creative/placid-client.ts` come from each vendor's public FAQ/billing pages and documented examples, not a direct read of their endpoint reference. If a real call 404s or its response doesn't parse, that's the first thing to check — not a sign the integration is fundamentally broken.
+
 ### Optional — Meta (Facebook/Instagram inbox + Social Planner)
 One Meta app powers BOTH the FB Messenger / IG DM inbox AND the Social Planner (they share one connection). All optional — leave unset and both features stay off.
 
