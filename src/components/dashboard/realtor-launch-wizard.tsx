@@ -306,11 +306,17 @@ export function RealtorLaunchWizard({
         throw new Error(data.error ?? "Could not save your setup foundation.");
       }
 
+      // No `steps` field here on purpose. The PATCH route only overwrites
+      // onboardingStepsCompleted when `steps` is an array — even an empty one —
+      // so sending `steps: []` used to silently wipe any checklist progress a
+      // returning operator had already attested (e.g. via the legacy wizard's
+      // ?step= deep links) the moment they walked back through this one. This
+      // wizard has no per-step evidence of its own to report — it only ever
+      // sets the answers and the completion timestamp below.
       const onboardingResponse = await fetch(`/api/sub-accounts/${subAccountId}/onboarding`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          steps: [],
           wizardCompleted: true,
           realtorRole: role,
           launchPriority: priority,

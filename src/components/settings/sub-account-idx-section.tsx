@@ -46,6 +46,7 @@ export function SubAccountIdxSection() {
   const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
+  const [togglingAutoDraft, setTogglingAutoDraft] = useState(false);
 
   const publicIdxUrl = useMemo(() => {
     const base =
@@ -112,6 +113,33 @@ export function SubAccountIdxSection() {
         </div>
       </section>
     );
+  }
+
+  async function toggleAutoDraft(next: boolean) {
+    setTogglingAutoDraft(true);
+    try {
+      const res = await fetch(`/api/sub-accounts/${subAccountId}/idx/config`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ autoDraftOnNewListing: next }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+      };
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error ?? "Failed to save that setting.");
+      }
+      toast.success(
+        next
+          ? "New listings will now auto-draft a campaign (still yours to review and approve)."
+          : "Auto-draft turned off."
+      );
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save that setting.");
+    } finally {
+      setTogglingAutoDraft(false);
+    }
   }
 
   async function handleSave(e: FormEvent) {
@@ -294,6 +322,25 @@ export function SubAccountIdxSection() {
               </dd>
             </div>
           </dl>
+          <label className="mt-3 flex items-start gap-2 rounded-lg border bg-background p-3 text-xs">
+            <input
+              type="checkbox"
+              className="mt-0.5"
+              checked={cfg?.autoDraftOnNewListing === true}
+              disabled={togglingAutoDraft}
+              onChange={(e) => void toggleAutoDraft(e.target.checked)}
+            />
+            <span>
+              <span className="font-medium text-foreground">
+                Auto-draft a campaign for every new listing
+              </span>
+              <span className="mt-0.5 block text-muted-foreground">
+                When a sync finds a listing new to this feed, a draft campaign
+                is created for review — nothing publishes until you approve
+                it, same as creating one by hand.
+              </span>
+            </span>
+          </label>
           <form onSubmit={handleSave} className="mt-4 rounded-lg border bg-background p-3">
             <div className="space-y-1.5">
               <Label htmlFor="idx-connected-mls-id">MLS ID</Label>

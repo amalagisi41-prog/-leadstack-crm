@@ -59,6 +59,14 @@ export async function GET(
   });
 }
 
+/** The only setup-modal steps a skip can name — see SubAccountDoc.setupSkippedSteps. */
+const SETUP_SKIPPABLE_STEP_IDS = new Set([
+  "listings",
+  "social",
+  "payments",
+  "domain",
+]);
+
 /**
  * PATCH /api/sub-accounts/[id]/onboarding
  *
@@ -77,6 +85,10 @@ export async function GET(
  *                                when present and recognised, so a PATCH that
  *                                carries only `steps` leaves stored answers
  *                                untouched rather than erasing them.
+ *   skippedSteps?: string[]    — ids the account-first setup modal
+ *                                (components/dashboard/setup-modal.tsx) was
+ *                                told to skip; unknown ids are dropped, same
+ *                                as `steps`.
  */
 export async function PATCH(
   request: Request,
@@ -91,6 +103,7 @@ export async function PATCH(
     wizardCompleted?: unknown;
     realtorRole?: unknown;
     launchPriority?: unknown;
+    skippedSteps?: unknown;
   };
   try {
     body = await request.json();
@@ -106,8 +119,24 @@ export async function PATCH(
       { status: 400 }
     );
   }
+  if (body.skippedSteps !== undefined && !Array.isArray(body.skippedSteps)) {
+    return NextResponse.json(
+      { error: "`skippedSteps` must be an array." },
+      { status: 400 }
+    );
+  }
 
   const known = new Set<string>(ONBOARDING_STEP_IDS);
+  const skippedSteps = Array.isArray(body.skippedSteps)
+    ? Array.from(
+        new Set(
+          body.skippedSteps.filter(
+            (s): s is string =>
+              typeof s === "string" && SETUP_SKIPPABLE_STEP_IDS.has(s)
+          )
+        )
+      )
+    : null;
   const steps = Array.isArray(body.steps)
     ? Array.from(
         new Set(
@@ -123,6 +152,9 @@ export async function PATCH(
   };
   if (steps) {
     update.onboardingStepsCompleted = steps;
+  }
+  if (skippedSteps) {
+    update.setupSkippedSteps = skippedSteps;
   }
 
   // The wizard reports its own completion separately from the checklist.

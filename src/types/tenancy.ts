@@ -354,6 +354,13 @@ export interface SubAccountDoc {
    */
   paymentPortalConfig?: PaymentPortalConfig | null;
   /**
+   * The Placid.app template id the operator designed once in Placid's own
+   * editor for this brand (listing photo + price + beds/baths layers). Not a
+   * secret — Placid auth lives in the agency-level PLACID_API_TOKEN env var;
+   * this is just which template to fill. Null until the operator sets one.
+   */
+  placidTemplateId?: string | null;
+  /**
    * Google review-request config (SMS / WhatsApp "leave us a review" sends
    * after payment or on demand). Optional — legacy/undefined reads as off.
    */
@@ -440,6 +447,15 @@ export interface SubAccountDoc {
    */
   realtorRole?: RealtorRole | null;
   launchPriority?: LaunchPriority | null;
+  /**
+   * Step ids the operator explicitly chose to skip in the account-first
+   * setup flow (components/dashboard/setup-modal.tsx) — "listings",
+   * "social", "payments", "domain". A skip is a recorded, explicit choice,
+   * distinct from a step nobody has gotten to yet: the setup flow never
+   * re-locks a skipped step behind itself, and no surface treats a skip as
+   * evidence the step is actually done. Absent/empty on a fresh sub-account.
+   */
+  setupSkippedSteps?: string[];
   /**
    * The custom domain the sub-account wants to front their published website
    * (e.g. "janedoe-homes.com"). Bare host, no scheme. Saved during the domain
@@ -595,6 +611,15 @@ export interface IdxConfig {
   } | null;
   /** Non-fatal issues from the last sync (a source that errored, no saved link found, etc) — shown alongside the source breakdown instead of a single generic message. */
   lastSyncWarnings?: string[] | null;
+  /**
+   * Opt-in. When true, a sync that finds a listing genuinely new to this
+   * workspace's inventory (lib/idx/sync.ts) auto-creates a DRAFT campaign
+   * brief for it — never approved, never published; the operator still
+   * reviews and approves every channel exactly as if they'd created it by
+   * hand. Default false/undefined — an operator who hasn't opted in should
+   * never see a draft appear they didn't ask for.
+   */
+  autoDraftOnNewListing?: boolean;
 }
 
 export type A2pCarrierStatus =

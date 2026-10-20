@@ -35,5 +35,6 @@ export async function POST(
     accountId: result.accountId ?? null,
     sources: result.sources ?? null,
     warnings: result.warnings ?? [],
+    autoDrafted: result.autoDrafted ?? 0,
   });
 }

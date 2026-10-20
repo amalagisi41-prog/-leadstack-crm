@@ -127,6 +127,60 @@ const TOOLS: readonly ZackTool[] = [
     outbound: true,
     audited: true as const,
   })),
+  {
+    id: "reports.performance-narrative",
+    label: "Summarize performance",
+    summary:
+      "Reads the selected date range's KPIs and writes a plain-English summary with 2-3 next steps.",
+    requires: ["businessProfile"],
+    // Read-only analysis over the operator's own pipeline data — nothing
+    // leaves the workspace and there's nothing to undo.
+    approval: "none",
+    reversibility: "instant",
+    screens: ["no-invented-facts"],
+    outbound: false,
+    audited: true,
+  },
+  {
+    id: "website.landing-audit",
+    label: "Audit a landing page",
+    summary:
+      "Reads a page's content for a clear call to action, trust signals, contact info, and message clarity.",
+    requires: ["businessProfile"],
+    // Read-only content analysis. It never claims to see layout or mobile
+    // rendering — only what Firecrawl's markdown extraction can see.
+    approval: "none",
+    reversibility: "instant",
+    screens: ["no-invented-facts"],
+    outbound: false,
+    audited: true,
+  },
+  {
+    id: "listing.campaign.video",
+    label: "Generate a listing video",
+    summary:
+      "Turns one of the listing's own photos into a short video via Creatify, from the approved brief's own copy.",
+    requires: ["businessProfile", "idx"],
+    // A generated video is a real asset the operator posts publicly under
+    // their name — same bar as the other listing.campaign.* drafts.
+    approval: "operator-explicit",
+    reversibility: "permanent",
+    screens: ["fair-housing", "seller-position", "mls-attribution", "no-invented-facts"],
+    outbound: true,
+    audited: true,
+  },
+  {
+    id: "listing.campaign.image",
+    label: "Generate a branded listing image",
+    summary:
+      "Fills the listing's verified facts into the operator's own Placid template (photo, price, beds/baths).",
+    requires: ["businessProfile", "idx"],
+    approval: "operator-explicit",
+    reversibility: "permanent",
+    screens: ["fair-housing", "seller-position", "mls-attribution", "no-invented-facts"],
+    outbound: true,
+    audited: true,
+  },
 ];
 
 export const ZACK_TOOL_REGISTRY = TOOLS;
