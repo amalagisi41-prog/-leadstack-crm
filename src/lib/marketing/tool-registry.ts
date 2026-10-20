@@ -141,6 +141,20 @@ const TOOLS: readonly ZackTool[] = [
     outbound: false,
     audited: true,
   },
+  {
+    id: "website.landing-audit",
+    label: "Audit a landing page",
+    summary:
+      "Reads a page's content for a clear call to action, trust signals, contact info, and message clarity.",
+    requires: ["businessProfile"],
+    // Read-only content analysis. It never claims to see layout or mobile
+    // rendering — only what Firecrawl's markdown extraction can see.
+    approval: "none",
+    reversibility: "instant",
+    screens: ["no-invented-facts"],
+    outbound: false,
+    audited: true,
+  },
 ];
 
 export const ZACK_TOOL_REGISTRY = TOOLS;
