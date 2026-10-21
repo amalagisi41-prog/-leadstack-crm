@@ -1,0 +1,22 @@
+{
+  "name": "agentstack-videos",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "voice": "node scripts/voice.mjs",
+    "studio": "remotion studio src/index.ts",
+    "render": "node scripts/render.mjs"
+  },
+  "dependencies": {
+    "@fontsource/geist-sans": "^5.3.0",
+    "@fontsource/instrument-serif": "^5.3.0",
+    "@remotion/bundler": "^4.0.537",
+    "@remotion/cli": "^4.0.537",
+    "@remotion/renderer": "^4.0.537",
+    "@types/react": "^18.3.31",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remotion": "^4.0.537",
+    "typescript": "^7.0.2"
+  }
+}

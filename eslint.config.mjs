@@ -23,6 +23,8 @@ const eslintConfig = [
       // script, not part of the Next.js app (nothing under src/ references
       // it) and not the app this repo builds/deploys.
       "my-ghl-app/**",
+      // Remotion onboarding-video project — its own package and toolchain.
+      "videos/**",
     ],
   },
   {

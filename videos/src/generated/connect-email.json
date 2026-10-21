@@ -1,0 +1,40 @@
+{
+  "id": "connect-email",
+  "scenes": [
+    {
+      "id": "hello",
+      "audio": "voice/connect-email/hello.wav",
+      "seconds": 5.388707
+    },
+    {
+      "id": "why",
+      "audio": "voice/connect-email/why.wav",
+      "seconds": 8.430522
+    },
+    {
+      "id": "choose",
+      "audio": "voice/connect-email/choose.wav",
+      "seconds": 6.400454
+    },
+    {
+      "id": "unsure",
+      "audio": "voice/connect-email/unsure.wav",
+      "seconds": 7.201542
+    },
+    {
+      "id": "signin",
+      "audio": "voice/connect-email/signin.wav",
+      "seconds": 5.783447
+    },
+    {
+      "id": "verified",
+      "audio": "voice/connect-email/verified.wav",
+      "seconds": 6.851565
+    },
+    {
+      "id": "next",
+      "audio": "voice/connect-email/next.wav",
+      "seconds": 4.461587
+    }
+  ]
+}
