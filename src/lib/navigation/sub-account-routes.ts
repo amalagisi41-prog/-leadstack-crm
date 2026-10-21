@@ -35,6 +35,7 @@ export const SUB_ACCOUNT_ROUTES = {
   aiAgents: "/ai-agents",
   siteHealth: "/site-health",
   getStarted: "/get-started",
+  connectMcp: "/connect/mcp",
 
   messagingSettings: "/dashboard/settings?tab=messaging",
   marketingCampaigns: "/marketing/campaigns",

@@ -231,8 +231,8 @@ export function EasyConnectorsSection() {
       title: "MCP — connect AI to AgentStack",
       description: "AgentStack exposes an authenticated MCP server for MCP-compatible AI clients.",
       state: "available",
-      href: "/api/mcp",
-      action: "Open AS MCP",
+      href: saPath(SUB_ACCOUNT_ROUTES.connectMcp),
+      action: "Set up MCP",
     },
     {
       key: "agentstack-api",
