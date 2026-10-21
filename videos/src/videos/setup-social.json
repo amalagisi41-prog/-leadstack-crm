@@ -1,0 +1,102 @@
+{
+  "id": "setup-social",
+  "title": "Connect Facebook & Instagram",
+  "scenes": [
+    {
+      "id": "hello",
+      "pose": "wave",
+      "visual": "hello",
+      "headline": [
+        "Facebook",
+        "and",
+        "*Instagram.*"
+      ],
+      "line": "Hi, I'm Zack. Let's connect Facebook and Instagram, so messages and posts live in one place.",
+      "sub": "Setup \u00b7 Social"
+    },
+    {
+      "id": "page",
+      "pose": "point",
+      "visual": "cards",
+      "headline": [
+        "You'll",
+        "need",
+        "a",
+        "*business",
+        "Page.*"
+      ],
+      "line": "You'll need a Facebook business Page, and, if you use Instagram, a professional Instagram account linked to it.",
+      "data": {
+        "items": [
+          {
+            "icon": "facebook",
+            "label": "Business Page",
+            "coral": true
+          },
+          {
+            "icon": "instagram",
+            "label": "Professional Instagram"
+          }
+        ]
+      }
+    },
+    {
+      "id": "noPage",
+      "pose": "idle",
+      "visual": "flow",
+      "headline": [
+        "No",
+        "Page",
+        "*yet?*"
+      ],
+      "line": "No Page yet? It takes about two minutes to create one. Choose the category, real estate agent.",
+      "data": {
+        "steps": [
+          "Create Page",
+          "Real Estate Agent",
+          "Add a photo"
+        ]
+      }
+    },
+    {
+      "id": "connect",
+      "pose": "point",
+      "visual": "flow",
+      "headline": [
+        "Two",
+        "things",
+        "*matter.*"
+      ],
+      "line": "When Facebook opens, pick your business Page, and leave every permission switched on.",
+      "data": {
+        "steps": [
+          "Pick your Page",
+          "Keep permissions on",
+          "Connected"
+        ]
+      }
+    },
+    {
+      "id": "next",
+      "pose": "cheer",
+      "visual": "checklist",
+      "headline": [
+        "Next",
+        "up:",
+        "*payments.*"
+      ],
+      "line": "Next up, your payment link.",
+      "data": {
+        "items": [
+          "Business details",
+          "Email or phone",
+          "Listings",
+          "Social",
+          "Payments",
+          "Domain"
+        ],
+        "done": 4
+      }
+    }
+  ]
+}

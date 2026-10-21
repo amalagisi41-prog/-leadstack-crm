@@ -1,0 +1,109 @@
+{
+  "id": "pipeline",
+  "title": "See where every deal stands",
+  "scenes": [
+    {
+      "id": "hello",
+      "pose": "wave",
+      "visual": "hello",
+      "headline": [
+        "Every",
+        "deal,",
+        "*one",
+        "view.*"
+      ],
+      "line": "Hi, I'm Zack. Let's see exactly where every deal stands.",
+      "sub": "Your pipeline"
+    },
+    {
+      "id": "stages",
+      "pose": "point",
+      "visual": "pipeline",
+      "headline": [
+        "Built",
+        "for",
+        "*real",
+        "estate.*"
+      ],
+      "line": "Your pipeline is already set up for real estate: new lead, contacted, showing scheduled, offer made, and closed.",
+      "data": {
+        "stages": [
+          "New lead",
+          "Contacted",
+          "Showing",
+          "Offer made",
+          "Closed"
+        ],
+        "deal": "12 Oak Lane"
+      }
+    },
+    {
+      "id": "drag",
+      "pose": "point",
+      "visual": "flow",
+      "headline": [
+        "Just",
+        "*drag.*"
+      ],
+      "line": "As a deal moves forward, just drag it to the next stage.",
+      "data": {
+        "steps": [
+          "Showing",
+          "Offer made",
+          "Closed"
+        ]
+      }
+    },
+    {
+      "id": "glance",
+      "pose": "idle",
+      "visual": "cards",
+      "headline": [
+        "Know",
+        "at",
+        "a",
+        "*glance.*"
+      ],
+      "line": "At a glance, you'll see what's new, what's stuck, and what's about to close.",
+      "data": {
+        "items": [
+          {
+            "icon": "star",
+            "label": "What's new"
+          },
+          {
+            "icon": "bolt",
+            "label": "What's stuck",
+            "coral": true
+          },
+          {
+            "icon": "check",
+            "label": "About to close"
+          }
+        ]
+      }
+    },
+    {
+      "id": "next",
+      "pose": "cheer",
+      "visual": "checklist",
+      "headline": [
+        "Your",
+        "deals,",
+        "*clear.*"
+      ],
+      "line": "Open Deals to see yours.",
+      "data": {
+        "items": [
+          "Speed to lead",
+          "Booking",
+          "Pipeline",
+          "AI agent",
+          "Domain"
+        ],
+        "done": 2,
+        "footer": "Open Deals"
+      }
+    }
+  ]
+}

@@ -22,6 +22,16 @@ import {
   ProgressVisual,
   StepsVisual,
 } from "./scenes/visuals";
+import {
+  CardsVisual,
+  ChatVisual,
+  ChecklistVisual,
+  FieldVisual,
+  FlowVisual,
+  PillVisual,
+  PipelineVisual,
+  TimerVisual,
+} from "./scenes/kit";
 
 loadFonts();
 
@@ -32,6 +42,8 @@ export interface SceneScript {
   headline: string[];
   sub?: string;
   line: string;
+  /** Props for the data-driven visuals in scenes/kit.tsx. */
+  data?: Record<string, unknown>;
 }
 
 export interface TimedScene extends SceneScript {
@@ -51,7 +63,16 @@ export const TAIL = 14;
 
 export const sceneFrames = (s: TimedScene) => LEAD_IN + Math.ceil(s.seconds * FPS) + TAIL;
 
-const VISUALS: Record<string, React.FC<{ sub?: string }>> = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- each visual reads its own fields from the script's `data`
+const VISUALS: Record<string, React.FC<any>> = {
+  cards: CardsVisual,
+  flow: FlowVisual,
+  chat: ChatVisual,
+  field: FieldVisual,
+  checklist: ChecklistVisual,
+  pipeline: PipelineVisual,
+  timer: TimerVisual,
+  pill: PillVisual,
   hello: HelloVisual,
   inbox: InboxVisual,
   choices: ChoicesVisual,
@@ -107,7 +128,7 @@ const SceneBody: React.FC<{ scene: TimedScene; frames: number }> = ({ scene, fra
     <AbsoluteFill style={{ left: 720, right: 110, justifyContent: "center", gap: 56, opacity: fadeOut }}>
       <Headline words={scene.headline} />
       <div style={{ alignSelf: "flex-start" }}>
-        <Visual sub={scene.sub} />
+        <Visual sub={scene.sub} {...scene.data} />
       </div>
     </AbsoluteFill>
   );

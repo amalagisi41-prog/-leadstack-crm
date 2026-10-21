@@ -1,0 +1,107 @@
+{
+  "id": "setup-business-details",
+  "title": "Add your business details",
+  "scenes": [
+    {
+      "id": "hello",
+      "pose": "wave",
+      "visual": "hello",
+      "headline": [
+        "Step",
+        "one:",
+        "*you.*"
+      ],
+      "line": "Hi, I'm Zack. Setup starts with three quick details about your business.",
+      "sub": "Setup \u00b7 Business details"
+    },
+    {
+      "id": "three",
+      "pose": "point",
+      "visual": "cards",
+      "headline": [
+        "Just",
+        "*three",
+        "things.*"
+      ],
+      "line": "Your business name, your license number, and the towns or neighborhoods you serve.",
+      "data": {
+        "items": [
+          {
+            "icon": "house",
+            "label": "Business name"
+          },
+          {
+            "icon": "key",
+            "label": "License #"
+          },
+          {
+            "icon": "globe",
+            "label": "Service area"
+          }
+        ]
+      }
+    },
+    {
+      "id": "why",
+      "pose": "idle",
+      "visual": "flow",
+      "headline": [
+        "Everything",
+        "builds",
+        "*on",
+        "this.*"
+      ],
+      "line": "Every other step builds on these, so they come first. Your AI, your emails, and your website all use them.",
+      "data": {
+        "steps": [
+          "Your details",
+          "AI",
+          "Emails",
+          "Website"
+        ]
+      }
+    },
+    {
+      "id": "done",
+      "pose": "thumbs",
+      "visual": "pill",
+      "headline": [
+        "It",
+        "checks",
+        "*itself",
+        "off.*"
+      ],
+      "line": "Save them, and this step checks itself off.",
+      "data": {
+        "from": "Next: Add your business details",
+        "to": "Next: Connect your email or phone",
+        "count": [
+          0,
+          6
+        ]
+      }
+    },
+    {
+      "id": "next",
+      "pose": "cheer",
+      "visual": "checklist",
+      "headline": [
+        "Next",
+        "up:",
+        "*email.*"
+      ],
+      "line": "Next up, your email or phone. I'll be right here.",
+      "data": {
+        "items": [
+          "Business details",
+          "Email or phone",
+          "Listings",
+          "Social",
+          "Payments",
+          "Domain"
+        ],
+        "done": 1
+      }
+    }
+  ]
+}

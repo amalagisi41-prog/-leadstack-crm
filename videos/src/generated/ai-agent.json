@@ -1,0 +1,30 @@
+{
+  "id": "ai-agent",
+  "scenes": [
+    {
+      "id": "hello",
+      "audio": "voice/ai-agent/hello.wav",
+      "seconds": 5.017188
+    },
+    {
+      "id": "persona",
+      "audio": "voice/ai-agent/persona.wav",
+      "seconds": 5.737007
+    },
+    {
+      "id": "channels",
+      "audio": "voice/ai-agent/channels.wav",
+      "seconds": 3.378503
+    },
+    {
+      "id": "chat",
+      "audio": "voice/ai-agent/chat.wav",
+      "seconds": 3.877732
+    },
+    {
+      "id": "next",
+      "audio": "voice/ai-agent/next.wav",
+      "seconds": 1.660227
+    }
+  ]
+}

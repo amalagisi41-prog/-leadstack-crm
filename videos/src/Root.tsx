@@ -3,8 +3,7 @@ import { Composition, Still } from "remotion";
 import { ZackSheet } from "./ZackSheet";
 import { FPS, HEIGHT, WIDTH } from "./brand";
 import { OnboardingVideo, sceneFrames, type SceneScript, type TimedScene } from "./OnboardingVideo";
-import connectEmail from "./videos/connect-email.json";
-import connectEmailVoice from "./generated/connect-email.json";
+import { REGISTRY } from "./generated/registry";
 
 function timed(
   script: { title: string; scenes: SceneScript[] },
@@ -18,7 +17,7 @@ function timed(
   return { title: script.title, scenes };
 }
 
-const videos = [{ id: "connect-email", props: timed(connectEmail as never, connectEmailVoice) }];
+const videos = REGISTRY.map((v) => ({ id: v.id, props: timed(v.script as never, v.voice) }));
 
 export const Root: React.FC = () => (
   <>

@@ -1,0 +1,99 @@
+{
+  "id": "speed-to-lead",
+  "title": "Answer every lead in 60 seconds",
+  "scenes": [
+    {
+      "id": "hello",
+      "pose": "wave",
+      "visual": "hello",
+      "headline": [
+        "Be",
+        "*first.*"
+      ],
+      "line": "Hi, I'm Zack. The agent who replies first usually wins the lead. Let's make that you.",
+      "sub": "Speed to lead"
+    },
+    {
+      "id": "attach",
+      "pose": "point",
+      "visual": "flow",
+      "headline": [
+        "Attach",
+        "it",
+        "to",
+        "your",
+        "*form.*"
+      ],
+      "line": "Attach the Speed to Lead plan to your website form. That's the whole setup.",
+      "data": {
+        "steps": [
+          "Your form",
+          "Speed to Lead",
+          "On"
+        ]
+      }
+    },
+    {
+      "id": "timer",
+      "pose": "point",
+      "visual": "timer",
+      "headline": [
+        "Within",
+        "*60",
+        "seconds.*"
+      ],
+      "line": "From then on, every new inquiry gets a text and an email within about sixty seconds, even at midnight.",
+      "data": {
+        "seconds": 60,
+        "label": "A text and an email go out on their own"
+      }
+    },
+    {
+      "id": "chat",
+      "pose": "idle",
+      "visual": "chat",
+      "headline": [
+        "Instant,",
+        "*and",
+        "personal.*"
+      ],
+      "line": "The messages use your name and your details, so they feel personal, not robotic.",
+      "data": {
+        "messages": [
+          {
+            "from": "lead",
+            "text": "Hi, I'd like info on 12 Oak Lane."
+          },
+          {
+            "from": "zack",
+            "text": "Thanks for reaching out! I'll send details now. When's a good time to chat?"
+          }
+        ],
+        "stamp": "Sent in 42 seconds"
+      }
+    },
+    {
+      "id": "next",
+      "pose": "cheer",
+      "visual": "checklist",
+      "headline": [
+        "Never",
+        "miss",
+        "a",
+        "*lead.*"
+      ],
+      "line": "Open Follow-Up Plans to switch it on.",
+      "data": {
+        "items": [
+          "Text messages",
+          "Website form",
+          "Speed to lead",
+          "Booking",
+          "Pipeline"
+        ],
+        "done": 2,
+        "footer": "Open Follow-Up Plans"
+      }
+    }
+  ]
+}

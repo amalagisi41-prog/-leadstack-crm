@@ -1,0 +1,105 @@
+{
+  "id": "domain-website",
+  "title": "Make sure leads land on your website",
+  "scenes": [
+    {
+      "id": "hello",
+      "pose": "wave",
+      "visual": "hello",
+      "headline": [
+        "Where",
+        "does",
+        "your",
+        "site",
+        "*live?*"
+      ],
+      "line": "Hi, I'm Zack. Let's make sure leads land on the right website.",
+      "sub": "Your website"
+    },
+    {
+      "id": "which",
+      "pose": "point",
+      "visual": "cards",
+      "headline": [
+        "Which",
+        "one",
+        "is",
+        "*you?*"
+      ],
+      "line": "Tell us your situation. Keeping the site you already have? Moving to an AgentStack site? Or need a domain?",
+      "data": {
+        "items": [
+          {
+            "icon": "house",
+            "label": "Keep my site",
+            "coral": true
+          },
+          {
+            "icon": "globe",
+            "label": "Move to AgentStack"
+          },
+          {
+            "icon": "search",
+            "label": "Need a domain"
+          }
+        ]
+      }
+    },
+    {
+      "id": "keep",
+      "pose": "idle",
+      "visual": "flow",
+      "headline": [
+        "Keeping",
+        "yours?",
+        "*Nothing",
+        "moves.*"
+      ],
+      "line": "If you're keeping your site, just name your host, and we'll check your settings for you. Nothing moves.",
+      "data": {
+        "steps": [
+          "Name your host",
+          "We check",
+          "All good"
+        ]
+      }
+    },
+    {
+      "id": "move",
+      "pose": "point",
+      "visual": "field",
+      "headline": [
+        "Moving?",
+        "*We'll",
+        "guide",
+        "you.*"
+      ],
+      "line": "If you're moving or need a domain, we'll walk you through each step, in the right order.",
+      "data": {
+        "label": "Your domain",
+        "value": "millerrealty.com",
+        "highlight": "millerrealty.com"
+      }
+    },
+    {
+      "id": "next",
+      "pose": "cheer",
+      "visual": "checklist",
+      "headline": [
+        "Leads",
+        "land",
+        "*right.*"
+      ],
+      "line": "Open Domain to get started.",
+      "data": {
+        "items": [
+          "Pipeline",
+          "AI agent",
+          "Domain"
+        ],
+        "done": 2,
+        "footer": "Open Domain"
+      }
+    }
+  ]
+}

@@ -1,0 +1,98 @@
+{
+  "id": "setup-payments",
+  "title": "Add your payment link",
+  "scenes": [
+    {
+      "id": "hello",
+      "pose": "wave",
+      "visual": "hello",
+      "headline": [
+        "Get",
+        "paid",
+        "*easily.*"
+      ],
+      "line": "Hi, I'm Zack. Let's add the link your clients already pay you through.",
+      "sub": "Setup \u00b7 Payments"
+    },
+    {
+      "id": "link",
+      "pose": "point",
+      "visual": "field",
+      "headline": [
+        "Paste",
+        "your",
+        "*link.*"
+      ],
+      "line": "Paste your payment link. A PayPal dot me link works, or your own payment page.",
+      "data": {
+        "label": "Payment link",
+        "value": "paypal.me/millerrealty",
+        "highlight": "millerrealty"
+      }
+    },
+    {
+      "id": "pay",
+      "pose": "idle",
+      "visual": "flow",
+      "headline": [
+        "A",
+        "Pay",
+        "button,",
+        "*everywhere.*"
+      ],
+      "line": "Your quotes and invoices will show a Pay button that goes straight to it.",
+      "data": {
+        "steps": [
+          "Quote",
+          "Pay button",
+          "Paid"
+        ]
+      }
+    },
+    {
+      "id": "optional",
+      "pose": "thumbs",
+      "visual": "cards",
+      "headline": [
+        "It's",
+        "*optional.*"
+      ],
+      "line": "This one's optional. Skip it if you don't take payments through AgentStack.",
+      "data": {
+        "items": [
+          {
+            "icon": "card",
+            "label": "Add a link",
+            "coral": true
+          },
+          {
+            "icon": "check",
+            "label": "Skip for now"
+          }
+        ]
+      }
+    },
+    {
+      "id": "next",
+      "pose": "cheer",
+      "visual": "checklist",
+      "headline": [
+        "Last",
+        "one:",
+        "*domain.*"
+      ],
+      "line": "Last one, your domain.",
+      "data": {
+        "items": [
+          "Business details",
+          "Email or phone",
+          "Listings",
+          "Social",
+          "Payments",
+          "Domain"
+        ],
+        "done": 5
+      }
+    }
+  ]
+}

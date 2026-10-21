@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "voice": "node scripts/voice.mjs",
+    "registry": "node scripts/registry.mjs",
     "studio": "remotion studio src/index.ts",
     "render": "node scripts/render.mjs"
   },

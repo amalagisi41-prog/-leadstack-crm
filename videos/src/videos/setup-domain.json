@@ -1,0 +1,96 @@
+{
+  "id": "setup-domain",
+  "title": "Connect your domain",
+  "scenes": [
+    {
+      "id": "hello",
+      "pose": "wave",
+      "visual": "hello",
+      "headline": [
+        "Your",
+        "web",
+        "*address.*"
+      ],
+      "line": "Hi, I'm Zack. Last step: putting your website on your own web address.",
+      "sub": "Setup \u00b7 Domain"
+    },
+    {
+      "id": "why-last",
+      "pose": "idle",
+      "visual": "flow",
+      "headline": [
+        "Saved",
+        "for",
+        "*last.*"
+      ],
+      "line": "It comes last on purpose. A domain needs a site behind it, so everything else comes first.",
+      "data": {
+        "steps": [
+          "Your details",
+          "Listings",
+          "Social",
+          "Domain"
+        ]
+      }
+    },
+    {
+      "id": "type",
+      "pose": "point",
+      "visual": "field",
+      "headline": [
+        "Type",
+        "your",
+        "*domain.*"
+      ],
+      "line": "Type the domain you own, like your name dot com.",
+      "data": {
+        "label": "Your domain",
+        "value": "millerrealty.com",
+        "highlight": "millerrealty.com"
+      }
+    },
+    {
+      "id": "check",
+      "pose": "point",
+      "visual": "flow",
+      "headline": [
+        "We",
+        "*check",
+        "it",
+        "for",
+        "you.*"
+      ],
+      "line": "We'll check your settings and tell you exactly what's left, by name. No guessing.",
+      "data": {
+        "steps": [
+          "Saved",
+          "We check",
+          "Live"
+        ]
+      }
+    },
+    {
+      "id": "done",
+      "pose": "cheer",
+      "visual": "checklist",
+      "headline": [
+        "You're",
+        "*all",
+        "set.*"
+      ],
+      "line": "That's it. You're all set up. Nice work.",
+      "data": {
+        "items": [
+          "Business details",
+          "Email or phone",
+          "Listings",
+          "Social",
+          "Payments",
+          "Domain"
+        ],
+        "done": 6,
+        "footer": "100% set up"
+      }
+    }
+  ]
+}

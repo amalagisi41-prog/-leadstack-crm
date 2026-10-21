@@ -1,0 +1,103 @@
+{
+  "id": "setup-listings",
+  "title": "Connect your listings",
+  "scenes": [
+    {
+      "id": "hello",
+      "pose": "wave",
+      "visual": "hello",
+      "headline": [
+        "Bring",
+        "in",
+        "your",
+        "*listings.*"
+      ],
+      "line": "Hi, I'm Zack. Let's bring your listings into AgentStack automatically.",
+      "sub": "Setup \u00b7 Listings"
+    },
+    {
+      "id": "idx",
+      "pose": "point",
+      "visual": "cards",
+      "headline": [
+        "It",
+        "runs",
+        "on",
+        "*IDX",
+        "Broker.*"
+      ],
+      "line": "Listings come in through your IDX Broker account. If you don't use IDX Broker, you can skip this step for now.",
+      "data": {
+        "items": [
+          {
+            "icon": "house",
+            "label": "IDX Broker",
+            "coral": true
+          },
+          {
+            "icon": "list",
+            "label": "Your MLS feed"
+          }
+        ]
+      }
+    },
+    {
+      "id": "key",
+      "pose": "idle",
+      "visual": "field",
+      "headline": [
+        "Copy",
+        "your",
+        "*access",
+        "key.*"
+      ],
+      "line": "In IDX Broker, go to Account, then API Access, and copy your access key.",
+      "data": {
+        "label": "IDX Broker access key",
+        "value": "a1b2c3\u2026x9y8z7",
+        "highlight": "a1b2c3\u2026x9y8z7"
+      }
+    },
+    {
+      "id": "paste",
+      "pose": "point",
+      "visual": "flow",
+      "headline": [
+        "Paste.",
+        "Connect.",
+        "*Synced.*"
+      ],
+      "line": "Paste it into AgentStack, click connect, then run a test sync to see your listings arrive.",
+      "data": {
+        "steps": [
+          "Paste key",
+          "Connect",
+          "Test sync",
+          "Listings in"
+        ]
+      }
+    },
+    {
+      "id": "next",
+      "pose": "cheer",
+      "visual": "checklist",
+      "headline": [
+        "Next",
+        "up:",
+        "*social.*"
+      ],
+      "line": "Next up, Facebook and Instagram.",
+      "data": {
+        "items": [
+          "Business details",
+          "Email or phone",
+          "Listings",
+          "Social",
+          "Payments",
+          "Domain"
+        ],
+        "done": 3
+      }
+    }
+  ]
+}

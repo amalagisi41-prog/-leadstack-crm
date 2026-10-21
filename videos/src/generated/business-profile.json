@@ -1,0 +1,30 @@
+{
+  "id": "business-profile",
+  "scenes": [
+    {
+      "id": "hello",
+      "audio": "voice/business-profile/hello.wav",
+      "seconds": 5.609297
+    },
+    {
+      "id": "what",
+      "audio": "voice/business-profile/what.wav",
+      "seconds": 7.894785
+    },
+    {
+      "id": "everywhere",
+      "audio": "voice/business-profile/everywhere.wav",
+      "seconds": 6.352336
+    },
+    {
+      "id": "example",
+      "audio": "voice/business-profile/example.wav",
+      "seconds": 4.92263
+    },
+    {
+      "id": "next",
+      "audio": "voice/business-profile/next.wav",
+      "seconds": 4.750159
+    }
+  ]
+}

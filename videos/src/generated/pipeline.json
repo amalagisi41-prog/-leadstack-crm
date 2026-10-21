@@ -1,0 +1,30 @@
+{
+  "id": "pipeline",
+  "scenes": [
+    {
+      "id": "hello",
+      "audio": "voice/pipeline/hello.wav",
+      "seconds": 3.96068
+    },
+    {
+      "id": "stages",
+      "audio": "voice/pipeline/stages.wav",
+      "seconds": 7.116916
+    },
+    {
+      "id": "drag",
+      "audio": "voice/pipeline/drag.wav",
+      "seconds": 2.983764
+    },
+    {
+      "id": "glance",
+      "audio": "voice/pipeline/glance.wav",
+      "seconds": 4.133152
+    },
+    {
+      "id": "next",
+      "audio": "voice/pipeline/next.wav",
+      "seconds": 1.335147
+    }
+  ]
+}

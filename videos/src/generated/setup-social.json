@@ -1,0 +1,30 @@
+{
+  "id": "setup-social",
+  "scenes": [
+    {
+      "id": "hello",
+      "audio": "voice/setup-social/hello.wav",
+      "seconds": 6.433605
+    },
+    {
+      "id": "page",
+      "audio": "voice/setup-social/page.wav",
+      "seconds": 6.176508
+    },
+    {
+      "id": "noPage",
+      "audio": "voice/setup-social/noPage.wav",
+      "seconds": 6.156644
+    },
+    {
+      "id": "connect",
+      "audio": "voice/setup-social/connect.wav",
+      "seconds": 4.527891
+    },
+    {
+      "id": "next",
+      "audio": "voice/setup-social/next.wav",
+      "seconds": 1.590567
+    }
+  ]
+}
