@@ -4,37 +4,37 @@
     {
       "id": "hello",
       "audio": "voice/connect-email/hello.wav",
-      "seconds": 5.388707
+      "seconds": 5.133288
     },
     {
       "id": "why",
       "audio": "voice/connect-email/why.wav",
-      "seconds": 8.430522
+      "seconds": 7.722313
     },
     {
       "id": "choose",
       "audio": "voice/connect-email/choose.wav",
-      "seconds": 6.400454
+      "seconds": 6.133424
     },
     {
       "id": "unsure",
       "audio": "voice/connect-email/unsure.wav",
-      "seconds": 7.201542
+      "seconds": 7.085442
     },
     {
       "id": "signin",
       "audio": "voice/connect-email/signin.wav",
-      "seconds": 5.783447
+      "seconds": 5.539637
     },
     {
       "id": "verified",
       "audio": "voice/connect-email/verified.wav",
-      "seconds": 6.851565
+      "seconds": 6.642585
     },
     {
       "id": "next",
       "audio": "voice/connect-email/next.wav",
-      "seconds": 4.461587
+      "seconds": 4.310658
     }
   ]
 }

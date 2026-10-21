@@ -25,8 +25,8 @@ const outDir = join(root, "public/voice", id);
 mkdirSync(outDir, { recursive: true });
 
 function synthesize(text, file) {
-  // length_scale > 1 slows delivery slightly: clearer for first-time users.
-  execFileSync("piper", ["-m", model, "--length_scale", "1.08", "--sentence_silence", "0.35", "-f", file], {
+  // length_scale tunes pace (1.0 = the voice's natural speed; higher is slower).
+  execFileSync("piper", ["-m", model, "--length_scale", "1.0", "--sentence_silence", "0.35", "-f", file], {
     input: text,
     stdio: ["pipe", "ignore", "inherit"],
   });
