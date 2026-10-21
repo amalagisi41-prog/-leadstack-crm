@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Check, Copy, PlugZap } from "lucide-react";
+import { ArrowLeft, Check, Copy, PlugZap, Sparkles } from "lucide-react";
+import { McpGuidedSetup } from "@/components/connect/mcp-guided-setup";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useSubAccount } from "@/context/sub-account-context";
@@ -22,6 +23,7 @@ import { useSubAccount } from "@/context/sub-account-context";
 export function McpSetupPage() {
   const { saPath } = useSubAccount();
   const [copied, setCopied] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(true);
 
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const endpoint = `${origin}/api/mcp`;
@@ -60,6 +62,11 @@ export function McpSetupPage() {
           </p>
         </div>
       </div>
+
+      <McpGuidedSetup open={guideOpen} onOpenChange={setGuideOpen} />
+      <Button className="mt-6" onClick={() => setGuideOpen(true)}>
+        <Sparkles className="mr-1.5 h-4 w-4" /> Walk me through it
+      </Button>
 
       <div className="bg-card mt-6 rounded-xl border p-4">
         <p className="text-sm font-medium">Your MCP server address</p>
