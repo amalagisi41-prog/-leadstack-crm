@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { OnboardingChecklist } from "@/components/dashboard/onboarding-checklist";
 import {
+  BUILT_IN_ONBOARDING_VIDEOS,
   ONBOARDING_STEPS,
   type OnboardingStepId,
   type OnboardingVideos,
@@ -95,10 +96,10 @@ export function OnboardingVideosSection() {
         <div>
           <h2 className="text-sm font-semibold">Onboarding videos</h2>
           <p className="text-xs text-muted-foreground">
-            Paste a walkthrough URL (Loom, YouTube, Vimeo — any link) for each
-            setup step. New sub-accounts see a &ldquo;Watch&rdquo; button on the
-            dashboard checklist for every step you fill in. Leave a field blank
-            to hide that step&apos;s button.
+            Every setup step already has a short Zack walkthrough video, shown
+            behind the &ldquo;Watch&rdquo; button on each sub-account&apos;s
+            dashboard checklist. To use your own instead, paste a link (Loom,
+            YouTube, Vimeo, any URL). Leave a field blank to keep the Zack video.
           </p>
         </div>
       </div>
@@ -122,15 +123,27 @@ export function OnboardingVideosSection() {
               onChange={(e) =>
                 setUrls((prev) => ({ ...prev, [step.id]: e.target.value }))
               }
-              placeholder="https://www.loom.com/share/…"
+              placeholder="Using the built-in Zack video. Paste a link to replace it"
             />
+            {!urls[step.id]?.trim() ? (
+              <a
+                href={BUILT_IN_ONBOARDING_VIDEOS[step.id]}
+                target="_blank"
+                rel="noreferrer"
+                className="text-[11px] font-medium text-primary hover:underline"
+              >
+                Watch the built-in Zack video
+              </a>
+            ) : null}
           </div>
         ))}
       </div>
 
       <div className="flex items-center justify-between gap-3">
         <p className="text-[11px] text-muted-foreground">
-          {filledCount} of {ONBOARDING_STEPS.length} videos added
+          {filledCount === 0
+            ? `All ${ONBOARDING_STEPS.length} steps use the built-in Zack videos`
+            : `${filledCount} custom ${filledCount === 1 ? "link" : "links"}; the rest use the built-in Zack videos`}
         </p>
         <div className="flex items-center gap-2">
           <Button
