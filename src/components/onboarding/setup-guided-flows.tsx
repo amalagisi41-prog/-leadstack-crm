@@ -171,6 +171,59 @@ function SkipButton({
   );
 }
 
+const STEP_PROMPTS: Record<"identity" | "listings" | "payments" | "domain", { title: string; why: string }> = {
+  identity: {
+    title: "First, tell us about your business",
+    why: "Your business name, license number, and service area go on everything AgentStack writes for you, so this comes first.",
+  },
+  listings: {
+    title: "Connect your listings",
+    why: "Your listings power property pages, campaigns, and marketing drafts. Connect your IDX Broker account so they show up here automatically.",
+  },
+  payments: {
+    title: "Add the link clients pay you through",
+    why: "Quotes and invoices show a Pay button that goes to this link — PayPal.me or your own payment page.",
+  },
+  domain: {
+    title: "Connect your domain",
+    why: "Put your website on your own web address, like yourname.com.",
+  },
+};
+
+/**
+ * One-screen pop-up for a setup step that doesn't have its own question
+ * flow yet: says why it matters and takes them straight to it.
+ */
+export function SetupStepPrompt({
+  step,
+  open,
+  onOpenChange,
+  setupHref,
+}: {
+  step: keyof typeof STEP_PROMPTS;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  setupHref: string;
+}) {
+  const buildSteps = useCallback(
+    (): GuidedStep[] => [
+      {
+        id: step,
+        title: STEP_PROMPTS[step].title,
+        final: true,
+        body: () => (
+          <div className="space-y-3">
+            <p>{STEP_PROMPTS[step].why}</p>
+            <Button render={<a href={setupHref} />}>Set it up now</Button>
+          </div>
+        ),
+      },
+    ],
+    [setupHref, step],
+  );
+  return <GuidedFlow open={open} onOpenChange={onOpenChange} steps={buildSteps} finishLabel="Not now" />;
+}
+
 interface FlowProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowRight, ListChecks } from "lucide-react";
@@ -13,11 +13,10 @@ import {
 } from "@/lib/onboarding/setup-progress";
 import {
   CommunicationsGuidedSetup,
+  SetupStepPrompt,
   SocialGuidedSetup,
 } from "@/components/onboarding/setup-guided-flows";
-
-/** Steps that open a guided pop-up; the rest still go to the Setup page. */
-const GUIDED_STEPS = new Set<SetupStepId>(["communications", "social"]);
+import { setupStepToPrompt } from "@/lib/onboarding/route-setup-step";
 
 function useIdentityDone(subAccountId: string): boolean | null {
   const [done, setDone] = useState<boolean | null>(null);
@@ -61,10 +60,25 @@ export function SetupProgressPill() {
   const identityDone = useIdentityDone(subAccountId);
   const [openFlow, setOpenFlow] = useState<SetupStepId | null>(null);
 
-  if (!subAccount || !isAdmin || identityDone === null) return null;
-  if (pathname?.endsWith(SUB_ACCOUNT_ROUTES.getStarted)) return null;
+  const progress = useMemo(
+    () => (subAccount && identityDone !== null ? computeSetupProgress(subAccount, identityDone) : null),
+    [subAccount, identityDone],
+  );
+  const onSetupPage = pathname?.endsWith(SUB_ACCOUNT_ROUTES.getStarted) ?? false;
 
-  const progress = computeSetupProgress(subAccount, identityDone);
+  // Each page asks the setup question it depends on, once per visit: the
+  // pop-up opens when the realtor arrives on a page, not again on every
+  // re-render or live update while they're still there.
+  const promptedPath = useRef<string | null>(null);
+  useEffect(() => {
+    if (!progress || !isAdmin || onSetupPage || !pathname) return;
+    if (promptedPath.current === pathname) return;
+    promptedPath.current = pathname;
+    const step = setupStepToPrompt(pathname, progress);
+    if (step) setOpenFlow(step);
+  }, [pathname, progress, isAdmin, onSetupPage]);
+
+  if (!subAccount || !isAdmin || !progress || onSetupPage) return null;
   if (progress.complete || !progress.nextStep) return null;
 
   const next = progress.nextStep;
@@ -89,15 +103,9 @@ export function SetupProgressPill() {
         pathname?.endsWith(SUB_ACCOUNT_ROUTES.businessProfile) ? "bottom-20" : "bottom-4"
       }`}
     >
-      {GUIDED_STEPS.has(next) ? (
-        <button type="button" className={pillClass} onClick={() => setOpenFlow(next)}>
-          {label}
-        </button>
-      ) : (
-        <Link className={pillClass} href={saPath(SUB_ACCOUNT_ROUTES.getStarted)}>
-          {label}
-        </Link>
-      )}
+      <button type="button" className={pillClass} onClick={() => setOpenFlow(next)}>
+        {label}
+      </button>
       <Link
         href={saPath(SUB_ACCOUNT_ROUTES.getStarted)}
         className="text-muted-foreground bg-background/80 inline-flex items-center gap-1 rounded-full px-2 text-xs hover:underline"
@@ -117,6 +125,15 @@ export function SetupProgressPill() {
         subAccountId={subAccountId}
         subAccount={subAccount}
       />
+      {(["identity", "listings", "payments", "domain"] as const).map((step) => (
+        <SetupStepPrompt
+          key={step}
+          step={step}
+          open={openFlow === step}
+          onOpenChange={(o) => setOpenFlow(o ? step : null)}
+          setupHref={saPath(SUB_ACCOUNT_ROUTES.getStarted)}
+        />
+      ))}
     </div>
   );
 }
