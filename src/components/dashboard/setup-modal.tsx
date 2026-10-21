@@ -15,6 +15,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { googleAccountConnectPath } from "@/lib/google/account-connect-path";
 import type { SubAccountDoc } from "@/types/tenancy";
+import {
+  SETUP_STEP_ORDER,
+  SETUP_STEP_TITLES,
+  deriveSetupStepStates,
+  type SetupStepId,
+  type SetupStepState,
+} from "@/lib/onboarding/setup-progress";
 
 /**
  * Account-first setup — the locked-step replacement for the old "Connect &
@@ -35,31 +42,9 @@ import type { SubAccountDoc } from "@/types/tenancy";
  * IDX or Meta gated on, and Payments/Domain are optional by design.
  */
 
-type StepId =
-  | "identity"
-  | "communications"
-  | "listings"
-  | "social"
-  | "payments"
-  | "domain";
-
-const STEP_ORDER: readonly StepId[] = [
-  "identity",
-  "communications",
-  "listings",
-  "social",
-  "payments",
-  "domain",
-];
-
-const STEP_TITLES: Record<StepId, string> = {
-  identity: "Identity",
-  communications: "Communications account",
-  listings: "Listings source",
-  social: "Social",
-  payments: "Payments",
-  domain: "Domain",
-};
+type StepId = SetupStepId;
+const STEP_ORDER = SETUP_STEP_ORDER;
+const STEP_TITLES = SETUP_STEP_TITLES;
 
 interface BusinessProfileFields {
   brokerage: string;
@@ -67,61 +52,8 @@ interface BusinessProfileFields {
   serviceAreas: string;
 }
 
-export type SetupStepState = "done" | "active" | "locked";
-
-/**
- * Steps the flow ever lets an operator skip. Identity and Communications
- * account are mandatory — everything downstream needs them — so a skip
- * naming either is ignored here rather than trusted, even though the API
- * route (SETUP_SKIPPABLE_STEP_IDS) already refuses to persist one. Two
- * independent checks, not one: this function has to stay correct on its own
- * if it's ever called with data that didn't come through that route.
- */
-const SKIPPABLE_STEP_IDS = new Set<StepId>([
-  "listings",
-  "social",
-  "payments",
-  "domain",
-]);
-
-/**
- * Pure lock/done derivation for the six setup steps — no Firestore, no
- * fetches, just the booleans the component already has by the time it
- * renders. Kept separate from the component so the sequencing rules
- * (identity gates communications; communications gates listings + social;
- * listings + social gate payments + domain) are unit-testable without
- * mounting the full form.
- */
-export function deriveSetupStepStates(
-  doneMap: Record<StepId, boolean>,
-  skippedStepIds: readonly string[]
-): Record<StepId, SetupStepState> {
-  const skipped = new Set(
-    skippedStepIds.filter((id): id is StepId =>
-      SKIPPABLE_STEP_IDS.has(id as StepId)
-    )
-  );
-  const isSatisfied = (id: StepId) => doneMap[id] || skipped.has(id);
-  const isUnlocked = (id: StepId): boolean => {
-    switch (id) {
-      case "identity":
-        return true;
-      case "communications":
-        return doneMap.identity;
-      case "listings":
-      case "social":
-        return doneMap.communications;
-      case "payments":
-      case "domain":
-        return isSatisfied("listings") && isSatisfied("social");
-    }
-  };
-  const result = {} as Record<StepId, SetupStepState>;
-  for (const id of STEP_ORDER) {
-    result[id] = isSatisfied(id) ? "done" : isUnlocked(id) ? "active" : "locked";
-  }
-  return result;
-}
+export { deriveSetupStepStates };
+export type { SetupStepState };
 
 function StepHeader({
   step,
