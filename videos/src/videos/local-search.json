@@ -1,0 +1,116 @@
+{
+  "id": "local-search",
+  "title": "Local search campaigns",
+  "scenes": [
+    {
+      "id": "hello",
+      "pose": "wave",
+      "visual": "hello",
+      "headline": [
+        "Get",
+        "found",
+        "*locally.*"
+      ],
+      "line": "Hi, I'm Zack. Let's get your listings found by people searching in your area.",
+      "sub": "Campaign Launch Assist"
+    },
+    {
+      "id": "start",
+      "pose": "point",
+      "visual": "cards",
+      "headline": [
+        "Start",
+        "with",
+        "a",
+        "*listing.*"
+      ],
+      "line": "Start with a listing. Upload one yourself, or connect IDX so your listings come in automatically.",
+      "data": {
+        "items": [
+          {
+            "icon": "upload",
+            "label": "Upload a listing"
+          },
+          {
+            "icon": "house",
+            "label": "Connect IDX",
+            "coral": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "recs",
+      "pose": "point",
+      "visual": "cards",
+      "headline": [
+        "Local",
+        "search,",
+        "*guided.*"
+      ],
+      "line": "We'll suggest what local searches to target, and draft campaign content for each of your channels.",
+      "data": {
+        "items": [
+          {
+            "icon": "search",
+            "label": "Local search"
+          },
+          {
+            "icon": "globe",
+            "label": "Landing page"
+          },
+          {
+            "icon": "facebook",
+            "label": "Social"
+          },
+          {
+            "icon": "envelope",
+            "label": "Email"
+          }
+        ]
+      }
+    },
+    {
+      "id": "approve",
+      "pose": "idle",
+      "visual": "flow",
+      "headline": [
+        "Nothing",
+        "publishes",
+        "*without",
+        "you.*"
+      ],
+      "line": "Every draft is just a draft. Nothing goes out until you review it and approve it.",
+      "data": {
+        "steps": [
+          "Draft",
+          "You review",
+          "Approve",
+          "Publish"
+        ]
+      }
+    },
+    {
+      "id": "next",
+      "pose": "cheer",
+      "visual": "checklist",
+      "headline": [
+        "Your",
+        "first",
+        "*campaign.*"
+      ],
+      "line": "Open Campaign Launch Assist to build your first one.",
+      "data": {
+        "items": [
+          "Business profile",
+          "Contacts",
+          "Local search campaign",
+          "Text messages",
+          "Website form"
+        ],
+        "done": 2,
+        "footer": "Open Campaign Launch Assist"
+      }
+    }
+  ]
+}

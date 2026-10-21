@@ -1,0 +1,30 @@
+{
+  "id": "domain-website",
+  "scenes": [
+    {
+      "id": "hello",
+      "audio": "voice/domain-website/hello.wav",
+      "seconds": 3.682041
+    },
+    {
+      "id": "which",
+      "audio": "voice/domain-website/which.wav",
+      "seconds": 6.390522
+    },
+    {
+      "id": "keep",
+      "audio": "voice/domain-website/keep.wav",
+      "seconds": 5.052018
+    },
+    {
+      "id": "move",
+      "audio": "voice/domain-website/move.wav",
+      "seconds": 4.156372
+    },
+    {
+      "id": "next",
+      "audio": "voice/domain-website/next.wav",
+      "seconds": 1.439637
+    }
+  ]
+}

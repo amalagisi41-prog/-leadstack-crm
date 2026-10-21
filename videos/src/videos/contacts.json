@@ -1,0 +1,101 @@
+{
+  "id": "contacts",
+  "title": "Bring in your contacts",
+  "scenes": [
+    {
+      "id": "hello",
+      "pose": "wave",
+      "visual": "hello",
+      "headline": [
+        "Bring",
+        "everyone",
+        "*home.*"
+      ],
+      "line": "Hi, I'm Zack. Let's bring your whole database into one place.",
+      "sub": "Your contacts"
+    },
+    {
+      "id": "ways",
+      "pose": "point",
+      "visual": "cards",
+      "headline": [
+        "Two",
+        "easy",
+        "*ways.*"
+      ],
+      "line": "There are two ways. Upload a spreadsheet from your old CRM, or add your first contacts by hand.",
+      "data": {
+        "items": [
+          {
+            "icon": "upload",
+            "label": "Upload a CSV",
+            "coral": true
+          },
+          {
+            "icon": "user",
+            "label": "Add by hand"
+          }
+        ],
+        "pick": 0
+      }
+    },
+    {
+      "id": "export",
+      "pose": "idle",
+      "visual": "flow",
+      "headline": [
+        "Export.",
+        "Upload.",
+        "*Match.*"
+      ],
+      "line": "Most CRMs can export a CSV file. Upload it, and we'll match your columns, like name, email, and phone, to the right fields.",
+      "data": {
+        "steps": [
+          "Export CSV",
+          "Upload",
+          "Match columns",
+          "Imported"
+        ]
+      }
+    },
+    {
+      "id": "one",
+      "pose": "point",
+      "visual": "field",
+      "headline": [
+        "One",
+        "place",
+        "for",
+        "*everyone.*"
+      ],
+      "line": "Once they're in, every contact has one profile, with notes, messages, and activity all together.",
+      "data": {
+        "label": "Contact",
+        "value": "Sarah Miller \u00b7 Buyer \u00b7 Fairfield",
+        "highlight": "Buyer"
+      }
+    },
+    {
+      "id": "next",
+      "pose": "cheer",
+      "visual": "checklist",
+      "headline": [
+        "Your",
+        "database,",
+        "*sorted.*"
+      ],
+      "line": "Open People to import yours now.",
+      "data": {
+        "items": [
+          "Business profile",
+          "Contacts",
+          "Local search campaign",
+          "Text messages",
+          "Website form"
+        ],
+        "done": 1,
+        "footer": "Open People \u2192 Import"
+      }
+    }
+  ]
+}

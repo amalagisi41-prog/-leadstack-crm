@@ -1,0 +1,107 @@
+{
+  "id": "ai-agent",
+  "title": "Let AI answer while you show homes",
+  "scenes": [
+    {
+      "id": "hello",
+      "pose": "wave",
+      "visual": "hello",
+      "headline": [
+        "Answer",
+        "leads",
+        "while",
+        "you",
+        "*show",
+        "homes.*"
+      ],
+      "line": "Hi, I'm Zack. Let's set up your AI agent, so leads get answers even when you're busy.",
+      "sub": "Your AI agent"
+    },
+    {
+      "id": "persona",
+      "pose": "point",
+      "visual": "field",
+      "headline": [
+        "Already",
+        "*written.*"
+      ],
+      "line": "Your AI agent comes with a persona already written for a realtor. Review it, and add your business name.",
+      "data": {
+        "label": "Your AI agent",
+        "value": "Hi! I'm the assistant for Miller Realty.",
+        "highlight": "Miller Realty"
+      }
+    },
+    {
+      "id": "channels",
+      "pose": "point",
+      "visual": "cards",
+      "headline": [
+        "Turn",
+        "it",
+        "*on.*"
+      ],
+      "line": "Then switch it on for text messages and for the chat on your website.",
+      "data": {
+        "items": [
+          {
+            "icon": "phone",
+            "label": "Text messages",
+            "coral": true
+          },
+          {
+            "icon": "bubble",
+            "label": "Website chat",
+            "coral": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "chat",
+      "pose": "idle",
+      "visual": "chat",
+      "headline": [
+        "It",
+        "answers,",
+        "*you",
+        "close.*"
+      ],
+      "line": "It answers questions, collects contact details, and hands the lead to you.",
+      "data": {
+        "messages": [
+          {
+            "from": "lead",
+            "text": "What's the commute like from that area?"
+          },
+          {
+            "from": "zack",
+            "text": "Most buyers there commute by train in about 50 minutes. Want me to have Sarah call you?"
+          }
+        ],
+        "stamp": "Lead saved \u00b7 Task created for you"
+      }
+    },
+    {
+      "id": "next",
+      "pose": "cheer",
+      "visual": "checklist",
+      "headline": [
+        "Your",
+        "agent,",
+        "*live.*"
+      ],
+      "line": "Open AI Agents to review it.",
+      "data": {
+        "items": [
+          "Booking",
+          "Pipeline",
+          "AI agent",
+          "Domain"
+        ],
+        "done": 2,
+        "footer": "Open AI Agents"
+      }
+    }
+  ]
+}

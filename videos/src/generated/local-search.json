@@ -1,0 +1,30 @@
+{
+  "id": "local-search",
+  "scenes": [
+    {
+      "id": "hello",
+      "audio": "voice/local-search/hello.wav",
+      "seconds": 4.15805
+    },
+    {
+      "id": "start",
+      "audio": "voice/local-search/start.wav",
+      "seconds": 5.713787
+    },
+    {
+      "id": "recs",
+      "audio": "voice/local-search/recs.wav",
+      "seconds": 5.0039
+    },
+    {
+      "id": "approve",
+      "audio": "voice/local-search/approve.wav",
+      "seconds": 4.657279
+    },
+    {
+      "id": "next",
+      "audio": "voice/local-search/next.wav",
+      "seconds": 2.670295
+    }
+  ]
+}

@@ -1,0 +1,110 @@
+{
+  "id": "booking",
+  "title": "Book appointments automatically",
+  "scenes": [
+    {
+      "id": "hello",
+      "pose": "wave",
+      "visual": "hello",
+      "headline": [
+        "Less",
+        "back",
+        "and",
+        "*forth.*"
+      ],
+      "line": "Hi, I'm Zack. Let's stop the back and forth of scheduling.",
+      "sub": "Booking"
+    },
+    {
+      "id": "link",
+      "pose": "point",
+      "visual": "field",
+      "headline": [
+        "Share",
+        "one",
+        "*link.*"
+      ],
+      "line": "You get one booking link to share with clients.",
+      "data": {
+        "label": "Your booking link",
+        "value": "agentstack.app/b/your-name",
+        "highlight": "your-name"
+      }
+    },
+    {
+      "id": "pick",
+      "pose": "point",
+      "visual": "cards",
+      "headline": [
+        "They",
+        "pick",
+        "a",
+        "*time.*"
+      ],
+      "line": "Clients pick a time that already works for you. No double bookings.",
+      "data": {
+        "items": [
+          {
+            "icon": "calendar",
+            "label": "Tue 10:00"
+          },
+          {
+            "icon": "calendar",
+            "label": "Tue 2:30",
+            "coral": true
+          },
+          {
+            "icon": "calendar",
+            "label": "Wed 11:00"
+          }
+        ],
+        "pick": 1
+      }
+    },
+    {
+      "id": "auto",
+      "pose": "idle",
+      "visual": "flow",
+      "headline": [
+        "Reminders",
+        "go",
+        "*out",
+        "on",
+        "their",
+        "own.*"
+      ],
+      "line": "Confirmations and reminders go out on their own, so fewer people forget to turn up.",
+      "data": {
+        "steps": [
+          "Booked",
+          "Confirmation",
+          "Reminder",
+          "Showing"
+        ]
+      }
+    },
+    {
+      "id": "next",
+      "pose": "cheer",
+      "visual": "checklist",
+      "headline": [
+        "More",
+        "showings,",
+        "*less",
+        "admin.*"
+      ],
+      "line": "Open Booking to set up your link.",
+      "data": {
+        "items": [
+          "Website form",
+          "Speed to lead",
+          "Booking",
+          "Pipeline",
+          "AI agent"
+        ],
+        "done": 2,
+        "footer": "Open Booking"
+      }
+    }
+  ]
+}

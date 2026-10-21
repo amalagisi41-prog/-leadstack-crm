@@ -1,0 +1,113 @@
+{
+  "id": "forms",
+  "title": "Turn visitors into leads",
+  "scenes": [
+    {
+      "id": "hello",
+      "pose": "wave",
+      "visual": "hello",
+      "headline": [
+        "Visitors",
+        "into",
+        "*leads.*"
+      ],
+      "line": "Hi, I'm Zack. Let's turn website visitors into leads, automatically.",
+      "sub": "Website forms"
+    },
+    {
+      "id": "build",
+      "pose": "point",
+      "visual": "cards",
+      "headline": [
+        "Build",
+        "a",
+        "*form.*"
+      ],
+      "line": "Build a simple form. Pick the fields you want, like name, email, phone, and what they're looking for.",
+      "data": {
+        "items": [
+          {
+            "icon": "user",
+            "label": "Name"
+          },
+          {
+            "icon": "envelope",
+            "label": "Email"
+          },
+          {
+            "icon": "phone",
+            "label": "Phone"
+          },
+          {
+            "icon": "house",
+            "label": "Looking for"
+          }
+        ]
+      }
+    },
+    {
+      "id": "share",
+      "pose": "idle",
+      "visual": "cards",
+      "headline": [
+        "Share",
+        "it",
+        "*anywhere.*"
+      ],
+      "line": "Share it as its own page, or add it to your website or a landing page.",
+      "data": {
+        "items": [
+          {
+            "icon": "globe",
+            "label": "Its own page",
+            "coral": true
+          },
+          {
+            "icon": "form",
+            "label": "On your website"
+          }
+        ]
+      }
+    },
+    {
+      "id": "auto",
+      "pose": "point",
+      "visual": "flow",
+      "headline": [
+        "Every",
+        "submission,",
+        "*handled.*"
+      ],
+      "line": "Every time someone fills it in, they become a contact and drop straight into your pipeline.",
+      "data": {
+        "steps": [
+          "Form filled",
+          "New contact",
+          "In your pipeline"
+        ]
+      }
+    },
+    {
+      "id": "next",
+      "pose": "cheer",
+      "visual": "checklist",
+      "headline": [
+        "Your",
+        "first",
+        "*form.*"
+      ],
+      "line": "Open Forms to build your first one.",
+      "data": {
+        "items": [
+          "Contacts",
+          "Local search campaign",
+          "Text messages",
+          "Website form",
+          "Speed to lead"
+        ],
+        "done": 3,
+        "footer": "Open Forms"
+      }
+    }
+  ]
+}

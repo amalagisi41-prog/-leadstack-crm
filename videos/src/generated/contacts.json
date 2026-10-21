@@ -1,0 +1,30 @@
+{
+  "id": "contacts",
+  "scenes": [
+    {
+      "id": "hello",
+      "audio": "voice/contacts/hello.wav",
+      "seconds": 3.763311
+    },
+    {
+      "id": "ways",
+      "audio": "voice/contacts/ways.wav",
+      "seconds": 5.992426
+    },
+    {
+      "id": "export",
+      "audio": "voice/contacts/export.wav",
+      "seconds": 8.244762
+    },
+    {
+      "id": "one",
+      "audio": "voice/contacts/one.wav",
+      "seconds": 5.514739
+    },
+    {
+      "id": "next",
+      "audio": "voice/contacts/next.wav",
+      "seconds": 1.892426
+    }
+  ]
+}

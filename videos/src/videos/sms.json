@@ -1,0 +1,109 @@
+{
+  "id": "sms",
+  "title": "Text and call leads",
+  "scenes": [
+    {
+      "id": "hello",
+      "pose": "wave",
+      "visual": "hello",
+      "headline": [
+        "Text",
+        "leads",
+        "*right",
+        "here.*"
+      ],
+      "line": "Hi, I'm Zack. Let's get texting set up, so you can message leads without leaving AgentStack.",
+      "sub": "Text messages"
+    },
+    {
+      "id": "number",
+      "pose": "point",
+      "visual": "cards",
+      "headline": [
+        "Your",
+        "own",
+        "*number.*"
+      ],
+      "line": "Texting runs on your own business number from Twilio, a phone service. You'll link it once in Settings.",
+      "data": {
+        "items": [
+          {
+            "icon": "phone",
+            "label": "Your Twilio number",
+            "coral": true
+          },
+          {
+            "icon": "key",
+            "label": "Account SID"
+          },
+          {
+            "icon": "key",
+            "label": "Auth token"
+          }
+        ]
+      }
+    },
+    {
+      "id": "where",
+      "pose": "idle",
+      "visual": "field",
+      "headline": [
+        "Find",
+        "it",
+        "in",
+        "*Twilio.*"
+      ],
+      "line": "Log in to Twilio. Your account SID and auth token are on the home screen. Your number is under Phone Numbers.",
+      "data": {
+        "label": "Twilio Account SID",
+        "value": "AC4f19\u2026b72e",
+        "highlight": "AC"
+      }
+    },
+    {
+      "id": "chat",
+      "pose": "point",
+      "visual": "chat",
+      "headline": [
+        "Send",
+        "and",
+        "*receive.*"
+      ],
+      "line": "After that, texts come and go right inside the CRM, and your AI agent can reply for you when you're busy.",
+      "data": {
+        "messages": [
+          {
+            "from": "lead",
+            "text": "Is the Elm St house still available?"
+          },
+          {
+            "from": "zack",
+            "text": "It is! Would Saturday at 11 work for a showing?"
+          }
+        ],
+        "stamp": "Sent from your number"
+      }
+    },
+    {
+      "id": "next",
+      "pose": "cheer",
+      "visual": "checklist",
+      "headline": [
+        "Texting,",
+        "*on.*"
+      ],
+      "line": "Open SMS Settings to link your number.",
+      "data": {
+        "items": [
+          "Contacts",
+          "Local search campaign",
+          "Text messages",
+          "Website form",
+          "Speed to lead"
+        ],
+        "done": 2,
+        "footer": "Open SMS Settings"
+      }
+    }
+  ]
+}

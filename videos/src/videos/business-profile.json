@@ -1,0 +1,119 @@
+{
+  "id": "business-profile",
+  "title": "Your business profile",
+  "scenes": [
+    {
+      "id": "hello",
+      "pose": "wave",
+      "visual": "hello",
+      "headline": [
+        "Let's",
+        "make",
+        "AI",
+        "sound",
+        "like",
+        "*you.*"
+      ],
+      "line": "Hi, I'm Zack. Let's teach AgentStack about your business, so every reply sounds like you wrote it.",
+      "sub": "Your business profile"
+    },
+    {
+      "id": "what",
+      "pose": "point",
+      "visual": "cards",
+      "headline": [
+        "Tell",
+        "us",
+        "*once.*"
+      ],
+      "line": "You tell us once: your name and brokerage, the services you offer, your brand voice, any compliance rules, and the questions clients ask most.",
+      "data": {
+        "items": [
+          {
+            "icon": "user",
+            "label": "Who you are"
+          },
+          {
+            "icon": "list",
+            "label": "Services"
+          },
+          {
+            "icon": "bubble",
+            "label": "Brand voice"
+          },
+          {
+            "icon": "key",
+            "label": "Rules & FAQs"
+          }
+        ]
+      }
+    },
+    {
+      "id": "everywhere",
+      "pose": "point",
+      "visual": "flow",
+      "headline": [
+        "Used",
+        "*everywhere.*"
+      ],
+      "line": "From then on, every AI agent, every email, and every automation pulls from that profile automatically. No retyping.",
+      "data": {
+        "steps": [
+          "Profile",
+          "AI agents",
+          "Emails",
+          "Automations"
+        ]
+      }
+    },
+    {
+      "id": "example",
+      "pose": "idle",
+      "visual": "chat",
+      "headline": [
+        "It",
+        "answers",
+        "*like",
+        "you",
+        "would.*"
+      ],
+      "line": "So when a lead asks a question, the reply uses your details, your tone, and your rules.",
+      "data": {
+        "messages": [
+          {
+            "from": "lead",
+            "text": "Do you work in Fairfield?"
+          },
+          {
+            "from": "zack",
+            "text": "Yes! We cover Fairfield and the surrounding towns. Want to set up a time to talk?"
+          }
+        ],
+        "stamp": "Written from your profile"
+      }
+    },
+    {
+      "id": "next",
+      "pose": "cheer",
+      "visual": "checklist",
+      "headline": [
+        "Fill",
+        "it",
+        "in",
+        "*once.*"
+      ],
+      "line": "Fill it in once, and update it anytime. Open Business Profile to get started.",
+      "data": {
+        "items": [
+          "Business profile",
+          "Contacts",
+          "Local search campaign",
+          "Text messages",
+          "Website form"
+        ],
+        "done": 0,
+        "footer": "Open Business Profile"
+      }
+    }
+  ]
+}
