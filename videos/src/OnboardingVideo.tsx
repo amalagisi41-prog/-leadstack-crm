@@ -11,7 +11,7 @@ import {
   useVideoConfig,
 } from "remotion";
 import { useAudioData, visualizeAudio } from "@remotion/media-utils";
-import { C, FPS, SANS, SERIF, loadFonts } from "./brand";
+import { C, FPS, SANS, W, loadFonts } from "./brand";
 import { Zack, type ZackPose } from "./Zack";
 import {
   AddressVisual,
@@ -61,7 +61,7 @@ const VISUALS: Record<string, React.FC<{ sub?: string }>> = {
   outro: OutroVisual,
 };
 
-/** Words wrapped in *asterisks* render as the coral serif accent. */
+/** Words wrapped in *asterisks* render as the coral light-italic accent. */
 const Headline: React.FC<{ words: string[] }> = ({ words }) => {
   const f = useCurrentFrame();
   const { fps } = useVideoConfig();
@@ -80,12 +80,12 @@ const Headline: React.FC<{ words: string[] }> = ({ words }) => {
             key={i}
             style={{
               display: "inline-block",
-              fontFamily: isAccent ? SERIF : SANS,
+              fontFamily: SANS,
               fontStyle: isAccent ? "italic" : "normal",
-              fontWeight: isAccent ? 400 : 800,
-              fontSize: isAccent ? 128 : 112,
+              fontWeight: isAccent ? W.light : W.heavy,
+              fontSize: 112,
               lineHeight: 1.08,
-              letterSpacing: isAccent ? -1 : -4,
+              letterSpacing: isAccent ? -3 : -4,
               color: isAccent ? C.coral : C.ink,
               opacity: s,
               transform: `translateY(${(1 - s) * 40}px)`,

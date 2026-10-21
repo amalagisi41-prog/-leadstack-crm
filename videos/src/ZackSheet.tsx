@@ -1,6 +1,6 @@
 import React from "react";
 import { AbsoluteFill, Img, staticFile } from "remotion";
-import { C, SANS, SERIF, loadFonts } from "./brand";
+import { C, SANS, W, loadFonts } from "./brand";
 import { Zack, type ZackPose } from "./Zack";
 
 loadFonts();
@@ -43,7 +43,7 @@ export const ZackSheet: React.FC = () => (
         <div style={{ fontWeight: 800, fontSize: 200, letterSpacing: -8, lineHeight: 0.9 }}>
           Zack<span style={{ color: C.coral }}>.</span>
         </div>
-        <div style={{ fontFamily: SERIF, fontStyle: "italic", fontSize: 64, color: C.coral, marginTop: 18 }}>
+        <div style={{ fontStyle: "italic", fontWeight: W.light, fontSize: 64, color: C.coral, marginTop: 18 }}>
           Your AgentStack guide
         </div>
         <p style={{ fontSize: 34, lineHeight: 1.45, color: C.muted, maxWidth: 980, marginTop: 30 }}>
@@ -91,11 +91,12 @@ export const ZackSheet: React.FC = () => (
         </div>
         <div style={{ fontWeight: 800, fontSize: 30, letterSpacing: 3, color: C.coral, marginTop: 50 }}>TYPE</div>
         <div style={{ display: "flex", alignItems: "baseline", gap: 30, marginTop: 14 }}>
-          <span style={{ fontWeight: 800, fontSize: 90, letterSpacing: -3 }}>Geist Bold</span>
-          <span style={{ fontFamily: SERIF, fontStyle: "italic", fontSize: 96, color: C.coral }}>Instrument Serif</span>
+          <span style={{ fontWeight: W.heavy, fontSize: 90, letterSpacing: -3 }}>Heavy</span>
+          <span style={{ fontWeight: W.regular, fontSize: 90, letterSpacing: -2 }}>Regular</span>
+          <span style={{ fontStyle: "italic", fontWeight: W.light, fontSize: 90, letterSpacing: -2, color: C.coral }}>Light italic</span>
         </div>
         <div style={{ fontSize: 26, color: C.muted, marginTop: 6 }}>
-          Bold sans says the instruction. Coral serif italic marks the one word that matters.
+          All Geist, one sans family. Heavy says the instruction, regular explains, coral light italic marks the one word that matters.
         </div>
       </div>
 

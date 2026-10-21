@@ -1,6 +1,6 @@
 import React from "react";
 import { Img, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
-import { C, SANS, SERIF } from "../brand";
+import { C, SANS, W } from "../brand";
 
 const pop = (frame: number, fps: number, delay: number) =>
   spring({ frame: frame - delay, fps, config: { damping: 14, stiffness: 140 } });
@@ -55,7 +55,7 @@ export const HelloVisual: React.FC<{ sub?: string }> = ({ sub }) => {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 22, opacity: s, transform: `translateY(${(1 - s) * 20}px)` }}>
       <div style={{ width: 64, height: 6, borderRadius: 3, background: C.coral }} />
-      <span style={{ fontFamily: SERIF, fontStyle: "italic", fontSize: 54, color: C.muted }}>{sub}</span>
+      <span style={{ fontFamily: SANS, fontStyle: "italic", fontWeight: W.light, fontSize: 54, color: C.muted }}>{sub}</span>
     </div>
   );
 };

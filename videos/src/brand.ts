@@ -17,11 +17,13 @@ export const FPS = 30;
 export const WIDTH = 1920;
 export const HEIGHT = 1080;
 
-const FONTS: Array<[family: string, file: string, weight: string, style?: string]> = [
+// One sans family in three weights. Geist ships no italic file, so italics
+// are the browser's slanted Geist — the accent style is light italic.
+const FONTS: Array<[family: string, file: string, weight: string]> = [
+  ["Geist", "geist-sans-latin-300-normal.woff2", "300"],
   ["Geist", "geist-sans-latin-400-normal.woff2", "400"],
   ["Geist", "geist-sans-latin-600-normal.woff2", "600"],
   ["Geist", "geist-sans-latin-800-normal.woff2", "800"],
-  ["Instrument Serif", "instrument-serif-latin-400-italic.woff2", "400", "italic"],
 ];
 
 let loaded = false;
@@ -30,11 +32,8 @@ export function loadFonts() {
   loaded = true;
   const handle = delayRender("fonts");
   Promise.all(
-    FONTS.map(([family, file, weight, style]) => {
-      const face = new FontFace(family, `url(${staticFile(`fonts/${file}`)})`, {
-        weight,
-        style: style ?? "normal",
-      });
+    FONTS.map(([family, file, weight]) => {
+      const face = new FontFace(family, `url(${staticFile(`fonts/${file}`)})`, { weight });
       document.fonts.add(face);
       return face.load();
     }),
@@ -42,4 +41,6 @@ export function loadFonts() {
 }
 
 export const SANS = "Geist, system-ui, sans-serif";
-export const SERIF = "'Instrument Serif', Georgia, serif";
+
+/** Weights: heavy for the instruction, regular for body, light italic for the accent word. */
+export const W = { light: 300, regular: 400, medium: 600, heavy: 800 } as const;
