@@ -12,7 +12,10 @@
         "*home.*"
       ],
       "line": "Hi, I'm Zack. Let's bring your whole database into one place.",
-      "sub": "Your contacts"
+      "sub": "Your contacts",
+      "data": {
+        "image": "leads"
+      }
     },
     {
       "id": "ways",

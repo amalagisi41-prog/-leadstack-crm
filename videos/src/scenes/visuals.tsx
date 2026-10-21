@@ -48,14 +48,68 @@ const Check: React.FC<{ size?: number; color?: string }> = ({ size = 40, color =
   </svg>
 );
 
-export const HelloVisual: React.FC<{ sub?: string }> = ({ sub }) => {
+/**
+ * Opening illustration: a crop of the matching home-page / presentation
+ * artwork (public/scenes/*), slowly pushing in, with the topic as a pill.
+ * Falls back to the plain subtitle when a script names no image.
+ */
+export const HelloVisual: React.FC<{ sub?: string; image?: string }> = ({ sub, image }) => {
   const f = useCurrentFrame();
   const { fps } = useVideoConfig();
   const s = pop(f, fps, 18);
+  if (!image) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: 22, opacity: s, transform: `translateY(${(1 - s) * 20}px)` }}>
+        <div style={{ width: 64, height: 6, borderRadius: 3, background: C.coral }} />
+        <span style={{ fontFamily: SANS, fontStyle: "italic", fontWeight: W.light, fontSize: 54, color: C.muted }}>{sub}</span>
+      </div>
+    );
+  }
+  return <IllustrationVisual image={image} caption={sub} />;
+};
+
+export const IllustrationVisual: React.FC<{ image: string; caption?: string }> = ({ image, caption }) => {
+  const f = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const s = pop(f, fps, 10);
+  const zoom = interpolate(f, [0, 300], [1.02, 1.1], { extrapolateRight: "clamp" });
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 22, opacity: s, transform: `translateY(${(1 - s) * 20}px)` }}>
-      <div style={{ width: 64, height: 6, borderRadius: 3, background: C.coral }} />
-      <span style={{ fontFamily: SANS, fontStyle: "italic", fontWeight: W.light, fontSize: 54, color: C.muted }}>{sub}</span>
+    <div
+      style={{
+        position: "relative",
+        width: 720,
+        height: 540,
+        borderRadius: 36,
+        overflow: "hidden",
+        border: `4px solid ${C.paper}`,
+        boxShadow: "0 24px 60px rgba(20,37,77,0.18)",
+        opacity: s,
+        transform: `translateY(${(1 - s) * 40}px)`,
+      }}
+    >
+      <Img src={staticFile(`scenes/${image}.jpg`)} style={{ width: "100%", height: "100%", objectFit: "cover", transform: `scale(${zoom})` }} />
+      {caption ? (
+        <div
+          style={{
+            position: "absolute",
+            left: 24,
+            bottom: 24,
+            padding: "12px 24px",
+            borderRadius: 999,
+            background: "rgba(255,253,249,0.94)",
+            fontFamily: SANS,
+            fontWeight: W.medium,
+            fontSize: 28,
+            color: C.ink,
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+          }}
+        >
+          <span style={{ width: 12, height: 12, borderRadius: 6, background: C.coral }} />
+          {caption}
+        </div>
+      ) : null}
     </div>
   );
 };

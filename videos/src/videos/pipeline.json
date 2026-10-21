@@ -13,7 +13,10 @@
         "view.*"
       ],
       "line": "Hi, I'm Zack. Let's see exactly where every deal stands.",
-      "sub": "Your pipeline"
+      "sub": "Your pipeline",
+      "data": {
+        "image": "analytics"
+      }
     },
     {
       "id": "stages",
@@ -57,7 +60,7 @@
     {
       "id": "glance",
       "pose": "idle",
-      "visual": "cards",
+      "visual": "illustration",
       "headline": [
         "Know",
         "at",
@@ -66,21 +69,8 @@
       ],
       "line": "At a glance, you'll see what's new, what's stuck, and what's about to close.",
       "data": {
-        "items": [
-          {
-            "icon": "star",
-            "label": "What's new"
-          },
-          {
-            "icon": "bolt",
-            "label": "What's stuck",
-            "coral": true
-          },
-          {
-            "icon": "check",
-            "label": "About to close"
-          }
-        ]
+        "image": "dashboard",
+        "caption": "Your dashboard"
       }
     },
     {

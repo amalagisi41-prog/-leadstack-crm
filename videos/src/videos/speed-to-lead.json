@@ -11,7 +11,10 @@
         "*first.*"
       ],
       "line": "Hi, I'm Zack. The agent who replies first usually wins the lead. Let's make that you.",
-      "sub": "Speed to lead"
+      "sub": "Speed to lead",
+      "data": {
+        "image": "new-lead"
+      }
     },
     {
       "id": "attach",

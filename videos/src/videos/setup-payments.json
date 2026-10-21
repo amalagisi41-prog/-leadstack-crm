@@ -12,7 +12,10 @@
         "*easily.*"
       ],
       "line": "Hi, I'm Zack. Let's add the link your clients already pay you through.",
-      "sub": "Setup \u00b7 Payments"
+      "sub": "Setup \u00b7 Payments",
+      "data": {
+        "image": "city"
+      }
     },
     {
       "id": "link",

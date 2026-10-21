@@ -13,7 +13,10 @@
         "here.*"
       ],
       "line": "Hi, I'm Zack. Let's get texting set up, so you can message leads without leaving AgentStack.",
-      "sub": "Text messages"
+      "sub": "Text messages",
+      "data": {
+        "image": "new-lead"
+      }
     },
     {
       "id": "number",

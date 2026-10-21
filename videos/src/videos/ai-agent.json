@@ -15,7 +15,10 @@
         "homes.*"
       ],
       "line": "Hi, I'm Zack. Let's set up your AI agent, so leads get answers even when you're busy.",
-      "sub": "Your AI agent"
+      "sub": "Your AI agent",
+      "data": {
+        "image": "ai-receptionist"
+      }
     },
     {
       "id": "persona",

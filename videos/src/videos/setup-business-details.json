@@ -12,7 +12,10 @@
         "*you.*"
       ],
       "line": "Hi, I'm Zack. Setup starts with three quick details about your business.",
-      "sub": "Setup \u00b7 Business details"
+      "sub": "Setup \u00b7 Business details",
+      "data": {
+        "image": "realtor-house"
+      }
     },
     {
       "id": "three",

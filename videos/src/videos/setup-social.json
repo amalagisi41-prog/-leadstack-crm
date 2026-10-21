@@ -12,7 +12,10 @@
         "*Instagram.*"
       ],
       "line": "Hi, I'm Zack. Let's connect Facebook and Instagram, so messages and posts live in one place.",
-      "sub": "Setup \u00b7 Social"
+      "sub": "Setup \u00b7 Social",
+      "data": {
+        "image": "realtor-house"
+      }
     },
     {
       "id": "page",

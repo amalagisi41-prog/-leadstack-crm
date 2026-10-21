@@ -13,7 +13,10 @@
         "*forth.*"
       ],
       "line": "Hi, I'm Zack. Let's stop the back and forth of scheduling.",
-      "sub": "Booking"
+      "sub": "Booking",
+      "data": {
+        "image": "booking-phone"
+      }
     },
     {
       "id": "link",

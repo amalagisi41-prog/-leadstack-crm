@@ -12,7 +12,10 @@
         "*locally.*"
       ],
       "line": "Hi, I'm Zack. Let's get your listings found by people searching in your area.",
-      "sub": "Campaign Launch Assist"
+      "sub": "Campaign Launch Assist",
+      "data": {
+        "image": "city"
+      }
     },
     {
       "id": "start",
