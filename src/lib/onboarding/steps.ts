@@ -75,7 +75,7 @@ export const ONBOARDING_STEPS: readonly OnboardingStepMeta[] = [
       "Tell AgentStack about your business once — name, brokerage, services, brand voice, compliance rules, and FAQs. Every AI agent, email, and automation pulls from this profile automatically.",
     cta: "Set up business profile",
     href: SUB_ACCOUNT_ROUTES.businessProfile,
-    videoMinutes: 5,
+    videoMinutes: 1,
   },
   {
     id: "contacts",
@@ -84,7 +84,7 @@ export const ONBOARDING_STEPS: readonly OnboardingStepMeta[] = [
       "Upload a CSV from your old CRM or add your first contacts manually. Your entire database lives here.",
     cta: "Go to People",
     href: "/contacts?import=1",
-    videoMinutes: 4,
+    videoMinutes: 1,
   },
   {
     id: "lseo",
@@ -93,7 +93,7 @@ export const ONBOARDING_STEPS: readonly OnboardingStepMeta[] = [
       "Upload a listing or connect IDX, then get guided local SERP recommendations and review-ready campaign drafts across your channels. Nothing publishes without your approval.",
     cta: "Open Campaign Launch Assist",
     href: SUB_ACCOUNT_ROUTES.marketingCampaigns,
-    videoMinutes: 4,
+    videoMinutes: 1,
   },
   {
     id: "sms",
@@ -102,7 +102,7 @@ export const ONBOARDING_STEPS: readonly OnboardingStepMeta[] = [
       "Link your dedicated Twilio number so you can send and receive SMS directly in the CRM — and the AI can reply on your behalf.",
     cta: "Open SMS Settings",
     href: SUB_ACCOUNT_ROUTES.messagingSettings,
-    videoMinutes: 3,
+    videoMinutes: 1,
   },
   {
     id: "form",
@@ -111,7 +111,7 @@ export const ONBOARDING_STEPS: readonly OnboardingStepMeta[] = [
       "Create a form for your website or a landing page. Every submission auto-creates a contact and drops them into your pipeline.",
     cta: "Build a Form",
     href: SUB_ACCOUNT_ROUTES.forms,
-    videoMinutes: 5,
+    videoMinutes: 1,
   },
   {
     id: "automation",
@@ -120,7 +120,7 @@ export const ONBOARDING_STEPS: readonly OnboardingStepMeta[] = [
       "Attach the Speed-to-Lead automation to your form so every new inquiry gets an SMS and email within 60 seconds — automatically.",
     cta: "Open Follow-Up Plans",
     href: SUB_ACCOUNT_ROUTES.workflows,
-    videoMinutes: 4,
+    videoMinutes: 1,
   },
   {
     id: "booking",
@@ -129,7 +129,7 @@ export const ONBOARDING_STEPS: readonly OnboardingStepMeta[] = [
       "Share a link and let clients pick a time that already works for you. Confirmations and reminders go out on their own, so fewer people forget to turn up.",
     cta: "Set Up Booking",
     href: SUB_ACCOUNT_ROUTES.booking,
-    videoMinutes: 4,
+    videoMinutes: 1,
   },
   {
     id: "pipeline",
@@ -138,7 +138,7 @@ export const ONBOARDING_STEPS: readonly OnboardingStepMeta[] = [
       "Your pipeline is pre-set for real estate: New Lead → Contacted → Showing Scheduled → Offer Made → Closed. Drag deals as they progress.",
     cta: "View Deals",
     href: SUB_ACCOUNT_ROUTES.pipeline,
-    videoMinutes: 3,
+    videoMinutes: 1,
   },
   {
     id: "ai",
@@ -147,7 +147,7 @@ export const ONBOARDING_STEPS: readonly OnboardingStepMeta[] = [
       "Your AI agent persona is pre-written for a CT realtor. Review it, add your business name, then enable it on SMS and Web Chat.",
     cta: "Set Up AI Agent",
     href: SUB_ACCOUNT_ROUTES.aiAgents,
-    videoMinutes: 5,
+    videoMinutes: 1,
   },
   {
     id: "domain",
@@ -160,7 +160,7 @@ export const ONBOARDING_STEPS: readonly OnboardingStepMeta[] = [
       "Tell us where your website lives. Keeping the site you already have? Name your host and we'll check your DNS — nothing moves. Moving to an AgentStack site, or need a domain? We'll walk you through it.",
     cta: "Open Domain",
     href: SUB_ACCOUNT_ROUTES.domain,
-    videoMinutes: 4,
+    videoMinutes: 1,
   },
 ];
 
@@ -192,7 +192,7 @@ export const ONBOARDING_METHOD_STEPS: readonly OnboardingMethodStepMeta[] = [
       "Set your business profile so AgentStack knows your services, voice, hours, and FAQs before anything goes live.",
     cta: "Open Build step",
     href: "/get-started?step=build",
-    videoMinutes: 5,
+    videoMinutes: 1,
     stepIds: ["business_profile"],
   },
   {
@@ -202,7 +202,7 @@ export const ONBOARDING_METHOD_STEPS: readonly OnboardingMethodStepMeta[] = [
       "Import contacts and connect your phone number so every lead lands in one place with a real conversation history.",
     cta: "Open Connect step",
     href: "/get-started?step=connect",
-    videoMinutes: 5,
+    videoMinutes: 1,
     stepIds: ["contacts", "sms"],
   },
   {
@@ -212,7 +212,7 @@ export const ONBOARDING_METHOD_STEPS: readonly OnboardingMethodStepMeta[] = [
       "Launch your lead forms and connect the public site pieces that feed fresh opportunities into your workspace automatically.",
     cta: "Open Capture step",
     href: "/get-started?step=capture",
-    videoMinutes: 4,
+    videoMinutes: 1,
     stepIds: ["form", "domain"],
   },
   {
@@ -222,7 +222,7 @@ export const ONBOARDING_METHOD_STEPS: readonly OnboardingMethodStepMeta[] = [
       "Turn on Speed-to-Lead, review your pipeline, and activate your AI follow-up so nothing sits untouched after a lead comes in.",
     cta: "Open Respond step",
     href: "/get-started?step=respond",
-    videoMinutes: 5,
+    videoMinutes: 1,
     stepIds: ["automation", "pipeline", "ai"],
   },
 ] as const;
@@ -260,14 +260,41 @@ export function isOnboardingMethodStepComplete(
   return step.stepIds.every((id) => set.has(id));
 }
 
+/**
+ * Zack walkthrough videos that ship with the app (public/onboarding-videos/,
+ * rendered from the videos/ project). Every step has one, so the dashboard
+ * "Watch" button works out of the box; an agency's pasted link replaces it.
+ */
+export const BUILT_IN_ONBOARDING_VIDEOS: Record<OnboardingStepId, string> = {
+  business_profile: "/onboarding-videos/business-profile.mp4",
+  contacts: "/onboarding-videos/contacts.mp4",
+  lseo: "/onboarding-videos/local-search.mp4",
+  sms: "/onboarding-videos/sms.mp4",
+  form: "/onboarding-videos/forms.mp4",
+  automation: "/onboarding-videos/speed-to-lead.mp4",
+  booking: "/onboarding-videos/booking.mp4",
+  pipeline: "/onboarding-videos/pipeline.mp4",
+  ai: "/onboarding-videos/ai-agent.mp4",
+  domain: "/onboarding-videos/domain-website.mp4",
+};
+
+/** The agency's own link for a step, else the built-in Zack video. */
+export function getOnboardingVideoUrl(
+  id: OnboardingStepId,
+  videos: OnboardingVideos | null | undefined
+): string {
+  return videos?.[id]?.trim() || BUILT_IN_ONBOARDING_VIDEOS[id];
+}
+
 export function getOnboardingMethodVideoUrl(
   step: OnboardingMethodStepMeta,
   videos: OnboardingVideos | null | undefined
 ): string | null {
-  if (!videos) return null;
+  // An agency link on any of the method's steps wins over the built-ins.
   for (const id of step.stepIds) {
-    const url = videos[id]?.trim();
+    const url = videos?.[id]?.trim();
     if (url) return url;
   }
-  return null;
+  const first = step.stepIds[0];
+  return first ? BUILT_IN_ONBOARDING_VIDEOS[first] : null;
 }

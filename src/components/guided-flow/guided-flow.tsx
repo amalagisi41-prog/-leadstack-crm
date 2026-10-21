@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, type ReactNode } from "react";
-import { ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, PlayCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -55,13 +55,17 @@ export function GuidedFlow({
   onOpenChange,
   steps: resolveSteps,
   finishLabel = "Done",
+  video,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   steps: (answers: GuidedAnswers) => GuidedStep[];
   finishLabel?: string;
+  /** Short Zack walkthrough for this flow, offered collapsed above the steps. */
+  video?: string;
 }) {
   const [answers, setAnswers] = useState<GuidedAnswers>({});
+  const [showVideo, setShowVideo] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
 
   const steps = useMemo(() => resolveSteps(answers), [resolveSteps, answers]);
@@ -72,6 +76,7 @@ export function GuidedFlow({
   function reset() {
     setAnswers({});
     setHistory([]);
+    setShowVideo(false);
   }
 
   function close() {
@@ -134,9 +139,30 @@ export function GuidedFlow({
             />
           ))}
         </div>
-        <p className="text-muted-foreground text-xs">
-          Step {index + 1} of {total}
-        </p>
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-muted-foreground text-xs">
+            Step {index + 1} of {total}
+          </p>
+          {video ? (
+            <button
+              type="button"
+              onClick={() => setShowVideo((v) => !v)}
+              className="text-primary inline-flex items-center gap-1 text-xs font-medium hover:underline"
+            >
+              {showVideo ? <X className="h-3.5 w-3.5" /> : <PlayCircle className="h-3.5 w-3.5" />}
+              {showVideo ? "Hide video" : "Watch Zack explain this"}
+            </button>
+          ) : null}
+        </div>
+        {video && showVideo ? (
+          <video
+            src={video}
+            controls
+            autoPlay
+            playsInline
+            className="w-full rounded-xl border bg-black"
+          />
+        ) : null}
 
         <DialogTitle className="text-lg">{step.title}</DialogTitle>
         {step.description ? (
