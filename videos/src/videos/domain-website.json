@@ -14,7 +14,10 @@
         "*live?*"
       ],
       "line": "Hi, I'm Zack. Let's make sure leads land on the right website.",
-      "sub": "Your website"
+      "sub": "Your website",
+      "data": {
+        "image": "realtor-house"
+      }
     },
     {
       "id": "which",

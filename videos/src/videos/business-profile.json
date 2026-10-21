@@ -15,7 +15,10 @@
         "*you.*"
       ],
       "line": "Hi, I'm Zack. Let's teach AgentStack about your business, so every reply sounds like you wrote it.",
-      "sub": "Your business profile"
+      "sub": "Your business profile",
+      "data": {
+        "image": "dashboard"
+      }
     },
     {
       "id": "what",

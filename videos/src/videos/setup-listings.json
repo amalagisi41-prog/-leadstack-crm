@@ -13,7 +13,10 @@
         "*listings.*"
       ],
       "line": "Hi, I'm Zack. Let's bring your listings into AgentStack automatically.",
-      "sub": "Setup \u00b7 Listings"
+      "sub": "Setup \u00b7 Listings",
+      "data": {
+        "image": "dashboard"
+      }
     },
     {
       "id": "idx",

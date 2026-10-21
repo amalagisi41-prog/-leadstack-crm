@@ -12,7 +12,10 @@
         "*leads.*"
       ],
       "line": "Hi, I'm Zack. Let's turn website visitors into leads, automatically.",
-      "sub": "Website forms"
+      "sub": "Website forms",
+      "data": {
+        "image": "leads"
+      }
     },
     {
       "id": "build",

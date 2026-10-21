@@ -12,7 +12,10 @@
         "*address.*"
       ],
       "line": "Hi, I'm Zack. Last step: putting your website on your own web address.",
-      "sub": "Setup \u00b7 Domain"
+      "sub": "Setup \u00b7 Domain",
+      "data": {
+        "image": "realtor-house"
+      }
     },
     {
       "id": "why-last",

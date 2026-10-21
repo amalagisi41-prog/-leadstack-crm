@@ -6,50 +6,89 @@
       "id": "hello",
       "pose": "wave",
       "visual": "hello",
-      "headline": ["Hi,", "I'm", "*Zack.*"],
+      "headline": [
+        "Hi,",
+        "I'm",
+        "*Zack.*"
+      ],
       "sub": "Your AgentStack guide",
-      "line": "Hi, I'm Zack. I'll walk you through setting up AgentStack, one small step at a time."
+      "line": "Hi, I'm Zack. I'll walk you through setting up AgentStack, one small step at a time.",
+      "data": {
+        "image": "new-lead"
+      }
     },
     {
       "id": "why",
       "pose": "point",
       "visual": "inbox",
-      "headline": ["Every", "lead.", "*One*", "*inbox.*"],
+      "headline": [
+        "Every",
+        "lead.",
+        "*One*",
+        "*inbox.*"
+      ],
       "line": "First, let's connect the place your leads already reach you. That way, every message lands in one inbox, and nothing slips through the cracks."
     },
     {
       "id": "choose",
       "pose": "point",
       "visual": "choices",
-      "headline": ["Pick", "the", "one", "you", "*check most.*"],
+      "headline": [
+        "Pick",
+        "the",
+        "one",
+        "you",
+        "*check most.*"
+      ],
       "line": "Pick the one you check most. Gmail, Outlook, or text messages. You can always add the others later."
     },
     {
       "id": "unsure",
       "pose": "idle",
       "visual": "address",
-      "headline": ["Not", "sure?", "*Look", "after", "the", "@.*"],
+      "headline": [
+        "Not",
+        "sure?",
+        "*Look",
+        "after",
+        "the",
+        "@.*"
+      ],
       "line": "Not sure which one you use? Look at the email address you give your clients. The part after the at sign usually tells you."
     },
     {
       "id": "signin",
       "pose": "point",
       "visual": "steps",
-      "headline": ["Sign", "in.", "Approve.", "*Done.*"],
+      "headline": [
+        "Sign",
+        "in.",
+        "Approve.",
+        "*Done.*"
+      ],
       "line": "Then just sign in, choose your account, and approve access. You'll come straight back to AgentStack."
     },
     {
       "id": "verified",
       "pose": "thumbs",
       "visual": "progress",
-      "headline": ["It", "checks", "*itself", "off.*"],
+      "headline": [
+        "It",
+        "checks",
+        "*itself",
+        "off.*"
+      ],
       "line": "Once your account is truly connected, the step checks itself off. No guessing, and nothing marked done until it really is."
     },
     {
       "id": "next",
       "pose": "cheer",
       "visual": "outro",
-      "headline": ["Next", "up:", "*listings.*"],
+      "headline": [
+        "Next",
+        "up:",
+        "*listings.*"
+      ],
       "line": "Nice work. Next up, your listings. I'll be right here when you're ready."
     }
   ]
