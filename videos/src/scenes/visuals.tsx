@@ -1,6 +1,7 @@
 import React from "react";
 import { Img, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
 import { C, SANS, W } from "../brand";
+import { SceneIllustration, type SceneName } from "./illustrations";
 
 const pop = (frame: number, fps: number, delay: number) =>
   spring({ frame: frame - delay, fps, config: { damping: 14, stiffness: 140 } });
@@ -49,8 +50,8 @@ const Check: React.FC<{ size?: number; color?: string }> = ({ size = 40, color =
 );
 
 /**
- * Opening illustration: a crop of the matching home-page / presentation
- * artwork (public/scenes/*), slowly pushing in, with the topic as a pill.
+ * Opening illustration: the matching hand-built scene (scenes/illustrations.tsx),
+ * slowly pushing in, with the topic as a pill.
  * Falls back to the plain subtitle when a script names no image.
  */
 export const HelloVisual: React.FC<{ sub?: string; image?: string }> = ({ sub, image }) => {
@@ -87,7 +88,9 @@ export const IllustrationVisual: React.FC<{ image: string; caption?: string }> =
         transform: `translateY(${(1 - s) * 40}px)`,
       }}
     >
-      <Img src={staticFile(`scenes/${image}.jpg`)} style={{ width: "100%", height: "100%", objectFit: "cover", transform: `scale(${zoom})` }} />
+      <div style={{ width: "100%", height: "100%", transform: `scale(${zoom})` }}>
+        <SceneIllustration name={image as SceneName} />
+      </div>
       {caption ? (
         <div
           style={{

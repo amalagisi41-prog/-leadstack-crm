@@ -85,7 +85,7 @@ const VISUALS: Record<string, React.FC<any>> = {
 };
 
 /** Words wrapped in *asterisks* render as the coral light-italic accent. */
-const Headline: React.FC<{ words: string[] }> = ({ words }) => {
+const Headline: React.FC<{ words: string[]; compact?: boolean }> = ({ words, compact }) => {
   const f = useCurrentFrame();
   const { fps } = useVideoConfig();
   let accent = false;
@@ -106,7 +106,7 @@ const Headline: React.FC<{ words: string[] }> = ({ words }) => {
               fontFamily: SANS,
               fontStyle: isAccent ? "italic" : "normal",
               fontWeight: isAccent ? W.light : W.heavy,
-              fontSize: 112,
+              fontSize: compact ? 88 : 112,
               lineHeight: 1.08,
               letterSpacing: isAccent ? -3 : -4,
               color: isAccent ? C.coral : C.ink,
@@ -128,7 +128,7 @@ const SceneBody: React.FC<{ scene: TimedScene; frames: number }> = ({ scene, fra
   const Visual = VISUALS[scene.visual] ?? HelloVisual;
   return (
     <AbsoluteFill style={{ left: 720, right: 110, justifyContent: "center", gap: 56, opacity: fadeOut }}>
-      <Headline words={scene.headline} />
+      <Headline words={scene.headline} compact={Boolean(scene.data?.image)} />
       <div style={{ alignSelf: "flex-start" }}>
         <Visual sub={scene.sub} {...scene.data} />
       </div>
