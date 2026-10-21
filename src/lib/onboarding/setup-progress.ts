@@ -46,6 +46,16 @@ export const SETUP_STEP_ACTIONS: Record<SetupStepId, string> = {
   domain: "Connect your domain",
 };
 
+/** Zack walkthrough for each setup step, played inside its guided pop-up (public/onboarding-videos/). */
+export const SETUP_VIDEOS: Record<SetupStepId, string> = {
+  identity: "/onboarding-videos/setup-business-details.mp4",
+  communications: "/onboarding-videos/connect-email.mp4",
+  listings: "/onboarding-videos/setup-listings.mp4",
+  social: "/onboarding-videos/setup-social.mp4",
+  payments: "/onboarding-videos/setup-payments.mp4",
+  domain: "/onboarding-videos/setup-domain.mp4",
+};
+
 /**
  * Steps an operator may skip. Identity and Communications are mandatory —
  * everything downstream needs them — so a skip naming either is ignored

@@ -22,6 +22,7 @@ import {
 } from "@/components/guided-flow/guided-flow";
 import { googleAccountConnectPath } from "@/lib/google/account-connect-path";
 import { commsFlowStepIds, socialFlowStepIds } from "@/lib/onboarding/guided-setup-flows";
+import { SETUP_VIDEOS } from "@/lib/onboarding/setup-progress";
 import type { SubAccountDoc } from "@/types/tenancy";
 
 async function skipSetupStep(subAccount: SubAccountDoc, subAccountId: string, step: string) {
@@ -221,7 +222,15 @@ export function SetupStepPrompt({
     ],
     [setupHref, step],
   );
-  return <GuidedFlow open={open} onOpenChange={onOpenChange} steps={buildSteps} finishLabel="Not now" />;
+  return (
+    <GuidedFlow
+      open={open}
+      onOpenChange={onOpenChange}
+      steps={buildSteps}
+      finishLabel="Not now"
+      video={SETUP_VIDEOS[step]}
+    />
+  );
 }
 
 interface FlowProps {
@@ -330,7 +339,7 @@ export function CommunicationsGuidedSetup({ open, onOpenChange, subAccountId, su
     [subAccountId, twilioConnected],
   );
 
-  return <GuidedFlow open={open} onOpenChange={onOpenChange} steps={buildSteps} />;
+  return <GuidedFlow open={open} onOpenChange={onOpenChange} steps={buildSteps} video={SETUP_VIDEOS.communications} />;
 }
 
 export function SocialGuidedSetup({ open, onOpenChange, subAccountId, subAccount }: FlowProps) {
@@ -450,5 +459,5 @@ export function SocialGuidedSetup({ open, onOpenChange, subAccountId, subAccount
     [gateOn, onOpenChange, subAccount, subAccountId],
   );
 
-  return <GuidedFlow open={open} onOpenChange={onOpenChange} steps={buildSteps} />;
+  return <GuidedFlow open={open} onOpenChange={onOpenChange} steps={buildSteps} video={SETUP_VIDEOS.social} />;
 }

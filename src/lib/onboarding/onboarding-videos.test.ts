@@ -35,3 +35,14 @@ describe("built-in onboarding videos", () => {
     expect(getOnboardingMethodVideoUrl(connect, { sms: "https://loom.com/sms" })).toBe("https://loom.com/sms");
   });
 });
+
+describe("setup pop-up videos", () => {
+  it("ships a video for every setup step", async () => {
+    const { SETUP_STEP_ORDER, SETUP_VIDEOS } = await import("./setup-progress");
+    for (const step of SETUP_STEP_ORDER) {
+      const url = SETUP_VIDEOS[step];
+      expect(url, step).toMatch(/^\/onboarding-videos\/.+\.mp4$/);
+      expect(existsSync(join(process.cwd(), "public", url)), url).toBe(true);
+    }
+  });
+});
