@@ -46,6 +46,9 @@ export const SETUP_STEP_ACTIONS: Record<SetupStepId, string> = {
   domain: "Connect your domain",
 };
 
+/** Zack's tour of everything AgentStack does, shown at the top of the Setup page. */
+export const WELCOME_VIDEO = "/onboarding-videos/welcome.mp4";
+
 /** Zack walkthrough for each setup step, played inside its guided pop-up (public/onboarding-videos/). */
 export const SETUP_VIDEOS: Record<SetupStepId, string> = {
   identity: "/onboarding-videos/setup-business-details.mp4",

@@ -18,6 +18,7 @@ import type { SubAccountDoc } from "@/types/tenancy";
 import {
   SETUP_STEP_ORDER,
   SETUP_STEP_TITLES,
+  WELCOME_VIDEO,
   deriveSetupStepStates,
   type SetupStepId,
   type SetupStepState,
@@ -425,6 +426,22 @@ export function SetupModal({
           unlocks them.
         </p>
       </div>
+
+      <details
+        open={stateFor("identity") !== "done"}
+        className="bg-card rounded-2xl border p-5"
+      >
+        <summary className="cursor-pointer text-sm font-medium">
+          Welcome to AgentStack — watch Zack&apos;s 2-minute tour first
+        </summary>
+        <video
+          src={WELCOME_VIDEO}
+          controls
+          playsInline
+          preload="metadata"
+          className="mt-3 w-full rounded-xl border bg-black"
+        />
+      </details>
 
       {/* 1. Identity */}
       <section className="bg-card rounded-2xl border p-5">

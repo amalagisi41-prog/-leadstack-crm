@@ -33,6 +33,8 @@ import smsScript from "../videos/sms.json";
 import smsVoice from "./sms.json";
 import speedToLeadScript from "../videos/speed-to-lead.json";
 import speedToLeadVoice from "./speed-to-lead.json";
+import welcomeScript from "../videos/welcome.json";
+import welcomeVoice from "./welcome.json";
 
 export const REGISTRY = [
   { id: "ai-agent", script: aiAgentScript, voice: aiAgentVoice },
@@ -52,4 +54,5 @@ export const REGISTRY = [
   { id: "setup-social", script: setupSocialScript, voice: setupSocialVoice },
   { id: "sms", script: smsScript, voice: smsVoice },
   { id: "speed-to-lead", script: speedToLeadScript, voice: speedToLeadVoice },
+  { id: "welcome", script: welcomeScript, voice: welcomeVoice },
 ];

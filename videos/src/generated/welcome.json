@@ -1,0 +1,75 @@
+{
+  "id": "welcome",
+  "scenes": [
+    {
+      "id": "hello",
+      "audio": "voice/welcome/hello.wav",
+      "seconds": 8.24644
+    },
+    {
+      "id": "one-place",
+      "audio": "voice/welcome/one-place.wav",
+      "seconds": 8.602993
+    },
+    {
+      "id": "no-juggling",
+      "audio": "voice/welcome/no-juggling.wav",
+      "seconds": 6.317506
+    },
+    {
+      "id": "people",
+      "audio": "voice/welcome/people.wav",
+      "seconds": 9.40576
+    },
+    {
+      "id": "inbox",
+      "audio": "voice/welcome/inbox.wav",
+      "seconds": 9.032562
+    },
+    {
+      "id": "ai",
+      "audio": "voice/welcome/ai.wav",
+      "seconds": 8.291202
+    },
+    {
+      "id": "speed",
+      "audio": "voice/welcome/speed.wav",
+      "seconds": 7.697415
+    },
+    {
+      "id": "booking",
+      "audio": "voice/welcome/booking.wav",
+      "seconds": 5.955918
+    },
+    {
+      "id": "marketing",
+      "audio": "voice/welcome/marketing.wav",
+      "seconds": 10.183628
+    },
+    {
+      "id": "found",
+      "audio": "voice/welcome/found.wav",
+      "seconds": 7.674195
+    },
+    {
+      "id": "business",
+      "audio": "voice/welcome/business.wav",
+      "seconds": 6.524807
+    },
+    {
+      "id": "setup",
+      "audio": "voice/welcome/setup.wav",
+      "seconds": 8.068934
+    },
+    {
+      "id": "guide",
+      "audio": "voice/welcome/guide.wav",
+      "seconds": 7.896463
+    },
+    {
+      "id": "go",
+      "audio": "voice/welcome/go.wav",
+      "seconds": 7.387302
+    }
+  ]
+}
