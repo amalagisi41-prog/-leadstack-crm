@@ -145,7 +145,7 @@
       ],
       "line": "Connect your listings, and AgentStack drafts the marketing for each one: a property page, social posts, an email, and a text. You approve everything before it goes out.",
       "data": {
-        "image": "analytics",
+        "image": "dashboard",
         "caption": "Marketing on autopilot"
       }
     },
@@ -180,15 +180,14 @@
       "pose": "thumbs",
       "visual": "illustration",
       "headline": [
-        "Run",
-        "the",
-        "*business",
-        "side.*"
+        "Know",
+        "what's",
+        "*working.*"
       ],
-      "line": "Send quotes and invoices your clients can pay online, and see what's working with plain-English reports in Analytics.",
+      "line": "See exactly where your leads come from and which listings and campaigns are paying off, in plain-English reports in Analytics.",
       "data": {
-        "image": "dashboard",
-        "caption": "Quotes, invoices & results"
+        "image": "analytics",
+        "caption": "Analytics"
       }
     },
     {

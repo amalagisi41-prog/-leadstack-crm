@@ -6,7 +6,6 @@ const noneDone = {
   communications: false,
   listings: false,
   social: false,
-  payments: false,
   domain: false,
 };
 
@@ -17,7 +16,6 @@ describe("deriveSetupStepStates", () => {
     expect(states.communications).toBe("locked");
     expect(states.listings).toBe("locked");
     expect(states.social).toBe("locked");
-    expect(states.payments).toBe("locked");
     expect(states.domain).toBe("locked");
   });
 
@@ -40,16 +38,14 @@ describe("deriveSetupStepStates", () => {
     expect(states.communications).toBe("done");
     expect(states.listings).toBe("active");
     expect(states.social).toBe("active");
-    expect(states.payments).toBe("locked");
     expect(states.domain).toBe("locked");
   });
 
-  it("requires BOTH listings and social to be done-or-skipped before payments/domain unlock", () => {
+  it("requires BOTH listings and social to be done-or-skipped before domain unlocks", () => {
     const onlyListingsDone = deriveSetupStepStates(
       { ...noneDone, identity: true, communications: true, listings: true },
       []
     );
-    expect(onlyListingsDone.payments).toBe("locked");
     expect(onlyListingsDone.domain).toBe("locked");
 
     const listingsDoneSocialSkipped = deriveSetupStepStates(
@@ -57,7 +53,6 @@ describe("deriveSetupStepStates", () => {
       ["social"]
     );
     expect(listingsDoneSocialSkipped.social).toBe("done");
-    expect(listingsDoneSocialSkipped.payments).toBe("active");
     expect(listingsDoneSocialSkipped.domain).toBe("active");
   });
 
@@ -68,20 +63,19 @@ describe("deriveSetupStepStates", () => {
     );
     expect(states.listings).toBe("done");
     expect(states.social).toBe("done");
-    expect(states.payments).toBe("active");
+    expect(states.domain).toBe("active");
   });
 
-  it("reports every step done once all six are done or skipped", () => {
+  it("reports every step done once all five are done or skipped", () => {
     const states = deriveSetupStepStates(
       {
         identity: true,
         communications: true,
         listings: true,
         social: true,
-        payments: false,
-        domain: false,
+              domain: false,
       },
-      ["payments", "domain"]
+      ["domain"]
     );
     expect(Object.values(states).every((s) => s === "done")).toBe(true);
   });

@@ -3,6 +3,7 @@ import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { requireSubAccountMember } from "@/lib/auth/require-tenancy";
 import { territoryGate } from "@/lib/auth/territory-filter";
+import { quotesGateResponse } from "@/lib/quotes/gate";
 import { issueQuoteNumber } from "@/lib/quotes/number";
 import { GLOBAL_TERRITORY_ID } from "@/types";
 import { DEFAULT_QUOTE } from "@/types/quotes";
@@ -51,6 +52,8 @@ export async function POST(
 
   const access = await requireSubAccountMember(request, subAccountId);
   if (access instanceof NextResponse) return access;
+  const gated = await quotesGateResponse(subAccountId);
+  if (gated) return gated;
 
   let body: CreateQuotePayload;
   try {

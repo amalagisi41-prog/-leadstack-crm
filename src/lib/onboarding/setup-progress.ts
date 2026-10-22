@@ -1,7 +1,7 @@
 import type { SubAccountDoc } from "@/types/tenancy";
 
 /**
- * The six account-setup steps and their lock/done rules, shared by the Setup
+ * The five account-setup steps and their lock/done rules, shared by the Setup
  * page and the always-visible setup pill so the two can never disagree about
  * how far along a workspace is. Every "done" is derived from persisted facts
  * on the sub-account (or the business profile, for identity) — never from a
@@ -13,7 +13,6 @@ export type SetupStepId =
   | "communications"
   | "listings"
   | "social"
-  | "payments"
   | "domain";
 
 export type SetupStepState = "done" | "active" | "locked";
@@ -23,7 +22,6 @@ export const SETUP_STEP_ORDER: readonly SetupStepId[] = [
   "communications",
   "listings",
   "social",
-  "payments",
   "domain",
 ];
 
@@ -32,7 +30,6 @@ export const SETUP_STEP_TITLES: Record<SetupStepId, string> = {
   communications: "Communications account",
   listings: "Listings source",
   social: "Social",
-  payments: "Payments",
   domain: "Domain",
 };
 
@@ -42,7 +39,6 @@ export const SETUP_STEP_ACTIONS: Record<SetupStepId, string> = {
   communications: "Connect your email or phone",
   listings: "Connect your listings",
   social: "Connect Facebook & Instagram",
-  payments: "Add your payment link",
   domain: "Connect your domain",
 };
 
@@ -55,7 +51,6 @@ export const SETUP_VIDEOS: Record<SetupStepId, string> = {
   communications: "/onboarding-videos/connect-email.mp4",
   listings: "/onboarding-videos/setup-listings.mp4",
   social: "/onboarding-videos/setup-social.mp4",
-  payments: "/onboarding-videos/setup-payments.mp4",
   domain: "/onboarding-videos/setup-domain.mp4",
 };
 
@@ -64,7 +59,7 @@ export const SETUP_VIDEOS: Record<SetupStepId, string> = {
  * everything downstream needs them — so a skip naming either is ignored
  * here even though the API route already refuses to persist one.
  */
-const SKIPPABLE_STEP_IDS = new Set<SetupStepId>(["listings", "social", "payments", "domain"]);
+const SKIPPABLE_STEP_IDS = new Set<SetupStepId>(["listings", "social", "domain"]);
 
 export function deriveSetupStepStates(
   doneMap: Record<SetupStepId, boolean>,
@@ -83,7 +78,6 @@ export function deriveSetupStepStates(
       case "listings":
       case "social":
         return doneMap.communications;
-      case "payments":
       case "domain":
         return isSatisfied("listings") && isSatisfied("social");
     }
@@ -108,7 +102,6 @@ export function setupDoneMap(
       subAccount.calendarConfig?.status === "connected",
     listings: subAccount.idxConfig?.enabled === true,
     social: subAccount.metaConfig?.connected === true,
-    payments: Boolean(subAccount.paymentPortalConfig?.url),
     domain: Boolean(subAccount.customDomain),
   };
 }

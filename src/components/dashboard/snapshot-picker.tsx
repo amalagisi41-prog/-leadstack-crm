@@ -4,13 +4,14 @@ import { useState } from "react";
 import { Loader2, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useSubAccount } from "@/context/sub-account-context";
+import { isSnapshotReleased, type SnapshotId } from "@/lib/snapshots/catalog";
 
 /**
  * Role-snapshot picker shown on the onboarding checklist. Applying a snapshot
  * re-configures the pipeline, templates, AI persona, and draft workflows for
  * the chosen role so a CSV import lands in a ready-to-work setup.
  */
-const ROLES: { id: string; label: string; blurb: string }[] = [
+const ROLES: { id: SnapshotId; label: string; blurb: string }[] = [
   { id: "solo_agent", label: "Solo Agent", blurb: "Simple pipeline + Speed-to-Lead" },
   { id: "team_builder", label: "Team Builder", blurb: "Lead routing + nurture drip" },
   { id: "broker_office", label: "Broker Office", blurb: "Lead distribution + oversight" },
@@ -19,10 +20,10 @@ const ROLES: { id: string; label: string; blurb: string }[] = [
 
 export function SnapshotPicker() {
   const { subAccountId } = useSubAccount();
-  const [applying, setApplying] = useState<string | null>(null);
-  const [applied, setApplied] = useState<string | null>(null);
+  const [applying, setApplying] = useState<SnapshotId | null>(null);
+  const [applied, setApplied] = useState<SnapshotId | null>(null);
 
-  async function apply(id: string) {
+  async function apply(id: SnapshotId) {
     setApplying(id);
     try {
       const res = await fetch(`/api/sub-accounts/${subAccountId}/apply-snapshot`, {
@@ -53,11 +54,12 @@ export function SnapshotPicker() {
         {ROLES.map((r) => {
           const busy = applying === r.id;
           const done = applied === r.id;
+          const released = isSnapshotReleased(r.id);
           return (
             <button
               key={r.id}
               onClick={() => apply(r.id)}
-              disabled={!!applying}
+              disabled={!!applying || !released}
               className={`rounded-lg border p-2.5 text-left text-xs transition-colors hover:border-blue-300 disabled:opacity-60 ${
                 done ? "border-emerald-300 bg-emerald-50 dark:bg-emerald-950/20" : "bg-card"
               }`}
@@ -66,6 +68,11 @@ export function SnapshotPicker() {
                 {busy && <Loader2 className="h-3 w-3 animate-spin" />}
                 {done && <Check className="h-3 w-3 text-emerald-500" />}
                 {r.label}
+                {!released && (
+                  <span className="ml-auto rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                    Coming soon
+                  </span>
+                )}
               </span>
               <span className="mt-0.5 block text-muted-foreground">{r.blurb}</span>
             </button>

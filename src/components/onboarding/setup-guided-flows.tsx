@@ -172,7 +172,7 @@ function SkipButton({
   );
 }
 
-const STEP_PROMPTS: Record<"identity" | "listings" | "payments" | "domain", { title: string; why: string }> = {
+const STEP_PROMPTS: Record<"identity" | "listings" | "domain", { title: string; why: string }> = {
   identity: {
     title: "First, tell us about your business",
     why: "Your business name, license number, and service area go on everything AgentStack writes for you, so this comes first.",
@@ -180,10 +180,6 @@ const STEP_PROMPTS: Record<"identity" | "listings" | "payments" | "domain", { ti
   listings: {
     title: "Connect your listings",
     why: "Your listings power property pages, campaigns, and marketing drafts. Connect your IDX Broker account so they show up here automatically.",
-  },
-  payments: {
-    title: "Add the link clients pay you through",
-    why: "Quotes and invoices show a Pay button that goes to this link — PayPal.me or your own payment page.",
   },
   domain: {
     title: "Connect your domain",

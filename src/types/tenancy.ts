@@ -154,6 +154,12 @@ export interface SubAccountDoc {
    */
   broadcastsEnabledByAgency?: boolean;
   /**
+   * Agency-controlled gate for Quotes, Invoices and the Products catalog
+   * (a Broker-package add-on). Off by default; while off the sidebar entries
+   * are hidden and create routes 403. No tear-down — existing docs are kept.
+   */
+  quotesEnabledByAgency?: boolean;
+  /**
    * Agency-controlled gate for outbound AI voice calling (operator-
    * initiated click-to-call). When `false` (or undefined on legacy docs)
    * the /api/comms/voice/call route returns 403 and the Voice settings'
