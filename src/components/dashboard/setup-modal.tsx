@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { WelcomeVideoDialog } from "@/components/onboarding/welcome-video-dialog";
 import { googleAccountConnectPath } from "@/lib/google/account-connect-path";
 import type { SubAccountDoc } from "@/types/tenancy";
 import {
@@ -402,12 +403,20 @@ export function SetupModal({
         </p>
       </div>
 
-      <details
-        open={stateFor("identity") !== "done"}
-        className="bg-card rounded-2xl border p-5"
-      >
+      <WelcomeVideoDialog
+        subAccountId={subAccountId}
+        enabled={stateFor("identity") !== "done"}
+        onDone={() => {
+          if (!firstOpenStep) return;
+          const section = document.getElementById(`setup-step-${firstOpenStep}`);
+          section?.scrollIntoView({ behavior: "smooth", block: "start" });
+          section?.querySelector<HTMLInputElement>("input")?.focus({ preventScroll: true });
+        }}
+      />
+
+      <details className="bg-card rounded-2xl border p-5">
         <summary className="cursor-pointer text-sm font-medium">
-          Welcome to AgentStack — watch Zack&apos;s 2-minute tour first
+          Rewatch Zack&apos;s 2-minute welcome tour
         </summary>
         <video
           src={WELCOME_VIDEO}
@@ -419,7 +428,7 @@ export function SetupModal({
       </details>
 
       {/* 1. Identity */}
-      <section className="bg-card rounded-2xl border p-5">
+      <section id="setup-step-identity" className="bg-card rounded-2xl border p-5">
         <StepHeader
           step={1}
           title={STEP_TITLES.identity}
@@ -486,7 +495,7 @@ export function SetupModal({
       </section>
 
       {/* 2. Communications account */}
-      <section className="bg-card rounded-2xl border p-5">
+      <section id="setup-step-communications" className="bg-card rounded-2xl border p-5">
         <StepHeader
           step={2}
           title={STEP_TITLES.communications}
@@ -585,7 +594,7 @@ export function SetupModal({
       </section>
 
       {/* 3. Listings source */}
-      <section className="bg-card rounded-2xl border p-5">
+      <section id="setup-step-listings" className="bg-card rounded-2xl border p-5">
         <StepHeader
           step={3}
           title={STEP_TITLES.listings}
@@ -674,7 +683,7 @@ export function SetupModal({
       </section>
 
       {/* 4. Social */}
-      <section className="bg-card rounded-2xl border p-5">
+      <section id="setup-step-social" className="bg-card rounded-2xl border p-5">
         <StepHeader
           step={4}
           title={STEP_TITLES.social}
@@ -726,7 +735,7 @@ export function SetupModal({
       </section>
 
       {/* 5. Domain */}
-      <section className="bg-card rounded-2xl border p-5">
+      <section id="setup-step-domain" className="bg-card rounded-2xl border p-5">
         <StepHeader
           step={5}
           title={STEP_TITLES.domain}
