@@ -3,7 +3,7 @@ import "server-only";
 import { NextResponse } from "next/server";
 import { requireSubAccountAdmin } from "@/lib/auth/require-tenancy";
 import { applySnapshot } from "@/lib/snapshots/apply";
-import { SNAPSHOTS, type SnapshotId } from "@/lib/snapshots/catalog";
+import { SNAPSHOTS, isSnapshotReleased, type SnapshotId } from "@/lib/snapshots/catalog";
 
 /**
  * POST /api/sub-accounts/[id]/apply-snapshot
@@ -38,6 +38,12 @@ export async function POST(
   const snapshotId = (body.snapshotId ?? "solo_agent") as SnapshotId;
   if (!(snapshotId in SNAPSHOTS)) {
     return NextResponse.json({ error: "Unknown snapshot." }, { status: 400 });
+  }
+  if (!isSnapshotReleased(snapshotId)) {
+    return NextResponse.json(
+      { error: "That package isn't available yet. AgentStack Solo is open now; Team and Broker are coming soon." },
+      { status: 403 },
+    );
   }
 
   try {

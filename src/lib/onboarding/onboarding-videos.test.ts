@@ -45,4 +45,9 @@ describe("setup pop-up videos", () => {
       expect(existsSync(join(process.cwd(), "public", url)), url).toBe(true);
     }
   });
+
+  it("ships the welcome tour", async () => {
+    const { WELCOME_VIDEO } = await import("./setup-progress");
+    expect(existsSync(join(process.cwd(), "public", WELCOME_VIDEO))).toBe(true);
+  });
 });

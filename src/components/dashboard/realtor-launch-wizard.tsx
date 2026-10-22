@@ -49,6 +49,8 @@ const ROLE_OPTIONS: {
   label: string;
   description: string;
   icon: React.ReactNode;
+  /** Team and Broker packages are off until full rollout. */
+  comingSoon?: boolean;
 }[] = [
   {
     value: "solo_agent",
@@ -59,12 +61,14 @@ const ROLE_OPTIONS: {
   {
     value: "team_lead",
     label: "Team Lead",
+    comingSoon: true,
     description: "Managing a small team of agents under one brand",
     icon: <Users className="h-5 w-5" />,
   },
   {
     value: "brokerage",
     label: "Brokerage",
+    comingSoon: true,
     description: "Operating a brokerage with multiple agents",
     icon: <Building2 className="h-5 w-5" />,
   },
@@ -429,7 +433,9 @@ function ScreenRole({
             key={option.value}
             type="button"
             onClick={() => onSelect(option.value)}
+            disabled={option.comingSoon}
             className={cn(
+              option.comingSoon && "cursor-not-allowed opacity-60",
               "flex items-start gap-3 rounded-xl border p-4 text-left transition-all",
               role === option.value ? "border-blue-500 bg-blue-50 ring-2 ring-blue-500/20 dark:bg-blue-950/30" : "bg-card hover:border-blue-300"
             )}
@@ -438,7 +444,12 @@ function ScreenRole({
               {option.icon}
             </div>
             <div>
-              <p className="text-sm font-medium">{option.label}</p>
+              <p className="text-sm font-medium">
+                {option.label}
+                {option.comingSoon ? (
+                  <span className="bg-muted text-muted-foreground ml-2 rounded px-1.5 py-0.5 text-[10px] font-medium">Coming soon</span>
+                ) : null}
+              </p>
               <p className="text-muted-foreground mt-0.5 text-xs">{option.description}</p>
             </div>
           </button>

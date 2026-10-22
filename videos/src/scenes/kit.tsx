@@ -332,9 +332,18 @@ export const FieldVisual: React.FC<{ label: string; value: string; highlight?: s
   const mid = idx >= 0 ? highlight! : "";
   const after = idx >= 0 ? value.slice(idx + mid.length) : "";
   return (
-    <div style={{ ...card, padding: "40px 56px", transform: `scale(${s})`, transformOrigin: "left center" }}>
+    <div style={{ ...card, padding: "40px 56px", maxWidth: 1060, transform: `scale(${s})`, transformOrigin: "left center" }}>
       <div style={{ fontFamily: SANS, fontSize: 28, color: C.muted, marginBottom: 12 }}>{label}</div>
-      <div style={{ fontFamily: SANS, fontSize: 64, fontWeight: W.medium, color: C.ink, letterSpacing: -1 }}>
+      <div
+        style={{
+          fontFamily: SANS,
+          fontSize: value.length > 28 ? 46 : 64,
+          lineHeight: 1.2,
+          fontWeight: W.medium,
+          color: C.ink,
+          letterSpacing: -1,
+        }}
+      >
         {before}
         {mid ? (
           <span style={{ position: "relative", color: sweep > 0.5 ? C.coral : C.ink }}>

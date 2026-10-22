@@ -125,7 +125,7 @@ export function SetupProgressPill() {
         subAccountId={subAccountId}
         subAccount={subAccount}
       />
-      {(["identity", "listings", "payments", "domain"] as const).map((step) => (
+      {(["identity", "listings", "domain"] as const).map((step) => (
         <SetupStepPrompt
           key={step}
           step={step}

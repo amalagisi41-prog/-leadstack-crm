@@ -187,6 +187,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const [socialGate, setSocialGate] = useState<boolean | null>(null);
   const [communityGate, setCommunityGate] = useState<boolean | null>(null);
   const [broadcastsHidden, setBroadcastsHidden] = useState(false);
+  const [quotesGate, setQuotesGate] = useState<boolean | null>(null);
   const [socialHidden, setSocialHidden] = useState(false);
   const [communityHidden, setCommunityHidden] = useState(false);
   const [siteHealthScore, setSiteHealthScore] = useState<number | null>(null);
@@ -205,6 +206,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       (snap) => {
         const data = snap.data();
         setBroadcastsGate(data?.broadcastsEnabledByAgency === true);
+        setQuotesGate(data?.quotesEnabledByAgency === true);
         setWebsiteStudioGate(data?.websiteStudioEnabledByAgency === true);
         setSocialGate(data?.socialPlannerEnabledByAgency === true);
         setCommunityGate(data?.communityEnabledByAgency === true);
@@ -387,6 +389,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                 unreadConversations={unreadConversations}
                 siteHealthScore={siteHealthScore}
                 broadcastsGate={broadcastsGate}
+                quotesGate={quotesGate}
                 websiteStudioGate={websiteStudioGate}
                 socialGate={socialGate}
                 communityGate={communityGate}
@@ -432,6 +435,7 @@ function NavGroupSection({
   unreadConversations,
   siteHealthScore,
   broadcastsGate,
+  quotesGate,
   websiteStudioGate,
   socialGate,
   communityGate,
@@ -447,6 +451,7 @@ function NavGroupSection({
   unreadConversations: number;
   siteHealthScore: number | null;
   broadcastsGate: boolean | null;
+  quotesGate: boolean | null;
   websiteStudioGate: boolean | null;
   socialGate: boolean | null;
   communityGate: boolean | null;
@@ -509,6 +514,8 @@ function NavGroupSection({
               (item.href === "/community" && communityGate === false);
 
             const gateHidden =
+              ((item.href === "/quotes" || item.href === "/products") &&
+                quotesGate === false) ||
               (item.href === "/broadcasts" &&
                 broadcastsGate === false &&
                 broadcastsHidden) ||

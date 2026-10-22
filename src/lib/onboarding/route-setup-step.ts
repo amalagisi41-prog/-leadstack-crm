@@ -18,8 +18,6 @@ const ROUTE_STEPS: ReadonlyArray<[prefix: string, step: SetupStepId | "next"]> =
   ["/properties", "listings"],
   ["/marketing", "listings"],
   ["/social", "social"],
-  ["/quotes", "payments"],
-  ["/products", "payments"],
   ["/domain", "domain"],
   ["/website-studio", "domain"],
   ["/site-health", "domain"],

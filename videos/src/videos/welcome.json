@@ -1,0 +1,243 @@
+{
+  "id": "welcome",
+  "title": "Welcome to AgentStack",
+  "scenes": [
+    {
+      "id": "hello",
+      "pose": "wave",
+      "visual": "hello",
+      "headline": [
+        "Welcome",
+        "to",
+        "*AgentStack.*"
+      ],
+      "line": "Hi, I'm Zack. Welcome to AgentStack, and congratulations, you're all signed up! Before we set anything up, let me show you everything you've just unlocked.",
+      "data": {
+        "image": "realtor-house"
+      },
+      "sub": "Your AgentStack tour"
+    },
+    {
+      "id": "one-place",
+      "pose": "point",
+      "visual": "illustration",
+      "headline": [
+        "Your",
+        "whole",
+        "business,",
+        "*one",
+        "place.*"
+      ],
+      "line": "AgentStack brings your whole real estate business together: your leads, your clients, your listings, and your marketing, all in one place, all working together.",
+      "data": {
+        "image": "city",
+        "caption": "All in one place"
+      }
+    },
+    {
+      "id": "no-juggling",
+      "pose": "idle",
+      "visual": "flow",
+      "headline": [
+        "No",
+        "more",
+        "*juggling.*"
+      ],
+      "line": "No more jumping between your email, your texts, a spreadsheet, and five different apps. It all lives here now.",
+      "data": {
+        "steps": [
+          "Email",
+          "Texts",
+          "Spreadsheets",
+          "Apps",
+          "AgentStack"
+        ]
+      }
+    },
+    {
+      "id": "people",
+      "pose": "point",
+      "visual": "illustration",
+      "headline": [
+        "Every",
+        "deal,",
+        "*in",
+        "view.*"
+      ],
+      "line": "Every client has one profile in People, with their notes, messages, and history together. And in Deals, every deal moves across a simple board, from new lead to closed.",
+      "data": {
+        "image": "leads",
+        "caption": "Your pipeline"
+      }
+    },
+    {
+      "id": "inbox",
+      "pose": "point",
+      "visual": "illustration",
+      "headline": [
+        "Every",
+        "conversation,",
+        "*one",
+        "inbox.*"
+      ],
+      "line": "In Conversations, your text messages, and depending on your plan, WhatsApp, Facebook, and Instagram messages, all land in one inbox.",
+      "data": {
+        "image": "new-lead",
+        "caption": "Conversations"
+      }
+    },
+    {
+      "id": "ai",
+      "pose": "point",
+      "visual": "illustration",
+      "headline": [
+        "Answers,",
+        "*day",
+        "and",
+        "night.*"
+      ],
+      "line": "Your AI agent answers questions for you around the clock, in the chat on your website and by text. It collects the lead's details and hands them straight to you.",
+      "data": {
+        "image": "ai-receptionist",
+        "caption": "Your AI receptionist"
+      }
+    },
+    {
+      "id": "speed",
+      "pose": "point",
+      "visual": "timer",
+      "headline": [
+        "Follow",
+        "up",
+        "in",
+        "*seconds.*"
+      ],
+      "line": "When a new lead fills in one of your forms, Follow-Up Plans send them a text and an email within about a minute, automatically, even at midnight.",
+      "data": {
+        "seconds": 60,
+        "label": "A text and an email go out on their own"
+      }
+    },
+    {
+      "id": "booking",
+      "pose": "idle",
+      "visual": "illustration",
+      "headline": [
+        "Showings",
+        "*book",
+        "themselves.*"
+      ],
+      "line": "With Booking, clients pick a time that works on your calendar, and confirmations and reminders go out on their own.",
+      "data": {
+        "image": "booking-phone",
+        "caption": "Booking"
+      }
+    },
+    {
+      "id": "marketing",
+      "pose": "point",
+      "visual": "illustration",
+      "headline": [
+        "Listings",
+        "that",
+        "*market",
+        "themselves.*"
+      ],
+      "line": "Connect your listings, and AgentStack drafts the marketing for each one: a property page, social posts, an email, and a text. You approve everything before it goes out.",
+      "data": {
+        "image": "dashboard",
+        "caption": "Marketing on autopilot"
+      }
+    },
+    {
+      "id": "found",
+      "pose": "point",
+      "visual": "cards",
+      "headline": [
+        "Get",
+        "*found.*"
+      ],
+      "line": "Capture leads with forms on your website, build your site in Website Studio, and run local search campaigns, all from the same place.",
+      "data": {
+        "items": [
+          {
+            "icon": "form",
+            "label": "Lead Capture"
+          },
+          {
+            "icon": "globe",
+            "label": "Website Studio"
+          },
+          {
+            "icon": "search",
+            "label": "Local search"
+          }
+        ]
+      }
+    },
+    {
+      "id": "business",
+      "pose": "thumbs",
+      "visual": "illustration",
+      "headline": [
+        "Know",
+        "what's",
+        "*working.*"
+      ],
+      "line": "See exactly where your leads come from and which listings and campaigns are paying off, in plain-English reports in Analytics.",
+      "data": {
+        "image": "analytics",
+        "caption": "Analytics"
+      }
+    },
+    {
+      "id": "setup",
+      "pose": "point",
+      "visual": "illustration",
+      "headline": [
+        "Six",
+        "*simple",
+        "steps.*"
+      ],
+      "line": "Getting started takes six simple steps: your business details, your email or phone, your listings, social, payments, and your domain.",
+      "data": {
+        "image": "realtor-house",
+        "caption": "Six quick steps"
+      }
+    },
+    {
+      "id": "guide",
+      "pose": "idle",
+      "visual": "pill",
+      "headline": [
+        "I'll",
+        "*guide",
+        "you.*"
+      ],
+      "line": "I'll guide you through each one, a question at a time. A setup button stays at the bottom of every page, and each step only checks off when it's really done.",
+      "data": {
+        "from": "Next: Add your business details",
+        "to": "Next: Connect your email or phone",
+        "count": [
+          0,
+          6
+        ]
+      }
+    },
+    {
+      "id": "go",
+      "pose": "cheer",
+      "visual": "illustration",
+      "headline": [
+        "Let's",
+        "*get",
+        "started.*"
+      ],
+      "line": "That's AgentStack. Your business, all in one place, working for you. Let's get started, with your business details first.",
+      "data": {
+        "image": "dashboard",
+        "caption": "Next: your business details"
+      }
+    }
+  ]
+}

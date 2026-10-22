@@ -18,6 +18,7 @@ import type { SubAccountDoc } from "@/types/tenancy";
 import {
   SETUP_STEP_ORDER,
   SETUP_STEP_TITLES,
+  WELCOME_VIDEO,
   deriveSetupStepStates,
   type SetupStepId,
   type SetupStepState,
@@ -30,16 +31,16 @@ import {
  * convention rather than a shadcn Dialog popup: numbered steps that stay
  * visible-but-locked, each one's lock/done state DERIVED from real
  * persisted facts (twilioConfig, googleAccountConfig, idxConfig, metaConfig,
- * paymentPortalConfig, customDomain) rather than a stored step pointer — the
+ * customDomain) rather than a stored step pointer — the
  * same reason DomainConnect and lib/onboarding/completion.ts never store a
  * "current step" field. See the Client Journey Re-plan doc, "Setup as a
  * modal, not a place."
  *
  * Steps, in the doc's own order: Identity -> Communications account ->
- * Listings source -> Social -> Payments -> Domain. Identity and
+ * Listings source -> Social -> Domain. Identity and
  * Communications account are mandatory (everything downstream needs them);
- * the last four are individually skippable, since not every workspace has
- * IDX or Meta gated on, and Payments/Domain are optional by design.
+ * the last three are individually skippable, since not every workspace has
+ * IDX or Meta gated on, and Domain is optional by design.
  */
 
 type StepId = SetupStepId;
@@ -309,31 +310,7 @@ export function SetupModal({
     subAccount.socialPlannerEnabledByAgency === true;
   const socialDone = subAccount.metaConfig?.connected === true;
 
-  // --- Payments ---
-  const paymentsDone = Boolean(subAccount.paymentPortalConfig?.url);
-  const [paymentForm, setPaymentForm] = useState({ url: "", label: "" });
-  const [savingPayment, setSavingPayment] = useState(false);
 
-  async function savePayment() {
-    setSavingPayment(true);
-    try {
-      const res = await fetch(`/api/sub-accounts/${subAccountId}/payment-portal`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          url: paymentForm.url.trim(),
-          label: paymentForm.label.trim() || null,
-        }),
-      });
-      const data = (await res.json().catch(() => ({}))) as { error?: string };
-      if (!res.ok) throw new Error(data.error ?? "Could not save the payment link.");
-      toast.success("Payment portal connected.");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not save.");
-    } finally {
-      setSavingPayment(false);
-    }
-  }
 
   // --- Domain ---
   const domainDone = Boolean(subAccount.customDomain);
@@ -367,7 +344,6 @@ export function SetupModal({
     communications: commsDone,
     listings: listingsDone,
     social: socialDone,
-    payments: paymentsDone,
     domain: domainDone,
   };
 
@@ -420,11 +396,27 @@ export function SetupModal({
           Set up {subAccount.name ?? "your workspace"}
         </h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          Six quick steps, in order — each one saves the moment you finish it.
+          Five quick steps, in order — each one saves the moment you finish it.
           Steps stay visible even while locked, so you always know what
           unlocks them.
         </p>
       </div>
+
+      <details
+        open={stateFor("identity") !== "done"}
+        className="bg-card rounded-2xl border p-5"
+      >
+        <summary className="cursor-pointer text-sm font-medium">
+          Welcome to AgentStack — watch Zack&apos;s 2-minute tour first
+        </summary>
+        <video
+          src={WELCOME_VIDEO}
+          controls
+          playsInline
+          preload="metadata"
+          className="mt-3 w-full rounded-xl border bg-black"
+        />
+      </details>
 
       {/* 1. Identity */}
       <section className="bg-card rounded-2xl border p-5">
@@ -733,64 +725,10 @@ export function SetupModal({
         )}
       </section>
 
-      {/* 5. Payments */}
+      {/* 5. Domain */}
       <section className="bg-card rounded-2xl border p-5">
         <StepHeader
           step={5}
-          title={STEP_TITLES.payments}
-          description="Optional. Connect the payment link your clients already pay you through."
-          state={stateFor("payments")}
-        />
-        {stateFor("payments") === "locked" ? (
-          <ul className="mt-3 space-y-1">
-            <Requirement met={isSatisfied("listings")} label="Listings source connected or skipped" />
-            <Requirement met={isSatisfied("social")} label="Social connected or skipped" />
-          </ul>
-        ) : stateFor("payments") === "done" ? (
-          <p className="text-muted-foreground mt-3 text-sm">
-            Connected{subAccount.paymentPortalConfig?.label ? ` — ${subAccount.paymentPortalConfig.label}` : ""}.
-          </p>
-        ) : (
-          <div className="mt-4 space-y-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="setup-payment-url">Payment link</Label>
-              <Input
-                id="setup-payment-url"
-                value={paymentForm.url}
-                onChange={(e) =>
-                  setPaymentForm((f) => ({ ...f, url: e.target.value }))
-                }
-                placeholder="https://paypal.me/yourbusiness"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                onClick={savePayment}
-                disabled={savingPayment || !paymentForm.url.trim()}
-              >
-                {savingPayment ? (
-                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                ) : null}
-                Connect
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => void skipStep("payments")}
-                disabled={skipping === "payments"}
-              >
-                Skip for now
-              </Button>
-            </div>
-          </div>
-        )}
-      </section>
-
-      {/* 6. Domain */}
-      <section className="bg-card rounded-2xl border p-5">
-        <StepHeader
-          step={6}
           title={STEP_TITLES.domain}
           description="Optional, and only after the steps above — a domain with no content behind it is a dead link."
           state={stateFor("domain")}
