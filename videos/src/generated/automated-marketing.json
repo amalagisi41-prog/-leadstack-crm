@@ -1,0 +1,45 @@
+{
+  "id": "automated-marketing",
+  "scenes": [
+    {
+      "id": "hello",
+      "audio": "voice/automated-marketing/hello.wav",
+      "seconds": 5.493197
+    },
+    {
+      "id": "where",
+      "audio": "voice/automated-marketing/where.wav",
+      "seconds": 4.506349
+    },
+    {
+      "id": "drafts",
+      "audio": "voice/automated-marketing/drafts.wav",
+      "seconds": 8.579773
+    },
+    {
+      "id": "approve",
+      "audio": "voice/automated-marketing/approve.wav",
+      "seconds": 5.922766
+    },
+    {
+      "id": "creative",
+      "audio": "voice/automated-marketing/creative.wav",
+      "seconds": 8.558231
+    },
+    {
+      "id": "autopilot",
+      "audio": "voice/automated-marketing/autopilot.wav",
+      "seconds": 8.743991
+    },
+    {
+      "id": "results",
+      "audio": "voice/automated-marketing/results.wav",
+      "seconds": 6.397098
+    },
+    {
+      "id": "next",
+      "audio": "voice/automated-marketing/next.wav",
+      "seconds": 3.786531
+    }
+  ]
+}
