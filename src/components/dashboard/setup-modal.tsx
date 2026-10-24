@@ -405,7 +405,7 @@ export function SetupModal({
 
       <WelcomeVideoDialog
         subAccountId={subAccountId}
-        enabled={stateFor("identity") !== "done"}
+        enabled={!allSatisfied}
         onDone={() => {
           if (!firstOpenStep) return;
           const section = document.getElementById(`setup-step-${firstOpenStep}`);

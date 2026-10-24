@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { AutoplayVideo } from "@/components/onboarding/autoplay-video";
 
 export type GuidedAnswers = Record<string, string>;
 
@@ -65,7 +66,8 @@ export function GuidedFlow({
   video?: string;
 }) {
   const [answers, setAnswers] = useState<GuidedAnswers>({});
-  const [showVideo, setShowVideo] = useState(false);
+  // Zack plays straight away on the first screen; the realtor can hide him.
+  const [showVideo, setShowVideo] = useState(true);
   const [history, setHistory] = useState<string[]>([]);
 
   const steps = useMemo(() => resolveSteps(answers), [resolveSteps, answers]);
@@ -76,7 +78,7 @@ export function GuidedFlow({
   function reset() {
     setAnswers({});
     setHistory([]);
-    setShowVideo(false);
+    setShowVideo(true);
   }
 
   function close() {
@@ -154,15 +156,7 @@ export function GuidedFlow({
             </button>
           ) : null}
         </div>
-        {video && showVideo ? (
-          <video
-            src={video}
-            controls
-            autoPlay
-            playsInline
-            className="w-full rounded-xl border bg-black"
-          />
-        ) : null}
+        {video && showVideo && open ? <AutoplayVideo src={video} /> : null}
 
         <DialogTitle className="text-lg">{step.title}</DialogTitle>
         {step.description ? (
