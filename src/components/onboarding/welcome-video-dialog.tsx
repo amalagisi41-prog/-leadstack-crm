@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowRight, Volume2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowRight } from "lucide-react";
+import { AutoplayVideo } from "@/components/onboarding/autoplay-video";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -30,11 +31,10 @@ function writeSeen(subAccountId: string) {
 }
 
 /**
- * Zack's welcome tour, autoplayed in a pop-up the first time a realtor lands
- * on Setup, before any setup step. Browsers block autoplay with sound unless
- * the page already had a click, so it falls back to muted playback with a
- * "Turn on sound" button rather than sitting on a frozen first frame.
- * Closing it (skip or finish) hands off to the first open setup step.
+ * Zack's welcome tour, autoplayed in a pop-up when a realtor lands on Setup,
+ * before any setup step. It keeps coming back on every Setup visit until the
+ * tour has actually been watched to the end — skipping only gets them past it
+ * for now. Closing it hands off to the first open setup step.
  */
 export function WelcomeVideoDialog({
   subAccountId,
@@ -42,43 +42,23 @@ export function WelcomeVideoDialog({
   onDone,
 }: {
   subAccountId: string;
-  /** Only new workspaces get the auto pop-up (identity step not done yet). */
+  /** Setup still has steps left; finished workspaces never see the pop-up. */
   enabled: boolean;
   onDone: () => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [muted, setMuted] = useState(false);
   const [ended, setEnded] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     if (enabled && !readSeen(subAccountId)) setOpen(true);
   }, [enabled, subAccountId]);
 
-  // Stable so React attaches it once; a fresh callback every render would
-  // re-run play() and restart the tour.
-  const startPlayback = useCallback((video: HTMLVideoElement | null) => {
-    if (!video) return;
-    videoRef.current = video;
-    video.muted = false;
-    video.play().catch(() => {
-      video.muted = true;
-      setMuted(true);
-      void video.play().catch(() => undefined);
-    });
-  }, []);
-
-  function unmute() {
-    const video = videoRef.current;
-    if (!video) return;
-    video.muted = false;
-    setMuted(false);
-    void video.play().catch(() => undefined);
+  function finished() {
+    writeSeen(subAccountId);
+    setEnded(true);
   }
 
   function close() {
-    writeSeen(subAccountId);
-    videoRef.current?.pause();
     setOpen(false);
     onDone();
   }
@@ -91,29 +71,15 @@ export function WelcomeVideoDialog({
           Zack&apos;s 2-minute tour of everything you just unlocked. Your setup
           starts right after.
         </DialogDescription>
-        <div className="relative">
-          <video
-            ref={startPlayback}
-            src={WELCOME_VIDEO}
-            controls
-            playsInline
-            onEnded={() => setEnded(true)}
-            className="w-full rounded-xl border bg-black"
-          />
-          {muted ? (
-            <Button
-              size="sm"
-              onClick={unmute}
-              className="absolute top-3 right-3 shadow"
-            >
-              <Volume2 className="mr-1.5 h-3.5 w-3.5" /> Turn on sound
-            </Button>
-          ) : null}
-        </div>
+        {open ? <AutoplayVideo src={WELCOME_VIDEO} onEnded={finished} /> : null}
         <div className="flex items-center justify-between gap-2">
-          <Button variant="ghost" size="sm" onClick={close}>
-            {ended ? "Close" : "Skip the tour"}
-          </Button>
+          {ended ? (
+            <span />
+          ) : (
+            <Button variant="ghost" size="sm" onClick={close}>
+              Skip for now
+            </Button>
+          )}
           <Button size="sm" onClick={close}>
             Start setup <ArrowRight className="ml-1 h-3.5 w-3.5" />
           </Button>
