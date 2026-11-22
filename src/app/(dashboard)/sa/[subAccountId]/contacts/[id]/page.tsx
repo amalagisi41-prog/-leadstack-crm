@@ -61,7 +61,8 @@ export default function ContactProfilePage() {
       <div className="space-y-6">
         <ContactProfileHeader contact={contact} />
         <ContactDeals contact={contact} />
-        {agency.multiAccountModeEnabled ? (
+        {agency.multiAccountModeEnabled &&
+        subAccount?.quotesEnabledByAgency === true ? (
           <ContactQuotes
             contactId={contact.id}
             scope={{ agencyId: agencyId ?? "", subAccountId }}
