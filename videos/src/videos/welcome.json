@@ -157,7 +157,7 @@
         "Get",
         "*found.*"
       ],
-      "line": "Capture leads with forms on your website, build your site in Website Studio, and run local search campaigns, all from the same place.",
+      "line": "Capture leads with forms on your website, and depending on your plan, build your site in Website Studio and run local search campaigns, all from the same place.",
       "data": {
         "items": [
           {
@@ -195,14 +195,14 @@
       "pose": "point",
       "visual": "illustration",
       "headline": [
-        "Six",
+        "Five",
         "*simple",
         "steps.*"
       ],
-      "line": "Getting started takes six simple steps: your business details, your email or phone, your listings, social, payments, and your domain.",
+      "line": "Getting started takes five simple steps: your business details, your email or phone, your listings, social, and your domain.",
       "data": {
         "image": "realtor-house",
-        "caption": "Six quick steps"
+        "caption": "Five quick steps"
       }
     },
     {

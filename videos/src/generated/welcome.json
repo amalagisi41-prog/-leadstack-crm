@@ -49,7 +49,7 @@
     {
       "id": "found",
       "audio": "voice/welcome/found.wav",
-      "seconds": 7.929615
+      "seconds": 8.974512
     },
     {
       "id": "business",
@@ -59,7 +59,7 @@
     {
       "id": "setup",
       "audio": "voice/welcome/setup.wav",
-      "seconds": 8.161814
+      "seconds": 6.965986
     },
     {
       "id": "guide",
