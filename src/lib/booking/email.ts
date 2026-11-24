@@ -43,7 +43,7 @@ export interface EmailRenderInput {
   meetingUrl?: string | null;
   /** /e/[token] URL for reschedule + cancel. Empty when APP_URL not set. */
   publicEventUrl: string;
-  /** PayPal.me URL (only when payment is required). */
+  /** The operator's connected payment portal URL (only when payment is required). */
   paymentUrl?: string | null;
 }
 
@@ -138,7 +138,7 @@ export function renderBookingPaymentPendingEmail(
     "",
     `Your slot is held for ${input.page.name} on ${whenLocal}.`,
     "",
-    `To lock it in, please pay ${amount} via PayPal:`,
+    `To lock it in, please pay ${amount}:`,
     input.paymentUrl,
     "",
     `Once we see the payment land we'll send a confirmation. If we don't see it within ${input.page.payment?.holdHours ?? 24} hours, the slot will be released automatically.`,
@@ -154,7 +154,7 @@ export function renderBookingPaymentPendingEmail(
       <h1 style="font-size:20px;margin:0 0 12px;">Pay to confirm your booking</h1>
       <p style="margin:0 0 16px;color:#3a3a44;">${escapeHtml(greeting)}</p>
       <p style="margin:0 0 16px;">Your slot is <strong>held</strong> for ${escapeHtml(input.page.name)} on <strong>${escapeHtml(whenLocal)}</strong>.</p>
-      <p style="margin:0 0 16px;">To lock it in, please pay <strong>${escapeHtml(amount)}</strong> via PayPal.</p>
+      <p style="margin:0 0 16px;">To lock it in, please pay <strong>${escapeHtml(amount)}</strong>.</p>
       ${primaryCta(input.paymentUrl, `Pay ${amount}`)}
       <p style="margin:24px 0 0;font-size:13px;color:#6a6a74;">If we don't see the payment within ${input.page.payment?.holdHours ?? 24} hours, the slot is released automatically.</p>
     `,

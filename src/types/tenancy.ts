@@ -154,6 +154,12 @@ export interface SubAccountDoc {
    */
   broadcastsEnabledByAgency?: boolean;
   /**
+   * Agency-controlled gate for Quotes, Invoices and the Products catalog
+   * (a Broker-package add-on). Off by default; while off the sidebar entries
+   * are hidden and create routes 403. No tear-down — existing docs are kept.
+   */
+  quotesEnabledByAgency?: boolean;
+  /**
    * Agency-controlled gate for outbound AI voice calling (operator-
    * initiated click-to-call). When `false` (or undefined on legacy docs)
    * the /api/comms/voice/call route returns 403 and the Voice settings'
@@ -279,6 +285,10 @@ export interface SubAccountDoc {
    * `metaInboxEnabledByAgency` is on). See {@link MetaConfig}.
    */
   metaConfig?: MetaConfig | null;
+  /** Authorized external calendar connection. OAuth tokens live in the server-only secrets subcollection. */
+  calendarConfig?: CalendarConnectionConfig | null;
+  /** Unified "Google Profile" connection (profile, Gmail, Calendar, Business Profile). Public half only. */
+  googleAccountConfig?: GoogleAccountConfig | null;
   bookingConfig: BookingConfig | null;
   sendWindow: SendWindow | null;
   /**
@@ -342,13 +352,20 @@ export interface SubAccountDoc {
    */
   accountContact: AccountContact | null;
   /**
-   * Per-sub-account PayPal connection used for the Products + Invoices
-   * payment flow. v1 uses paypal.me links — sub-account owner pastes
-   * their PayPal.me username; on invoice send we generate
-   * `https://paypal.me/{username}/{amount}{currency}`. Null = not
-   * connected. v2 will add Stripe Connect alongside.
+   * Per-sub-account payment collection link (see `PaymentPortalConfig`) —
+   * powers the Pay CTA on invoices, paid booking-page deposits, and paid
+   * community group/course purchases. Optional: legacy/undefined docs
+   * read as "no portal connected," same as every other optional
+   * feature-config field in this doc.
    */
-  paypalConfig: PayPalConfig | null;
+  paymentPortalConfig?: PaymentPortalConfig | null;
+  /**
+   * The Placid.app template id the operator designed once in Placid's own
+   * editor for this brand (listing photo + price + beds/baths layers). Not a
+   * secret — Placid auth lives in the agency-level PLACID_API_TOKEN env var;
+   * this is just which template to fill. Null until the operator sets one.
+   */
+  placidTemplateId?: string | null;
   /**
    * Google review-request config (SMS / WhatsApp "leave us a review" sends
    * after payment or on demand). Optional — legacy/undefined reads as off.
@@ -437,6 +454,15 @@ export interface SubAccountDoc {
   realtorRole?: RealtorRole | null;
   launchPriority?: LaunchPriority | null;
   /**
+   * Step ids the operator explicitly chose to skip in the account-first
+   * setup flow (components/dashboard/setup-modal.tsx) — "listings",
+   * "social", "payments", "domain". A skip is a recorded, explicit choice,
+   * distinct from a step nobody has gotten to yet: the setup flow never
+   * re-locks a skipped step behind itself, and no surface treats a skip as
+   * evidence the step is actually done. Absent/empty on a fresh sub-account.
+   */
+  setupSkippedSteps?: string[];
+  /**
    * The custom domain the sub-account wants to front their published website
    * (e.g. "janedoe-homes.com"). Bare host, no scheme. Saved during the domain
    * setup step; the actual DNS + Vercel domain hookup is an ops step the
@@ -476,6 +502,14 @@ export interface SubAccountDoc {
    * "IDX Listings (IDX Broker) v1".
    */
   idxConfig?: IdxConfig | null;
+  /**
+   * Provider-neutral listing sources for this sub-account. Each source owns
+   * how listings enter AgentStack; source-specific credentials stay in the
+   * existing server-only secrets model rather than this member-readable doc.
+   * Undefined/empty preserves the legacy IDX-only behavior until the tenant
+   * configures additional sources.
+   */
+  listingSources?: ListingSourceConfig[];
   /**
    * RPR (Realtors Property Resource) MLS-SSO board code, e.g. "ctconnm-n"
    * for SmartMLS/connectMLS in Connecticut. Powers the "View on RPR" link's
@@ -518,6 +552,28 @@ export interface SubAccountDoc {
   onboardingLifecycleEmails?: OnboardingLifecycleEmails | null;
 }
 
+export type ListingSourceProvider = "idx" | "wordpress" | "manual" | "cms";
+export type ListingSourceMode = "read_only" | "managed" | "publish";
+
+export interface ListingSourceConfig {
+  id: string;
+  provider: ListingSourceProvider;
+  mode: ListingSourceMode;
+  enabled: boolean;
+  /** Human-readable label chosen by the sub-account. */
+  name: string;
+  /** Provider-specific connection reference; credentials never belong here. */
+  connectionId?: string | null;
+  /** Provider-specific mapping/configuration, intentionally schema-light for extensibility. */
+  mapping?: Record<string, string> | null;
+  /** External collection/type identifier, such as a CMS post type. */
+  collectionType?: string | null;
+  /** Public source URL when the provider exposes one. */
+  publicUrl?: string | null;
+  createdAt?: Timestamp | FieldValue | null;
+  updatedAt?: Timestamp | FieldValue | null;
+}
+
 export interface IdxConfig {
   enabled: boolean;
   /**
@@ -538,10 +594,38 @@ export interface IdxConfig {
   mlsId: string | null;
   /** "Listings provided by <MLS name>" attribution line shown on public pages. */
   displayName: string | null;
+  /**
+   * The connected IDX Broker account's own id, as `/clients/accountinfo`
+   * reports it. Shown in Settings so the operator can self-verify this key
+   * belongs to the account they expect — the app has no way to know which
+   * account is "correct" for a given customer, so it surfaces the evidence
+   * instead of guessing.
+   */
+  accountId?: string | null;
+  /** The MLS-issued agent id discovered from `/clients/agents`, used to narrow the Featured request to one agent's listings. Null until unambiguously discovered (more than one agent on the account leaves this null). */
+  agentMlsId?: string | null;
   lastSyncAt: Timestamp | FieldValue | null;
   lastSyncStatus: "idle" | "syncing" | "success" | "empty" | "failed";
   lastSyncError: string | null;
   listingCount: number;
+  /** Per-source listing counts from the last sync — see `lib/idx/sync.ts`. */
+  lastSyncSources?: {
+    featured: number;
+    agentFiltered: number;
+    savedLink: number;
+    supplemental: number;
+  } | null;
+  /** Non-fatal issues from the last sync (a source that errored, no saved link found, etc) — shown alongside the source breakdown instead of a single generic message. */
+  lastSyncWarnings?: string[] | null;
+  /**
+   * Opt-in. When true, a sync that finds a listing genuinely new to this
+   * workspace's inventory (lib/idx/sync.ts) auto-creates a DRAFT campaign
+   * brief for it — never approved, never published; the operator still
+   * reviews and approves every channel exactly as if they'd created it by
+   * hand. Default false/undefined — an operator who hasn't opted in should
+   * never see a draft appear they didn't ask for.
+   */
+  autoDraftOnNewListing?: boolean;
 }
 
 export type A2pCarrierStatus =
@@ -719,14 +803,21 @@ export interface MetaConfig {
   tokenRefreshedAt?: Timestamp | FieldValue | null;
 }
 
-export interface PayPalConfig {
-  /**
-   * PayPal.me username — the path segment after paypal.me/. 1-20 chars,
-   * alphanumeric + hyphens. The operator finds this on
-   * https://paypal.com/paypalme. Stored as the bare username (no
-   * leading slash, no `paypal.me/` prefix).
-   */
-  username: string;
+/**
+ * Per-sub-account payment collection link. Provider-agnostic by design —
+ * the operator pastes a link to whatever payment portal they already use
+ * (PayPal.me, Venmo, Square, Cash App, a Stripe Payment Link, a bank's own
+ * pay page, anything that resolves to a page a customer can pay on) rather
+ * than the app integrating with one specific provider. We never parse or
+ * template an amount into the URL — every provider formats that
+ * differently and some don't support it at all — so the link is always
+ * shown as-is, with the amount stated in the surrounding text instead.
+ */
+export interface PaymentPortalConfig {
+  /** The operator's payment portal URL, shown verbatim wherever a payment CTA renders. */
+  url: string;
+  /** Optional label for the CTA/button, e.g. "Pay via Venmo". Falls back to a generic "Pay now" when unset. */
+  label?: string | null;
   connectedAt: Date;
 }
 
@@ -817,6 +908,29 @@ export interface GoogleWorkspaceConfig {
   /** When this configuration was first connected. */
   connectedAt: Date;
   /** UID of the sub-account admin who connected this. */
+  connectedByUid: string;
+}
+
+export type CalendarProvider = "google" | "outlook";
+
+export interface GoogleAccountConfig {
+  status: "connected";
+  email: string;
+  name: string;
+  picture: string | null;
+  scopes: string[];
+  gmail: boolean;
+  calendar: boolean;
+  connectedAt: Date | Timestamp | FieldValue;
+  connectedByUid: string;
+}
+
+export interface CalendarConnectionConfig {
+  provider: CalendarProvider;
+  status: "connected";
+  email: string;
+  displayName: string | null;
+  connectedAt: Date | Timestamp | FieldValue;
   connectedByUid: string;
 }
 

@@ -8,8 +8,9 @@ export const dynamic = "force-dynamic";
 
 /**
  * Member: start a one-time purchase for group access (scope "group") or a
- * single course (scope "course"). Returns the paypal.me URL to pay at; access
- * is granted when a staff admin marks the purchase paid.
+ * single course (scope "course"). Returns the sub-account's connected
+ * payment portal URL to pay at (any provider), or null if none is
+ * connected; access is granted when a staff admin marks the purchase paid.
  *
  * Group purchases don't require an existing membership (that's what's being
  * bought); course purchases require an active membership in the group.

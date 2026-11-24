@@ -170,6 +170,17 @@ const UNSUB = "\n\n{{unsubscribeLink}}";
 
 // ─── Snapshot definitions ────────────────────────────────────────────────────
 
+/**
+ * Packages open to customers today. AgentStack Solo is live for testing;
+ * Team Builder, Broker Office and Luxury Broker stay off until full rollout.
+ * Add an id here to release it.
+ */
+export const RELEASED_SNAPSHOT_IDS: readonly SnapshotId[] = ["solo_agent"];
+
+export function isSnapshotReleased(id: SnapshotId): boolean {
+  return RELEASED_SNAPSHOT_IDS.includes(id);
+}
+
 export const SNAPSHOTS: Record<SnapshotId, SnapshotDef> = {
   solo_agent: {
     id: "solo_agent",

@@ -39,9 +39,9 @@ import {
   HeartPulse,
   Images,
   MapPin,
+  ListChecks,
   Rocket,
   Wrench,
-  ClipboardCheck,
   ChevronDown,
   ChevronRight,
   DollarSign,
@@ -88,7 +88,7 @@ const PRIMARY_NAV: PrimaryNavItem[] = [
   { href: "/dashboard", label: "Today", icon: Home },
   { href: "/contacts", label: "People", icon: Users, badgeKey: "unreadConversations" },
   { href: "/pipeline", label: "Deals", icon: GitBranch },
-  { href: "/properties", label: "Properties", icon: MapPin },
+  { href: "/idx", label: "Properties", icon: MapPin },
 ];
 
 /* ─── Expandable sections under the primary items ──────────────── */
@@ -120,7 +120,6 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/funnels", label: "Marketing Pages", icon: Filter, enabled: true },
       { href: "/broadcasts", label: "Broadcasts", icon: Send, enabled: true },
       { href: "/social", label: "Social Planner", icon: Share2, enabled: true },
-      { href: "/idx", label: "Listings", icon: Building, enabled: true },
       { href: "/marketing/ad-spend", label: "Ad Spend & Billing", icon: DollarSign, enabled: true },
     ],
   },
@@ -133,19 +132,19 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/booking", label: "Booking", icon: CalendarClock, enabled: true },
       { href: "/conversations", label: "Conversations", icon: MessagesSquare, enabled: true, badgeKey: "unreadConversations" },
       { href: "/tasks", label: "Tasks", icon: CheckSquare, enabled: true, badgeKey: "dueToday" },
-      { href: "/ai-agents", label: "AI Assistants", icon: Bot, enabled: true },
+      { href: "/ai-agents", label: "AI Agents", icon: Bot, enabled: true },
       { href: "/quotes", label: "Quotes", icon: FileSignature, enabled: true },
       { href: "/reports", label: "Analytics", icon: BarChart3, enabled: true },
     ],
   },
   {
     key: "setup",
-    label: "Set Up My Business",
+    label: "Connect & Set Up",
     icon: Wrench,
     items: [
-      { href: "/launch-readiness", label: "Launch Readiness", icon: ClipboardCheck, enabled: true },
+      { href: "/get-started?revisit=1", label: "Setup", icon: ListChecks, enabled: true },
       { href: "/business-profile", label: "Business Blueprint", icon: BookOpen, enabled: true },
-      { href: "/connect", label: "Connections", icon: Plug, enabled: true },
+      { href: "/connect", label: "Connect", icon: Plug, enabled: true },
       { href: "/site-health", label: "Site Health", icon: HeartPulse, enabled: true, badgeKey: "siteHealth" },
       { href: "/media", label: "Media Library", icon: Images, enabled: true },
       { href: "/domain", label: "Domain", icon: Link2, enabled: true },
@@ -188,6 +187,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const [socialGate, setSocialGate] = useState<boolean | null>(null);
   const [communityGate, setCommunityGate] = useState<boolean | null>(null);
   const [broadcastsHidden, setBroadcastsHidden] = useState(false);
+  const [quotesGate, setQuotesGate] = useState<boolean | null>(null);
   const [socialHidden, setSocialHidden] = useState(false);
   const [communityHidden, setCommunityHidden] = useState(false);
   const [siteHealthScore, setSiteHealthScore] = useState<number | null>(null);
@@ -206,6 +206,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       (snap) => {
         const data = snap.data();
         setBroadcastsGate(data?.broadcastsEnabledByAgency === true);
+        setQuotesGate(data?.quotesEnabledByAgency === true);
         setWebsiteStudioGate(data?.websiteStudioEnabledByAgency === true);
         setSocialGate(data?.socialPlannerEnabledByAgency === true);
         setCommunityGate(data?.communityEnabledByAgency === true);
@@ -388,6 +389,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                 unreadConversations={unreadConversations}
                 siteHealthScore={siteHealthScore}
                 broadcastsGate={broadcastsGate}
+                quotesGate={quotesGate}
                 websiteStudioGate={websiteStudioGate}
                 socialGate={socialGate}
                 communityGate={communityGate}
@@ -433,6 +435,7 @@ function NavGroupSection({
   unreadConversations,
   siteHealthScore,
   broadcastsGate,
+  quotesGate,
   websiteStudioGate,
   socialGate,
   communityGate,
@@ -448,6 +451,7 @@ function NavGroupSection({
   unreadConversations: number;
   siteHealthScore: number | null;
   broadcastsGate: boolean | null;
+  quotesGate: boolean | null;
   websiteStudioGate: boolean | null;
   socialGate: boolean | null;
   communityGate: boolean | null;
@@ -510,6 +514,8 @@ function NavGroupSection({
               (item.href === "/community" && communityGate === false);
 
             const gateHidden =
+              ((item.href === "/quotes" || item.href === "/products") &&
+                quotesGate === false) ||
               (item.href === "/broadcasts" &&
                 broadcastsGate === false &&
                 broadcastsHidden) ||

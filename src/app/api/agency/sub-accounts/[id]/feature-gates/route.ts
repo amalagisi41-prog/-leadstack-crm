@@ -45,6 +45,7 @@ interface PatchBody {
   emailDomainEnabled?: boolean;
   apiAccessEnabled?: boolean;
   broadcastsEnabled?: boolean;
+  quotesEnabled?: boolean;
   outboundVoiceEnabled?: boolean;
   whatsappEnabled?: boolean;
   metaInboxEnabled?: boolean;
@@ -87,6 +88,7 @@ export async function PATCH(
   const wantsEmail = typeof body.emailDomainEnabled === "boolean";
   const wantsApi = typeof body.apiAccessEnabled === "boolean";
   const wantsBroadcasts = typeof body.broadcastsEnabled === "boolean";
+  const wantsQuotes = typeof body.quotesEnabled === "boolean";
   const wantsOutboundVoice = typeof body.outboundVoiceEnabled === "boolean";
   const wantsWhatsapp = typeof body.whatsappEnabled === "boolean";
   const wantsMetaInbox = typeof body.metaInboxEnabled === "boolean";
@@ -108,6 +110,7 @@ export async function PATCH(
     !wantsEmail &&
     !wantsApi &&
     !wantsBroadcasts &&
+    !wantsQuotes &&
     !wantsOutboundVoice &&
     !wantsWhatsapp &&
     !wantsMetaInbox &&
@@ -125,7 +128,7 @@ export async function PATCH(
     return NextResponse.json(
       {
         error:
-          "At least one of `emailDomainEnabled`, `apiAccessEnabled`, `broadcastsEnabled`, `outboundVoiceEnabled`, `whatsappEnabled`, `metaInboxEnabled`, `websiteEnabled`, `socialPlannerEnabled`, `communityEnabled`, `idxEnabled`, `broadcastsHiddenWhenDisabled`, `websiteHiddenWhenDisabled`, `socialPlannerHiddenWhenDisabled`, `communityHiddenWhenDisabled`, or `idxHiddenWhenDisabled` (boolean) is required.",
+          "At least one of `emailDomainEnabled`, `apiAccessEnabled`, `broadcastsEnabled`, `quotesEnabled`, `outboundVoiceEnabled`, `whatsappEnabled`, `metaInboxEnabled`, `websiteEnabled`, `socialPlannerEnabled`, `communityEnabled`, `idxEnabled`, `broadcastsHiddenWhenDisabled`, `websiteHiddenWhenDisabled`, `socialPlannerHiddenWhenDisabled`, `communityHiddenWhenDisabled`, or `idxHiddenWhenDisabled` (boolean) is required.",
       },
       { status: 400 },
     );
@@ -208,6 +211,11 @@ export async function PATCH(
     // send for the 99% case). Operators can cancel by deleting the
     // broadcast doc if a mid-batch stop is needed.
     updates.broadcastsEnabledByAgency = body.broadcastsEnabled;
+  }
+
+  if (wantsQuotes) {
+    // No tear-down — existing quotes, invoices and products are kept.
+    updates.quotesEnabledByAgency = body.quotesEnabled;
   }
 
   if (wantsOutboundVoice) {
@@ -339,6 +347,7 @@ export async function PATCH(
     ...(wantsEmail ? { emailDomainEnabled: body.emailDomainEnabled } : {}),
     ...(wantsApi ? { apiAccessEnabled: body.apiAccessEnabled } : {}),
     ...(wantsBroadcasts ? { broadcastsEnabled: body.broadcastsEnabled } : {}),
+    ...(wantsQuotes ? { quotesEnabled: body.quotesEnabled } : {}),
     ...(wantsOutboundVoice
       ? { outboundVoiceEnabled: body.outboundVoiceEnabled }
       : {}),

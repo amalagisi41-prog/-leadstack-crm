@@ -96,6 +96,13 @@ const SCHEDULES: ScheduleSpec[] = [
     description:
       "Weekly renewal of every connected Meta (Facebook/Instagram) sub-account's long-lived token, Sundays at 06:00 UTC — keeps the connection open indefinitely instead of it silently expiring ~60 days after connecting.",
   },
+  {
+    scheduleId: "agentstack-listings-source-sync",
+    path: "/api/cron/listings-source-sync",
+    cron: "0 5 * * 1",
+    description:
+      "Weekly re-sync of every sub-account's connected public listings page into the Listings inventory, Mondays at 05:00 UTC.",
+  },
 ];
 
 const MARKER_PATH = "system/scheduleRegistration";

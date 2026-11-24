@@ -19,6 +19,7 @@ import { useSubAccount } from "@/context/sub-account-context";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RprLinkButton } from "@/components/properties/rpr-link-button";
+import { CreativeGenerationPanel } from "@/components/properties/creative-generation-panel";
 import type { CampaignBriefDoc } from "@/types/marketing-campaigns";
 import type { IdxListingDoc } from "@/types/idx";
 
@@ -480,6 +481,13 @@ function AssetsTab({
           </div>
         )}
       </section>
+      <CreativeGenerationPanel
+        subAccountId={subAccountId}
+        listingId={listingId}
+        photoUrl={brief.brief.images[0]}
+        initialVideo={brief.video}
+        initialImage={brief.creativeImage}
+      />
       <section className="bg-card rounded-2xl border p-5">
         <div className="flex items-start gap-3">
           <PackageOpen className="text-primary mt-0.5 h-5 w-5" />

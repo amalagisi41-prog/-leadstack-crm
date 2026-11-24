@@ -525,7 +525,7 @@ function IntakeFormSection({
           <span>
             A {page.payment.currency} {page.payment.amount}
             {page.payment.description ? ` ${page.payment.description.toLowerCase()}` : ""}{" "}
-            is required to confirm this booking. You&apos;ll see the PayPal
+            is required to confirm this booking. You&apos;ll see the payment
             link on the next screen.
           </span>
         </div>
@@ -580,7 +580,7 @@ function ConfirmationPanel({
   // Auto-redirect only for confirmed (non-pending) bookings carrying a
   // redirect URL. Pending/paid holds never redirect (defense-in-depth on
   // top of the server already nulling redirectUrl for them) so the
-  // PayPal CTA stays put.
+  // payment CTA stays put.
   const willRedirect = !pending && !!confirmation.redirectUrl;
   const [secondsLeft, setSecondsLeft] = useState(REDIRECT_COUNTDOWN_SECONDS);
 
@@ -633,7 +633,7 @@ function ConfirmationPanel({
           rel="noreferrer"
           className="inline-flex h-10 items-center justify-center rounded-lg border bg-foreground px-5 text-sm font-medium text-background transition"
         >
-          Pay {page.payment?.currency} {page.payment?.amount} on PayPal
+          Pay {page.payment?.currency} {page.payment?.amount}
         </a>
       )}
       <p className="text-xs">

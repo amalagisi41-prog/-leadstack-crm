@@ -80,6 +80,12 @@ export async function GET(
       ...brief,
       createdAt: isoTimestamp(brief.createdAt),
       updatedAt: isoTimestamp(brief.updatedAt),
+      video: brief.video
+        ? { ...brief.video, requestedAt: isoTimestamp(brief.video.requestedAt) }
+        : null,
+      creativeImage: brief.creativeImage
+        ? { ...brief.creativeImage, requestedAt: isoTimestamp(brief.creativeImage.requestedAt) }
+        : null,
     },
     listing: listing
       ? { ...listing, syncedAt: isoTimestamp(listing.syncedAt) }

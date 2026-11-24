@@ -1,0 +1,30 @@
+{
+  "id": "speed-to-lead",
+  "scenes": [
+    {
+      "id": "hello",
+      "audio": "voice/speed-to-lead/hello.wav",
+      "seconds": 4.972426
+    },
+    {
+      "id": "attach",
+      "audio": "voice/speed-to-lead/attach.wav",
+      "seconds": 3.8678
+    },
+    {
+      "id": "timer",
+      "audio": "voice/speed-to-lead/timer.wav",
+      "seconds": 5.433469
+    },
+    {
+      "id": "chat",
+      "audio": "voice/speed-to-lead/chat.wav",
+      "seconds": 4.353741
+    },
+    {
+      "id": "next",
+      "audio": "voice/speed-to-lead/next.wav",
+      "seconds": 2.054966
+    }
+  ]
+}

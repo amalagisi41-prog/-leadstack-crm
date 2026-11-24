@@ -1284,6 +1284,18 @@ function SetupProgressCard({
             Continue with {nextStep.title}
             <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
           </Button>
+          {/* This number tracks CRM setup (contacts, forms, SMS, AI, pipeline)
+              — a different measure than the Site Health score in the sidebar,
+              which covers your website and compliance tasks. Named here so
+              seeing two different percentages doesn't read as a bug. */}
+          <p className="text-muted-foreground mt-3 text-[11px] leading-snug">
+            This tracks your CRM setup.{" "}
+            <Link href={saPath("/site-health")} className="underline underline-offset-2 hover:text-foreground">
+              Site Health
+            </Link>{" "}
+            (in the sidebar) tracks your website and compliance tasks
+            separately.
+          </p>
         </div>
       </div>
     </section>

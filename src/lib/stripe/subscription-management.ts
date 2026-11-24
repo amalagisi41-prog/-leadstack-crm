@@ -5,9 +5,9 @@ import { getMarketingPlan } from "@/config/landing";
 import type { AgencyDoc } from "@/types";
 import {
   ADD_ON_KEYS,
-  addOnKeyForPriceId,
+  addOnKeyForPrice,
   addOnPriceId,
-  planKeyForPriceId,
+  planKeyForPrice,
   type AddOnKey,
   type PlanKey,
 } from "@/lib/stripe/catalog";
@@ -84,10 +84,7 @@ export function summarizeSubscription(
   let activeAddOnCount = 0;
 
   for (const item of subscription.items.data) {
-    const priceId =
-      typeof item.price === "string" ? item.price : item.price?.id ?? null;
-    if (!priceId) continue;
-    const addOnKey = addOnKeyForPriceId(priceId);
+    const addOnKey = itemAddOnKey(item);
     if (!addOnKey) continue;
     activeAddOnCount += item.quantity ?? 1;
     if (!addOnKeys.includes(addOnKey)) addOnKeys.push(addOnKey);
@@ -184,10 +181,7 @@ export async function syncBundleDiscount(subscriptionId: string) {
 
 export function findBasePlanItem(subscription: Stripe.Subscription) {
   for (const item of subscription.items.data) {
-    const priceId =
-      typeof item.price === "string" ? item.price : item.price?.id ?? null;
-    if (!priceId) continue;
-    const planKey = planKeyForPriceId(priceId);
+    const planKey = itemPlanKey(item);
     if (planKey) return { item, planKey };
   }
   return null;
@@ -208,6 +202,17 @@ export function findAddOnItem(
           priceId && item.metadata?.subAccountId === subAccountId,
     );
     if (exact) return exact;
+    // Only a legacy item with NO sub-account tag may stand in for this one.
+    // Falling back to ANY item with the price meant a second sub-account
+    // turning IDX on matched the first one's line, reported "already", and
+    // was never billed.
+    return (
+      subscription.items.data.find(
+        (item) =>
+          (typeof item.price === "string" ? item.price : item.price?.id) ===
+            priceId && !item.metadata?.subAccountId,
+      ) ?? null
+    );
   }
 
   return (
@@ -251,9 +256,8 @@ function hasBundleDiscount(
 
 function summarizeLineItem(item: Stripe.SubscriptionItem): BillingLineItem {
   const price = typeof item.price === "string" ? null : item.price;
-  const priceId = price?.id ?? (typeof item.price === "string" ? item.price : "");
-  const planKey = priceId ? planKeyForPriceId(priceId) : null;
-  const addOnKey = priceId ? addOnKeyForPriceId(priceId) : null;
+  const planKey = itemPlanKey(item);
+  const addOnKey = itemAddOnKey(item);
   const quantity = item.quantity ?? 1;
   const unitAmount = price?.unit_amount ?? null;
 
@@ -263,7 +267,7 @@ function summarizeLineItem(item: Stripe.SubscriptionItem): BillingLineItem {
       ? getMarketingPlan(planKey).name
       : addOnKey
         ? addOnName(addOnKey)
-        : "Other subscription item",
+        : price?.nickname?.trim() || "Other subscription item",
     kind: planKey ? "plan" : addOnKey ? "add_on" : "other",
     quantity,
     currency: price?.currency ?? null,
@@ -283,4 +287,24 @@ function addOnName(key: AddOnKey) {
     case "website_studio":
       return "AI Website Studio";
   }
+}
+
+function priceShape(item: Stripe.SubscriptionItem) {
+  if (typeof item.price === "string") return { id: item.price };
+  if (!item.price) return null;
+  return {
+    id: item.price.id,
+    lookup_key: item.price.lookup_key,
+    metadata: item.price.metadata,
+  };
+}
+
+export function itemPlanKey(item: Stripe.SubscriptionItem): PlanKey | null {
+  const price = priceShape(item);
+  return price ? planKeyForPrice(price) : null;
+}
+
+export function itemAddOnKey(item: Stripe.SubscriptionItem): AddOnKey | null {
+  const price = priceShape(item);
+  return price ? addOnKeyForPrice(price) : null;
 }

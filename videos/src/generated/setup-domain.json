@@ -1,0 +1,30 @@
+{
+  "id": "setup-domain",
+  "scenes": [
+    {
+      "id": "hello",
+      "audio": "voice/setup-domain/hello.wav",
+      "seconds": 4.378639
+    },
+    {
+      "id": "why-last",
+      "audio": "voice/setup-domain/why-last.wav",
+      "seconds": 5.411927
+    },
+    {
+      "id": "type",
+      "audio": "voice/setup-domain/type.wav",
+      "seconds": 2.345215
+    },
+    {
+      "id": "check",
+      "audio": "voice/setup-domain/check.wav",
+      "seconds": 4.18127
+    },
+    {
+      "id": "done",
+      "audio": "voice/setup-domain/done.wav",
+      "seconds": 2.418231
+    }
+  ]
+}

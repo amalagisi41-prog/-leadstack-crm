@@ -12,7 +12,6 @@ import {
   recordQuoteActivity,
 } from "@/lib/quotes/lifecycle";
 import { buildQuoteUrl, issueQuoteToken } from "@/lib/quotes/token";
-import { buildPaypalInvoiceUrl } from "@/lib/paypal/payment-link";
 import type { Quote } from "@/types/quotes";
 import type { SubAccountDoc } from "@/types";
 
@@ -26,18 +25,17 @@ export const dynamic = "force-dynamic";
  *   1. Verify caller is an active member of the sub-account.
  *   2. Load the quote + verify it belongs to this sub-account.
  *   3. Load the recipient contact + verify email present.
- *   4. Load the sub-account doc for business name + PayPal config.
- *   4a. Invoice path: generate a paypal.me URL from the sub-account's
- *       PayPal username + invoice total. Always regenerated on send
- *       (paypal.me URLs are stateless, no API call, no "old link" to
- *       deactivate). 503 if PayPal isn't configured.
+ *   4. Load the sub-account doc for business name + logo + payment portal.
+ *   4a. Invoice path: if a payment portal is connected (Settings →
+ *       Payments — any provider, not just one), snapshot its link onto
+ *       the invoice as-is. No portal connected → invoice still sends,
+ *       just with no Pay link; the operator marks it paid manually.
  *   5. Issue a fresh public token (HMAC-signed) and persist the hash.
  *   6. Render + send the email via Resend. Reply-To = caller's email.
  *   7. Persist lifecycle update.
  *   8. Fire activity + automation side-effects.
  *
- * 503 when Resend isn't configured (quote or invoice) OR when PayPal
- * isn't configured (invoice only).
+ * 503 when Resend isn't configured.
  */
 export async function POST(
   request: Request,
@@ -98,52 +96,23 @@ export async function POST(
     );
   }
 
-  // 4. Sub-account doc for business name + PayPal config + logo
+  // 4. Sub-account doc for business name + logo + payment portal
   const subSnap = await db.doc(`subAccounts/${subAccountId}`).get();
   const sub = (subSnap.exists ? (subSnap.data() as SubAccountDoc) : null);
   const businessName = sub?.name || "Your business";
   const businessLogoUrl = sub?.logoUrl ?? null;
 
-  // 4a. Invoice path — build a paypal.me URL from the sub-account's
-  //     PayPal config. Always regenerate on send (paypal.me URLs encode
-  //     the amount inline; no API call; no old link to deactivate).
+  // 4a. Invoice path — snapshot the operator's connected payment portal
+  //     link (as-is, no amount templating) onto the invoice. No portal
+  //     connected → the invoice still sends, just with no Pay link.
   let paymentLinkUpdate: {
     paymentLinkUrl: string;
-    paymentLinkId: string | null;
     paymentLinkMintedAt: ReturnType<typeof FieldValue.serverTimestamp>;
   } | null = null;
-  if (quote.kind === "invoice") {
-    const paypal = sub?.paypalConfig ?? null;
-    if (!paypal?.username) {
-      return NextResponse.json(
-        {
-          error:
-            "Connect PayPal under Settings → Payments before sending invoices.",
-        },
-        { status: 503 },
-      );
-    }
-    try {
-      const url = buildPaypalInvoiceUrl({ paypal, invoice: quote });
-      paymentLinkUpdate = {
-        paymentLinkUrl: url,
-        paymentLinkId: null,
-        paymentLinkMintedAt: FieldValue.serverTimestamp(),
-      };
-      // Reflect locally so the email + activity see the fresh URL.
-      quote.paymentLinkUrl = url;
-      quote.paymentLinkId = null;
-    } catch (err) {
-      console.error("[quotes/send] paypal link build failed", err);
-      return NextResponse.json(
-        {
-          error: `Failed to build PayPal link: ${
-            err instanceof Error ? err.message : "unknown error"
-          }`,
-        },
-        { status: 500 },
-      );
-    }
+  if (quote.kind === "invoice" && sub?.paymentPortalConfig?.url) {
+    const url = sub.paymentPortalConfig.url;
+    paymentLinkUpdate = { paymentLinkUrl: url, paymentLinkMintedAt: FieldValue.serverTimestamp() };
+    quote.paymentLinkUrl = url;
   }
 
   // 5. Issue token (server-only, HMAC + nonce; raw token never persisted)

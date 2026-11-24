@@ -83,15 +83,15 @@ export async function PATCH(
     return NextResponse.json({ error: "Booking page not found" }, { status: 404 });
   }
 
-  // Same payment gate as create — guard against requiring payment when
-  // PayPal isn't connected. Edits that toggle payment on still need this.
+  // Same payment gate as create — guard against requiring payment when no
+  // payment portal is connected. Edits that toggle payment on still need this.
   if (data.payment) {
     const subSnap = await db.doc(`subAccounts/${subAccountId}`).get();
-    if (!subSnap.data()?.paypalConfig) {
+    if (!subSnap.data()?.paymentPortalConfig?.url) {
       return NextResponse.json(
         {
           error:
-            "Connect a PayPal.me username under Settings → Payments before requiring payment on a booking page.",
+            "Connect a payment portal under Settings → Payments before requiring payment on a booking page.",
         },
         { status: 400 },
       );

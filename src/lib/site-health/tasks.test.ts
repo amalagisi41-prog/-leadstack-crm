@@ -1,9 +1,117 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildSiteHealthTasks,
   computeSiteHealth,
+  deriveWebChatEnabled,
+  isBusinessEmailVerified,
   remainingSiteHealthTaskIds,
   type SiteHealthInputs,
 } from "./tasks";
+
+describe("deriveWebChatEnabled", () => {
+  it("is false when the chat channel itself is off, regardless of the site", () => {
+    expect(
+      deriveWebChatEnabled({
+        chatChannelEnabled: false,
+        publishedWebsite: true,
+        publishedAgentSite: true,
+      }),
+    ).toBe(false);
+  });
+
+  it("completes for a site published through the legacy gitpage.site-based Website Studio", () => {
+    // Regression: this task used to only recognize `publishedAgentSite`,
+    // stranding every operator who published through the older builder —
+    // they could enable chat and this item would never clear.
+    expect(
+      deriveWebChatEnabled({
+        chatChannelEnabled: true,
+        publishedWebsite: true,
+        publishedAgentSite: false,
+      }),
+    ).toBe(true);
+  });
+
+  it("completes for a site published through the newer AI Website Studio", () => {
+    expect(
+      deriveWebChatEnabled({
+        chatChannelEnabled: true,
+        publishedWebsite: false,
+        publishedAgentSite: true,
+      }),
+    ).toBe(true);
+  });
+
+  it("completes for an externally hosted site with a verified widget install", () => {
+    expect(
+      deriveWebChatEnabled({
+        chatChannelEnabled: true,
+        publishedWebsite: false,
+        publishedAgentSite: false,
+        agentStackWidgetInstalled: true,
+      }),
+    ).toBe(true);
+  });
+
+  it("stays incomplete when chat is on but no site is published anywhere", () => {
+    expect(
+      deriveWebChatEnabled({
+        chatChannelEnabled: true,
+        publishedWebsite: false,
+        publishedAgentSite: false,
+      }),
+    ).toBe(false);
+  });
+});
+
+describe("Site Health — chat task copy explains WHY it's blocked", () => {
+  // Regression: the task used to send everyone to the same "Set up chat"
+  // link regardless of cause. An agent on an externally hosted site who
+  // hasn't pasted the widget snippet yet could flip that toggle forever and
+  // this item would never clear, with no hint why.
+  const base: SiteHealthInputs = {
+    profile: {},
+    publishedWebsite: false,
+    publishedAgentSite: false,
+    customDomain: undefined,
+    hasLeadForm: false,
+    hasBookingPage: false,
+    webChatEnabled: false,
+    businessEmailVerified: false,
+  };
+
+  it("points to publishing a website when nothing is published anywhere", () => {
+    const chat = buildSiteHealthTasks(base).find((t) => t.id === "chat")!;
+    expect(chat.action).toBe("Publish your website");
+    expect(chat.href).toBe("/website-studio");
+  });
+
+  it("points to the chat snippet when an external site is verified but carries no widget", () => {
+    const chat = buildSiteHealthTasks({
+      ...base,
+      externalSiteVerified: true,
+    }).find((t) => t.id === "chat")!;
+    expect(chat.action).toBe("Get your chat snippet");
+    expect(chat.detail).toContain("chat snippet is not on it yet");
+  });
+
+  it("falls back to the generic chat setup link once a site is published", () => {
+    const chat = buildSiteHealthTasks({
+      ...base,
+      publishedAgentSite: true,
+    }).find((t) => t.id === "chat")!;
+    expect(chat.action).toBe("Set up chat");
+    expect(chat.href).toBe("/ai-agents/web-chat");
+  });
+
+  it("uses the generic copy once chat is actually enabled", () => {
+    const chat = buildSiteHealthTasks({
+      ...base,
+      webChatEnabled: true,
+    }).find((t) => t.id === "chat")!;
+    expect(chat.action).toBe("Set up chat");
+  });
+});
 
 /**
  * The path to 100%, walked persona by persona.
@@ -217,5 +325,72 @@ describe("Site Health — compliance is all-or-nothing", () => {
       profile: { ...PROFILE_DONE, fairHousing: false },
     };
     expect(remainingSiteHealthTaskIds(unchecked)).toContain("compliance");
+  });
+});
+
+describe("Site Health — business email verification", () => {
+  it("does not treat a merely typed Reply-To address as verified", () => {
+    expect(
+      isBusinessEmailVerified({
+        replyToEmail: "agent@example.com",
+        accountEmail: "agent@example.com",
+        accountEmailVerified: false,
+      })
+    ).toBe(false);
+  });
+
+  it("accepts a Firebase-verified Reply-To when it matches the signed-in account", () => {
+    expect(
+      isBusinessEmailVerified({
+        replyToEmail: "agent@example.com",
+        accountEmail: "agent@example.com",
+        accountEmailVerified: true,
+      })
+    ).toBe(true);
+  });
+
+  it("does not trust a verified account email when Reply-To points elsewhere", () => {
+    expect(
+      isBusinessEmailVerified({
+        replyToEmail: "business@example.com",
+        accountEmail: "agent@example.com",
+        accountEmailVerified: true,
+      })
+    ).toBe(false);
+  });
+
+  it("accepts a verified sending provider for a different Reply-To mailbox", () => {
+    expect(
+      isBusinessEmailVerified({
+        replyToEmail: "business@example.com",
+        resendVerified: true,
+      })
+    ).toBe(true);
+
+    expect(
+      isBusinessEmailVerified({
+        replyToEmail: "business@example.com",
+        googleWorkspaceConnected: true,
+      })
+    ).toBe(true);
+  });
+
+  it("keeps the Site Health score at 88% until business email is actually trusted", () => {
+    const pending = {
+      profile: PROFILE_DONE,
+      publishedWebsite: true,
+      publishedAgentSite: false,
+      customDomain: "example-realty.test",
+      hasLeadForm: true,
+      hasBookingPage: true,
+      webChatEnabled: true,
+      businessEmailVerified: false,
+    };
+
+    expect(computeSiteHealth(pending).score).toBe(88);
+    expect(remainingSiteHealthTaskIds(pending)).toEqual(["email"]);
+    expect(
+      computeSiteHealth({ ...pending, businessEmailVerified: true }).score
+    ).toBe(100);
   });
 });

@@ -1,0 +1,179 @@
+{
+  "id": "automated-marketing",
+  "title": "Automated marketing",
+  "scenes": [
+    {
+      "id": "hello",
+      "pose": "wave",
+      "visual": "hello",
+      "headline": [
+        "Marketing",
+        "that",
+        "*runs",
+        "itself.*"
+      ],
+      "line": "Hi, I'm Zack. Let me show you how AgentStack markets your listings for you, and where to find it.",
+      "data": {
+        "image": "city"
+      },
+      "sub": "Automated marketing"
+    },
+    {
+      "id": "where",
+      "pose": "point",
+      "visual": "flow",
+      "headline": [
+        "Start",
+        "in",
+        "*Campaigns.*"
+      ],
+      "line": "In the sidebar, open Marketing, then Campaigns. That's your campaign panel.",
+      "data": {
+        "steps": [
+          "Sidebar",
+          "Marketing",
+          "Campaigns"
+        ]
+      }
+    },
+    {
+      "id": "drafts",
+      "pose": "point",
+      "visual": "cards",
+      "headline": [
+        "One",
+        "listing.",
+        "*Every",
+        "channel.*"
+      ],
+      "line": "Pick a listing, and AgentStack drafts the whole campaign for you: a landing page, social posts, an email, a text, and a Google Business post.",
+      "data": {
+        "items": [
+          {
+            "icon": "globe",
+            "label": "Landing page"
+          },
+          {
+            "icon": "facebook",
+            "label": "Social posts"
+          },
+          {
+            "icon": "envelope",
+            "label": "Email"
+          },
+          {
+            "icon": "phone",
+            "label": "Text"
+          }
+        ]
+      }
+    },
+    {
+      "id": "approve",
+      "pose": "idle",
+      "visual": "flow",
+      "headline": [
+        "Nothing",
+        "goes",
+        "out",
+        "*without",
+        "you.*"
+      ],
+      "line": "Nothing goes out on its own. Review each draft, change anything you like, and approve it before it publishes.",
+      "data": {
+        "steps": [
+          "Draft",
+          "You review",
+          "Approve",
+          "Published"
+        ]
+      }
+    },
+    {
+      "id": "creative",
+      "pose": "point",
+      "visual": "cards",
+      "headline": [
+        "Add",
+        "*video",
+        "and",
+        "images.*"
+      ],
+      "line": "Want more? Open the property, and on its Assets tab, turn the listing photo into a short video or a branded image, where your account has it switched on.",
+      "data": {
+        "items": [
+          {
+            "icon": "megaphone",
+            "label": "Short video",
+            "coral": true
+          },
+          {
+            "icon": "star",
+            "label": "Branded image"
+          }
+        ]
+      }
+    },
+    {
+      "id": "autopilot",
+      "pose": "point",
+      "visual": "field",
+      "headline": [
+        "Put",
+        "it",
+        "on",
+        "*autopilot.*"
+      ],
+      "line": "To put it on autopilot, go to Settings, then Admin, and turn on auto-draft. Every new listing from your feed gets a draft campaign, waiting for your review.",
+      "data": {
+        "label": "Settings \u2192 Admin",
+        "value": "Auto-draft a campaign for every new listing",
+        "highlight": "Auto-draft"
+      }
+    },
+    {
+      "id": "results",
+      "pose": "thumbs",
+      "visual": "cards",
+      "headline": [
+        "See",
+        "*what's",
+        "working.*"
+      ],
+      "line": "Then check Analytics for a plain-English summary of how it's going, and Site Health for tips to make your landing page work harder.",
+      "data": {
+        "items": [
+          {
+            "icon": "chart",
+            "label": "Analytics",
+            "coral": true
+          },
+          {
+            "icon": "check",
+            "label": "Site Health"
+          }
+        ]
+      }
+    },
+    {
+      "id": "next",
+      "pose": "cheer",
+      "visual": "checklist",
+      "headline": [
+        "Marketing,",
+        "*handled.*"
+      ],
+      "line": "That's it. Your marketing runs in the background, and you stay in control.",
+      "data": {
+        "items": [
+          "Open Marketing \u2192 Campaigns",
+          "Pick a listing",
+          "Review & approve",
+          "Turn on auto-draft"
+        ],
+        "done": 4,
+        "footer": "Marketing on autopilot"
+      }
+    }
+  ]
+}

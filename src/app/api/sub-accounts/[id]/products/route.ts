@@ -6,6 +6,7 @@ import {
   sanitizeProductPayload,
   type CreateProductPayload,
 } from "@/lib/products/sanitize-product";
+import { quotesGateResponse } from "@/lib/quotes/gate";
 import { DEFAULT_PRODUCT } from "@/types/products";
 import type { Product } from "@/types/products";
 
@@ -37,6 +38,8 @@ export async function POST(
 
   const access = await requireSubAccountMember(request, subAccountId);
   if (access instanceof NextResponse) return access;
+  const gated = await quotesGateResponse(subAccountId);
+  if (gated) return gated;
 
   let body: CreateProductPayload;
   try {

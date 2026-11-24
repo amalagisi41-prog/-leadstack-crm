@@ -8,6 +8,7 @@ import { requireAgencyOwner } from "@/lib/auth/require-tenancy";
 import {
   ADD_ON_GATE_FIELD,
   ADD_ON_KEYS,
+  ADD_ON_PRICE_ENV_VAR,
   addOnPriceId,
   type AddOnKey,
 } from "@/lib/stripe/catalog";
@@ -64,8 +65,12 @@ export async function POST(
 
   const priceId = addOnPriceId(addOnKey as AddOnKey);
   if (!priceId) {
+    const envVar = ADD_ON_PRICE_ENV_VAR[addOnKey as AddOnKey];
     return NextResponse.json(
-      { error: "This add-on isn't configured on this deployment yet." },
+      {
+        error: `This add-on isn't configured on this deployment yet — set ${envVar} to a Stripe recurring price id and redeploy.`,
+        missingEnvVar: envVar,
+      },
       { status: 503 },
     );
   }

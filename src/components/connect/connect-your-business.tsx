@@ -2,11 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ExternalLink } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { toast } from "sonner";
+
 import { doc, onSnapshot } from "firebase/firestore";
 import {
   Building,
   Calendar,
+  CreditCard,
   Facebook,
   FileUp,
   Lock,
@@ -15,7 +18,6 @@ import {
   MessagesSquare,
   Phone,
   Search,
-  Sparkles,
   Star,
   Upload,
   Globe2,
@@ -27,11 +29,17 @@ import { metaCanInbox } from "@/lib/comms/meta-capabilities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+import { EasyConnectorsSection } from "@/components/connect/easy-connectors-section";
+import { GoogleGIcon } from "@/components/brand/google-g-icon";
+import { googleAccountConnectPath } from "@/lib/google/account-connect-path";
+import type { GoogleAccountConfig } from "@/types/tenancy";
 
-type PortalProfiles = { zillow: string; homes: string; realtor: string };
-
-const EMPTY_PORTAL_PROFILES: PortalProfiles = { zillow: "", homes: "", realtor: "" };
+/** The first requested Google scope that was NOT granted, named for the operator — or null if everything was. */
+function googleMissingScope(account: GoogleAccountConfig): string | null {
+  if (!account.gmail) return "Gmail sending";
+  if (!account.calendar) return "Calendar";
+  return null;
+}
 
 type ConnectionStatus =
   | "connected"
@@ -41,6 +49,18 @@ type ConnectionStatus =
 
 interface ConnectionCardData {
   key: string;
+  /**
+   * "account" — an outside identity or service the operator provides
+   * credentials for (Google, Meta, Twilio, IDX Broker, a payment provider,
+   * a domain registrar, an API consumer). "feature" — an in-app capability
+   * that needs no outside sign-in at all (chat widget, booking pages, CSV
+   * import, forms, reviews link). Kept apart because mixing the two in one
+   * flat list is the thing new operators actually got lost in: "sign into
+   * something" and "turn a built-in thing on" are different mental
+   * actions, and the account-first reframe is specifically about not
+   * making someone hunt for Twilio between Booking Pages and CSV Import.
+   */
+  group: "account" | "feature";
   icon: React.ElementType;
   iconTone: string;
   title: string;
@@ -119,7 +139,11 @@ function ConnectionCard({ data }: { data: ConnectionCardData }) {
             variant="outline"
             className="w-full"
             render={
-              data.actionHref ? <Link href={data.actionHref} /> : undefined
+              data.actionHref
+                ? data.actionHref.startsWith("/api/")
+                  ? <a href={data.actionHref} />
+                  : <Link href={data.actionHref} />
+                : undefined
             }
           >
             {data.actionLabel}
@@ -144,8 +168,25 @@ export function ConnectYourBusiness() {
   const { subAccount, saPath } = useSubAccount();
   const [webChatEnabled, setWebChatEnabled] = useState<boolean | null>(null);
   const [search, setSearch] = useState("");
-  const [portalProfiles, setPortalProfiles] = useState<PortalProfiles>(EMPTY_PORTAL_PROFILES);
-  const [savingProfiles, setSavingProfiles] = useState(false);
+  const searchParams = useSearchParams();
+  const googleResult = searchParams.get("google");
+  const googleError = searchParams.get("google_error");
+
+  useEffect(() => {
+    if (googleResult === "connected") {
+      toast.success("Google account connected.");
+    } else if (googleResult === "error") {
+      const reason =
+        googleError === "access_denied"
+          ? "Google access was not granted."
+          : googleError === "not_configured"
+            ? "Google sign-in is not configured on this deployment yet."
+            : googleError === "admin_only"
+              ? "Only a sub-account admin can connect Google."
+              : "Google connection did not finish. Try again.";
+      toast.error(reason);
+    }
+  }, [googleResult, googleError]);
 
   useEffect(() => {
     if (!subAccount) return;
@@ -159,35 +200,6 @@ export function ConnectYourBusiness() {
     );
   }, [subAccount]);
 
-  useEffect(() => {
-    if (!subAccount) return;
-    void fetch(`/api/sub-accounts/${subAccount.id}/marketing/sources`)
-      .then((res) => res.json())
-      .then((data: { portalProfiles?: Partial<PortalProfiles> }) =>
-        setPortalProfiles({ ...EMPTY_PORTAL_PROFILES, ...data.portalProfiles })
-      )
-      .catch(() => undefined);
-  }, [subAccount]);
-
-  async function savePortalProfiles() {
-    if (!subAccount) return;
-    setSavingProfiles(true);
-    try {
-      const res = await fetch(`/api/sub-accounts/${subAccount.id}/marketing/sources`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ portalProfiles }),
-      });
-      const data = await res.json().catch(() => ({})) as { ok?: boolean; error?: string; portalProfiles?: Partial<PortalProfiles> };
-      if (!res.ok || !data.ok) throw new Error(data.error ?? "Could not save profile links.");
-      setPortalProfiles({ ...EMPTY_PORTAL_PROFILES, ...data.portalProfiles });
-      toast.success("Realtor profile links saved.");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not save profile links.");
-    } finally {
-      setSavingProfiles(false);
-    }
-  }
 
   const cards = useMemo<ConnectionCardData[]>(() => {
     if (!subAccount) return [];
@@ -200,6 +212,8 @@ export function ConnectYourBusiness() {
     const formsHref = saPath("/forms");
     const aiAgentsHref = saPath("/ai-agents/web-chat");
     const domainHref = saPath("/domain");
+    const calendarHref = `${settingsHref}#calendar-connection`;
+    const googleAccount = subAccount.googleAccountConfig ?? null;
 
     const smsConnected = subAccount.twilioConfig?.enabled === true;
     const emailDomainVerified =
@@ -213,6 +227,16 @@ export function ConnectYourBusiness() {
     const metaConnected = metaCanInbox(subAccount.metaConfig ?? null);
     const metaNeedsAttention =
       !!subAccount.metaConfig?.connected && !metaConnected;
+    // metaInboxEnabledByAgency/socialPlannerEnabledByAgency are a deliberate
+    // "inert and invisible everywhere" preview gate — the connect UI itself
+    // (SubAccountMetaSection) renders nothing at all until the agency turns
+    // one on. Showing this card unconditionally used to promise a working
+    // connection that Settings could never deliver — the dead end behind
+    // "no social sign up anywhere." Matching that same contract here means
+    // the card doesn't exist for a sub-account the feature is invisible for.
+    const metaGateOn =
+      subAccount.metaInboxEnabledByAgency === true ||
+      subAccount.socialPlannerEnabledByAgency === true;
 
     const idxConfigured =
       subAccount.idxEnabledByAgency === true &&
@@ -220,16 +244,28 @@ export function ConnectYourBusiness() {
     const idxNeedsAttention =
       subAccount.idxEnabledByAgency === true && !subAccount.idxConfig?.enabled;
 
-    return [
+    const outlookCalendarConnected =
+      subAccount.calendarConfig?.status === "connected" &&
+      subAccount.calendarConfig.provider === "outlook";
+
+    const list: (ConnectionCardData | null)[] = [
       {
         key: "domain-hosting",
+        group: "account",
         icon: Globe2,
         iconTone: "bg-cyan-500/10 text-cyan-700 dark:text-cyan-400",
         title: "Domain & external host",
         detail: subAccount.customDomain ?? undefined,
         blurb:
           "Have AgentStack review your existing site and content while your domain and hosting remain with your current provider.",
-        status: subAccount.customDomain ? "connected" : "not_connected",
+        status:
+          subAccount.customDomainState === "live"
+            ? "connected"
+            : subAccount.customDomainState === "points_elsewhere" ||
+                subAccount.customDomainState === "no_records" ||
+                subAccount.customDomainState === "unknown"
+              ? "needs_attention"
+              : "not_connected",
         actionLabel: subAccount.customDomain
           ? "Manage domain"
           : "Connect domain",
@@ -237,6 +273,7 @@ export function ConnectYourBusiness() {
       },
       {
         key: "api-automation",
+        group: "account",
         icon: Code2,
         iconTone: "bg-slate-500/10 text-slate-700 dark:text-slate-300",
         title: "Zapier, Make & API",
@@ -250,6 +287,7 @@ export function ConnectYourBusiness() {
       },
       {
         key: "email",
+        group: "account",
         icon: Mail,
         iconTone: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
         title: "Business email",
@@ -269,10 +307,11 @@ export function ConnectYourBusiness() {
             ? "connected"
             : "not_connected",
         actionLabel: emailDomainVerified ? "Manage" : "Connect",
-        actionHref: settingsHref,
+        actionHref: `${settingsHref}?tab=messaging#business-email`,
       },
       {
         key: "sms",
+        group: "account",
         icon: Phone,
         iconTone: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
         title: "Text messaging",
@@ -282,10 +321,11 @@ export function ConnectYourBusiness() {
         blurb: "Your own number for two-way SMS with leads and clients.",
         status: smsConnected ? "connected" : "not_connected",
         actionLabel: smsConnected ? "Manage" : "Connect",
-        actionHref: settingsHref,
+        actionHref: `${settingsHref}?tab=messaging#sms-connection`,
       },
       {
         key: "chat-widget",
+        group: "feature",
         icon: MessageSquare,
         iconTone: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400",
         title: "Chat widget",
@@ -296,8 +336,11 @@ export function ConnectYourBusiness() {
         actionLabel: webChatEnabled ? "Verify install" : "Connect",
         actionHref: aiAgentsHref,
       },
-      {
+      !metaGateOn
+        ? null
+        : {
         key: "meta",
+        group: "account",
         icon: Facebook,
         iconTone: "bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-400",
         title: "Facebook & Instagram",
@@ -316,10 +359,45 @@ export function ConnectYourBusiness() {
             ? "connected"
             : "not_connected",
         actionLabel: metaConnected ? "Manage" : "Connect",
-        actionHref: settingsHref,
+        actionHref: `${settingsHref}?tab=messaging#meta-connection`,
+      },
+      {
+        key: "outlook-calendar",
+        group: "account",
+        icon: Calendar,
+        iconTone: "bg-sky-500/10 text-sky-700 dark:text-sky-400",
+        title: "Microsoft / Outlook",
+        // Google Calendar lives on the Google card below — this codebase's
+        // OAuth client already unifies Gmail + Calendar into one grant, so a
+        // second, separate "connect Google Calendar" entry point here was the
+        // exact duplicate-path confusion the account-first reframe exists to
+        // remove. This card is Outlook-only.
+        detail:
+          outlookCalendarConnected ? subAccount.calendarConfig?.email ?? undefined : undefined,
+        blurb:
+          "Authorize the Outlook calendar you already use for booking pages. OAuth credentials stay server-side.",
+        status: outlookCalendarConnected ? "connected" : "not_connected",
+        actionLabel: outlookCalendarConnected ? "Manage calendar" : "Connect Outlook",
+        actionHref: calendarHref,
+      },
+      {
+        key: "payments",
+        group: "account",
+        icon: CreditCard,
+        iconTone: "bg-lime-500/10 text-lime-700 dark:text-lime-400",
+        title: "Payments",
+        detail: subAccount.paymentPortalConfig?.url
+          ? subAccount.paymentPortalConfig.label || "Connected"
+          : undefined,
+        blurb:
+          "Connect the payment link your clients already pay you through (PayPal.me, Stripe payment link, or any other hosted checkout) for invoices and paid booking pages.",
+        status: subAccount.paymentPortalConfig?.url ? "connected" : "not_connected",
+        actionLabel: subAccount.paymentPortalConfig?.url ? "Manage" : "Connect",
+        actionHref: `${settingsHref}#payment-connection`,
       },
       {
         key: "booking",
+        group: "feature",
         icon: Calendar,
         iconTone: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
         title: "Booking pages",
@@ -331,6 +409,7 @@ export function ConnectYourBusiness() {
       },
       {
         key: "csv-import",
+        group: "feature",
         icon: FileUp,
         iconTone: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
         title: "CSV import",
@@ -341,6 +420,7 @@ export function ConnectYourBusiness() {
       },
       {
         key: "forms",
+        group: "feature",
         icon: Upload,
         iconTone: "bg-pink-500/10 text-pink-600 dark:text-pink-400",
         title: "Website forms",
@@ -353,9 +433,10 @@ export function ConnectYourBusiness() {
       },
       {
         key: "mls-feed",
+        group: "account",
         icon: Building,
         iconTone: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-        title: "SmartMLS & MLS feed",
+        title: "Listings & MLS feed",
         detail: idxNeedsAttention
           ? "Choose your approved feed"
           : idxConfigured
@@ -371,31 +452,54 @@ export function ConnectYourBusiness() {
           : idxConfigured
             ? "connected"
             : "not_connected",
-        actionLabel: idxConfigured ? "Manage MLS feed" : "Connect SmartMLS",
-        actionHref: mlsFeedHref,
+        actionLabel: idxConfigured ? "Manage MLS feed" : "Manage listings",
+        actionHref: idxConfigured ? mlsFeedHref : saPath("/idx"),
       },
       {
-        key: "gbp",
-        icon: Sparkles,
-        iconTone: "bg-blue-100 text-blue-700",
-        title: "Google Business Profile",
-        blurb: "View and manage your Google Business Profile details inside your Business Blueprint.",
-        status: "not_connected" as const,
-        actionLabel: "Open Blueprint",
-        actionHref: saPath("/business-profile"),
+        key: "google-account",
+        group: "account",
+        icon: GoogleGIcon,
+        iconTone: "bg-white text-foreground ring-1 ring-border",
+        title: "Google Profile",
+        // Google's consent screen lets someone grant the account overall but
+        // untick an individual scope, so "Connected" alone can't be trusted —
+        // it has to say which of the two things actually got granted. A
+        // blended "Connected" here previously hid a declined Gmail-send or
+        // Calendar grant with no indication anything was missing.
+        detail: !googleAccount
+          ? undefined
+          : googleMissingScope(googleAccount)
+            ? `${googleAccount.email} — ${googleMissingScope(googleAccount)} not granted`
+            : googleAccount.email,
+        detailTone: googleAccount && googleMissingScope(googleAccount)
+          ? "text-amber-600 dark:text-amber-400"
+          : undefined,
+        blurb:
+          "Connect your Google account once: profile, Gmail sending, and Google Calendar. OAuth keeps credentials server-side.",
+        status:
+          googleAccount?.status !== "connected"
+            ? "not_connected"
+            : googleMissingScope(googleAccount)
+              ? "needs_attention"
+              : "connected",
+        actionLabel: googleAccount?.status === "connected" ? "Reconnect Google" : "Connect Google",
+        actionHref: googleAccountConnectPath(subAccount.id),
       },
       {
         key: "google-reviews",
+        group: "feature",
         icon: Star,
         iconTone: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
         title: "Google reviews",
+        detail: subAccount.googleReviewConfig?.reviewUrl ? "Configured" : undefined,
         blurb:
           "Save your Google review link and configure review request settings.",
-        status: "not_connected" as const,
+        status: subAccount.googleReviewConfig?.reviewUrl ? "connected" : "not_connected",
         actionLabel: "Configure reviews",
         actionHref: googleReviewsHref,
       },
     ];
+    return list.filter((card): card is ConnectionCardData => card !== null);
   }, [subAccount, saPath, webChatEnabled]);
 
   const filtered = useMemo(() => {
@@ -407,41 +511,96 @@ export function ConnectYourBusiness() {
     );
   }, [cards, search]);
 
+  // Account-first reframe: split the flat card list into the outside
+  // identities/services the operator signs into or pastes credentials for
+  // ("account") and the in-app capabilities that need no outside sign-in at
+  // all ("feature"). New operators were getting lost hunting for Twilio
+  // between Booking Pages and CSV Import in one undifferentiated grid —
+  // this groups "connect something" work together and separately from
+  // "turn a built-in thing on" work.
+  const accountCards = useMemo(
+    () => filtered.filter((c) => c.group === "account"),
+    [filtered]
+  );
+  const featureCards = useMemo(
+    () => filtered.filter((c) => c.group === "feature"),
+    [filtered]
+  );
+
   if (!subAccount) {
     return <div className="bg-muted/30 h-64 animate-pulse rounded-2xl" />;
   }
 
   return (
     <div className="space-y-6 pb-12">
+      <EasyConnectorsSection />
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Connections</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Connect your business</h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            One place to connect the apps, channels, domains, imports, and
-            plug-ins that power your AgentStack workspace.
+            Start with a goal above. AS will guide you to the right connection; this is the full connection list when you need it.
           </p>
         </div>
+      </div>
+
+      <div className="flex justify-end">
         <div className="relative w-full sm:w-64">
           <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search integrations"
+            placeholder="Search connections"
             className="pl-9"
           />
         </div>
       </div>
 
       {filtered.length === 0 ? (
-        <p className="text-muted-foreground rounded-2xl border border-dashed p-8 text-center text-sm">
+        <p className="text-muted-foreground rounded-xl border border-dashed p-8 text-center text-sm">
           No integrations match &ldquo;{search}&rdquo;.
         </p>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filtered.map((card) => (
-            <ConnectionCard key={card.key} data={card} />
-          ))}
-        </div>
+        <>
+          <section className="space-y-3">
+            <div>
+              <h2 className="text-base font-semibold">Connect an account</h2>
+              <p className="text-muted-foreground text-xs">
+                Sign in or paste credentials for an outside service — Google,
+                Meta, Twilio, your MLS feed, and the rest of what AgentStack
+                connects to on your behalf.
+              </p>
+            </div>
+            {accountCards.length === 0 ? (
+              <p className="text-muted-foreground rounded-xl border border-dashed p-6 text-center text-sm">
+                No account connections match &ldquo;{search}&rdquo;.
+              </p>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {accountCards.map((card) => (
+                  <ConnectionCard key={card.key} data={card} />
+                ))}
+              </div>
+            )}
+          </section>
+
+          {featureCards.length > 0 && (
+            <details className="rounded-2xl border bg-card">
+              <summary className="cursor-pointer list-none px-5 py-4 text-sm font-semibold">
+                Built-in features
+                <span className="ml-2 text-xs font-normal text-muted-foreground">
+                  {featureCards.length} available — no external sign-in needed
+                </span>
+              </summary>
+              <div className="border-t p-5">
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {featureCards.map((card) => (
+                    <ConnectionCard key={card.key} data={card} />
+                  ))}
+                </div>
+              </div>
+            </details>
+          )}
+        </>
       )}
 
       <p className="text-muted-foreground flex items-center gap-1.5 text-xs">
@@ -450,52 +609,6 @@ export function ConnectYourBusiness() {
         which channel a lead used.
       </p>
 
-      {/* Saved profile links — NOT integrations, just URL references */}
-      <section className="rounded-2xl border border-dashed p-5">
-        <div>
-          <h2 className="text-sm font-medium text-muted-foreground">Saved profile links</h2>
-          <p className="mt-1 max-w-3xl text-xs leading-relaxed text-muted-foreground">
-            Paste your public listing-portal URLs here for reference. These are not integrations&mdash;AgentStack
-            does not connect to or sync with these sites. The links prefill your Business Blueprint for review.
-          </p>
-        </div>
-        <div className="mt-4 grid gap-3 md:grid-cols-3">
-          {([
-            ["zillow", "Zillow profile", "https://www.zillow.com/profile/..."],
-            ["homes", "Homes.com profile", "https://www.homes.com/..."],
-            ["realtor", "Realtor.com profile", "https://www.realtor.com/..."],
-          ] as const).map(([key, label, placeholder]) => (
-            <label key={key} className="block">
-              <span className="text-xs font-medium">{label}</span>
-              <Input
-                className="mt-1"
-                value={portalProfiles[key]}
-                onChange={(event) => setPortalProfiles({ ...portalProfiles, [key]: event.target.value })}
-                placeholder={placeholder}
-              />
-              {portalProfiles[key] ? (
-                <a href={portalProfiles[key]} target="_blank" rel="noreferrer" className="mt-1 inline-flex items-center gap-1 text-[11px] text-primary underline">
-                  View public profile <ExternalLink className="h-3 w-3" />
-                </a>
-              ) : null}
-            </label>
-          ))}
-        </div>
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <Button type="button" size="sm" onClick={savePortalProfiles} disabled={savingProfiles}>
-            {savingProfiles ? "Saving…" : "Save profile links"}
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            disabled={!Object.values(portalProfiles).some(Boolean)}
-            render={<Link href={`${saPath("/business-profile")}?import=${encodeURIComponent(Object.values(portalProfiles).filter(Boolean).join("\n"))}`} />}
-          >
-            Review in Blueprint
-          </Button>
-        </div>
-      </section>
     </div>
   );
 }

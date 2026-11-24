@@ -1,0 +1,30 @@
+{
+  "id": "booking",
+  "scenes": [
+    {
+      "id": "hello",
+      "audio": "voice/booking/hello.wav",
+      "seconds": 3.577551
+    },
+    {
+      "id": "link",
+      "audio": "voice/booking/link.wav",
+      "seconds": 2.240726
+    },
+    {
+      "id": "pick",
+      "audio": "voice/booking/pick.wav",
+      "seconds": 3.612381
+    },
+    {
+      "id": "auto",
+      "audio": "voice/booking/auto.wav",
+      "seconds": 4.446621
+    },
+    {
+      "id": "next",
+      "audio": "voice/booking/next.wav",
+      "seconds": 1.497687
+    }
+  ]
+}

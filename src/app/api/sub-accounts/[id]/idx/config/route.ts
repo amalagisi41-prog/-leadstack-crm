@@ -29,6 +29,7 @@ import type { IdxConfig } from "@/types";
 interface PostBody {
   accessKey?: string;
   mlsId?: string | null;
+  autoDraftOnNewListing?: boolean;
 }
 
 export async function GET(
@@ -99,6 +100,27 @@ export async function POST(
   }
 
   const existing = subSnap.data()?.idxConfig as IdxConfig | null | undefined;
+
+  // A flag-only toggle (the auto-draft checkbox) shouldn't have to re-verify
+  // the IDX Broker account or re-fetch approved MLS ids — that's a real
+  // external call this update has no reason to depend on, and a transient
+  // IDX Broker outage shouldn't block flipping a checkbox.
+  if (
+    body.autoDraftOnNewListing !== undefined &&
+    !body.accessKey &&
+    body.mlsId === undefined &&
+    existing?.connected
+  ) {
+    await subRef.set(
+      {
+        idxConfig: { autoDraftOnNewListing: body.autoDraftOnNewListing === true },
+        updatedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true },
+    );
+    return NextResponse.json({ ok: true, autoDraftOnNewListing: body.autoDraftOnNewListing === true });
+  }
+
   const accessKey = (body.accessKey ?? "").trim();
   if (!accessKey && !existing?.connected) {
     return NextResponse.json(
@@ -140,10 +162,16 @@ export async function POST(
     connected: true,
     mlsId,
     displayName: existing?.displayName ?? null,
+    accountId: existing?.accountId ?? null,
+    agentMlsId: existing?.agentMlsId ?? null,
     lastSyncAt: existing?.lastSyncAt ?? null,
     lastSyncStatus: existing?.lastSyncStatus ?? "idle",
     lastSyncError: null,
     listingCount: existing?.listingCount ?? 0,
+    lastSyncSources: existing?.lastSyncSources ?? null,
+    lastSyncWarnings: existing?.lastSyncWarnings ?? null,
+    autoDraftOnNewListing:
+      body.autoDraftOnNewListing ?? existing?.autoDraftOnNewListing ?? false,
   };
 
   await subRef.set(

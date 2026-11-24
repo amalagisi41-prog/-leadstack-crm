@@ -1,0 +1,30 @@
+{
+  "id": "setup-listings",
+  "scenes": [
+    {
+      "id": "hello",
+      "audio": "voice/setup-listings/hello.wav",
+      "seconds": 4.13483
+    },
+    {
+      "id": "idx",
+      "audio": "voice/setup-listings/idx.wav",
+      "seconds": 6.282676
+    },
+    {
+      "id": "key",
+      "audio": "voice/setup-listings/key.wav",
+      "seconds": 4.539501
+    },
+    {
+      "id": "paste",
+      "audio": "voice/setup-listings/paste.wav",
+      "seconds": 4.632381
+    },
+    {
+      "id": "next",
+      "audio": "voice/setup-listings/next.wav",
+      "seconds": 2.171066
+    }
+  ]
+}

@@ -281,10 +281,12 @@ export interface Enrollment {
 }
 
 /**
- * A one-time PayPal purchase for group access or a single course, at
- * `subAccounts/{saId}/communityGroups/{groupId}/purchases/{purchaseId}`. v1 is
- * manual-reconcile (admin marks paid) — the doc is shaped so Stripe auto-grant
- * can slot in later by flipping `status` from a webhook instead of by hand.
+ * A one-time purchase request for group access or a single course, at
+ * `subAccounts/{saId}/communityGroups/{groupId}/purchases/{purchaseId}`. v1
+ * is manual-reconcile: when the sub-account has a payment portal connected,
+ * the member pays via that link (any provider), then a staff admin marks
+ * paid to grant access. The doc is shaped so a real payment provider can
+ * slot in later by flipping `status` from a webhook instead of by hand.
  */
 export type PurchaseScope = "group" | "course";
 export type PurchaseStatus = "pending" | "paid" | "void";
@@ -300,7 +302,8 @@ export interface Purchase {
   targetId: string;
   amountCents: number;
   currency: string;
-  paypalUrl: string;
+  /** Snapshot of the sub-account's connected payment portal link at request time (any provider). Null if none was connected. */
+  portalUrl: string | null;
   status: PurchaseStatus;
   grantedByUid: string | null;
   requestedAt: Timestamp | FieldValue | null;

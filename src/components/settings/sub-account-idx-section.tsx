@@ -46,6 +46,7 @@ export function SubAccountIdxSection() {
   const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [disconnecting, setDisconnecting] = useState(false);
+  const [togglingAutoDraft, setTogglingAutoDraft] = useState(false);
 
   const publicIdxUrl = useMemo(() => {
     const base =
@@ -114,6 +115,33 @@ export function SubAccountIdxSection() {
     );
   }
 
+  async function toggleAutoDraft(next: boolean) {
+    setTogglingAutoDraft(true);
+    try {
+      const res = await fetch(`/api/sub-accounts/${subAccountId}/idx/config`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ autoDraftOnNewListing: next }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+      };
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error ?? "Failed to save that setting.");
+      }
+      toast.success(
+        next
+          ? "New listings will now auto-draft a campaign (still yours to review and approve)."
+          : "Auto-draft turned off."
+      );
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save that setting.");
+    } finally {
+      setTogglingAutoDraft(false);
+    }
+  }
+
   async function handleSave(e: FormEvent) {
     e.preventDefault();
     setSaving(true);
@@ -160,14 +188,25 @@ export function SubAccountIdxSection() {
         ok?: boolean;
         error?: string;
         listingCount?: number;
+        sources?: Record<string, number>;
       };
       if (!res.ok || !data.ok) {
         throw new Error(data.error ?? "Sync failed.");
       }
-      if ((data.listingCount ?? 0) === 0) {
-        toast.warning("IDX Broker returned no active listings. Check whether this account has featured listings and whether the expected listings are available through its API. The hosted agent page alone does not confirm API access.");
+      const count = data.listingCount ?? 0;
+      if (count === 0) {
+        const breakdown = data.sources
+          ? Object.entries(data.sources)
+              .map(([source, n]) => `${source}: ${n}`)
+              .join(", ")
+          : null;
+        toast.warning(
+          breakdown
+            ? `Sync completed with 0 listings across every source (${breakdown}). See the breakdown below for details.`
+            : "Sync completed with 0 listings. See the breakdown below for details.",
+        );
       } else {
-        toast.success(`Synced ${data.listingCount} active listings.`);
+        toast.success(`Synced ${count} listings.`);
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Sync failed.");
@@ -283,6 +322,25 @@ export function SubAccountIdxSection() {
               </dd>
             </div>
           </dl>
+          <label className="mt-3 flex items-start gap-2 rounded-lg border bg-background p-3 text-xs">
+            <input
+              type="checkbox"
+              className="mt-0.5"
+              checked={cfg?.autoDraftOnNewListing === true}
+              disabled={togglingAutoDraft}
+              onChange={(e) => void toggleAutoDraft(e.target.checked)}
+            />
+            <span>
+              <span className="font-medium text-foreground">
+                Auto-draft a campaign for every new listing
+              </span>
+              <span className="mt-0.5 block text-muted-foreground">
+                When a sync finds a listing new to this feed, a draft campaign
+                is created for review — nothing publishes until you approve
+                it, same as creating one by hand.
+              </span>
+            </span>
+          </label>
           <form onSubmit={handleSave} className="mt-4 rounded-lg border bg-background p-3">
             <div className="space-y-1.5">
               <Label htmlFor="idx-connected-mls-id">MLS ID</Label>
@@ -319,13 +377,50 @@ export function SubAccountIdxSection() {
             </div>
           </form>
           {cfg?.lastSyncStatus === "empty" && (
-            <p className="mt-3 rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-300">
-              The last IDX Broker sync returned no listings. Check the account&apos;s featured listings and ask IDX Broker whether listings shown on its hosted agent page are available to your API key. This feed is not verified for launch.
-            </p>
+            <div className="mt-3 space-y-2 rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-300">
+              <p>
+                The last sync found 0 listings across every source checked.
+                This feed is not verified for launch.
+              </p>
+              {cfg?.lastSyncSources && (
+                <dl className="grid grid-cols-2 gap-x-3 gap-y-1 sm:grid-cols-4">
+                  {Object.entries(cfg.lastSyncSources).map(([source, count]) => (
+                    <div key={source}>
+                      <dt className="font-medium capitalize">{source.replace(/([A-Z])/g, " $1")}</dt>
+                      <dd>{count}</dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
+              {cfg?.lastSyncWarnings && cfg.lastSyncWarnings.length > 0 && (
+                <ul className="list-disc space-y-0.5 pl-4">
+                  {cfg.lastSyncWarnings.map((warning) => (
+                    <li key={warning}>{warning}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+          {cfg?.lastSyncStatus === "success" && cfg?.lastSyncWarnings && cfg.lastSyncWarnings.length > 0 && (
+            <div className="mt-3 rounded-lg bg-muted px-3 py-2 text-xs text-muted-foreground">
+              <p className="font-medium text-foreground">Some sources didn&apos;t contribute to this sync:</p>
+              <ul className="mt-1 list-disc space-y-0.5 pl-4">
+                {cfg.lastSyncWarnings.map((warning) => (
+                  <li key={warning}>{warning}</li>
+                ))}
+              </ul>
+            </div>
           )}
           {cfg?.lastSyncStatus === "failed" && cfg?.lastSyncError && (
             <p className="mt-3 rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">
               Last sync failed: {cfg.lastSyncError}
+            </p>
+          )}
+          {cfg?.accountId && (
+            <p className="mt-3 text-[11px] text-muted-foreground">
+              Connected IDX Broker account: <span className="font-mono">{cfg.accountId}</span>
+              {cfg?.agentMlsId ? <> · Agent MLS id: <span className="font-mono">{cfg.agentMlsId}</span></> : null}
+              . Confirm this is the account you expect in IDX Broker&apos;s own dashboard.
             </p>
           )}
           <div className="mt-4 rounded-lg border bg-background p-3">

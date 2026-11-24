@@ -1,0 +1,30 @@
+{
+  "id": "forms",
+  "scenes": [
+    {
+      "id": "hello",
+      "audio": "voice/forms/hello.wav",
+      "seconds": 4.378639
+    },
+    {
+      "id": "build",
+      "audio": "voice/forms/build.wav",
+      "seconds": 5.655737
+    },
+    {
+      "id": "share",
+      "audio": "voice/forms/share.wav",
+      "seconds": 4.237642
+    },
+    {
+      "id": "auto",
+      "audio": "voice/forms/auto.wav",
+      "seconds": 4.562721
+    },
+    {
+      "id": "next",
+      "audio": "voice/forms/next.wav",
+      "seconds": 1.857596
+    }
+  ]
+}

@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type { Metadata } from "next";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { SubAccountProvider } from "@/context/sub-account-context";
+import { SetupProgressPill } from "@/components/onboarding/setup-progress-pill";
 
 export async function generateMetadata({
   params,
@@ -27,6 +28,7 @@ export default async function SubAccountLayout({
   return (
     <SubAccountProvider subAccountId={subAccountId}>
       {children}
+      <SetupProgressPill />
     </SubAccountProvider>
   );
 }

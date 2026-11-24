@@ -24,12 +24,12 @@ import { SubAccountA2pSection } from "@/components/settings/sub-account-a2p-sect
 import { SubAccountMetaSection } from "@/components/settings/sub-account-meta-section";
 import { SubAccountEmailDomainSection } from "@/components/settings/sub-account-email-domain-section";
 import { EmailSetupWizardDialog } from "@/components/settings/email-setup-wizard-dialog";
-import { SubAccountPayPalSection } from "@/components/settings/sub-account-paypal-section";
 import { SubAccountGoogleReviewSection } from "@/components/settings/sub-account-google-review-section";
 import { SubAccountDailyBriefingSection } from "@/components/settings/sub-account-daily-briefing-section";
 import { SubAccountIdxSection } from "@/components/settings/sub-account-idx-section";
 import { SubAccountRprSection } from "@/components/settings/sub-account-rpr-section";
 import { SubAccountAddOnsSection } from "@/components/settings/sub-account-add-ons-section";
+import { SubAccountPaymentPortalSection } from "@/components/settings/sub-account-payment-portal-section";
 import { SubAccountStripeSection } from "@/components/settings/sub-account-stripe-section";
 import { SubAccountApiKeysSection } from "@/components/settings/sub-account-api-keys-section";
 import { SubAccountApiRecipesSection } from "@/components/settings/sub-account-api-recipes-section";
@@ -80,15 +80,15 @@ export default function SettingsPage() {
     const params = new URLSearchParams(window.location.search);
     const emailOAuthStatus = params.get("email_oauth");
     const emailOAuthError = params.get("email_oauth_error");
+    const calendarOAuthStatus = params.get("calendar_oauth");
+    const calendarOAuthError = params.get("calendar_oauth_error");
 
     if (emailOAuthStatus === "success") {
+      setSettingsTab("messaging");
       setEmailSetupOpen(true);
       toast.success("Google Workspace connected successfully!");
-      // Clean up the URL
-      const url = new URL(window.location.href);
-      url.searchParams.delete("email_oauth");
-      window.history.replaceState(null, "", url);
     } else if (emailOAuthError) {
+      setSettingsTab("messaging");
       const errorMessages: Record<string, string> = {
         missing_params: "Missing OAuth parameters",
         invalid_state: "Invalid OAuth state",
@@ -98,10 +98,39 @@ export default function SettingsPage() {
         server_error: "Server error occurred",
       };
       const errorMsg = errorMessages[emailOAuthError] || emailOAuthError;
-      toast.error(`OAuth failed: ${errorMsg}`);
-      // Clean up the URL
+      toast.error(`Google email connection failed: ${errorMsg}`);
+    }
+
+    if (calendarOAuthStatus === "success") {
+      setSettingsTab("admin");
+      toast.success("Google Calendar connected successfully!");
+    } else if (calendarOAuthError) {
+      setSettingsTab("admin");
+      const errorMessages: Record<string, string> = {
+        access_denied: "Google access was not granted",
+        missing_params: "Missing OAuth parameters",
+        invalid_state: "Invalid OAuth state",
+        unauthorized: "You don't have permission to access this resource",
+        not_configured: "Google Calendar is not configured on this deployment",
+        token_exchange_failed: "Failed to exchange authorization code",
+        refresh_token_missing: "Google did not return a refresh token",
+        userinfo_failed: "Failed to fetch Google account information",
+        server_error: "Server error occurred",
+      };
+      const errorMsg = errorMessages[calendarOAuthError] || calendarOAuthError;
+      toast.error(`Google Calendar connection failed: ${errorMsg}`);
+    }
+
+    if (emailOAuthStatus || emailOAuthError || calendarOAuthStatus || calendarOAuthError) {
       const url = new URL(window.location.href);
-      url.searchParams.delete("email_oauth_error");
+      for (const key of [
+        "email_oauth",
+        "email_oauth_error",
+        "calendar_oauth",
+        "calendar_oauth_error",
+      ]) {
+        url.searchParams.delete(key);
+      }
       window.history.replaceState(null, "", url);
     }
 
@@ -112,6 +141,14 @@ export default function SettingsPage() {
     ) {
       setSettingsTab(requestedTab);
     }
+
+    if (params.get("email_setup") === "1") {
+      setSettingsTab("messaging");
+      setEmailSetupOpen(true);
+      const url = new URL(window.location.href);
+      url.searchParams.delete("email_setup");
+      window.history.replaceState(null, "", url);
+    }
   }, []);
 
   useEffect(() => {
@@ -121,7 +158,11 @@ export default function SettingsPage() {
         ? "business-email"
         : window.location.hash === "#google-reviews"
           ? "google-reviews"
-          : null;
+          : window.location.hash === "#sms-connection"
+            ? "sms-connection"
+            : window.location.hash === "#meta-connection"
+              ? "meta-connection"
+              : null;
     if (!hashTarget) return;
     const frame = window.requestAnimationFrame(() => {
       document
@@ -348,13 +389,17 @@ export default function SettingsPage() {
               ids + won/lost terminals are fixed). */}
           <SubAccountPipelineSection />
 
-          {/* Calendar sync — per-sub-account .ics subscription URL. */}
+          {/* Calendar connection — provider OAuth; booking ICS remains available separately. */}
           <SubAccountCalendarSyncSection />
 
-          {/* Payments — PayPal.me username for the Products + Invoices flow. */}
-          <SubAccountPayPalSection />
+          {/* Payments — a generic link to whatever payment portal the
+              operator already uses (PayPal.me, Venmo, Square, a Stripe
+              Payment Link, etc). Powers the Pay CTA on invoices, paid
+              bookings, and paid community purchases. */}
+          <SubAccountPaymentPortalSection />
 
-          {/* Stripe Connect — v2 roadmap placeholder. */}
+          {/* Stripe Connect — v2 roadmap placeholder for automated,
+              in-app-processed payments (vs. the generic portal link above). */}
           <SubAccountStripeSection />
 
           {/* IDX Listings — realtor MLS search powered by the sub-account's

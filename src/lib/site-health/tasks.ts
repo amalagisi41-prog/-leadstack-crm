@@ -49,6 +49,72 @@ export interface SiteHealthInputs {
   businessEmailVerified: boolean;
 }
 
+export interface BusinessEmailVerificationInputs {
+  replyToEmail?: string;
+  accountEmail?: string;
+  accountEmailVerified?: boolean;
+  resendVerified?: boolean;
+  googleWorkspaceConnected?: boolean;
+}
+
+/**
+ * A Reply-To value alone is not verification. The address is trusted when it
+ * is verified by Firebase for the signed-in account, or when a connected
+ * sending provider has verified ownership of the sending setup.
+ */
+export function isBusinessEmailVerified(
+  inputs: BusinessEmailVerificationInputs
+): boolean {
+  const replyToEmail = inputs.replyToEmail?.trim().toLowerCase() ?? "";
+  const accountEmail = inputs.accountEmail?.trim().toLowerCase() ?? "";
+  const hasReplyTo = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(replyToEmail);
+  if (!hasReplyTo) return false;
+
+  const firebaseVerified =
+    inputs.accountEmailVerified === true &&
+    !!accountEmail &&
+    accountEmail === replyToEmail;
+
+  return (
+    firebaseVerified ||
+    inputs.resendVerified === true ||
+    inputs.googleWorkspaceConnected === true
+  );
+}
+
+export interface WebChatReadinessInputs {
+  /** subAccounts/{id}/aiAgent/web-chat exists and `enabled === true`. */
+  chatChannelEnabled: boolean;
+  /** True when a legacy `website` doc is ready or has a live URL. */
+  publishedWebsite: boolean;
+  /** True when agentSites/main has status "published". */
+  publishedAgentSite: boolean;
+  /** True only for an externally hosted site verified to carry the AgentStack widget tag. */
+  agentStackWidgetInstalled?: boolean;
+}
+
+/**
+ * Whether the "Turn on website chat" task is actually done.
+ *
+ * A channel toggle alone only proves AgentStack is configured — nothing
+ * proves a visitor can reach it. A site AgentStack itself hosts and serves
+ * carries the widget by construction, from EITHER builder: the legacy
+ * gitpage.site-based Website Studio (`publishedWebsite`) or the newer AI
+ * Website Studio (`publishedAgentSite`). This must accept both, exactly as
+ * the "website" task itself does — checking only one of the two silently
+ * strands every operator who published through the other builder: they can
+ * enable chat and this task still never clears, no matter what they do.
+ * Only an EXTERNALLY hosted site needs the separate widget-install proof.
+ */
+export function deriveWebChatEnabled(inputs: WebChatReadinessInputs): boolean {
+  return (
+    inputs.chatChannelEnabled &&
+    (inputs.publishedWebsite ||
+      inputs.publishedAgentSite ||
+      inputs.agentStackWidgetInstalled === true)
+  );
+}
+
 export interface SiteHealthTask {
   id: string;
   title: string;
@@ -65,6 +131,46 @@ export interface SiteHealthResult {
   tasks: SiteHealthTask[];
   /** Null when the account did not migrate from anywhere. */
   cancellation: CancellationReadiness | null;
+}
+
+/**
+ * The chat task's copy depends on WHY it's incomplete, not just that it is.
+ * Enabling the channel toggle does nothing for an agent whose site lives
+ * outside AgentStack until the chat snippet is actually pasted onto that
+ * site and re-verified — before this, the task pointed everyone at the same
+ * "Set up chat" link regardless of cause, stranding that persona with no
+ * way to tell what was actually missing (the widget-install step lives on
+ * the Site Health page's "website" task, not on the chat settings page the
+ * generic link sends them to).
+ */
+function chatTaskCopy(
+  inputs: SiteHealthInputs
+): Pick<SiteHealthTask, "detail" | "href" | "action"> {
+  const anySitePublished = inputs.publishedWebsite || inputs.publishedAgentSite;
+  if (inputs.webChatEnabled || anySitePublished) {
+    return {
+      detail: "Answer common questions and capture leads while you are busy.",
+      href: "/ai-agents/web-chat",
+      action: "Set up chat",
+    };
+  }
+  if (inputs.externalSiteVerified) {
+    // Verified live, but deriveWebChatEnabled() found no widget on it — the
+    // channel toggle alone can never satisfy that; the snippet has to be
+    // pasted onto the agent's own site and re-verified above.
+    return {
+      detail:
+        'Your site is verified, but the chat snippet is not on it yet. Copy it from Web Chat settings, paste it into your site, then click "I already have a website" on the task above to re-check.',
+      href: "/ai-agents/web-chat",
+      action: "Get your chat snippet",
+    };
+  }
+  return {
+    detail:
+      "Publish your website first (above) — chat turns on automatically once it's live.",
+    href: "/website-studio",
+    action: "Publish your website",
+  };
 }
 
 export function buildSiteHealthTasks(
@@ -134,10 +240,8 @@ export function buildSiteHealthTasks(
     {
       id: "chat",
       title: "Turn on website chat",
-      detail: "Answer common questions and capture leads while you are busy.",
       complete: inputs.webChatEnabled,
-      href: "/ai-agents/web-chat",
-      action: "Set up chat",
+      ...chatTaskCopy(inputs),
     },
     {
       id: "email",

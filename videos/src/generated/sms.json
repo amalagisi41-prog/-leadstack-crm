@@ -1,0 +1,30 @@
+{
+  "id": "sms",
+  "scenes": [
+    {
+      "id": "hello",
+      "audio": "voice/sms/hello.wav",
+      "seconds": 5.110068
+    },
+    {
+      "id": "number",
+      "audio": "voice/sms/number.wav",
+      "seconds": 5.713787
+    },
+    {
+      "id": "where",
+      "audio": "voice/sms/where.wav",
+      "seconds": 6.806803
+    },
+    {
+      "id": "chat",
+      "audio": "voice/sms/chat.wav",
+      "seconds": 6.408707
+    },
+    {
+      "id": "next",
+      "audio": "voice/sms/next.wav",
+      "seconds": 2.008526
+    }
+  ]
+}

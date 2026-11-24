@@ -98,7 +98,7 @@ export const WHATSAPP_STARTER_TEMPLATES: WhatsappStarterTemplate[] = [
       { position: 1, label: "First name", sampleValue: "Ben", source: "merge_tag", mergeTag: "contact.firstName" },
       { position: 2, label: "Invoice number", sampleValue: "INV-2026-0001", source: "manual", mergeTag: null },
       { position: 3, label: "Amount", sampleValue: "$420.00", source: "manual", mergeTag: null },
-      { position: 4, label: "Pay link", sampleValue: "https://paypal.me/acme/420", source: "manual", mergeTag: null },
+      { position: 4, label: "Pay link", sampleValue: "https://example.com/pay/acme-420", source: "manual", mergeTag: null },
     ],
   },
   {

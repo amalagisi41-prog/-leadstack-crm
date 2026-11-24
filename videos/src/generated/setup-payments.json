@@ -1,0 +1,30 @@
+{
+  "id": "setup-payments",
+  "scenes": [
+    {
+      "id": "hello",
+      "audio": "voice/setup-payments/hello.wav",
+      "seconds": 3.786531
+    },
+    {
+      "id": "link",
+      "audio": "voice/setup-payments/link.wav",
+      "seconds": 4.3322
+    },
+    {
+      "id": "pay",
+      "audio": "voice/setup-payments/pay.wav",
+      "seconds": 3.204354
+    },
+    {
+      "id": "optional",
+      "audio": "voice/setup-payments/optional.wav",
+      "seconds": 3.89102
+    },
+    {
+      "id": "next",
+      "audio": "voice/setup-payments/next.wav",
+      "seconds": 1.358367
+    }
+  ]
+}

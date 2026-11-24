@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useSubAccount } from "@/context/sub-account-context";
 import { Button } from "@/components/ui/button";
+import { LandingAuditCard } from "@/components/site-health/landing-audit-card";
 
 interface HealthTask {
   id: string;
@@ -45,7 +46,7 @@ const ACK_FOR_TASK: Record<string, string> = {
 };
 
 export default function SiteHealthPage() {
-  const { subAccountId, saPath } = useSubAccount();
+  const { subAccountId, saPath, subAccount } = useSubAccount();
   const [result, setResult] = useState<HealthResult | null>(null);
   const [error, setError] = useState(false);
   const [checkingSite, setCheckingSite] = useState(false);
@@ -369,6 +370,10 @@ export default function SiteHealthPage() {
           ))}
         </div>
       </section>
+
+      <LandingAuditCard
+        defaultUrl={subAccount?.customDomain ? `https://${subAccount.customDomain}` : null}
+      />
     </div>
   );
 }

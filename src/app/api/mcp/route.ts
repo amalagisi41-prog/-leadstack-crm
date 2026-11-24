@@ -6,6 +6,7 @@ import { requireSubAccountAdmin, requireSubAccountMember } from "@/lib/auth/requ
 import { buildContentBrief } from "@/lib/marketing/content-brief";
 import { findCampaignListing } from "@/lib/marketing/campaign-listing";
 import { readAccessToken } from "@/lib/mcp/oauth";
+import { touchMcpConnection } from "@/lib/mcp/connection";
 import type { SubAccountDoc } from "@/types";
 
 type JsonRpcRequest = {
@@ -97,6 +98,9 @@ export async function POST(request: Request) {
   const id = body.id;
   if (body.method === "notifications/initialized") return new NextResponse(null, { status: 204 });
   if (body.method === "initialize") return response(id, { protocolVersion: "2025-06-18", capabilities: { tools: { listChanged: false } }, serverInfo: { name: "agentstack", version: "1.0.0" } });
+  if (tokenCaller) {
+    await touchMcpConnection(tokenCaller.uid).catch(() => undefined);
+  }
   if (body.method === "tools/list") return response(id, { tools: TOOLS });
   if (body.method !== "tools/call") return errorResponse(id, -32601, "Method not found");
 

@@ -312,24 +312,27 @@ export function PublicQuoteView({
           )}
           {isInvoice ? (
             <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-muted-foreground">
-                Pay securely via PayPal. You&apos;ll receive a receipt by
-                email once payment clears.
-              </p>
               {quote.paymentLinkUrl ? (
-                <a
-                  href={quote.paymentLinkUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50"
-                >
-                  <CreditCard className="h-4 w-4" />
-                  Pay {formatCurrency(totals.total, quote.currency)}
-                </a>
+                <>
+                  <p className="text-sm text-muted-foreground">
+                    Pay online. You&apos;ll receive a receipt by email
+                    once payment clears.
+                  </p>
+                  <a
+                    href={quote.paymentLinkUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50"
+                  >
+                    <CreditCard className="h-4 w-4" />
+                    Pay {formatCurrency(totals.total, quote.currency)}
+                  </a>
+                </>
               ) : (
-                <p className="text-sm text-amber-700 dark:text-amber-400">
-                  Payment link not yet generated — please ask the sender
-                  to re-send.
+                <p className="text-sm text-muted-foreground">
+                  This invoice doesn&apos;t have an online payment option —
+                  contact the sender directly to arrange payment of{" "}
+                  {formatCurrency(totals.total, quote.currency)}.
                 </p>
               )}
             </div>

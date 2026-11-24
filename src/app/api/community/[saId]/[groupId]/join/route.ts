@@ -8,8 +8,8 @@ export const dynamic = "force-dynamic";
 /**
  * Member: join a group. Requires an active member session scoped to this
  * sub-account. Free + open groups activate immediately; approval-policy groups
- * land pending; paid groups return `payment_required` (the one-time PayPal flow
- * lands in Slice 6).
+ * land pending; paid groups return `payment_required` (see the one-time
+ * purchase flow in `lib/server/community-purchase-service.ts`).
  */
 export async function POST(
   request: Request,

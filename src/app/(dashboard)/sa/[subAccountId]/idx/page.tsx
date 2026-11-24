@@ -33,6 +33,7 @@ import {
   resolveMarketingStatus,
 } from "@/lib/marketing/listing-source";
 import { SUB_ACCOUNT_ROUTES } from "@/lib/navigation/sub-account-routes";
+import { ListingsSourcesSection } from "@/components/marketing/listings-source-card";
 import { cn } from "@/lib/utils";
 import type { IdxListingDoc, ListingMarketingStatus } from "@/types/idx";
 import type { ListingInquiryStat } from "@/types/listing-inquiries";
@@ -231,9 +232,23 @@ export default function ListingsPage() {
         ok?: boolean;
         error?: string;
         listingCount?: number;
+        sources?: Record<string, number>;
       };
       if (!res.ok || !data.ok) throw new Error(data.error ?? "Sync failed.");
-      toast.success(`Synced ${data.listingCount ?? 0} listings.`);
+      if ((data.listingCount ?? 0) === 0) {
+        const breakdown = data.sources
+          ? Object.entries(data.sources)
+              .map(([source, n]) => `${source}: ${n}`)
+              .join(", ")
+          : null;
+        toast.warning(
+          breakdown
+            ? `Sync completed with 0 listings across every source (${breakdown}). See the breakdown in Settings for details.`
+            : "Sync completed with 0 listings. See the breakdown in Settings for details.",
+        );
+      } else {
+        toast.success(`Synced ${data.listingCount} active listings.`);
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Sync failed.");
     } finally {
@@ -324,6 +339,8 @@ export default function ListingsPage() {
         settingsHref={saPath(SUB_ACCOUNT_ROUTES.settings)}
         subAccountId={subAccountId}
       />
+
+      <ListingsSourcesSection subAccountId={subAccountId} isAdmin={isAdmin} />
 
       {/* Search + filters */}
       <div className="space-y-3">
@@ -454,7 +471,7 @@ export default function ListingsPage() {
                     <td className="px-4 py-2 text-right">
                       {inCampaigns ? (
                         <Link
-                          href={saPath(SUB_ACCOUNT_ROUTES.properties)}
+                          href={saPath(SUB_ACCOUNT_ROUTES.listings)}
                           className="text-muted-foreground inline-flex items-center gap-1 text-xs hover:underline"
                         >
                           <Check className="h-3.5 w-3.5 text-emerald-600" />
@@ -582,48 +599,111 @@ function FeedStatusCard({
       ? `${window.location.origin}/idx/${subAccountId}`
       : `/idx/${subAccountId}`;
 
+  const syncStatus = cfg?.lastSyncStatus ?? null;
+  const resultLabel =
+    syncStatus === "success"
+      ? `${cfg?.listingCount ?? 0} active listings`
+      : syncStatus === "empty"
+        ? "0 listings returned"
+        : syncStatus === "failed"
+          ? "Sync failed"
+          : syncStatus === "syncing"
+            ? "Sync in progress"
+            : "Not tested yet";
+  const resultTone =
+    syncStatus === "failed"
+      ? "text-destructive"
+      : syncStatus === "empty"
+        ? "text-amber-700 dark:text-amber-400"
+        : syncStatus === "success"
+          ? "text-emerald-700 dark:text-emerald-400"
+          : "text-foreground";
+
   return (
-    <div className="grid gap-3 sm:grid-cols-3">
-      <div className="bg-card rounded-2xl border p-4">
-        <p className="text-muted-foreground text-xs">Last MLS sync</p>
-        <p className="mt-1 text-lg font-semibold">
-          {cfg?.lastSyncAt ? formatRelativeTime(cfg.lastSyncAt) : "Never"}
-        </p>
-      </div>
-      <div className="bg-card rounded-2xl border p-4">
-        <p className="text-muted-foreground text-xs">Feed status</p>
-        <p
-          className={cn(
-            "mt-1 text-lg font-semibold",
-            cfg?.lastSyncStatus === "failed" && "text-destructive"
-          )}
-        >
-          {cfg?.lastSyncStatus === "failed"
-            ? "Failed"
-            : cfg?.lastSyncStatus === "empty" || (cfg?.lastSyncStatus === "success" && (cfg?.listingCount ?? 0) === 0)
-              ? "No listings returned"
-              : cfg?.lastSyncStatus === "success"
-                ? "Listings synced"
-                : "Not verified"}
-        </p>
-      </div>
-      <div className="bg-card flex items-center gap-2 rounded-2xl border p-4">
-        <div className="min-w-0 flex-1">
-          <p className="text-muted-foreground text-xs">Public search page</p>
-          <p className="truncate text-xs">{publicUrl}</p>
+    <div className="space-y-3">
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div className="bg-card rounded-2xl border p-4">
+          <p className="text-muted-foreground text-xs">Connection</p>
+          <p className="mt-1 text-lg font-semibold text-emerald-700 dark:text-emerald-400">
+            Connected
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            IDX Broker authorization is saved.
+          </p>
         </div>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            void navigator.clipboard.writeText(publicUrl);
-            toast.success("Link copied.");
-          }}
-        >
-          <Copy className="h-3.5 w-3.5" />
-        </Button>
+        <div className="bg-card rounded-2xl border p-4">
+          <p className="text-muted-foreground text-xs">API result</p>
+          <p className={cn("mt-1 text-lg font-semibold", resultTone)}>
+            {resultLabel}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {cfg?.lastSyncAt
+              ? `Last tested ${formatRelativeTime(cfg.lastSyncAt)}.`
+              : "Run Sync now to test the feed."}
+          </p>
+        </div>
+        <div className="bg-card flex items-center gap-2 rounded-2xl border p-4">
+          <div className="min-w-0 flex-1">
+            <p className="text-muted-foreground text-xs">Public search page</p>
+            <p className="truncate text-xs">{publicUrl}</p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              void navigator.clipboard.writeText(publicUrl);
+              toast.success("Link copied.");
+            }}
+          >
+            <Copy className="h-3.5 w-3.5" />
+          </Button>
+        </div>
       </div>
+
+      {syncStatus === "empty" ? (
+        <div className="rounded-2xl border border-amber-300/60 bg-amber-500/5 p-4 text-sm">
+          <p className="font-medium text-amber-900 dark:text-amber-200">
+            IDX Broker is connected, but every source checked returned zero listings.
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-amber-800 dark:text-amber-300">
+            This does not mean the MLS account is broken. The connected IDX Broker
+            account may have no featured listings available to this API response,
+            or its Featured IDs configuration may point at a different agent.
+            Check IDX Broker&apos;s Featured IDs for the intended agent, then run
+            Sync now again.
+          </p>
+          {cfg?.lastSyncSources && (
+            <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-amber-800 dark:text-amber-300 sm:grid-cols-4">
+              {Object.entries(cfg.lastSyncSources).map(([source, count]) => (
+                <div key={source}>
+                  <dt className="font-medium capitalize">{source.replace(/([A-Z])/g, " $1")}</dt>
+                  <dd>{count}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+          <Link
+            href={`${settingsHref}#mls-feed`}
+            className="mt-3 inline-block text-xs font-medium underline-offset-4 hover:underline"
+          >
+            Open MLS connection settings
+          </Link>
+        </div>
+      ) : null}
+
+      {syncStatus === "failed" && cfg?.lastSyncError ? (
+        <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-sm">
+          <p className="font-medium text-destructive">The last MLS test failed.</p>
+          <p className="mt-1 break-words text-xs text-muted-foreground">{cfg.lastSyncError}</p>
+          <Link
+            href={`${settingsHref}#mls-feed`}
+            className="mt-3 inline-block text-xs font-medium underline-offset-4 hover:underline"
+          >
+            Open MLS connection settings
+          </Link>
+        </div>
+      ) : null}
     </div>
   );
 }

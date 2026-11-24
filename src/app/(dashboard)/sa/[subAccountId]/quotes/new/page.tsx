@@ -3,9 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import Link from "next/link";
-import { AlertTriangle } from "lucide-react";
-
 import { QuoteBuilder, type QuoteFormValues } from "@/components/quotes/quote-builder";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -33,8 +30,7 @@ export default function NewQuotePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
-  const { subAccountId, agencyId, saPath, subAccount } = useSubAccount();
-  const paypalConnected = !!subAccount?.paypalConfig?.username;
+  const { subAccountId, agencyId, saPath } = useSubAccount();
 
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -118,7 +114,7 @@ export default function NewQuotePage() {
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           {kind === "invoice"
-            ? "Build the line items and totals. Save as draft now — sending mints a Stripe Payment Link and emails the recipient."
+            ? "Build the line items and totals. Save as draft now — sending emails the recipient; mark it paid once you've received payment."
             : "Build the line items, totals, and terms. Save as a draft now — send to the recipient when you're ready."}
         </p>
       </div>
@@ -149,28 +145,6 @@ export default function NewQuotePage() {
             : "Send an estimate that the recipient can accept or decline. Convert to an invoice once accepted."}
         </p>
       </Card>
-
-      {kind === "invoice" && !paypalConnected && (
-        <div className="flex items-start gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/5 p-4">
-          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
-          <div className="flex-1 text-sm">
-            <p className="font-semibold text-amber-700 dark:text-amber-400">
-              PayPal isn&apos;t connected for this workspace.
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              You can save this invoice as a draft, but you won&apos;t be able
-              to send it until a PayPal.me username is saved — the payment
-              link is generated at send time.{" "}
-              <Link
-                href={saPath("/dashboard/settings")}
-                className="font-medium text-amber-700 underline-offset-4 hover:underline dark:text-amber-400"
-              >
-                Connect PayPal →
-              </Link>
-            </p>
-          </div>
-        </div>
-      )}
 
       {contacts.length === 0 ? (
         <Card className="p-5">

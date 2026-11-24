@@ -5,6 +5,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { requireSubAccountAdmin } from "@/lib/auth/require-tenancy";
 import { subAccountWhatsappIsConfigured } from "@/lib/comms/twilio";
+import { checkFairHousing } from "@/lib/workflows/guardrails";
 import {
   DEFAULT_REVIEW_COOLDOWN_DAYS,
   DEFAULT_REVIEW_SMS_TEMPLATE,
@@ -77,6 +78,19 @@ export async function POST(
       { error: "The message must include {{reviewUrl}} so the link is sent." },
       { status: 400 },
     );
+  }
+
+  if (channel !== "whatsapp_template") {
+    const fairHousing = checkFairHousing(messageTemplate);
+    if (fairHousing.blocked) {
+      return NextResponse.json(
+        {
+          error:
+            "This review-request message contains language AgentStack blocks for fair-housing safety. Remove the flagged wording and try again.",
+        },
+        { status: 400 },
+      );
+    }
   }
 
   let whatsappTemplateId: string | null = null;

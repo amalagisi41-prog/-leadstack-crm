@@ -16,6 +16,7 @@ import {
   Send,
   Share2,
   GraduationCap,
+  FileSignature,
 } from "lucide-react";
 import {
   Dialog,
@@ -64,6 +65,7 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
   const initialTimezone = subAccount?.timezone ?? "America/New_York";
   const initialApi = subAccount?.apiAccessEnabledByAgency === true;
   const initialBroadcasts = subAccount?.broadcastsEnabledByAgency === true;
+  const initialQuotes = subAccount?.quotesEnabledByAgency === true;
   const initialOutbound = subAccount?.outboundVoiceEnabledByAgency === true;
   const initialWhatsapp = subAccount?.whatsappEnabledByAgency === true;
   const initialMetaInbox = subAccount?.metaInboxEnabledByAgency === true;
@@ -88,6 +90,7 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
   const [timezone, setTimezone] = useState(initialTimezone);
   const [apiAccessEnabled, setApiAccessEnabled] = useState(initialApi);
   const [broadcastsEnabled, setBroadcastsEnabled] = useState(initialBroadcasts);
+  const [quotesEnabled, setQuotesEnabled] = useState(initialQuotes);
   const [outboundVoiceEnabled, setOutboundVoiceEnabled] =
     useState(initialOutbound);
   const [whatsappEnabled, setWhatsappEnabled] = useState(initialWhatsapp);
@@ -140,6 +143,7 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
       setTimezone(initialTimezone);
       setApiAccessEnabled(initialApi);
       setBroadcastsEnabled(initialBroadcasts);
+      setQuotesEnabled(initialQuotes);
       setOutboundVoiceEnabled(initialOutbound);
       setWhatsappEnabled(initialWhatsapp);
       setMetaInboxEnabled(initialMetaInbox);
@@ -160,6 +164,7 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
     initialTimezone,
     initialApi,
     initialBroadcasts,
+    initialQuotes,
     initialOutbound,
     initialWhatsapp,
     initialMetaInbox,
@@ -183,6 +188,7 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
   const identityDirty = name.trim() !== initialName || timezone !== initialTimezone;
   const apiDirty = apiAccessEnabled !== initialApi;
   const broadcastsDirty = broadcastsEnabled !== initialBroadcasts;
+  const quotesDirty = quotesEnabled !== initialQuotes;
   const outboundDirty = outboundVoiceEnabled !== initialOutbound;
   const whatsappDirty = whatsappEnabled !== initialWhatsapp;
   const metaInboxDirty = metaInboxEnabled !== initialMetaInbox;
@@ -201,6 +207,7 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
     identityDirty ||
     apiDirty ||
     broadcastsDirty ||
+    quotesDirty ||
     outboundDirty ||
     whatsappDirty ||
     metaInboxDirty ||
@@ -236,6 +243,7 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
     if (identityDirty) changes.push(`workspace identity → ${name.trim()} (${timezone})`);
     if (emailDirty) changes.push(`dedicated email domain ${emailDomainEnabled ? "on" : "off"}`);
     if (apiDirty) changes.push(`API access ${apiAccessEnabled ? "on" : "off"}`);
+    if (quotesDirty) changes.push(`quotes & invoices ${quotesEnabled ? "on" : "off"}`);
     if (broadcastsDirty) changes.push(`broadcasts ${broadcastsEnabled ? "on" : "off"}`);
     if (outboundDirty) changes.push(`outbound calling ${outboundVoiceEnabled ? "on" : "off"}`);
     if (whatsappDirty) changes.push(`WhatsApp ${whatsappEnabled ? "on" : "off"}`);
@@ -260,6 +268,7 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
         emailDomainEnabled?: boolean;
         apiAccessEnabled?: boolean;
         broadcastsEnabled?: boolean;
+        quotesEnabled?: boolean;
         outboundVoiceEnabled?: boolean;
         whatsappEnabled?: boolean;
         metaInboxEnabled?: boolean;
@@ -277,6 +286,7 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
       if (emailDirty) payload.emailDomainEnabled = emailDomainEnabled;
       if (apiDirty) payload.apiAccessEnabled = apiAccessEnabled;
       if (broadcastsDirty) payload.broadcastsEnabled = broadcastsEnabled;
+      if (quotesDirty) payload.quotesEnabled = quotesEnabled;
       if (outboundDirty) payload.outboundVoiceEnabled = outboundVoiceEnabled;
       if (whatsappDirty) payload.whatsappEnabled = whatsappEnabled;
       if (metaInboxDirty) payload.metaInboxEnabled = metaInboxEnabled;
@@ -339,6 +349,13 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
           apiAccessEnabled
             ? "API access enabled."
             : "API access disabled. Existing keys + webhooks preserved but inert until re-enabled.",
+        );
+      }
+      if (quotesDirty) {
+        parts.push(
+          quotesEnabled
+            ? "Quotes & invoices enabled."
+            : "Quotes & invoices disabled. Existing quotes and invoices are kept.",
         );
       }
       if (broadcastsDirty) {
@@ -489,6 +506,18 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
             25,000 recipients per send) to filtered audiences. Disabling locks
             the Broadcasts sidebar entry and returns 403 on new send attempts;
             historical broadcast docs and in-flight QStash messages are preserved.
+          </GateToggle>
+
+          <GateToggle
+            checked={quotesEnabled}
+            onChange={setQuotesEnabled}
+            disabled={saving}
+            icon={<FileSignature className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />}
+            title="Quotes & invoices (Broker package)"
+          >
+            When enabled, this sub-account gets Quotes, Invoices and the Products
+            catalog. While off, those sidebar entries are hidden and new quotes
+            or products can&apos;t be created. Existing quotes and invoices are kept.
           </GateToggle>
 
           <GateToggle
