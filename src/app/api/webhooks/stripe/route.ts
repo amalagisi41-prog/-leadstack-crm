@@ -28,7 +28,6 @@ export async function POST(request: Request) {
 
   const stripe = getStripeServer();
   let event: Stripe.Event;
-  let verificationOnly = false;
 
   try {
     event = stripe.webhooks.constructEvent(
@@ -36,41 +35,19 @@ export async function POST(request: Request) {
       signature,
       process.env.STRIPE_WEBHOOK_SECRET
     );
-  } catch (liveError) {
-    try {
-      if (!process.env.STRIPE_TEST_WEBHOOK_SECRET) throw liveError;
-      event = stripe.webhooks.constructEvent(
-        body,
-        signature,
-        process.env.STRIPE_TEST_WEBHOOK_SECRET
-      );
-      const invoice = event.data.object as Stripe.Invoice;
-      if (
-        event.livemode ||
-        event.type !== "invoice.paid" ||
-        invoice.metadata?.agentstack_verification !== "true"
-      ) {
-        throw new Error(
-          "Test signing secret only permits explicitly flagged test invoices"
-        );
-      }
-      verificationOnly = true;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Unknown error";
-      console.error(`Webhook signature verification failed: ${message}`);
-      return NextResponse.json(
-        { error: `Webhook Error: ${message}` },
-        { status: 400 }
-      );
-    }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    console.error(`Webhook signature verification failed: ${message}`);
+    return NextResponse.json(
+      { error: `Webhook Error: ${message}` },
+      { status: 400 }
+    );
   }
-  console.info("[stripe-webhook] signature verified", {
-    eventId: event.id,
-    verificationOnly,
-  });
+
+  console.info("[stripe-webhook] signature verified", { eventId: event.id });
 
   try {
-    const result = await processStripeWebhook(event, { verificationOnly });
+    const result = await processStripeWebhook(event);
     return NextResponse.json({ received: true, duplicate: result.duplicate });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";

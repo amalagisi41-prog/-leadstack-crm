@@ -21,8 +21,7 @@ function stripeId(value: string | { id: string } | null | undefined) {
 }
 
 export async function processStripeWebhook(
-  event: Stripe.Event,
-  options: { verificationOnly?: boolean } = {}
+  event: Stripe.Event
 ): Promise<{ duplicate: boolean }> {
   if (!event.id)
     throw new Error("Verified Stripe event is missing its event ID");
@@ -44,7 +43,6 @@ export async function processStripeWebhook(
         eventId: event.id,
         type: event.type,
         livemode: event.livemode,
-        verificationOnly: options.verificationOnly === true,
         receivedAt: data?.receivedAt ?? FieldValue.serverTimestamp(),
         status: "processing",
         owner,
@@ -87,14 +85,6 @@ export async function processStripeWebhook(
               customerId,
               subscriptionId
             );
-            if (
-              options.verificationOnly &&
-              records.some((record) => record.data()?.isTest !== true)
-            ) {
-              throw new Error(
-                "Verification invoices may only activate explicitly flagged test workspaces/users"
-              );
-            }
             workspacePaths = records.map((record) => record.ref.path);
             const activated = writeSubscriptionState(
               transaction,
