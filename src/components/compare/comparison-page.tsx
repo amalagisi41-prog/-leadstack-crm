@@ -24,7 +24,7 @@ export function ComparisonPage({ comparison }: { comparison: Comparison }) {
       <FeatureTable comparison={comparison} />
       <PricingTable comparison={comparison} />
       <Verification comparison={comparison} />
-      <ComparisonCalculator />
+      {comparison.slug !== "gohighlevel" ? <ComparisonCalculator /> : null}
       <CompetitorWins comparison={comparison} />
       <FAQ comparison={comparison} />
       <CrossLink currentSlug={comparison.slug} />
@@ -121,7 +121,7 @@ function Hero({ comparison }: { comparison: Comparison }) {
       </p>
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
         <Link
-          href="/#pricing"
+          href={comparison.finalCta.primaryCtaHref}
           data-cta="comparison-hero"
           className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-11 items-center rounded-lg px-6 text-sm font-semibold transition-colors"
         >

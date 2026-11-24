@@ -1,227 +1,201 @@
 import type { Comparison } from "@/types/comparisons";
+import {
+  HOMEPAGE_DESCRIPTION,
+  SOLO_PRICE_LINE,
+  SOLO_MONTHLY_TERMS,
+  SOLO_CANCELLATION,
+} from "@/lib/public-site/offer";
 
-/**
- * GoHighLevel vs AgentStack — the flagship comparison page.
- *
- * GHL is the direct rival AgentStack is positioned head-to-head against, so
- * this page sees the highest converting search intent. Update pricing +
- * verification date when GHL changes their public tiers.
- *
- * Underlying-stack identifiers (Firebase, Twilio, Vapi, Resend, OpenRouter,
- * Vercel, Next.js, gitpage.site, specific AI model names, etc.) are
- * deliberately kept out of this file. Visitors shouldn't be able to
- * reconstruct AgentStack's architecture from the comparison page — that
- * information ships inside the repo they get after purchase.
- */
+// The public Solo offer, rather than the former source-code license.
 export const gohighlevelComparison: Comparison = {
   slug: "gohighlevel",
   competitorName: "GoHighLevel",
   competitorShortName: "GHL",
-  metaTitle: "GoHighLevel vs AgentStack | All-in-One CRM Compared (2026)",
+  metaTitle: "AgentStack CRM vs GoHighLevel — Built for Realtors",
   metaDescription:
-    "GoHighLevel vs AgentStack — feature, pricing, and ownership comparison. Why agencies are switching from $297/mo recurring to a self-hosted all-in-one CRM they own outright.",
-  lastVerifiedDate: "June 2026",
-
+    "AgentStack CRM vs GoHighLevel: a workspace built for realtors, guided six-step setup, and AgentStack Solo at $99/month. Compare the workflow and current plans.",
+  lastVerifiedDate: "November 23, 2026",
   hero: {
-    h1: "GoHighLevel vs AgentStack",
-    subhead:
-      "Both are all-in-one CRMs built for agencies. Only one of them lets you own the code, set your own prices, keep your client data on your own infrastructure, and walk away the day you decide to switch tools.",
-    ctaLabel: "See AgentStack pricing",
+    h1: "AgentStack CRM vs GoHighLevel: built for realtors",
+    subhead: `Built to replace GoHighLevel — without the parts that were never made for agents. Keep buyer inquiries, listing appointments, showings, and offers in one workspace. ${SOLO_PRICE_LINE}.`,
+    ctaLabel: "See the $99/month Solo plan",
   },
-
   pullQuote: {
-    text: "GoHighLevel made the modern agency stack possible — one tool, one bill, every channel. AgentStack is the next step: the same surface area, but you own the code, the data, and the margin instead of renting them.",
-    author: "The AgentStack team",
-    role: "On why AgentStack exists",
+    text: "Your next step should be following up with a buyer or preparing for a listing appointment. AgentStack CRM gives that work a clear home, with a guided setup built around your real estate business.",
+    author: "The AgentStack CRM team",
+    role: "The operating system for realtors",
   },
-
   painPoints: {
-    heading: "Where GoHighLevel falls short",
+    heading: "Why agents leave GoHighLevel",
     bullets: [
       {
-        title: "$297 every month — for as long as you operate",
-        body: "GoHighLevel's Unlimited tier is $297 per month, billed in perpetuity. There's no point at which you finish paying. Five years in, you've handed them roughly $17,800 and still don't own a single line of the platform you sell to your clients. The day you stop paying, the tool stops working.",
+        title: "Less setup to translate",
+        body: "A broad marketing platform can be powerful, but a solo agent still needs to map it to buyers, sellers, their sphere, and farm areas. AgentStack CRM starts with that real estate context.",
       },
       {
-        title: "White-label is paint, not foundation",
-        body: "GHL's white-label is real and well-executed — but it stops at the surface. You can change colors, logos, the login URL, the domain. You cannot change how the platform behaves, ship a feature your client asked for last Tuesday, or fork the codebase when GHL's product direction diverges from yours. Their roadmap is your roadmap.",
+        title: "A clearer daily workflow",
+        body: "Bring people, deals, tasks, calendar, lead forms, and booking pages into one workspace. Follow a lead from the first inquiry through appointments and closing.",
       },
       {
-        title: "Their database holds your clients hostage",
-        body: "Every contact, deal, conversation, and recorded call lives on GoHighLevel's infrastructure. Exporting is possible but partial — webhook history, recorded voice calls, attachment metadata, and automation execution logs are difficult to recover in usable shape. If GHL changes pricing, deprecates a feature, or you simply outgrow them, migration is a months-long project.",
+        title: "One clear Solo offer",
+        body: `${SOLO_PRICE_LINE}. See what is Live and what remains Private Preview before subscribing. Optional add-ons require your approval.`,
       },
     ],
   },
-
   advantages: [
+    { title: "Built exclusively for realtors", body: HOMEPAGE_DESCRIPTION },
     {
-      title: "You own the code, not a seat",
-      body: "AgentStack is the full source code of an agency CRM you clone, deploy to your own cloud account, and brand as your own product. Every file — the UI, the API routes, the AI agent logic, the booking pages, the quote generator — is yours to read, modify, and extend. There is no platform behind AgentStack waiting to deprecate the feature you depend on.",
+      title: "A guided six-step Build",
+      body: "Work through Build, Connect, Capture, Respond, Nurture, and Close. Configure your workspace around the people and opportunities you already work with.",
     },
     {
-      title: "Pricing is a line on a vendor invoice, not a subscription",
-      body: "After the one-time license, your only ongoing costs are the actual infrastructure your deployment consumes — cloud hosting, database storage, per-SMS, per-email, per-token AI. You pay your service providers directly at their published rates, with no platform markup baked into repackaged credits. Most agencies' total infrastructure spend is under $50/month for the first dozen sub-accounts.",
+      title: "One workspace for the core work",
+      body: "Keep contacts, deals, tasks, calendar, lead forms, and booking pages together. Organize buyer inquiries and seller opportunities without starting from a blank general-purpose CRM.",
     },
     {
-      title: "AI built on an open gateway — pick any model",
-      body: "Web Chat, SMS auto-reply, and Voice agents all flow through a single AI gateway, configured per channel. One key routes turns to a fast default model, or you can override per channel to a heavier reasoning model from any of the major model families. When a better model ships, you switch with a config change — not a vendor partnership negotiation.",
-    },
-    {
-      title: "White-label all the way down to the database",
-      body: "Per-sub-account dedicated phone numbers. Per-sub-account verified email sending domains. Per-sub-account branding, API keys, webhook subscriptions, and a fully tenancy-scoped database so a leaked credential only ever sees one client's data. Every URL, every email, every SMS, every API request can come from the brand your client sees — because the data model was designed that way from line one.",
+      title: "Availability stated before you buy",
+      body: "AI, messaging, and automation channels remain Private Preview where labeled. The Solo offer does not promise every channel is live or included without additional confirmation.",
     },
   ],
-
   featureTable: {
-    heading:
-      "How AgentStack's base license compares to GoHighLevel's base plan",
+    heading: "Compare the workflow you need",
     rows: [
       {
-        label: "Unlimited sub-accounts",
-        agentstack: true,
-        competitor: false,
+        label: "Product focus",
+        agentstack: "Realtors: buyers, sellers, showings, and offers",
+        competitor: "Broad CRM and marketing platform",
       },
       {
-        label: "All-in-one CRM: contacts, pipeline, quotes, booking, calendar",
-        agentstack: true,
-        competitor: true,
-      },
-      {
-        label: "AI Web Chat widget + SMS auto-reply + Voice agent",
-        agentstack: true,
-        competitor: false,
-      },
-      {
-        label: "Google review requests (SMS + WhatsApp, auto + on-demand)",
+        label: "Contacts and deal pipelines",
         agentstack: true,
         competitor: true,
       },
       {
-        label: "Premium support",
-        agentstack: true,
-        competitor: false,
-      },
-      {
-        label: "Public API + webhooks included (idempotency, versioning)",
-        agentstack: true,
-        competitor: false,
-      },
-      {
-        label: "Full source code access — modify any feature",
-        agentstack: true,
-        competitor: false,
-      },
-      {
-        label: "Self-host on your own cloud account",
-        agentstack: true,
-        competitor: false,
-      },
-      {
-        label: "Recurring monthly platform fee",
-        agentstack: "$0",
-        competitor: "$297/month",
-      },
-      {
-        label: "Client data on your infrastructure",
-        agentstack: true,
-        competitor: false,
-      },
-      {
-        label: "Per-sub-account dedicated email sending domain",
+        label: "Lead forms and booking calendars",
         agentstack: true,
         competitor: true,
       },
       {
-        label: "Funnel / landing page builder",
-        agentstack: true,
-        competitor: true,
+        label: "Setup approach",
+        agentstack: "Guided six-step real estate setup",
+        competitor: "Configurable workflows and industry snapshots",
       },
       {
-        label: "Social post scheduling (Facebook + Instagram)",
-        agentstack: true,
-        competitor: true,
+        label: "AI, messaging, and automations",
+        agentstack: "Private Preview where labeled; confirm availability first",
+        competitor: "Plan, add-on, and usage charges apply",
+      },
+      {
+        label: "Entry monthly offer",
+        agentstack: "$99/month Solo — one workspace",
+        competitor: "$97/month Starter; $297/month Unlimited",
       },
     ],
   },
-
   pricing: {
-    heading: "Pricing compared honestly",
+    heading: "Compare the current monthly offers",
     agentstack: {
-      headline: "One-time license + your real vendor costs",
+      headline: SOLO_PRICE_LINE,
       detail:
-        "Pay for AgentStack once. The features GoHighLevel sells as paid add-ons — AI Employee, premium support — and capabilities it gates behind higher tiers — the full public API + webhooks — are all included with the license. For most agencies, monthly running costs come in under the price of a cup of coffee — the free tiers across the underlying providers are generous.",
+        "One workspace and the core lead-to-appointment workflow, with a guided six-step setup.",
       notes: [
-        "AI agents (Web Chat + SMS + Voice): $0/month — included with the license (GoHighLevel's AI Employee is a $97/mo-per-sub-account add-on).",
-        "Public API + webhooks: $0 — included with the license (GoHighLevel gates these to higher tiers).",
-        "Premium support: $0/month — a direct line to the team comes with the license (GoHighLevel charges $500/month).",
-        "Hosting, database, and email all run on generous free tiers that comfortably cover a small agency's first dozen sub-accounts.",
-        "Typical all-in running cost for a small agency: around the price of a cup of coffee a month.",
-        "SMS, email, and AI usage is billed directly by your providers at their published rates — the same usage GoHighLevel bills you for too, just without the platform markup. Apples-to-apples, it's a wash or cheaper.",
+        SOLO_MONTHLY_TERMS,
+        "Includes people, deals, tasks, calendar, lead forms, and booking pages.",
+        "Private Preview channels and optional add-ons are confirmed before activation.",
+        SOLO_CANCELLATION,
       ],
     },
     competitor: {
-      headline: "$297/month — and the add-ons stack fast",
+      headline: "GoHighLevel: Starter $97/month; Unlimited $297/month",
       detail:
-        "GoHighLevel's Unlimited Plan is $297/month or $2,970/year billed annually. The features most agencies actually need — AI Employee on every sub-account, premium support, white-label mobile app — are paid add-ons stacked on top of the base.",
+        "GoHighLevel offers a broad CRM and marketing platform. Its Starter and Unlimited tiers serve different account needs; compare the tier and usage charges you would actually use.",
       notes: [
-        "12 months of GHL Unlimited base at $297/mo = $3,564.",
-        "AI Employee: $97/month per sub-account — add-on, not included in the $297 base. At 10 sub-accounts that's another $970/month.",
-        "Premium Support: $500/month flat — account-level add-on, not included in the $297 base.",
-        "Public API + webhooks: gated to higher tiers — not on GoHighLevel's entry ($97) plan.",
-        "After 5 years the base alone is roughly $17,820 — with no ownership accrual.",
-        "Additional charges for other premium features (white-label mobile app, agency pro tools).",
-        "SMS and voice credits are billed through GHL at a markup over the underlying provider's published rates.",
+        "Starter includes three sub-accounts; Unlimited includes unlimited sub-accounts.",
+        "Telecommunications, AI usage, and optional add-ons can carry additional charges.",
+        "Check GoHighLevel’s current pricing directly before purchasing.",
       ],
     },
     summary:
-      "For a typical agency, break-even versus a single month of GoHighLevel lands inside the first month — not the first year. From month two onward, every dollar is pure savings, and the platform you sell to your clients is yours, not rented. Run the numbers below.",
+      "Choose based on the workflow and scope you need. AgentStack Solo is $99/month for a realtor-focused workspace; it is not an unlimited-agency license or a promise of zero ongoing platform fees.",
   },
-
-  faq: {
-    heading: "Frequently asked questions",
+  verification: {
+    heading: "Check the offer before switching",
+    intro: "Compare the published plans and the capabilities available today.",
     items: [
       {
-        question: "Is AgentStack a true GoHighLevel replacement?",
-        answer:
-          "Yes — for the work agencies do every day: contacts, pipeline, calendar, booking pages, quotes, automations, bulk email broadcasts, AI Web Chat + SMS + Voice agents, social post scheduling (Facebook + Instagram), Google review requests, dedicated per-sub-account phone numbers and sending domains, and a full public REST API with webhooks. It's the same surface area you sell today — delivered as code you own.",
+        label: "Monthly plan",
+        agentstack: SOLO_PRICE_LINE,
+        competitor: "Starter $97/month; Unlimited $297/month",
+        sources: [
+          { label: "AgentStack pricing", url: "/pricing" },
+          {
+            label: "GoHighLevel pricing",
+            url: "https://www.gohighlevel.com/pricing",
+          },
+        ],
       },
       {
-        question: "Can I bring my clients across from GoHighLevel?",
-        answer:
-          "Yes, on your timeline. Contacts import via CSV and your other records come across through the public REST API. The smooth path most agencies take: onboard new clients straight onto AgentStack, run both side by side, and move existing clients at their natural renewal. No big-bang cutover, no pressure.",
-      },
-      {
-        question: "How does the white-label work?",
-        answer:
-          "You deploy AgentStack to your own cloud under your own domain and set your brand in one config file — name, logo, tagline, support email, pricing. Every surface your clients touch renders as your brand: the landing page, every dashboard screen, transactional emails, public booking pages, the AI chat widget, and customer-facing quote pages. The AgentStack name never appears. And each sub-account can carry its own sending domain and dedicated phone number, so your clients see fully separate brands right down to the channel.",
-      },
-      {
-        question: "What does it actually cost to run?",
-        answer:
-          "After the one-time license, a small agency runs on the generous free tiers across hosting, database, and email — around the price of a cup of coffee a month. GoHighLevel is $297/month for the platform alone, forever, before add-ons. The usage you'd pay either way — SMS, email, AI — you pay your providers directly, at their published rates, without a platform markup on top.",
-      },
-      {
-        question: "Who owns my client data?",
-        answer:
-          "You do — completely. Every contact, deal, conversation, and call summary lives in your own cloud project, under your billing and your access control. There's no AgentStack-controlled database in the loop, and you can export everything at any time with your database vendor's standard tools. Your clients' data is your asset, not a vendor's leverage.",
-      },
-      {
-        question: "Do I need to be a developer to run AgentStack?",
-        answer:
-          "No code, ever — once it's deployed, the entire CRM runs in the browser. Setup is a one-time, guided process: you create a few standard provider accounts and paste in the keys, with an AI coding assistant able to walk you through every step. There's nothing to write — just accounts to connect. Budget around a couple of hours if it's your first time and this isn't something you do every day; faster if it is. After that, it's just your CRM.",
-      },
-      {
-        question: "What if I want to stop using AgentStack one day?",
-        answer:
-          "You keep everything. It's your code on your infrastructure with your data — so your deployment runs as long as you want it to, with or without us. That's the whole point of owning an asset instead of renting access: a SaaS disappears the day the company does; what you own doesn't.",
+        label: "Workflow and availability",
+        agentstack:
+          "Guided real estate setup; advanced channels labeled Private Preview",
+        competitor:
+          "CRM, pipelines, workflows, and booking calendars; check plan and usage terms",
+        sources: [
+          { label: "The AgentStack Method", url: "/the-method" },
+          {
+            label: "GoHighLevel features and fees",
+            url: "https://www.gohighlevel.com/pricing",
+          },
+        ],
       },
     ],
   },
-
+  competitorWins: {
+    heading: "When GoHighLevel may be the better fit",
+    bullets: [
+      "You run a marketing agency serving several industries and want a broad platform to configure for them.",
+      "Your decision depends on capabilities AgentStack currently labels Private Preview.",
+    ],
+    closing:
+      "Check the specific plan and channel availability on both platforms. AgentStack CRM is focused on the day-to-day work of realtors.",
+  },
+  faq: {
+    heading: "Questions from agents considering a switch",
+    items: [
+      {
+        question: "How much is AgentStack Solo?",
+        answer: `${SOLO_PRICE_LINE}. ${SOLO_MONTHLY_TERMS}`,
+      },
+      {
+        question: "Is AgentStack CRM built for real estate?",
+        answer:
+          "Yes. It is the operating system for realtors, bringing buyer and seller leads, listing appointments, showings, offers, and deals into one workspace.",
+      },
+      {
+        question: "Does Solo include every AI and automation channel?",
+        answer:
+          "No. Capabilities labeled Private Preview require confirmation of availability and billing before activation. Review the current pricing page for what is Live.",
+      },
+      {
+        question: "Do I have to build my CRM from scratch?",
+        answer:
+          "The six-step guided setup helps you configure the workspace around your real estate business. Follow Build, Connect, Capture, Respond, Nurture, and Close.",
+      },
+      {
+        question: "Is this the old one-time source-code license?",
+        answer:
+          "The public Solo offer is a $99/month subscription for one workspace. It does not promise source-code ownership, self-hosting, or zero recurring platform fees.",
+      },
+      {
+        question: "How do I cancel?",
+        answer: `${SOLO_CANCELLATION} Cancel before renewal through your billing portal; see the cancellation guide for account and retention details.`,
+      },
+    ],
+  },
   finalCta: {
-    headline: "Own your CRM. Stop renting it.",
-    body: "AgentStack gives agencies the full GoHighLevel-style surface area as code they own, on infrastructure they control, with no recurring platform fee on top.",
-    primaryCtaLabel: "See AgentStack pricing",
-    primaryCtaHref: "/#pricing",
+    headline: "A clearer home for your real estate business.",
+    body: `Keep your next lead, appointment, and deal moving in a workspace built for realtors. ${SOLO_PRICE_LINE}.`,
+    primaryCtaLabel: "See AgentStack Solo — $99/month",
+    primaryCtaHref: "/pricing",
   },
 };

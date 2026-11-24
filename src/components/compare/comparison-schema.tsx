@@ -1,3 +1,8 @@
+import {
+  HOMEPAGE_DESCRIPTION,
+  SOLO_PRICE,
+  SOLO_PRICE_LINE,
+} from "@/lib/public-site/offer";
 import type { Comparison } from "@/types/comparisons";
 import { getComparisonPath } from "@/data/comparisons";
 
@@ -26,16 +31,25 @@ export function ComparisonSchema({
   const softwareApplication = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    name: "AgentStack",
+    name: "AgentStack CRM",
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web",
     description:
-      "AgentStack is an all-in-one agency CRM you self-host and brand as your own. Contacts, pipeline, calendar, booking pages, quotes, automations, bulk email, public REST API, and AI agents (Web Chat, SMS, Voice) in one codebase you own outright.",
+      comparison.slug === "gohighlevel"
+        ? HOMEPAGE_DESCRIPTION
+        : "AgentStack is an all-in-one agency CRM you self-host and brand as your own. Contacts, pipeline, calendar, booking pages, quotes, automations, bulk email, public REST API, and AI agents (Web Chat, SMS, Voice) in one codebase you own outright.",
     url: baseUrl,
     offers: {
       "@type": "Offer",
       priceCurrency: "USD",
-      category: "One-time license",
+      ...(comparison.slug === "gohighlevel"
+        ? {
+            price: SOLO_PRICE,
+            name: SOLO_PRICE_LINE,
+            url: `${baseUrl}/pricing`,
+            category: "Monthly subscription",
+          }
+        : { category: "One-time license" }),
     },
   };
 

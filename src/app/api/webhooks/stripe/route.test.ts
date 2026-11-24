@@ -202,6 +202,7 @@ beforeEach(() => {
   });
   vi.stubEnv("STRIPE_SECRET_KEY", "test");
   vi.stubEnv("STRIPE_WEBHOOK_SECRET", "test");
+  vi.stubEnv("STRIPE_TEST_WEBHOOK_SECRET", "");
   vi.stubEnv("NEXT_PUBLIC_POSTHOG_KEY", "project-test");
   vi.stubEnv("NEXT_PUBLIC_GA4_MEASUREMENT_ID", "");
   vi.stubEnv("GA4_API_SECRET", "");
@@ -350,5 +351,47 @@ it("ledgers checkout once without changing its existing handler behavior", async
   await POST(request());
   await POST(request());
   expect(state.checkout).toHaveBeenCalledOnce();
+  expect(fetch).not.toHaveBeenCalled();
+});
+
+function useVerificationSecret(livemode = false) {
+  vi.stubEnv("STRIPE_TEST_WEBHOOK_SECRET", "verification-secret");
+  const event = invoice();
+  Object.assign(event.data.object.metadata, {
+    agentstack_verification: "true",
+  });
+  event.livemode = livemode;
+  state.constructEvent.mockImplementation((_body, _signature, secret) => {
+    if (secret !== "verification-secret")
+      throw new Error("signature does not match live secret");
+    return event;
+  });
+}
+
+it("accepts the verification secret only for flagged test invoices and test workspace records", async () => {
+  useVerificationSecret();
+  state.rows.get("agencies/workspace")!.isTest = true;
+  expect((await POST(request())).status).toBe(200);
+  expect((await POST(request())).status).toBe(200);
+  expect(state.control.activationWrites).toBe(1);
+  expect(fetch).toHaveBeenCalledOnce();
+  expect(
+    state.rows.get("processedWebhookEvents/evt_first")?.verificationOnly
+  ).toBe(true);
+});
+it("rejects live-mode events signed with the verification secret before side effects", async () => {
+  vi.spyOn(console, "error").mockImplementation(() => {});
+  useVerificationSecret(true);
+  expect((await POST(request())).status).toBe(400);
+  expect(fetch).not.toHaveBeenCalled();
+  expect(state.rows.has("processedWebhookEvents/evt_first")).toBe(false);
+});
+it("cannot activate an unflagged production workspace through the verification secret", async () => {
+  vi.spyOn(console, "error").mockImplementation(() => {});
+  useVerificationSecret();
+  expect((await POST(request())).status).toBe(500);
+  expect(state.rows.get("agencies/workspace")?.subscriptionStatus).toBe(
+    "inactive"
+  );
   expect(fetch).not.toHaveBeenCalled();
 });
