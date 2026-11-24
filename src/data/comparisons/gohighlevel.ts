@@ -116,7 +116,7 @@ export const gohighlevelComparison: Comparison = {
       ],
     },
     summary:
-      "Choose based on the workflow and scope you need. AgentStack Solo is $99/month for a realtor-focused workspace; it is not an unlimited-agency license or a promise of zero ongoing platform fees.",
+      "Choose based on the workflow and scope you need. AgentStack Solo is $99/month for one realtor-focused workspace. Compare the included tools, current availability, and any optional usage costs before switching.",
   },
   verification: {
     heading: "Check the offer before switching",
@@ -182,9 +182,9 @@ export const gohighlevelComparison: Comparison = {
           "The six-step guided setup helps you configure the workspace around your real estate business. Follow Build, Connect, Capture, Respond, Nurture, and Close.",
       },
       {
-        question: "Is this the old one-time source-code license?",
+        question: "What does the Solo subscription cover?",
         answer:
-          "The public Solo offer is a $99/month subscription for one workspace. It does not promise source-code ownership, self-hosting, or zero recurring platform fees.",
+          "AgentStack Solo is a $99/month subscription for one workspace, guided setup, people, deals, tasks, calendar, lead forms, and booking pages. Review the pricing page for availability and optional add-ons.",
       },
       {
         question: "How do I cancel?",
