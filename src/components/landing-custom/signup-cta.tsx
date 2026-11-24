@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { captureClientEvent, identifyAnalytics } from "@/lib/analytics/client";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
@@ -16,6 +17,12 @@ const perks = [
 
 export function SignupCta() {
   const router = useRouter();
+  const signupAction = useRef<string | null>(null);
+  function trackSignupStart() {
+    signupAction.current ??= crypto.randomUUID();
+    captureClientEvent("signup_started", signupAction.current);
+  }
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -38,6 +45,7 @@ export function SignupCta() {
       });
 
       const payload = (await res.json().catch(() => ({}))) as {
+        uid?: string;
         error?: string;
         redirectTo?: string;
       };
@@ -49,6 +57,8 @@ export function SignupCta() {
         }
         throw new Error(payload.error ?? "Could not create account.");
       }
+
+      if (payload.uid) identifyAnalytics(payload.uid);
 
       await signInWithEmail(email, password);
       router.push(payload.redirectTo ?? "/dashboard");
@@ -118,7 +128,7 @@ export function SignupCta() {
                 />
               </div>
 
-              <form onSubmit={handleSubmit} className="mt-3 space-y-3">
+              <form onSubmit={handleSubmit} onFocusCapture={trackSignupStart} onPointerDownCapture={trackSignupStart} className="mt-3 space-y-3">
                 <div>
                   <label className="mb-1.5 block text-xs font-medium text-[#526078]">
                     Full name

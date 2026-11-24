@@ -1,3 +1,4 @@
+import { captureServerEvent } from "@/lib/analytics/server";
 import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
@@ -489,6 +490,7 @@ async function handleSubmit(
     }
   })();
 
+  await captureServerEvent("first_lead_captured", subAccountId, subAccountId, { workspace_id: subAccountId });
   return jsonWithCors({
     ok: true,
     contactId: contactRef.id,

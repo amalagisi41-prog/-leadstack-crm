@@ -5,7 +5,7 @@ import { LegalDocument, LegalValue } from "@/components/legal/legal-document";
 export const metadata: Metadata = {
   title: "Terms of Service",
   description:
-    "The agreement governing use of AgentStack's CRM, websites, domains, communications, integrations, and AI-assisted workflows.",
+    "The agreement governing use of AgentStack CRM's CRM, websites, domains, communications, integrations, and AI-assisted workflows.",
 };
 
 /**

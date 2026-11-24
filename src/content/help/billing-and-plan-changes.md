@@ -27,3 +27,9 @@ Your billing setup should match how you sell and how many people use the workspa
 - Billing email and card details
 
 If you are making a bigger operational jump, it is still smart to review your setup before inviting more users into the workspace.
+
+## Cancellation terms
+
+Cancellation stops future billing. Your access and retention window depend on the account state and the current billing period.
+
+[Review what to export before cancelling](/help/cancel-your-plan).

@@ -36,7 +36,7 @@ const lifecycle = [
 
 const proofPoints = [
   "15-minute guided setup",
-  "AI follow-up included",
+  "AI follow-up · Private Preview",
   "Built for real estate",
 ];
 const HERO_VIDEO_ID =
@@ -55,7 +55,7 @@ function ClosingWordmark({ compact = false }: { compact?: boolean }) {
     >
       <Image
         src="/brand/exports/ui/agentstack-mark-on-light-1024.png"
-        alt="AgentStack"
+        alt="AgentStack CRM logo"
         width={1024}
         height={1024}
         unoptimized

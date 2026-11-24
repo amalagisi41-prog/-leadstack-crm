@@ -1,4 +1,7 @@
+import type { Metadata } from "next";
 import { PublicInfoShell } from "@/components/public/public-info-shell";
+
+export const metadata: Metadata = { title: "Product status — AgentStack CRM", description: "AgentStack CRM: Product status and connected-service availability for real estate agents.", openGraph: { title: "Product status — AgentStack CRM" }, twitter: { title: "Product status — AgentStack CRM" } };
 
 export default function StatusPage() {
   return (

@@ -69,7 +69,7 @@ const readAllArticles = cache((): HelpArticle[] => {
       const parsed = parseFrontmatter(raw, slug);
       return {
         ...parsed,
-        html: markdownToHtml(parsed.body),
+        html: markdownToHtml(parsed.body.replace(/^#\s+.*$/m, "").replace(/^#\s+/gm, "## ")),
       };
     })
     .sort((a, b) => {

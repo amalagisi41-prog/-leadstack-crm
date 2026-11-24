@@ -1,3 +1,5 @@
+import { WhyLeaveGhl } from "@/components/landing-custom/why-leave-ghl";
+import { homepageSchema } from "@/lib/public-site/homepage-schema";
 import { LANDING_VARIANT } from "@/config/landing";
 import { resolveCustomBrand } from "@/lib/landing/resolve-brand";
 import { resolveHeroVariant } from "@/lib/hero-variant-server";
@@ -58,7 +60,9 @@ export default async function HomePage() {
       <div className="flex min-h-screen flex-col bg-[#FFF6E8] text-[#173B7A] [color-scheme:light]">
         <CustomNavbar brand={brand} />
         <main className="flex-1">
+          <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(homepageSchema()).replace(/</g, "\\u003c") }} />
           <CustomHero />
+          <WhyLeaveGhl />
           <VideoTeaser />
           <CustomHowItWorks />
           <PipelineDemo />

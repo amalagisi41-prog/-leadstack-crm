@@ -1,8 +1,11 @@
+import type { Metadata } from "next";
 import { PublicInfoShell } from "@/components/public/public-info-shell";
 import {
   AVAILABILITY_STYLES,
   PUBLIC_CAPABILITIES,
 } from "@/lib/public-site/capability-status";
+
+export const metadata: Metadata = { title: "Feature availability — AgentStack CRM", description: "AgentStack CRM: Live features, Private Preview, and Coming Soon capabilities for realtors.", openGraph: { title: "Feature availability — AgentStack CRM" }, twitter: { title: "Feature availability — AgentStack CRM" } };
 
 export default function AvailabilityPage() {
   return (

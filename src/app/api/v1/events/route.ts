@@ -1,3 +1,4 @@
+import { captureServerEvent } from "@/lib/analytics/server";
 import "server-only";
 
 import { FieldValue, type Query } from "firebase-admin/firestore";
@@ -115,6 +116,7 @@ export const POST = withApiAuth(async ({ body, ctx }) => {
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
   });
+  if (ctx.mode === "live" && input.contactId) await captureServerEvent("first_appointment_booked", ctx.subAccountId, ctx.subAccountId, { workspace_id: ctx.subAccountId });
   const created = await ref.get();
   const wire = serializeEventForApi(created.id, created.data()!, ctx.mode);
   if (wire.created_at === new Date(0).toISOString()) {

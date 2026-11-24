@@ -5,7 +5,7 @@ import { LegalDocument, LegalValue } from "@/components/legal/legal-document";
 export const metadata: Metadata = {
   title: "Software Licensing",
   description:
-    "AgentStack's product license, customer website ownership, AI output rights, open-source notices, and component provenance policy.",
+    "AgentStack CRM's product license, customer website ownership, AI output rights, open-source notices, and component provenance policy.",
 };
 
 /**

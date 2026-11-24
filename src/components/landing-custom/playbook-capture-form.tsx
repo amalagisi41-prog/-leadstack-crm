@@ -70,12 +70,12 @@ export function PlaybookCaptureForm() {
               <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#173B7A]">
                 Not ready yet?
               </p>
-              <h1 className="mt-4 text-3xl font-semibold tracking-tight text-[#173B7A] sm:text-5xl">
+              <h2 className="mt-4 text-3xl font-semibold tracking-tight text-[#173B7A] sm:text-5xl">
                 Get{" "}
                 <span className="font-sans font-normal italic text-[#DB4F9B]">
                   {AGENTSTACK_METHOD_NAME}
                 </span>
-              </h1>
+              </h2>
               <p className="mt-4 max-w-xl text-base leading-7 text-[#526078] sm:text-lg">
                 We&apos;ll save your place in the nurture flow and follow up
                 with the setup guidance that matters most before you start.

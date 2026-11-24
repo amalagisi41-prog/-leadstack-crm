@@ -1,3 +1,4 @@
+import { captureServerEvent } from "@/lib/analytics/server";
 import "server-only";
 
 import { FieldValue } from "firebase-admin/firestore";
@@ -230,6 +231,7 @@ export async function provisionNewAgency(
   });
 
   await batch.commit();
+  await captureServerEvent("workspace_created", uid, subAccountId, { workspace_id: subAccountId });
 
   // The worked example, so the very first workspace an owner opens has a
   // legible pipeline rather than six empty columns. Marked `isSample`, so

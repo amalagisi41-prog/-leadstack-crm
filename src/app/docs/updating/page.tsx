@@ -15,9 +15,9 @@ import { LogoMark } from "@/components/brand/logo-mark";
  */
 
 export const metadata = {
-  title: "Keeping your app up to date — AgentStack",
+  title: "Keeping your app up to date — AgentStack CRM",
   description:
-    "How to pull the latest official AgentStack build into your own customised version of the app — without losing your changes.",
+    "How to pull the latest official AgentStack CRM build into your own customised version of the app — without losing your changes.",
 };
 
 export default function UpdatingDocsPage() {

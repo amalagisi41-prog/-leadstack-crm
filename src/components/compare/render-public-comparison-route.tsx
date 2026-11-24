@@ -19,21 +19,23 @@ export function buildPublicComparisonMetadata(slug: string): Metadata {
     "https://agentstackcrm.app";
   const canonical = `${baseUrl}${getComparisonPath(comparison.slug)}`;
 
+  const title = `AgentStack CRM vs ${comparison.competitorName}`;
+  const description = comparison.metaDescription.replace(/AgentStack(?! CRM)/g, "AgentStack CRM");
   return {
-    title: comparison.metaTitle,
-    description: comparison.metaDescription,
+    title,
+    description,
     alternates: { canonical },
     openGraph: {
-      title: comparison.metaTitle,
-      description: comparison.metaDescription,
+      title,
+      description,
       url: canonical,
       type: "article",
-      siteName: "AgentStack",
+      siteName: "AgentStack CRM",
     },
     twitter: {
       card: "summary_large_image",
-      title: comparison.metaTitle,
-      description: comparison.metaDescription,
+      title,
+      description,
     },
     robots: { index: true, follow: true },
   };

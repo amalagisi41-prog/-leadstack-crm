@@ -1,3 +1,4 @@
+import { captureServerEvent } from "@/lib/analytics/server";
 import "server-only";
 
 import { NextResponse } from "next/server";
@@ -108,6 +109,7 @@ export async function POST(request: Request) {
     );
   }
 
+  await captureServerEvent("signup_completed", uid, uid);
   return NextResponse.json({
     redirectTo: "/subscribe",
     requiresBilling: true,

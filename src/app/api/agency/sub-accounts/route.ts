@@ -1,3 +1,4 @@
+import { captureServerEvent } from "@/lib/analytics/server";
 import "server-only";
 
 import { NextResponse } from "next/server";
@@ -319,6 +320,7 @@ export async function POST(request: Request) {
     );
   }
 
+  await captureServerEvent("workspace_created", uid, subAccountId, { workspace_id: subAccountId });
   return NextResponse.json({
     subAccountId,
     accountNumber,

@@ -4,7 +4,7 @@ import { ArchitectureDiagram } from "@/components/docs/architecture-diagram";
 export const metadata: Metadata = {
   title: "Architecture",
   description:
-    "How AgentStack hangs together — eight product domains in one tube-map view.",
+    "How AgentStack CRM hangs together — eight product domains in one tube-map view.",
 };
 
 /**

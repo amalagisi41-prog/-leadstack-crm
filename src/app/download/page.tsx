@@ -9,8 +9,10 @@ const brandName =
   LANDING_VARIANT === "custom" ? CUSTOM_BRAND.name : "AgentStack";
 
 export const metadata: Metadata = {
-  title: `Install ${brandName} on any device`,
-  description: `Install ${brandName} on your phone, tablet, or desktop. Use the browser's install action—no app store or platform-specific download is required.`,
+  title: `Install AgentStack CRM on any device`,
+  description: `Install AgentStack CRM on your phone, tablet, or desktop. Use the browser's install action—no app store or platform-specific download is required.`,
+  openGraph: { title: `Install AgentStack CRM on any device` },
+  twitter: { title: `Install AgentStack CRM on any device` },
 };
 
 /**

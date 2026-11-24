@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { captureClientEvent, identifyAnalytics } from "@/lib/analytics/client";
+import { useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { signInWithEmail, sendVerificationEmail } from "@/lib/firebase/auth";
@@ -29,6 +30,12 @@ export function SignupForm({
   planKey?: MarketingPlanKey | null;
 }) {
   const router = useRouter();
+  const signupAction = useRef<string | null>(null);
+  function trackSignupStart() {
+    signupAction.current ??= crypto.randomUUID();
+    captureClientEvent("signup_started", signupAction.current);
+  }
+
   const searchParams = useSearchParams();
   // Pre-fill email when arriving from an invite link (/signup?email=…).
   // Invited users join that workspace; everyone else starts a new Solo
@@ -78,6 +85,7 @@ export function SignupForm({
       });
 
       const payload = (await res.json().catch(() => ({}))) as {
+        uid?: string;
         error?: string;
         redirectTo?: string;
         requiresBilling?: boolean;
@@ -94,6 +102,8 @@ export function SignupForm({
         }
         throw new Error(payload.error ?? "Could not create account.");
       }
+
+      if (payload.uid) identifyAnalytics(payload.uid);
 
       // Sign in client-side to mint the Firebase ID token, then exchange it
       // for the __session cookie middleware reads.
@@ -152,7 +162,7 @@ export function SignupForm({
           Create your workspace and begin the onboarding tour.
         </CardDescription>
       </CardHeader>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} onFocusCapture={trackSignupStart} onPointerDownCapture={trackSignupStart}>
         <CardContent className="space-y-4">
           <SocialAuthButtons mode="signup" onError={setError} />
           <div className="space-y-2">

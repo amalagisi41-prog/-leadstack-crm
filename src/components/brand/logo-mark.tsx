@@ -1,5 +1,6 @@
 interface LogoMarkProps {
   size?: number;
+  alt?: string;
   className?: string;
   idSuffix?: string;
   /**
@@ -23,6 +24,7 @@ interface LogoMarkProps {
  */
 export function LogoMark({
   size = 20,
+  alt = "",
   className,
   tone = "light",
 }: LogoMarkProps) {
@@ -34,11 +36,11 @@ export function LogoMark({
           ? "/icons/logo-light-192.png"
           : "/icons/logo-dark-192.png"
       }
-      alt=""
+      alt={alt}
       width={size}
       height={size}
       className={className}
-      aria-hidden="true"
+      aria-hidden={alt ? undefined : true}
     />
   );
 }

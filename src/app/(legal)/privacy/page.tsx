@@ -5,7 +5,7 @@ import { LegalDocument, LegalValue } from "@/components/legal/legal-document";
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description:
-    "How AgentStack collects, uses, discloses, and protects information across its CRM, website, communications, and AI-assisted services.",
+    "How AgentStack CRM collects, uses, discloses, and protects information across its CRM, website, communications, and AI-assisted services.",
 };
 
 /**

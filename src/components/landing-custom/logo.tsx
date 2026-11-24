@@ -9,5 +9,5 @@ export function Logo({
   idSuffix?: string;
   tone?: "light" | "dark";
 }) {
-  return <LogoMark size={size} idSuffix={idSuffix} tone={tone} />;
+  return <LogoMark alt="AgentStack CRM logo" size={size} idSuffix={idSuffix} tone={tone} />;
 }

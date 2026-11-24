@@ -3,8 +3,8 @@ import { Zap, Users, CalendarCheck, Star, Globe, BarChart3 } from "lucide-react"
 const features = [
   {
     icon: Zap,
-    title: "Every lead answered instantly",
-    body: "AI responds in under 60 seconds via text, email, web chat, and phone — even while you're in a showing. The first agent to respond wins. That's always you.",
+    title: "Respond between showings — Private Preview",
+    body: "AI Web Chat and AI Assist, plus SMS and voice automation, are Private Preview. Review channel setup and consent before responding to buyer inquiries.",
     color: "bg-amber-500/10 text-amber-500",
   },
   {
@@ -21,20 +21,20 @@ const features = [
   },
   {
     icon: Star,
-    title: "Reviews without the awkward ask",
-    body: "AgentStack sends a Google review request at the perfect moment — right after closing, when satisfaction is highest. More five-star reviews, less asking.",
+    title: "Closing follow-up — Private Preview",
+    body: "SMS automation is Private Preview. Review a post-closing follow-up workflow before inviting a past client to leave a review.",
     color: "bg-blue-500/10 text-blue-500",
   },
   {
     icon: Globe,
     title: "Lead capture that actually converts",
-    body: "Launch proven systems — home valuations, buyer consultations, open houses — with one click. Every submission feeds directly into your follow-up plan.",
+    body: "Create lead forms for buyer consultations, listing inquiries, and open houses. Submissions create contacts in your real estate workspace.",
     color: "bg-teal-500/10 text-teal-500",
   },
   {
     icon: BarChart3,
     title: "Know your numbers without trying",
-    body: "GCI by month, pipeline value by stage, leads by source. Everything updates live. No Excel exports, no copy-paste errors.",
+    body: "Track buyer and seller opportunities in your pipeline, organize closing tasks, and see which relationships need your attention next.",
     color: "bg-rose-500/10 text-rose-500",
   },
 ];
@@ -54,7 +54,7 @@ export function Features() {
             </span>
           </h2>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-[#526078] sm:text-lg">
-            You shouldn&apos;t need a tech degree to run your business. AgentStack sets up in 15 minutes and pays for itself with one closed deal.
+            Keep your sphere, buyer consultations, listing appointments, and offers organized while you focus on the next closing.
           </p>
         </div>
 

@@ -13,7 +13,7 @@ export function Footer({ brand }: { brand: ResolvedBrand }) {
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={brand.logoUrl}
-                  alt={`${brand.name} logo`}
+                  alt="AgentStack CRM logo"
                   className="h-8 w-auto max-w-[140px] object-contain"
                 />
               ) : (
@@ -21,13 +21,14 @@ export function Footer({ brand }: { brand: ResolvedBrand }) {
               )}
             </Link>
             <p className="mt-3 text-sm leading-6 text-[#526078]">
-              {brand.tagline}.
+              AgentStack CRM — agentstackcrm.app
             </p>
           </div>
 
           <div>
             <h3 className="mb-3 text-sm font-semibold">Product</h3>
             <ul className="space-y-2 text-sm text-[#526078]">
+              <li><Link href="/pricing">Pricing</Link></li>
               <li>
                 <a
                   href="#features"

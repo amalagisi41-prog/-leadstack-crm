@@ -1,3 +1,4 @@
+import { captureServerEvent } from "@/lib/analytics/server";
 import "server-only";
 
 import { NextResponse } from "next/server";
@@ -90,6 +91,7 @@ export async function POST(
     );
   }
 
+  await captureServerEvent("first_appointment_booked", event.subAccountId, event.subAccountId, { workspace_id: event.subAccountId });
   // Side effects — best-effort.
   const updatedEvent: CalendarEvent = {
     ...event,

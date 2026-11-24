@@ -3,8 +3,10 @@ import Link from "next/link";
 import { CUSTOM_BRAND } from "@/config/landing";
 
 export const metadata: Metadata = {
-  title: `${CUSTOM_BRAND.name} Security`,
-  description: `How ${CUSTOM_BRAND.name} handles data ownership, access, storage, and export.`,
+  title: `AgentStack CRM Security`,
+  description: `How AgentStack CRM handles data ownership, access, storage, and export.`,
+  openGraph: { title: `AgentStack CRM Security` },
+  twitter: { title: `AgentStack CRM Security` },
 };
 
 export default function SecurityPage() {

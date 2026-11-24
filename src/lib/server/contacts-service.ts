@@ -1,3 +1,4 @@
+import { captureServerEvent } from "@/lib/analytics/server";
 import "server-only";
 
 import { FieldValue } from "firebase-admin/firestore";
@@ -125,6 +126,7 @@ export async function createContactServerSide(
     payload: { contact },
   });
   if (input.mode === "live") {
+    await captureServerEvent("first_lead_captured", input.subAccountId, input.subAccountId, { workspace_id: input.subAccountId });
     void fireWorkflowTrigger({
       subAccountId: input.subAccountId,
       agencyId: input.agencyId,

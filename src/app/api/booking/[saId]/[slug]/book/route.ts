@@ -1,3 +1,4 @@
+import { captureServerEvent } from "@/lib/analytics/server";
 import "server-only";
 
 import { NextResponse } from "next/server";
@@ -450,6 +451,8 @@ export async function POST(
     );
   }
 
+  await captureServerEvent("first_lead_captured", saId, saId, { workspace_id: saId });
+  if (!paymentRequired) await captureServerEvent("first_appointment_booked", saId, saId, { workspace_id: saId });
   // ── Post-write side effects (best-effort) ──────────────────────
   const publicEventUrl = buildEventPublicUrl(created.rawToken);
   const appHost =

@@ -271,7 +271,8 @@ export function IdxShowcase() {
             <span className={styles.dot} />
             IDX Listings
           </div>
-          <h2>
+          <p className="mb-3 text-sm font-semibold">Private Preview</p>
+              <h2>
             Your own listings site, <em>live on your laptop and their phone.</em>
           </h2>
           <p>

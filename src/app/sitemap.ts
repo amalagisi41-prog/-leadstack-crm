@@ -21,6 +21,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const helpArticles = getHelpArticles();
 
   const sharedEntries: MetadataRoute.Sitemap = [
+    { url: `${baseUrl}/pricing`, lastModified: now, changeFrequency: "monthly", priority: 0.8 },
     {
       url: `${baseUrl}/`,
       lastModified: now,

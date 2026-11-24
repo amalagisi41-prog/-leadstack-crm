@@ -37,6 +37,7 @@ export function PublicInfoShell({
         </div>
         <div className="mt-12">{children}</div>
         <footer className="mt-16 flex flex-wrap gap-5 border-t border-[#E7DCC7] pt-6 text-sm text-[#526078]">
+          <Link href="/pricing">Pricing</Link>
           <Link href="/help">Help</Link>
           <Link href="/security">Security</Link>
           <Link href="/integrations">Integrations</Link>

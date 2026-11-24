@@ -1,3 +1,4 @@
+import { captureServerEvent } from "@/lib/analytics/server";
 import "server-only";
 
 import { NextResponse } from "next/server";
@@ -8,6 +9,7 @@ import {
   ONBOARDING_STEP_IDS,
   isOnboardingComplete,
 } from "@/lib/onboarding/steps";
+import { WIZARD_STEP_STEP_IDS } from "@/lib/onboarding/state-machine";
 import { computeOnboardingState } from "@/lib/onboarding/state-machine";
 import { summarizeOnboardingCompletion } from "@/lib/onboarding/completion";
 import { readOnboardingSignals } from "@/lib/onboarding/read-signals";
@@ -151,6 +153,14 @@ export async function PATCH(
   }
 
   await getAdminDb().doc(`subAccounts/${subAccountId}`).update(update);
+
+  if (steps) {
+    await Promise.all(WIZARD_STEP_STEP_IDS.map(async (required, index) => {
+      if (required.every((step) => steps.includes(step))) {
+        await captureServerEvent("setup_step_completed", subAccountId, `${subAccountId}:${index + 1}`, { step: index + 1, workspace_id: subAccountId });
+      }
+    }));
+  }
 
   // Only a checklist PATCH drives the lifecycle emails. An answers-only save
   // says nothing about how far along setup is, so it must not re-queue them.

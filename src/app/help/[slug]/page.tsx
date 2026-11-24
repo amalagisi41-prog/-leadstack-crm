@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CUSTOM_BRAND } from "@/config/landing";
 import {
   getHelpArticle,
   getHelpArticles,
@@ -24,8 +23,10 @@ export async function generateMetadata({
   }
 
   return {
-    title: `${article.title} | ${CUSTOM_BRAND.name} Help Center`,
-    description: article.description,
+    title: `${article.title} — AgentStack CRM`,
+    description: article.description.replace(/AgentStack(?! CRM)/g, "AgentStack CRM"),
+    openGraph: { title: `${article.title} — AgentStack CRM` },
+    twitter: { title: `${article.title} — AgentStack CRM` },
   };
 }
 

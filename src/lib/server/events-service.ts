@@ -1,3 +1,4 @@
+import { captureServerEvent } from "@/lib/analytics/server";
 import "server-only";
 
 import { FieldValue } from "firebase-admin/firestore";
@@ -85,6 +86,7 @@ export async function createEventServerSide(
     updatedAt: FieldValue.serverTimestamp(),
   };
   await ref.set(doc);
+  if (input.mode === "live" && input.contactId) await captureServerEvent("first_appointment_booked", input.subAccountId, input.subAccountId, { workspace_id: input.subAccountId });
 
   // Mirror the client's activity write so the contact timeline is unchanged.
   if (input.contactId) {

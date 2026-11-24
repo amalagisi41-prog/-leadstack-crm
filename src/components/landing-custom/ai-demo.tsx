@@ -38,6 +38,7 @@ export function AiDemo() {
               <p className="mb-2 text-sm font-semibold uppercase tracking-[0.28em] text-[#173B7A]">
                 Never miss an inquiry
               </p>
+              <p className="mb-3 text-sm font-semibold">Private Preview</p>
               <h2 className="mb-4 text-3xl font-semibold tracking-tight text-[#173B7A] sm:text-5xl">
                 Every lead answered.{" "}
                 <span className="font-sans font-normal italic text-[#DB4F9B]">

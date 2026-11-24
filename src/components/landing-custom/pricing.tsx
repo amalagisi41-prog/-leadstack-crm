@@ -4,13 +4,14 @@ import { useState } from "react";
 import { Check, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CUSTOM_BRAND } from "@/config/landing";
+import { SOLO_PRICE_LINE, SOLO_CANCELLATION } from "@/lib/public-site/offer";
+import { PUBLIC_CAPABILITIES } from "@/lib/public-site/capability-status";
+import Link from "next/link";
 
 export function Pricing() {
   const [loading, setLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState("");
-  const [billingInterval, setBillingInterval] = useState<"month" | "year">(
-    "month"
-  );
+  const billingInterval = "month";
   const offer = CUSTOM_BRAND.pricing.starter;
 
   async function startCheckout() {
@@ -65,48 +66,26 @@ export function Pricing() {
             <div className="flex items-center justify-between gap-4">
               <div>
                 <div className="flex items-center gap-2 text-sm font-semibold text-blue-100">
-                  <Sparkles className="h-4 w-4" /> Founding member access
+                  <Sparkles className="h-4 w-4" /> AgentStack Solo
                 </div>
                 <p className="mt-2 text-2xl font-semibold">{offer.name}</p>
               </div>
-              <div className="text-right">
-                <span className="text-4xl font-bold">
-                  $
-                  {billingInterval === "year"
-                    ? offer.priceAnnual
-                    : offer.priceMonthly}
-                </span>
-                <span className="text-blue-100/70">/mo</span>
-              </div>
             </div>
-            <p className="mt-3 text-sm leading-6 text-blue-100/75">
-              Charged today. Includes one bonus month; renews{" "}
-              {billingInterval === "year"
-                ? "at $1,188 yearly after 13 months"
-                : "at $149 monthly after 2 months"}
-              . Cancel before renewal from your billing portal.
+            <p className="mt-4 text-2xl font-semibold">{SOLO_PRICE_LINE}</p>
+            <p className="mt-3 text-sm leading-6 text-blue-100">
+              Includes one workspace, guided setup, people, deals, tasks,
+              calendar, lead forms, and booking pages.
+            </p>
+            <p className="mt-3 text-sm leading-6 text-blue-100">
+              {SOLO_CANCELLATION}
             </p>
           </div>
 
           <div className="p-7">
-            <div className="mb-6 grid grid-cols-2 rounded-xl bg-[#173B7A]/5 p-1">
-              <button
-                type="button"
-                onClick={() => setBillingInterval("month")}
-                className={`rounded-lg px-3 py-2 text-sm font-medium ${billingInterval === "month" ? "bg-white text-[#173B7A] shadow-sm" : "text-[#526078]"}`}
-              >
-                Monthly · $149
-              </button>
-              <button
-                type="button"
-                onClick={() => setBillingInterval("year")}
-                className={`rounded-lg px-3 py-2 text-sm font-medium ${billingInterval === "year" ? "bg-white text-[#173B7A] shadow-sm" : "text-[#526078]"}`}
-              >
-                Annual · $99/mo
-              </button>
-            </div>
             <ul className="grid gap-3 sm:grid-cols-2">
-              {offer.features.map((feature) => (
+              {PUBLIC_CAPABILITIES.filter(
+                (item) => item.availability === "Live"
+              ).map(({ name: feature }) => (
                 <li
                   key={feature}
                   className="flex items-start gap-2 text-sm text-[#173B7A]"
@@ -118,6 +97,29 @@ export function Pricing() {
                 </li>
               ))}
             </ul>
+            <p className="mt-6 font-semibold">
+              Private Preview — availability and billing confirmed before
+              activation
+            </p>
+            <ul className="mt-3 space-y-2 text-sm">
+              {PUBLIC_CAPABILITIES.filter(
+                (item) => item.availability === "Private Preview"
+              ).map((item) => (
+                <li key={item.name}>{item.name}</li>
+              ))}
+            </ul>
+            <p className="mt-4 text-sm">
+              Discounts, trial length, and money-back guarantee: [TO CONFIRM].
+            </p>
+            <p className="mt-4 text-sm">
+              <Link href="/help/billing-and-plan-changes" className="underline">
+                Billing and plan changes
+              </Link>{" "}
+              ·{" "}
+              <Link href="/help/cancel-your-plan" className="underline">
+                Cancellation details
+              </Link>
+            </p>
             <Button
               onClick={startCheckout}
               disabled={loading}

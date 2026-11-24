@@ -1,3 +1,4 @@
+import { HOMEPAGE_DESCRIPTION } from "@/lib/public-site/offer";
 import type { Metadata, Viewport } from "next";
 import { Providers } from "@/components/providers";
 import { RefTracker } from "@/components/affiliate/ref-tracker";
@@ -11,11 +12,11 @@ import "./globals.css";
 // one config file to brand both the page chrome and the rendered landing.
 const CUSTOM_SITE_URL = `https://${CUSTOM_BRAND.primaryDomain}`;
 const AGENTSTACK_SITE_URL = "https://agentstackcrm.app";
-const CUSTOM_TITLE = `${CUSTOM_BRAND.name} — ${CUSTOM_BRAND.tagline}`;
+const CUSTOM_TITLE = "AgentStack CRM — The operating system for realtors";
 const AGENTSTACK_TITLE =
-  "AgentStack — The all-in-one CRM for teams that actually close";
+  "AgentStack CRM — The operating system for realtors";
 const AGENTSTACK_DESCRIPTION =
-  "Capture leads, run pipelines, and book meetings from one simple workspace. Built for small teams that want to replace five tools with one.";
+  HOMEPAGE_DESCRIPTION;
 const APP_ICONS: Metadata["icons"] = {
   icon: [
     { url: versionedIcon("/icons/icon-192.png"), sizes: "192x192", type: "image/png" },
@@ -36,19 +37,19 @@ export const metadata: Metadata =
         metadataBase: new URL(CUSTOM_SITE_URL),
         alternates: { canonical: "/" },
         title: CUSTOM_TITLE,
-        description: CUSTOM_BRAND.shortDescription,
+        description: HOMEPAGE_DESCRIPTION,
         icons: APP_ICONS,
         openGraph: {
           title: CUSTOM_TITLE,
-          description: CUSTOM_BRAND.shortDescription,
+          description: HOMEPAGE_DESCRIPTION,
           url: CUSTOM_SITE_URL,
-          siteName: CUSTOM_BRAND.name,
+          siteName: "AgentStack CRM",
           type: "website",
         },
         twitter: {
           card: "summary_large_image",
           title: CUSTOM_TITLE,
-          description: CUSTOM_BRAND.shortDescription,
+          description: HOMEPAGE_DESCRIPTION,
         },
       }
     : {
@@ -61,7 +62,7 @@ export const metadata: Metadata =
           title: AGENTSTACK_TITLE,
           description: AGENTSTACK_DESCRIPTION,
           url: AGENTSTACK_SITE_URL,
-          siteName: "AgentStack",
+          siteName: "AgentStack CRM",
           type: "website",
         },
         twitter: {

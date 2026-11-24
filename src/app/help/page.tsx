@@ -4,8 +4,10 @@ import { CUSTOM_BRAND } from "@/config/landing";
 import { getHelpArticles } from "@/lib/help-center/articles";
 
 export const metadata: Metadata = {
-  title: `${CUSTOM_BRAND.name} Help Center`,
+  title: `AgentStack CRM Help Center`,
   description: `Start here for setup, imports, billing, IDX Broker connection, and support.`,
+  openGraph: { title: `AgentStack CRM Help Center` },
+  twitter: { title: `AgentStack CRM Help Center` },
 };
 
 export default function HelpPage() {

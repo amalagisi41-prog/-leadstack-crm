@@ -1,5 +1,6 @@
 "use client";
 
+import { initializeAnalytics } from "@/lib/analytics/client";
 import { useEffect } from "react";
 import Script from "next/script";
 import { usePathname } from "next/navigation";
@@ -51,10 +52,15 @@ export function AnalyticsScripts() {
     return () => window.clearInterval(interval);
   }, [isEmbed, shouldLoadCrisp, shouldLoadMarketingChat]);
 
+  useEffect(() => { initializeAnalytics(); }, []);
   if (isEmbed) return null;
 
   return (
     <>
+      {process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID && <>
+        <Script id="ga4-loader" strategy="afterInteractive" src={`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID)}`} />
+        <Script id="ga4-config" strategy="afterInteractive">{`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config',${JSON.stringify(process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID)},{send_page_view:true});`}</Script>
+      </>}
       {shouldLoadMarketingChat && marketingChatSubAccountId && (
         <Script
           id="agentstack-marketing-chat"

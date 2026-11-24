@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { PublicInfoShell } from "@/components/public/public-info-shell";
 
 const integrations = [
@@ -58,6 +59,8 @@ const integrations = [
     "Guided connection and local presence workflows.",
   ],
 ] as const;
+
+export const metadata: Metadata = { title: "Integrations — AgentStack CRM", description: "AgentStack CRM: Connected services and integration availability for real estate workspaces.", openGraph: { title: "Integrations — AgentStack CRM" }, twitter: { title: "Integrations — AgentStack CRM" } };
 
 export default function IntegrationsPage() {
   return (

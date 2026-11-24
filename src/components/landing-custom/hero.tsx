@@ -9,8 +9,10 @@ export function Hero() {
         </h1>
 
         <p className="mx-auto mt-6 max-w-3xl text-balance text-base leading-7 text-[#526078] sm:text-lg md:text-xl">
-          Capture leads, respond instantly, stay organized, and close more transactions with one simple system powered by AI.
+          Keep buyer inquiries, listing appointments, showings, and offers in one workspace built exclusively for realtors.
         </p>
+        <p className="mx-auto mt-4 max-w-3xl text-base leading-7 text-[#526078]">Built to replace GoHighLevel — without the parts that were never made for agents.</p>
+        <p className="mt-4 text-sm text-[#526078]">AgentStack CRM — agentstackcrm.app</p>
       </div>
     </section>
   );

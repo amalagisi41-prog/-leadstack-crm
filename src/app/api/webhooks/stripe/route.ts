@@ -1,3 +1,4 @@
+import { captureServerEvent } from "@/lib/analytics/server";
 import { NextResponse } from "next/server";
 import { getStripeServer } from "@/lib/stripe/server";
 import {
@@ -55,15 +56,37 @@ export async function POST(request: Request) {
           event.data.object as Stripe.Checkout.Session,
         );
         break;
+      case "invoice.paid": {
+        const invoice = event.data.object as Stripe.Invoice;
+        const subscription = invoice.parent?.subscription_details?.subscription;
+        if (invoice.amount_paid > 0 && subscription) {
+          const subscriptionId = typeof subscription === "string" ? subscription : subscription.id;
+          const customerId = typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id;
+          if (customerId) await captureServerEvent("subscription_activated", customerId, subscriptionId);
+        }
+        break;
+      }
       case "customer.subscription.updated":
         await handleSubscriptionUpdated(
           event.data.object as Stripe.Subscription,
         );
+        {
+          const subscription = event.data.object as Stripe.Subscription;
+          if (subscription.cancel_at_period_end || subscription.cancel_at) {
+            const customerId = typeof subscription.customer === "string" ? subscription.customer : subscription.customer.id;
+            await captureServerEvent("subscription_cancelled", customerId, subscription.id);
+          }
+        }
         break;
       case "customer.subscription.deleted":
         await handleSubscriptionDeleted(
           event.data.object as Stripe.Subscription,
         );
+        {
+          const subscription = event.data.object as Stripe.Subscription;
+          const customerId = typeof subscription.customer === "string" ? subscription.customer : subscription.customer.id;
+          await captureServerEvent("subscription_cancelled", customerId, subscription.id);
+        }
         break;
       default:
         console.log(`Unhandled event type: ${event.type}`);
