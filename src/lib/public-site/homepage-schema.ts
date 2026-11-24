@@ -1,6 +1,6 @@
-import { HOMEPAGE_DESCRIPTION, SITE_URL } from "./offer";
+import { HOMEPAGE_DESCRIPTION, SITE_URL, SOLO_PRICE } from "./offer";
 export function homepageSchema() {
-  // The public price is unconfirmed. Deliberately omit offers and sameAs.
+  // Publish the confirmed monthly offer. No official social profiles were supplied.
   return {
     "@context": "https://schema.org",
     "@graph": [
@@ -18,6 +18,13 @@ export function homepageSchema() {
         applicationCategory: "BusinessApplication",
         operatingSystem: "Web",
         description: HOMEPAGE_DESCRIPTION,
+        offers: {
+          "@type": "Offer",
+          price: SOLO_PRICE,
+          priceCurrency: "USD",
+          url: `${SITE_URL}/pricing`,
+          description: `AgentStack Solo — $${SOLO_PRICE}/month`,
+        },
         publisher: { "@id": `${SITE_URL}/#organization` },
       },
     ],

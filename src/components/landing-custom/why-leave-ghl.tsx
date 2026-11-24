@@ -1,3 +1,5 @@
+import { SOLO_PRICE } from "@/lib/public-site/offer";
+
 export function WhyLeaveGhl() {
   return (
     <section className="bg-white px-4 py-16 text-[#173B7A]">
@@ -17,7 +19,7 @@ export function WhyLeaveGhl() {
             ],
             [
               "No agency markup",
-              "One Solo plan, built for a working agent’s P&L. Public price: [TO CONFIRM].",
+              `One Solo plan, built for a working agent’s P&L. Public price: $${SOLO_PRICE}/month.`,
             ],
           ].map(([title, body]) => (
             <div

@@ -1,5 +1,5 @@
-// Public commercial terms require explicit owner confirmation.
-export const SOLO_PRICE = "[TO CONFIRM]";
+// Solo monthly price confirmed by Franco. Shared by public copy and checkout.
+export const SOLO_PRICE = 99;
 export const SOLO_PRICE_LINE = `AgentStack Solo — $${SOLO_PRICE}/month`;
 export const SOLO_CANCELLATION =
   "Cancellation stops future billing. Your access and retention window depend on the account state and the current billing period.";

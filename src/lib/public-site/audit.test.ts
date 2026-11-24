@@ -1,12 +1,12 @@
 import { expect, it } from "vitest";
 import { getHelpArticle, getHelpArticles } from "@/lib/help-center/articles";
 import { homepageSchema } from "./homepage-schema";
-import { HOMEPAGE_DESCRIPTION } from "./offer";
-it("homepage schema parses and publishes no unconfirmed price or invented profiles", () => {
+import { HOMEPAGE_DESCRIPTION, SOLO_PRICE } from "./offer";
+it("homepage schema parses and matches the confirmed monthly Solo price", () => {
   const schema = JSON.parse(JSON.stringify(homepageSchema()));
   expect(schema["@graph"][0]).not.toHaveProperty("sameAs");
   const app = schema["@graph"][1];
-  expect(app).not.toHaveProperty("offers");
+  expect(app.offers).toMatchObject({ price: 99, priceCurrency: "USD", description: `AgentStack Solo — $${SOLO_PRICE}/month` });
   expect(app.description).toBe(HOMEPAGE_DESCRIPTION);
   expect(app.name).toBe("AgentStack CRM");
 });

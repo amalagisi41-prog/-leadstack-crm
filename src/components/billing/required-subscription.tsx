@@ -1,5 +1,6 @@
 "use client";
 
+import { SOLO_PRICE } from "@/lib/public-site/offer";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
@@ -103,7 +104,7 @@ export function RequiredSubscription() {
           onClick={() => setInterval("month")}
           className={`rounded-lg px-3 py-2 text-sm font-medium ${interval === "month" ? "bg-white text-[#173B7A] shadow-sm" : "text-[#526078]"}`}
         >
-          Monthly · $149
+          Monthly · ${SOLO_PRICE}
         </button>
         <button
           type="button"

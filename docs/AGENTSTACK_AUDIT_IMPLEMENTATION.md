@@ -4,7 +4,7 @@ The seven supplied edit prompts are implemented in the local checkout. The activ
 
 ## Owner-provided values still needed
 
-- Confirm the public Solo monthly price in `src/lib/public-site/offer.ts`. The prompt supplied no price, so both public cards show `[TO CONFIRM]`. The existing billing backend still has its prior Stripe configuration; no commercial billing behavior was changed.
+- Solo monthly pricing is now confirmed at **$99/month**. `src/lib/public-site/offer.ts` supplies the public cards, monthly enrollment label, new-checkout amount, and homepage offer schema. Existing subscriptions are not repriced by this code change. Annual billing retains its existing $1,188/year setup.
 - Discounts, trial length, and money-back guarantee remain visibly `[TO CONFIRM]` as requested. Unsupported no-fee claims were omitted. The cancellation text is shared with the help articles; no retention duration was invented.
 - Configure `NEXT_PUBLIC_POSTHOG_KEY`, `NEXT_PUBLIC_POSTHOG_HOST`, `NEXT_PUBLIC_GA4_MEASUREMENT_ID`, and server-only `GA4_API_SECRET`. Rebuild after changing public variables. Do not configure the same GA4 stream a second time through GTM.
 - Enable `invoice.paid` alongside the existing checkout and subscription webhook events in the Stripe endpoint configuration.
@@ -24,7 +24,7 @@ Signup/workspace-created events identify the account; workspace milestones ident
 
 ## Verification and remaining external work
 
-Automated checks validate valid JSON-LD with no unconfirmed offers or invented profiles, 15 help article bodies without H1s, five guides in the required word range, and duplicate event prevention. Compare-page JSON-LD is unchanged.
+Automated checks validate valid JSON-LD with the confirmed $99/month offer and no invented profiles, 15 help article bodies without H1s, five guides in the required word range, and duplicate event prevention. Compare-page JSON-LD is unchanged.
 
 Live provider ingestion needs configured credentials and a controlled signup/payment test. No deployment, directory submission, G2/Capterra claim, or fabricated beta testimonial was performed. Those external follow-ups remain with Franco.
 

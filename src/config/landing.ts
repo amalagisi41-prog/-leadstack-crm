@@ -24,6 +24,8 @@
  * Flip LANDING_VARIANT below to swap which one renders at "/".
  */
 
+import { SOLO_PRICE } from "@/lib/public-site/offer";
+
 export type LandingVariant = "agentstack" | "custom";
 
 export const LANDING_VARIANT: LandingVariant = "custom";
@@ -152,7 +154,7 @@ export const CUSTOM_BRAND: CustomBrand = {
   pricing: {
     starter: {
       name: "AgentStack Solo",
-      priceMonthly: 149,
+      priceMonthly: SOLO_PRICE,
       priceAnnual: 99,
       blurb:
         "For individual agents helping shape the guided AgentStack operating system.",
