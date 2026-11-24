@@ -19,6 +19,10 @@ import {
 } from "@/lib/checkout/claim-config";
 import { isHeroVariantId } from "@/lib/hero-variants";
 import type { SubscriptionStatus } from "@/types";
+import {
+  readSubscriptionRecords,
+  writeSubscriptionState,
+} from "./subscription-state";
 
 export async function handleCheckoutCompleted(
   session: Stripe.Checkout.Session
@@ -52,25 +56,24 @@ export async function handleCheckoutCompleted(
     return;
   }
 
-  await getAdminDb()
-    .collection("users")
-    .doc(uid)
-    .update({
+  const db = getAdminDb();
+  await db.runTransaction(async (transaction) => {
+    const user = await transaction.get(db.doc(`users/${uid}`));
+    if (!user.exists)
+      throw new Error(`No legacy user found for checkout ${session.id}`);
+    writeSubscriptionState(transaction, [user], "active", {
       stripeCustomerId: session.customer as string,
-      subscriptionStatus: "active" as SubscriptionStatus,
       subscriptionPriceId: session.metadata?.priceId ?? null,
-      updatedAt: new Date(),
     });
+  });
 }
 
-async function handleExistingAgencyCheckout(
-  session: Stripe.Checkout.Session,
-) {
+async function handleExistingAgencyCheckout(session: Stripe.Checkout.Session) {
   const uid = session.metadata?.uid;
   const agencyId = session.metadata?.agencyId;
   if (!uid || !agencyId) {
     throw new Error(
-      `Existing-agency checkout ${session.id} is missing uid or agencyId.`,
+      `Existing-agency checkout ${session.id} is missing uid or agencyId.`
     );
   }
 
@@ -80,16 +83,18 @@ async function handleExistingAgencyCheckout(
   const updates = {
     stripeCustomerId: customerId,
     subscriptionId,
-    subscriptionStatus: "active" as SubscriptionStatus,
     subscriptionPriceId: priceId,
     updatedAt: FieldValue.serverTimestamp(),
   };
 
   const db = getAdminDb();
-  const batch = db.batch();
-  batch.set(db.doc(`users/${uid}`), updates, { merge: true });
-  batch.set(db.doc(`agencies/${agencyId}`), updates, { merge: true });
-  await batch.commit();
+  await db.runTransaction(async (transaction) => {
+    const records = await Promise.all([
+      transaction.get(db.doc(`agencies/${agencyId}`)),
+      transaction.get(db.doc(`users/${uid}`)),
+    ]);
+    writeSubscriptionState(transaction, records, "active", updates);
+  });
   const record = await getAdminAuth().getUser(uid);
   await getAdminAuth().setCustomUserClaims(uid, {
     ...(record.customClaims ?? {}),
@@ -551,35 +556,10 @@ async function syncSubscriptionStatus(
   status: SubscriptionStatus
 ) {
   const db = getAdminDb();
-  const [agencySnapshot, usersSnapshot] = await Promise.all([
-    db
-      .collection("agencies")
-      .where("stripeCustomerId", "==", customerId)
-      .limit(1)
-      .get(),
-    db
-      .collection("users")
-      .where("stripeCustomerId", "==", customerId)
-      .limit(1)
-      .get(),
-  ]);
-
-  if (agencySnapshot.empty && usersSnapshot.empty) {
-    console.error(`No agency or user found for Stripe customer ${customerId}`);
-    return;
-  }
-
-  await Promise.all([
-    ...agencySnapshot.docs.map((d) =>
-      d.ref.update({
-        subscriptionStatus: status,
-        updatedAt: FieldValue.serverTimestamp(),
-      })
-    ),
-    ...usersSnapshot.docs.map((d) =>
-      d.ref.update({ subscriptionStatus: status, updatedAt: new Date() })
-    ),
-  ]);
+  await db.runTransaction(async (transaction) => {
+    const records = await readSubscriptionRecords(transaction, customerId);
+    writeSubscriptionState(transaction, records, status);
+  });
 }
 
 export async function handleSubscriptionUpdated(

@@ -3,8 +3,10 @@ import { createHash } from "node:crypto";
 import { getAdminDb } from "@/lib/firebase/admin";
 import type { FunnelEvent, FunnelProperties } from "./events";
 
-// A durable per-destination claim prevents concurrent actions and webhook
-// retries from emitting twice. Delivery is at-most-once: uncertain network
+// Non-webhook application actions retain their existing action-key behavior.
+// Stripe-originated events use the event-ID ledger and outbox in webhook.ts.
+// A durable per-destination claim prevents concurrent application actions
+// from emitting twice. Delivery is at-most-once: uncertain network
 // failures are recorded for inspection, never blindly resent to GA4.
 export async function captureServerEvent(
   event: FunnelEvent,
