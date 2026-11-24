@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Check, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CUSTOM_BRAND } from "@/config/landing";
-import { SOLO_PRICE_LINE, SOLO_CANCELLATION } from "@/lib/public-site/offer";
+import { SOLO_PRICE_LINE, SOLO_CANCELLATION, SOLO_MONTHLY_TERMS } from "@/lib/public-site/offer";
 import { PUBLIC_CAPABILITIES } from "@/lib/public-site/capability-status";
 import Link from "next/link";
 
@@ -137,9 +137,8 @@ export function Pricing() {
               </p>
             )}
             <p className="mt-4 text-center text-xs leading-5 text-[#7B8AA1]">
-              Payment collected today · card securely stored by Stripe ·
-              automatic renewal unless canceled · add-ons charged only with
-              approval
+              {SOLO_MONTHLY_TERMS} Optional add-ons are charged only with your
+              approval.
             </p>
           </div>
         </div>
