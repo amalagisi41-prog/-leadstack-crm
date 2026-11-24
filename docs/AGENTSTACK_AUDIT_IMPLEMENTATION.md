@@ -5,7 +5,8 @@ The seven supplied edit prompts are implemented in the local checkout. The activ
 ## Owner-provided values still needed
 
 - Solo monthly pricing is now confirmed at **$99/month**. `src/lib/public-site/offer.ts` supplies the public cards, monthly enrollment label, new-checkout amount, and homepage offer schema. Existing subscriptions are not repriced by this code change. Annual billing retains its existing $1,188/year setup.
-- Discounts, trial length, and money-back guarantee remain visibly `[TO CONFIRM]` as requested. Unsupported no-fee claims were omitted. The cancellation text is shared with the help articles; no retention duration was invented.
+- The unfinished discounts/trial/guarantee line has been removed from the shared Solo card until public terms are confirmed. Unsupported no-fee claims were omitted. The cancellation text is shared with the help articles; no retention duration was invented.
+- `/pricing` is explicitly public in auth middleware. Regression tests cover logged-out and auth-error access while keeping dashboard routes and similar path names protected. Deployment verification uses fresh HTTP requests with no cookies.
 - Configure `NEXT_PUBLIC_POSTHOG_KEY`, `NEXT_PUBLIC_POSTHOG_HOST`, `NEXT_PUBLIC_GA4_MEASUREMENT_ID`, and server-only `GA4_API_SECRET`. Rebuild after changing public variables. Do not configure the same GA4 stream a second time through GTM.
 - Enable `invoice.paid` alongside the existing checkout and subscription webhook events in the Stripe endpoint configuration.
 - Check guide passages labeled `[VERIFY IN APP]` against the enabled preview features in a real workspace.

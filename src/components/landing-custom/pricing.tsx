@@ -109,9 +109,6 @@ export function Pricing() {
               ))}
             </ul>
             <p className="mt-4 text-sm">
-              Discounts, trial length, and money-back guarantee: [TO CONFIRM].
-            </p>
-            <p className="mt-4 text-sm">
               <Link href="/help/billing-and-plan-changes" className="underline">
                 Billing and plan changes
               </Link>{" "}

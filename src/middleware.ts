@@ -8,6 +8,8 @@ const PUBLIC_PATHS = [
   "/login",
   "/signup",
   "/subscribe",
+  // Public Solo offer linked from navigation, sitemap, and homepage schema.
+  "/pricing",
   "/terms",
   "/privacy",
   "/about",
