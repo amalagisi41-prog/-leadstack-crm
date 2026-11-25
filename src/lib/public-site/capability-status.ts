@@ -26,6 +26,12 @@ export const PUBLIC_CAPABILITIES: readonly PublicCapability[] = [
     availability: "Live",
   },
   {
+    name: "Review Requests",
+    description:
+      "Google review requests created when a deal closes and sent after a delay you set (3 days by default), with a log of every request. Starts in Log only until you switch it to Live; sending needs text messaging or WhatsApp set up.",
+    availability: "Live",
+  },
+  {
     name: "Guided AgentStack Method setup",
     description:
       "Build, Connect, Capture, Respond, Nurture, and Close in one guided setup.",

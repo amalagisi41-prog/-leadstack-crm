@@ -3,7 +3,12 @@ import "server-only";
 import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
-import { isSelfServePlanKey } from "@/config/landing";
+import {
+  PURCHASABLE_PLAN_KEYS,
+  isPurchasablePlanKey,
+  isSelfServePlanKey,
+  type SelfServePlanKey,
+} from "@/config/landing";
 import type { AgencyRole, AgencyDoc, MemberStatus } from "@/types";
 import { getStripeServer } from "@/lib/stripe/server";
 import { planPriceId } from "@/lib/stripe/catalog";
@@ -115,10 +120,20 @@ async function readOwner(
   };
 }
 
+/**
+ * Plans this account may switch to right now: listed as purchasable AND
+ * backed by a configured Stripe price. The billing UI offers a switch only
+ * for these, so an on-hold plan (Team today) never shows "Switch to …".
+ */
+function switchablePlanKeys(): SelfServePlanKey[] {
+  return PURCHASABLE_PLAN_KEYS.filter((key) => !!planPriceId(key));
+}
+
 function responseForSummary(summary: BillingSnapshot) {
   return {
     ok: true,
     summary,
+    switchablePlanKeys: switchablePlanKeys(),
   };
 }
 
@@ -204,6 +219,12 @@ export async function POST(request: Request) {
     if (!isSelfServePlanKey(body.planKey)) {
       return NextResponse.json(
         { error: "A valid self-serve plan is required." },
+        { status: 400 },
+      );
+    }
+    if (!isPurchasablePlanKey(body.planKey)) {
+      return NextResponse.json(
+        { error: "That plan isn't available right now." },
         { status: 400 },
       );
     }

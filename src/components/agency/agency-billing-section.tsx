@@ -96,6 +96,9 @@ function intervalLabel(
 export function AgencyBillingSection({ detailed = false }: { detailed?: boolean }) {
   const [summary, setSummary] = useState<BillingSummary | null>(null);
   const [unbilled, setUnbilled] = useState<UnbilledAddOn[]>([]);
+  // Plans the server says can be switched to now (purchasable + priced).
+  // An on-hold plan (Team today) is absent, so it gets no switch action.
+  const [switchable, setSwitchable] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyAction, setBusyAction] = useState<
     "portal" | "resume" | "cancel" | "starter" | "pro" | "bill_add_ons" | null
@@ -120,6 +123,7 @@ export function AgencyBillingSection({ detailed = false }: { detailed?: boolean 
       const data = (await res.json().catch(() => ({}))) as {
         summary?: BillingSummary;
         unbilledAddOns?: UnbilledAddOn[];
+        switchablePlanKeys?: string[];
         error?: string;
       };
       if (!res.ok || !data.summary) {
@@ -127,6 +131,7 @@ export function AgencyBillingSection({ detailed = false }: { detailed?: boolean 
       }
       setSummary(data.summary);
       setUnbilled(data.unbilledAddOns ?? []);
+      setSwitchable(data.switchablePlanKeys ?? []);
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : "Could not load billing.",
@@ -162,6 +167,7 @@ export function AgencyBillingSection({ detailed = false }: { detailed?: boolean 
         summary?: BillingSummary;
         unbilledAddOns?: UnbilledAddOn[];
         unresolved?: UnbilledAddOn[];
+        switchablePlanKeys?: string[];
         error?: string;
       };
       if (!res.ok) {
@@ -172,6 +178,7 @@ export function AgencyBillingSection({ detailed = false }: { detailed?: boolean 
         return;
       }
       if (data.summary) setSummary(data.summary);
+      if (data.switchablePlanKeys) setSwitchable(data.switchablePlanKeys);
       if (data.unbilledAddOns) setUnbilled(data.unbilledAddOns);
       lastUnresolvedRef.current = data.unresolved ?? [];
       return data.summary ?? null;
@@ -364,6 +371,8 @@ export function AgencyBillingSection({ detailed = false }: { detailed?: boolean 
               );
             }
             if (loading || !summary?.currentPlanKey) return null;
+            // Not purchasable right now (e.g. Team while on hold): no switch.
+            if (!switchable.includes(plan.key)) return null;
             return (
               <Button
                 key={plan.key}

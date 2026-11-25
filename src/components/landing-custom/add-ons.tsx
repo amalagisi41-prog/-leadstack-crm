@@ -11,6 +11,8 @@ interface AddOn {
   features: string[];
   badge?: string;
   highlight?: boolean;
+  /** Included in every plan at no extra charge — shown instead of a price. */
+  included?: boolean;
 }
 
 const addOns: AddOn[] = [
@@ -45,17 +47,18 @@ const addOns: AddOn[] = [
   },
   {
     category: "Reputation",
-    name: MARKETING_ADD_ON_NAMES.reviewManager,
-    tagline: "5-star reviews on autopilot",
-    price: "$49",
-    billing: "/mo",
-    badge: "Most requested",
-    highlight: true,
+    name: MARKETING_ADD_ON_NAMES.reviewRequests,
+    tagline: "Ask for a Google review after every closing",
+    price: "Included",
+    billing: " in every plan",
+    included: true,
     features: [
-      "Auto-request Google & Zillow reviews",
-      "Unified dashboard across platforms",
-      "Instant alert on every new review",
-      "One-click response templates",
+      "A review request is created automatically when a deal closes",
+      "Sent after a delay you choose — 3 days by default",
+      "Links to your Google review page, by text or WhatsApp (needs that channel set up)",
+      "A full log of every request and what happened to it",
+      "Send a request by hand whenever you like",
+      "Off / Log only / Live control — starts in Log only, so nothing sends until you turn it on",
     ],
   },
   {

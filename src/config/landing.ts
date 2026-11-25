@@ -49,7 +49,7 @@ export const IDX_BROKER_NAME = "IDX Broker";
 export const MARKETING_ADD_ON_NAMES = {
   aiWebsiteStudio: "AI Website Studio",
   customWebsiteBuild: "Custom Website Build",
-  reviewManager: "Review Manager",
+  reviewRequests: "Review Requests",
   googleBusinessProfile: "Google Business Profile",
   googleAdsManagement: "Google Ads Management",
   socialPlanner: "Social Planner",
@@ -242,6 +242,20 @@ export function isMarketingPlanKey(
   value: string | null | undefined
 ): value is MarketingPlanKey {
   return !!value && MARKETING_PLAN_KEYS.includes(value as MarketingPlanKey);
+}
+
+/**
+ * Plans a customer can buy or switch to today. Team ("pro") is on hold, so
+ * it is not listed: the billing page offers no "Switch to Team" and the
+ * switch action refuses it. To offer Team again, add "pro" here (and set
+ * STRIPE_PRO_PRICE_ID) — the switch reappears automatically.
+ */
+export const PURCHASABLE_PLAN_KEYS: readonly SelfServePlanKey[] = ["starter"];
+
+export function isPurchasablePlanKey(
+  value: string | null | undefined
+): value is SelfServePlanKey {
+  return !!value && PURCHASABLE_PLAN_KEYS.includes(value as SelfServePlanKey);
 }
 
 export function isSelfServePlanKey(
