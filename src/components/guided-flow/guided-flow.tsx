@@ -68,6 +68,10 @@ export function GuidedFlow({
   const [answers, setAnswers] = useState<GuidedAnswers>({});
   // Zack plays straight away on the first screen; the realtor can hide him.
   const [showVideo, setShowVideo] = useState(true);
+  // A video that fails to load is dropped, toggle and all — never a
+  // permanently-loading black box.
+  const [videoUnavailable, setVideoUnavailable] = useState(false);
+  const hasVideo = Boolean(video) && !videoUnavailable;
   const [history, setHistory] = useState<string[]>([]);
 
   const steps = useMemo(() => resolveSteps(answers), [resolveSteps, answers]);
@@ -145,7 +149,7 @@ export function GuidedFlow({
           <p className="text-muted-foreground text-xs">
             Step {index + 1} of {total}
           </p>
-          {video ? (
+          {hasVideo ? (
             <button
               type="button"
               onClick={() => setShowVideo((v) => !v)}
@@ -156,7 +160,9 @@ export function GuidedFlow({
             </button>
           ) : null}
         </div>
-        {video && showVideo && open ? <AutoplayVideo src={video} /> : null}
+        {video && hasVideo && showVideo && open ? (
+          <AutoplayVideo src={video} onUnavailable={() => setVideoUnavailable(true)} />
+        ) : null}
 
         <DialogTitle className="text-lg">{step.title}</DialogTitle>
         {step.description ? (

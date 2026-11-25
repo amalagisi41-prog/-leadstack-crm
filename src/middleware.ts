@@ -174,6 +174,9 @@ const PUBLIC_PATHS = [
   // exclusion list (unlike images), so it still needs an explicit entry.
   "/manifest.webmanifest",
   "/sw.js",
+  // Zack's onboarding videos (also excluded from the matcher by extension;
+  // listed here too so a matcher change can never re-gate them).
+  "/onboarding-videos",
   // Install instructions and the offline fallback. Both have to resolve
   // without a session: /download doubles as the marketing site's "get the
   // app" destination and is usually opened on a second device that has not
@@ -401,7 +404,11 @@ export default function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    // Static media from /public skips auth entirely. Videos used to run
+    // through it: a new user who still owed email verification or billing got
+    // the onboarding .mp4 requests redirected to an HTML page, so every Zack
+    // video sat on a black "--:--" spinner forever.
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp4|webm|vtt)$).*)",
     "/api/login",
     "/api/logout",
   ],

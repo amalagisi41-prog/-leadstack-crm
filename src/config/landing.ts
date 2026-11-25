@@ -30,6 +30,20 @@ export type LandingVariant = "agentstack" | "custom";
 
 export const LANDING_VARIANT: LandingVariant = "custom";
 export const AGENTSTACK_METHOD_NAME = "The AgentStack Method™";
+
+/**
+ * The six AgentStack Method steps, in order. The marketing "How it works"
+ * section and the in-app setup model (lib/onboarding/method.ts) both read
+ * this, so the steps the site sells are the steps the app tracks.
+ */
+export const AGENTSTACK_METHOD_STEP_NAMES = [
+  "Build",
+  "Connect",
+  "Capture",
+  "Respond",
+  "Nurture",
+  "Close",
+] as const;
 export const IDX_BROKER_NAME = "IDX Broker";
 
 export const MARKETING_ADD_ON_NAMES = {

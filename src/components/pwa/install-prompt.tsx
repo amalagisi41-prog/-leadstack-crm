@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Check, Smartphone } from "lucide-react";
@@ -15,6 +15,35 @@ import { Button } from "@/components/ui/button";
 import { InstallSteps } from "@/components/pwa/install-steps";
 import { useAppInstall } from "@/hooks/use-app-install";
 import { CUSTOM_BRAND, LANDING_VARIANT } from "@/config/landing";
+import { useAuth } from "@/hooks/use-auth";
+import { onboardingSettled } from "@/lib/onboarding/prompt-gate";
+import { PROMPT_GATE_EVENT, readPromptGate } from "@/lib/onboarding/prompt-gate-storage";
+
+/**
+ * True once the user has completed onboarding or said "not now" to it. The
+ * install modal waits for this so it is never the first thing a new user
+ * sees — onboarding goes first.
+ */
+function useOnboardingSettled(): boolean {
+  const { user } = useAuth();
+  const uid = user?.uid ?? null;
+  const [settled, setSettled] = useState(false);
+  useEffect(() => {
+    if (!uid) return;
+    let active = true;
+    const check = () =>
+      void readPromptGate(uid).then((gate) => {
+        if (active) setSettled(onboardingSettled(gate));
+      });
+    check();
+    window.addEventListener(PROMPT_GATE_EVENT, check);
+    return () => {
+      active = false;
+      window.removeEventListener(PROMPT_GATE_EVENT, check);
+    };
+  }, [uid]);
+  return settled;
+}
 
 /**
  * The install prompt shown once per sign-in until the app is actually
@@ -40,11 +69,12 @@ export function InstallPrompt() {
     markInstalled,
   } = useAppInstall();
   const [busy, setBusy] = useState(false);
+  const onboardingDone = useOnboardingSettled();
 
   const brandName =
     LANDING_VARIANT === "custom" ? CUSTOM_BRAND.name : "AgentStack";
 
-  if (!shouldPrompt) return null;
+  if (!shouldPrompt || !onboardingDone) return null;
 
   async function onInstall() {
     setBusy(true);

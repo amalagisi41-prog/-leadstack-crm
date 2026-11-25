@@ -55,6 +55,10 @@ import { useAgency } from "@/hooks/use-agency";
 import { LogoMark } from "@/components/brand/logo-mark";
 import { InstallCallout } from "@/components/pwa/install-callout";
 import { cn } from "@/lib/utils";
+import { useMethodProgress } from "@/hooks/use-method-progress";
+import { setupHubHref } from "@/lib/onboarding/setup-hub-href";
+import { setupBadgeText } from "@/lib/onboarding/method";
+import type { SubAccountDoc } from "@/types/tenancy";
 import {
   Sheet,
   SheetContent,
@@ -67,7 +71,7 @@ interface NavItem {
   label: string;
   icon: typeof Home;
   enabled: boolean;
-  badgeKey?: "dueToday" | "unreadConversations" | "siteHealth";
+  badgeKey?: "dueToday" | "unreadConversations" | "setupProgress";
 }
 
 interface NavSection {
@@ -81,7 +85,15 @@ interface PrimaryNavItem {
   href: string;
   label: string;
   icon: typeof Home;
-  badgeKey?: "dueToday" | "unreadConversations" | "siteHealth";
+  badgeKey?: "dueToday" | "unreadConversations" | "setupProgress";
+}
+
+/** Nav item that opens the setup hub (agency-level route, not under /sa/{id}). */
+const SETUP_HUB_ITEM = "@setup-hub";
+
+function resolveNavHref(href: string, subRoot: string | null): string {
+  if (href === SETUP_HUB_ITEM) return setupHubHref(subRoot?.replace(/^\/sa\//, "") ?? null);
+  return `${subRoot}${href}`;
 }
 
 const PRIMARY_NAV: PrimaryNavItem[] = [
@@ -98,7 +110,7 @@ interface NavGroupItem {
   label: string;
   icon: typeof Home;
   enabled: boolean;
-  badgeKey?: "dueToday" | "unreadConversations" | "siteHealth";
+  badgeKey?: "dueToday" | "unreadConversations" | "setupProgress";
 }
 
 interface NavGroup {
@@ -142,10 +154,10 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Connect & Set Up",
     icon: Wrench,
     items: [
-      { href: "/get-started?revisit=1", label: "Setup", icon: ListChecks, enabled: true },
+      { href: SETUP_HUB_ITEM, label: "Setup", icon: ListChecks, enabled: true, badgeKey: "setupProgress" },
       { href: "/business-profile", label: "Business Blueprint", icon: BookOpen, enabled: true },
       { href: "/connect", label: "Connect", icon: Plug, enabled: true },
-      { href: "/site-health", label: "Site Health", icon: HeartPulse, enabled: true, badgeKey: "siteHealth" },
+      { href: "/site-health", label: "Site Health", icon: HeartPulse, enabled: true },
       { href: "/media", label: "Media Library", icon: Images, enabled: true },
       { href: "/domain", label: "Domain", icon: Link2, enabled: true },
       { href: "/website-studio", label: "Website Studio", icon: LayoutTemplate, enabled: true },
@@ -188,9 +200,9 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const [communityGate, setCommunityGate] = useState<boolean | null>(null);
   const [broadcastsHidden, setBroadcastsHidden] = useState(false);
   const [quotesGate, setQuotesGate] = useState<boolean | null>(null);
+  const [setupSubAccount, setSetupSubAccount] = useState<SubAccountDoc | null>(null);
   const [socialHidden, setSocialHidden] = useState(false);
   const [communityHidden, setCommunityHidden] = useState(false);
-  const [siteHealthScore, setSiteHealthScore] = useState<number | null>(null);
 
   useEffect(() => {
     const linkSubIdLocal = activeSubId ?? memberships[0]?.subAccountId ?? null;
@@ -205,6 +217,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       doc(getFirebaseDb(), "subAccounts", linkSubIdLocal),
       (snap) => {
         const data = snap.data();
+        setSetupSubAccount((data as SubAccountDoc | undefined) ?? null);
         setBroadcastsGate(data?.broadcastsEnabledByAgency === true);
         setQuotesGate(data?.quotesEnabledByAgency === true);
         setWebsiteStudioGate(data?.websiteStudioEnabledByAgency === true);
@@ -227,25 +240,12 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const linkSubId = activeSubId ?? fallbackSub;
   const showSubNav = !!linkSubId;
 
-  useEffect(() => {
-    if (!linkSubId) {
-      setSiteHealthScore(null);
-      return;
-    }
-    let active = true;
-    void fetch(`/api/sub-accounts/${linkSubId}/site-health`)
-      .then(async (response) => {
-        if (!response.ok) return;
-        const data = (await response.json()) as { score?: number };
-        if (active && typeof data.score === "number") {
-          setSiteHealthScore(data.score);
-        }
-      })
-      .catch(() => undefined);
-    return () => {
-      active = false;
-    };
-  }, [linkSubId, pathname]);
+  // The sidebar's setup badge reads the same AgentStack Method progress as
+  // the dashboard card, the setup pill and the setup hub. It replaces the
+  // Site Health percentage that used to sit here: that is a different
+  // measure (website + compliance tasks) and read as a conflicting number.
+  const { method: setupMethod } = useMethodProgress(linkSubId, setupSubAccount);
+  const setupBadge = setupBadgeText(setupMethod);
 
   // Solo mode: outside multi-account mode, the brand line reads as the
   // workspace/sub-account name rather than the agency's — a single-operator
@@ -387,7 +387,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
                 pathname={pathname}
                 dueToday={dueToday}
                 unreadConversations={unreadConversations}
-                siteHealthScore={siteHealthScore}
+                setupBadge={setupBadge}
                 broadcastsGate={broadcastsGate}
                 quotesGate={quotesGate}
                 websiteStudioGate={websiteStudioGate}
@@ -433,7 +433,7 @@ function NavGroupSection({
   pathname,
   dueToday,
   unreadConversations,
-  siteHealthScore,
+  setupBadge,
   broadcastsGate,
   quotesGate,
   websiteStudioGate,
@@ -449,7 +449,7 @@ function NavGroupSection({
   pathname: string;
   dueToday: number;
   unreadConversations: number;
-  siteHealthScore: number | null;
+  setupBadge: string | null;
   broadcastsGate: boolean | null;
   quotesGate: boolean | null;
   websiteStudioGate: boolean | null;
@@ -462,7 +462,7 @@ function NavGroupSection({
 }) {
   // Auto-expand if any child route is active
   const hasActiveChild = group.items.some((item) => {
-    const fullHref = `${subRoot}${item.href}`;
+    const fullHref = resolveNavHref(item.href, subRoot);
     return pathname === fullHref || pathname.startsWith(fullHref);
   });
   const [expanded, setExpanded] = useState(hasActiveChild);
@@ -502,7 +502,7 @@ function NavGroupSection({
               return null;
             }
 
-            const fullHref = `${subRoot}${item.href}`;
+            const fullHref = resolveNavHref(item.href, subRoot);
             const isActive =
               pathname === fullHref || pathname.startsWith(fullHref);
 
@@ -555,8 +555,8 @@ function NavGroupSection({
                 : item.badgeKey === "unreadConversations" &&
                     unreadConversations > 0
                   ? unreadConversations
-                  : item.badgeKey === "siteHealth" && siteHealthScore !== null
-                    ? `${siteHealthScore}%`
+                  : item.badgeKey === "setupProgress" && setupBadge
+                    ? setupBadge
                     : null;
 
             return (

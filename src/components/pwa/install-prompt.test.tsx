@@ -29,6 +29,18 @@ vi.mock("next/link", () => ({
   ),
 }));
 
+// Onboarding goes first: the install modal only appears once the user has
+// completed or dismissed onboarding. Tests below default to "settled"; the
+// deferral itself is covered in its own describe block.
+const gate = vi.hoisted(() => ({
+  state: { shownThisSession: false, dismissedAt: 1 as number | null, completedAt: null as number | null },
+}));
+vi.mock("@/hooks/use-auth", () => ({ useAuth: () => ({ user: { uid: "u1" } }) }));
+vi.mock("@/lib/onboarding/prompt-gate-storage", () => ({
+  PROMPT_GATE_EVENT: "as:onboarding-prompt-gate",
+  readPromptGate: async () => ({ ...gate.state }),
+}));
+
 /** Pretend to be a given device, with a clean storage slate. */
 function asDevice(
   userAgent: string,
@@ -140,6 +152,25 @@ describe("the sign-in prompt", () => {
         screen.queryByText(/put agentstack on your phone/i)
       ).not.toBeInTheDocument()
     );
+  });
+});
+
+describe("deferred behind onboarding", () => {
+  it("is not the first thing a new user sees: hidden until onboarding is completed or dismissed", async () => {
+    gate.state = { shownThisSession: false, dismissedAt: null, completedAt: null };
+    asDevice(CHROME_ANDROID);
+    render(<InstallPrompt />);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(screen.queryByText(/on your phone/i)).not.toBeInTheDocument();
+    gate.state = { shownThisSession: false, dismissedAt: 1, completedAt: null };
+  });
+
+  it("appears once onboarding is completed", async () => {
+    gate.state = { shownThisSession: false, dismissedAt: null, completedAt: 5 };
+    asDevice(CHROME_ANDROID);
+    render(<InstallPrompt />);
+    expect(await screen.findByText(/on your phone/i)).toBeInTheDocument();
+    gate.state = { shownThisSession: false, dismissedAt: 1, completedAt: null };
   });
 });
 
