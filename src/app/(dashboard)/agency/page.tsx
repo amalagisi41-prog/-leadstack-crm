@@ -18,7 +18,9 @@ import { getFirebaseDb } from "@/lib/firebase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { StatusTab } from "@/components/agency/status-tab";
+import { InternalHealthTab } from "@/components/agency/status-tab";
+import { CustomerStatusTab } from "@/components/agency/customer-status-tab";
+import type { CustomerStatusItem } from "@/lib/agency/customer-status";
 import { SubAccountManageDialog } from "@/components/agency/sub-account-manage-dialog";
 import { LANDING_VARIANT } from "@/config/landing";
 import type { SubAccountDoc } from "@/types";
@@ -72,6 +74,14 @@ function AgencyHomeContent() {
   // Full sub-account docs (owner only) — needed so the Manage dialog has the
   // current feature-gate state. The cards themselves render from memberships.
   const [subs, setSubs] = useState<SubAccountDoc[]>([]);
+  // Customer Status (plain-language connect prompts) + whether this owner is
+  // the deployment operator, who alone also gets the Internal health tab.
+  const [customerStatus, setCustomerStatus] = useState<{
+    items: CustomerStatusItem[] | null;
+    internal: boolean;
+    loading: boolean;
+    error: string | null;
+  }>({ items: null, internal: false, loading: true, error: null });
   const [managingId, setManagingId] = useState<string | null>(null);
   const managing = subs.find((s) => s.id === managingId) ?? null;
 
@@ -91,6 +101,25 @@ function AgencyHomeContent() {
     );
     return () => unsub();
   }, [isOwner, agencyId]);
+
+  useEffect(() => {
+    if (!isOwner || !user) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/agency/status", { cache: "no-store" });
+        if (!res.ok) throw new Error(String(res.status));
+        const body = (await res.json()) as { items: CustomerStatusItem[]; internal: boolean };
+        if (!cancelled) setCustomerStatus({ items: body.items, internal: body.internal === true, loading: false, error: null });
+      } catch (e) {
+        console.error("[agency] status load failed", e);
+        if (!cancelled) setCustomerStatus((s) => ({ ...s, loading: false, error: "load_failed" }));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isOwner, user]);
 
   const agency = useAgency();
   useEffect(() => {
@@ -266,6 +295,7 @@ function AgencyHomeContent() {
         <TabsList>
           <TabsTrigger value="sub-accounts">Sub-accounts</TabsTrigger>
           {isOwner && <TabsTrigger value="status">Status</TabsTrigger>}
+          {isOwner && customerStatus.internal && <TabsTrigger value="internal">Internal</TabsTrigger>}
         </TabsList>
 
         <TabsContent value="sub-accounts" className="mt-4">
@@ -353,7 +383,16 @@ function AgencyHomeContent() {
 
         {isOwner && (
           <TabsContent value="status" className="mt-4">
-            <StatusTab />
+            <CustomerStatusTab
+              items={customerStatus.items}
+              loading={customerStatus.loading}
+              error={customerStatus.error}
+            />
+          </TabsContent>
+        )}
+        {isOwner && customerStatus.internal && (
+          <TabsContent value="internal" className="mt-4">
+            <InternalHealthTab />
           </TabsContent>
         )}
       </Tabs>

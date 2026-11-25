@@ -62,7 +62,7 @@ export async function POST(
   } catch (err) {
     console.error("[apply-snapshot] error", err);
     return NextResponse.json(
-      { error: "Failed to apply snapshot. Check server logs." },
+      { error: "We couldn't apply that template. Please try again in a moment." },
       { status: 500 },
     );
   }

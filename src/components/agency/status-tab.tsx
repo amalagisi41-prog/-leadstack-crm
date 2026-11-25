@@ -14,11 +14,16 @@ import {
 import { Button } from "@/components/ui/button";
 import type { HealthStatus, IntegrationHealth, SubCheck } from "@/lib/health/checks";
 
-export function StatusTab() {
+/**
+ * INTERNAL — deployment-operator-only integration health (env-var presence,
+ * secret names, vendor services). Mounted only for the operator; paying
+ * customers see CustomerStatusTab instead.
+ */
+export function InternalHealthTab() {
   const [results, setResults] = useState<IntegrationHealth[] | null>(null);
   const [cachedAt, setCachedAt] = useState<number | null>(null);
-  const [launchReady, setLaunchReady] = useState<boolean | null>(null);
-  const [launchBlockers, setLaunchBlockers] = useState<string[]>([]);
+  const [requiredReady, setRequiredReady] = useState<boolean | null>(null);
+  const [requiredMissing, setRequiredMissing] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -33,20 +38,20 @@ export function StatusTab() {
       if (!res.ok) {
         throw new Error(
           res.status === 403
-            ? "Agency owner only."
+            ? "Internal view: deployment operator only."
             : `Health check failed: ${res.status}`,
         );
       }
       const body = (await res.json()) as {
         results: IntegrationHealth[];
         cachedAt: number;
-        launchReady?: boolean;
-        launchBlockers?: string[];
+        requiredReady?: boolean;
+        requiredMissing?: string[];
       };
       setResults(body.results);
       setCachedAt(body.cachedAt);
-      setLaunchReady(body.launchReady ?? null);
-      setLaunchBlockers(body.launchBlockers ?? []);
+      setRequiredReady(body.requiredReady ?? null);
+      setRequiredMissing(body.requiredMissing ?? []);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
@@ -93,7 +98,15 @@ export function StatusTab() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border bg-card p-4">
         <div>
-          <h2 className="text-sm font-semibold">Integration health</h2>
+          <h2 className="text-sm font-semibold">
+            Integration health{" "}
+            <span className="ml-1 rounded bg-slate-800 px-1.5 py-0.5 align-middle text-[10px] font-semibold tracking-wide text-white uppercase">
+              Internal
+            </span>
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            Operator-only. Customers never see this; they see plain-language connect prompts on Status.
+          </p>
           <p className="text-xs text-muted-foreground">
             {cachedAt ? (
               <>Last checked {formatRelative(cachedAt)}.</>
@@ -150,17 +163,17 @@ export function StatusTab() {
           Refresh
         </Button>
 
-        {launchReady !== null && (
+        {requiredReady !== null && (
           <div
             className={
-              launchReady
+              requiredReady
                 ? "w-full rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800"
                 : "w-full rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-800"
             }
           >
-            {launchReady
-              ? "Green light: core SaaS launch gates are healthy."
-              : `Launch blocked: ${launchBlockers.length} required integration${launchBlockers.length === 1 ? "" : "s"} need attention.`}
+            {requiredReady
+              ? "All required server integrations are configured."
+              : `${requiredMissing.length} required server integration${requiredMissing.length === 1 ? " is" : "s are"} not configured. Features that depend on ${requiredMissing.length === 1 ? "it are" : "them are"} hidden from customers until fixed.`}
           </div>
         )}
 
