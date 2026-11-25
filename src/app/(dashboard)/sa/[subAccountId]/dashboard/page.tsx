@@ -20,7 +20,6 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useSubAccount } from "@/context/sub-account-context";
-import { useOnboardingCompletion } from "@/hooks/use-onboarding-completion";
 import { useEffectiveTerritoryFilter } from "@/hooks/use-effective-territory-filter";
 import { subscribeToContacts } from "@/lib/firestore/contacts";
 import { subscribeToDeals } from "@/lib/firestore/deals";
@@ -41,10 +40,8 @@ import type {
 import { Button } from "@/components/ui/button";
 import { NewDealDialog } from "@/components/pipeline/new-deal-dialog";
 import { cn } from "@/lib/utils";
-import {
-  isOnboardingMethodStepComplete,
-  ONBOARDING_METHOD_STEPS,
-} from "@/lib/onboarding/steps";
+import { useMethodProgress } from "@/hooks/use-method-progress";
+import { SetupProgressCard } from "@/components/onboarding/setup-progress-card";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const STALLED_AFTER_MS = 7 * DAY_MS;
@@ -308,25 +305,11 @@ export default function DashboardPage() {
   // list. Reading the ticks made this card wrong in both directions at once —
   // a workspace full of contacts showed "contacts" outstanding because nobody
   // ticked it, while an empty pipeline showed done because somebody did.
-  const { completion: onboardingCompletion, loading: onboardingLoading } =
-    useOnboardingCompletion(subAccountId);
-  const onboardingDoneIds = onboardingCompletion?.doneStepIds ?? [];
-  const completedOnboardingSteps = ONBOARDING_METHOD_STEPS.filter((step) =>
-    isOnboardingMethodStepComplete(step, onboardingDoneIds)
-  );
-  const nextOnboardingStep = ONBOARDING_METHOD_STEPS.find(
-    (step) => !isOnboardingMethodStepComplete(step, onboardingDoneIds)
-  );
-  const onboardingProgress = ONBOARDING_METHOD_STEPS.length
-    ? Math.round(
-        (completedOnboardingSteps.length / ONBOARDING_METHOD_STEPS.length) * 100
-      )
-    : 0;
-  // The card disappears only once every required step is OBSERVED. Hiding it
-  // on the strength of ticks would retire the one surface still showing a
-  // client what is left to do — the items the wizard does not cover
-  // (`contacts`, `sms`, `booking`) are exactly the ones that go unticked.
-  const checklistComplete = onboardingCompletion?.fullyVerified === true;
+  // The AgentStack Method progress — the same model the setup pill, the
+  // sidebar's Setup badge and the setup hub read, so all show one number.
+  const { method: methodProgress } = useMethodProgress(subAccountId, subAccount);
+  const nextMethodStep = methodProgress?.nextStep ?? null;
+  const nextMethodTask = nextMethodStep?.nextTask ?? null;
 
   const unresolvedTasks = useMemo<UniversalTask[]>(() => {
     const items: UniversalTask[] = [];
@@ -479,14 +462,14 @@ export default function DashboardPage() {
         cta: "Open deal",
       });
     }
-    if (nextOnboardingStep) {
+    if (nextMethodStep && nextMethodTask) {
       items.push({
-        id: "setup-" + nextOnboardingStep.id,
+        id: "setup-" + nextMethodStep.id,
         priority: 3,
-        label: nextOnboardingStep.title,
-        detail: nextOnboardingStep.description,
-        href: saPath(nextOnboardingStep.href),
-        cta: nextOnboardingStep.cta,
+        label: `${nextMethodStep.name}: ${nextMethodTask.label}`,
+        detail: `Step ${(methodProgress?.completedCount ?? 0) + 1} of ${methodProgress?.total ?? 6} of The AgentStack Method — ${nextMethodStep.summary.toLowerCase()}.`,
+        href: saPath(nextMethodTask.href),
+        cta: "Open",
       });
     }
     return items.sort((a, b) => a.priority - b.priority).slice(0, 6);
@@ -495,7 +478,9 @@ export default function DashboardPage() {
     deals,
     escalatedSessions,
     newLeads,
-    nextOnboardingStep,
+    nextMethodStep,
+    nextMethodTask,
+    methodProgress,
     overdueTasks,
     saPath,
     stalledDeals,
@@ -844,10 +829,10 @@ export default function DashboardPage() {
           {/* Held back until the derived progress arrives. Rendering during
               the read would briefly assert "0% ready" — a false claim about a
               workspace we simply have not finished measuring. */}
-          {!checklistComplete && !onboardingLoading && (
+          {methodProgress && !methodProgress.complete && (
             <SetupProgressCard
-              progress={onboardingProgress}
-              nextStep={nextOnboardingStep}
+              progress={methodProgress}
+              subAccountId={subAccountId}
               saPath={saPath}
             />
           )}
@@ -1221,83 +1206,6 @@ function ScheduleCard({
           })}
         </ul>
       )}
-    </section>
-  );
-}
-
-function SetupProgressCard({
-  progress,
-  nextStep,
-  saPath,
-}: {
-  progress: number;
-  nextStep: (typeof ONBOARDING_METHOD_STEPS)[number] | undefined;
-  saPath: (path: string) => string;
-}) {
-  if (!nextStep) return null;
-
-  return (
-    <section className="bg-card rounded-2xl border p-5">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div className="max-w-2xl space-y-3">
-          <div>
-            <p className="text-muted-foreground text-[11px] font-semibold tracking-[0.24em] uppercase">
-              The AgentStack Method
-            </p>
-            <h2 className="mt-1 text-lg font-semibold tracking-tight">
-              Your business is {progress}% ready
-            </h2>
-          </div>
-          <div>
-            <p className="text-sm font-medium">{nextStep.title}</p>
-            <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
-              {nextStep.description}
-            </p>
-          </div>
-          <div className="text-muted-foreground flex flex-wrap gap-2 text-xs">
-            <span className="bg-muted/20 rounded-full border px-3 py-1 font-medium">
-              About {nextStep.videoMinutes} min
-            </span>
-            <span className="bg-muted/20 rounded-full border px-3 py-1 font-medium">
-              Progress saves as you go
-            </span>
-          </div>
-        </div>
-
-        <div className="bg-muted/10 w-full max-w-xs rounded-xl border p-4">
-          <div className="mb-2 flex items-center justify-between text-xs">
-            <span className="text-foreground font-medium">
-              Onboarding progress
-            </span>
-            <span className="text-muted-foreground">{progress}%</span>
-          </div>
-          <div className="bg-muted h-2 rounded-full">
-            <div
-              className="h-2 rounded-full bg-blue-600"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-          <Button
-            className="mt-4 w-full"
-            render={<Link href={saPath(nextStep.href)} />}
-          >
-            Continue with {nextStep.title}
-            <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-          </Button>
-          {/* This number tracks CRM setup (contacts, forms, SMS, AI, pipeline)
-              — a different measure than the Site Health score in the sidebar,
-              which covers your website and compliance tasks. Named here so
-              seeing two different percentages doesn't read as a bug. */}
-          <p className="text-muted-foreground mt-3 text-[11px] leading-snug">
-            This tracks your CRM setup.{" "}
-            <Link href={saPath("/site-health")} className="underline underline-offset-2 hover:text-foreground">
-              Site Health
-            </Link>{" "}
-            (in the sidebar) tracks your website and compliance tasks
-            separately.
-          </p>
-        </div>
-      </div>
     </section>
   );
 }

@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { ArrowRight, Wrench, Link2, Target, Zap, RefreshCw, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { AGENTSTACK_METHOD_NAME } from "@/config/landing";
+import { AGENTSTACK_METHOD_NAME, AGENTSTACK_METHOD_STEP_NAMES } from "@/config/landing";
 
 const steps = [
   {
     number: "01",
     icon: Wrench,
-    title: "Build",
+    title: AGENTSTACK_METHOD_STEP_NAMES[0],
     body: "Tell AgentStack about your business once — services, hours, follow-up rules. It configures everything around it.",
     iconColor: "text-blue-500",
     iconBg: "bg-blue-500/10",
@@ -17,7 +17,7 @@ const steps = [
   {
     number: "02",
     icon: Link2,
-    title: "Connect",
+    title: AGENTSTACK_METHOD_STEP_NAMES[1],
     body: "Import contacts. Connect email, phone, calendar, Google Business Profile, website, and social accounts.",
     iconColor: "text-indigo-500",
     iconBg: "bg-indigo-500/10",
@@ -27,7 +27,7 @@ const steps = [
   {
     number: "03",
     icon: Target,
-    title: "Capture",
+    title: AGENTSTACK_METHOD_STEP_NAMES[2],
     body: "Launch lead capture systems — home valuations, buyer consultations, open houses, listing inquiries — with one click.",
     iconColor: "text-blue-500",
     iconBg: "bg-blue-500/10",
@@ -37,7 +37,7 @@ const steps = [
   {
     number: "04",
     icon: Zap,
-    title: "Respond",
+    title: AGENTSTACK_METHOD_STEP_NAMES[3],
     body: "Every lead answered immediately. Automatic follow-up begins instantly — even while you're in a showing.",
     iconColor: "text-indigo-500",
     iconBg: "bg-indigo-500/10",
@@ -47,7 +47,7 @@ const steps = [
   {
     number: "05",
     icon: RefreshCw,
-    title: "Nurture",
+    title: AGENTSTACK_METHOD_STEP_NAMES[4],
     body: "AgentStack keeps every conversation moving until someone responds. No manual reminders. No forgotten leads.",
     iconColor: "text-blue-500",
     iconBg: "bg-blue-500/10",
@@ -57,7 +57,7 @@ const steps = [
   {
     number: "06",
     icon: Trophy,
-    title: "Close",
+    title: AGENTSTACK_METHOD_STEP_NAMES[5],
     body: "Appointments. Transactions. Reviews. Referrals. Repeat. The system runs — you close.",
     iconColor: "text-indigo-500",
     iconBg: "bg-indigo-500/10",

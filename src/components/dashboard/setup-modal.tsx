@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -14,6 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { WelcomeVideoDialog } from "@/components/onboarding/welcome-video-dialog";
+import { methodStepForSetupStep } from "@/lib/onboarding/method";
+import { setupHubHref } from "@/lib/onboarding/setup-hub-href";
 import { googleAccountConnectPath } from "@/lib/google/account-connect-path";
 import type { SubAccountDoc } from "@/types/tenancy";
 import {
@@ -37,7 +40,8 @@ import {
  * "current step" field. See the Client Journey Re-plan doc, "Setup as a
  * modal, not a place."
  *
- * Steps, in the doc's own order: Identity -> Communications account ->
+ * Each section is labelled with its AgentStack Method step (lib/onboarding/
+ * method.ts): Build, Connect, Capture. Steps, in order: Identity -> Communications account ->
  * Listings source -> Social -> Domain. Identity and
  * Communications account are mandatory (everything downstream needs them);
  * the last three are individually skippable, since not every workspace has
@@ -56,6 +60,24 @@ interface BusinessProfileFields {
 
 export { deriveSetupStepStates };
 export type { SetupStepState };
+
+/** The rewatch player, dropped entirely if the file can't load. */
+function RewatchVideo({ src }: { src: string }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return <p className="text-muted-foreground mt-3 text-sm">The tour video isn&apos;t available right now.</p>;
+  }
+  return (
+    <video
+      src={src}
+      controls
+      playsInline
+      preload="metadata"
+      onError={() => setFailed(true)}
+      className="mt-3 w-full rounded-xl border bg-black"
+    />
+  );
+}
 
 function StepHeader({
   step,
@@ -397,9 +419,13 @@ export function SetupModal({
           Set up {subAccount.name ?? "your workspace"}
         </h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          Five quick steps, in order — each one saves the moment you finish it.
-          Steps stay visible even while locked, so you always know what
-          unlocks them.
+          The account connections behind the Build, Connect and Capture steps
+          of The AgentStack Method, in order — each saves the moment you
+          finish it. Locked steps stay visible so you always know what unlocks
+          them.{" "}
+          <Link href={setupHubHref(subAccountId)} className="text-primary underline underline-offset-2">
+            See all six steps
+          </Link>
         </p>
       </div>
 
@@ -418,20 +444,14 @@ export function SetupModal({
         <summary className="cursor-pointer text-sm font-medium">
           Rewatch Zack&apos;s 2-minute welcome tour
         </summary>
-        <video
-          src={WELCOME_VIDEO}
-          controls
-          playsInline
-          preload="metadata"
-          className="mt-3 w-full rounded-xl border bg-black"
-        />
+        <RewatchVideo src={WELCOME_VIDEO} />
       </details>
 
       {/* 1. Identity */}
       <section id="setup-step-identity" className="bg-card rounded-2xl border p-5">
         <StepHeader
-          step={1}
-          title={STEP_TITLES.identity}
+          step={methodStepForSetupStep("identity").number}
+          title={`${methodStepForSetupStep("identity").name} · ${STEP_TITLES.identity}`}
           description="Business name, license #, and service area — every step below builds on this."
           state={stateFor("identity")}
         />
@@ -497,8 +517,8 @@ export function SetupModal({
       {/* 2. Communications account */}
       <section id="setup-step-communications" className="bg-card rounded-2xl border p-5">
         <StepHeader
-          step={2}
-          title={STEP_TITLES.communications}
+          step={methodStepForSetupStep("communications").number}
+          title={`${methodStepForSetupStep("communications").name} · ${STEP_TITLES.communications}`}
           description="How do your leads reach you today? Pick the account you already use."
           state={stateFor("communications")}
         />
@@ -596,8 +616,8 @@ export function SetupModal({
       {/* 3. Listings source */}
       <section id="setup-step-listings" className="bg-card rounded-2xl border p-5">
         <StepHeader
-          step={3}
-          title={STEP_TITLES.listings}
+          step={methodStepForSetupStep("listings").number}
+          title={`${methodStepForSetupStep("listings").name} · ${STEP_TITLES.listings}`}
           description="Connect your IDX Broker key and pick an approved MLS feed."
           state={stateFor("listings")}
         />
@@ -685,8 +705,8 @@ export function SetupModal({
       {/* 4. Social */}
       <section id="setup-step-social" className="bg-card rounded-2xl border p-5">
         <StepHeader
-          step={4}
-          title={STEP_TITLES.social}
+          step={methodStepForSetupStep("social").number}
+          title={`${methodStepForSetupStep("social").name} · ${STEP_TITLES.social}`}
           description="One Facebook & Instagram connection unlocks the unified inbox and the Social Planner together."
           state={stateFor("social")}
         />
@@ -737,8 +757,8 @@ export function SetupModal({
       {/* 5. Domain */}
       <section id="setup-step-domain" className="bg-card rounded-2xl border p-5">
         <StepHeader
-          step={5}
-          title={STEP_TITLES.domain}
+          step={methodStepForSetupStep("domain").number}
+          title={`${methodStepForSetupStep("domain").name} · ${STEP_TITLES.domain}`}
           description="Optional, and only after the steps above — a domain with no content behind it is a dead link."
           state={stateFor("domain")}
         />
