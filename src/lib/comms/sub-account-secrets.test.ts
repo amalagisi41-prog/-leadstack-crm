@@ -69,6 +69,9 @@ vi.mock("@/lib/firebase/admin", () => ({
 }));
 
 import {
+  hydrateTwilioConfig,
+  loadTwilioSecrets,
+  writeTwilioSecrets,
   deleteIdxSecrets,
   deleteMetaSecrets,
   loadIdxSecrets,
@@ -228,5 +231,33 @@ describe("the secret paths are the ones firestore.rules denies", () => {
 
     expect(docs.has(META_SECRET_PATH)).toBe(true);
     expect(docs.has(IDX_SECRET_PATH)).toBe(true);
+  });
+});
+
+describe("Twilio auth token", () => {
+  const TWILIO_SECRET_PATH = "subAccounts/sub-1/secrets/twilio";
+
+  it("writes the token only to the secrets subcollection", async () => {
+    docs.set(PARENT, { twilioConfig: { enabled: true, accountSid: "AC1", authTokenSet: true } });
+    await writeTwilioSecrets("sub-1", { authToken: "tw-secret" });
+    expect(docs.get(TWILIO_SECRET_PATH)).toMatchObject({ authToken: "tw-secret" });
+    expect(JSON.stringify(docs.get(PARENT))).not.toContain("tw-secret");
+  });
+
+  it("migrates an inline token, deletes it and stamps authTokenSet", async () => {
+    docs.set(PARENT, {
+      twilioConfig: { enabled: true, accountSid: "AC1", authToken: "legacy", fromNumber: "+15550000000" },
+    });
+    await expect(loadTwilioSecrets("sub-1")).resolves.toEqual({ authToken: "legacy" });
+    const cfg = (docs.get(PARENT) as { twilioConfig: Record<string, unknown> }).twilioConfig;
+    expect(cfg).not.toHaveProperty("authToken");
+    expect(cfg.authTokenSet).toBe(true);
+    expect(cfg.fromNumber).toBe("+15550000000");
+  });
+
+  it("hydrates the in-memory config from the secrets store", async () => {
+    docs.set(TWILIO_SECRET_PATH, { authToken: "tw-secret" });
+    const out = await hydrateTwilioConfig("sub-1", { accountSid: "AC1", authTokenSet: true });
+    expect(out).toMatchObject({ accountSid: "AC1", authToken: "tw-secret" });
   });
 });

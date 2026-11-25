@@ -1,5 +1,6 @@
 import "server-only";
 
+import { hydrateTwilioConfig } from "@/lib/comms/sub-account-secrets";
 import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
@@ -88,8 +89,11 @@ export async function POST(
 
   // WhatsApp reuses the SMS Twilio creds — they must already be configured.
   const snap = await getAdminDb().doc(`subAccounts/${subAccountId}`).get();
-  const cfg = (snap.data() as SubAccountDoc | undefined)?.twilioConfig ?? null;
-  if (!subAccountTwilioIsConfigured(cfg) || !cfg) {
+  const cfg = await hydrateTwilioConfig(
+    subAccountId,
+    (snap.data() as SubAccountDoc | undefined)?.twilioConfig ?? null,
+  );
+  if (!subAccountTwilioIsConfigured(cfg) || !cfg || !cfg.authToken) {
     return NextResponse.json(
       {
         error:
@@ -114,7 +118,7 @@ export async function POST(
   } else {
     webhookResult = await autoConfigureInboundWebhook({
       accountSid: cfg.accountSid,
-      authToken: cfg.authToken,
+      authToken: cfg.authToken ?? "",
       fromNumber: whatsappFromNumber,
       webhookUrl,
     });

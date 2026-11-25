@@ -700,7 +700,14 @@ export interface TwilioConfig {
    */
   enabled: boolean;
   accountSid: string;
-  authToken: string;
+  /**
+   * DEPRECATED on the stored doc — the token lives server-only at
+   * `subAccounts/{id}/secrets/twilio`. Present only in memory after
+   * `hydrateTwilioConfig()`, or on legacy docs not yet migrated.
+   */
+  authToken?: string;
+  /** Public marker: a token is saved in the secrets store. */
+  authTokenSet?: boolean;
   /** E.164 (e.g. "+15551234567"). The number this sub-account sends from. */
   fromNumber: string;
   /**

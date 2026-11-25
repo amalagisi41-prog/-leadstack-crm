@@ -1,5 +1,6 @@
 import "server-only";
 
+import { hydrateTwilioConfig } from "@/lib/comms/sub-account-secrets";
 import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import twilio from "twilio";
@@ -92,10 +93,11 @@ async function resolveRoute(
     .get();
   if (!dedicated.empty) {
     const sa = dedicated.docs[0].data() as SubAccountDoc;
-    if (sa.twilioConfig?.authToken) {
+    const cfg = await hydrateTwilioConfig(dedicated.docs[0].id, sa.twilioConfig);
+    if (cfg?.authToken) {
       return {
         mode: "dedicated",
-        authToken: sa.twilioConfig.authToken,
+        authToken: cfg.authToken,
         subAccountId: dedicated.docs[0].id,
         agencyId: sa.agencyId,
       };

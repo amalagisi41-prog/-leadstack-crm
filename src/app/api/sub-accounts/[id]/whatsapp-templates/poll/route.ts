@@ -1,5 +1,6 @@
 import "server-only";
 
+import { hydrateTwilioConfig } from "@/lib/comms/sub-account-secrets";
 import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
@@ -109,7 +110,10 @@ export async function POST(
   }
 
   const subSnap = await db.doc(`subAccounts/${subAccountId}`).get();
-  const cfg = (subSnap.data() as SubAccountDoc | undefined)?.twilioConfig ?? null;
+  const cfg = await hydrateTwilioConfig(
+    subAccountId,
+    (subSnap.data() as SubAccountDoc | undefined)?.twilioConfig ?? null,
+  );
   if (!cfg?.accountSid || !cfg.authToken) {
     // Creds disappeared — stop chasing.
     await ref.update({

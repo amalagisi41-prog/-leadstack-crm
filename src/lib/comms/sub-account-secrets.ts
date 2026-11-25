@@ -419,18 +419,75 @@ export async function deleteIdxSecrets(subAccountId: string): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// FOLLOW-UP: twilioConfig.authToken
+// Twilio — the dedicated-number auth token
 // ---------------------------------------------------------------------------
-// `twilioConfig.authToken` sits on the same member-readable parent document
-// and has the same exposure. It is deliberately NOT migrated here.
-//
-// It is read directly (as part of the whole `TwilioConfig` object) by ~14 call
-// sites, including the Twilio and WhatsApp inbound webhooks, which use it to
-// verify request signatures. Migrating it means converting every one of those
-// in lockstep — a lazy migration that deletes the inline copy would break any
-// path still reading it, and those paths include live inbound messaging.
-//
-// That refactor is worth doing, but it belongs in its own change so it can be
-// tested and rolled back independently of the Gmail fix. Adding a dormant
-// `loadTwilioSecrets()` here would be worse than leaving it out: the first
-// caller to touch it would silently delete a credential the other 13 still read.
+
+export const TWILIO_SECRET = "twilio";
+
+export interface TwilioSecrets {
+  /** Twilio auth token: sends SMS/WhatsApp as the business and verifies
+   *  inbound webhook signatures. Never on the member-readable parent doc. */
+  authToken: string;
+}
+
+export async function writeTwilioSecrets(
+  subAccountId: string,
+  secrets: TwilioSecrets,
+): Promise<void> {
+  await secretRef(subAccountId, TWILIO_SECRET).set(
+    { ...secrets, updatedAt: FieldValue.serverTimestamp() },
+    { merge: true },
+  );
+}
+
+/**
+ * Reads the auth token, lazily migrating a legacy inline
+ * `twilioConfig.authToken` off the parent doc (stamping the public
+ * `twilioConfig.authTokenSet` marker in the same write so "configured" checks
+ * keep passing).
+ */
+export async function loadTwilioSecrets(
+  subAccountId: string,
+): Promise<TwilioSecrets | null> {
+  const snap = await secretRef(subAccountId, TWILIO_SECRET).get();
+  const token = snap.data()?.authToken;
+  if (typeof token === "string" && token) return { authToken: token };
+
+  return migrateInlineSecret<TwilioSecrets>({
+    subAccountId,
+    secretName: TWILIO_SECRET,
+    parentField: "twilioConfig",
+    inlineFields: ["authToken"],
+    publicPatch: { "twilioConfig.authTokenSet": true },
+    extract: (legacy) => {
+      const value = legacy.authToken;
+      return typeof value === "string" && value ? { authToken: value } : null;
+    },
+  });
+}
+
+export async function deleteTwilioSecrets(subAccountId: string): Promise<void> {
+  await secretRef(subAccountId, TWILIO_SECRET).delete();
+}
+
+/**
+ * Returns `cfg` with `authToken` filled from the secrets store. EVERY server
+ * path that needs the token value (sending, signature checks, Twilio REST
+ * calls, Vapi BYOC) goes through this — the parent doc no longer carries it.
+ * The returned object is in-memory only: never write it back to the parent.
+ */
+export async function hydrateTwilioConfig<T extends { authToken?: string } | null | undefined>(
+  subAccountId: string,
+  cfg: T,
+): Promise<T> {
+  if (!cfg) return cfg;
+  if (cfg.authToken) {
+    // Legacy inline copy — migrate it off the parent, keep using the value.
+    await loadTwilioSecrets(subAccountId).catch((err) =>
+      console.error("[sub-account-secrets] twilio migration failed", subAccountId, err),
+    );
+    return cfg;
+  }
+  const secrets = await loadTwilioSecrets(subAccountId);
+  return { ...cfg, authToken: secrets?.authToken ?? "" };
+}

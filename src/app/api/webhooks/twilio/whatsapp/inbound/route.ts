@@ -1,5 +1,6 @@
 import "server-only";
 
+import { hydrateTwilioConfig } from "@/lib/comms/sub-account-secrets";
 import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import type { DocumentSnapshot } from "firebase-admin/firestore";
@@ -100,10 +101,11 @@ async function resolveRoute(toNumber: string): Promise<ResolvedRoute | null> {
     );
     return null;
   }
-  if (!sa.twilioConfig?.authToken) return null;
+  const cfg = await hydrateTwilioConfig(snap.docs[0].id, sa.twilioConfig);
+  if (!cfg?.authToken) return null;
 
   return {
-    authToken: sa.twilioConfig.authToken,
+    authToken: cfg.authToken,
     subAccountId: snap.docs[0].id,
     agencyId: sa.agencyId,
   };

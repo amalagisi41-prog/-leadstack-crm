@@ -153,14 +153,8 @@ const PUBLIC_PATHS = [
   // Upstash-Signature header verification inside the route.
   "/api/events/reminder",
   "/api/events/payment",
-  // NOTE: /api/dev-only/danger-wipe-everything is deliberately NOT listed
-  // here. It recursively deletes every Firestore collection and every Auth
-  // user, and its only guard is a NODE_ENV !== "production" check inside the
-  // route. Listing it as a public path meant that guard was the ONLY thing
-  // standing between an unauthenticated URL and total data loss — one env-var
-  // mistake (a self-hosted `pnpm dev`, a mis-set NODE_ENV) away from a
-  // catastrophe with no session required. It keeps its own env guard AND now
-  // requires a session like every other route.
+  // NOTE: the former /api/dev-only/danger-wipe-everything route was removed
+  // from the codebase entirely; never re-add a wipe endpoint to a public path.
   "/setup.html",
   // SEO conventions — Next.js serves these as virtual routes from
   // src/app/robots.ts and src/app/sitemap.ts respectively. Both must

@@ -1,5 +1,6 @@
 import "server-only";
 
+import { hydrateTwilioConfig } from "@/lib/comms/sub-account-secrets";
 import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
@@ -84,11 +85,13 @@ export async function POST(
     updatedAt: FieldValue.serverTimestamp(),
   });
 
+  const twilioCfg = await hydrateTwilioConfig(subAccountId, sub.twilioConfig);
+  const twilioToken = twilioCfg?.authToken ?? "";
   let contentSid: string;
   try {
     const created = await createContentTemplate({
       accountSid: sub.twilioConfig.accountSid,
-      authToken: sub.twilioConfig.authToken,
+      authToken: twilioToken,
       friendlyName: name,
       language: tpl.language,
       body: tpl.body,
@@ -97,7 +100,7 @@ export async function POST(
     contentSid = created.contentSid;
     await submitForWhatsappApproval({
       accountSid: sub.twilioConfig.accountSid,
-      authToken: sub.twilioConfig.authToken,
+      authToken: twilioToken,
       contentSid,
       name,
       category: tpl.category,

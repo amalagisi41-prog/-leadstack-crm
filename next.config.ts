@@ -12,8 +12,7 @@ const NO_FRAMING = [
 ];
 
 const nextConfig: NextConfig = {
-  typescript: { ignoreBuildErrors: true },
-  eslint: { ignoreDuringBuilds: true },
+  // Type and lint errors block the build — a release can't ship with either.
   // pdf-parse's Node worker includes a platform-native canvas dependency.
   // Keep these packages external so Vercel resolves the correct Linux build
   // at runtime instead of attempting to parse a native binary during webpack.

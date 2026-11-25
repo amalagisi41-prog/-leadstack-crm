@@ -269,8 +269,8 @@ src/
       social/publish/step/        POST QStash callback — publish one scheduled social post
       community/[groupId]/        POST public magic-link sign-in for community members
         auth/
-      dev-only/danger-wipe-       DEV TESTING ONLY — wipes everything in the agency
-        everything/               (owner-gated; not for production use)
+      dev-only/seed-demo/         Demo-data seeder (agentstack variant + agency owner only).
+                                  The old danger-wipe-everything endpoint was removed from the tree.
   components/
     ui/                  shadcn/ui primitives
     auth/                Login + signup forms
@@ -1060,7 +1060,7 @@ Two things to preserve when touching these:
 - **Never spread a config object back onto the parent.** `lib/idx/sync.ts` writes sync status by merging the config back; it destructures `accessKey` out explicitly, because spreading is exactly how a migrated credential gets silently re-inlined.
 - **`connected` is a public marker, not decoration.** The IDX settings UI used to derive "connected" from the presence of the credential itself. That test stops working the moment the credential moves, so the migration stamps `connected: true` in the same write that strips the inline copy, and the readers accept either.
 
-**Still open (deliberate):** `twilioConfig.authToken` sits on the same member-readable parent document with the same exposure. It is read directly by 6 call sites including the Twilio + WhatsApp inbound webhooks (which use it for signature verification), so migrating it means converting all of them in lockstep. That belongs in its own change — see the FOLLOW-UP note at the bottom of `sub-account-secrets.ts`.
+**`twilioConfig.authToken` followed the same move.** It lives at `subAccounts/{id}/secrets/twilio`; the parent doc keeps only the public `twilioConfig.authTokenSet` marker (the configured checks in `lib/comms/twilio.ts` accept either). Every path that needs the value — sends via `getTwilioForSubAccount()`, both inbound webhooks' signature checks, WhatsApp setup, template submit/poll and Vapi BYOC — calls `hydrateTwilioConfig()`, which also lazily migrates a legacy inline copy. Never spread a hydrated config back onto the parent.
 
 ### Optional — Vercel API (automatic custom-domain registration)
 

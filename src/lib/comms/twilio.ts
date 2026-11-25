@@ -3,6 +3,7 @@ import "server-only";
 import twilio, { type Twilio } from "twilio";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { agencyAllowsSharedSms } from "@/lib/agency/policy";
+import { hydrateTwilioConfig } from "@/lib/comms/sub-account-secrets";
 import type { SubAccountDoc, TwilioConfig } from "@/types";
 
 /**
@@ -69,10 +70,14 @@ export function smsIsConfigured(): boolean {
   );
 }
 
+function hasToken(cfg: TwilioConfig): boolean {
+  return !!cfg.authToken || cfg.authTokenSet === true;
+}
+
 export function subAccountTwilioIsConfigured(
   cfg: TwilioConfig | null | undefined,
 ): boolean {
-  return !!cfg?.enabled && !!cfg.accountSid && !!cfg.authToken && !!cfg.fromNumber;
+  return !!cfg?.enabled && !!cfg.accountSid && hasToken(cfg) && !!cfg.fromNumber;
 }
 
 /**
@@ -88,7 +93,7 @@ export function subAccountWhatsappIsConfigured(
   return (
     !!cfg?.enabled &&
     !!cfg.accountSid &&
-    !!cfg.authToken &&
+    hasToken(cfg) &&
     !!cfg.whatsappFromNumber
   );
 }
@@ -145,6 +150,15 @@ export async function getTwilioForSubAccount(
   }
 
   if (subAccountTwilioIsConfigured(cfg) && cfg) {
+    cfg = await hydrateTwilioConfig(subAccountId, cfg);
+    if (!cfg?.authToken) {
+      // Never silently fall back to the shared sender for a dedicated number.
+      throw new Error(
+        "This workspace's Twilio auth token is missing. Re-save it under Settings → SMS.",
+      );
+    }
+  }
+  if (subAccountTwilioIsConfigured(cfg) && cfg && cfg.authToken) {
     let client = _saClientCache.get(subAccountId);
     if (!client) {
       client = twilio(cfg.accountSid, cfg.authToken);

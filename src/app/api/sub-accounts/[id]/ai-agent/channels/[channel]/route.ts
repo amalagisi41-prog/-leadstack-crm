@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { hydrateTwilioConfig } from "@/lib/comms/sub-account-secrets";
 import { requireSubAccountAdmin } from "@/lib/auth/require-tenancy";
 import { getAdminDb } from "@/lib/firebase/admin";
 import {
@@ -574,7 +575,7 @@ async function runVoiceProvisioningSideEffect(input: {
       }
       const result = await ensureVapiPhoneNumber({
         subAccountId,
-        twilioConfig: subAccount.twilioConfig,
+        twilioConfig: await hydrateTwilioConfig(subAccountId, subAccount.twilioConfig),
         assistantId,
         existingPhoneNumberId: voice.vapiPhoneNumberId,
       });

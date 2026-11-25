@@ -1,5 +1,6 @@
 import "server-only";
 
+import { hydrateTwilioConfig, writeTwilioSecrets } from "@/lib/comms/sub-account-secrets";
 import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
@@ -82,7 +83,10 @@ export async function POST(
       ?.twilioConfig ?? null;
 
   const submittedToken = body.authToken?.trim() ?? "";
-  const authToken = submittedToken || existingCfg?.authToken || "";
+  const authToken =
+    submittedToken ||
+    (existingCfg ? (await hydrateTwilioConfig(subAccountId, existingCfg))?.authToken : "") ||
+    "";
 
   if (!accountSid || !fromNumber) {
     return NextResponse.json(
@@ -140,17 +144,21 @@ export async function POST(
   const cfg: TwilioConfig = {
     enabled: true,
     accountSid,
-    authToken,
+    authTokenSet: true,
     fromNumber,
     inboundWebhookConfigured: webhookResult.ok,
     lastValidatedAt: new Date(),
     inboundWebhookSecret: null,
   };
+  // Token goes to the server-only secrets store; the member-readable parent
+  // doc only gets the public `authTokenSet` marker. The explicit delete
+  // clears any legacy inline copy (set+merge deep-merges maps).
+  await writeTwilioSecrets(subAccountId, { authToken });
   await getAdminDb()
     .doc(`subAccounts/${subAccountId}`)
     .set(
       {
-        twilioConfig: cfg,
+        twilioConfig: { ...cfg, authToken: FieldValue.delete() },
         updatedAt: FieldValue.serverTimestamp(),
       },
       { merge: true },
