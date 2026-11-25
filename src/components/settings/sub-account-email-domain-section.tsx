@@ -1,7 +1,5 @@
 "use client";
 
-import Link from "next/link";
-import { SUB_ACCOUNT_ROUTES } from "@/lib/navigation/sub-account-routes";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import {
@@ -186,10 +184,9 @@ function ReplyToBanner({
 }
 
 export function SubAccountEmailDomainSection() {
-  const { subAccountId, subAccount, isAdmin, saPath } = useSubAccount();
+  const { subAccountId, subAccount, isAdmin } = useSubAccount();
   const cfg = subAccount?.resendConfig ?? null;
   const gateOpen = subAccount?.emailDomainEnabledByAgency === true;
-  const needsReplyTo = !subAccount?.replyToEmail?.trim();
 
   const [domainName, setDomainName] = useState("");
   const [fromName, setFromName] = useState("");

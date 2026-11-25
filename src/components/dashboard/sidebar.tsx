@@ -18,7 +18,6 @@ import {
   BarChart3,
   Settings,
   LogOut,
-  Building,
   Building2,
   Workflow,
   Compass,
@@ -67,19 +66,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-
-interface NavItem {
-  href: string;
-  label: string;
-  icon: typeof Home;
-  enabled: boolean;
-  badgeKey?: "dueToday" | "unreadConversations" | "setupProgress";
-}
-
-interface NavSection {
-  label: string;
-  items: NavItem[];
-}
 
 /* ─── Primary nav: 7 top-level items a realtor recognises ──────── */
 
@@ -174,7 +160,6 @@ const NAV_GROUPS: NavGroup[] = [
 ];
 
 /* Keep legacy constant for backward compat if anything else imports it */
-const SUB_ACCOUNT_NAV_SECTIONS: NavSection[] = [];
 
 interface SidebarProps {
   open: boolean;

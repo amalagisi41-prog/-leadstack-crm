@@ -10,11 +10,12 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
+    "lint": "eslint --max-warnings=0",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "format": "prettier --write \"src/**/*.{ts,tsx,css,json}\""
+    "format": "prettier --write \"src/**/*.{ts,tsx,css,json}\"",
+    "test:rules": "firebase emulators:exec --project demo-agentstack-rules --only firestore,storage \"vitest run --config vitest.rules.config.ts\""
   },
   "dependencies": {
     "@base-ui/react": "^1.3.0",
@@ -52,7 +53,7 @@
     "react-icons": "^5.6.0",
     "react-map-gl": "^8.1.1",
     "resend": "^6.12.0",
-    "sanitize-html": "^2.17.5",
+    "sanitize-html": "^2.18.0",
     "server-only": "^0.0.1",
     "sonner": "^2.0.7",
     "stripe": "^20.4.1",
@@ -62,6 +63,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@firebase/rules-unit-testing": "^6.0.0",
     "@tailwindcss/postcss": "^4",
     "@tailwindcss/typography": "^0.5.19",
     "@testing-library/dom": "^10.4.1",
@@ -78,6 +80,7 @@
     "eslint-config-next": "15.5.29",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
+    "firebase-tools": "^15.37.0",
     "jsdom": "^30.0.1",
     "prettier": "^3.8.1",
     "prettier-plugin-tailwindcss": "^0.7.2",

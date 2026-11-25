@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @next/next/no-img-element -- listing photos and generated creatives come from arbitrary external hosts that next/image can't allowlist. */
 
 import { useState } from "react";
 import { Loader2, Sparkles, Video } from "lucide-react";

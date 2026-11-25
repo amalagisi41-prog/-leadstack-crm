@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element -- listing photos and generated creatives come from arbitrary external hosts that next/image can't allowlist. */
 import { notFound } from "next/navigation";
 import { getAdminDb } from "@/lib/firebase/admin";
 import type { CampaignBriefDoc } from "@/types/marketing-campaigns";

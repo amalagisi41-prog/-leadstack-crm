@@ -148,7 +148,6 @@ function sanitizeHeaderValue(value: string): string {
  */
 function encodeHeaderValue(value: string): string {
   const clean = sanitizeHeaderValue(value);
-  // eslint-disable-next-line no-control-regex
   if (/^[\x00-\x7F]*$/.test(clean)) return clean;
   return `=?UTF-8?B?${Buffer.from(clean, "utf8").toString("base64")}?=`;
 }

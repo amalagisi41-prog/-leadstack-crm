@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @next/next/no-img-element -- listing photos and generated creatives come from arbitrary external hosts that next/image can't allowlist. */
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
