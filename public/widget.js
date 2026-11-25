@@ -45,7 +45,7 @@
     try {
       var u = new URL(scriptTag.src);
       return u.protocol + "//" + u.host;
-    } catch (e) {
+    } catch {
       return "";
     }
   })();
@@ -60,7 +60,7 @@
   function shouldAutoOpen() {
     try {
       return new URLSearchParams(window.location.search).get("chat") === "1";
-    } catch (e) {
+    } catch {
       return false;
     }
   }
@@ -148,7 +148,7 @@
       // it on each /message call. Used for session.origin + session.pageUrl
       // logging — not for auth (parent origin is gated at /config).
       var parentUrl = "";
-      try { parentUrl = window.location.href; } catch (e) {}
+      try { parentUrl = window.location.href; } catch {}
       var qs = parentUrl ? "?p=" + encodeURIComponent(parentUrl) : "";
       iframe.src = BASE + "/embed/chat/" + encodeURIComponent(saId) + qs;
       iframe.title = "Chat with us";

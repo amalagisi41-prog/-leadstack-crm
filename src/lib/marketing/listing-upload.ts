@@ -23,7 +23,6 @@ if (typeof globalThis.DOMMatrix === "undefined") {
   globalThis.DOMMatrix = ServerDomMatrix as unknown as typeof globalThis.DOMMatrix;
 }
 
-type Cell = string | number | boolean | null;
 
 const PHOTO_URL_RE = /https?:\/\/[^\s,;"'<>]+\.(?:jpe?g|png|webp|gif)(?:\?[^\s,;"'<>]*)?/gi;
 

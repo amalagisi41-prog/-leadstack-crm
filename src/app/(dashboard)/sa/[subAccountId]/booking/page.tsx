@@ -250,7 +250,7 @@ function StatusPill({ status }: { status: BookingPage["status"] }) {
 
 function EmptyState({
   isAdmin,
-  newHref,
+  newHref: _newHref,
 }: {
   isAdmin: boolean;
   newHref: string;

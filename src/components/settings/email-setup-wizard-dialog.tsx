@@ -90,7 +90,7 @@ export function EmailSetupWizardDialog({
 
   const [googleConnecting, setGoogleConnecting] = useState(false);
 
-  const loadRecords = useCallback(async () => {
+  const _loadRecords = useCallback(async () => {
     try {
       const res = await fetch(`/api/sub-accounts/${subAccountId}/resend`);
       const data = (await res.json().catch(() => ({}))) as {

@@ -36,6 +36,13 @@ jobs:
       - name: Test
         run: pnpm test
 
+      # Runs firestore.rules + storage.rules in the Firebase emulators
+      # (Java is preinstalled on ubuntu runners). Catches a rules change that
+      # would expose integration secrets or reopen uploads before it can be
+      # deployed.
+      - name: Security rules tests
+        run: pnpm test:rules
+
       - name: Production build
         run: pnpm build
         env:

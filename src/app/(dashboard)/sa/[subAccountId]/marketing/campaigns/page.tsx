@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @next/next/no-img-element -- listing photos and generated creatives come from arbitrary external hosts that next/image can't allowlist. */
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -1566,4 +1567,3 @@ export default function MarketingCampaignsPage() {
   );
 }
 
-type IdxListingShape = { id: string; address: string };
