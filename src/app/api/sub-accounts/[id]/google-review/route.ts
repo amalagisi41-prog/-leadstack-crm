@@ -145,6 +145,12 @@ export async function POST(
 
   const cooldownDays = clampCooldown(body.cooldownDays);
 
+  // The post-closing automation's mode + delay are set from the Review
+  // Requests page (review-requests/automation) — carry them over so saving
+  // the link/channel never silently resets them.
+  const existingSnap = await getAdminDb().doc(`subAccounts/${subAccountId}`).get();
+  const existingCfg = (existingSnap.data() as SubAccountDoc | undefined)?.googleReviewConfig;
+
   const cfg: GoogleReviewConfig = {
     enabled: body.enabled === true,
     reviewUrl,
@@ -154,6 +160,10 @@ export async function POST(
     cooldownDays,
     triggerOnQuotePaid: body.triggerOnQuotePaid === true,
     triggerOnDealCompleted: body.triggerOnDealCompleted === true,
+    ...(existingCfg?.automationMode ? { automationMode: existingCfg.automationMode } : {}),
+    ...(typeof existingCfg?.delayDaysAfterClosing === "number"
+      ? { delayDaysAfterClosing: existingCfg.delayDaysAfterClosing }
+      : {}),
     updatedAt: new Date(),
   };
 

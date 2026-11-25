@@ -9,7 +9,7 @@ import {
   type UpdateDealPatch,
 } from "@/lib/server/deals-service";
 import { fireWorkflowTrigger, hasActiveWorkflowForTrigger } from "@/lib/workflows/engine";
-import { maybeSendReviewRequest } from "@/lib/reviews/request";
+import { maybeSendReviewRequest } from "@/lib/reviews/log";
 import { loadCustomFieldDefs } from "@/lib/custom-fields/load-defs";
 import { validateCustomFieldValues } from "@/lib/custom-fields/validation";
 import { PIPELINE_STAGES, DEAL_PRIORITIES } from "@/types/deals";

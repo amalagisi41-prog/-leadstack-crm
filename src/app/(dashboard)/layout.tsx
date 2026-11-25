@@ -41,6 +41,7 @@ export default function DashboardLayout({
       workflows: "Workflows",
       products: "Products",
       quotes: "Quotes",
+      "review requests": "Review Requests",
       website: "Website",
       "website studio": "Website Studio",
       idx: "Listings",

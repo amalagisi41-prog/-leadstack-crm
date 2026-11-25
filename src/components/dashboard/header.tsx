@@ -73,6 +73,7 @@ const TITLES: Array<[RegExp, string]> = [
     "AI Agents · Google Business",
   ],
   [/^\/sa\/[^/]+\/ai-agents/, "AI Agents"],
+  [/^\/sa\/[^/]+\/review-requests/, "Review Requests"],
   [/^\/sa\/[^/]+\/reports/, "Analytics"],
   [/^\/sa\/[^/]+\/logs/, "Logs"],
   [/^\/sa\/[^/]+\/idx/, "Listings"],

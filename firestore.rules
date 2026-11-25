@@ -856,6 +856,16 @@ service cloud.firestore {
     // Social Planner posts. Reads from the browser (subscribeToSocialPosts
     // drives the content calendar); all writes go through admin-SDK API
     // routes (create/schedule/publish/delete), so client writes stay closed.
+    // Review Requests log — one row per review request (manual, automatic,
+    // post-closing). Members read; only the Admin SDK writes (lib/reviews/log.ts).
+    match /reviewRequests/{requestId} {
+      allow read: if canAccessSub(
+        resource.data.subAccountId,
+        resource.data.agencyId
+      );
+      allow write: if false;
+    }
+
     match /socialPosts/{postId} {
       allow read: if canAccessSub(
         resource.data.subAccountId,

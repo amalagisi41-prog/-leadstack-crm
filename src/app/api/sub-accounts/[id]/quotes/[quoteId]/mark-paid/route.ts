@@ -9,7 +9,7 @@ import {
   fireQuoteTrigger,
   recordQuoteActivity,
 } from "@/lib/quotes/lifecycle";
-import { maybeSendReviewRequest } from "@/lib/reviews/request";
+import { maybeSendReviewRequest } from "@/lib/reviews/log";
 import type { Quote } from "@/types/quotes";
 
 export const dynamic = "force-dynamic";

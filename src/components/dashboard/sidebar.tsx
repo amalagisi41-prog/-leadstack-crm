@@ -46,6 +46,7 @@ import {
   ChevronDown,
   ChevronRight,
   DollarSign,
+  Star,
 } from "lucide-react";
 import { getFirebaseDb } from "@/lib/firebase/client";
 import { signOutUser } from "@/lib/firebase/auth";
@@ -146,6 +147,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/conversations", label: "Conversations", icon: MessagesSquare, enabled: true, badgeKey: "unreadConversations" },
       { href: "/tasks", label: "Tasks", icon: CheckSquare, enabled: true, badgeKey: "dueToday" },
       { href: "/ai-agents", label: "AI Agents", icon: Bot, enabled: true },
+      { href: "/review-requests", label: "Review Requests", icon: Star, enabled: true },
       { href: "/quotes", label: "Quotes", icon: FileSignature, enabled: true },
       { href: "/reports", label: "Analytics", icon: BarChart3, enabled: true },
     ],

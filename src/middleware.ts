@@ -228,6 +228,8 @@ const PUBLIC_PATH_PATTERNS: RegExp[] = [
   // Social Planner publish callback — QStash callback, signature-verified
   // inside the route (same security model as /api/workflows/step).
   /^\/api\/social\/publish\/step$/,
+  // Review Requests delayed send — QStash callback, signature-verified.
+  /^\/api\/reviews\/requests\/step$/,
   // WhatsApp template approval poll: /api/sub-accounts/{id}/whatsapp-templates/poll
   // QStash callback, signature-verified inside the route.
   /^\/api\/sub-accounts\/[^/]+\/whatsapp-templates\/poll$/,

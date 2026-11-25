@@ -1,5 +1,6 @@
 "use client";
 
+import { matchPages } from "@/lib/search/pages";
 import {
   useCallback,
   useEffect,
@@ -16,6 +17,7 @@ import {
   CalendarCheck,
   FileText,
   ArrowRight,
+  Star,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useOptionalSubAccount } from "@/context/sub-account-context";
@@ -40,6 +42,13 @@ import type { CalendarEvent } from "@/types/events";
 import type { LeadForm } from "@/types/forms";
 
 type Result =
+  | {
+      kind: "page";
+      id: string;
+      title: string;
+      subtitle: string;
+      href: string;
+    }
   | {
       kind: "contact";
       id: string;
@@ -77,6 +86,11 @@ type Result =
     };
 
 const KIND_META: Record<Result["kind"], { label: string; icon: React.ElementType; tone: string }> = {
+  page: {
+    label: "Pages",
+    icon: Star,
+    tone: "bg-sky-500/10 text-sky-600 dark:text-sky-400",
+  },
   contact: {
     label: "People",
     icon: Users,
@@ -227,6 +241,16 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
     const match = (s: string | null | undefined) =>
       s ? s.toLowerCase().includes(q) : false;
 
+    for (const p of linkPrefix ? matchPages(q) : []) {
+      out.push({
+        kind: "page",
+        id: p.path,
+        title: p.title,
+        subtitle: p.description,
+        href: `${linkPrefix}${p.path}`,
+      });
+    }
+
     for (const c of contacts) {
       if (match(c.name) || match(c.email) || match(c.company)) {
         out.push({
@@ -309,7 +333,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   }, [query, contacts, deals, tasks, events, forms, contactById, linkPrefix]);
 
   const grouped = useMemo(() => {
-    const order: Result["kind"][] = ["contact", "deal", "task", "event", "form"];
+    const order: Result["kind"][] = ["page", "contact", "deal", "task", "event", "form"];
     return order
       .map((k) => ({
         kind: k,
