@@ -3,9 +3,11 @@ import "server-only";
 import {
   ADD_ON_GATE_FIELD,
   ADD_ON_KEYS,
+  ADD_ON_LOOKUP_KEY,
   ADD_ON_PRICE_ENV_VAR,
   type AddOnKey,
 } from "./addon-catalog";
+import { getStripeServer } from "./server";
 import { SELF_SERVE_PLAN_KEYS, type SelfServePlanKey } from "@/config/landing";
 
 /**
@@ -75,6 +77,44 @@ export function addOnPriceId(key: AddOnKey): string | null {
   }
 }
 
+const LOOKUP_CACHE_MS = 5 * 60 * 1000;
+let lookupCache: { at: number; ids: Partial<Record<AddOnKey, string>> } | null = null;
+
+/**
+ * The Stripe price id for an add-on: the env var when set, otherwise the
+ * active price carrying the add-on's lookup key (cached for 5 minutes).
+ * Returns null only when neither exists; callers must log that as a
+ * configuration problem, never show it to the customer.
+ */
+export async function resolveAddOnPriceId(key: AddOnKey): Promise<string | null> {
+  const fromEnv = addOnPriceId(key);
+  if (fromEnv) return fromEnv;
+  if (!lookupCache || Date.now() - lookupCache.at > LOOKUP_CACHE_MS) {
+    const ids: Partial<Record<AddOnKey, string>> = {};
+    try {
+      const prices = await getStripeServer().prices.list({
+        lookup_keys: ADD_ON_KEYS.map((k) => ADD_ON_LOOKUP_KEY[k]),
+        active: true,
+        limit: 10,
+      });
+      for (const price of prices.data) {
+        const match = ADD_ON_KEYS.find((k) => ADD_ON_LOOKUP_KEY[k] === price.lookup_key);
+        if (match) ids[match] = price.id;
+      }
+    } catch (error) {
+      console.error("[billing-config] Could not look up add-on prices in Stripe", error);
+      return null;
+    }
+    lookupCache = { at: Date.now(), ids };
+  }
+  return lookupCache.ids[key] ?? null;
+}
+
+/** Test hook: forget cached lookup-key prices. */
+export function resetAddOnPriceCache() {
+  lookupCache = null;
+}
+
 export function addOnKeyForPriceId(priceId: string): AddOnKey | null {
   for (const key of ADD_ON_KEYS) {
     if (addOnPriceId(key) === priceId) return key;
@@ -96,16 +136,34 @@ export function gateFieldForPriceId(priceId: string): string | null {
  * (a legacy/test price, a re-created price, or a missing env var): fall back
  * to `metadata.plan_key` / `metadata.addon_key` or the price lookup_key.
  */
+/** Lookup keys the setup script stamps on the plan prices. */
+export const PLAN_LOOKUP_KEY: Record<PlanKey, string> = {
+  starter: "agentstack_solo_monthly",
+  pro: "agentstack_team_monthly",
+};
+
 export function planKeyForPrice(price: {
   id: string;
   lookup_key?: string | null;
   metadata?: Record<string, string> | null;
+  /** The price's product metadata, when the product was expanded. */
+  product_metadata?: Record<string, string> | null;
 }): PlanKey | null {
   const byId = planKeyForPriceId(price.id);
   if (byId) return byId;
-  const hint = (price.metadata?.plan_key ?? price.lookup_key ?? "").trim();
+  const hint = (
+    price.metadata?.plan_key ??
+    price.product_metadata?.plan_key ??
+    price.lookup_key ??
+    ""
+  ).trim();
   if (!hint) return null;
-  const normalized = hint === "solo" ? "starter" : hint;
+  const normalized =
+    hint === "solo" || hint === PLAN_LOOKUP_KEY.starter
+      ? "starter"
+      : hint === PLAN_LOOKUP_KEY.pro
+        ? "pro"
+        : hint;
   return (PLAN_KEYS as readonly string[]).includes(normalized)
     ? (normalized as PlanKey)
     : null;
@@ -119,7 +177,6 @@ export function addOnKeyForPrice(price: {
   const byId = addOnKeyForPriceId(price.id);
   if (byId) return byId;
   const hint = (price.metadata?.addon_key ?? price.lookup_key ?? "").trim();
-  return (ADD_ON_KEYS as readonly string[]).includes(hint)
-    ? (hint as AddOnKey)
-    : null;
+  if ((ADD_ON_KEYS as readonly string[]).includes(hint)) return hint as AddOnKey;
+  return ADD_ON_KEYS.find((k) => ADD_ON_LOOKUP_KEY[k] === hint) ?? null;
 }

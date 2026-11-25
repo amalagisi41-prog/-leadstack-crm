@@ -9,7 +9,7 @@ import {
   ADD_ON_GATE_FIELD,
   ADD_ON_KEYS,
   ADD_ON_PRICE_ENV_VAR,
-  addOnPriceId,
+  resolveAddOnPriceId,
   type AddOnKey,
 } from "@/lib/stripe/catalog";
 import { syncAddOnSubscriptionItem } from "@/lib/stripe/add-on-sync";
@@ -72,14 +72,14 @@ export async function PATCH(
     );
   }
 
-  const priceId = addOnPriceId(addOnKey as AddOnKey);
+  const priceId = await resolveAddOnPriceId(addOnKey as AddOnKey);
   if (!priceId) {
-    const envVar = ADD_ON_PRICE_ENV_VAR[addOnKey as AddOnKey];
+    // Configuration problem: logged for operators, never explained to the customer.
+    console.error(
+      `[billing-config] No Stripe price for add-on "${addOnKey}" — run scripts/stripe/setup-billing-catalog.mjs or set ${ADD_ON_PRICE_ENV_VAR[addOnKey as AddOnKey]}.`,
+    );
     return NextResponse.json(
-      {
-        error: `This add-on isn't configured on this deployment yet — set ${envVar} to a Stripe recurring price id and redeploy.`,
-        missingEnvVar: envVar,
-      },
+      { error: "This add-on isn't available to add right now. Please contact support and we'll turn it on for you." },
       { status: 503 },
     );
   }

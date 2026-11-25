@@ -126,7 +126,19 @@ export async function GET(request: Request) {
   const owner = await readOwner(request);
   if (owner instanceof NextResponse) return owner;
 
-  const subscription = await retrieveAgencySubscription(owner.agency);
+  let subscription = await retrieveAgencySubscription(owner.agency);
+  // Self-heal: an add-on that is switched on but missing from the
+  // subscription is attached here, with no proration (it bills from the next
+  // cycle; nothing already unbilled is charged). The owner no longer has to
+  // find and press a button for features they are already using.
+  if (subscription) {
+    try {
+      const { attached } = await billUnbilledAddOns(owner.agency, owner.agencyId, subscription);
+      if (attached.length > 0) subscription = await retrieveAgencySubscription(owner.agency);
+    } catch (error) {
+      console.error("[billing] Could not attach active add-ons", error);
+    }
+  }
   return NextResponse.json({
     ...responseForSummary(await summarizeAgencyBilling(subscription)),
     unbilledAddOns: await findUnbilledAddOns(owner.agencyId, subscription),
@@ -156,7 +168,7 @@ export async function POST(request: Request) {
   }
 
   if (body.action === "bill_add_ons") {
-    const unresolved = await billUnbilledAddOns(
+    const { attached, unresolved } = await billUnbilledAddOns(
       owner.agency,
       owner.agencyId,
       subscription,
@@ -165,6 +177,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       ...responseForSummary(await summarizeAgencyBilling(refreshed)),
       unbilledAddOns: await findUnbilledAddOns(owner.agencyId, refreshed),
+      attached,
       unresolved,
     });
   }
@@ -194,8 +207,9 @@ export async function POST(request: Request) {
     }
     const nextPriceId = planPriceId(body.planKey);
     if (!nextPriceId) {
+      console.error(`[billing-config] No Stripe price configured for plan "${body.planKey}".`);
       return NextResponse.json(
-        { error: "That plan is not configured on this deployment yet." },
+        { error: "That plan isn't available to switch to right now. Please contact support." },
         { status: 503 },
       );
     }

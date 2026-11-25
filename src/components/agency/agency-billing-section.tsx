@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { CreditCard, Loader2, ReceiptText } from "lucide-react";
 import { getMarketingPlan } from "@/config/landing";
-import { ADD_ON_PRICE_ENV_VAR } from "@/lib/stripe/addon-catalog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -257,7 +256,7 @@ export function AgencyBillingSection({ detailed = false }: { detailed?: boolean 
             <div>
               <p className="text-sm font-medium">Next recurring charge</p>
               <p className="text-xs text-muted-foreground">
-                Stripe preview including active discounts and applicable tax.
+                Includes active discounts and applicable tax.
               </p>
             </div>
             <p className="text-lg font-semibold tabular-nums">
@@ -273,7 +272,7 @@ export function AgencyBillingSection({ detailed = false }: { detailed?: boolean 
           </div>
           {!loading && !summary?.nextRecurringInvoice && summary?.subscriptionStatus && (
             <p className="mt-2 text-xs text-muted-foreground">
-              Stripe could not return a recurring invoice preview for this subscription. Open Billing details to see Stripe&apos;s current invoice information.
+              We couldn&apos;t calculate your next charge right now. Open Billing details to see your latest invoice.
             </p>
           )}
         </div>
@@ -296,7 +295,7 @@ export function AgencyBillingSection({ detailed = false }: { detailed?: boolean 
                   <div className="min-w-0">
                     <p className="text-sm font-medium">{item.name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {item.kind === "plan" ? "Plan" : item.kind === "add_on" ? "Add-on" : "Subscription item"}
+                      {item.kind === "add_on" ? "Add-on" : "Plan"}
                       {item.quantity > 1 ? ` · Quantity ${item.quantity}` : ""}
                       {" · "}{intervalLabel(item.interval, item.intervalCount)}
                     </p>
@@ -316,58 +315,62 @@ export function AgencyBillingSection({ detailed = false }: { detailed?: boolean 
           )}
         </div>
 
+        {/* Active add-ons the app could not put on the bill. Customer copy
+            only: the cause (a missing Stripe price, no subscription) is
+            logged server-side for operators, never explained here. Add-ons
+            missing only a subscription line are attached automatically when
+            this page loads, billing from the next cycle. */}
         {!loading && unbilled.length > 0 && (
-          <div className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-3 text-sm dark:border-amber-900 dark:bg-amber-950/30">
-            <p className="font-medium text-amber-900 dark:text-amber-200">
-              {unbilled.length} active add-on{unbilled.length === 1 ? " is" : "s are"} not on this bill
+          <div className="rounded-lg border bg-muted/20 px-3 py-3 text-sm">
+            <p className="font-medium">
+              {unbilled.length} active add-on{unbilled.length === 1 ? " isn't" : "s aren't"} on your bill yet
             </p>
-            <ul className="mt-2 space-y-1 text-xs text-amber-900/90 dark:text-amber-200/90">
+            <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
               {unbilled.map((u) => (
                 <li key={`${u.subAccountId}:${u.addOnKey}`}>
                   {u.addOnName} · {u.subAccountName}
-                  {u.reason === "not_priced"
-                    ? ` — no Stripe price configured on this deployment. Create a recurring price in Stripe and set ${ADD_ON_PRICE_ENV_VAR[u.addOnKey]} in your environment variables, then click "Add to billing" again.`
-                    : u.reason === "no_subscription"
-                      ? " — no active subscription to attach this to"
-                      : ""}
                 </li>
               ))}
             </ul>
-            <Button
-              size="sm"
-              className="mt-3"
-              disabled={busyAction !== null}
-              onClick={() =>
-                void runAction({ action: "bill_add_ons" }, "bill_add_ons").then(
-                  (next) => {
-                    if (!next) return; // runAction already toasted the error
-                    const unresolved = lastUnresolvedRef.current;
-                    if (unresolved.length > 0) {
-                      toast.warning(
-                        `Billed what we could — ${unresolved.length} add-on${unresolved.length === 1 ? "" : "s"} still ${unresolved.length === 1 ? "needs" : "need"} a Stripe price configured.`,
-                      );
-                    } else {
-                      toast.success("Billing updated for active add-ons.");
-                    }
-                  },
-                )
-              }
-            >
-              {busyAction === "bill_add_ons" ? "Updating…" : "Add to billing"}
-            </Button>
+            <p className="mt-2 text-xs text-muted-foreground">
+              {unbilled.length === 1 ? "It stays" : "They stay"} on, and you won&apos;t be charged for any time before
+              {unbilled.length === 1 ? " it's" : " they're"} added to your subscription. Questions? Contact support.
+            </p>
           </div>
         )}
 
-        <div className="grid gap-2 sm:grid-cols-2">
+        {/* The plan the account is on is labelled "Current plan" and is not
+            a button; switch actions appear only on the other plans. When the
+            plan can't be identified, no switch is offered rather than two
+            identical "Switch" buttons. */}
+        <div className="grid gap-2 sm:grid-cols-2" data-testid="plan-choices">
+          {!loading && summary?.subscriptionStatus && !summary.currentPlanKey ? (
+            <div className="border-primary bg-primary/5 flex items-center justify-between rounded-lg border px-3 py-2 text-sm font-medium">
+              <span>{summary.currentPlanName}</span>
+              <span className="text-primary text-xs font-semibold">Current plan</span>
+            </div>
+          ) : null}
           {PLAN_CHOICES.map((plan) => {
             const selected = summary?.currentPlanKey === plan.key;
+            if (selected) {
+              return (
+                <div
+                  key={plan.key}
+                  className="border-primary bg-primary/5 flex items-center justify-between rounded-lg border px-3 py-2 text-sm font-medium"
+                >
+                  <span>{plan.name}</span>
+                  <span className="text-primary text-xs font-semibold">Current plan</span>
+                </div>
+              );
+            }
+            if (loading || !summary?.currentPlanKey) return null;
             return (
               <Button
                 key={plan.key}
                 type="button"
-                variant={selected ? "default" : "outline"}
+                variant="outline"
                 className="justify-between"
-                disabled={loading || busyAction !== null}
+                disabled={busyAction !== null}
                 onClick={() =>
                   void runAction(
                     { action: "switch_plan", planKey: plan.key },
@@ -378,25 +381,22 @@ export function AgencyBillingSection({ detailed = false }: { detailed?: boolean 
                 <span>{plan.name}</span>
                 {busyAction === plan.key ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : selected ? (
-                  <span className="text-xs">Current</span>
                 ) : (
-                  <span className="text-xs">Switch</span>
+                  <span className="text-xs">Switch to {plan.name}</span>
                 )}
               </Button>
             );
           })}
         </div>
 
-        <div className="rounded-lg border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
-          {loading
-            ? "Loading add-on bundle details…"
-            : summary?.bundleDiscountActive
+        {/* Bundle savings are only mentioned when they really apply here. */}
+        {!loading && summary?.bundleCouponConfigured ? (
+          <div className="rounded-lg border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+            {summary.bundleDiscountActive
               ? "Bundle savings are active — 15% off because 3 or more add-ons are on your subscription."
-              : summary?.bundleCouponConfigured
-                ? `${Math.max(0, 3 - (summary?.activeAddOnCount ?? 0))} more add-on${Math.max(0, 3 - (summary?.activeAddOnCount ?? 0)) === 1 ? "" : "s"} unlocks 15% off automatically.`
-                : "Bundle savings will turn on automatically once your billing coupon is configured."}
-        </div>
+              : `${Math.max(0, 3 - summary.activeAddOnCount)} more add-on${Math.max(0, 3 - summary.activeAddOnCount) === 1 ? "" : "s"} unlocks 15% off automatically.`}
+          </div>
+        ) : null}
 
         <div className="flex flex-wrap gap-2">
           {summary?.cancelAtPeriodEnd ? (

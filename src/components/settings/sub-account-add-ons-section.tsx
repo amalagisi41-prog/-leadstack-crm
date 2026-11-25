@@ -202,7 +202,7 @@ export function SubAccountAddOnsSection() {
         })}
       </ul>
 
-      <p className="mt-3 text-xs text-muted-foreground">{bundleMessage}</p>
+      {bundleMessage ? <p className="mt-3 text-xs text-muted-foreground">{bundleMessage}</p> : null}
     </section>
   );
 }
@@ -212,9 +212,7 @@ function readBundleMessage(summary: {
   bundleDiscountActive: boolean;
   bundleCouponConfigured: boolean;
 }) {
-  if (!summary.bundleCouponConfigured) {
-    return "Bundle savings will turn on automatically once your billing coupon is configured.";
-  }
+  if (!summary.bundleCouponConfigured) return "";
   if (summary.bundleDiscountActive) {
     return "Bundle savings are active — 15% off because 3 or more add-ons are on your subscription.";
   }

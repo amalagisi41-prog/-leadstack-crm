@@ -6,7 +6,7 @@ import type { AgencyDoc } from "@/types";
 import {
   ADD_ON_GATE_FIELD,
   ADD_ON_KEYS,
-  addOnPriceId,
+  resolveAddOnPriceId,
   type AddOnKey,
 } from "@/lib/stripe/catalog";
 import { ADD_ON_LABELS } from "@/lib/stripe/addon-catalog";
@@ -48,6 +48,10 @@ export async function findUnbilledAddOns(
     else legacyRemaining.set(key, (legacyRemaining.get(key) ?? 0) + (item.quantity ?? 1));
   }
 
+  const priced = Object.fromEntries(
+    await Promise.all(ADD_ON_KEYS.map(async (k) => [k, !!(await resolveAddOnPriceId(k))] as const)),
+  ) as Record<AddOnKey, boolean>;
+
   const unbilled: UnbilledAddOn[] = [];
   for (const doc of snap.docs) {
     const data = doc.data() as Record<string, unknown>;
@@ -64,7 +68,7 @@ export async function findUnbilledAddOns(
         subAccountName: typeof data.name === "string" ? data.name : doc.id,
         addOnKey: key,
         addOnName: ADD_ON_LABELS[key].name,
-        reason: !addOnPriceId(key)
+        reason: !priced[key]
           ? "not_priced"
           : !subscription
             ? "no_subscription"
@@ -75,21 +79,55 @@ export async function findUnbilledAddOns(
   return unbilled;
 }
 
-/** Create the missing Stripe lines. Returns what could not be fixed in-app. */
+export interface AttachedAddOn {
+  subAccountId: string;
+  subAccountName: string;
+  addOnKey: AddOnKey;
+  addOnName: string;
+}
+
+/**
+ * Put every active-but-unbilled add-on on the subscription. Catch-up items
+ * are created WITHOUT proration: they bill from the next cycle on, and time
+ * that already went unbilled is never charged retroactively.
+ *
+ * Returns what was attached and what still could not be (no price in Stripe,
+ * or no subscription); the latter are logged for operators, never shown to
+ * the customer as instructions.
+ */
 export async function billUnbilledAddOns(
   agency: AgencyDoc,
   agencyId: string,
   subscription: Stripe.Subscription | null,
-): Promise<UnbilledAddOn[]> {
+): Promise<{ attached: AttachedAddOn[]; unresolved: UnbilledAddOn[] }> {
   const pending = await findUnbilledAddOns(agencyId, subscription);
+  const attached: AttachedAddOn[] = [];
   for (const entry of pending) {
     if (entry.reason !== "missing_item") continue;
-    await syncAddOnSubscriptionItem({
+    const result = await syncAddOnSubscriptionItem({
       agency,
       subAccountId: entry.subAccountId,
       addOnKey: entry.addOnKey,
       enabled: true,
+      prorate: false,
     });
+    if (result.outcome === "added") {
+      const { reason: _reason, ...rest } = entry;
+      void _reason;
+      attached.push(rest);
+    }
   }
-  return pending.filter((p) => p.reason !== "missing_item");
+  const unresolved = pending.filter((p) => p.reason !== "missing_item");
+  for (const u of unresolved) {
+    console.error(
+      `[billing-config] Add-on "${u.addOnKey}" is active on sub-account ${u.subAccountId} (agency ${agencyId}) but cannot be billed: ${u.reason}.`,
+    );
+  }
+  if (attached.length > 0) {
+    console.info(
+      `[billing] Attached ${attached.length} active add-on(s) for agency ${agencyId}, billing from the next cycle (no proration): ` +
+        attached.map((a) => `${a.addOnKey}@${a.subAccountId}`).join(", "),
+    );
+  }
+  return { attached, unresolved };
 }

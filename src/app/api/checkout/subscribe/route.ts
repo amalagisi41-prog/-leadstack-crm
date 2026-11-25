@@ -9,7 +9,7 @@ import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import {
   ADD_ON_KEYS,
   PLAN_KEYS,
-  addOnPriceId,
+  resolveAddOnPriceId,
   planPriceId,
   type AddOnKey,
   type PlanKey,
@@ -80,13 +80,15 @@ export async function POST(request: Request) {
   // money in the one flow where the customer is trying to give you some.
   //
   // The base plan already has this guard six lines up; the add-ons didn't.
-  const unconfiguredAddOns = addOnKeys.filter((key) => !addOnPriceId(key));
+  const resolvedAddOnPrices = await Promise.all(addOnKeys.map((key) => resolveAddOnPriceId(key)));
+  const unconfiguredAddOns = addOnKeys.filter((_, i) => !resolvedAddOnPrices[i]);
   if (unconfiguredAddOns.length > 0) {
+    console.error(
+      `[billing-config] Checkout refused: no Stripe price for add-on(s) ${unconfiguredAddOns.join(", ")}.`,
+    );
     return NextResponse.json(
       {
-        error: `These add-ons aren't configured on this deployment yet: ${unconfiguredAddOns.join(
-          ", "
-        )}. Remove them and try again, or contact support.`,
+        error: "Some of the add-ons you picked aren't available right now. Remove them and try again, or contact support.",
         code: "ADDON_NOT_CONFIGURED",
         addOnKeys: unconfiguredAddOns,
       },
@@ -94,9 +96,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const addOnPriceIds = addOnKeys
-    .map((key) => addOnPriceId(key))
-    .filter((id): id is string => !!id);
+  const addOnPriceIds = resolvedAddOnPrices.filter((id): id is string => !!id);
 
   const soloAmount = billingInterval === "year" ? 118_800 : SOLO_PRICE * 100;
   const planLineItem: Stripe.Checkout.SessionCreateParams.LineItem =

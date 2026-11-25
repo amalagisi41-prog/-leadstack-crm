@@ -44,7 +44,12 @@ export interface NextRecurringInvoice {
   currency: string;
 }
 
-const SUBSCRIPTION_EXPANDS = ["discounts", "items.data.price"] as const;
+// The product is expanded so a line can always be named from Stripe's own
+// product name when its price isn't one this deployment recognises.
+const SUBSCRIPTION_EXPANDS = ["discounts", "items.data.price.product"] as const;
+
+/** Never show "Other subscription item": the product name, else this. */
+export const FALLBACK_LINE_ITEM_NAME = "AgentStack subscription";
 
 export function getBundleCouponId(): string | null {
   return process.env.STRIPE_ADDON_BUNDLE_COUPON_ID?.trim() || null;
@@ -103,7 +108,7 @@ export function summarizeSubscription(
     currentPlanKey,
     currentPlanName: currentPlanKey
       ? getMarketingPlan(currentPlanKey).name
-      : "Managed plan",
+      : unrecognisedPlanName(subscription),
     subscriptionStatus: subscription.status,
     cancelAtPeriodEnd: subscription.cancel_at_period_end,
     currentPeriodEnd,
@@ -192,42 +197,25 @@ export function findAddOnItem(
   addOnKey: AddOnKey,
   subAccountId?: string,
 ) {
-  const priceId = addOnPriceId(addOnKey);
-  if (!priceId) return null;
+  // Matched by what the price IS (env id, lookup key or addon_key metadata),
+  // not only by the env price id, so a price found by lookup key still counts.
+  const items = subscription.items.data.filter((item) => itemAddOnKey(item) === addOnKey);
 
   if (subAccountId) {
-    const exact = subscription.items.data.find(
-      (item) =>
-        (typeof item.price === "string" ? item.price : item.price?.id) ===
-          priceId && item.metadata?.subAccountId === subAccountId,
-    );
+    const exact = items.find((item) => item.metadata?.subAccountId === subAccountId);
     if (exact) return exact;
     // Only a legacy item with NO sub-account tag may stand in for this one.
     // Falling back to ANY item with the price meant a second sub-account
     // turning IDX on matched the first one's line, reported "already", and
     // was never billed.
-    return (
-      subscription.items.data.find(
-        (item) =>
-          (typeof item.price === "string" ? item.price : item.price?.id) ===
-            priceId && !item.metadata?.subAccountId,
-      ) ?? null
-    );
+    return items.find((item) => !item.metadata?.subAccountId) ?? null;
   }
 
-  return (
-    subscription.items.data.find(
-      (item) =>
-        (typeof item.price === "string" ? item.price : item.price?.id) ===
-        priceId,
-    ) ?? null
-  );
+  return items[0] ?? null;
 }
 
 export function getBundleDiscountMessage(summary: BillingSnapshot): string {
-  if (!summary.bundleCouponConfigured) {
-    return "Bundle savings will turn on automatically when your billing coupon is configured.";
-  }
+  if (!summary.bundleCouponConfigured) return "";
   if (summary.bundleDiscountActive) {
     return "Bundle savings are active — 15% off because 3 or more add-ons are on your subscription.";
   }
@@ -267,7 +255,7 @@ function summarizeLineItem(item: Stripe.SubscriptionItem): BillingLineItem {
       ? getMarketingPlan(planKey).name
       : addOnKey
         ? addOnName(addOnKey)
-        : price?.nickname?.trim() || "Other subscription item",
+        : productName(price) || price?.nickname?.trim() || FALLBACK_LINE_ITEM_NAME,
     kind: planKey ? "plan" : addOnKey ? "add_on" : "other",
     quantity,
     currency: price?.currency ?? null,
@@ -289,6 +277,27 @@ function addOnName(key: AddOnKey) {
   }
 }
 
+function expandedProduct(price: Stripe.Price | null | undefined): Stripe.Product | null {
+  const product = price?.product;
+  if (!product || typeof product === "string" || product.deleted) return null;
+  return product as Stripe.Product;
+}
+
+function productName(price: Stripe.Price | null | undefined): string | null {
+  return expandedProduct(price)?.name?.trim() || null;
+}
+
+/** A plan line this deployment doesn't map to a plan key: name it from Stripe. */
+function unrecognisedPlanName(subscription: Stripe.Subscription): string {
+  for (const item of subscription.items.data) {
+    if (itemAddOnKey(item)) continue;
+    const price = typeof item.price === "string" ? null : item.price;
+    const name = productName(price) || price?.nickname?.trim();
+    if (name) return name;
+  }
+  return FALLBACK_LINE_ITEM_NAME;
+}
+
 function priceShape(item: Stripe.SubscriptionItem) {
   if (typeof item.price === "string") return { id: item.price };
   if (!item.price) return null;
@@ -296,6 +305,7 @@ function priceShape(item: Stripe.SubscriptionItem) {
     id: item.price.id,
     lookup_key: item.price.lookup_key,
     metadata: item.price.metadata,
+    product_metadata: expandedProduct(item.price)?.metadata ?? null,
   };
 }
 
