@@ -53,7 +53,7 @@ describe("SampleDataNotice", () => {
         canRemove={false}
       />
     );
-    expect(screen.queryByRole("button", { name: /remove sample data/i })).toBe(
+    expect(screen.queryByRole("button", { name: /remove sample pipeline/i })).toBe(
       null
     );
     expect(screen.getByText(/an admin on this workspace/i)).toBeTruthy();
@@ -72,9 +72,9 @@ describe("SampleDataNotice", () => {
       />
     );
     await userEvent.click(
-      screen.getByRole("button", { name: /remove sample data/i })
+      screen.getByRole("button", { name: /remove sample pipeline/i })
     );
-    expect(screen.getByText(/remove the sample data\?/i)).toBeTruthy();
+    expect(screen.getByText(/remove the sample pipeline\?/i)).toBeTruthy();
 
     await userEvent.click(
       screen.getByRole("button", { name: /keep it for now/i })
@@ -101,12 +101,12 @@ describe("SampleDataNotice", () => {
       />
     );
     await userEvent.click(
-      screen.getByRole("button", { name: /remove sample data/i })
+      screen.getByRole("button", { name: /remove sample pipeline/i })
     );
     // The confirm dialog's button carries the same label as the trigger, so
     // take the last one — the one inside the dialog.
     const confirmButtons = screen.getAllByRole("button", {
-      name: /remove sample data/i,
+      name: /remove sample pipeline/i,
     });
     await userEvent.click(confirmButtons[confirmButtons.length - 1]);
 
@@ -138,10 +138,10 @@ describe("SampleDataNotice", () => {
       />
     );
     await userEvent.click(
-      screen.getByRole("button", { name: /remove sample data/i })
+      screen.getByRole("button", { name: /remove sample pipeline/i })
     );
     const confirmButtons = screen.getAllByRole("button", {
-      name: /remove sample data/i,
+      name: /remove sample pipeline/i,
     });
     await userEvent.click(confirmButtons[confirmButtons.length - 1]);
 
@@ -173,7 +173,7 @@ describe("ShowExampleButton", () => {
 
     render(<ShowExampleButton subAccountId="sub-1" canSeed />);
     await userEvent.click(
-      screen.getByRole("button", { name: /show me an example/i })
+      screen.getByRole("button", { name: /add a sample pipeline/i })
     );
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
@@ -199,7 +199,7 @@ describe("ShowExampleButton", () => {
 
     render(<ShowExampleButton subAccountId="sub-1" canSeed />);
     await userEvent.click(
-      screen.getByRole("button", { name: /show me an example/i })
+      screen.getByRole("button", { name: /add a sample pipeline/i })
     );
 
     await waitFor(() =>

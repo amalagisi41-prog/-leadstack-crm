@@ -5,6 +5,7 @@ import { buildReportsSummary, type ReportsRangeKey, type ReportsSummary } from "
 import type { Deal } from "@/types/deals";
 import type { Contact } from "@/types/contacts";
 import type { SubAccountDoc } from "@/types/tenancy";
+import { realRecords } from "@/lib/sample-data/counting";
 
 /**
  * The Firestore side of buildReportsSummary() — split out so both
@@ -27,12 +28,8 @@ export async function fetchReportsSummary(
   const pipelineStages = (subSnap.data() as SubAccountDoc | undefined)
     ?.pipelineStages;
 
-  const deals = dealsSnap.docs
-    .map((d) => d.data() as Deal)
-    .filter((d) => d.isSample !== true);
-  const contacts = contactsSnap.docs
-    .map((d) => d.data() as Contact)
-    .filter((c) => c.isSample !== true);
+  const deals = realRecords(dealsSnap.docs.map((d) => d.data() as Deal));
+  const contacts = realRecords(contactsSnap.docs.map((d) => d.data() as Contact));
 
   return buildReportsSummary({ deals, contacts, pipelineStages, range });
 }

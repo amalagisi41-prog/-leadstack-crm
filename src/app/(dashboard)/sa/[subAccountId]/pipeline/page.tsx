@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useSubAccount } from "@/context/sub-account-context";
 import { subscribeToContacts } from "@/lib/firestore/contacts";
 import { subscribeToDeals } from "@/lib/firestore/deals";
+import { realRecords } from "@/lib/sample-data/counting";
 import { subscribeToTerritories } from "@/lib/firestore/territories";
 import { useEffectiveTerritoryFilter } from "@/hooks/use-effective-territory-filter";
 import { formatCurrency } from "@/lib/format";
@@ -159,19 +160,22 @@ export default function PipelinePage() {
     });
   }, [deals, filters, contactsById]);
 
+  // Stat cards are headline numbers: sample deals stay on the board (under
+  // the sample banner) but are never counted. lib/sample-data/counting.ts.
+  const countedDeals = useMemo(() => realRecords(filteredDeals), [filteredDeals]);
   const openDeals = useMemo(
     () =>
-      filteredDeals.filter(
+      countedDeals.filter(
         (d) => d.stageId !== "won" && d.stageId !== "lost",
       ),
-    [filteredDeals],
+    [countedDeals],
   );
   const wonTotal = useMemo(
     () =>
-      filteredDeals
+      countedDeals
         .filter((d) => d.stageId === "won")
         .reduce((sum, d) => sum + (d.value || 0), 0),
-    [filteredDeals],
+    [countedDeals],
   );
   const openTotal = useMemo(
     () => openDeals.reduce((sum, d) => sum + (d.value || 0), 0),

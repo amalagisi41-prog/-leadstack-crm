@@ -30,6 +30,8 @@ import { toDate } from "@/lib/format";
 import { getStage, type Deal } from "@/types/deals";
 import { usePipelineStages } from "@/hooks/use-pipeline-stages";
 import type { Contact } from "@/types/contacts";
+import { realRecords, sampleCount } from "@/lib/sample-data/counting";
+import { SampleDataNotice } from "@/components/onboarding/sample-data-notice";
 import type { CalendarEvent } from "@/types/events";
 import type { Task } from "@/types/tasks";
 import type { WebChatSession } from "@/types/web-chat";
@@ -90,6 +92,9 @@ export default function DashboardPage() {
 
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [deals, setDeals] = useState<Deal[]>([]);
+  // Sample (seeded example) records never feed a dashboard number — see
+  // lib/sample-data/counting.ts. They're tracked only to say they exist.
+  const [sampleTotal, setSampleTotal] = useState({ contacts: 0, deals: 0 });
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [sessions, setSessions] = useState<WebChatSession[]>([]);
@@ -145,12 +150,14 @@ export default function DashboardPage() {
     };
 
     const unsubC = subscribeToContacts(scope, { territoryFilter }, (list) => {
-      setContacts(list);
+      setContacts(realRecords(list));
+      setSampleTotal((s) => ({ ...s, contacts: sampleCount(list) }));
       contactsReady = true;
       settle();
     });
     const unsubD = subscribeToDeals(scope, { territoryFilter }, (list) => {
-      setDeals(list);
+      setDeals(realRecords(list));
+      setSampleTotal((s) => ({ ...s, deals: sampleCount(list) }));
       dealsReady = true;
       settle();
     });
@@ -788,6 +795,13 @@ export default function DashboardPage() {
           </Button>
         </div>
       ) : null}
+      <SampleDataNotice
+        subAccountId={subAccountId}
+        count={sampleTotal.contacts + sampleTotal.deals}
+        noun="records"
+        canRemove={isAdmin}
+        message={`This workspace holds ${sampleTotal.contacts} sample contacts and ${sampleTotal.deals} sample deals. They're an example only and are not counted in any number on this page.`}
+      />
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-1">
           <p className="text-muted-foreground text-xs font-medium tracking-[0.24em] uppercase">

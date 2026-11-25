@@ -7,6 +7,7 @@ import { CreditCard, Download } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { usePipelineStages } from "@/hooks/use-pipeline-stages";
 import { useSubAccount } from "@/context/sub-account-context";
+import { realRecords, sampleCount } from "@/lib/sample-data/counting";
 import { getUserDoc } from "@/lib/firestore/users";
 import { subscribeToContacts } from "@/lib/firestore/contacts";
 import { subscribeToDeals } from "@/lib/firestore/deals";
@@ -71,8 +72,13 @@ export default function SettingsPage() {
   const pipelineStages = usePipelineStages();
   const workspaceName = subAccount?.name ?? "this sub-account";
   const [profile, setProfile] = useState<UserDoc | null>(null);
-  const [contacts, setContacts] = useState<Contact[]>([]);
-  const [deals, setDeals] = useState<Deal[]>([]);
+  const [allContacts, setContacts] = useState<Contact[]>([]);
+  const [allDeals, setDeals] = useState<Deal[]>([]);
+  // Sample records are not the client's data: excluded from the export and
+  // its counts, like every headline number (lib/sample-data/counting.ts).
+  const contacts = useMemo(() => realRecords(allContacts), [allContacts]);
+  const deals = useMemo(() => realRecords(allDeals), [allDeals]);
+  const skippedSamples = sampleCount(allContacts) + sampleCount(allDeals);
   const [settingsTab, setSettingsTab] = useState("admin");
   const [emailSetupOpen, setEmailSetupOpen] = useState(false);
 
@@ -204,7 +210,11 @@ export default function SettingsPage() {
 
   function handleExportWorkspace() {
     if (contacts.length === 0 && deals.length === 0) {
-      toast.error("No contacts or deals to export yet.");
+      toast.error(
+        skippedSamples
+          ? "No contacts or deals to export yet — sample records aren't exported."
+          : "No contacts or deals to export yet."
+      );
       return;
     }
 
@@ -273,7 +283,7 @@ export default function SettingsPage() {
       }, 150);
     }
     toast.success(
-      `Exported ${contactRows.length} contact${contactRows.length === 1 ? "" : "s"} and ${dealRows.length} deal${dealRows.length === 1 ? "" : "s"}.`
+      `Exported ${contactRows.length} contact${contactRows.length === 1 ? "" : "s"} and ${dealRows.length} deal${dealRows.length === 1 ? "" : "s"}.${skippedSamples ? " Sample records were left out." : ""}`
     );
   }
 
@@ -438,6 +448,9 @@ export default function SettingsPage() {
                   {contacts.length} contact{contacts.length === 1 ? "" : "s"} ·{" "}
                   {deals.length} deal{deals.length === 1 ? "" : "s"} · downloads
                   both CSV files in one click
+                  {skippedSamples
+                    ? ` · ${skippedSamples} sample record${skippedSamples === 1 ? "" : "s"} not included`
+                    : ""}
                 </p>
               </div>
               <Button

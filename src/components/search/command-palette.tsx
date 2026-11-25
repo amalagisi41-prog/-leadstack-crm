@@ -205,7 +205,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
           kind: "deal",
           id: d.id,
           title: d.title,
-          subtitle: `${stage.label} · ${formatCurrency(d.value, d.currency)}${
+          subtitle: `${d.isSample ? "Sample · " : ""}${stage.label} · ${formatCurrency(d.value, d.currency)}${
             contact ? ` · ${contact.name}` : ""
           }`,
           href: `${linkPrefix}/pipeline`,
@@ -247,7 +247,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
           kind: "deal",
           id: d.id,
           title: d.title,
-          subtitle: `${stage.label} · ${formatCurrency(d.value, d.currency)}${
+          subtitle: `${d.isSample ? "Sample · " : ""}${stage.label} · ${formatCurrency(d.value, d.currency)}${
             contact ? ` · ${contact.name}` : ""
           }`,
           href: `${linkPrefix}/pipeline`,
