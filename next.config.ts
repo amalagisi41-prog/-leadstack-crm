@@ -43,27 +43,15 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
-      // Baseline hardening on every response. Framing is NOT restricted
-      // here: public forms, booking pages and the chat embed are meant to
-      // be iframed on clients' sites.
+      // Baseline hardening on every response.
       { source: "/:path*", headers: BASELINE_SECURITY_HEADERS },
       // Signed-in and sign-in surfaces must never be framed (clickjacking).
-      { source: "/sa/:path*", headers: NO_FRAMING },
-      { source: "/agency/:path*", headers: NO_FRAMING },
-      { source: "/me/:path*", headers: NO_FRAMING },
-      { source: "/dashboard/:path*", headers: NO_FRAMING },
-      { source: "/contacts/:path*", headers: NO_FRAMING },
-      { source: "/pipeline/:path*", headers: NO_FRAMING },
-      { source: "/calendar/:path*", headers: NO_FRAMING },
-      { source: "/tasks/:path*", headers: NO_FRAMING },
-      { source: "/reports/:path*", headers: NO_FRAMING },
-      { source: "/forms", headers: NO_FRAMING },
-      { source: "/login", headers: NO_FRAMING },
-      { source: "/signup", headers: NO_FRAMING },
-      { source: "/subscribe/:path*", headers: NO_FRAMING },
-      { source: "/welcome/:path*", headers: NO_FRAMING },
-      { source: "/affiliate/:path*", headers: NO_FRAMING },
-      { source: "/internal/:path*", headers: NO_FRAMING },
+      // Frame protection everywhere EXCEPT the three surfaces that are
+      // designed to be iframed on a client's own website:
+      //   /embed/*  the AI Web Chat widget iframe (frame-ancestors * below)
+      //   /f/*      hosted forms (the form builder hands out an <iframe> snippet)
+      //   /b/*      public booking pages (embedded on agents' sites)
+      { source: "/((?!embed/|f/|b/).*)", headers: NO_FRAMING },
       {
         // The web-chat embed iframe target — must be loadable cross-
         // origin from any buyer's site. CSP frame-ancestors '*' is the

@@ -257,7 +257,8 @@ describe("Twilio auth token", () => {
 
   it("hydrates the in-memory config from the secrets store", async () => {
     docs.set(TWILIO_SECRET_PATH, { authToken: "tw-secret" });
-    const out = await hydrateTwilioConfig("sub-1", { accountSid: "AC1", authTokenSet: true });
+    const input = { accountSid: "AC1", authTokenSet: true } as { authToken?: string; accountSid: string; authTokenSet: boolean };
+    const out = await hydrateTwilioConfig("sub-1", input);
     expect(out).toMatchObject({ accountSid: "AC1", authToken: "tw-secret" });
   });
 });
