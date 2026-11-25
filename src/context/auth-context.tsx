@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  createContext,
-  useEffect,
-  useState,
-  type ReactNode,
-} from "react";
+import { createContext, useEffect, useState, type ReactNode } from "react";
 import { onAuthStateChanged, type User } from "firebase/auth";
 import {
   collection,
@@ -62,7 +57,7 @@ export interface AuthContextValue {
 }
 
 export const AuthContext = createContext<AuthContextValue | undefined>(
-  undefined,
+  undefined
 );
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -73,7 +68,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<MemberStatus | null>(null);
   const [agencyId, setAgencyId] = useState<string | null>(null);
   const [agencyRole, setAgencyRole] = useState<AgencyRole | null>(null);
-  const [memberships, setMemberships] = useState<UserSubAccountMembership[]>([]);
+  const [memberships, setMemberships] = useState<UserSubAccountMembership[]>(
+    []
+  );
   const [membershipsLoaded, setMembershipsLoaded] = useState(false);
 
   useEffect(() => {
@@ -113,31 +110,67 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setMembershipsLoaded(false);
 
         try {
-          // Refresh the ID token FIRST so newly-set custom claims (status,
-          // agencyId, agencyRole) are present on the token before any
-          // Firestore read fires. Without this, rules see a stale token
-          // missing the `status: "active"` claim and deny the reads with
-          // "Missing or insufficient permissions".
-          const tokenResult = await firebaseUser
-            .getIdTokenResult(true)
+          // Make sure the token carries current custom claims (status,
+          // agencyId, agencyRole) before any Firestore read fires — without
+          // them rules deny the reads with "Missing or insufficient
+          // permissions". This used to force a network refresh on EVERY page
+          // load, a sequential round trip ahead of all data (measured as the
+          // second step of the start-up waterfall). Now the cached token is
+          // used unless its claims are missing or it was minted more than 10
+          // minutes ago; a fresh signup/invite (no claims yet) and stale
+          // claims after a role change still get the forced refresh.
+          let tokenResult = await firebaseUser
+            .getIdTokenResult(false)
             .catch(() => null);
+          const cachedClaims = tokenResult?.claims;
+          const issuedMs = tokenResult
+            ? Date.parse(tokenResult.issuedAtTime)
+            : 0;
+          if (
+            !cachedClaims ||
+            cachedClaims.status !== "active" ||
+            !cachedClaims.agencyId ||
+            !Number.isFinite(issuedMs) ||
+            Date.now() - issuedMs > 10 * 60 * 1000
+          ) {
+            tokenResult = await firebaseUser
+              .getIdTokenResult(true)
+              .catch(() => tokenResult);
+          }
           const claims = tokenResult?.claims ?? {};
 
           const db = getFirebaseDb();
+
+          // Subscribe to the user's sub-account memberships so the switcher
+          // updates live when an admin adds/removes them somewhere. Started
+          // IN PARALLEL with the profile reads below (it only needs the uid)
+          // instead of after them — that ordering was a second sequential
+          // Firestore round trip before any workspace page could load.
+          membershipUnsub = subscribeMemberships(firebaseUser.uid);
+
+          // The agency id/role are already on the token's claims, so publish
+          // them now: workspace pages key their queries off agencyId and can
+          // start in parallel with the profile reads below instead of after
+          // them. (A removed user is still caught and signed out by the
+          // status check below — rules deny any read they attempt meanwhile.)
+          if (typeof claims.agencyId === "string" && claims.agencyId) {
+            setAgencyId(claims.agencyId);
+            setAgencyRole((claims.agencyRole as AgencyRole | null | undefined) ?? null);
+          }
+
           const [cfgSnap, userSnap] = await Promise.all([
             getDoc(doc(db, "appConfig", "main")),
             getDoc(doc(db, "users", firebaseUser.uid)),
           ]);
 
-          const cfg = cfgSnap.exists()
-            ? (cfgSnap.data() as AppConfig)
-            : null;
+          const cfg = cfgSnap.exists() ? (cfgSnap.data() as AppConfig) : null;
           const userDoc = userSnap.exists()
             ? (userSnap.data() as UserDoc)
             : null;
 
           if (!userDoc || userDoc.status !== "active") {
             // Removed/orphan user — sign them out hard.
+            cleanupMembership();
             await signOutUser().catch(() => undefined);
             setAdminUid(null);
             setRole(null);
@@ -166,7 +199,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
           if (!recoveredAgencyId) {
             const agencyMemberships = await getDocs(
-              collection(db, `userMemberships/${firebaseUser.uid}/agencies`),
+              collection(db, `userMemberships/${firebaseUser.uid}/agencies`)
             );
 
             const membershipDocs = agencyMemberships.docs
@@ -190,18 +223,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               })
               .filter(
                 (
-                  membership,
-                ): membership is { agencyId: string; role: AgencyRole | null } =>
-                  Boolean(membership),
+                  membership
+                ): membership is {
+                  agencyId: string;
+                  role: AgencyRole | null;
+                } => Boolean(membership)
               );
 
             const preferredMembership =
-              membershipDocs.find((membership) => membership.role === "owner") ??
+              membershipDocs.find(
+                (membership) => membership.role === "owner"
+              ) ??
               membershipDocs[0] ??
               null;
 
             recoveredAgencyId = preferredMembership?.agencyId ?? null;
-            recoveredAgencyRole = preferredMembership?.role ?? recoveredAgencyRole;
+            recoveredAgencyRole =
+              preferredMembership?.role ?? recoveredAgencyRole;
           }
 
           setAgencyId(recoveredAgencyId);
@@ -220,36 +258,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }).catch((err) => {
             console.warn("[auth] claim-pending-invites failed", err);
           });
-
-          // Subscribe to the user's sub-account memberships so the switcher
-          // updates live when an admin adds/removes them somewhere.
-          membershipUnsub = onSnapshot(
-            collection(db, `userMemberships/${firebaseUser.uid}/subAccounts`),
-            (snap) => {
-              const items: UserSubAccountMembership[] = snap.docs.map((d) => {
-                const data = d.data() as Partial<UserSubAccountMembership>;
-                return {
-                  subAccountId: data.subAccountId ?? d.id,
-                  agencyId: data.agencyId ?? "",
-                  role: (data.role ?? "collaborator") as
-                    | "admin"
-                    | "collaborator",
-                  name: data.name ?? "",
-                  accountNumber: data.accountNumber,
-                  addedAt:
-                    data.addedAt instanceof Date
-                      ? data.addedAt
-                      : new Date(),
-                };
-              });
-              setMemberships(items);
-              setMembershipsLoaded(true);
-            },
-            () => {
-              setMemberships([]);
-              setMembershipsLoaded(true);
-            },
-          );
         } catch (err) {
           console.error("Failed to load auth context", err);
           // Don't strand membership-gated UI if setup threw before the
@@ -258,8 +266,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } finally {
           setLoading(false);
         }
-      },
+      }
     );
+
+    function subscribeMemberships(uid: string) {
+      return onSnapshot(
+        collection(getFirebaseDb(), `userMemberships/${uid}/subAccounts`),
+        (snap) => {
+          const items: UserSubAccountMembership[] = snap.docs.map((d) => {
+            const data = d.data() as Partial<UserSubAccountMembership>;
+            return {
+              subAccountId: data.subAccountId ?? d.id,
+              agencyId: data.agencyId ?? "",
+              role: (data.role ?? "collaborator") as "admin" | "collaborator",
+              name: data.name ?? "",
+              accountNumber: data.accountNumber,
+              addedAt: data.addedAt instanceof Date ? data.addedAt : new Date(),
+            };
+          });
+          setMemberships(items);
+          setMembershipsLoaded(true);
+        },
+        () => {
+          setMemberships([]);
+          setMembershipsLoaded(true);
+        }
+      );
+    }
 
     return () => {
       cleanupMembership();

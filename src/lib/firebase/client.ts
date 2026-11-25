@@ -4,8 +4,12 @@ import {
   getApp,
   type FirebaseApp,
 } from "firebase/app";
-import { getAuth, type Auth } from "firebase/auth";
-import { getFirestore, type Firestore } from "firebase/firestore";
+import { connectAuthEmulator, getAuth, type Auth } from "firebase/auth";
+import {
+  connectFirestoreEmulator,
+  getFirestore,
+  type Firestore,
+} from "firebase/firestore";
 import { getStorage, type FirebaseStorage } from "firebase/storage";
 
 const firebaseConfig = {
@@ -25,6 +29,8 @@ export function isFirebaseConfigured(): boolean {
   );
 }
 
+const EMULATOR_HOST = process.env.NEXT_PUBLIC_FIREBASE_EMULATOR_HOST?.trim() || null;
+
 let _app: FirebaseApp | null = null;
 let _auth: Auth | null = null;
 let _db: Firestore | null = null;
@@ -43,6 +49,12 @@ function getFirebaseApp(): FirebaseApp {
 export function getFirebaseAuth(): Auth {
   if (!_auth) {
     _auth = getAuth(getFirebaseApp());
+    // Local development / performance profiling only: point at the Firebase
+    // emulators when NEXT_PUBLIC_FIREBASE_EMULATOR_HOST (e.g. "127.0.0.1") is
+    // set. Unset in every real deployment.
+    if (EMULATOR_HOST) {
+      connectAuthEmulator(_auth, `http://${EMULATOR_HOST}:9099`, { disableWarnings: true });
+    }
   }
   return _auth;
 }
@@ -50,6 +62,7 @@ export function getFirebaseAuth(): Auth {
 export function getFirebaseDb(): Firestore {
   if (!_db) {
     _db = getFirestore(getFirebaseApp());
+    if (EMULATOR_HOST) connectFirestoreEmulator(_db, EMULATOR_HOST, 8080);
   }
   return _db;
 }

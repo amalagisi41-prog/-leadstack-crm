@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { SubAccountDoc } from "@/types/tenancy";
+import { fetchJsonShared } from "@/lib/client/shared-json";
 import { useOnboardingCompletion } from "@/hooks/use-onboarding-completion";
 import { computeSetupProgress, type SetupProgress } from "@/lib/onboarding/setup-progress";
 import {
@@ -18,11 +19,12 @@ export function useIdentityDone(subAccountId: string | null | undefined): boolea
     let active = true;
     async function load() {
       try {
-        const res = await fetch(`/api/sub-accounts/${subAccountId}/business-profile`);
-        if (!res.ok) return;
-        const data = (await res.json()) as {
+        // Shared with every other progress reader on the page (one request,
+        // not one per component).
+        const data = await fetchJsonShared<{
           profile?: { brokerage?: string; licenseNumber?: string; serviceAreas?: string };
-        };
+        }>(`/api/sub-accounts/${subAccountId}/business-profile`);
+        if (!data) return;
         const p = data.profile;
         if (active) {
           setDone(Boolean(p?.brokerage?.trim() && p?.licenseNumber?.trim() && p?.serviceAreas?.trim()));
