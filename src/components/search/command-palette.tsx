@@ -83,7 +83,7 @@ const KIND_META: Record<Result["kind"], { label: string; icon: React.ElementType
     tone: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
   },
   deal: {
-    label: "Client Journeys",
+    label: "Deals",
     icon: Briefcase,
     tone: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
   },

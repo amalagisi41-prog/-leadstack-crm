@@ -71,10 +71,17 @@ export function SetupProgressCard({
             <div className="h-2 rounded-full bg-blue-600" style={{ width: `${progress.percent}%` }} />
           </div>
           {nextTask ? (
-            <Button className="mt-4 w-full" render={<Link href={saPath(nextTask.href)} />}>
-              {nextTask.label}
-              <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-            </Button>
+            <>
+              {/* The step name sits beside the button, never inside it: a
+                  long task name used to overflow the fixed-width button. */}
+              <p className="text-muted-foreground mt-4 text-xs" data-testid="setup-next-task">
+                Next: <span className="text-foreground font-medium">{nextTask.label}</span>
+              </p>
+              <Button className="mt-2 w-full" render={<Link href={saPath(nextTask.href)} aria-label={`Continue setup: ${nextTask.label}`} />}>
+                Continue setup
+                <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+              </Button>
+            </>
           ) : null}
           <Button
             variant="outline"

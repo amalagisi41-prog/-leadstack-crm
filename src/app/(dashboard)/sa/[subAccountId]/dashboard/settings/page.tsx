@@ -295,7 +295,7 @@ export default function SettingsPage() {
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">
-          {workspaceName} · Settings
+          {workspaceName} · Workspace Settings
         </h1>
         <p className="text-muted-foreground text-sm">
           Workspace-level configuration for{" "}

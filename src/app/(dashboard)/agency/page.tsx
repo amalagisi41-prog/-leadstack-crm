@@ -362,7 +362,7 @@ function AgencyHomeContent() {
                         </p>
                       </div>
                       <span className="text-muted-foreground group-hover:text-foreground flex items-center gap-1 text-xs">
-                        Open <ArrowRight className="h-3 w-3" />
+                        Open dashboard <ArrowRight className="h-3 w-3" />
                       </span>
                     </Link>
                     {isOwner && (
@@ -371,7 +371,7 @@ function AgencyHomeContent() {
                         onClick={() => setManagingId(m.subAccountId)}
                         className="bg-background text-muted-foreground hover:bg-muted hover:text-foreground absolute top-3 right-3 z-10 rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition-colors"
                       >
-                        Manage
+                        Features &amp; access
                       </button>
                     )}
                   </li>

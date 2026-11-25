@@ -35,7 +35,7 @@ export default function AgencySettingsPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Agency Settings</h1>
         <p className="text-muted-foreground text-sm">
           Agency-level configuration. These settings apply across every
           sub-account and the public landing page.

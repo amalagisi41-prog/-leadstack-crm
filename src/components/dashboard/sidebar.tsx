@@ -101,7 +101,7 @@ const PRIMARY_NAV: PrimaryNavItem[] = [
   { href: "/dashboard", label: "Today", icon: Home },
   { href: "/contacts", label: "People", icon: Users, badgeKey: "unreadConversations" },
   { href: "/pipeline", label: "Deals", icon: GitBranch },
-  { href: "/idx", label: "Properties", icon: MapPin },
+  { href: "/idx", label: "Listings", icon: MapPin },
 ];
 
 /* ─── Expandable sections under the primary items ──────────────── */
@@ -166,7 +166,7 @@ const NAV_GROUPS: NavGroup[] = [
       { href: "/products", label: "Products", icon: Package, enabled: true },
       { href: "/community", label: "Community", icon: GraduationCap, enabled: true },
       { href: "/logs", label: "Logs", icon: ScrollText, enabled: true },
-      { href: "/dashboard/settings", label: "Settings", icon: Settings, enabled: true },
+      { href: "/dashboard/settings", label: "Workspace Settings", icon: Settings, enabled: true },
     ],
   },
 ];
@@ -259,9 +259,9 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       : agency.name;
 
   return (
-    <div className="pl-safe flex h-full flex-col bg-[#4F6F9F] text-white">
+    <div className="pl-safe flex h-full min-h-0 flex-col bg-[#4F6F9F] text-white">
       {/* Logo / brand */}
-      <div className="flex h-16 items-center border-b border-white/20 px-5">
+      <div className="flex h-16 shrink-0 items-center border-b border-white/20 px-5">
         <Link href="/" className="flex items-center gap-2.5">
           {agency.logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -281,7 +281,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
       {/* Nav */}
       <nav
-        className="flex-1 overflow-y-auto px-3 py-4"
+        className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pt-4 pb-8"
         onClick={(e) => {
           // Event delegation so the mobile Sheet drawer closes on any nav
           // link tap without threading an onNavigate prop through every
@@ -342,7 +342,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             />
             <SidebarLink
               href="/agency/settings"
-              label="Agency settings"
+              label="Agency Settings"
               icon={Settings}
               active={pathname.startsWith("/agency/settings")}
             />
@@ -351,6 +351,14 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
         {showSubNav && (
           <>
+            {/* Names the workspace context, so it reads apart from the
+                Agency links above. */}
+            <p
+              className="mb-1.5 truncate px-2 text-[10px] font-semibold tracking-wider text-white/70 uppercase"
+              title={linkedMembership?.name ?? "Workspace"}
+            >
+              {linkedMembership?.name ?? "Workspace"}
+            </p>
             <div className="mb-4">
               <button
                 onClick={() => openAskAssistant()}
@@ -417,7 +425,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
       </nav>
 
       {/* User footer */}
-      <div className="pb-safe border-t border-white/20 p-3">
+      <div className="pb-safe shrink-0 border-t border-white/20 p-3">
         {/* Removes itself once the app is installed. */}
         <div className="mb-2">
           <InstallCallout />
@@ -633,12 +641,12 @@ function SidebarLink({
 export function Sidebar({ open, onOpenChange }: SidebarProps) {
   return (
     <>
-      <aside className="hidden w-60 shrink-0 bg-[#4F6F9F] md:block">
+      <aside className="hidden h-full min-h-0 w-60 shrink-0 bg-[#4F6F9F] md:block">
         <SidebarContent />
       </aside>
 
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="left" className="w-60 p-0">
+        <SheetContent side="left" className="h-dvh w-60 p-0">
           <SheetHeader className="sr-only">
             <SheetTitle>Navigation</SheetTitle>
           </SheetHeader>

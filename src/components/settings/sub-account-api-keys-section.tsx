@@ -118,7 +118,7 @@ export function SubAccountApiKeysSection() {
             </p>
             <p className="mt-1">
               Your agency administrator controls this from the agency
-              sub-accounts list (Manage → Public API access). Existing keys
+              sub-accounts list (Features &amp; access → Public API access). Existing keys
               and webhooks are preserved — re-enabling resumes them
               instantly without re-rotating Zapier integrations.
             </p>

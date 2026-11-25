@@ -106,8 +106,16 @@ describe("progress agrees on every surface", () => {
 
     gate.shown = true; // keep the pill from auto-opening in this test
     const pill = render(<SetupProgressPill />);
-    expect(await pill.findByText("2 of 6")).toBeInTheDocument();
+    expect(await pill.findByText(/^Setup: 2 of 6 — /)).toBeInTheDocument();
+    // Docked in the page flow, never floating over content.
+    expect(pill.getByRole("region", { name: "Setup progress" }).className).not.toMatch(/\bfixed\b/);
+    // Dismiss hides it for the session once setup is underway.
+    await act(async () => {
+      pill.getByRole("button", { name: /hide setup progress/i }).click();
+    });
+    expect(pill.queryByRole("region", { name: "Setup progress" })).toBeNull();
     pill.unmount();
+    sessionStorage.clear();
 
     expect(setupBadgeText(METHOD)).toBe("2/6");
   });

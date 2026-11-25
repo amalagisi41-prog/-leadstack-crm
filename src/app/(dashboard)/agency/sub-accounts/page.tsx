@@ -135,14 +135,14 @@ export default function SubAccountsListPage() {
                           className="h-7 rounded-full px-3 text-xs"
                           onClick={() => setManagingId(s.id)}
                         >
-                          Manage
+                          Features &amp; access
                         </Button>
                       )}
                       <Link
                         href={`/sa/${s.id}/dashboard`}
                         className="text-xs font-medium text-primary hover:underline"
                       >
-                        Open →
+                        Open dashboard →
                       </Link>
                     </div>
                   </td>

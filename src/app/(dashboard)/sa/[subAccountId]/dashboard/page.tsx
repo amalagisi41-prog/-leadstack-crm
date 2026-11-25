@@ -1046,7 +1046,11 @@ function NextBestActionCard({ action }: { action: NextBestAction }) {
         </div>
 
         <div className="flex flex-col gap-2 md:min-w-40">
-          <Button size="sm" render={<Link href={action.primary.href} />}>
+          <Button
+            size="sm"
+            className="h-auto min-h-8 whitespace-normal text-center"
+            render={<Link href={action.primary.href} />}
+          >
             {action.primary.label}
             <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
           </Button>
