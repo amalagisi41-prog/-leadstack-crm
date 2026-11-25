@@ -1,6 +1,5 @@
 import "server-only";
 
-import * as XLSX from "xlsx";
 import type { IdxListingDoc } from "@/types/idx";
 import { normalizeAddressKey, stableListingId } from "@/lib/marketing/listing-dedupe";
 
@@ -127,10 +126,33 @@ function parseSmartMlsPdf(textContent: string): Record<string, unknown> {
 }
 
 async function rowsFromFile(buffer: Buffer, extension: string): Promise<Record<string, unknown>[]> {
-  if ([".xlsx", ".xls"].includes(extension)) {
-    const workbook = XLSX.read(buffer, { type: "buffer" });
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    return XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: "" });
+  if (extension === ".xls") {
+    // The legacy binary .xls format isn't supported by the maintained reader
+    // (the old SheetJS npm build carries unpatched advisories).
+    throw new Error("Old-style .xls files aren't supported. Save the sheet as .xlsx or CSV and upload again.");
+  }
+  if (extension === ".xlsx") {
+    const { default: ExcelJS } = await import("exceljs");
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(buffer as unknown as ArrayBuffer);
+    const sheet = workbook.worksheets[0];
+    if (!sheet) return [];
+    const headers: string[] = [];
+    sheet.getRow(1).eachCell({ includeEmpty: true }, (cell, col) => {
+      headers[col] = String(cell.text ?? "").trim();
+    });
+    const rows: Record<string, unknown>[] = [];
+    for (let r = 2; r <= sheet.rowCount; r++) {
+      const row = sheet.getRow(r);
+      if (!row.hasValues) continue;
+      const out: Record<string, unknown> = {};
+      for (let c = 1; c < headers.length; c++) {
+        if (!headers[c]) continue;
+        out[headers[c]] = row.getCell(c).text ?? "";
+      }
+      rows.push(out);
+    }
+    return rows;
   }
   if (extension === ".pdf") {
     const [{ PDFParse }, { getData }] = await Promise.all([

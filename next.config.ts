@@ -1,5 +1,16 @@
 import type { NextConfig } from "next";
 
+const BASELINE_SECURITY_HEADERS = [
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
+  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=()" },
+];
+const NO_FRAMING = [
+  { key: "X-Frame-Options", value: "SAMEORIGIN" },
+  { key: "Content-Security-Policy", value: "frame-ancestors 'self';" },
+];
+
 const nextConfig: NextConfig = {
   typescript: { ignoreBuildErrors: true },
   eslint: { ignoreDuringBuilds: true },
@@ -33,6 +44,27 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
+      // Baseline hardening on every response. Framing is NOT restricted
+      // here: public forms, booking pages and the chat embed are meant to
+      // be iframed on clients' sites.
+      { source: "/:path*", headers: BASELINE_SECURITY_HEADERS },
+      // Signed-in and sign-in surfaces must never be framed (clickjacking).
+      { source: "/sa/:path*", headers: NO_FRAMING },
+      { source: "/agency/:path*", headers: NO_FRAMING },
+      { source: "/me/:path*", headers: NO_FRAMING },
+      { source: "/dashboard/:path*", headers: NO_FRAMING },
+      { source: "/contacts/:path*", headers: NO_FRAMING },
+      { source: "/pipeline/:path*", headers: NO_FRAMING },
+      { source: "/calendar/:path*", headers: NO_FRAMING },
+      { source: "/tasks/:path*", headers: NO_FRAMING },
+      { source: "/reports/:path*", headers: NO_FRAMING },
+      { source: "/forms", headers: NO_FRAMING },
+      { source: "/login", headers: NO_FRAMING },
+      { source: "/signup", headers: NO_FRAMING },
+      { source: "/subscribe/:path*", headers: NO_FRAMING },
+      { source: "/welcome/:path*", headers: NO_FRAMING },
+      { source: "/affiliate/:path*", headers: NO_FRAMING },
+      { source: "/internal/:path*", headers: NO_FRAMING },
       {
         // The web-chat embed iframe target — must be loadable cross-
         // origin from any buyer's site. CSP frame-ancestors '*' is the

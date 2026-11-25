@@ -2,21 +2,36 @@ rules_version = '2';
 
 // Firebase Storage rules. The only writer surface today is the Community
 // feature's group cover/logo uploads. Community group images are PUBLIC (the
-// About page at /c/* is public), so reads are open; writes require a signed-in
-// Firebase user (staff — community members are NOT Firebase users, so they
-// can't write here) plus an image content-type + 5 MB size cap.
+// About page at /c/* is public), so reads are open; writes require an admin of
+// that workspace (or its agency owner) plus a raster image + 5 MB size cap.
 //
 // Deploy with: firebase deploy --only storage
 service firebase.storage {
   match /b/{bucket}/o {
 
-    // Community group cover/logo images.
+    // Only staff of THIS workspace may write its images: the agency owner of
+    // the workspace's agency, or an active admin member of the workspace.
+    // (Previously any signed-in user could write to any workspace's path.)
+    function canAdminWorkspace(subAccountId) {
+      let sa = firestore.get(/databases/(default)/documents/subAccounts/$(subAccountId));
+      let member = firestore.get(/databases/(default)/documents/subAccounts/$(subAccountId)/subAccountMembers/$(request.auth.uid));
+      return request.auth != null
+        && request.auth.token.status == "active"
+        && sa != null
+        && (
+          (request.auth.token.agencyRole == "owner" && request.auth.token.agencyId == sa.data.agencyId)
+          || (member != null && member.data.status == "active" && member.data.role == "admin")
+        );
+    }
+
+    // Community group cover/logo images. Raster images only: SVG can carry
+    // script, so it isn't accepted on a public bucket path.
     match /community/{subAccountId}/{groupId}/{fileName} {
       allow read: if true;
-      allow write: if request.auth != null
+      allow write: if canAdminWorkspace(subAccountId)
         && request.resource.size < 5 * 1024 * 1024
-        && request.resource.contentType.matches('image/.*');
-      allow delete: if request.auth != null;
+        && request.resource.contentType.matches('image/(png|jpeg|webp|gif)');
+      allow delete: if canAdminWorkspace(subAccountId);
     }
 
     // Default deny everything else.

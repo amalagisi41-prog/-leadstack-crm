@@ -11,7 +11,7 @@ The contact importer brings person records into the selected workspace. It does 
 
 ## Before you start
 
-Export your contacts from GoHighLevel as CSV. The exact export menu and available columns in your GHL account are **[VERIFY IN APP]**. Keep one row per person and one primary email per row. AgentStack’s CSV preparation requires a valid email; phone-only rows are invalid in this importer. Resolve those rows separately instead of expecting the preview to invent an email address.
+Export your contacts from GoHighLevel as CSV. GoHighLevel’s export menu and columns can change; check GoHighLevel’s own help if you can’t find it. Keep one row per person and one primary email per row. AgentStack’s CSV preparation requires a valid email; phone-only rows are invalid in this importer. Resolve those rows separately instead of expecting the preview to invent an email address.
 
 ## Numbered import steps
 

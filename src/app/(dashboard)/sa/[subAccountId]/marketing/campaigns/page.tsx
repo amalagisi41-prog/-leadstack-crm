@@ -969,7 +969,7 @@ export default function MarketingCampaignsPage() {
                   <input
                     type="file"
                     className="sr-only"
-                    accept=".pdf,.csv,.xlsx,.xls,.json,.txt,.html"
+                    accept=".pdf,.csv,.xlsx,.json,.txt,.html"
                     onChange={(event) =>
                       setListingFile(event.target.files?.[0] ?? null)
                     }

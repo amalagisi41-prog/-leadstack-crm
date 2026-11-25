@@ -64,7 +64,7 @@ export async function POST(request: Request, ctx: { params: Promise<{ id: string
     const form = await request.formData();
     const source = form.get("listingFile");
     if (!(source instanceof File)) return NextResponse.json({ error: "Choose a listing PDF, CSV, XLSX, JSON, TXT, or HTML file." }, { status: 400 });
-    if (!SOURCE_TYPES.has(source.type) && !/\.(pdf|csv|xlsx?|json|txt|html?)$/i.test(source.name)) return NextResponse.json({ error: "Unsupported listing file format." }, { status: 400 });
+    if (!SOURCE_TYPES.has(source.type) && !/\.(pdf|csv|xlsx|json|txt|html?)$/i.test(source.name)) return NextResponse.json({ error: "Unsupported listing file format." }, { status: 400 });
     if (source.size > MAX_SOURCE_BYTES) return NextResponse.json({ error: "Keep listing files under 15 MB." }, { status: 400 });
     const photoFiles = form.getAll("photos").filter((value): value is File => value instanceof File);
     if (photoFiles.length > 20) return NextResponse.json({ error: "Upload up to 20 listing photos at a time." }, { status: 400 });

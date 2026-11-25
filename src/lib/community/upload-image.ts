@@ -23,7 +23,7 @@ export async function uploadCommunityImage(
   groupId: string,
   kind: "cover" | "card" | "logo" | "course",
 ): Promise<string> {
-  if (!file.type.startsWith("image/")) {
+  if (!/^image\/(png|jpeg|webp|gif)$/.test(file.type)) {
     throw new Error("Choose an image file (JPG, PNG, WebP, or GIF).");
   }
   if (file.size > MAX_IMAGE_BYTES) {
