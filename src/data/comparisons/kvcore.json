@@ -90,7 +90,7 @@
       },
       {
         "label": "Transparent starting plan on the public site",
-        "agentstack": "$199/mo",
+        "agentstack": "{{SOLO_PRICE}}/mo",
         "competitor": "Contact sales"
       }
     ]
@@ -98,10 +98,10 @@
   "pricing": {
     "heading": "Pricing compared honestly",
     "agentstack": {
-      "headline": "Published plans starting at $199/month",
+      "headline": "Published plans starting at {{SOLO_PRICE}}/month",
       "detail": "AgentStack publicly lists Solo, Team, and Broker pricing, plus add-ons, so buyers can self-qualify before they ever speak to anyone.",
       "notes": [
-        "Solo starts at $199/month.",
+        "AgentStack Solo is {{SOLO_PRICE}}/month. {{SOLO_MONTHLY_TERMS}}",
         "Team starts at $299/month.",
         "Broker starts at $399/month.",
         "Add-ons are listed publicly on the site."
@@ -164,7 +164,7 @@
     "items": [
       {
         "label": "Pricing",
-        "agentstack": "Published publicly: Solo $199/mo, Team $299/mo, Broker $399/mo.",
+        "agentstack": "Published publicly: Solo {{SOLO_PRICE}}/mo, Team $299/mo, Broker $399/mo.",
         "competitor": "We did not verify a live public kvCORE pricing page. The official root page presents a login experience, and the official /pricing URL returned a page-not-found response during review.",
         "sources": [
           {
