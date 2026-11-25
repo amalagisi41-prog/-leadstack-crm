@@ -239,7 +239,7 @@ function ListingCard({
 const benefits = [
   { strong: "Branded search + detail pages", rest: "— your logo, your domain" },
   { strong: "Auto-synced", rest: `from your ${IDX_BROKER_NAME} account every 6 hours` },
-  { strong: "Every listing view captures a lead", rest: "straight into your CRM" },
+  { strong: "Showing requests become leads", rest: "straight into your CRM" },
   { strong: '"Request a showing" form', rest: "on every listing, no extra setup" },
 ];
 

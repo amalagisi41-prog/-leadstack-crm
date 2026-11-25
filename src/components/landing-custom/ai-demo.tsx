@@ -46,13 +46,13 @@ export function AiDemo() {
                 </span>
               </h2>
               <p className="mb-6 max-w-xl leading-7 text-[#526078]">
-                AgentStack responds to inbound texts, web chat, and calls around the clock — qualifying buyers, booking showings, and sending listing docs before you even see the notification.
+                AgentStack responds to inbound texts, web chat, and calls around the clock — qualifying buyers, capturing showing requests, and flagging hot leads for you before you even see the notification.
               </p>
               <ul className="space-y-3">
                 {[
                   "Responds in under 60 seconds, day or night",
-                  "Answers property questions using your listing data",
-                  "Books showings directly into your calendar",
+                  "Answers questions using your business profile and knowledge base",
+                  "Turns showing requests into a follow-up task for you",
                   "Escalates hot leads to you immediately",
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2.5 text-sm">

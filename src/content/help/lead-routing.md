@@ -8,12 +8,11 @@ order: 9
 
 Lead routing decides who owns the next inbound opportunity. If that rule is vague, hot leads sit too long or end up with the wrong person.
 
-## The main routing choices
+## What AgentStack does today
 
-- Round robin
-- Territory based
-- Source based
-- Always to one primary operator
+- **Territory scoping**: tag contacts and deals with a territory so collaborators only see their own.
+- **Booking pages in team mode** rotate bookings between the hosts you choose.
+- Everything else goes to the workspace's main operator. Automatic round-robin or source-based assignment of new leads isn't built yet; agree a rule with your team and assign by hand.
 
 ## What to think through
 

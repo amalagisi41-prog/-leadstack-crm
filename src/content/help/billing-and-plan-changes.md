@@ -6,7 +6,7 @@ order: 6
 ---
 # Billing and plan changes
 
-Your billing setup should match how you sell and how many people use the workspace. AgentStack supports self-serve plan changes so you do not have to email support for basic account moves.
+Your billing setup should match how you sell and how many people use the workspace. Solo is the self-serve plan: you can manage card details and cancel from the billing portal. Moving to a team or brokerage setup is arranged with us directly — use the chat bubble to ask.
 
 ## Typical plan change moments
 

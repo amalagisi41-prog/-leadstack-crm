@@ -93,14 +93,14 @@ export function Territory() {
                 </span>
               </h2>
               <p className="mb-6 max-w-xl leading-7 text-[#526078]">
-                Stop guessing who&apos;s hot in your territory. AgentStack maps every contact to their neighborhood, shows you which leads haven&apos;t heard from you in too long, and routes new inquiries to the right agent automatically.
+                Stop guessing who&apos;s hot in your territory. AgentStack maps every contact to their neighborhood, shows you which leads haven&apos;t heard from you in too long, and lets you assign records to territories.
               </p>
               <ul className="space-y-3">
                 {[
                   "Route inbound leads to agents by territory",
-                  "See which neighborhoods have the most activity",
+                  "Tag contacts and deals by territory",
                   "Identify contacts overdue for a follow-up",
-                  "Track GCI per territory for brokerage reporting",
+                  "Limit collaborators to their own territory",
               ].map((item) => (
                   <li key={item} className="flex items-start gap-2.5 text-sm">
                     <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[#4F91FF]/15 text-[#4F91FF]">
