@@ -39,7 +39,7 @@ jobs:
       - name: Production build
         run: pnpm build
         env:
-          NODE_OPTIONS: "--max-old-space-size=2048"
+          NODE_OPTIONS: "--max-old-space-size=6144"
 
       - name: Check public Solo price
         run: node scripts/check-public-prices.mjs
