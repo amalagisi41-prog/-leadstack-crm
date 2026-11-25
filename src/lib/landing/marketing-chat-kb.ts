@@ -72,8 +72,9 @@ export function getMarketingChatKnowledgeChunks(): string[] {
     `AgentStack feature and add-on facts:
 - Core workflow: capture leads, respond instantly, organize the pipeline, nurture automatically, and close deals.
 - AI works across SMS, web chat, and voice.
-- Territory routing, booking pages, reviews, and IDX are part of the marketing story.
-- Add-ons currently highlighted on the site include ${MARKETING_ADD_ON_NAMES.aiWebsiteStudio}, ${MARKETING_ADD_ON_NAMES.customWebsiteBuild}, ${MARKETING_ADD_ON_NAMES.reviewManager}, ${MARKETING_ADD_ON_NAMES.googleBusinessProfile}, ${MARKETING_ADD_ON_NAMES.googleAdsManagement}, ${MARKETING_ADD_ON_NAMES.socialPlanner}, ${MARKETING_ADD_ON_NAMES.aiListingCopy}, and ${MARKETING_ADD_ON_NAMES.whiteGloveSetup}.`,
+- Territory routing, booking pages, review requests, and IDX are part of the marketing story.
+- ${MARKETING_ADD_ON_NAMES.reviewRequests} is included in every workspace at no extra charge (not a paid add-on): when a deal closes, a review request is created and sent after a configurable delay (3 days by default) with the workspace's Google review link, by text or WhatsApp. Every request and its status is logged on the Review Requests page (Grow My Business). It can also be sent by hand. The automation has Off / Log only / Live modes and starts in Log only, so nothing is sent until the workspace turns it to Live. It does NOT monitor or alert on new reviews, combine reviews from other platforms, support Zillow, or provide response templates — never claim those.
+- Add-ons currently highlighted on the site include ${MARKETING_ADD_ON_NAMES.aiWebsiteStudio}, ${MARKETING_ADD_ON_NAMES.customWebsiteBuild}, ${MARKETING_ADD_ON_NAMES.googleBusinessProfile}, ${MARKETING_ADD_ON_NAMES.googleAdsManagement}, ${MARKETING_ADD_ON_NAMES.socialPlanner}, ${MARKETING_ADD_ON_NAMES.aiListingCopy}, and ${MARKETING_ADD_ON_NAMES.whiteGloveSetup}.`,
     `AgentStack marketing FAQ facts:\n${faq}`,
   ];
 }

@@ -21,8 +21,8 @@ const features = [
   },
   {
     icon: Star,
-    title: "Closing follow-up — Private Preview",
-    body: "SMS automation is Private Preview. Review a post-closing follow-up workflow before inviting a past client to leave a review.",
+    title: "Review Requests after every closing",
+    body: "When a deal closes, a Google review request is created and sent after a delay you set — 3 days by default — with every request logged. It starts in Log only, so nothing sends until you switch it on. Sending uses your text or WhatsApp setup.",
     color: "bg-blue-500/10 text-blue-500",
   },
   {
