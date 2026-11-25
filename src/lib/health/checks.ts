@@ -1,6 +1,7 @@
 import "server-only";
 
 import { getAdminDb } from "@/lib/firebase/admin";
+import { hydrateTwilioConfig } from "@/lib/comms/sub-account-secrets";
 
 /**
  * Agency-level health checks. Each integration runs its presence test
@@ -363,6 +364,59 @@ async function checkResend(): Promise<IntegrationHealth> {
 }
 
 // ---------------------------------------------------------------------------
+// Dedicated per-workspace Twilio numbers (token in the secrets store)
+
+const DEDICATED_TWILIO_SAMPLE = 10;
+
+async function checkDedicatedTwilioTokens(): Promise<SubCheck> {
+  const label = "Dedicated numbers: auth token in secrets store";
+  try {
+    const snap = await getAdminDb()
+      .collection("subAccounts")
+      .where("twilioConfig.enabled", "==", true)
+      .limit(DEDICATED_TWILIO_SAMPLE)
+      .get();
+    if (snap.empty) {
+      return { label, status: "skipped", detail: "No workspace has its own Twilio number yet." };
+    }
+    const problems: string[] = [];
+    for (const d of snap.docs) {
+      const cfg = await hydrateTwilioConfig(
+        d.id,
+        (d.data() as { twilioConfig?: { accountSid?: string; authToken?: string } }).twilioConfig ?? null,
+      );
+      if (!cfg?.accountSid || !cfg.authToken) {
+        problems.push(`${d.id}: token missing — re-save it under Settings → SMS`);
+        continue;
+      }
+      const auth = Buffer.from(`${cfg.accountSid}:${cfg.authToken}`).toString("base64");
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
+      try {
+        const r = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${cfg.accountSid}.json`, {
+          headers: { Authorization: `Basic ${auth}` },
+          signal: ctrl.signal,
+        });
+        if (!r.ok) problems.push(`${d.id}: Twilio rejected the stored token (${r.status})`);
+      } catch {
+        problems.push(`${d.id}: couldn't reach Twilio`);
+      } finally {
+        clearTimeout(t);
+      }
+    }
+    return problems.length
+      ? { label, status: "error", detail: problems.join("; ") }
+      : {
+          label,
+          status: "ok",
+          detail: `${snap.size} workspace${snap.size === 1 ? "" : "s"} checked — token read from the secrets store and accepted by Twilio.`,
+        };
+  } catch (err) {
+    return { label, status: "error", detail: err instanceof Error ? err.message : "Check failed" };
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Twilio (SMS) — creds + inbound webhook URL on the from-number
 
 async function checkTwilio(): Promise<IntegrationHealth> {
@@ -474,19 +528,11 @@ async function checkTwilio(): Promise<IntegrationHealth> {
     });
   }
 
-  // Informational only — surface the Twilio↔WhatsApp link without
-  // implying this agency-level env check covers it. Dedicated SMS +
-  // WhatsApp run off each sub-account's OWN Twilio creds (Settings → SMS)
-  // plus a per-SA WhatsApp sender + the whatsappEnabledByAgency gate —
-  // none of which are deployment env vars, so they're verified per
-  // sub-account, not here. Always "skipped" so it never affects the
-  // traffic light.
-  subChecks.push({
-    label: "Dedicated SMS + WhatsApp",
-    status: "skipped",
-    detail:
-      "Configured per sub-account (each sub-account's own Twilio creds + WhatsApp sender, behind the agency WhatsApp gate) — not covered by this agency-level check.",
-  });
+  // Dedicated numbers run off each workspace's OWN Twilio creds, whose auth
+  // token lives in the server-only secrets store. Verify that every enabled
+  // workspace's token is readable there and still accepted by Twilio —
+  // direct evidence that the move to the secrets store works end to end.
+  subChecks.push(await checkDedicatedTwilioTokens());
 
   const status = rollup(subChecks);
   return {
