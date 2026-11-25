@@ -22,6 +22,7 @@ import {
   Building2,
   Workflow,
   Compass,
+  CreditCard,
   Lock,
   Send,
   Megaphone,
@@ -332,6 +333,12 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
               label="Sub-accounts"
               icon={Users}
               active={pathname.startsWith("/agency/sub-accounts")}
+            />
+            <SidebarLink
+              href="/agency/billing"
+              label="Billing"
+              icon={CreditCard}
+              active={pathname.startsWith("/agency/billing")}
             />
             <SidebarLink
               href="/agency/settings"

@@ -4,7 +4,7 @@ import type { AgencyDoc } from "@/types";
 import {
   ADD_ON_GATE_FIELD,
   ADD_ON_KEYS,
-  addOnPriceId,
+  resolveAddOnPriceId,
   type AddOnKey,
 } from "@/lib/stripe/catalog";
 import { getStripeServer } from "@/lib/stripe/server";
@@ -87,13 +87,26 @@ export async function syncAddOnSubscriptionItem(params: {
   subAccountId: string;
   addOnKey: AddOnKey;
   enabled: boolean;
+  /**
+   * Charge a prorated amount for the rest of the current period (the default,
+   * for a feature switched on today). Catch-up billing of an add-on that was
+   * already on passes false: it starts billing on the next cycle and never
+   * back-bills time that went unbilled.
+   */
+  prorate?: boolean;
 }): Promise<AddOnSyncResult> {
-  const { agency, subAccountId, addOnKey, enabled } = params;
+  const { agency, subAccountId, addOnKey, enabled, prorate = true } = params;
   const gateField = ADD_ON_GATE_FIELD[addOnKey];
   const base = { addOnKey, gateField, enabled };
 
-  const priceId = addOnPriceId(addOnKey);
-  if (!priceId) return { ...base, outcome: "not_priced" };
+  const priceId = await resolveAddOnPriceId(addOnKey);
+  if (!priceId) {
+    console.error(
+      `[billing-config] No Stripe price for add-on "${addOnKey}" (sub-account ${subAccountId}). ` +
+        "Run scripts/stripe/setup-billing-catalog.mjs or set the env price id.",
+    );
+    return { ...base, outcome: "not_priced" };
+  }
   if (!agency?.subscriptionId) return { ...base, outcome: "no_subscription" };
 
   const stripe = getStripeServer();
@@ -111,6 +124,7 @@ export async function syncAddOnSubscriptionItem(params: {
       price: priceId,
       quantity: 1,
       metadata: { addOnKey, subAccountId },
+      proration_behavior: prorate ? "create_prorations" : "none",
     });
     await syncBundleDiscount(agency.subscriptionId);
     return { ...base, outcome: "added" };

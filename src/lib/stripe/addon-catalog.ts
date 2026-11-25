@@ -31,6 +31,26 @@ export const ADD_ON_LABELS: Record<AddOnKey, { name: string; price: string }> = 
  * instead of a generic "not configured," and by the Settings UI to show
  * the same name inline so the agency owner knows exactly what to set.
  */
+/**
+ * Stripe lookup keys for the recurring add-on prices (and the Solo/Team plan
+ * prices). The app finds a price by its lookup key when no env price id is
+ * set, so billing works as soon as the price exists in Stripe — no deploy-time
+ * configuration step for an operator to forget. `scripts/stripe/
+ * setup-billing-catalog.mjs` creates them with these exact keys.
+ */
+export const ADD_ON_LOOKUP_KEY: Record<AddOnKey, string> = {
+  idx: "agentstack_addon_idx_monthly",
+  social: "agentstack_addon_social_monthly",
+  website_studio: "agentstack_addon_website_studio_monthly",
+};
+
+/** The add-on list prices the app displays, in cents per month (USD). */
+export const ADD_ON_MONTHLY_CENTS: Record<AddOnKey, number> = {
+  idx: 6000,
+  social: 2900,
+  website_studio: 9900,
+};
+
 export const ADD_ON_PRICE_ENV_VAR: Record<AddOnKey, string> = {
   idx: "STRIPE_ADDON_IDX_PRICE_ID",
   social: "STRIPE_ADDON_SOCIAL_PRICE_ID",
