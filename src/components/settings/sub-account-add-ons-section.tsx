@@ -26,9 +26,9 @@ export function SubAccountAddOnsSection() {
   const { agencyRole } = useAuth();
   const { subAccountId, subAccount, isAdmin } = useSubAccount();
   const [busy, setBusy] = useState<AddOnKey | null>(null);
-  const [bundleMessage, setBundleMessage] = useState<string>(
-    "Bundle savings turn on automatically when 3 or more add-ons are active.",
-  );
+  // Empty until billing confirms a bundle discount really exists here —
+  // never promise savings that aren't set up.
+  const [bundleMessage, setBundleMessage] = useState<string>("");
   const isOwner = agencyRole === "owner";
 
   useEffect(() => {

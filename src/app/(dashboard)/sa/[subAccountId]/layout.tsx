@@ -27,8 +27,8 @@ export default async function SubAccountLayout({
   const { subAccountId } = await params;
   return (
     <SubAccountProvider subAccountId={subAccountId}>
-      {children}
       <SetupProgressPill />
+      {children}
     </SubAccountProvider>
   );
 }

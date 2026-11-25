@@ -19,7 +19,7 @@ import {
 } from "@/lib/automations/merge-tags";
 import { buildUnsubscribeUrl } from "@/lib/automations/unsubscribe-token";
 import { publishCallback, qstashIsConfigured } from "@/lib/automations/qstash";
-import { maybeSendReviewRequest } from "@/lib/reviews/request";
+import { maybeSendReviewRequest } from "@/lib/reviews/log";
 import { evalConditionGroup } from "./conditions";
 import { isSendGatedNodeType } from "./send-window";
 import {

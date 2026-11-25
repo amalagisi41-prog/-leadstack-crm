@@ -139,10 +139,13 @@ export async function GET(request: Request) {
       console.error("[billing] Could not attach active add-ons", error);
     }
   }
-  return NextResponse.json({
-    ...responseForSummary(await summarizeAgencyBilling(subscription)),
-    unbilledAddOns: await findUnbilledAddOns(owner.agencyId, subscription),
-  });
+  // The invoice preview (Stripe) and the unbilled-add-on scan (Firestore)
+  // are independent — run them together instead of back to back.
+  const [summary, unbilledAddOns] = await Promise.all([
+    summarizeAgencyBilling(subscription),
+    findUnbilledAddOns(owner.agencyId, subscription),
+  ]);
+  return NextResponse.json({ ...responseForSummary(summary), unbilledAddOns });
 }
 
 export async function POST(request: Request) {
@@ -174,12 +177,11 @@ export async function POST(request: Request) {
       subscription,
     );
     const refreshed = await retrieveAgencySubscription(owner.agency);
-    return NextResponse.json({
-      ...responseForSummary(await summarizeAgencyBilling(refreshed)),
-      unbilledAddOns: await findUnbilledAddOns(owner.agencyId, refreshed),
-      attached,
-      unresolved,
-    });
+    const [summary, unbilledAddOns] = await Promise.all([
+      summarizeAgencyBilling(refreshed),
+      findUnbilledAddOns(owner.agencyId, refreshed),
+    ]);
+    return NextResponse.json({ ...responseForSummary(summary), unbilledAddOns, attached, unresolved });
   }
 
   if (body.action === "portal") {

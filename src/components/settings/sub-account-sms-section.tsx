@@ -338,7 +338,7 @@ export function SubAccountSmsSection() {
                 spellCheck={false}
               />
               <p className="text-[11px] text-muted-foreground">
-                Stored in Firestore, never displayed back.
+                Stored securely and never shown again.
                 {isExistingConfig
                   ? " Leave blank to keep the token you saved before."
                   : ""}

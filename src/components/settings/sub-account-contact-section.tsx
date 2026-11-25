@@ -1,5 +1,11 @@
 "use client";
 
+import {
+  EXAMPLE_PLACEHOLDER_CLASS,
+  EXAMPLE_VALUES,
+  examplePlaceholder,
+  realValueOrEmpty,
+} from "@/lib/forms/example-values";
 import { useEffect, useState, type FormEvent } from "react";
 import { Building2, Mail, Phone, User as UserIcon, Wand2 } from "lucide-react";
 import { toast } from "sonner";
@@ -19,9 +25,10 @@ export function SubAccountContactSection() {
   const [copyingFromBlueprint, setCopyingFromBlueprint] = useState(false);
 
   useEffect(() => {
-    setName(subAccount?.accountContact?.name ?? "");
-    setEmail(subAccount?.accountContact?.email ?? "");
-    setPhone(subAccount?.accountContact?.phone ?? "");
+    // An example value that was ever stored reads as empty — never as data.
+    setName(realValueOrEmpty(subAccount?.accountContact?.name));
+    setEmail(realValueOrEmpty(subAccount?.accountContact?.email));
+    setPhone(realValueOrEmpty(subAccount?.accountContact?.phone));
   }, [subAccount]);
 
   if (!isAdmin) return null;
@@ -118,8 +125,8 @@ export function SubAccountContactSection() {
               id="contact-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Jane Doe"
-              className="pl-8"
+              placeholder={examplePlaceholder(EXAMPLE_VALUES.contactName)}
+              className={`pl-8 ${EXAMPLE_PLACEHOLDER_CLASS}`}
             />
           </div>
         </div>
@@ -133,8 +140,8 @@ export function SubAccountContactSection() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="jane@acme.com"
-              className="pl-8"
+              placeholder={examplePlaceholder(EXAMPLE_VALUES.contactEmail)}
+              className={`pl-8 ${EXAMPLE_PLACEHOLDER_CLASS}`}
             />
           </div>
         </div>
@@ -147,8 +154,8 @@ export function SubAccountContactSection() {
               id="contact-phone"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              placeholder="+15551234567"
-              className="pl-8"
+              placeholder={examplePlaceholder(EXAMPLE_VALUES.contactPhone)}
+              className={`pl-8 ${EXAMPLE_PLACEHOLDER_CLASS}`}
             />
           </div>
           <p className="text-[11px] text-muted-foreground">

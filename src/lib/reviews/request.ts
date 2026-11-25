@@ -41,13 +41,18 @@ import type { WhatsappTemplateDoc } from "@/types/whatsapp-templates";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-export type ReviewTrigger = "manual" | "quote_paid" | "deal_completed";
+export type ReviewTrigger = "manual" | "quote_paid" | "deal_completed" | "deal_won" | "workflow";
 
 export interface SendReviewInput {
   subAccountId: string;
   agencyId: string;
   contactId: string;
   trigger: ReviewTrigger;
+  /**
+   * Log-only mode: run every pre-flight check and stop just before the
+   * provider call. Nothing is sent; the result says whether it WOULD send.
+   */
+  dryRun?: boolean;
 }
 
 export interface SendReviewResult {
@@ -57,6 +62,12 @@ export interface SendReviewResult {
    *  whatsapp_not_configured | no_template | template_not_approved |
    *  template_var_missing | send_failed | error */
   reason?: string;
+  /** dryRun only: every check passed — a live run would have sent. */
+  wouldSend?: boolean;
+  /** Channel used / that would be used, when known. */
+  channel?: string;
+  /** Provider error text on send_failed. */
+  detail?: string;
 }
 
 function firstWord(s: string): string {
@@ -84,7 +95,7 @@ function toMillis(v: unknown): number | null {
   return maybe && typeof maybe.toMillis === "function" ? maybe.toMillis() : null;
 }
 
-export async function maybeSendReviewRequest(
+export async function attemptReviewSend(
   input: SendReviewInput,
 ): Promise<SendReviewResult> {
   try {
@@ -97,7 +108,9 @@ export async function maybeSendReviewRequest(
     }
 
     const isManual = input.trigger === "manual";
-    if (!isManual) {
+    // deal_won is governed by the Off / Log only / Live automation mode
+    // (lib/reviews/log.ts), not by the legacy enabled + per-trigger flags.
+    if (!isManual && input.trigger !== "deal_won") {
       // Each auto trigger is gated by `enabled` + its own per-trigger flag.
       const triggerEnabled =
         input.trigger === "quote_paid"
@@ -119,6 +132,7 @@ export async function maybeSendReviewRequest(
     if (!contact.phone) return { sent: false, reason: "no_phone" };
 
     const channel = normalizeReviewChannel(cfg.channel);
+    const dry = (): SendReviewResult => ({ sent: false, reason: "log_only", wouldSend: true, channel });
     const isWhatsapp = channel !== "sms";
     const convoChannel: ConversationChannel = isWhatsapp ? "whatsapp" : "sms";
 
@@ -169,6 +183,7 @@ export async function maybeSendReviewRequest(
         // customer messaged recently). No approved template required.
         const open = await whatsappWindowOpen(db, contact.id);
         if (!open) return { sent: false, reason: "window_closed" };
+        if (input.dryRun) return dry();
         const res = await sendWhatsappForSubAccount({
           subAccountId: input.subAccountId,
           subAccount,
@@ -197,6 +212,7 @@ export async function maybeSendReviewRequest(
         if (values.some((v) => v.trim() === "")) {
           return { sent: false, reason: "template_var_missing" };
         }
+        if (input.dryRun) return dry();
         const res = await sendWhatsappTemplateForSubAccount({
           subAccountId: input.subAccountId,
           subAccount,
@@ -214,6 +230,7 @@ export async function maybeSendReviewRequest(
       if (!dedicated && !smsIsConfigured()) {
         return { sent: false, reason: "sms_not_configured" };
       }
+      if (input.dryRun) return dry();
       renderedBody = fillReviewSms(
         cfg.messageTemplate || DEFAULT_REVIEW_SMS_TEMPLATE,
         { firstName: firstWord(contact.name), businessName, reviewUrl: cfg.reviewUrl },
@@ -298,10 +315,14 @@ export async function maybeSendReviewRequest(
       console.warn("[reviews/request] activity write failed", err);
     }
 
-    return { sent: true };
+    return { sent: true, channel };
   } catch (err) {
     console.warn("[reviews/request] failed", err);
-    return { sent: false, reason: "send_failed" };
+    return {
+      sent: false,
+      reason: "send_failed",
+      detail: err instanceof Error ? err.message.slice(0, 300) : undefined,
+    };
   }
 }
 

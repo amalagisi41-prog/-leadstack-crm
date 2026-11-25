@@ -1,5 +1,6 @@
 "use client";
 
+import { matchPages } from "@/lib/search/pages";
 import {
   useCallback,
   useEffect,
@@ -16,6 +17,7 @@ import {
   CalendarCheck,
   FileText,
   ArrowRight,
+  Star,
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useOptionalSubAccount } from "@/context/sub-account-context";
@@ -40,6 +42,13 @@ import type { CalendarEvent } from "@/types/events";
 import type { LeadForm } from "@/types/forms";
 
 type Result =
+  | {
+      kind: "page";
+      id: string;
+      title: string;
+      subtitle: string;
+      href: string;
+    }
   | {
       kind: "contact";
       id: string;
@@ -77,13 +86,18 @@ type Result =
     };
 
 const KIND_META: Record<Result["kind"], { label: string; icon: React.ElementType; tone: string }> = {
+  page: {
+    label: "Pages",
+    icon: Star,
+    tone: "bg-sky-500/10 text-sky-600 dark:text-sky-400",
+  },
   contact: {
     label: "People",
     icon: Users,
     tone: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
   },
   deal: {
-    label: "Client Journeys",
+    label: "Deals",
     icon: Briefcase,
     tone: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
   },
@@ -205,7 +219,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
           kind: "deal",
           id: d.id,
           title: d.title,
-          subtitle: `${stage.label} · ${formatCurrency(d.value, d.currency)}${
+          subtitle: `${d.isSample ? "Sample · " : ""}${stage.label} · ${formatCurrency(d.value, d.currency)}${
             contact ? ` · ${contact.name}` : ""
           }`,
           href: `${linkPrefix}/pipeline`,
@@ -227,6 +241,16 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
     const match = (s: string | null | undefined) =>
       s ? s.toLowerCase().includes(q) : false;
 
+    for (const p of linkPrefix ? matchPages(q) : []) {
+      out.push({
+        kind: "page",
+        id: p.path,
+        title: p.title,
+        subtitle: p.description,
+        href: `${linkPrefix}${p.path}`,
+      });
+    }
+
     for (const c of contacts) {
       if (match(c.name) || match(c.email) || match(c.company)) {
         out.push({
@@ -247,7 +271,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
           kind: "deal",
           id: d.id,
           title: d.title,
-          subtitle: `${stage.label} · ${formatCurrency(d.value, d.currency)}${
+          subtitle: `${d.isSample ? "Sample · " : ""}${stage.label} · ${formatCurrency(d.value, d.currency)}${
             contact ? ` · ${contact.name}` : ""
           }`,
           href: `${linkPrefix}/pipeline`,
@@ -309,7 +333,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   }, [query, contacts, deals, tasks, events, forms, contactById, linkPrefix]);
 
   const grouped = useMemo(() => {
-    const order: Result["kind"][] = ["contact", "deal", "task", "event", "form"];
+    const order: Result["kind"][] = ["page", "contact", "deal", "task", "event", "form"];
     return order
       .map((k) => ({
         kind: k,

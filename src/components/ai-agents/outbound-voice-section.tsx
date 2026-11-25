@@ -322,7 +322,7 @@ export function OutboundVoiceSection() {
         <div className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-5 text-sm text-amber-800 dark:text-amber-400">
           <strong>Locked by your agency.</strong> Outbound calling consumes
           call minutes and carries compliance weight, so the agency owner
-          enables it per workspace (Agency → Sub-accounts → Manage). Once it&apos;s
+          enables it per workspace (Agency → Sub-accounts → Features &amp; access). Once it&apos;s
           on, this page unlocks.
         </div>
       ) : (

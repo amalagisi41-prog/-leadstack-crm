@@ -851,6 +851,14 @@ export interface GoogleReviewConfig {
    * (WhatsApp Manual can't auto-send). Undefined on legacy docs → off.
    */
   triggerOnDealCompleted?: boolean;
+  /**
+   * Post-closing automation (deal reaches Closed (won)): "off" | "log_only" |
+   * "live". Undefined reads as "log_only" — requests are created, delayed and
+   * logged on the Review Requests page, but nothing sends. See lib/reviews/log.ts.
+   */
+  automationMode?: "off" | "log_only" | "live";
+  /** Days after closing before the post-closing request goes out (default 3). */
+  delayDaysAfterClosing?: number;
   updatedAt: Date;
 }
 

@@ -119,7 +119,7 @@ export function SubAccountWebhooksSection() {
               Webhooks are disabled for this sub-account.
             </p>
             <p className="mt-1">
-              Webhooks live behind the same agency gate as API keys (Manage →
+              Webhooks live behind the same agency gate as API keys (Features &amp; access →
               Public API access). Existing subscriptions are preserved and
               resume firing the moment your agency administrator re-enables
               access.

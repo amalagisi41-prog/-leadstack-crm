@@ -14,7 +14,7 @@ export const ZACK_PRODUCT_KB = `# AgentStack product guide
 ## Main navigation
 - Your Day: Today, Tasks.
 - Site Health: Site Health shows the completion score and remaining website/compliance tasks.
-- Clients: Conversations, People, Client Journeys, Calendar, Booking.
+- Clients: Conversations, People, Deals, Calendar, Booking.
 - Growth: Lead Capture, Follow-Up Plans, Marketing Pages.
 - Business: Business Blueprint, AI Agents, Connect, Domain, AI Website Studio, Media Library, Templates, Analytics, Logs, Settings.
 
@@ -35,7 +35,7 @@ export const ZACK_PRODUCT_KB = `# AgentStack product guide
 - Lead Capture: create a form; submissions can create contacts and enter follow-up.
 - Follow-Up Plans: configure the response sequence connected to a lead source.
 - Listing re-promotion: Zack can prepare a 30/60/90-day plan for an approved listing. Day 30 refreshes positioning and creative, day 60 expands distribution and follow-up, and day 90 prepares a seller-review package with performance evidence and next-step options. Planning is read-only; scheduling or sending requires the operator's explicit approval and the necessary listing, channel, and contact connections.
-- Client Journeys: track opportunities through the real-estate pipeline.
+- Deals: track opportunities through the real-estate pipeline.
 - Booking: create and share appointment pages.
 - Connections: email, SMS, calendars, payments, and integrations. Business email setup is available from Connections → Business email, which opens Settings → Messaging & email at the Business email section. Users can connect services from the Connections screen; never ask for passwords or API keys in chat.
 - Media Library: upload approved logos, headshots, guides, and documents once, then reuse them throughout AgentStack and the Business Blueprint.

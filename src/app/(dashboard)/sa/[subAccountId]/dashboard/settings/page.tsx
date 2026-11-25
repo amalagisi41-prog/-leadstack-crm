@@ -7,6 +7,7 @@ import { CreditCard, Download } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { usePipelineStages } from "@/hooks/use-pipeline-stages";
 import { useSubAccount } from "@/context/sub-account-context";
+import { realRecords, sampleCount } from "@/lib/sample-data/counting";
 import { getUserDoc } from "@/lib/firestore/users";
 import { subscribeToContacts } from "@/lib/firestore/contacts";
 import { subscribeToDeals } from "@/lib/firestore/deals";
@@ -30,7 +31,6 @@ import { SubAccountIdxSection } from "@/components/settings/sub-account-idx-sect
 import { SubAccountRprSection } from "@/components/settings/sub-account-rpr-section";
 import { SubAccountAddOnsSection } from "@/components/settings/sub-account-add-ons-section";
 import { SubAccountPaymentPortalSection } from "@/components/settings/sub-account-payment-portal-section";
-import { SubAccountStripeSection } from "@/components/settings/sub-account-stripe-section";
 import { SubAccountApiKeysSection } from "@/components/settings/sub-account-api-keys-section";
 import { SubAccountApiRecipesSection } from "@/components/settings/sub-account-api-recipes-section";
 import { SubAccountCalendarSyncSection } from "@/components/settings/sub-account-calendar-sync-section";
@@ -71,8 +71,13 @@ export default function SettingsPage() {
   const pipelineStages = usePipelineStages();
   const workspaceName = subAccount?.name ?? "this sub-account";
   const [profile, setProfile] = useState<UserDoc | null>(null);
-  const [contacts, setContacts] = useState<Contact[]>([]);
-  const [deals, setDeals] = useState<Deal[]>([]);
+  const [allContacts, setContacts] = useState<Contact[]>([]);
+  const [allDeals, setDeals] = useState<Deal[]>([]);
+  // Sample records are not the client's data: excluded from the export and
+  // its counts, like every headline number (lib/sample-data/counting.ts).
+  const contacts = useMemo(() => realRecords(allContacts), [allContacts]);
+  const deals = useMemo(() => realRecords(allDeals), [allDeals]);
+  const skippedSamples = sampleCount(allContacts) + sampleCount(allDeals);
   const [settingsTab, setSettingsTab] = useState("admin");
   const [emailSetupOpen, setEmailSetupOpen] = useState(false);
 
@@ -204,7 +209,11 @@ export default function SettingsPage() {
 
   function handleExportWorkspace() {
     if (contacts.length === 0 && deals.length === 0) {
-      toast.error("No contacts or deals to export yet.");
+      toast.error(
+        skippedSamples
+          ? "No contacts or deals to export yet — sample records aren't exported."
+          : "No contacts or deals to export yet."
+      );
       return;
     }
 
@@ -273,7 +282,7 @@ export default function SettingsPage() {
       }, 150);
     }
     toast.success(
-      `Exported ${contactRows.length} contact${contactRows.length === 1 ? "" : "s"} and ${dealRows.length} deal${dealRows.length === 1 ? "" : "s"}.`
+      `Exported ${contactRows.length} contact${contactRows.length === 1 ? "" : "s"} and ${dealRows.length} deal${dealRows.length === 1 ? "" : "s"}.${skippedSamples ? " Sample records were left out." : ""}`
     );
   }
 
@@ -285,7 +294,7 @@ export default function SettingsPage() {
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">
-          {workspaceName} · Settings
+          {workspaceName} · Workspace Settings
         </h1>
         <p className="text-muted-foreground text-sm">
           Workspace-level configuration for{" "}
@@ -398,10 +407,6 @@ export default function SettingsPage() {
               bookings, and paid community purchases. */}
           <SubAccountPaymentPortalSection />
 
-          {/* Stripe Connect — v2 roadmap placeholder for automated,
-              in-app-processed payments (vs. the generic portal link above). */}
-          <SubAccountStripeSection />
-
           {/* IDX Listings — realtor MLS search powered by the sub-account's
               own IDX Broker account. Self-gates: renders a "Locked by your
               agency" state until idxEnabledByAgency is on. */}
@@ -438,6 +443,9 @@ export default function SettingsPage() {
                   {contacts.length} contact{contacts.length === 1 ? "" : "s"} ·{" "}
                   {deals.length} deal{deals.length === 1 ? "" : "s"} · downloads
                   both CSV files in one click
+                  {skippedSamples
+                    ? ` · ${skippedSamples} sample record${skippedSamples === 1 ? "" : "s"} not included`
+                    : ""}
                 </p>
               </div>
               <Button

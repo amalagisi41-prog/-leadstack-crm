@@ -1,5 +1,6 @@
 import "server-only";
 
+import { isExampleValue } from "@/lib/forms/example-values";
 import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
@@ -76,6 +77,21 @@ export async function PATCH(request: Request) {
   const update: Record<string, unknown> = {
     updatedAt: FieldValue.serverTimestamp(),
   };
+
+  // Placeholder examples are never saved as the customer's own brand.
+  for (const [field, value] of Object.entries({
+    name: body.name,
+    logoUrl: body.logoUrl,
+    supportEmail: body.supportEmail,
+    primaryDomain: body.primaryDomain,
+  })) {
+    if (typeof value === "string" && isExampleValue(value)) {
+      return NextResponse.json(
+        { error: `That ${field === "name" ? "agency name" : field === "logoUrl" ? "logo URL" : field === "supportEmail" ? "support email" : "domain"} is the example shown in the box. Enter your own, or leave it blank.` },
+        { status: 400 },
+      );
+    }
+  }
 
   if (body.name !== undefined) {
     const name = body.name.trim();

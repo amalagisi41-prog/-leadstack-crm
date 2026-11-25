@@ -48,6 +48,11 @@ interface SampleDataNoticeProps {
   noun: string;
   /** Whether the caller may remove them. Non-admins are told who can. */
   canRemove: boolean;
+  /**
+   * Replaces the default sentence — for surfaces (the dashboard) that don't
+   * list the samples but must still say they exist and aren't counted.
+   */
+  message?: string;
 }
 
 export function SampleDataNotice({
@@ -55,6 +60,7 @@ export function SampleDataNotice({
   count,
   noun,
   canRemove,
+  message,
 }: SampleDataNoticeProps) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [removing, setRemoving] = useState(false);
@@ -98,11 +104,16 @@ export function SampleDataNotice({
           aria-hidden
         />
         <p className="min-w-0 flex-1 text-muted-foreground">
-          <span className="font-medium text-foreground">
-            {count} of these {noun} are a sample
-          </span>{" "}
-          — a worked example to show you how this screen works. They are not
-          real people, and nothing is ever sent to them.
+          {message ?? (
+            <>
+              <span className="font-medium text-foreground">
+                {count} of these {noun} are a sample
+              </span>{" "}
+              — a worked example to show you how this screen works. They are
+              not real people, nothing is ever sent to them, and they are not
+              counted in any totals.
+            </>
+          )}
         </p>
         {canRemove ? (
           <Button
@@ -110,7 +121,7 @@ export function SampleDataNotice({
             size="sm"
             onClick={() => setConfirmOpen(true)}
           >
-            Remove sample data
+            Remove sample pipeline
           </Button>
         ) : (
           <span className="text-xs text-muted-foreground">
@@ -122,7 +133,7 @@ export function SampleDataNotice({
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent className="sm:max-w-md" data-testid="confirm-remove">
           <DialogHeader>
-            <DialogTitle>Remove the sample data?</DialogTitle>
+            <DialogTitle>Remove the sample pipeline?</DialogTitle>
             <DialogDescription>
               This deletes every sample contact and deal in this workspace, and
               the example conversation that goes with them.
@@ -146,7 +157,7 @@ export function SampleDataNotice({
               onClick={handleRemove}
               disabled={removing}
             >
-              {removing ? "Removing…" : "Remove sample data"}
+              {removing ? "Removing…" : "Remove sample pipeline"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -191,11 +202,15 @@ export function ShowExampleButton({
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) {
-        toast.error(data?.error ?? "Could not add the example. Try again.");
+        toast.error(
+          data?.error ?? "Could not add the sample pipeline. Try again."
+        );
         return;
       }
       // onSnapshot fills the screen in — nothing to refresh.
-      toast.success("Added a sample pipeline you can play with.");
+      toast.success(
+        `Added a sample pipeline${data?.seeded ? ` (${data.seeded.contacts} contacts, ${data.seeded.deals} deals)` : ""}. It's labelled as a sample and never counted — remove it any time with "Remove sample pipeline".`
+      );
     } catch {
       toast.error("Could not add the example. Check your connection.");
     } finally {
@@ -206,7 +221,7 @@ export function ShowExampleButton({
   return (
     <Button variant="outline" onClick={handleSeed} disabled={working}>
       <Wand2 className="mr-1 h-4 w-4" />
-      {working ? "Adding…" : "Show me an example"}
+      {working ? "Adding…" : "Add a sample pipeline"}
     </Button>
   );
 }

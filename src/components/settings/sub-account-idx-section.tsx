@@ -105,7 +105,7 @@ export function SubAccountIdxSection() {
             </p>
             <p className="mt-1">
               Your agency administrator controls this from the agency
-              sub-accounts list (Manage → IDX Listings). Your IDX Broker
+              sub-accounts list (Features &amp; access → IDX Listings). Your IDX Broker
               access key and any synced listings are preserved — re-enabling
               resumes them instantly.
             </p>

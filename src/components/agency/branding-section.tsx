@@ -1,5 +1,11 @@
 "use client";
 
+import {
+  EXAMPLE_PLACEHOLDER_CLASS,
+  EXAMPLE_VALUES,
+  examplePlaceholder,
+  realValueOrEmpty,
+} from "@/lib/forms/example-values";
 import { useEffect, useState, type FormEvent } from "react";
 import { Globe, Mail, Palette, Save } from "lucide-react";
 import { toast } from "sonner";
@@ -27,10 +33,11 @@ export function BrandingSection() {
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => {
     if (!agency.loading && !hydrated) {
-      setName(agency.name === "AgentStack" ? "" : agency.name);
-      setLogoUrl(agency.logoUrl ?? "");
-      setSupportEmail(agency.supportEmail ?? "");
-      setPrimaryDomain(agency.primaryDomain ?? "");
+      // Real saved values only — a stored example reads as empty.
+      setName(agency.name === "AgentStack" ? "" : realValueOrEmpty(agency.name));
+      setLogoUrl(realValueOrEmpty(agency.logoUrl));
+      setSupportEmail(realValueOrEmpty(agency.supportEmail));
+      setPrimaryDomain(realValueOrEmpty(agency.primaryDomain));
       setHydrated(true);
     }
   }, [
@@ -116,7 +123,8 @@ export function BrandingSection() {
           id="agency-name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Acme Marketing Co."
+          placeholder={examplePlaceholder(EXAMPLE_VALUES.agencyName)}
+          className={EXAMPLE_PLACEHOLDER_CLASS}
           maxLength={80}
           required
         />
@@ -133,7 +141,8 @@ export function BrandingSection() {
           type="url"
           value={logoUrl}
           onChange={(e) => setLogoUrl(e.target.value)}
-          placeholder="https://yourcdn.com/agency-logo.svg"
+          placeholder={examplePlaceholder(EXAMPLE_VALUES.logoUrl)}
+          className={EXAMPLE_PLACEHOLDER_CLASS}
         />
         <p className="text-[11px] text-muted-foreground">
           Public https URL pointing at your logo (SVG or PNG, transparent
@@ -151,8 +160,8 @@ export function BrandingSection() {
             type="email"
             value={supportEmail}
             onChange={(e) => setSupportEmail(e.target.value)}
-            placeholder="hello@yourbrand.com"
-            className="pl-8"
+            placeholder={examplePlaceholder(EXAMPLE_VALUES.supportEmail)}
+            className={`pl-8 ${EXAMPLE_PLACEHOLDER_CLASS}`}
           />
         </div>
         <p className="text-[11px] text-muted-foreground">
@@ -169,8 +178,8 @@ export function BrandingSection() {
             id="primary-domain"
             value={primaryDomain}
             onChange={(e) => setPrimaryDomain(e.target.value)}
-            placeholder="yourbrand.com"
-            className="pl-8"
+            placeholder={examplePlaceholder(EXAMPLE_VALUES.primaryDomain)}
+            className={`pl-8 ${EXAMPLE_PLACEHOLDER_CLASS}`}
           />
         </div>
         <p className="text-[11px] text-muted-foreground">

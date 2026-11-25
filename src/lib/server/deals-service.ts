@@ -1,5 +1,6 @@
 import "server-only";
 
+import { enqueueDealWonReviewRequest } from "@/lib/reviews/log";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { emitWebhookEvent } from "@/lib/api/webhooks/dispatch";
@@ -295,6 +296,17 @@ export async function updateDealServerSide(opts: {
         toStageId: patch.stageId,
       },
     });
+  }
+
+  // Post-closing review automation: a move INTO Closed (won) creates the
+  // review request (Off / Log only / Live — lib/reviews/log.ts). Every
+  // server write path (dashboard PATCH, pipeline board, public API) lands
+  // here. Idempotent per deal; never on API test-mode writes; fire-and-forget
+  // so it can never fail the deal update itself.
+  if (stageChanged && patch.stageId === "won" && mode === "live") {
+    void enqueueDealWonReviewRequest(fresh.id).catch((err) =>
+      console.error("[deals-service] review request enqueue failed", fresh.id, err),
+    );
   }
 
   // Always emit deal.updated; a stage move layers the finer events on top.

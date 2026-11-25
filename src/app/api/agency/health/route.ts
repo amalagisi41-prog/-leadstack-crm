@@ -2,16 +2,19 @@ import "server-only";
 
 import { NextResponse } from "next/server";
 import { getAdminAuth } from "@/lib/firebase/admin";
+import { isDeploymentOperatorEmail } from "@/lib/auth/operator";
 import { runHealthChecks, type IntegrationHealth } from "@/lib/health/checks";
 import type { AgencyRole, MemberStatus } from "@/types";
 
 /**
- * Agency-owner-only health snapshot. Returns one row per integration so the
+ * INTERNAL, deployment-operator-only health snapshot. Returns one row per integration so the
  * agency dashboard can render traffic-light status. Caches results in
  * memory for 60s — refresh forced via `?refresh=1`.
  *
- * Auth: caller must be `agencyRole === "owner"`. The endpoint reveals env-var
- * presence which is sensitive; gating to owner-only is intentional.
+ * Auth: caller must be an agency owner AND the deployment operator
+ * (BOOTSTRAP_ADMIN_EMAIL). It reveals env-var presence, secret names and vendor
+ * services — configuration only the operator can fix. Every other agency owner
+ * is a paying customer and gets the plain-language view at /api/agency/status.
  */
 
 interface CacheEntry {
@@ -40,11 +43,8 @@ async function readOwnerCaller(
   if (claims.status !== "active") {
     return NextResponse.json({ error: "Account inactive" }, { status: 403 });
   }
-  if (claims.agencyRole !== "owner" || !claims.agencyId) {
-    return NextResponse.json(
-      { error: "Agency owner only" },
-      { status: 403 },
-    );
+  if (claims.agencyRole !== "owner" || !claims.agencyId || !isDeploymentOperatorEmail(record.email)) {
+    return NextResponse.json({ error: "Not available" }, { status: 403 });
   }
   return { agencyId: claims.agencyId };
 }
@@ -61,20 +61,20 @@ export async function GET(request: Request) {
     !refresh &&
     Date.now() - cached.cachedAt < CACHE_TTL_MS
   ) {
-    const launchBlockers = cached.results.filter(
+    const requiredProblems = cached.results.filter(
       (result) => result.required && result.status !== "ok",
     );
     return NextResponse.json({
       results: cached.results,
       cachedAt: cached.cachedAt,
       fresh: false,
-      launchReady: launchBlockers.length === 0,
-      launchBlockers: launchBlockers.map((result) => result.id),
+      requiredReady: requiredProblems.length === 0,
+      requiredMissing: requiredProblems.map((result) => result.id),
     });
   }
 
   const results = await runHealthChecks();
-  const launchBlockers = results.filter(
+  const requiredProblems = results.filter(
     (result) => result.required && result.status !== "ok",
   );
   const cachedAt = Date.now();
@@ -83,7 +83,7 @@ export async function GET(request: Request) {
     results,
     cachedAt,
     fresh: true,
-    launchReady: launchBlockers.length === 0,
-    launchBlockers: launchBlockers.map((result) => result.id),
+    requiredReady: requiredProblems.length === 0,
+    requiredMissing: requiredProblems.map((result) => result.id),
   });
 }

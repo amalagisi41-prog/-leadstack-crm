@@ -25,15 +25,15 @@ export default function DashboardLayout({
       ?.replace(/[-_]/g, " ");
     const labels: Record<string, string> = {
       dashboard: "Today",
-      contacts: "Contacts",
+      contacts: "People",
       conversations: "Conversations",
-      pipeline: "Pipeline",
+      pipeline: "Deals",
       tasks: "Tasks",
       calendar: "Calendar",
       forms: "Lead Capture",
       funnels: "Funnels",
       reports: "Reports",
-      settings: "Settings",
+      settings: pathname.startsWith("/agency") ? "Agency Settings" : "Workspace Settings",
       booking: "Booking",
       media: "Media",
       social: "Social Planner",
@@ -41,9 +41,10 @@ export default function DashboardLayout({
       workflows: "Workflows",
       products: "Products",
       quotes: "Quotes",
+      "review requests": "Review Requests",
       website: "Website",
       "website studio": "Website Studio",
-      idx: "IDX Listings",
+      idx: "Listings",
       import: "Import",
     };
     document.title = `${labels[section ?? ""] ?? (section ? section.replace(/\b\w/g, (char) => char.toUpperCase()) : "AgentStack")} · AgentStack`;

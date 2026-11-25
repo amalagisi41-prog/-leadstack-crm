@@ -444,7 +444,7 @@ export function SubAccountManageDialog({ subAccount, open, onOpenChange }: Props
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Manage {subAccount.name}</DialogTitle>
+          <DialogTitle>Features &amp; access · {subAccount.name}</DialogTitle>
           <DialogDescription>
             Agency-level controls for this sub-account. Sub-account admins
             can&apos;t flip these — that&apos;s the point.

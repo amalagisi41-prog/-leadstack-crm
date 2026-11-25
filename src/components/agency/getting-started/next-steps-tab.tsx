@@ -101,7 +101,7 @@ const STEPS: NextStep[] = [
     number: 8,
     title: "Invite a teammate",
     why: "Add an admin or collaborator to a sub-account. Members are scoped to that one workspace — no leak across clients.",
-    cta: "Open Settings",
+    cta: "Open Workspace Settings",
     href: "/dashboard/settings",
     icon: UserPlus,
     requiresSubAccount: true,

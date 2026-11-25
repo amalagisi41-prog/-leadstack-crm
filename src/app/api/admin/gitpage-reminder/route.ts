@@ -1,6 +1,7 @@
 import "server-only";
 
 import { NextResponse } from "next/server";
+import { isDeploymentOperatorEmail } from "@/lib/auth/operator";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
 import { requireUid } from "@/lib/comms/route-auth";
@@ -41,8 +42,7 @@ export async function POST(request: Request) {
   if (auth instanceof NextResponse) return auth;
 
   // Agency-owner gate.
-  const owner = process.env.BOOTSTRAP_ADMIN_EMAIL?.trim().toLowerCase();
-  if (!owner || auth.email.trim().toLowerCase() !== owner) {
+  if (!isDeploymentOperatorEmail(auth.email)) {
     return NextResponse.json({ error: "Owner only." }, { status: 403 });
   }
 

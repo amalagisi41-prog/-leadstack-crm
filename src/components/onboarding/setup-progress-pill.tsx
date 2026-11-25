@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ArrowRight, ListChecks } from "lucide-react";
+import { ArrowRight, ListChecks, X } from "lucide-react";
 import { useSubAccount } from "@/context/sub-account-context";
 import { SUB_ACCOUNT_ROUTES } from "@/lib/navigation/sub-account-routes";
 import type { SetupStepId } from "@/lib/onboarding/setup-progress";
@@ -27,8 +27,19 @@ import { setupStepToPrompt } from "@/lib/onboarding/route-setup-step";
 
 const SETUP_FLOW_IDS: ReadonlySet<string> = new Set(["identity", "communications", "listings", "social", "domain"]);
 
+const DISMISS_KEY = "agentstack:setup-bar-dismissed";
+
+function readDismissed(subAccountId: string): boolean {
+  try {
+    return sessionStorage.getItem(DISMISS_KEY) === subAccountId;
+  } catch {
+    return false;
+  }
+}
+
 /**
- * Stays at the bottom of every workspace page until setup reaches 100%, so
+ * Docked in the page flow above every workspace page (never floating over
+ * content) until setup reaches 100%, so
  * the next step is always one click away. Its "x of 6" is The AgentStack
  * Method progress from useMethodProgress — the same figure the dashboard,
  * sidebar and setup hub show.
@@ -47,6 +58,20 @@ export function SetupProgressPill() {
   const [openFlow, setOpenFlow] = useState<SetupStepId | null>(null);
   const autoOpened = useRef(false);
   const onSetupPage = pathname?.endsWith(SUB_ACCOUNT_ROUTES.getStarted) ?? false;
+  // Hidden for the rest of the browser session once the realtor dismisses it
+  // (offered only after setup is underway, so a brand-new workspace keeps it).
+  const [dismissed, setDismissed] = useState(false);
+  useEffect(() => {
+    setDismissed(readDismissed(subAccountId));
+  }, [subAccountId]);
+  function dismiss() {
+    try {
+      sessionStorage.setItem(DISMISS_KEY, subAccountId);
+    } catch {
+      // Storage blocked: still hide for this page view.
+    }
+    setDismissed(true);
+  }
 
   // Record completion once it is observed, so no onboarding modal ever opens
   // on its own again and lower-priority prompts (app install) may show.
@@ -90,42 +115,59 @@ export function SetupProgressPill() {
 
   const nextStep = method.nextStep;
   const nextTask = nextStep.nextTask;
+  const fullLabel = nextActionLabel(method) ?? nextStep.name;
+  // Short form always fits ("Setup: 1 of 6 — Connect"); the task detail is
+  // added where there is room and wraps rather than truncating.
   const label = (
     <>
-      <span className="bg-primary/10 text-primary rounded-full px-2 py-0.5 text-xs font-semibold">
-        {method.completedCount} of {method.total}
+      <span className="font-semibold">
+        Setup: {method.completedCount} of {method.total} — {nextStep.name}
       </span>
-      <span className="truncate">Next: {nextActionLabel(method)}</span>
+      {nextTask ? (
+        <span className="text-muted-foreground hidden md:inline">· {nextTask.label}</span>
+      ) : null}
       <ArrowRight className="h-4 w-4 shrink-0" />
     </>
   );
   const pillClass =
-    "bg-background flex max-w-[calc(100vw-2rem)] items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium shadow-lg hover:border-primary";
+    "hover:text-primary flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5 text-left text-sm";
+
+  if (dismissed) return null;
 
   return (
-    // Bottom-center, offset for the lg sidebar: the Crisp support bubble owns
-    // the bottom-right corner, and the Business Profile page has its own
-    // sticky save bar along the bottom.
     <div
-      className={`fixed left-1/2 z-40 flex -translate-x-1/2 flex-col items-center gap-1.5 lg:left-[calc(50%+8rem)] ${
-        pathname?.endsWith(SUB_ACCOUNT_ROUTES.businessProfile) ? "bottom-20" : "bottom-4"
-      }`}
+      role="region"
+      aria-label="Setup progress"
+      className="bg-background mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-lg border px-3 py-2"
     >
       {nextTask && SETUP_FLOW_IDS.has(nextTask.id) ? (
-        <button type="button" className={pillClass} onClick={() => handleOpenChange(nextTask.id as SetupStepId, true)}>
+        <button type="button" className={pillClass} title={fullLabel} onClick={() => handleOpenChange(nextTask.id as SetupStepId, true)}>
           {label}
         </button>
       ) : (
-        <Link href={saPath(nextTask?.href ?? SUB_ACCOUNT_ROUTES.getStarted)} className={pillClass}>
+        <Link href={saPath(nextTask?.href ?? SUB_ACCOUNT_ROUTES.getStarted)} className={pillClass} title={fullLabel}>
           {label}
         </Link>
       )}
-      <Link
-        href={setupHubHref(subAccountId)}
-        className="text-muted-foreground bg-background/80 inline-flex items-center gap-1 rounded-full px-2 text-xs hover:underline"
-      >
-        <ListChecks className="h-3 w-3" /> See all setup steps
-      </Link>
+      <span className="flex items-center gap-2">
+        <Link
+          href={setupHubHref(subAccountId)}
+          className="text-muted-foreground inline-flex items-center gap-1 text-xs hover:underline"
+        >
+          <ListChecks className="h-3 w-3" /> See all setup steps
+        </Link>
+        {method.completedCount > 0 ? (
+          <button
+            type="button"
+            onClick={dismiss}
+            aria-label="Hide setup progress for this session"
+            title="Hide for this session"
+            className="text-muted-foreground hover:text-foreground rounded p-1"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        ) : null}
+      </span>
 
       <CommunicationsGuidedSetup
         open={openFlow === "communications"}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { fetchJsonShared } from "@/lib/client/shared-json";
 import type { StepCompletion } from "@/lib/onboarding/completion";
 
 /**
@@ -58,8 +59,15 @@ export function useOnboardingCompletion(
     }
     let active = true;
     setLoading(true);
-    void fetch(`/api/sub-accounts/${subAccountId}/onboarding`)
-      .then(async (r) => (r.ok ? await r.json() : null))
+    // Shared with the other setup-progress readers on the page.
+    void fetchJsonShared<{
+      ok?: boolean;
+      completedStepIds?: string[];
+      verifiedStepIds?: string[];
+      attestedStepIds?: string[];
+      fullyVerified?: boolean;
+      steps?: never[];
+    }>(`/api/sub-accounts/${subAccountId}/onboarding`)
       .then((data) => {
         if (!active) return;
         // A failed or malformed read leaves `completion` null. Callers show
