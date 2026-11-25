@@ -105,7 +105,7 @@ export function PasswordSection() {
             minLength={MIN_LENGTH}
           />
           <p className="text-[11px] text-muted-foreground">
-            At least {MIN_LENGTH} characters.
+            {`At least ${MIN_LENGTH} characters.`}
           </p>
         </div>
         <div className="space-y-1.5">

@@ -6,17 +6,19 @@ import { toast } from "sonner";
 import { Loader2, Mail, MessageSquare, Radio } from "lucide-react";
 
 interface MessagingConfig {
+  /** True only for the deployment operator — gates credential details. */
+  internal?: boolean;
   sms: {
     configured: boolean;
     fromNumber: string | null;
     accountSidMasked: string | null;
-    authTokenSet: boolean;
+    authTokenSet: boolean | null;
     sharedAllowed: boolean;
   };
   email: {
     configured: boolean;
     fromAddress: string | null;
-    apiKeySet: boolean;
+    apiKeySet: boolean | null;
   };
 }
 
@@ -145,11 +147,10 @@ export function MessagingSection() {
           <Radio className="h-4 w-4" />
         </span>
         <div>
-          <h2 className="text-sm font-semibold">Messaging (shared senders)</h2>
+          <h2 className="text-sm font-semibold">Messaging</h2>
           <p className="text-xs text-muted-foreground">
-            The deployment-wide Twilio (SMS) and Resend (email) senders every
-            sub-account falls back to when it has no dedicated config of its
-            own. Set via environment variables — read-only here.
+            The shared text and email senders your workspaces use until they
+            connect their own number or email address.
           </p>
         </div>
       </div>
@@ -169,38 +170,48 @@ export function MessagingSection() {
             <div className="mb-2 flex items-center justify-between">
               <span className="flex items-center gap-2 text-sm font-medium">
                 <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                SMS · Twilio
+                Text messaging
               </span>
               <StatusPill
                 ok={config.sms.configured}
-                label={config.sms.configured ? "Configured" : "Not configured"}
+                label={config.sms.configured ? "Ready" : "Not available"}
               />
             </div>
             <div className="divide-y">
               <Field
-                label="From number"
+                label="Sends from"
                 value={config.sms.fromNumber ?? "—"}
               />
-              <Field
-                label="Account SID"
-                value={config.sms.accountSidMasked ?? "—"}
-              />
-              <Field
-                label="Auth token"
-                value={config.sms.authTokenSet ? "Set" : "Not set"}
-              />
+              {config.internal ? (
+                <>
+                  <Field
+                    label="Account SID (internal)"
+                    value={config.sms.accountSidMasked ?? "—"}
+                  />
+                  <Field
+                    label="Auth token (internal)"
+                    value={config.sms.authTokenSet ? "Set" : "Not set"}
+                  />
+                </>
+              ) : null}
             </div>
+            {!config.sms.configured ? (
+              <p className="mt-2 text-[11px] text-muted-foreground">
+                No shared number is available. Each workspace can connect its
+                own phone number from its Connect page.
+              </p>
+            ) : null}
 
             {/* Policy: may sub-accounts fall back to this shared sender? */}
             <div className="mt-3 flex items-start justify-between gap-3 border-t pt-3">
               <div>
                 <p className="text-xs font-medium">
-                  Allow sub-accounts to use this shared sender
+                  Let workspaces use this shared number
                 </p>
                 <p className="text-[11px] text-muted-foreground">
-                  On by default. Turn off to require every sub-account to
-                  configure its own dedicated Twilio number — SMS steps and
-                  sends are blocked until they do.
+                  On by default. Turn off to require every workspace to
+                  connect its own phone number — texts are paused until they
+                  do.
                 </p>
               </div>
               <Toggle
@@ -216,38 +227,49 @@ export function MessagingSection() {
             <div className="mb-2 flex items-center justify-between">
               <span className="flex items-center gap-2 text-sm font-medium">
                 <Mail className="h-4 w-4 text-muted-foreground" />
-                Email · Resend
+                Email sending
               </span>
               <StatusPill
                 ok={config.email.configured}
-                label={
-                  config.email.configured ? "Configured" : "Not configured"
-                }
+                label={config.email.configured ? "Ready" : "Not available"}
               />
             </div>
             <div className="divide-y">
               <Field
-                label="From address"
+                label="Sends from"
                 value={config.email.fromAddress ?? "—"}
               />
-              <Field
-                label="API key"
-                value={config.email.apiKeySet ? "Set" : "Not set"}
-              />
+              {config.internal ? (
+                <Field
+                  label="API key (internal)"
+                  value={config.email.apiKeySet ? "Set" : "Not set"}
+                />
+              ) : null}
             </div>
+            {!config.email.configured ? (
+              <p className="mt-2 text-[11px] text-muted-foreground">
+                No shared email sender is available. Each workspace can connect
+                its own email account from its Connect page.
+              </p>
+            ) : null}
           </div>
 
-          <p className="text-[11px] text-muted-foreground">
-            To change these, update the environment variables
-            (<code>TWILIO_ACCOUNT_SID</code>, <code>TWILIO_AUTH_TOKEN</code>,{" "}
-            <code>TWILIO_FROM_NUMBER</code>, <code>RESEND_API_KEY</code>,{" "}
-            <code>EMAIL_FROM</code>) in your hosting provider and redeploy. Live
-            reachability (credential + webhook checks) is shown on{" "}
-            <Link href="/agency" className="underline underline-offset-2">
-              Agency → Status
-            </Link>
-            .
-          </p>
+          {config.internal ? (
+            <p className="rounded-md border border-dashed p-2 text-[11px] text-muted-foreground">
+              <span className="mr-1 rounded bg-slate-800 px-1 py-0.5 text-[9px] font-semibold tracking-wide text-white uppercase">
+                Internal
+              </span>
+              To change these, update the environment variables
+              (<code>TWILIO_ACCOUNT_SID</code>, <code>TWILIO_AUTH_TOKEN</code>,{" "}
+              <code>TWILIO_FROM_NUMBER</code>, <code>RESEND_API_KEY</code>,{" "}
+              <code>EMAIL_FROM</code>) in your hosting provider and redeploy.
+              Live checks are on{" "}
+              <Link href="/agency" className="underline underline-offset-2">
+                Agency → Internal
+              </Link>
+              .
+            </p>
+          ) : null}
         </div>
       )}
     </section>

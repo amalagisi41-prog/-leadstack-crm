@@ -853,10 +853,9 @@ export default function DashboardPage() {
           <UniversalTaskQueue items={unresolvedTasks} />
 
           {isWorkspaceEmpty ? (
-            <div className="space-y-4">
-              <NextBestActionCard action={nextBestAction} />
-              <EmptyWorkspaceState saPath={saPath} />
-            </div>
+            // Exactly one empty-state card: the next-action card would repeat
+            // the same "No leads yet" here.
+            <EmptyWorkspaceState saPath={saPath} />
           ) : (
             <div className="grid gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.6fr)]">
               <div className="space-y-4">

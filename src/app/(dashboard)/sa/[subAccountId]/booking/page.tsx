@@ -268,12 +268,13 @@ function EmptyState({
         share the link and your leads grab a time. Reminders + reschedule
         / cancel are built in.
       </p>
-      {isAdmin && (
-        <Button render={<Link href={newHref} />} className="mt-5">
-          <Plus className="mr-1 h-4 w-4" />
-          New booking page
-        </Button>
-      )}
+      {/* One primary action per page: New booking page lives in the top bar. */}
+      {isAdmin ? (
+        <p className="mt-5 text-sm font-medium">
+          Use <span className="text-foreground">New booking page</span> at the
+          top of this page to start.
+        </p>
+      ) : null}
     </div>
   );
 }

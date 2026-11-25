@@ -1,5 +1,6 @@
 import "server-only";
 
+import { realValueOrEmpty } from "@/lib/forms/example-values";
 import { NextResponse } from "next/server";
 import { FieldValue } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase/admin";
@@ -161,10 +162,11 @@ export async function PATCH(
       );
     } else {
       const raw = body.accountContact;
-      const name = typeof raw.name === "string" ? raw.name.trim() : "";
+      // Placeholder examples are dropped, never stored as a real contact.
+      const name = typeof raw.name === "string" ? realValueOrEmpty(raw.name.trim()) : "";
       const email =
-        typeof raw.email === "string" ? raw.email.trim().toLowerCase() : "";
-      const phone = typeof raw.phone === "string" ? raw.phone.trim() : "";
+        typeof raw.email === "string" ? realValueOrEmpty(raw.email.trim().toLowerCase()) : "";
+      const phone = typeof raw.phone === "string" ? realValueOrEmpty(raw.phone.trim()) : "";
       if (email && !EMAIL_RE.test(email)) {
         return NextResponse.json(
           { error: "Account contact email must be a valid email address." },

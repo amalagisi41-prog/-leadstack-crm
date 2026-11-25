@@ -234,7 +234,6 @@ export default function PipelinePage() {
       ) : deals.length === 0 ? (
         <EmptyState
           hasContacts={contacts.length > 0}
-          contacts={contacts}
           canSeed={isAdmin}
         />
       ) : filteredDeals.length === 0 && hasActiveFilters(filters) ? (
@@ -306,11 +305,9 @@ function BoardSkeleton() {
 
 function EmptyState({
   hasContacts,
-  contacts,
   canSeed,
 }: {
   hasContacts: boolean;
-  contacts: Contact[];
   canSeed: boolean;
 }) {
   const { saPath, subAccountId } = useSubAccount();
@@ -322,13 +319,12 @@ function EmptyState({
       <h3 className="text-base font-semibold">No deals yet</h3>
       <p className="mt-1 text-sm text-muted-foreground">
         {hasContacts
-          ? "Create your first deal to start tracking opportunities."
+          ? "Use New deal at the top of this page to start tracking an opportunity."
           : "Add a contact first, then open your first deal against them."}
       </p>
       <div className="mt-6 flex flex-wrap justify-center gap-2">
-        {hasContacts ? (
-          <NewDealDialog contacts={contacts} />
-        ) : (
+        {/* One primary action per page: New deal lives in the top bar. */}
+        {hasContacts ? null : (
           <Button render={<Link href={saPath("/contacts")} />}>
             Go to People
           </Button>

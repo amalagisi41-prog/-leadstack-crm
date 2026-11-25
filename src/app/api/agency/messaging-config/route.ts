@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import { emailIsConfigured } from "@/lib/comms/resend";
 import { smsIsConfigured } from "@/lib/comms/twilio";
+import { isDeploymentOperatorEmail } from "@/lib/auth/operator";
 import type { AgencyDoc, AgencyRole, MemberStatus } from "@/types";
 
 /**
@@ -62,18 +63,22 @@ export async function GET(request: Request) {
     sharedSmsAllowed = data?.sharedSmsAllowed !== false;
   }
 
+  // Credential presence is operator-only (deployment config); customers get
+  // status + the sender identity they'll actually see on messages.
+  const internal = isDeploymentOperatorEmail(record.email);
   return NextResponse.json({
+    internal,
     sms: {
       configured: smsIsConfigured(),
       fromNumber: trimOrNull(process.env.TWILIO_FROM_NUMBER),
-      accountSidMasked: maskMiddle(process.env.TWILIO_ACCOUNT_SID),
-      authTokenSet: present(process.env.TWILIO_AUTH_TOKEN),
+      accountSidMasked: internal ? maskMiddle(process.env.TWILIO_ACCOUNT_SID) : null,
+      authTokenSet: internal ? present(process.env.TWILIO_AUTH_TOKEN) : null,
       sharedAllowed: sharedSmsAllowed,
     },
     email: {
       configured: emailIsConfigured(),
       fromAddress: trimOrNull(process.env.EMAIL_FROM),
-      apiKeySet: present(process.env.RESEND_API_KEY),
+      apiKeySet: internal ? present(process.env.RESEND_API_KEY) : null,
     },
   });
 }

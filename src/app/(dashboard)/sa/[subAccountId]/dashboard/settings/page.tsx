@@ -31,7 +31,6 @@ import { SubAccountIdxSection } from "@/components/settings/sub-account-idx-sect
 import { SubAccountRprSection } from "@/components/settings/sub-account-rpr-section";
 import { SubAccountAddOnsSection } from "@/components/settings/sub-account-add-ons-section";
 import { SubAccountPaymentPortalSection } from "@/components/settings/sub-account-payment-portal-section";
-import { SubAccountStripeSection } from "@/components/settings/sub-account-stripe-section";
 import { SubAccountApiKeysSection } from "@/components/settings/sub-account-api-keys-section";
 import { SubAccountApiRecipesSection } from "@/components/settings/sub-account-api-recipes-section";
 import { SubAccountCalendarSyncSection } from "@/components/settings/sub-account-calendar-sync-section";
@@ -407,10 +406,6 @@ export default function SettingsPage() {
               Payment Link, etc). Powers the Pay CTA on invoices, paid
               bookings, and paid community purchases. */}
           <SubAccountPaymentPortalSection />
-
-          {/* Stripe Connect — v2 roadmap placeholder for automated,
-              in-app-processed payments (vs. the generic portal link above). */}
-          <SubAccountStripeSection />
 
           {/* IDX Listings — realtor MLS search powered by the sub-account's
               own IDX Broker account. Self-gates: renders a "Locked by your
