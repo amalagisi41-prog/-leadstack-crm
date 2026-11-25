@@ -90,7 +90,7 @@
       },
       {
         "label": "Transparent monthly plan entry point",
-        "agentstack": "$199/mo",
+        "agentstack": "{{SOLO_PRICE}}/mo",
         "competitor": "$69/user/mo"
       }
     ]
@@ -98,10 +98,10 @@
   "pricing": {
     "heading": "Pricing compared honestly",
     "agentstack": {
-      "headline": "Published plans starting at $199/month",
+      "headline": "Published plans starting at {{SOLO_PRICE}}/month",
       "detail": "AgentStack publishes clear tiered pricing for Solo, Team, and Broker use cases, with AI follow-up already central to the offer and no separate CRM seat math for every new agent.",
       "notes": [
-        "Solo starts at $199/month.",
+        "AgentStack Solo is {{SOLO_PRICE}}/month. {{SOLO_MONTHLY_TERMS}}",
         "Team starts at $299/month.",
         "Broker starts at $399/month.",
         "AI web chat, SMS follow-up, and the onboarding system are part of the product direction from day one."
@@ -165,7 +165,7 @@
     "items": [
       {
         "label": "Pricing",
-        "agentstack": "Published on the marketing site: Solo $199/mo, Team $299/mo, Broker $399/mo.",
+        "agentstack": "Published on the marketing site: Solo {{SOLO_PRICE}}/mo, Team $299/mo, Broker $399/mo.",
         "competitor": "Published by Follow Up Boss: Grow starts at $69/user/month on the monthly plan, Pro is $499/month including 10 users, and Platform is $1000/month including 30 users.",
         "sources": [
           {

@@ -1,6 +1,7 @@
 import type { Comparison } from "@/types/comparisons";
 import {
   HOMEPAGE_DESCRIPTION,
+  SOLO_PRICE,
   SOLO_PRICE_LINE,
   SOLO_MONTHLY_TERMS,
   SOLO_CANCELLATION,
@@ -13,12 +14,12 @@ export const gohighlevelComparison: Comparison = {
   competitorShortName: "GHL",
   metaTitle: "AgentStack CRM vs GoHighLevel — Built for Realtors",
   metaDescription:
-    "AgentStack CRM vs GoHighLevel: a workspace built for realtors, guided six-step setup, and AgentStack Solo at $99/month. Compare the workflow and current plans.",
+    `AgentStack CRM vs GoHighLevel: a workspace built for realtors, guided six-step setup, and AgentStack Solo at $${SOLO_PRICE}/month. Compare the workflow and current plans.`,
   lastVerifiedDate: "November 23, 2026",
   hero: {
     h1: "AgentStack CRM vs GoHighLevel: built for realtors",
     subhead: `Built to replace GoHighLevel — without the parts that were never made for agents. Keep buyer inquiries, listing appointments, showings, and offers in one workspace. ${SOLO_PRICE_LINE}.`,
-    ctaLabel: "See the $99/month Solo plan",
+    ctaLabel: `See the $${SOLO_PRICE}/month Solo plan`,
   },
   pullQuote: {
     text: "Your next step should be following up with a buyer or preparing for a listing appointment. AgentStack CRM gives that work a clear home, with a guided setup built around your real estate business.",
@@ -87,7 +88,7 @@ export const gohighlevelComparison: Comparison = {
       },
       {
         label: "Entry monthly offer",
-        agentstack: "$99/month Solo — one workspace",
+        agentstack: `$${SOLO_PRICE}/month Solo — one workspace`,
         competitor: "$97/month Starter; $297/month Unlimited",
       },
     ],
@@ -116,7 +117,7 @@ export const gohighlevelComparison: Comparison = {
       ],
     },
     summary:
-      "Choose based on the workflow and scope you need. AgentStack Solo is $99/month for one realtor-focused workspace. Compare the included tools, current availability, and any optional usage costs before switching.",
+      `Choose based on the workflow and scope you need. AgentStack Solo is $${SOLO_PRICE}/month for one realtor-focused workspace. Compare the included tools, current availability, and any optional usage costs before switching.`,
   },
   verification: {
     heading: "Check the offer before switching",
@@ -184,7 +185,7 @@ export const gohighlevelComparison: Comparison = {
       {
         question: "What does the Solo subscription cover?",
         answer:
-          "AgentStack Solo is a $99/month subscription for one workspace, guided setup, people, deals, tasks, calendar, lead forms, and booking pages. Review the pricing page for availability and optional add-ons.",
+          `AgentStack Solo is a $${SOLO_PRICE}/month subscription for one workspace, guided setup, people, deals, tasks, calendar, lead forms, and booking pages. Review the pricing page for availability and optional add-ons.`,
       },
       {
         question: "How do I cancel?",
@@ -195,7 +196,7 @@ export const gohighlevelComparison: Comparison = {
   finalCta: {
     headline: "A clearer home for your real estate business.",
     body: `Keep your next lead, appointment, and deal moving in a workspace built for realtors. ${SOLO_PRICE_LINE}.`,
-    primaryCtaLabel: "See AgentStack Solo — $99/month",
+    primaryCtaLabel: `See AgentStack Solo — $${SOLO_PRICE}/month`,
     primaryCtaHref: "/pricing",
   },
 };
