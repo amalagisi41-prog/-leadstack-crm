@@ -24,8 +24,9 @@ export default function TermsPage() {
   return (
     <LegalDocument title="AgentStack Terms of Service">
       <p>
-        These Terms are an agreement between <strong>{name}</strong>, doing
-        business as AgentStack (&ldquo;AgentStack,&rdquo; &ldquo;we,&rdquo;
+        These Terms are an agreement between <strong>{name}</strong>
+        {LEGAL_ENTITY.legalName !== "AgentStack" ? ", doing business as AgentStack" : ""}{" "}
+        (&ldquo;AgentStack,&rdquo; &ldquo;we,&rdquo;
         &ldquo;us&rdquo;), and the person or organization using the Service
         (&ldquo;Customer,&rdquo; &ldquo;you&rdquo;). By creating an account,
         purchasing a subscription, or using AgentStack, you agree to these

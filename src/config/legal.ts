@@ -54,7 +54,8 @@ const read = (value: string | undefined) => (value ?? "").trim();
  */
 export const LEGAL_ENTITY: LegalEntityConfig = {
   legalName: read(process.env.NEXT_PUBLIC_LEGAL_COMPANY_NAME) || "AgentStack",
-  mailingAddress: read(process.env.NEXT_PUBLIC_LEGAL_MAILING_ADDRESS) || "",
+  mailingAddress: read(process.env.NEXT_PUBLIC_LEGAL_MAILING_ADDRESS) ||
+    "184 High Ridge Rd, Stamford, CT 06905",
   governingState:
     read(process.env.NEXT_PUBLIC_LEGAL_GOVERNING_STATE) || "Connecticut",
   governingVenue:
