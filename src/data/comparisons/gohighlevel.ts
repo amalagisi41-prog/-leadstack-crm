@@ -142,7 +142,7 @@ export const gohighlevelComparison: Comparison = {
         competitor:
           "CRM, pipelines, workflows, and booking calendars; check plan and usage terms",
         sources: [
-          { label: "The AgentStack Method", url: "/the-method" },
+          { label: "The AgentStack Method", url: "/playbook" },
           {
             label: "GoHighLevel features and fees",
             url: "https://www.gohighlevel.com/pricing",
