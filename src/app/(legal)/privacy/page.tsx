@@ -20,13 +20,19 @@ export default function PrivacyPage() {
   return (
     <LegalDocument title="AgentStack Privacy Policy">
       <p>
-        AgentStack is operated by{" "}
-        <strong>
-          <LegalValue
-            value={LEGAL_ENTITY.legalName}
-            field="LEGAL COMPANY NAME"
-          />
-        </strong>{" "}
+        {LEGAL_ENTITY.legalName === "AgentStack" ? (
+          <strong>AgentStack</strong>
+        ) : (
+          <>
+            AgentStack is operated by{" "}
+            <strong>
+              <LegalValue
+                value={LEGAL_ENTITY.legalName}
+                field="LEGAL COMPANY NAME"
+              />
+            </strong>
+          </>
+        )}{" "}
         (&ldquo;AgentStack,&rdquo; &ldquo;we,&rdquo; &ldquo;us,&rdquo; or
         &ldquo;our&rdquo;). This policy explains how we collect, use, disclose,
         and protect information through agentstackcrm.app and AgentStack&apos;s
