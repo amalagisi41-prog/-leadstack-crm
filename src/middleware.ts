@@ -12,6 +12,8 @@ const PUBLIC_PATHS = [
   "/pricing",
   "/terms",
   "/privacy",
+  // AgentStack's own licensing policy — linked from the public footer.
+  "/licensing",
   "/about",
   "/security",
   "/help",

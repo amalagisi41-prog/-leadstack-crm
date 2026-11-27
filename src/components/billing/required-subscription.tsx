@@ -19,6 +19,14 @@ export function RequiredSubscription() {
     let canceled = false;
     async function recoverPaidCheckout() {
       try {
+        // Only a signed-in owner can have a paid checkout to recover. Skip the
+        // call for signed-out visitors instead of letting it 401.
+        const auth = getFirebaseAuth();
+        await auth.authStateReady();
+        if (!auth.currentUser) {
+          if (!canceled) setRecovering(false);
+          return;
+        }
         const response = await fetch("/api/checkout/recover", {
           method: "POST",
           credentials: "include",
