@@ -5,6 +5,7 @@ import { requireSubAccountAdmin } from "@/lib/auth/require-tenancy";
 import {
   buildGoogleAccountAuthUrl,
   googleAccountClient,
+  type GoogleAccountReturnTo,
 } from "@/lib/google/account-connect";
 
 /**
@@ -35,7 +36,11 @@ export async function GET(
   const client = googleAccountClient();
   if (!client) return back("not_configured");
 
+  const returnToParam = request.nextUrl.searchParams.get("returnTo");
+  const returnTo: GoogleAccountReturnTo =
+    returnToParam === "calendar" ? "calendar" : "connect";
+
   return NextResponse.redirect(
-    buildGoogleAccountAuthUrl(subAccountId, client.clientId),
+    buildGoogleAccountAuthUrl(subAccountId, client.clientId, returnTo),
   );
 }

@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useSubAccount } from "@/context/sub-account-context";
 import { Button } from "@/components/ui/button";
 import type { CalendarProvider } from "@/types/tenancy";
+import { googleAccountConnectPath } from "@/lib/google/account-connect-path";
 
 const PROVIDERS: Array<{
   id: CalendarProvider;
@@ -16,7 +17,7 @@ const PROVIDERS: Array<{
   {
     id: "google",
     label: "Google Calendar",
-    description: "Authorize AgentStack to work with your Google Calendar.",
+    description: "Connect Google once to authorize Calendar, Gmail, and Business Profile.",
     path: "google-oauth",
   },
   {
@@ -55,6 +56,13 @@ export function SubAccountCalendarSyncSection() {
   async function connect(provider: (typeof PROVIDERS)[number]) {
     setConnecting(provider.id);
     try {
+      if (provider.id === "google") {
+        window.location.assign(
+          `${googleAccountConnectPath(subAccountId)}?returnTo=calendar`,
+        );
+        return;
+      }
+
       const response = await fetch(
         `/api/sub-accounts/${subAccountId}/calendar/${provider.path}`,
         { method: "POST" },
@@ -151,7 +159,7 @@ function formatOAuthError(error: string): string {
     case "access_denied":
       return "Calendar authorization was cancelled.";
     case "not_configured":
-      return "Calendar sign-in is not configured on this deployment.";
+      return "Google sign-in is not configured on this deployment.";
     case "refresh_token_missing":
       return "The calendar provider did not return a refresh token. Please try connecting again.";
     case "invalid_state":

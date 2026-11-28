@@ -52,7 +52,12 @@ export async function GET(request: NextRequest) {
   // can never be mistaken for a Business Profile import state (or vice versa).
   const account = verifyGoogleAccountState(state);
   if (account) {
-    return completeGoogleAccountConnection(request, account.subAccountId, code);
+    return completeGoogleAccountConnection(
+      request,
+      account.subAccountId,
+      code,
+      account.returnTo,
+    );
   }
 
   // Verify the HMAC signature before trusting anything inside `state`.
